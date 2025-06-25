@@ -1,7 +1,9 @@
 [build]
 publish = "public"
 
+# Só redireciona se não for um arquivo ou pasta real
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  force = false
