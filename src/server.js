@@ -1,11 +1,18 @@
+// server.js (atualizado com suporte a CORS para funcionar com Netlify)
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 const { authenticateUser } = require('./auth/login');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+
+app.use(cors({
+  origin: 'https://eletrobusiness.com.br', // ou seu domínio personalizado no Netlify
+  credentials: true
+}));
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -19,10 +26,12 @@ app.use(session({
     }
 }));
 
-// Servir arquivos públicos
+// Servir arquivos públicos apenas localmente (não afeta o Netlify)
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Middleware para proteger rotas /users
+const usersDir = path.join(__dirname, '../users');
+
+// Rota protegida para /users
 app.use('/users', (req, res, next) => {
     if (!req.session.user) {
         return res.status(401).send("Não autorizado. Faça login.");
@@ -31,18 +40,14 @@ app.use('/users', (req, res, next) => {
     const requestedPath = req.path;
     const user = req.session.user;
 
-    // Para CNPJ como username
-    if (requestedPath.startsWith(`/${user.username}`)) {
-        return express.static(path.join(__dirname, '../users'))(req, res, next);
-    }
+    const userAllowedBase = `/users/${user.username}`;
+    const cnpjFolder = user.redirect.split('/').slice(0, 4).join('/');
 
-    // Para colaboradores: verificação se o caminho termina com /{username}/...
-    const parts = requestedPath.split('/');
-    if (parts.includes(user.username)) {
-        return express.static(path.join(__dirname, '../users'))(req, res, next);
+    if (requestedPath.startsWith(userAllowedBase) || requestedPath.startsWith(cnpjFolder)) {
+        return express.static(usersDir)(req, res, next);
+    } else {
+        return res.status(403).send("Acesso negado.");
     }
-
-    return res.status(403).send("Acesso negado.");
 });
 
 // Rota de login
@@ -75,7 +80,7 @@ app.get('/logout', (req, res) => {
     });
 });
 
-// 404 handler
+// 404
 app.use((req, res) => {
     res.status(404).sendFile(path.join(__dirname, '../public/404.html'));
 });

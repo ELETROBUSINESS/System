@@ -8,11 +8,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const password = document.getElementById('senha').value;
 
     try {
-      const response = await fetch('/login', {
+      const response = await fetch('https://system-5y39.onrender.com', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include', // importante para cookies/sessão
         body: JSON.stringify({ username, password })
       });
 
