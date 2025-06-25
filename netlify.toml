@@ -1,8 +1,8 @@
 [build]
-  publish = "public"
+  publish = "public"  # Isso faz o Netlify servir os arquivos a partir da pasta public
+  command = ""         # Sem comando de build, pois não há build process
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-  force = false
