@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/assets/img/icons/favicon.ico">
+    <title>Pedidos | Sayllon</title>
+    <link rel="stylesheet" href="/assets/CSS/main.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+
+#modal {
+    display: none;
+    position: fixed;
+    top: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 600px;
+    height: 90%;
+    overflow-y: auto;
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    z-index: 1000;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+  }
+
+  #modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
+
+  .produto-item {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .produto-item strong {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  .produto-item em {
+    color: #555;
+    font-size: 0.9em;
+  }
+
+  .produto-item input {
+    width: 60px;
+    padding: 4px;
+    margin-top: 5px;
+    display: block;
+  }
+
+  #form-pedido button {
+    margin-right: 10px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+
+  table th, table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+  }
+
+  select.status-select {
+    padding: 4px;
+    border-radius: 4px;
+    border: 1px solid #aaa;
+  }
+  input{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-color: #eeeeee;
+    box-shadow: 0px 10px 15px -3px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+  }
+
+    </style>
+</head>
+<body>
+  <div class="info">
+    <div class="photo-profile">
+      <img src="/users/sayllon/lanchonete/adm/img/profile_photo.png">
+      <div class="detals">
+        <h1>Olá, Sayllon!</h1>
+        <p>CEO: Tentação na Chapa</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="new_nav">
+    <div class="conta-info">
+      <div class="back">
+        <a class="btn-default" href="/users/sayllon/lanchonete/adm/conta.html" target="_self">
+            Voltar<i class='bx bxs-left-arrow-circle'></i>
+        </a>
+    </div>
+      <p>Pedidos</p>
+      <button class="btn-default" onclick="abrirModal()"><i class='bx bxs-message-add'></i>Novo Pedido</button>
+      <table border="1" id="tabela-pedidos">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Cliente</th>
+            <th>Produtos</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody id="lista-pedidos"></tbody>
+      </table>
+    </div>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+
+    <div class="navigation">
+      <ul>
+          <li class="list">
+              <a href="/users/sayllon/lanchonete/adm/conta.html">
+                  <span class="icon">
+                      <i class='bx bxs-user'></i>
+                  </span>
+                  <span class="text">Conta</span>
+              </a>
+          </li>
+
+          <li class="list">
+              <a href="/users/sayllon/lanchonete/adm/metricas.html">
+                  <span class="icon">
+                      <i class='bx bxs-circle-three-quarter'></i>
+                  </span>
+                  <span class="text">Métricas</span>
+              </a>
+          </li>
+
+          <li class="list active">
+              <a href="#">
+                  <span class="icon">
+                      <i class='bx bxs-bookmark-alt-plus'></i>
+                  </span>
+                  <span class="text">Pedido</span>
+              </a>
+          </li>
+
+          <li class="list">
+              <a href="/users/sayllon/lanchonete/adm/extrato.html">
+                  <span class="icon">
+                      <i class='bx bxs-copy-alt'></i>
+                  </span>
+                  <span class="text">Extrato</span>
+              </a>
+          </li>
+
+          <li class="list">
+              <a href="/index.html">
+                  <span class="icon">
+                      <i class='bx bxs-log-out'></i>
+                  </span>
+                  <span class="text">Sair</span>
+              </a>
+          </li>
+          
+          <div class="indicator color11"></div>
+      </ul>
+  </div>
+  </div>
+
+  <!-- Modal de novo pedido -->
+  <div id="modal">
+    <div class="modal-content">
+      <h2><i class='bx bxs-food-menu'></i> Novo Pedido</h2>
+      <form id="form-pedido">
+        <label>Nome do Cliente:<br><input type="text" name="cliente" required></label><br>
+        <div id="lista-produtos"></div>
+        <br>
+        <strong>Total: R$<span id="total">0.00</span></strong><br><br>
+        <button class="" type="submit"><i class='bx bx-bookmark-alt-plus'></i> Enviar Pedido</button>
+        <button class="" type="button" onclick="fecharModal()"><i class='bx bx-x'></i> Cancelar</button>
+      </form>
+    </div>
+  </div>
+
+<script>
+  const url = "https://script.google.com/macros/s/AKfycbzijkg1NOsg8iJSbThg003cPhEk7GDQj_tDkXgt15q5nsj8_eo-C-ukIY0Wdd_VPhWxpg/exec";
+
+  async function carregarProdutos() {
+    const res = await fetch(`${url}?tipo=produtos`);
+    const produtos = await res.json();
+    const div = document.getElementById("lista-produtos");
+    div.innerHTML = "";
+
+    produtos.forEach((produto, index) => {
+      const item = document.createElement("div");
+      item.innerHTML = `
+        <strong>${produto.nome}</strong> - R$${produto.preco.toFixed(2)}<br>
+        <em>${produto.descricao}</em><br>
+        Quantidade: <input type="number" min="0" value="0" data-index="${index}" data-nome="${produto.nome}" data-preco="${produto.preco}" onchange="atualizarTotal()"><br><br>
+      `;
+      div.appendChild(item);
+    });
+
+    
+  }
+
+  function atualizarTotal() {
+    const inputs = document.querySelectorAll("#lista-produtos input");
+    let total = 0;
+    inputs.forEach(input => {
+      const qtd = parseInt(input.value);
+      const preco = parseFloat(input.dataset.preco);
+      if (qtd > 0) total += qtd * preco;
+    });
+    document.getElementById("total").textContent = total.toFixed(2);
+  }
+
+  async function enviarPedido(e) {
+    e.preventDefault();
+    const cliente = e.target.cliente.value;
+    const inputs = document.querySelectorAll("#lista-produtos input");
+    const produtosSelecionados = [];
+
+    inputs.forEach(input => {
+      const qtd = parseInt(input.value);
+      if (qtd > 0) {
+        produtosSelecionados.push({
+          nome: input.dataset.nome,
+          qtd
+        });
+      }
+    });
+
+    if (!produtosSelecionados.length) return alert("Selecione pelo menos um produto.");
+
+    const total = parseFloat(document.getElementById("total").textContent);
+    await fetch(url, {
+      method: "POST",
+      body: JSON.stringify({ tipo: "pedido", cliente, produtos: produtosSelecionados, total })
+    });
+
+    alert("Pedido enviado!");
+    fecharModal();
+    carregarPedidos();
+  }
+
+  function carregarPedidos() {
+    fetch(url + "?tipo=pedidos")
+      .then(res => res.json())
+      .then(pedidos => {
+        const tabela = document.querySelector("#tabela-pedidos tbody");
+        tabela.innerHTML = "";
+
+        pedidos.forEach((p, i) => {
+          const linha = document.createElement("tr");
+          linha.innerHTML = `
+            <td>${p.data}</td>
+            <td>${p.cliente}</td>
+            <td>${p.produtos}</td>
+            <td>R$${parseFloat(p.total).toFixed(2)}</td>
+            <td>
+              <select onchange="atualizarStatus(${i}, this.value)">
+                <option value="pendente" ${p.status === "pendente" ? "selected" : ""}>pendente</option>
+                <option value="finalizado" ${p.status === "finalizado" ? "selected" : ""}>finalizado</option>
+                <option value="cancelado" ${p.status === "cancelado" ? "selected" : ""}>cancelado</option>
+              </select>
+            </td>
+          `;
+          tabela.appendChild(linha);
+        });
+      });
+  }
+
+  function atualizarStatus(index, status) {
+    fetch(url, {
+      method: "POST",
+      body: JSON.stringify({ tipo: "atualizar_status", index, status })
+    }).then(res => res.text()).then(msg => {
+      console.log(msg); // opcional: alerta ou mensagem
+    });
+  }
+
+
+  function abrirModal() {
+    document.getElementById("modal").style.display = "block";
+    carregarProdutos();
+  }
+
+  function fecharModal() {
+    document.getElementById("modal").style.display = "none";
+  }
+
+  document.getElementById("form-pedido").addEventListener("submit", enviarPedido);
+  window.onload = carregarPedidos;
+</script>
+</body>
+</html>

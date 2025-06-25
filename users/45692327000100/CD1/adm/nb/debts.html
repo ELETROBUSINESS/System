@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="320;/disconnected.html"></meta>
+
+    <link rel="icon" href="/assets/img/icons/favicon.ico">
+    <title>A N F da Silva LTDA | Boletos (abril)</title>
+
+    <!-- Link To CSS -->
+    <link rel="stylesheet" href="/assets/CSS/main.css">
+</head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script> <script> window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-BV6V3GTMR0'); </script>
+
+<body class="painel-adm1" onload="AnimationLoading();">
+    <header> <div class="loading"><div class="efect-loading"></div></div></header>
+    <div class="info">
+        <div class="photo-profile">
+            <ion-icon name="business-outline"></ion-icon>
+            <div class="detals">
+                <h1>A N F da Silva LTDA</h1>
+                <p class="horario"></p>
+            </div>
+        </div>
+        <div class="balance">
+            <p>Débitos pendentes</p>
+            <iframe width="500" height="90" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSKbfop8dJVMDj74qymflYlFXejtTxAAR4TvdICldr5Q2pvRgomrYpNThBC6ht6zgbJ2o-qz1URouEA/pubchart?oid=1944461880&amp;format=interactive"></iframe>
+        </div>
+    </div>
+
+    <div class="back">
+        <a class="btn-default" href="/users/45692327000100/CD1/adm/nb/manager.html" target="_self">
+            Voltar<ion-icon name="arrow-undo-circle-sharp"></ion-icon>
+        </a>
+    </div>
+
+    <div class="new_nav">
+        <div class="conta-info">
+            <p>Contas</p>
+            <div class="shop  container">
+                <div class="boletosContainer">
+  <div class="boletos-vencer" id="boletosContainer"></div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('boletosContainer');
+
+    // Mostrar loader antes do fetch
+    container.innerHTML = `
+      <div class="loader">
+        <div class="spinner"></div>
+      </div>
+    `;
+
+    const url = 'https://script.google.com/macros/s/AKfycbwKigmIqNokI5oPsHywdpX2tuB0Y3AE7LwO1QoHF7vZyriksdSvcOflVUo8jY03TW8euw/exec?tipo=boletos';
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        container.innerHTML = ''; // Limpar loader
+
+        data.forEach(boleto => {
+          const div = document.createElement('div');
+          div.classList.add('boleto-item');
+          div.innerHTML = `
+            <i class="fi fi-rs-corporate-alt"></i>
+            <span class="data">${boleto.vencimento}</span>
+            <span class="empresa">${boleto.empresa}</span>
+            <span class="valor">R$${boleto.valor}</span>
+            <span class="status">${boleto.status}</span>
+          `;
+          container.appendChild(div);
+        });
+      })
+      .catch(err => {
+        container.innerHTML = '<p style="text-align:center;color:red;">Erro ao carregar boletos.</p>';
+        console.error('Erro ao carregar boletos:', err);
+      });
+  });
+</script>
+
+
+
+            </div>
+         </div>
+
+    </div>
+</body>
+</html>
+
+<!-- Link To JS -->
+<script src="/assets/js/loading.js"></script>
+<script src="/assets/js/recurses.js"></script>
+<script src="/assets/js/time.js"></script>

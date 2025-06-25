@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="320;/disconnected.html"></meta>
+    
+    <title>Área de Vendas | Nubia</title>
+   <link rel="icon" href="/assets/img/iconWeb.png">
+    
+    <!-- Link To CSS -->
+    <link rel="stylesheet" href="/assets/CSS/main.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+</head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script> <script> window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-BV6V3GTMR0'); </script>
+
+<body onload="AnimationLoading();">
+    <header> <div class="loading"><div class="efect-loading"></div></div></header>
+    <div class="generatedReceipt" id="generatedReceipt">
+        <div class="container-comprovante">
+            <div class="comprovante">
+                <div class="date-info">
+                    <i class='bx bx-cart'></i>
+                    <p id="hrInfo">11:30:11</p>
+                </div>
+                <div class="TypeMov">
+                    <h1 id="paymentInfo">Pix - QRCODE</h1>
+                    <p>Saída</p>
+                    <span id="valueInfo">R$0,00</span>
+                </div>
+                <div class="Resumo">
+                    <div class="quest1">
+                        <p>Operadora</p>
+                        <span id="sellerInfo">*</span>
+                    </div>
+                    <div class="quest1">
+                        <p>Desconto</p>
+                        <span id="desInfo">R$0,00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="infoAdd">
+                <a href="/users/45692327000100/CD1/adm/nb/pushBuy.html" class="b-function">
+                    <i class='bx bxs-cart-add'></i>
+                    Nova saída
+                </a>
+                <a href="/users/45692327000100/CD1/adm/nb/extrato.html" class="b-function">
+                    <i class='bx bx-copy-alt'></i>
+                    Ver extrato
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="new_nav main-container">
+        <main id="form_container">
+            <div id="form_header">
+                <h1 id="form_title">Saída</h1>
+                <a class="btn-default" href="/users/45692327000100/CD1/adm/nb/formsPush.html" target="_self">
+                    <i class='bx bxs-left-arrow-circle'></i>
+                </a>
+            </div>
+            
+            <form action="" id="form-sell-adm">
+                <div id="input_container">
+                    <div class="input-box">
+                        <label 
+                            for="value"
+                            class="form-label">
+                            Valor da operação
+                        </label>
+                        <div class="input-field">
+                            <input
+                            type="number"
+                            name="value"
+                            id="value"
+                            class="form-control"
+                            placeholder="R$0,00"
+                            autocomplete="off"
+                            step="0.01"
+                            >
+                        </div>
+                        <span class="error"></span>
+                    </div>
+                    <div id="desconto"></div>
+                    <div id="total">
+                    </div>
+
+                    <div class="custom-select-wrapper">
+                        <label class="form-label">Declaração de operação</label>
+                        <div class="custom-select" id="customSelect">
+                          <div class="selected">
+                            <i class="fa-regular fa-credit-card"></i> Declaração
+                          </div>
+                          <div class="options">
+                            <div data-value="product"><i class="fi fi-rr-boxes"></i> Aquisição de Mercadoria</div>
+                            <div data-value="folha"><i class="fi fi-rr-ballot"></i> Folha de pagamento</div>
+                            <div data-value="manutenção"><i class="fi fi-rr-shop"></i> Manutenção da loja</div>
+                            <div data-value="campanhas"><i class="fi fi-rr-ad-paid"></i> Campanhas</div>
+                            <div data-value="combustíveis"><i class="fi fi-rr-gas-pump"></i> Combustíveis</div>
+                            <div data-value="combustíveis"><i class=""></i> Outros</div>
+                          </div>
+                        </div>
+                        <input type="hidden" name="declaration" id="paymentModal">
+                    </div>
+
+                    <div class="radio-container">
+                        <br>
+                        <label class="form-label">Forma de Pagamento</label>
+
+                        <div id="input_container">
+                            <select id="paymentModal" name="payment" class="option-payment-card">
+                                <option value="dinheiro">Dinheiro</option>
+                                <option value="pixQR-F">Pix</option>
+                                <option value="boleto">Boleto</option>
+                                <option value="" selected class="infome">Escolha uma forma de pagamento</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="radio-container">
+                        <label class="form-label">Vendedora</label>
+
+                        <div id="payment_inputs">
+                            <div class="radio-box">
+                                <input type="radio"
+                                name="seller"
+                                id="seller"
+                                class="form-control"
+                                value="nubia"
+                                checked="on"
+                                >
+                                <label for="nubia" class="form-label">Nubia</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="radio-container">
+                        <label class="form-label">Type</label>
+
+                        <div id="payment_inputs">
+                            <div class="radio-box">
+                                <input type="radio"
+                                name="type"
+                                id="saída"
+                                class="form-control"
+                                value="saída"
+                                checked="on"
+                                >
+                                <label for="saída" class="form-label">Saída</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-box">
+                        <label 
+                            for="description"
+                            class="form-label">
+                            Descrição
+                        </label>
+                        <div class="input-field">
+                            <input
+                            type="text"
+                            name="description"
+                            id="description"
+                            class="form-control"
+                            placeholder="Descreva a operação"
+                            autocomplete="off"
+                            >
+                            <ion-icon name="reader-sharp"></ion-icon>
+                        </div>
+                    </div>
+                    <br>
+                </div>
+
+                <div class="radio-box">
+                    <button onclick="" type="submit" class="btn-default" id="submit-button-ADM">
+                        <div class="icon">
+                            <i class='bx bxs-receipt'></i>
+                        </div>
+                        Registrar
+                    </button>
+                </div>
+            </form>
+        </main>
+        <audio id="songSell" src="/assets/songSell.MP3"></audio>
+        <div id="pushBox"></div>
+        </div>
+        <div class="pn">
+            <div class="pn-hr">
+                <div class="loading1"><div class="efect-loading1"></div></div>
+                <p class="horario" id="horario">00:00:00</p>
+            </div>
+        </div>
+    </div>
+    <script>
+        const customSelect = document.getElementById('customSelect');
+        const selected = customSelect.querySelector('.selected');
+        const options = customSelect.querySelector('.options');
+        const hiddenInput = document.getElementById('paymentModal');
+      
+        selected.addEventListener('click', () => {
+          customSelect.classList.toggle('active');
+        });
+      
+        options.querySelectorAll('div').forEach(option => {
+          option.addEventListener('click', () => {
+            selected.innerHTML = option.innerHTML;
+            hiddenInput.value = option.dataset.value;
+            customSelect.classList.remove('active');
+          });
+        });
+      
+        // Fecha se clicar fora
+        document.addEventListener('click', (e) => {
+          if (!customSelect.contains(e.target)) {
+            customSelect.classList.remove('active');
+          }
+        });
+      </script>
+    
+    <script src="/assets/js/loading.js"></script>
+    <script src="/assets/js/new-mov-ADM.js"></script>
+    <script src="/assets/js/time.js"></script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="320;/disconnected.html">
+    </meta>
+
+    <link rel="icon" href="/assets/img/icons/favicon.ico">
+    <title>A N F da Silva LTDA</title>
+
+    <!-- Link To CSS -->
+    <link rel="stylesheet" href="/assets/CSS/main.css">
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/3.0.0/uicons-regular-straight/css/uicons-regular-straight.css'>
+</head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
+<script> window.dataLayer = window.dataLayer || []; function gtag() { dataLayer.push(arguments); } gtag('js', new Date()); gtag('config', 'G-BV6V3GTMR0'); </script>
+
+<div class="new_nav">
+    <div class="conta-info">
+        <p>Ferramenta em Beta | Treinando IA <i class='bxr  bx-pencil-sparkles'></i> </p>
+        <br>
+
+        <div class="back">
+            <a class="btn-default" href="/users/45692327000100/CD1/adm/nb/manager.html" target="_self">
+                Voltar<i class='bx bxs-left-arrow-circle'></i>
+            </a>
+        </div>
+
+        <div class="containerCard">
+            <input type="file" accept="image/*" capture="environment" id="cameraInput">
+            <img id="preview" style="max-width: 300px; display: none;">
+            <p id="result"></p>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+<script>
+    const input = document.getElementById('cameraInput');
+    const preview = document.getElementById('preview');
+    const result = document.getElementById('result');
+
+    input.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            preview.src = reader.result;
+            preview.style.display = 'block';
+
+            Tesseract.recognize(
+                reader.result,
+                'por',
+                { logger: m => console.log(m) }
+            ).then(({ data: { text } }) => {
+                result.textContent = 'Texto reconhecido:\n' + text;
+
+                // Aqui você pode buscar os dados do boleto
+                const vencimento = text.match(/\d{2}\/\d{2}\/\d{4}/)?.[0] || "Não encontrado";
+                const valor = text.match(/R?\$?\s?\d{1,3}(?:\.\d{3})*,\d{2}/)?.[0] || "Não encontrado";
+                const empresa = text.match(/[A-Z][A-Z\s]+(?=\s*CNPJ)/i)?.[0] || "Não encontrada";
+
+                result.textContent += `\n\n👉 Vencimento: ${vencimento}\n💰 Valor: ${valor}\n🏢 Empresa: ${empresa}`;
+            });
+        };
+        reader.readAsDataURL(file);
+    });
+</script>

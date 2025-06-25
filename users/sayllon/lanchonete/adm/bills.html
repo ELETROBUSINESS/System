@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="300;/users/nubia/Dtudo/adm/id20551910/platform/conta.html"></meta>
+
+    <title>Adicionar Boleto | Nubia</title>
+    <link rel="icon" href="/img/icons/logo_icon.png">
+    
+    <!-- Link To CSS -->
+    <link rel="stylesheet" href="/CSS/main.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+</head>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-BV6V3GTMR0');
+</script>
+
+<body onload="AnimationLoading();">
+    <header> <div class="loading"><div class="efect-loading"></div></div></header>
+    <!-- 
+    <div class="nav container">
+        <a href="/index.html" class="logo"><img src="/img/icons/logo_white.png"> ELETRO </a>         
+    </div>
+    -->
+
+    <div class="new_nav main-container">
+        <main id="form_container">
+            <div id="form_header">
+                <h1 id="form_title">Novo Boleto</h1>
+                <a class="btn-default" href="/users/nubia/Dtudo/adm/id20551910/platform/conta.html" target="_self">
+                    <ion-icon name="arrow-undo-circle-sharp"></ion-icon>
+                </a>
+            </div>
+            
+            <form action="" id="form-bills-adm">
+                <div id="input_container">
+                    <div class="input-box">
+                        <label 
+                            for="value"
+                            class="form-label">
+                            Valor do boleto
+                        </label>
+                        <div class="input-field">
+                            <input
+                            type="number"
+                            name="value"
+                            id="value"
+                            class="form-control"
+                            placeholder="R$0,00"
+                            autocomplete="off"
+                            step="0.01"
+                            >
+                            <ion-icon name="cart-sharp"></ion-icon>
+                        </div>
+                        <span class="error"></span>
+                    </div>
+                    <br>
+                    <div class="radio-container">
+                        <label class="form-label">Administrador</label>
+
+                        <div id="payment_inputs">
+                            <div class="radio-box">
+                                <input type="radio"
+                                name="adm"
+                                id="nubia"
+                                class="form-control"
+                                value="nubia"
+                                checked="on"
+                                >
+                                <label for="nubia" class="form-label">Nubia</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-box">
+                        <label 
+                            for="empresa"
+                            class="form-label">
+                            Nome da Empresa
+                        </label>
+                        <div class="input-field">
+                            <input
+                            type="text"
+                            name="empresa"
+                            id="empresa"
+                            class="form-control"
+                            placeholder="preencha com o nome da empresa"
+                            autocomplete="off"
+                            >
+                            <ion-icon name="business"></ion-icon>
+                        </div>
+                    </div>
+                    <br>
+                    <div class="input-box">
+                        <label 
+                            for="validade"
+                            class="form-label">
+                            Data de vencimento
+                        </label>
+                        <div class="input-field">
+                            <input
+                            type="date"
+                            name="validade"
+                            id="validade"
+                            class="form-control"
+                            placeholder="DTUDO VARIEDADES"
+                            autocomplete="off"
+                            >
+                        </div>
+                    </div>
+                    <br>
+                    
+                </div>
+
+                <div class="radio-box">
+                    <button type="submit" class="btn-default" id="submit-button-ADM">
+                        <ion-icon name="cart-sharp"></ion-icon>
+                        Registrar
+                    </button>
+                </div>
+            </form>
+        </main>
+        <audio id="songSell" src="/songSell.MP3"></audio>
+        <div id="pushBox"></div>
+        </div>
+    </div>
+    
+    <script src="/javascript/app-loading.js.js"></script>
+    <script src="/javascript/movBills.js"></script>
+</body>
+</html>

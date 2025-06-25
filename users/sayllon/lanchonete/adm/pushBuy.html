@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="420;/disconnected.html"></meta>
+    
+    <title>Área de Vendas | Sayllon</title>
+    <link rel="icon" href="/assets/img/icons/favicon.ico">
+    
+    <!-- Link To CSS -->
+    <link rel="stylesheet" href="/assets/CSS/main.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script> <script> window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-BV6V3GTMR0'); </script>
+
+<body onload="AnimationLoading();">
+    <header> <div class="loading"><div class="efect-loading"></div></div></header>
+    <div class="generatedReceipt" id="generatedReceipt">
+        <div class="container-comprovante">
+            <div class="comprovante">
+                <div class="date-info">
+                    <i class='bx bx-cart'></i>
+                    <p id="hrInfo">11:30:11</p>
+                </div>
+                <div class="TypeMov">
+                    <h1 id="paymentInfo">Pix - QRCODE</h1>
+                    <p></p>
+                    <span id="valueInfo">R$0,00</span>
+                </div>
+                <div class="Resumo">
+                    <div class="quest1">
+                        <p>Operação</p>
+                        <span id="sellerInfo">Ryan</span>
+                    </div>
+                    <div class="quest1">
+                        <p>Desconto</p>
+                        <span id="desInfo">R$0,00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="infoAdd">
+                <a href="/users/sayllon/lanchonete/adm/pushBuy.html" class="b-function">
+                    <i class='bx bxs-cart-add'></i>
+                    Nova saída
+                </a>
+                <a href="#" class="b-function">
+                    <i class='bx bx-copy-alt'></i>
+                    Ver extrato
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="new_nav main-container">
+        <main id="form_container">
+            <div id="form_header">
+                <h1 id="form_title">Saída</h1>
+                <a class="btn-default" href="/users/sayllon/lanchonete/adm/formsPush.html" target="_self">
+                    <i class='bx bxs-left-arrow-circle'></i>
+                </a>
+            </div>
+            
+            <form action="" id="form-sell-adm">
+                <div id="input_container">
+                    <div class="input-box">
+                        <label 
+                            for="value"
+                            class="form-label">
+                            Valor da operação
+                        </label>
+                        <div class="input-field">
+                            <input
+                            type="number"
+                            name="value"
+                            id="value"
+                            class="form-control"
+                            placeholder="R$0,00"
+                            autocomplete="off"
+                            step="0.01"
+                            >
+                            <ion-icon name="cart-sharp"></ion-icon>
+                        </div>
+                        <span class="error"></span>
+                    </div>
+                    
+                    <div class="radio-container">
+                        <br>
+                        <label class="form-label">Declaração</label>
+
+                        <div id="input_container">
+                            <select name="payment" class="option-payment-card">
+                                <option value="product">Ingredientes</option>
+                                <option value="folha">Folha de pagamento</option>
+                                <option value="manutenção">Manutenção</option>
+                                <option value="campanhas">Campanhas</option>
+                                <option value="combustíveis">Combustíveis</option>
+                                <option value="combustíveis">Outros</option>
+                                <option value="" selected class="infome">Escolha uma declaração</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="radio-container">
+                        <br>
+                        <label class="form-label">Forma de Pagamento</label>
+
+                        <div id="input_container">
+                            <select id="paymentModal" name="payment" class="option-payment-card">
+                                <option value="dinheiro">Dinheiro</option>
+                                <option value="pixQR-F">Pix</option>
+                                <option value="pixQR-G">Boleto</option>
+                                <option value="" selected class="infome">Escolha uma forma de pagamento</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="radio-container">
+                        <label class="form-label">Vendedora</label>
+
+                        <div id="payment_inputs">
+                            <div class="radio-box">
+                                <input type="radio"
+                                name="seller"
+                                id="seller"
+                                class="form-control"
+                                value="sayllon"
+                                checked="on"
+                                >
+                                <label for="sayllon" class="form-label">Sayllon</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="radio-container">
+                        <label class="form-label">Type</label>
+
+                        <div id="payment_inputs">
+                            <div class="radio-box">
+                                <input type="radio"
+                                name="type"
+                                id="saída"
+                                class="form-control"
+                                value="saída"
+                                checked="on"
+                                >
+                                <label for="saída" class="form-label">Saída</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-box">
+                        <label 
+                            for="description"
+                            class="form-label">
+                            Descrição
+                        </label>
+                        <div class="input-field">
+                            <input
+                            type="text"
+                            name="description"
+                            id="description"
+                            class="form-control"
+                            placeholder="Descreva a operação"
+                            autocomplete="off"
+                            >
+                            <ion-icon name="reader-sharp"></ion-icon>
+                        </div>
+                    </div>
+                    <br>
+                </div>
+
+                <div class="radio-box">
+                    <button onclick="" type="submit" class="btn-default" id="submit-button-ADM">
+                        <div class="icon">
+                            <i class='bx bxs-receipt'></i>
+                        </div>
+                        Registrar
+                    </button>
+                </div>
+            </form>
+        </main>
+        <audio id="songSell" src="/assets/songSell.MP3"></audio>
+        <div id="pushBox"></div>
+        </div>
+        <div class="pn">
+            <div class="pn-hr">
+                <div class="loading1"><div class="efect-loading1"></div></div>
+                <p class="horario" id="horario">00:00:00</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/javascript/loading.js"></script>
+    <script src="/javascript/mainServer.js"></script>
+    <script src="/javascript/time.js"></script>
+</body>
+</html>

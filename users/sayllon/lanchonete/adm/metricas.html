@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="320;/disconnected.html"></meta>
+
+    <link rel="icon" href="/assets/img/icons/favicon.ico">
+    <title>Gerenciador | Nubia</title>
+
+    <!-- Link To CSS -->
+    <link rel="stylesheet" href="/assets/CSS/main.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+</head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script> <script> window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-BV6V3GTMR0'); </script>
+
+<body class="painel-adm1" onload="constDate();">
+    <div class="info infoQ1">
+        <div class="photo-profile">
+            <img src="/users/sayllon/lanchonete/adm/img/profile_photo.png">
+            <div class="detals">
+                <h1>Sayllon</h1>
+                <p>CEO: Tentação na Chapa</p>
+            </div>
+        </div>
+    </div>
+
+    <!--
+    <div class="cardInfo">
+        <div class="balance">
+            <span>Saldo geral</span>
+            <div class="balance">
+                <p>Saldo</p>
+                <iframe width="329" height="91" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSKbfop8dJVMDj74qymflYlFXejtTxAAR4TvdICldr5Q2pvRgomrYpNThBC6ht6zgbJ2o-qz1URouEA/pubchart?oid=1210635423&amp;format=interactive"></iframe>
+            </div>
+        </div>
+
+        <div class="contaBalace">
+            <span>Resultado de Vendas</span>
+            <div class="listBalance">
+                <i class="fi fi-rr-bank"></i>
+                <span>Sicredit</span>
+                <span>R$1.0212</span>
+            </div>
+            <div class="listBalance">
+                <i class="fi fi-rr-bank"></i>
+                <span>InfinitePay</span>
+                <span>R$823</span>
+            </div>
+            <div class="listBalance">
+                <i class="fi fi-rr-bank"></i>
+                <span>Dinheiro espécie</span>
+                <span>R$2.212</span>
+            </div>
+        </div>
+    </div>
+
+    -->
+    <div class="dashboard">
+        <!--
+        <div class="option">
+            <div class="card-option">
+                <button onclick="imprimir()">
+                    <a href="">
+                        <i class='bx bx-printer'></i>
+                        <h3>Imprimir</h3>
+                    </a>
+                </button>
+            </div>
+        </div>
+        -->
+
+        <div class="" id="dataLoading">
+            <div class="dataLoading">
+                <div class="loadingB"></div>
+                <span>Consolidando dados..</span>
+            </div>
+        </div>
+
+        <div class="back">
+            <a class="btn-default" href="/users/sayllon/lanchonete/adm/conta.html" target="_self">
+                Voltar<i class='bx bxs-left-arrow-circle'></i>
+            </a>
+        </div>
+
+        <p>Dashboard</p>
+
+        <div class="invoicing">
+            <i class="fi fi-rr-money-bill-transfer"></i>
+            <div class="detals">
+                <h1>Faturamento</h1>
+                <iframe width="100px" height="30" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRwqKDz-VS2g27VKvXbm3imPVqcbGXy_Is8o8tf-ThFO8YkEIBRXsTamNabed_kIlIgAfwVwwaHC4ql/pubchart?oid=1453553820&amp;format=interactive"></iframe>
+            </div>
+        </div>
+
+        <div>
+            <a class="invoicing" href="">
+                <i class="fi fi-rr-payroll-calendar"></i>
+                <div class="detals">
+                <h1>Boletos a pagar</h1>
+                
+            </div>
+            </a>
+        </div>
+
+        <div class="invoicing">
+            <i class="fi fi-rr-point-of-sale"></i>
+            <div class="detals">
+                <h1>Taxas Máquininha</h1>
+                
+            </div>
+        </div>
+
+        <div class="invoicing">
+            <i class="fi fi-rr-message-dollar"></i>
+            <div class="detals">
+                <h1>Lucro</h1>
+                
+            </div>
+        </div>
+
+        <div class="invoicing">
+            <i class="fi fi-rr-users-alt"></i>
+            <div class="detals">
+                <h1>Clientes</h1>
+                <iframe width="100px" height="30" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRwqKDz-VS2g27VKvXbm3imPVqcbGXy_Is8o8tf-ThFO8YkEIBRXsTamNabed_kIlIgAfwVwwaHC4ql/pubchart?oid=968340074&amp;format=interactive"></iframe>
+            </div>
+        </div>
+
+        <div class="invoicing">
+            <i class="fi fi-rr-user-salary"></i>
+            <div class="detals">
+                <h1>Ticket-Médio</h1>
+                
+            </div>
+        </div>
+
+        <div class="metrics">
+            <iframe width="350px" height="200px" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRwqKDz-VS2g27VKvXbm3imPVqcbGXy_Is8o8tf-ThFO8YkEIBRXsTamNabed_kIlIgAfwVwwaHC4ql/pubchart?oid=1959062891&amp;format=interactive"></iframe>
+            <br>
+            <br>
+        </div>
+
+        <div class="navigation">
+            <ul>
+                <li class="list">
+                    <a href="/users/sayllon/lanchonete/adm/conta.html">
+                        <span class="icon">
+                            <i class='bx bxs-user'></i>
+                        </span>
+                        <span class="text">Conta</span>
+                    </a>
+                </li>
+    
+                <li class="list active">
+                    <a href="#">
+                        <span class="icon">
+                            <i class='bx bxs-circle-three-quarter'></i>
+                        </span>
+                        <span class="text">Métricas</span>
+                    </a>
+                </li>
+
+                <li class="list">
+                    <a href="/users/sayllon/lanchonete/adm/request.html">
+                        <span class="icon">
+                            <i class='bx bxs-bookmark-alt-plus'></i>
+                        </span>
+                        <span class="text">Pedido</span>
+                    </a>
+                </li>
+
+                <li class="list">
+                    <a href="/users/sayllon/lanchonete/adm/extrato.html">
+                        <span class="icon">
+                            <i class='bx bxs-copy-alt'></i>
+                        </span>
+                        <span class="text">Extrato</span>
+                    </a>
+                </li>
+
+                <li class="list">
+                    <a href="/index.html">
+                        <span class="icon">
+                            <i class='bx bxs-log-out'></i>
+                        </span>
+                        <span class="text">Sair</span>
+                    </a>
+                </li>
+                
+                <div class="indicator color11"></div>
+            </ul>
+        </div>
+    </div>
+        <!-- Link To JS -->
+        <script src="/javascript/loading.js"></script>
+        <script src="/javascript/recurses.js"></script>
+</body>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-adsense-account" content="ca-pub-9060080612658200">
+    <meta http-equiv="refresh" content="320;/users/nubia/Dtudo/collaborators/jbv27/platform/conta.html"></meta>
+
+    <link rel="icon" href="/assets/img/icons/favicon.ico">
+    <title>Área de Vendas | João</title>
+    
+    <!-- Link To CSS -->
+    <link rel="stylesheet" href="/assets/CSS/main.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script> <script> window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-BV6V3GTMR0'); </script>
+
+<body onload="AnimationLoading();">
+    <header> <div class="loading"><div class="efect-loading"></div></div></header>
+    <div class="generatedReceipt" id="generatedReceipt">
+        <div class="container-comprovante">
+            <div class="comprovante">
+                <div class="date-info">
+                    <i class='bx bx-detail'></i>
+                    <p class="title">Comprovante</p>
+                </div>
+                <div class="date-info">
+                    <p>Operação:</p>
+                    <p id="hrInfo">11:30:11</p>
+                </div>
+                <div class="TypeMov">
+                    <h1 id="paymentInfo">Pix - QRCODE</h1>
+                    <p>Cliente Anonimo</p>
+                    <span id="valueInfo">R$0,00</span>
+                </div>
+                <div class="Resumo">
+                    <div class="quest1">
+                        <p>Vendedor</p>
+                        <span id="sellerInfo">Ryan</span>
+                    </div>
+                    <div class="quest1">
+                        <p>Desconto</p>
+                        <span id="desInfo">R$0,00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="infoAdd">
+                <a href="/users/45692327000100/CD1/colaborador/jbv27/formsPush.html" class="b-function">
+                    <i class='bx bxs-cart-add'></i>
+                    Nova venda
+                </a>
+                <a href="/users/45692327000100/CD1/colaborador/jbv27/extrato.html" class="b-function">
+                    <i class='bx bx-copy-alt'></i>
+                    Ver extrato
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="new_nav main-container">
+        <main id="form_container">
+            <div id="form_header">
+                <h1 id="form_title">Nova Venda</h1>
+                <a class="btn-default" href="/users/45692327000100/CD1/colaborador/jbv27/formsPush.html" target="_self">
+                    <i class='bx bxs-left-arrow-circle'></i>
+                </a>
+            </div>
+            
+            <form action="" id="form-sell">
+                <div id="input_container">
+                    <div class="input-box">
+                        <label 
+                            for="value"
+                            class="form-label">
+                            Venda Bruta
+                        </label>
+                        <div class="input-field">
+                            <input
+                            type="number"
+                            name="value"
+                            id="value"
+                            class="form-control"
+                            placeholder="R$0,00"
+                            autocomplete="off"
+                            step="0.01"
+                            required="on"
+                            >
+                        </div>
+                        <span class="error"></span>
+                    </div>
+
+                    <div class="radio-container">
+                        <br>
+                        <label class="form-label">Forma de Pagamento</label>
+
+                        <div id="input_container">
+                            <select id="paymentModal" name="payment" class="option-payment-card">
+                                <option value="dinheiro">Dinheiro</option>
+                                <option value="pixQR-F">Pix - QRCODE</option>
+                                <option value="pixQR-G">Pix - Maquininha</option>
+                                <option value="c-debitoVisa">Cartão de Débito (Visa | MasterCard)</option>
+                                <option value="c-debito+">Cartão de Débito (Outros)</option>
+                                <option value="" selected class="infome">Escolha uma forma de pagamento</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="radio-container">
+                        <label class="form-label">Vendedor</label>
+
+                        <div id="payment_inputs">
+                            <div class="radio-box">
+                                <input type="radio"
+                                name="seller"
+                                id="seller"
+                                class="form-control"
+                                value="joão"
+                                checked="on"
+                                >
+                                <label for="joão" class="form-label">João</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-box">
+                        <label 
+                            for="desconto"
+                            class="form-label">
+                            Desconto
+                        </label>
+                        <div class="input-field">
+                            <input
+                            type="number"
+                            name="desconto"
+                            id="desconto"
+                            class="form-control"
+                            placeholder="R$0,00"
+                            autocomplete="off"
+                            step="0.01"
+                            >
+                            <ion-icon name="pricetag-sharp"></ion-icon>
+                        </div>
+                    </div>
+
+                    <div class="input-box">
+                        <label 
+                            for="total"
+                            class="form-label">
+                            Valor final
+                        </label>
+                        <div class="input-field">
+                            <input
+                            type="number"
+                            name="total"
+                            id="total"
+                            class="form-control"
+                            placeholder="R$0,00"
+                            autocomplete="off"
+                            readonly
+                            >
+                            <ion-icon name="bag-handle-sharp"></ion-icon>
+                        </div>
+                    </div>
+                    <br>
+                </div>
+
+                <div class="radio-box">
+                    <button onclick="calcular()" type="submit" class="btn-default" id="submit-button-sell">
+                        <div class="icon">
+                            <i class='bx bxs-cart-alt'></i>
+                        </div>
+                        Vender
+                    </button>
+                </div>
+            </form>
+        </main>
+        <audio id="songSell" src="/assets/songSell.MP3"></audio>
+        <div id="pushBox"></div>
+        </div>
+    </div>
+    <div class="pn">
+        <div class="pn-hr">
+            <div class="loading1"><div class="efect-loading1"></div></div>
+            <p class="horario" id="horario">00:00:00</p>
+        </div>
+    </div>
+    <script src="/javascript/loading.js"></script>
+    <script src="/javascript/new-mov.js"></script>
+    <script src="/javascript/time.js"></script>
+</body>
+</html>
