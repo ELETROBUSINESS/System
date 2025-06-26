@@ -76,7 +76,7 @@ app.post('/login', async (req, res) => {
 // Logout
 app.get('/logout', (req, res) => {
     req.session.destroy(() => {
-        res.redirect('/login.html');
+        res.redirect('/index.html');
     });
 });
 
