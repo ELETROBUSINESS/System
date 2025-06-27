@@ -8,20 +8,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const password = document.getElementById('senha').value;
 
     try {
-      const response = await fetch('https://system-5y39.onrender.com/login', {
+      const response = await fetch('/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        credentials: 'include', // importante para cookies/sessão
+        credentials: 'include', // necessário para cookies
         body: JSON.stringify({ username, password })
       });
 
       const data = await response.json();
 
       if (data.success) {
-        // Redireciona diretamente para o servidor Render, que serve os arquivos protegidos
-        window.location.href = 'https://system-5y39.onrender.com' + data.redirect;
+        // REDIRECIONA usando o domínio atual (Netlify)
+        window.location.href = data.redirect;
       } else {
         alert('Usuário ou senha inválidos');
       }
