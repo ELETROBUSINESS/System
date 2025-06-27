@@ -1,5 +1,13 @@
 [build]
   publish = "public"
+  command = ""
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false  # so redireciona se o arquivo realmente não existir
+
 
 [[redirects]]
   # Esta regra é CRUCIAL para o proxy.
@@ -15,12 +23,6 @@
   to = "https://system-5y39.onrender.com/login"
   status = 200
   force = true
-
-[[redirects]]
-  # Regra padrão para a página inicial.
-  from = "/"
-  to = "/index.html"
-  status = 200
 
 [[redirects]]
   # Regra de fallback para erros 404.
