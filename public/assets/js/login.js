@@ -20,7 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await response.json();
 
       if (data.success) {
-        window.location.href = data.redirect;
+        // Redireciona diretamente para o servidor Render, que serve os arquivos protegidos
+        window.location.href = 'https://system-5y39.onrender.com' + data.redirect;
       } else {
         alert('Usuário ou senha inválidos');
       }
