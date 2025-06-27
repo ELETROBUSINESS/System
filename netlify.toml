@@ -1,14 +1,23 @@
 [build]
+  # Define a pasta que será publicada no Netlify.
   publish = "public"
-  command = ""
 
+# Regras de redirecionamento para o seu aplicativo.
+# A ordem das regras é importante! A primeira regra correspondente é usada.
 [[redirects]]
-  from = "/"
-  to = "/index.html"
+  from = "/users/*"
+  to = "https://system-5y39.onrender.com/users/:splat"
   status = 200
+  force = true  # Garante que o proxy sempre aconteça.
 
 [[redirects]]
   from = "/login"
+  to = "https://system-5y39.onrender.com/login"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/"
   to = "/index.html"
   status = 200
 
