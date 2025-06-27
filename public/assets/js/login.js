@@ -9,13 +9,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const response = await fetch('/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include', // necessário para cookies cross-site
-        body: JSON.stringify({ username, password })
-      });
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  credentials: 'include',
+  body: JSON.stringify({ username, password })
+});
+
 
       const data = await response.json();
 

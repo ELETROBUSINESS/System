@@ -9,6 +9,9 @@
   force = true
   rewrite = true
   methods = ["POST", "GET", "OPTIONS"]
+  headers = { 
+    Access-Control-Allow-Origin = "*"
+  }
 
 [[redirects]]
   from = "/users/*"
