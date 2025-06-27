@@ -1,5 +1,6 @@
 [build]
   publish = "public"
+  command = ""
 
 [[redirects]]
   from = "/login"
@@ -7,6 +8,7 @@
   status = 200
   force = true
   rewrite = true
+  methods = ["POST", "GET", "OPTIONS"]
 
 [[redirects]]
   from = "/users/*"
@@ -14,9 +16,9 @@
   status = 200
   force = true
   rewrite = true
+  methods = ["GET", "OPTIONS"]
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-  force = false
