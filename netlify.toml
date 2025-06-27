@@ -1,31 +1,22 @@
 [build]
   publish = "public"
-  command = ""
+
+[[redirects]]
+  from = "/login"
+  to = "https://system-5y39.onrender.com/login"
+  status = 200
+  force = true
+  rewrite = true
+
+[[redirects]]
+  from = "/users/*"
+  to = "https://system-5y39.onrender.com/users/:splat"
+  status = 200
+  force = true
+  rewrite = true
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-  force = false  # so redireciona se o arquivo realmente não existir
-
-
-[[redirects]]
-  # Esta regra é CRUCIAL para o proxy.
-  # Ela encaminha todas as requisições para /users/ para o Render com status 200 (proxy).
-  from = "/users/*"
-  to = "https://system-5y39.onrender.com/users/:splat"
-  status = 200
-  force = true # Garante que esta regra tenha prioridade
-
-[[redirects]]
-  # Esta regra faz o proxy do login para o Render.
-  from = "/login"
-  to = "https://system-5y39.onrender.com/login"
-  status = 200
-  force = true
-
-[[redirects]]
-  # Regra de fallback para erros 404.
-  from = "/*"
-  to = "/404.html"
-  status = 404
+  force = false
