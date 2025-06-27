@@ -34,18 +34,23 @@ const usersDir = path.join(__dirname, '../users');
 // Rota protegida para /users
 app.use('/users', (req, res, next) => {
     if (!req.session.user) {
-        return res.status(401).send("Não autorizado. Faça login.");
+        return res.redirect('/login.html');
     }
 
-    const requestedPath = req.path;
-    const user = req.session.user;
+    const requestedPath = req.path; // Ex: /45692327000100/CD1/colaborador/ryan/conta.html
+    const user = req.session.user; // Contém o objeto do usuário logado
 
-    const userAllowedBase = `/users/${user.username}`;
-    const cnpjFolder = user.redirect.split('/').slice(0, 4).join('/');
+    // Extrai o caminho base permitido do usuário a partir da URL de redirecionamento
+    // path.posix.dirname() pega o diretório (ex: '/users/CNPJ/.../ryan')
+    // .replace('/users', '') remove o prefixo para comparar com req.path
+    const userAllowedBasePath = path.posix.dirname(user.redirect).replace('/users', ''); 
 
-    if (requestedPath.startsWith(userAllowedBase) || requestedPath.startsWith(cnpjFolder)) {
+    // Verifica se o caminho solicitado começa com o caminho base permitido ao usuário.
+    if (requestedPath.startsWith(userAllowedBasePath)) {
+        // Se autorizado, serve os arquivos estáticos da pasta users
         return express.static(usersDir)(req, res, next);
     } else {
+        // Se não autorizado, nega o acesso
         return res.status(403).send("Acesso negado.");
     }
 });
