@@ -34,20 +34,24 @@ const usersDir = path.join(__dirname, '../users');
 // Rota protegida para /users
 app.use('/users', (req, res, next) => {
     if (!req.session.user) {
-        return res.redirect('/login.html');
+        // Redireciona para o login se a sessão não existir
+        return res.redirect('/index.html');
     }
 
-    const requestedPath = req.path; // Ex: /45692327000100/CD1/colaborador/ryan/conta.html
-    const user = req.session.user; // Contém o objeto do usuário logado
+    const requestedPath = req.path; // Ex: '/45692327000100/CD1/colaborador/ryan/conta.html'
+    const userRedirect = req.session.user.redirect; // Ex: '/users/45692327000100/CD1/colaborador/ryan/conta.html'
 
-    // Extrai o caminho base permitido do usuário a partir da URL de redirecionamento
-    // path.posix.dirname() pega o diretório (ex: '/users/CNPJ/.../ryan')
-    // .replace('/users', '') remove o prefixo para comparar com req.path
-    const userAllowedBasePath = path.posix.dirname(user.redirect).replace('/users', ''); 
+    // Extrai o caminho permitido do usuário a partir da URL de redirecionamento,
+    // garantindo que o nome do arquivo final seja removido.
+    // Isso cria o prefixo: '/45692327000100/CD1/colaborador/ryan'
+    const allowedPrefix = userRedirect.substring(userRedirect.indexOf('/users/') + 6, userRedirect.lastIndexOf('/'));
+    
+    // Converte o prefixo em um caminho relativo para comparação
+    const userAllowedBasePath = '/' + allowedPrefix;
 
-    // Verifica se o caminho solicitado começa com o caminho base permitido ao usuário.
+    // Verifica se o caminho solicitado começa com o prefixo permitido
     if (requestedPath.startsWith(userAllowedBasePath)) {
-        // Se autorizado, serve os arquivos estáticos da pasta users
+        // Se autorizado, serve os arquivos estáticos
         return express.static(usersDir)(req, res, next);
     } else {
         // Se não autorizado, nega o acesso
