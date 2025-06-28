@@ -1,3 +1,5 @@
+/*
+
 // server.js (atualizado com suporte a CORS para funcionar com Netlify)
 const express = require('express');
 const session = require('express-session');
@@ -99,3 +101,5 @@ app.use((req, res) => {
 app.listen(PORT, () => {
     console.log(`Servidor rodando: http://localhost:${PORT}`);
 });
+
+*/
