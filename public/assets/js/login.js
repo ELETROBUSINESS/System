@@ -1,3 +1,5 @@
+/*
+
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.querySelector('.form_login');
 
@@ -65,3 +67,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+
+*/
