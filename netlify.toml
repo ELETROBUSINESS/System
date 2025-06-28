@@ -3,25 +3,6 @@
   command = ""
 
 [[redirects]]
-  from = "/login"
-  to = "https://system-5y39.onrender.com/login"
-  status = 200
-  force = true
-  rewrite = true
-  methods = ["POST", "GET", "OPTIONS"]
-  headers = { 
-    Access-Control-Allow-Origin = "*"
-  }
-
-[[redirects]]
-  from = "/users/*"
-  to = "https://system-5y39.onrender.com/users/:splat"
-  status = 200
-  force = true
-  rewrite = true
-  methods = ["GET", "OPTIONS"]
-
-[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
