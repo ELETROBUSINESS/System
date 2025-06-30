@@ -1,4 +1,3 @@
-/*
 
 // server.js (atualizado com suporte a CORS para funcionar com Netlify)
 const express = require('express');
@@ -34,6 +33,8 @@ app.use(session({
 app.use(express.static(path.join(__dirname, '../public')));
 
 const usersDir = path.join(__dirname, '../users');
+
+/*
 
 // Rota protegida para /users
 app.use('/users', (req, res, next) => {
@@ -98,8 +99,8 @@ app.use((req, res) => {
     res.status(404).sendFile(path.join(__dirname, '../public/404.html'));
 });
 
+*/
+
 app.listen(PORT, () => {
     console.log(`Servidor rodando: http://localhost:${PORT}`);
 });
-
-*/

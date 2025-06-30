@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +9,7 @@
     <link rel="icon" href="/assets/img/iconWeb.png">
     <title>Wallet | Ryan</title>
 
-<!-- Link To CSS -->
+    <!-- Link To CSS -->
     <link rel="stylesheet" href="/assets/CSS/main.css">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel='stylesheet'
@@ -20,7 +21,11 @@
 <script> window.dataLayer = window.dataLayer || []; function gtag() { dataLayer.push(arguments); } gtag('js', new Date()); gtag('config', 'G-BV6V3GTMR0'); </script>
 
 <body class="painel-adm1" onload="AnimationLoading();">
-    <header><div class="loading"><div class="efect-loading"></div></div></header>
+    <header>
+        <div class="loading">
+            <div class="efect-loading"></div>
+        </div>
+    </header>
     <div class="info">
         <div class="photo-profile">
             <img src="/users/45692327000100/CD1/colaborador/ryan/img/profile.jpg">
@@ -37,93 +42,87 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-          const url = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=3`;
-      
-          fetch(url)
-            .then(response => response.json())
-            .then(data => {
-              const campos = [
-                'ticketEvelynDate',
-                'ticketRyannDate'
-              ];
-      
-              campos.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) {
-                  el.textContent = data[id];
-                  el.classList.remove('skeleton', 'shimmer');
-                }
-              });
-            })
-            .catch(error => {
-              console.error('Erro ao buscar dados da página 3:', error);
-            });
+            const url = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=3`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const campos = [
+                        'ticketEvelynDate',
+                        'ticketRyannDate'
+                    ];
+
+                    campos.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            el.textContent = data[id];
+                            el.classList.remove('skeleton', 'shimmer');
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Erro ao buscar dados da página 3:', error);
+                });
         });
-      </script>
-    
-        <div class="dashboard">
-            <div class="back">
-                <a class="btn-default" href="/users/45692327000100/CD1/colaborador/ryan/conta.html" target="_self">
-                    Voltar<i class='bx bxs-left-arrow-circle'></i>
-                </a>
-            </div>
-            <div class="invoicing">
-            <i class="fi fi-rr-user-salary"></i>
-            <div class="detals">
-                <h1>Ticket-Médio</h1>
-                <span id="ticketRyannDate" class="skeleton shimmer"></span>
-            </div>
+    </script>
+
+    <div class="dashboard">
+        <div class="back">
+            <a class="btn-default" href="/users/45692327000100/CD1/colaborador/ryan/conta.html" target="_self">
+                Voltar<i class='bx bxs-left-arrow-circle'></i>
+            </a>
         </div>
         <br>
-            <p>Lançamentos</p>
+        <p>Lançamentos</p>
 
 
-            <div class="containerCard">
-                <div class="card-optionSize lEntrada">
-                    <i class='bx bx-credit-card-alt' ></i>
-                    <div>
-                        <h1>CRED Payment</h1>
-                        <span>R$500,00</span>
-                    </div>
-                    <span class="l2">30/06/2025</span>
+        <div class="containerCard">
+            <div class="card-optionSize lEntrada">
+                <i class='bx bx-credit-card-alt'></i>
+                <div>
+                    <h1>CRED Payment</h1>
+                    <span>R$500,00</span>
                 </div>
-            </div>
-
-            <div class="containerCard">
-                <div class="card-optionSize lEntrada">
-                    <i class='bx bx-dollar' ></i>
-                    <div>
-                        <h1>Bonûs</h1>
-                        <span>Em análise..</span>
-                    </div>
-                    <span class="l2">06/06/2025</span>
-                </div>
-            </div>
-
-            <div class="containerCard">
-                <div class="card-optionSize lSaida">
-                    <i class='bx bx-purchase-tag-alt'></i>
-                    <div>
-                        <h1>Adiantamento</h1>
-                        <span>R$100,00</span>
-                    </div>
-                    <span class="l2">12/06/2025</span>
-                </div>
-            </div>
-
-            <div class="containerCard">
-                <div class="card-optionSize lSaida">
-                    <i class='bx bx-purchase-tag-alt'></i>
-                    <div>
-                        <h1>Bombom Cacau Show</h1>
-                        <span>R$3,50</span>
-                    </div>
-                    <span class="l2">05/06/2025</span>
-                </div>
+                <span class="l2">30/06/2025</span>
             </div>
         </div>
 
-        <!-- Link To JS -->
-        <script src="/assets/js/loading.js"></script>
+        <div class="containerCard">
+            <div class="card-optionSize lEntrada">
+                <i class='bx bx-dollar'></i>
+                <div>
+                    <h1>Bonûs</h1>
+                    <span>Em análise..</span>
+                </div>
+                <span class="l2">06/06/2025</span>
+            </div>
+        </div>
+
+        <div class="containerCard">
+            <div class="card-optionSize lSaida">
+                <i class='bx bx-purchase-tag-alt'></i>
+                <div>
+                    <h1>Adiantamento</h1>
+                    <span>R$100,00</span>
+                </div>
+                <span class="l2">12/06/2025</span>
+            </div>
+        </div>
+
+        <div class="containerCard">
+            <div class="card-optionSize lSaida">
+                <i class='bx bx-purchase-tag-alt'></i>
+                <div>
+                    <h1>Bombom Cacau Show</h1>
+                    <span>R$3,50</span>
+                </div>
+                <span class="l2">05/06/2025</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link To JS -->
+    <script src="/assets/js/loading.js"></script>
 </body>
+
 </html>

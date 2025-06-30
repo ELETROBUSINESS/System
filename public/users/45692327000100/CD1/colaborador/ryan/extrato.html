@@ -11,6 +11,7 @@
 
     <!-- Link To CSS -->
     <link rel="stylesheet" href="/assets/css/main.css">
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 </head>
 
@@ -45,56 +46,87 @@
 
             <div class="conta-info">
                 <div class="shop  container">
-                    <iframe class="user_painel-s"
-                        src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRdib-qEAVOO0SyQckpeps2kH7vsTKR7_UUNm6UcBQafjSUxNjjiHDrW0TpoyiMAzC7878JFmq0F2Tj/pubhtml?gid=491551714&amp;single=true&amp;widget=false&amp;headers=false&amp;chrome=false"></iframe>
+                    <p>Últimas vendas(8)</p>
+                    <div class="shop  container">
+                        <div class="mainContainer">
+                            <div class="boletosContainer">
+                                <div class="boletos-vencer" id="boletosContainer"></div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('boletosContainer');
+
+    // Loader antes do carregamento
+    container.innerHTML = `
+      <div class="loader">
+        <div class="spinner"></div>
+      </div>
+    `;
+
+    const url = "https://script.google.com/macros/s/AKfycbw4AyWVzzxfnwxgtUSR7p1ehjG62ufEPYQv8M3_tm9gTwGhRJ-lNhfI5QoIBLAV2x1gSA/exec?tipo=extratoID1";
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        container.innerHTML = '';
+
+        data.forEach(boleto => {
+          const div = document.createElement('div');
+          div.classList.add('boleto-item');
+
+          div.innerHTML = `
+            <i class='bx  bx-shopping-bag'></i> 
+            <span class="data">${boleto.data}</span>
+            <span class="payment">${boleto.formaPagamento}</span>
+            <span class="valor">R$ ${boleto.valor}</span>
+          `;
+
+          container.appendChild(div);
+        });
+      })
+      .catch(err => {
+        container.innerHTML = '<p style="text-align:center;color:red;">Erro ao carregar boletos.</p>';
+        console.error('Erro ao carregar extrato:', err);
+      });
+  });
+</script>
                 </div>
             </div>
-
         </div>
 
         <div class="navigation">
             <ul>
                 <li class="list">
                     <a href="/users/45692327000100/CD1/colaborador/ryan/conta.html">
-                        <span class="icon">
-                            <i class='bx bxs-user'></i>
-                        </span>
-                        <span class="text">Conta</span>
+                        <span class="icon"><i class='bx  bx-home'></i></span>
+                        <span class="text">Home</span>
                     </a>
                 </li>
-
                 <li class="list">
-                    <a href="/users/45692327000100/CD1/colaborador/ryan/metricas.html">
-                        <span class="icon">
-                            <i class='bx bxs-circle-three-quarter'></i>
-                        </span>
-                        <span class="text">Métricas</span>
+                    <a href="/users/45692327000100/CD1/colaborador/ryan/quest.html">
+                        <span class="icon"><i class='bx  bx-radar'></i></span>
+                        <span class="text">Missões</span>
                     </a>
                 </li>
-
                 <li class="list">
                     <a href="/users/45692327000100/CD1/colaborador/ryan/push.html">
-                        <span class="icon">
-                            <i class='bx bxs-cart-add'></i>
-                        </span>
+                        <span class="icon"><i class='bxr  bx-plus-circle'></i></span>
                         <span class="text">Venda</span>
                     </a>
                 </li>
-
                 <li class="list active">
                     <a href="#">
-                        <span class="icon">
-                            <i class='bx bxs-copy-alt'></i>
-                        </span>
+                        <span class="icon"><i class='bx  bxs-copy-list'></i></span>
                         <span class="text">Extrato</span>
                     </a>
                 </li>
-
                 <li class="list">
                     <a href="/login.html">
-                        <span class="icon">
-                            <i class='bx bxs-log-out'></i>
-                        </span>
+                        <span class="icon"><i class='bx  bx-arrow-out-up-square-half bx-rotate-270'></i></span>
                         <span class="text">Sair</span>
                     </a>
                 </li>
