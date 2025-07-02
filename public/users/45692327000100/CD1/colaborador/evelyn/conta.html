@@ -23,10 +23,10 @@
 <body class="painel-adm1" onload="constDate();">
     <div class="mensagerLocal">
         <div class="mensager">
-            <img src="/assets/eFriend.png">
+            <img src="/assets//img/business-goal.png">
             <div>
-                <h1>Bom dia <span>Evelyn</span>,</h1>
-                <p>Tenha um ótimo dia de vendas colega!</p>
+                <h1>Missões,</h1>
+                <p>Ganhe pontos ao completar as missões!</p>
             </div>
             <div class="progress-bar"></div> <!-- Barra adicionada aqui -->
         </div>
@@ -71,7 +71,7 @@
         </div>
         <div class="balance">
             <p>Pontos</p>
-            <span>5</span>
+            <span>5,00</span>
         </div>
         <div class="border"></div>
         <div class="pending">
@@ -79,39 +79,34 @@
             <span id="ticketEvelynDate" class="skeleton shimmer"></span>
         </div>
     </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const url = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=3`;
 
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    const campos = [
-                        'ticketEvelynDate',
-                        'ticketRyannDate'
-                    ];
+    <div class="containerCard">
+        <a href="/users/45692327000100/CD1/colaborador/ryan/quest.html">
+            <div class="card-optionSize">
+                <img src="/assets//img/business-goal.png">
+                <div>
+                    <h1></h1>
+                    <span>Ganhe pontos realizando missões!</span>
+                </div>
+                <span class="l2"></span>
+            </div>
+        </a>
+    </div>
 
-                    campos.forEach(id => {
-                        const el = document.getElementById(id);
-                        if (el) {
-                            el.textContent = data[id];
-                            el.classList.remove('skeleton', 'shimmer');
-                        }
-                    });
-                })
-                .catch(error => {
-                    console.error('Erro ao buscar dados da página 3:', error);
-                });
-        });
-    </script>
     <div class="new_nav">
         <div class="conta-info">
             <p>Eu, Evelyn</p>
             <div class="option">
                 <div class="card-option">
                     <a href="/users/45692327000100/CD1/colaborador/evelyn/push.html">
-                        <i class='bx bx-cart-add'></i>
-                        <h3>Vender</h3>
+                        <i class='bxr  bx-plus-circle'></i>
+                        <h3>Registrar</h3>
+                    </a>
+                </div>
+                <div class="card-option">
+                    <a href="/users/45692327000100/CD1/colaborador/evelyn/quest.html">
+                        <i class='bx  bx-radar'></i>
+                        <h3>Missão</h3>
                     </a>
                 </div>
                 <div class="card-option">
@@ -122,26 +117,14 @@
                 </div>
                 <div class="card-option">
                     <a href="/users/45692327000100/CD1/colaborador/evelyn/wallet.html">
-                        <i class='bxr  bx-credit-card'></i>
-                        <h3>Wallet</h3>
+                        <i class='bx  bx-user-id-card'></i>
+                        <h3>Conta</h3>
                     </a>
                 </div>
                 <div class="card-option">
                     <a href="/users/45692327000100/CD1/colaborador/evelyn/extrato.html">
                         <i class='bx bx-copy-alt'></i>
                         <h3>Extrato</h3>
-                    </a>
-                </div>
-                <div class="card-option">
-                    <a href="#">
-                        <i class='bx bxs-lock-alt'></i>
-                        <h3>Resultado</h3>
-                    </a>
-                </div>
-                <div class="card-option">
-                    <a href="/news/public/index.html">
-                        <i class='bx bx-news'></i>
-                        <h3>News</h3>
                     </a>
                 </div>
             </div>
@@ -151,45 +134,35 @@
             <ul>
                 <li class="list active">
                     <a href="#">
-                        <span class="icon">
-                            <i class='bx bxs-user'></i>
-                        </span>
-                        <span class="text">Conta</span>
+                        <span class="icon"><i class='bx  bxs-home'></i></span>
+                        <span class="text">Home</span>
                     </a>
                 </li>
 
                 <li class="list">
-                    <a href="/users/45692327000100/CD1/colaborador/evelyn/metricas.html">
-                        <span class="icon">
-                            <i class='bx bxs-circle-three-quarter'></i>
-                        </span>
-                        <span class="text">Métricas</span>
+                    <a href="/users/45692327000100/CD1/colaborador/evelyn/quest.html">
+                        <span class="icon"><i class='bx  bx-radar'></i></span>
+                        <span class="text">Missões</span>
                     </a>
                 </li>
 
                 <li class="list">
                     <a href="/users/45692327000100/CD1/colaborador/evelyn/push.html">
-                        <span class="icon">
-                            <i class='bx bxs-cart-add'></i>
-                        </span>
+                        <span class="icon"><i class='bxr  bx-plus-circle'></i></span>
                         <span class="text">Venda</span>
                     </a>
                 </li>
 
                 <li class="list">
                     <a href="/users/45692327000100/CD1/colaborador/evelyn/extrato.html">
-                        <span class="icon">
-                            <i class='bx bxs-copy-alt'></i>
-                        </span>
+                        <span class="icon"><i class='bx bx-copy-alt'></i></span>
                         <span class="text">Extrato</span>
                     </a>
                 </li>
 
                 <li class="list">
-                    <a href="/login.html">
-                        <span class="icon">
-                            <i class='bx bxs-log-out'></i>
-                        </span>
+                    <a href="/index.html">
+                        <span class="icon"><i class='bx  bx-arrow-out-up-square-half bx-rotate-270'></i></span>
                         <span class="text">Sair</span>
                     </a>
                 </li>
@@ -199,6 +172,7 @@
 
         <!-- Link To JS -->
         <script src="/assets/js/loading.js"></script>
+        <script src="/assets/js/mydateUser.js"></script>
 </body>
 
 </html>

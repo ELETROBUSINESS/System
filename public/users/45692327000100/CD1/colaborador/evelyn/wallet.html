@@ -33,32 +33,6 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-          const url = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=3`;
-      
-          fetch(url)
-            .then(response => response.json())
-            .then(data => {
-              const campos = [
-                'ticketEvelynDate',
-                'ticketRyannDate'
-              ];
-      
-              campos.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) {
-                  el.textContent = data[id];
-                  el.classList.remove('skeleton', 'shimmer');
-                }
-              });
-            })
-            .catch(error => {
-              console.error('Erro ao buscar dados da página 3:', error);
-            });
-        });
-      </script>
-
         <div class="dashboard">
             <div class="back">
                 <a class="btn-default" href="/users/45692327000100/CD1/colaborador/evelyn/conta.html" target="_self">
@@ -113,5 +87,6 @@
         <!-- Link To JS -->
         <script src="/assets/js/loading.js"></script>
         <script src="/assets/js/recurses.js"></script>
+        <script src="/assets/js/mydateUser.js"></script>
 </body>
 </html>

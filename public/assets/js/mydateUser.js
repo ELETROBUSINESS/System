@@ -7,7 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const campos = [
                 'ticketEvelynDate',
                 'ticketRyannDate',
-                'metaRyan'
+                'metaRyan',
+                'metaEvelyn'
             ];
 
             campos.forEach(id => {
