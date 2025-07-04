@@ -1,7 +1,7 @@
 // gerarHash.js
 const bcrypt = require('bcrypt');
 
-const senha = 'password'; // Substitua pela senha real
+const senha = '204511'; // Substitua pela senha real
 const saltRounds = 10;
 
 bcrypt.hash(senha, saltRounds, function(err, hash) {
