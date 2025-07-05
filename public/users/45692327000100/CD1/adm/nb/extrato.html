@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,23 +10,31 @@
     <title>Extrato | Nubia</title>
 
     <!-- Link To CSS -->
-    <link rel="stylesheet" href="/assets/CSS/main.css">
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
 </head>
 
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
 
-  gtag('config', 'G-BV6V3GTMR0');
+    gtag('config', 'G-BV6V3GTMR0');
 </script>
 
 <body>
+
     <body class="painel-adm1" onload="AnimationLoading();">
-        <header> <div class="loading"><div class="efect-loading"></div></div></header>
+        <header>
+            <div class="loading">
+                <div class="efect-loading"></div>
+            </div>
+        </header>
         <div class="info">
             <div class="photo-profile">
                 <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg">
@@ -38,69 +47,116 @@
         </div>
 
         <div class="new_nav">
+
             <div class="conta-info">
-                <div class="shop  container">
-                    <iframe class="user_painel-s" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSKbfop8dJVMDj74qymflYlFXejtTxAAR4TvdICldr5Q2pvRgomrYpNThBC6ht6zgbJ2o-qz1URouEA/pubhtml?gid=742903619&amp;single=true&amp;widget=false&amp;headers=false&amp;chrome=false"></iframe>
+                <div class="shop container">
+                    <p>Últimas operações(8)</p>
+                    <div class="shop container">
+                        <div class="mainContainer">
+                            <div class="boletosContainer">
+                                <div class="boletos-vencer" id="boletosContainer"></div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <script>
+                        document.addEventListener('DOMContentLoaded', () => {
+                            const container = document.getElementById('boletosContainer');
+
+                            // Loader antes do carregamento
+                            container.innerHTML = `
+                        <div class="loader">
+                            <div class="spinner"></div>
+                        </div>
+                    `;
+
+                            // URL para o extrato da Núbia
+                            const url = "https://script.google.com/macros/s/AKfycbw4AyWVzzxfnwxgtUSR7p1ehjG62ufEPYQv8M3_tm9gTwGhRJ-lNhfI5QoIBLAV2x1gSA/exec?tipo=extratoID3";
+
+                            fetch(url)
+                                .then(res => res.json())
+                                .then(data => {
+                                    container.innerHTML = '';
+
+                                    data.forEach(boleto => {
+                                        const div = document.createElement('div');
+                                        div.classList.add('boleto-item');
+
+                                        // Lógica para adicionar a classe 'lEntrada' ou 'lSaida'
+                                        if (boleto.tipoOperacao && boleto.tipoOperacao.toLowerCase() === 'entrada') {
+                                            div.classList.add('lEntrada');
+                                        } else if (boleto.tipoOperacao && boleto.tipoOperacao.toLowerCase() === 'saida') {
+                                            div.classList.add('lSaida');
+                                        }
+
+                                        div.innerHTML = `
+                                    <i class='bx bx-shopping-bag'></i> 
+                                    <span class="data">${boleto.data}</span>
+                                    <span class="payment">${boleto.formaPagamento}</span>
+                                    <span class="valor">R$${boleto.valor}</span> 
+                                `; // Removi o "R$ " daqui, pois o Apps Script já envia formatado
+
+                                        container.appendChild(div);
+                                    });
+                                })
+                                .catch(err => {
+                                    container.innerHTML = '<p style="text-align:center;color:red;">Erro ao carregar boletos.</p>';
+                                    console.error('Erro ao carregar extrato:', err);
+                                });
+                        });
+                    </script>
                 </div>
-             </div>
+            </div>
         </div>
 
         <div class="navigation">
             <ul>
                 <li class="list">
                     <a href="/users/45692327000100/CD1/adm/nb/conta.html">
-                        <span class="icon">
-                            <i class='bx bxs-store'></i>
-                        </span>
-                        <span class="text">Lojas</span>
-                    </a>
-                </li>
-    
-                <li class="list">
-                    <a href="/users/45692327000100/CD1/adm/nb/profile.html">
-                        <span class="icon">
-                            <i class='bx bxs-circle-three-quarter'></i>
-                        </span>
-                        <span class="text">Métricas</span>
+                        <span class="icon"><i class='bx  bx-home'></i></span>
+                        <span class="text">Home</span>
                     </a>
                 </li>
 
                 <li class="list">
-                    <a href="/users/45692327000100/CD1/adm/nb/formsPush.html">
-                        <span class="icon">
-                            <i class='bx bxs-cart-add'></i>
-                        </span>
+                    <a href="/users/45692327000100/CD1/adm/nb/metricas.html">
+                        <span class="icon"><i class='bxr  bx-bar-chart-square'></i></span>
+                        <span class="text">Métrica</span>
+                    </a>
+                </li>
+
+                <li class="list">
+                    <a href="/users/45692327000100/CD1/adm/nb/push.html">
+                        <span class="icon"><i class='bxr  bx-plus-circle'></i></span>
                         <span class="text">Venda</span>
                     </a>
                 </li>
 
                 <li class="list active">
                     <a href="#">
-                        <span class="icon">
-                            <i class='bx bxs-copy-alt'></i>
-                        </span>
+                        <span class="icon"><i class='bx bxs-copy-alt'></i></span>
                         <span class="text">Extrato</span>
                     </a>
                 </li>
 
                 <li class="list">
-                    <a href="/login.html">
-                        <span class="icon">
-                            <i class='bx bxs-log-out'></i>
-                        </span>
+                    <a href="/index.html">
+                        <span class="icon"><i class='bx  bx-arrow-out-up-square-half bx-rotate-270'></i></span>
                         <span class="text">Sair</span>
                     </a>
                 </li>
                 <div class="indicator color11"></div>
             </ul>
         </div>
-    </div>
 
-    
+
         <!-- Link To JS -->
         <script src="/assets/js/loading.js"></script>
         <script src="/assets/js/recurses.js"></script>
-        </body>
-    </html>
+    </body>
+
+</html>
 </body>
+
 </html>
