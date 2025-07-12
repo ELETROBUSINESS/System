@@ -1,24 +1,31 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="320;/disconnected.html"></meta>
-    
+    </meta>
+
     <title>Área de Vendas | Nubia</title>
     <link rel="icon" href="/assets/img/iconWeb.png">
-    
+
     <!-- Link To CSS -->
     <link rel="stylesheet" href="/assets/CSS/main.css">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+    <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
     <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-brands/css/uicons-brands.css'>
 </head>
 <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script> <script> window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-BV6V3GTMR0'); </script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
+<script> window.dataLayer = window.dataLayer || []; function gtag() { dataLayer.push(arguments); } gtag('js', new Date()); gtag('config', 'G-BV6V3GTMR0'); </script>
 
 <body onload="AnimationLoading();">
-    <header> <div class="loading"><div class="efect-loading"></div></div></header>
+    <header>
+        <div class="loading">
+            <div class="efect-loading"></div>
+        </div>
+    </header>
     <div class="generatedReceipt" id="generatedReceipt">
         <div class="container-comprovante">
             <div class="comprovante">
@@ -67,25 +74,18 @@
                     <i class='bx bxs-left-arrow-circle'></i>
                 </a>
             </div>
-            
+
             <form action="" id="form-sell-adm">
+                <input type="hidden" name="formType" value="venda">
+
                 <div id="input_container">
                     <div class="input-box">
-                        <label 
-                            for="value"
-                            class="form-label">
+                        <label for="value" class="form-label">
                             Venda Bruta
                         </label>
                         <div class="input-field">
-                            <input
-                            type="number"
-                            name="value"
-                            id="value"
-                            class="form-control"
-                            placeholder="R$0.00"
-                            autocomplete="off"
-                            step="0.01"
-                            >
+                            <input type="number" name="value" id="value" class="form-control" placeholder="R$0.00"
+                                autocomplete="off" step="0.01">
                             <ion-icon name="cart-sharp"></ion-icon>
                         </div>
                         <span class="error"></span>
@@ -94,23 +94,33 @@
                     <div class="custom-select-wrapper">
                         <label class="form-label">Forma de pagamento</label>
                         <div class="custom-select" id="customSelect">
-                          <div class="selected">
-                            <i class="fa-regular fa-credit-card"></i> Escolha a forma de pagamento
-                          </div>
-                          <div class="options">
-                            <div data-value="dinheiro"><i class="fi fi-rr-money"></i> Dinheiro</div>
-                            <div data-value="pixQR-F"><i class="fi fi-rr-money-coin-transfer"></i> Pix | QRCODE</div>
-                            <div data-value="pixQR-G"><i class="fi fi-rr-point-of-sale-bill"></i> Pix | Maquininha</div>
-                            <div data-value="movCard"><i class="fi fi-rr-money-transfer-smartphone"></i> MovCard</div>
-                            <div data-value="c-debitoVisa"><i class="fi fi-rr-credit-card"></i> Débito | Master+Visa</div>
-                            <div data-value="c-debito+"><i class="fi fi-rr-credit-card"></i> Débito | Outros</div>
-                            <div data-value="c-creditoVisa1x"><i class="fi fi-rr-credit-card"></i> Crédito 1x | Master+Visa</div>
-                            <div data-value="c-creditoVisa2x"><i class="fi fi-rr-credit-card"></i> Crédito 2x | Master+Visa</div>
-                            <div data-value="c-creditoVisa3x"><i class="fi fi-rr-credit-card"></i> Crédito 3x | Master+Visa</div>
-                            <div data-value="c-credito+1x"><i class="fi fi-rr-credit-card"></i> Crédito 1x | Outro</div>
-                            <div data-value="c-credito+2x"><i class="fi fi-rr-credit-card"></i> Crédito 2x | Outro</div>
-                            <div data-value="c-credito+3x"><i class="fi fi-rr-credit-card"></i> Crédito 3x | Outro</div>
-                          </div>
+                            <div class="selected">
+                                <i class="fa-regular fa-credit-card"></i> Escolha a forma de pagamento
+                            </div>
+                            <div class="options">
+                                <div data-value="dinheiro"><i class="fi fi-rr-money"></i> Dinheiro</div>
+                                <div data-value="pixQR-F"><i class="fi fi-rr-money-coin-transfer"></i> Pix | QRCODE
+                                </div>
+                                <div data-value="pixQR-G"><i class="fi fi-rr-point-of-sale-bill"></i> Pix | Maquininha
+                                </div>
+                                <div data-value="movCard"><i class="fi fi-rr-money-transfer-smartphone"></i> MovCard
+                                </div>
+                                <div data-value="c-debitoVisa"><i class="fi fi-rr-credit-card"></i> Débito | Master+Visa
+                                </div>
+                                <div data-value="c-debito+"><i class="fi fi-rr-credit-card"></i> Débito | Outros</div>
+                                <div data-value="c-creditoVisa1x"><i class="fi fi-rr-credit-card"></i> Crédito 1x |
+                                    Master+Visa</div>
+                                <div data-value="c-creditoVisa2x"><i class="fi fi-rr-credit-card"></i> Crédito 2x |
+                                    Master+Visa</div>
+                                <div data-value="c-creditoVisa3x"><i class="fi fi-rr-credit-card"></i> Crédito 3x |
+                                    Master+Visa</div>
+                                <div data-value="c-credito+1x"><i class="fi fi-rr-credit-card"></i> Crédito 1x | Outro
+                                </div>
+                                <div data-value="c-credito+2x"><i class="fi fi-rr-credit-card"></i> Crédito 2x | Outro
+                                </div>
+                                <div data-value="c-credito+3x"><i class="fi fi-rr-credit-card"></i> Crédito 3x | Outro
+                                </div>
+                            </div>
                         </div>
                         <input type="hidden" name="payment" id="paymentModal">
                     </div>
@@ -120,40 +130,34 @@
                         const selected = customSelect.querySelector('.selected');
                         const options = customSelect.querySelector('.options');
                         const hiddenInput = document.getElementById('paymentModal');
-                      
+
                         selected.addEventListener('click', () => {
-                          customSelect.classList.toggle('active');
+                            customSelect.classList.toggle('active');
                         });
-                      
+
                         options.querySelectorAll('div').forEach(option => {
-                          option.addEventListener('click', () => {
-                            selected.innerHTML = option.innerHTML;
-                            hiddenInput.value = option.dataset.value;
-                            customSelect.classList.remove('active');
-                          });
+                            option.addEventListener('click', () => {
+                                selected.innerHTML = option.innerHTML;
+                                hiddenInput.value = option.dataset.value;
+                                customSelect.classList.remove('active');
+                            });
                         });
-                      
+
                         // Fecha se clicar fora
                         document.addEventListener('click', (e) => {
-                          if (!customSelect.contains(e.target)) {
-                            customSelect.classList.remove('active');
-                          }
+                            if (!customSelect.contains(e.target)) {
+                                customSelect.classList.remove('active');
+                            }
                         });
-                      </script>
-                      
+                    </script>
 
                     <div class="radio-container">
                         <label class="form-label">Vendedora</label>
 
                         <div id="payment_inputs">
                             <div class="radio-box">
-                                <input type="radio"
-                                name="seller"
-                                id="seller"
-                                class="form-control"
-                                value="nubia"
-                                checked="on"
-                                >
+                                <input type="radio" name="seller" id="seller" class="form-control" value="nubia"
+                                    checked="on">
                                 <label for="nubia" class="form-label">Nubia</label>
                             </div>
                         </div>
@@ -164,54 +168,31 @@
 
                         <div id="payment_inputs">
                             <div class="radio-box">
-                                <input type="radio"
-                                name="type"
-                                id="entrada"
-                                class="form-control"
-                                value="entrada"
-                                checked="on"
-                                >
+                                <input type="radio" name="type" id="entrada" class="form-control" value="entrada"
+                                    checked="on">
                                 <label for="entrada" class="form-label">Entrada</label>
                             </div>
                         </div>
                     </div>
 
                     <div class="input-box">
-                        <label 
-                            for="desconto"
-                            class="form-label">
+                        <label for="desconto" class="form-label">
                             Desconto
                         </label>
                         <div class="input-field">
-                            <input
-                            type="number"
-                            name="desconto"
-                            id="desconto"
-                            class="form-control"
-                            placeholder="R$0,00"
-                            autocomplete="off"
-                            step="0.01"
-                            >
+                            <input type="number" name="desconto" id="desconto" class="form-control" placeholder="R$0,00"
+                                autocomplete="off" step="0.01">
                             <ion-icon name="pricetag-sharp"></ion-icon>
                         </div>
                     </div>
 
                     <div class="input-box">
-                        <label 
-                            for="total"
-                            class="form-label">
+                        <label for="total" class="form-label">
                             Valor final
                         </label>
                         <div class="input-field">
-                            <input
-                            type="number"
-                            name="total"
-                            id="total"
-                            class="form-control"
-                            placeholder="R$0,00"
-                            autocomplete="off"
-                            readonly
-                            >
+                            <input type="number" name="total" id="total" class="form-control" placeholder="R$0,00"
+                                autocomplete="off" readonly>
                             <ion-icon name="bag-handle-sharp"></ion-icon>
                         </div>
                     </div>
@@ -230,18 +211,21 @@
         </main>
         <audio id="songSell" src="/assets/audio/Sell.MP3"></audio>
         <div id="pushBox"></div>
-        </div>
+    </div>
 
-        <div class="pn">
-            <div class="pn-hr">
-                <div class="loading1"><div class="efect-loading1"></div></div>
-                <p class="horario" id="horario">00:00:00</p>
+    <div class="pn">
+        <div class="pn-hr">
+            <div class="loading1">
+                <div class="efect-loading1"></div>
             </div>
+            <p class="horario" id="horario">00:00:00</p>
         </div>
     </div>
-    
+    </div>
+
     <script src="/assets/js/loading.js"></script>
     <script src="/assets/js/new-mov-ADM.js"></script>
     <script src="/assets/js/time.js"></script>
 </body>
+
 </html>
