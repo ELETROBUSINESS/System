@@ -1968,7 +1968,7 @@ section {
     right: 50px;
     display: flex;
     flex-direction: column;
-    color: white;
+    color: #000000;
     justify-content: center;
 }
 
@@ -2035,6 +2035,20 @@ section {
     width: 100%;
     background: #ea070b;
     animation: progress 5s linear forwards;
+}
+.progress-bar-container {
+    width: 100%;
+    background-color: #dad3d3;
+    height: 5px; /* Altura da barra de progresso */
+    border-radius: 5px;
+    overflow: hidden; /* Garante que a barra de progresso não transborde */
+}
+
+.progress-bar2 {
+    height: 100%;
+    width: 0%; /* Inicia em 0% */
+    background-color: #db0038; /* Cor da barra de progresso */
+    transition: width 5s linear; /* Transição suave por 5 segundos */
 }
 
 .card-option2 i {

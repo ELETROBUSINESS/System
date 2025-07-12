@@ -12,15 +12,17 @@
     <link rel="stylesheet" href="/assets/css/main.css">
     <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+    <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
 </head>
 <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script><script> window.dataLayer = window.dataLayer || []; function gtag() { dataLayer.push(arguments); } gtag('js', new Date()); gtag('config', 'G-BV6V3GTMR0');</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
+<script> window.dataLayer = window.dataLayer || []; function gtag() { dataLayer.push(arguments); } gtag('js', new Date()); gtag('config', 'G-BV6V3GTMR0');</script>
 
 <body class="painel-adm1" onload="constDate();AnimationLoading()">
     <div class="mensagerLocal">
         <div class="mensager">
-            <img src="/assets/eFriend.png">
+            <img src="/assets/img/eFriend.png">
             <div>
                 <h1>Bom dia <span>Dona Nubia</span>,</h1>
                 <p>Tenha um ótimo dia de vendas!</p>
@@ -119,26 +121,76 @@
                             <span id="boletoValor"></span>
                             <a class="add_btn" href="/users/45692327000100/CD1/adm/nb/manager.html">Ver mais</a>
                         </div>
-                        <span class="l2" id="boletoVencimento"></span>
+                        <span class="lpan l2" id="boletoVencimento"></span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar2" id="progressBar"></div>
                     </div>
                 </div>
             </a>
 
             <script>
                 document.addEventListener('DOMContentLoaded', () => {
-                    const url = 'https://script.google.com/macros/s/AKfycbzbeCWhW4cyixLvkvpYYpv1UK72CfLYQblJv8jWSPPSSHFzNehv0vW5vLjHZrua-qeMJg/exec?tipo=primeiroBoleto';
+                    const url = 'https://script.google.com/macros/s/AKfycbzbeCWhW4cyixLvkvpYYpv1UK72CfLYQblJv8jWSPPSSHFzNehv0vW5vLjHZrua-qeMJg/exec?tipo=boletos'; // Altere para "boletos" para buscar todos
 
+                    let boletos = [];
+                    let currentIndex = 0;
+                    const displayDuration = 5000; // 5 segundos
+                    let intervalId;
+                    let progressBarIntervalId;
+
+                    const boletoEmpresa = document.getElementById('boletoEmpresa');
+                    const boletoValor = document.getElementById('boletoValor');
+                    const boletoVencimento = document.getElementById('boletoVencimento');
+                    const progressBar = document.getElementById('progressBar');
+
+                    // Função para atualizar a exibição do boleto
+                    function updateBoletoDisplay() {
+                        if (boletos.length === 0) {
+                            console.warn("Nenhum boleto para exibir.");
+                            return;
+                        }
+
+                        const currentBoleto = boletos[currentIndex];
+                        boletoEmpresa.textContent = currentBoleto.empresa;
+                        boletoValor.textContent = `R$ ${currentBoleto.valor.toFixed(2).replace('.', ',')}`;
+                        boletoVencimento.textContent = currentBoleto.vencimento;
+
+                        // Reinicia a barra de progresso
+                        resetProgressBar();
+
+                        currentIndex = (currentIndex + 1) % boletos.length; // Avança para o próximo boleto, ou volta ao início
+                    }
+
+                    // Função para reiniciar e animar a barra de progresso
+                    function resetProgressBar() {
+                        progressBar.style.transition = 'none'; // Remove a transição para resetar instantaneamente
+                        progressBar.style.width = '0%';
+                        // Força o reflow para que a transição seja aplicada corretamente na próxima vez
+                        void progressBar.offsetWidth;
+                        progressBar.style.transition = `width ${displayDuration / 1000}s linear`; // Aplica a transição
+                        progressBar.style.width = '100%';
+                    }
+
+                    // Função para iniciar a rotação dos boletos
+                    function startBoletoRotation() {
+                        updateBoletoDisplay(); // Exibe o primeiro boleto imediatamente
+                        intervalId = setInterval(updateBoletoDisplay, displayDuration);
+                    }
+
+                    // Busca os boletos
                     fetch(url)
                         .then(response => response.json())
                         .then(data => {
-                            if (!data.erro) {
-                                document.getElementById('boletoEmpresa').textContent = data.empresa;
-                                document.getElementById('boletoValor').textContent = `R$ ${data.valor.toFixed(2).replace('.', ',')}`;
-                                document.getElementById('boletoVencimento').textContent = data.vencimento;
+                            if (data && data.length > 0) {
+                                boletos = data;
+                                startBoletoRotation();
+                            } else {
+                                console.warn("Nenhum boleto encontrado ou dados inválidos.");
                             }
                         })
                         .catch(error => {
-                            console.error('Erro ao carregar o primeiro boleto:', error);
+                            console.error('Erro ao carregar os boletos:', error);
                         });
                 });
             </script>
@@ -146,25 +198,25 @@
             <div class="option">
                 <div class="card-option">
                     <a href="/users/45692327000100/CD1/adm/nb/formsPush.html">
-                        <i class='bxr  bx-plus-circle'></i> 
+                        <i class='bxr  bx-plus-circle'></i>
                         <h3>Registrar</h3>
                     </a>
                 </div>
                 <div class="card-option">
                     <a href="/users/45692327000100/CD1/adm/nb/manager.html">
-                        <i class='bxr  bx-scan-barcode'  ></i> 
+                        <i class='bxr  bx-scan-barcode'></i>
                         <h3>Despesas</h3>
                     </a>
                 </div>
                 <div class="card-option">
                     <a href="/users/45692327000100/CD1/adm/nb/metricas.html">
-                        <i class='bxr  bx-bar-chart-square'></i> 
+                        <i class='bxr  bx-bar-chart-square'></i>
                         <h3>Métricas</h3>
                     </a>
                 </div>
                 <div class="card-option">
                     <a href="/users/45692327000100/CD1/adm/nb/lojas.html">
-                        <i class='bxr  bx-store'></i> 
+                        <i class='bxr  bx-store'></i>
                         <h3>Lojas</h3>
                     </a>
                 </div>
