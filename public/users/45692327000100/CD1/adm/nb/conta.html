@@ -1,23 +1,16 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <link rel="icon" href="/assets/img/iconWeb.png">
     <title>Minha Empresa | D'TUDO</title>
-
-    <!-- Link To CSS -->
     <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/desktop.css">
     <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
 </head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
-<script> window.dataLayer = window.dataLayer || []; function gtag() { dataLayer.push(arguments); } gtag('js', new Date()); gtag('config', 'G-BV6V3GTMR0');</script>
-
 <body class="painel-adm1" onload="constDate();AnimationLoading()">
     <div class="mensagerLocal">
         <div class="mensager">
@@ -26,27 +19,33 @@
                 <h1>Bom dia <span>Dona Nubia</span>,</h1>
                 <p>Tenha um ótimo dia de vendas!</p>
             </div>
-            <div class="progress-bar"></div> <!-- Barra adicionada aqui -->
+            <div class="progress-bar"></div>
         </div>
     </div>
     <script>
         const MENSAGEM_KEY = 'ultimaMensagemEletro';
         const INTERVALO_HORAS = 20;
         const INTERVALO_MS = INTERVALO_HORAS * 60 * 60 * 1000;
+
         const agora = new Date().getTime();
         const ultimaVisualizacao = localStorage.getItem(MENSAGEM_KEY);
+
         const mensagemEl = document.querySelector('.mensagerLocal');
+
         // Se nunca viu ou já passou 20 horas
         if (!ultimaVisualizacao || (agora - parseInt(ultimaVisualizacao)) > INTERVALO_MS) {
             mensagemEl.style.display = 'flex';
+
             // Começa animação de desaparecimento após 10s
             setTimeout(() => {
                 mensagemEl.style.transition = "opacity 0.5s ease";
                 mensagemEl.style.opacity = 0;
+
                 setTimeout(() => {
                     mensagemEl.style.display = "none";
                 }, 500);
             }, 6200);
+
             // Salva data/hora da visualização
             localStorage.setItem(MENSAGEM_KEY, agora);
         } else {
@@ -58,53 +57,261 @@
             <div class="efect-loading"></div>
         </div>
     </header>
-    <div class="info">
-        <div class="photo-profile">
-            <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg">
-            <div class="detals">
-                <h1>Olá, Nubia!</h1>
+
+    <div class="desktop-layout-container">
+        <aside class="sidebar">
+            <div class="sidebar-profile">
+                <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg" alt="Profile Photo">
+                <h3>Nubia</h3>
                 <p>CEO: D'TUDO | Dupão</p>
             </div>
-            <i class="fi fi-rr-shield-trust"></i>
-        </div>
-        <div class="balance">
-            <p>Saldo</p>
-            <span id="valor1" class="skeleton shimmer"></span>
-        </div>
-        <div class="border"></div>
-        <div class="pending">
-            <p>Vendas a receber</p>
-            <span id="valor2" class="skeleton shimmer"></span>
-        </div>
-    </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const url = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=1`;
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="sidebar-nav-item">
+                        <a href="#"><i class='bx bxs-home'></i> Home</a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="/users/45692327000100/CD1/adm/nb/push.html"><i class='bxr bx-plus-circle'></i> Vender</a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="/users/45692327000100/CD1/adm/nb/metricas.html"><i class='bx bxs-dashboard'></i> Métricas</a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="/users/45692327000100/CD1/adm/nb/manager.html"><i class='bxr bx-bar-chart-square'></i> Despesas</a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="/users/45692327000100/CD1/adm/nb/lojas.html"><i class='bxr bx-store'></i> Lojas</a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="/users/45692327000100/CD1/adm/nb/extrato.html"><i class='bx bx-copy-alt'></i> Extrato</a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="/index.html"><i class='bx bx-log-out'></i> Log Out</a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
 
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    const el1 = document.getElementById('valor1');
-                    const el2 = document.getElementById('valor2');
+        <main class="main-content">
+            <div class="info">
+                <div class="photo-profile">
+                    <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg">
+                    <div class="detals">
+                        <h1>Olá, Nubia!</h1>
+                        <p>CEO: D'TUDO | Dupão</p>
+                    </div>
+                    <i class="fi fi-rr-shield-trust"></i>
+                </div>
+                <div class="balance">
+                    <p>Saldo</p>
+                    <span id="valor1" class="skeleton shimmer"></span>
+                </div>
+                <div class="border"></div>
+                <div class="pending">
+                    <p>Vendas a receber</p>
+                    <span id="valor2" class="skeleton shimmer"></span>
+                </div>
+            </div>
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    const url = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=1`;
 
-                    if (el1) {
-                        el1.textContent = data.valor1;
-                        el1.classList.remove('skeleton', 'shimmer');
-                    }
+                    fetch(url)
+                        .then(response => response.json())
+                        .then(data => {
+                            const el1 = document.getElementById('valor1');
+                            const el2 = document.getElementById('valor2');
 
-                    if (el2) {
-                        el2.textContent = data.valor2;
-                        el2.classList.remove('skeleton', 'shimmer');
-                    }
-                })
-                .catch(error => {
-                    console.error('Erro ao buscar dados:', error);
+                            if (el1) {
+                                el1.textContent = data.valor1;
+                                el1.classList.remove('skeleton', 'shimmer');
+                            }
+
+                            if (el2) {
+                                el2.textContent = data.valor2;
+                                el2.classList.remove('skeleton', 'shimmer');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Erro ao buscar dados:', error);
+                        });
                 });
-        });
-    </script>
-    <div class="new_nav">
-        <div class="conta-info">
-            <div class="" id="dataLoading">
+            </script>
+            <div class="new_nav">
+                <div class="" id="dataLoading">
+                    <div class="dataLoading">
+                        <div class="loadingB"></div>
+                        <span>Consolidando dados..</span>
+                    </div>
+                </div>
+                <p>Prestes a vencer</p>
+                <a href="/users/45692327000100/CD1/adm/nb/manager.html">
+                    <div class="containerCard">
+                        <div class="card-optionSize">
+                            <i class="fi fi-rr-refund-alt"></i>
+                            <div>
+                                <h1 id="boletoEmpresa"></h1>
+                                <span id="boletoValor"></span>
+                                <a class="add_btn" href="/users/45692327000100/CD1/adm/nb/manager.html">Ver mais</a>
+                            </div>
+                            <span class="lpan l2" id="boletoVencimento"></span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar2" id="progressBar"></div>
+                        </div>
+                    </div>
+                </a>
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', () => {
+                        const url = 'https://script.google.com/macros/s/AKfycbzbeCWhW4cyixLvkvpYYpv1UK72CfLYQblJv8jWSPPSSHFzNehv0vW5vLjHZrua-qeMJg/exec?tipo=boletos'; // Altere para "boletos" para buscar todos
+
+                        let boletos = [];
+                        let currentIndex = 0;
+                        const displayDuration = 5000; // 5 segundos
+                        let intervalId;
+                        let progressBarIntervalId;
+
+                        const boletoEmpresa = document.getElementById('boletoEmpresa');
+                        const boletoValor = document.getElementById('boletoValor');
+                        const boletoVencimento = document.getElementById('boletoVencimento');
+                        const progressBar = document.getElementById('progressBar');
+
+                        function updateBoletoDisplay() {
+                            if (boletos.length === 0) {
+                                console.warn("Nenhum boleto para exibir.");
+                                return;
+                            }
+
+                            const currentBoleto = boletos[currentIndex];
+                            boletoEmpresa.textContent = currentBoleto.empresa;
+                            boletoValor.textContent = `R$ ${currentBoleto.valor.toFixed(2).replace('.', ',')}`;
+                            boletoVencimento.textContent = currentBoleto.vencimento;
+
+                            resetProgressBar();
+
+                            currentIndex = (currentIndex + 1) % boletos.length;
+                        }
+
+                        function resetProgressBar() {
+                            progressBar.style.transition = 'none';
+                            progressBar.style.width = '0%';
+                            void progressBar.offsetWidth;
+                            progressBar.style.transition = `width ${displayDuration / 1000}s linear`;
+                            progressBar.style.width = '100%';
+                        }
+
+                        function startBoletoRotation() {
+                            updateBoletoDisplay();
+                            intervalId = setInterval(updateBoletoDisplay, displayDuration);
+                        }
+
+                        fetch(url)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data && data.length > 0) {
+                                    boletos = data;
+                                    startBoletoRotation();
+                                } else {
+                                    console.warn("Nenhum boleto encontrado ou dados inválidos.");
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Erro ao carregar os boletos:', error);
+                            });
+                    });
+                </script>
+
+                <div class="option">
+                    <div class="card-option">
+                        <a href="/users/45692327000100/CD1/adm/nb/formsPush.html">
+                            <i class='bxr bx-plus-circle'></i>
+                            <h3>Registrar</h3>
+                        </a>
+                    </div>
+                    <div class="card-option">
+                        <a href="/users/45692327000100/CD1/adm/nb/manager.html">
+                            <i class='bxr bx-scan-barcode'></i>
+                            <h3>Despesas</h3>
+                        </a>
+                    </div>
+                    <div class="card-option">
+                        <a href="/users/45692327000100/CD1/adm/nb/metricas.html">
+                            <i class='bxr bx-bar-chart-square'></i>
+                            <h3>Métricas</h3>
+                        </a>
+                    </div>
+                    <div class="card-option">
+                        <a href="/users/45692327000100/CD1/adm/nb/lojas.html">
+                            <i class='bxr bx-store'></i>
+                            <h3>Lojas</h3>
+                        </a>
+                    </div>
+                    <div class="card-option">
+                        <a href="/users/45692327000100/CD1/adm/nb/extrato.html">
+                            <i class='bx bx-copy-alt'></i>
+                            <h3>Extrato</h3>
+                        </a>
+                    </div>
+                    <div class="card-option">
+                        <a href="/users/45692327000100/CD1/adm/nb/profile.html">
+                            <i class='bx bx-user'></i>
+                            <h3>Pessoal</h3>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <main class="main-content-mobile">
+        <div class="info">
+            <div class="photo-profile">
+                <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg">
+                <div class="detals">
+                    <h1>Olá, Nubia!</h1>
+                    <p>CEO: D'TUDO | Dupão</p>
+                </div>
+                <i class="fi fi-rr-shield-trust"></i>
+            </div>
+            <div class="balance">
+                <p>Saldo</p>
+                <span id="valor1-mobile" class="skeleton shimmer"></span>
+            </div>
+            <div class="border"></div>
+            <div class="pending">
+                <p>Vendas a receber</p>
+                <span id="valor2-mobile" class="skeleton shimmer"></span>
+            </div>
+        </div>
+        <script>
+            // Script para os valores do mobile - Use IDs diferentes para evitar conflito
+            document.addEventListener('DOMContentLoaded', () => {
+                const url = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=1`;
+
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        const el1Mobile = document.getElementById('valor1-mobile');
+                        const el2Mobile = document.getElementById('valor2-mobile');
+
+                        if (el1Mobile) {
+                            el1Mobile.textContent = data.valor1;
+                            el1Mobile.classList.remove('skeleton', 'shimmer');
+                        }
+
+                        if (el2Mobile) {
+                            el2Mobile.textContent = data.valor2;
+                            el2Mobile.classList.remove('skeleton', 'shimmer');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro ao buscar dados mobile:', error);
+                    });
+            });
+        </script>
+        <div class="new_nav">
+            <div class="" id="dataLoading-mobile">
                 <div class="dataLoading">
                     <div class="loadingB"></div>
                     <span>Consolidando dados..</span>
@@ -116,106 +323,99 @@
                     <div class="card-optionSize">
                         <i class="fi fi-rr-refund-alt"></i>
                         <div>
-                            <h1 id="boletoEmpresa"></h1>
-                            <span id="boletoValor"></span>
+                            <h1 id="boletoEmpresa-mobile"></h1>
+                            <span id="boletoValor-mobile"></span>
                             <a class="add_btn" href="/users/45692327000100/CD1/adm/nb/manager.html">Ver mais</a>
                         </div>
-                        <span class="lpan l2" id="boletoVencimento"></span>
+                        <span class="lpan l2" id="boletoVencimento-mobile"></span>
                     </div>
                     <div class="progress-bar-container">
-                        <div class="progress-bar2" id="progressBar"></div>
+                        <div class="progress-bar2" id="progressBar-mobile"></div>
                     </div>
                 </div>
             </a>
-
             <script>
+                // Script para os boletos do mobile - Use IDs diferentes
                 document.addEventListener('DOMContentLoaded', () => {
-                    const url = 'https://script.google.com/macros/s/AKfycbzbeCWhW4cyixLvkvpYYpv1UK72CfLYQblJv8jWSPPSSHFzNehv0vW5vLjHZrua-qeMJg/exec?tipo=boletos'; // Altere para "boletos" para buscar todos
+                    const url = 'https://script.google.com/macros/s/AKfycbzbeCWhW4cyixLvkvpYYpv1UK72CfLYQblJv8jWSPPSSHFzNehv0vW5vLjHZrua-qeMJg/exec?tipo=boletos';
 
                     let boletos = [];
                     let currentIndex = 0;
-                    const displayDuration = 5000; // 5 segundos
+                    const displayDuration = 5000;
                     let intervalId;
                     let progressBarIntervalId;
 
-                    const boletoEmpresa = document.getElementById('boletoEmpresa');
-                    const boletoValor = document.getElementById('boletoValor');
-                    const boletoVencimento = document.getElementById('boletoVencimento');
-                    const progressBar = document.getElementById('progressBar');
+                    const boletoEmpresaMobile = document.getElementById('boletoEmpresa-mobile');
+                    const boletoValorMobile = document.getElementById('boletoValor-mobile');
+                    const boletoVencimentoMobile = document.getElementById('boletoVencimento-mobile');
+                    const progressBarMobile = document.getElementById('progressBar-mobile');
 
-                    // Função para atualizar a exibição do boleto
-                    function updateBoletoDisplay() {
+                    function updateBoletoDisplayMobile() {
                         if (boletos.length === 0) {
-                            console.warn("Nenhum boleto para exibir.");
+                            console.warn("Nenhum boleto mobile para exibir.");
                             return;
                         }
 
                         const currentBoleto = boletos[currentIndex];
-                        boletoEmpresa.textContent = currentBoleto.empresa;
-                        boletoValor.textContent = `R$ ${currentBoleto.valor.toFixed(2).replace('.', ',')}`;
-                        boletoVencimento.textContent = currentBoleto.vencimento;
+                        boletoEmpresaMobile.textContent = currentBoleto.empresa;
+                        boletoValorMobile.textContent = `R$ ${currentBoleto.valor.toFixed(2).replace('.', ',')}`;
+                        boletoVencimentoMobile.textContent = currentBoleto.vencimento;
 
-                        // Reinicia a barra de progresso
-                        resetProgressBar();
+                        resetProgressBarMobile();
 
-                        currentIndex = (currentIndex + 1) % boletos.length; // Avança para o próximo boleto, ou volta ao início
+                        currentIndex = (currentIndex + 1) % boletos.length;
                     }
 
-                    // Função para reiniciar e animar a barra de progresso
-                    function resetProgressBar() {
-                        progressBar.style.transition = 'none'; // Remove a transição para resetar instantaneamente
-                        progressBar.style.width = '0%';
-                        // Força o reflow para que a transição seja aplicada corretamente na próxima vez
-                        void progressBar.offsetWidth;
-                        progressBar.style.transition = `width ${displayDuration / 1000}s linear`; // Aplica a transição
-                        progressBar.style.width = '100%';
+                    function resetProgressBarMobile() {
+                        progressBarMobile.style.transition = 'none';
+                        progressBarMobile.style.width = '0%';
+                        void progressBarMobile.offsetWidth;
+                        progressBarMobile.style.transition = `width ${displayDuration / 1000}s linear`;
+                        progressBarMobile.style.width = '100%';
                     }
 
-                    // Função para iniciar a rotação dos boletos
-                    function startBoletoRotation() {
-                        updateBoletoDisplay(); // Exibe o primeiro boleto imediatamente
-                        intervalId = setInterval(updateBoletoDisplay, displayDuration);
+                    function startBoletoRotationMobile() {
+                        updateBoletoDisplayMobile();
+                        intervalId = setInterval(updateBoletoDisplayMobile, displayDuration);
                     }
 
-                    // Busca os boletos
                     fetch(url)
                         .then(response => response.json())
                         .then(data => {
                             if (data && data.length > 0) {
                                 boletos = data;
-                                startBoletoRotation();
+                                startBoletoRotationMobile();
                             } else {
-                                console.warn("Nenhum boleto encontrado ou dados inválidos.");
+                                console.warn("Nenhum boleto encontrado ou dados inválidos (mobile).");
                             }
                         })
                         .catch(error => {
-                            console.error('Erro ao carregar os boletos:', error);
+                            console.error('Erro ao carregar os boletos mobile:', error);
                         });
                 });
             </script>
-
             <div class="option">
                 <div class="card-option">
                     <a href="/users/45692327000100/CD1/adm/nb/formsPush.html">
-                        <i class='bxr  bx-plus-circle'></i>
+                        <i class='bxr bx-plus-circle'></i>
                         <h3>Registrar</h3>
                     </a>
                 </div>
                 <div class="card-option">
                     <a href="/users/45692327000100/CD1/adm/nb/manager.html">
-                        <i class='bxr  bx-scan-barcode'></i>
+                        <i class='bxr bx-scan-barcode'></i>
                         <h3>Despesas</h3>
                     </a>
                 </div>
                 <div class="card-option">
                     <a href="/users/45692327000100/CD1/adm/nb/metricas.html">
-                        <i class='bxr  bx-bar-chart-square'></i>
+                        <i class='bxr bx-bar-chart-square'></i>
                         <h3>Métricas</h3>
                     </a>
                 </div>
                 <div class="card-option">
                     <a href="/users/45692327000100/CD1/adm/nb/lojas.html">
-                        <i class='bxr  bx-store'></i>
+                        <i class='bxr bx-store'></i>
                         <h3>Lojas</h3>
                     </a>
                 </div>
@@ -231,52 +431,47 @@
                         <h3>Pessoal</h3>
                     </a>
                 </div>
+                <br><br><br>
             </div>
         </div>
+    </main>
 
-
-        <div class="navigation">
-            <ul>
-                <li class="list active">
-                    <a href="#">
-                        <span class="icon"><i class='bx  bxs-home'></i></span>
-                        <span class="text">Home</span>
-                    </a>
-                </li>
-
-                <li class="list">
-                    <a href="/users/45692327000100/CD1/adm/nb/metricas.html">
-                        <span class="icon"><i class='bxr  bx-bar-chart-square'></i></span>
-                        <span class="text">Métrica</span>
-                    </a>
-                </li>
-
-                <li class="list">
-                    <a href="/users/45692327000100/CD1/adm/nb/push.html">
-                        <span class="icon"><i class='bxr  bx-plus-circle'></i></span>
-                        <span class="text">Venda</span>
-                    </a>
-                </li>
-
-                <li class="list">
-                    <a href="/users/45692327000100/CD1/adm/nb/extrato.html">
-                        <span class="icon"><i class='bx bx-copy-alt'></i></span>
-                        <span class="text">Extrato</span>
-                    </a>
-                </li>
-
-                <li class="list">
-                    <a href="/index.html">
-                        <span class="icon"><i class='bx  bx-arrow-out-up-square-half bx-rotate-270'></i></span>
-                        <span class="text">Sair</span>
-                    </a>
-                </li>
-                <div class="indicator color11"></div>
-            </ul>
-        </div>
+    <div class="navigation">
+        <ul>
+            <li class="list active">
+                <a href="#">
+                    <span class="icon"><i class='bx bxs-home'></i></span>
+                    <span class="text">Home</span>
+                </a>
+            </li>
+            <li class="list">
+                <a href="/users/45692327000100/CD1/adm/nb/metricas.html">
+                    <span class="icon"><i class='bxr bx-bar-chart-square'></i></span>
+                    <span class="text">Métrica</span>
+                </a>
+            </li>
+            <li class="list">
+                <a href="/users/45692327000100/CD1/adm/nb/push.html">
+                    <span class="icon"><i class='bxr bx-plus-circle'></i></span>
+                    <span class="text">Venda</span>
+                </a>
+            </li>
+            <li class="list">
+                <a href="/users/45692327000100/CD1/adm/nb/extrato.html">
+                    <span class="icon"><i class='bx bx-copy-alt'></i></span>
+                    <span class="text">Extrato</span>
+                </a>
+            </li>
+            <li class="list">
+                <a href="/index.html">
+                    <span class="icon"><i class='bx bx-arrow-out-up-square-half bx-rotate-270'></i></span>
+                    <span class="text">Sair</span>
+                </a>
+            </li>
+            <div class="indicator color11"></div>
+        </ul>
     </div>
-    <!-- Link To JS -->
+
     <script src="/assets/js/loading.js"></script>
 </body>
-
 </html>

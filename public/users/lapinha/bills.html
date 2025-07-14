@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Nova conta | Lapinha</title>
+    <link rel="icon" href="/assets/img/iconWeb.png">
+    
+    <!-- Link To CSS -->
+    <link rel="stylesheet" href="/assets/CSS/main.css">
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-straight/css/uicons-regular-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+
+<body onload="AnimationLoading();">
+    <header> <div class="loading"><div class="efect-loading"></div></div></header>
+
+    <div class="new_nav main-container">
+        <main id="form_container">
+            <div id="form_header">
+                <h1 id="form_title">Nova conta</h1>
+                <a class="btn-default" href="/users/lapinha/manager.html" target="_self">
+                    <i class='bx bxs-left-arrow-circle'></i>
+                </a>
+            </div>
+            
+            <form action="" id="form-bills-adm">
+                <input type="hidden" name="status" value="a pagar">
+                <div id="input_container">
+                    <input type="hidden" name="formType" value="boleto">
+                    <div class="input-box">
+                        <label 
+                            for="value"
+                            class="form-label">
+                            Valor da conta
+                        </label>
+                        <div class="input-field">
+                            <input
+                            type="number"
+                            name="value"
+                            id="value"
+                            class="form-control"
+                            placeholder="R$0,00"
+                            autocomplete="off"
+                            step="0.01"
+                            >
+                            <ion-icon name="cart-sharp"></ion-icon>
+                        </div>
+                        <span class="error"></span>
+                    </div>
+                    <br>
+                    <div class="radio-container">
+                        <label class="form-label">Administrador</label>
+
+                        <div id="payment_inputs">
+                            <div class="radio-box">
+                                <input type="radio"
+                                name="adm"
+                                id="lapinha"
+                                class="form-control"
+                                value="lapinha"
+                                checked="on"
+                                >
+                                <label for="lapinha" class="form-label">Lapinha</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-box">
+                        <label 
+                            for="empresa"
+                            class="form-label">
+                            Nome da Empresa
+                        </label>
+                        <div class="input-field">
+                            <input
+                            type="text"
+                            name="empresa"
+                            id="empresa"
+                            class="form-control"
+                            placeholder="preencha com o nome da empresa"
+                            autocomplete="off"
+                            >
+                            <ion-icon name="business"></ion-icon>
+                        </div>
+                    </div>
+                    <br>
+                    <div class="input-box">
+                        <label 
+                            for="validade"
+                            class="form-label">
+                            Data de vencimento
+                        </label>
+                        <div class="input-field">
+                            <input
+                            type="date"
+                            name="validade"
+                            id="validade"
+                            class="form-control"
+                            placeholder="DTUDO VARIEDADES"
+                            autocomplete="off"
+                            >
+                        </div>
+                    </div>
+                    <br>
+                    
+                </div>
+
+                <div class="radio-box">
+                    <button type="submit" class="btn-default" id="submit-button-ADM">
+                        <ion-icon name="cart-sharp"></ion-icon>
+                        Registrar
+                    </button>
+                </div>
+            </form>
+        </main>
+        <audio id="songSell" src="/assets/audio/Sell.MP3"></audio>
+        <div id="pushBox"></div>
+        </div>
+    </div>
+    
+    <script src="/assets/js/loading.js"></script>
+    <script src="/assets/js/movBills.js"></script>
+</body>
+</html>

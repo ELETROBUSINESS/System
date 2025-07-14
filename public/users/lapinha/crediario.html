@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="320;/disconnected.html"></meta>
     
-    <title>Área de Vendas | Nubia</title>
+    <title>Crédiario | Lapinha</title>
    <link rel="icon" href="/assets/img/iconWeb.png">
     
     <!-- Link To CSS -->
@@ -27,7 +27,7 @@
                 </div>
                 <div class="TypeMov">
                     <h1 id="paymentInfo">Pix - QRCODE</h1>
-                    <p>Saída</p>
+                    <p>Venda</p>
                     <span id="valueInfo">R$0,00</span>
                 </div>
                 <div class="Resumo">
@@ -42,11 +42,11 @@
                 </div>
             </div>
             <div class="infoAdd">
-                <a href="/users/45692327000100/CD1/adm/nb/pushBuy.html" class="b-function">
+                <a href="/users/lapinha/crediario.html" class="b-function">
                     <i class='bx bxs-cart-add'></i>
-                    Nova saída
+                    Nova venda
                 </a>
-                <a href="/users/45692327000100/CD1/adm/nb/extrato.html" class="b-function">
+                <a href="/users/lapinha/extrato.html" class="b-function">
                     <i class='bx bx-copy-alt'></i>
                     Ver extrato
                 </a>
@@ -57,8 +57,8 @@
     <div class="new_nav main-container">
         <main id="form_container">
             <div id="form_header">
-                <h1 id="form_title">Saída</h1>
-                <a class="btn-default" href="/users/45692327000100/CD1/adm/nb/formsPush.html" target="_self">
+                <h1 id="form_title">Crédiario</h1>
+                <a class="btn-default" href="/users/lapinha/manager.html" target="_self">
                     <i class='bx bxs-left-arrow-circle'></i>
                 </a>
             </div>
@@ -70,7 +70,7 @@
                         <label 
                             for="value"
                             class="form-label">
-                            Valor da operação
+                            Valor da compra
                         </label>
                         <div class="input-field">
                             <input
@@ -89,40 +89,25 @@
                     <div id="total">
                     </div>
 
-                    <div class="custom-select-wrapper">
-                        <label class="form-label">Declaração de operação</label>
-                        <div class="custom-select" id="customSelect">
-                          <div class="selected">
-                            <i class="fa-regular fa-credit-card"></i> Declaração
-                          </div>
-                          <div class="options">
-                            <div data-value="product"><i class="fi fi-rr-boxes"></i> Aquisição de Mercadoria</div>
-                            <div data-value="folha"><i class="fi fi-rr-ballot"></i> Folha de pagamento</div>
-                            <div data-value="manutenção"><i class="fi fi-rr-shop"></i> Manutenção da loja</div>
-                            <div data-value="campanhas"><i class="fi fi-rr-ad-paid"></i> Campanhas</div>
-                            <div data-value="combustíveis"><i class="fi fi-rr-gas-pump"></i> Combustíveis</div>
-                            <div data-value="combustíveis"><i class=""></i> Outros</div>
-                          </div>
-                        </div>
-                        <input type="hidden" name="declaration" id="paymentModal">
-                    </div>
-
                     <div class="radio-container">
-                        <br>
-                        <label class="form-label">Forma de Pagamento</label>
+                        <label class="form-label">Forma de pagamento</label>
 
-                        <div id="input_container">
-                            <select id="paymentModal" name="payment" class="option-payment-card">
-                                <option value="dinheiro">Dinheiro</option>
-                                <option value="pixQR-F">Pix</option>
-                                <option value="boleto">Boleto</option>
-                                <option value="" selected class="infome">Escolha uma forma de pagamento</option>
-                            </select>
+                        <div id="payment_inputs">
+                            <div class="radio-box">
+                                <input type="radio"
+                                name="payment"
+                                id="paymentModal"
+                                class="form-control"
+                                value="crediario"
+                                checked="on"
+                                >
+                                <label for="crediario" class="form-label">Crédiario</label>
+                            </div>
                         </div>
                     </div>
 
                     <div class="radio-container">
-                        <label class="form-label">Vendedora</label>
+                        <label class="form-label">Operadora</label>
 
                         <div id="payment_inputs">
                             <div class="radio-box">
@@ -130,10 +115,10 @@
                                 name="seller"
                                 id="seller"
                                 class="form-control"
-                                value="nubia"
+                                value="lapinha"
                                 checked="on"
                                 >
-                                <label for="nubia" class="form-label">Nubia</label>
+                                <label for="lapinha" class="form-label">Lapinha</label>
                             </div>
                         </div>
                     </div>
@@ -145,12 +130,12 @@
                             <div class="radio-box">
                                 <input type="radio"
                                 name="type"
-                                id="saída"
+                                id="entrada"
                                 class="form-control"
-                                value="saída"
+                                value="entrada"
                                 checked="on"
                                 >
-                                <label for="saída" class="form-label">Saída</label>
+                                <label for="entrada" class="form-label">Entrada</label>
                             </div>
                         </div>
                     </div>
@@ -159,7 +144,7 @@
                         <label 
                             for="description"
                             class="form-label">
-                            Descrição
+                            Nome do cliente
                         </label>
                         <div class="input-field">
                             <input
@@ -167,7 +152,7 @@
                             name="description"
                             id="description"
                             class="form-control"
-                            placeholder="Descreva a operação"
+                            placeholder="Descreva o nome do cliente"
                             autocomplete="off"
                             >
                             <ion-icon name="reader-sharp"></ion-icon>
@@ -186,7 +171,7 @@
                 </div>
             </form>
         </main>
-        <audio id="songSell" src="/assets/songSell.MP3"></audio>
+        <audio id="songSell" src="/assets/audio/Sell.MP3"></audio>
         <div id="pushBox"></div>
         </div>
         <div class="pn">
@@ -196,31 +181,6 @@
             </div>
         </div>
     </div>
-    <script>
-        const customSelect = document.getElementById('customSelect');
-        const selected = customSelect.querySelector('.selected');
-        const options = customSelect.querySelector('.options');
-        const hiddenInput = document.getElementById('paymentModal');
-      
-        selected.addEventListener('click', () => {
-          customSelect.classList.toggle('active');
-        });
-      
-        options.querySelectorAll('div').forEach(option => {
-          option.addEventListener('click', () => {
-            selected.innerHTML = option.innerHTML;
-            hiddenInput.value = option.dataset.value;
-            customSelect.classList.remove('active');
-          });
-        });
-      
-        // Fecha se clicar fora
-        document.addEventListener('click', (e) => {
-          if (!customSelect.contains(e.target)) {
-            customSelect.classList.remove('active');
-          }
-        });
-      </script>
     
     <script src="/assets/js/loading.js"></script>
     <script src="/assets/js/new-mov-ADM.js"></script>

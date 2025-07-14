@@ -14,5 +14,10 @@ const users = [
     username: "ryan",
     password: "182011",
     redirect: "/users/45692327000100/CD1/colaborador/ryan/conta.html"
+  },
+  {
+    username: "lapinha",
+    password: "202020",
+    redirect: "/users/lapinha/conta.html"
   }
 ];

@@ -48,7 +48,7 @@ function createPush(){
 
 // Model ADM
 const formADM = document.getElementById("form-sell-adm");
-const songSell = document.getElementById("songSell"); // Certifique-se de que este elemento de áudio existe
+const songSell = document.getElementById("Sell"); // Certifique-se de que este elemento de áudio existe
 
 formADM.addEventListener("submit", function (e) {
     e.preventDefault(); // Impede o recarregamento da página
