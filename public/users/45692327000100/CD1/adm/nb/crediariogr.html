@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="icon" href="/assets/img/iconWeb.png">
+  <title>A N F da Silva LTDA</title>
+
+  <!-- Link To CSS -->
+  <link rel="stylesheet" href="/assets/CSS/main.css">
+  <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel='stylesheet'
+    href='https://cdn-uicons.flaticon.com/3.0.0/uicons-regular-straight/css/uicons-regular-straight.css'>
+</head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
+<script> window.dataLayer = window.dataLayer || []; function gtag() { dataLayer.push(arguments); } gtag('js', new Date()); gtag('config', 'G-BV6V3GTMR0'); </script>
+
+<body class="painel-adm1" onload="AnimationLoading();">
+  <header>
+    <div class="loading">
+      <div class="efect-loading"></div>
+    </div>
+  </header>
+  <div class="info">
+    <div class="photo-profile">
+      <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg">
+      <div class="detals">
+        <h1>Olá, Nubia!</h1>
+        <p>CEO: D'TUDO | Dupão</p>
+      </div>
+      <i class="fi fi-rr-shield-trust"></i>
+    </div>
+    <div class="pending">
+      <p>Débitos Pendentes</p>
+      <span id="boletosPayDate" class="skeleton shimmer"></span>
+    </div>
+  </div>
+  <br>
+
+  <script>
+    function carregarDadosPagina2() {
+      const url = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=2`;
+
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          const campos = [
+            'boletosPayDate'
+          ];
+
+          campos.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+              el.textContent = data[id];
+              el.classList.remove('skeleton', 'shimmer');
+            }
+          });
+        })
+        .catch(error => {
+          console.error('Erro ao buscar dados da página 2:', error);
+        });
+    } document.addEventListener('DOMContentLoaded', () => {
+      carregarDadosPagina2(); // Carrega ao abrir a página
+      setInterval(carregarDadosPagina2, 30000); // Atualiza a cada 10 segundos
+    });
+
+  </script>
+
+  <div class="back">
+    <a class="btn-default" href="/users/45692327000100/CD1/adm/nb/conta.html" target="_self">
+      Voltar<i class='bx bxs-left-arrow-circle'></i>
+    </a>
+  </div>
+
+  <div class="new_nav">
+    <div class="conta-info">
+      <p>Gerenciar</p>
+      <div class="option">
+        <div class="card-option">
+          <a href="/users/45692327000100/CD1/adm/nb/crediario.html">
+            <i class='bx  bx-credit-card-insert'></i> 
+            <h3>Registrar Carnê</h3>
+          </a>
+      </div>
+
+      <p>Contas a receber</p>
+      <div class="shop  container">
+        <div class="mainContainer">
+          <div class="boletosContainer">
+            <div class="boletos-vencer" id="boletosContainer"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+
+</html>
+
+<!-- Link To JS -->
+<script src="/assets/js/loading.js"></script>
+<script src="/assets/js/recurses.js"></script>
+<script src="/assets/js/time.js"></script>
