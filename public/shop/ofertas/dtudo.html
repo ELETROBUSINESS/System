@@ -265,38 +265,40 @@
 
 
     <script>
-        function atualizarCronometros() {
-            const countdowns = document.querySelectorAll('.countdown');
+    function atualizarCronometros() {
+        const countdowns = document.querySelectorAll('.countdown');
 
-            countdowns.forEach(el => {
-                const endTime = el.dataset.endtime || "23:00";
-                const [hora, minuto] = endTime.split(':').map(Number);
+        countdowns.forEach(el => {
+            const endTime = el.dataset.endtime || "23:00";
+            const [hora, minuto] = endTime.split(':').map(Number);
 
-                const agora = new Date();
+            const agora = new Date();
 
-                // Define encerramento para hoje, no horário indicado
-                const encerramento = new Date();
-                encerramento.setHours(hora, minuto, 0, 0);
+            // Define o horário de encerramento para hoje
+            const encerramento = new Date();
+            encerramento.setHours(hora, minuto, 0, 0);
 
-                // Se a hora já passou hoje, mostra "Encerrado"
-                if (encerramento < agora) {
-                    el.textContent = "Encerrado";
-                    el.parentElement.style.backgroundColor = "#333";
-                    return;
-                }
+            // Verifica se o tempo acabou
+            if (encerramento <= agora) {
+                el.textContent = "Encerrado";
+                el.parentElement.style.backgroundColor = "#333";
+                return;
+            }
 
-                const diferenca = encerramento - agora;
-                const totalSegundos = Math.floor(diferenca / 1000);
-                const minutos = String(Math.floor((totalSegundos % 3600) / 60)).padStart(2, '0');
-                const segundos = String(totalSegundos % 60).padStart(2, '0');
+            const diferenca = encerramento - agora;
+            const totalSegundos = Math.floor(diferenca / 1000);
 
-                el.textContent = `${minutos}:${segundos}`;
-            });
-        }
+            const horas = String(Math.floor(totalSegundos / 3600)).padStart(2, '0');
+            const minutos = String(Math.floor((totalSegundos % 3600) / 60)).padStart(2, '0');
+            const segundos = String(totalSegundos % 60).padStart(2, '0');
 
-        setInterval(atualizarCronometros, 1000);
-        atualizarCronometros();
-    </script>
+            el.textContent = `${horas}:${minutos}:${segundos}`;
+        });
+    }
+
+    setInterval(atualizarCronometros, 1000);
+    atualizarCronometros();
+</script>
 
 
 </body>
