@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-adsense-account" content="ca-pub-9060080612658200">
+
+    <link rel="icon" href="/assets/img/iconWeb.png">
+    <title>Gerenciador</title>
+
+    <!-- Link To CSS -->
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
+<script> window.dataLayer = window.dataLayer || []; function gtag() { dataLayer.push(arguments); } gtag('js', new Date()); gtag('config', 'G-BV6V3GTMR0'); </script>
+
+<body class="painel-adm1" onload="constDate();">
+    <div class="mensagerLocal">
+        <div class="mensager">
+            <img src="/assets//img/business-goal.png">
+            <div>
+                <h1>Missões,</h1>
+                <p>Ganhe pontos ao completar as missões!</p>
+            </div>
+            <div class="progress-bar"></div> <!-- Barra adicionada aqui -->
+        </div>
+    </div>
+    <script>
+        const MENSAGEM_KEY = 'ultimaMensagemEletro';
+        const INTERVALO_HORAS = 20;
+        const INTERVALO_MS = INTERVALO_HORAS * 60 * 60 * 1000;
+
+        const agora = new Date().getTime();
+        const ultimaVisualizacao = localStorage.getItem(MENSAGEM_KEY);
+
+        const mensagemEl = document.querySelector('.mensagerLocal');
+
+        // Se nunca viu ou já passou 20 horas
+        if (!ultimaVisualizacao || (agora - parseInt(ultimaVisualizacao)) > INTERVALO_MS) {
+            mensagemEl.style.display = 'flex';
+
+            // Começa animação de desaparecimento após 10s
+            setTimeout(() => {
+                mensagemEl.style.transition = "opacity 0.5s ease";
+                mensagemEl.style.opacity = 0;
+
+                setTimeout(() => {
+                    mensagemEl.style.display = "none";
+                }, 500);
+            }, 6200);
+
+            // Salva data/hora da visualização
+            localStorage.setItem(MENSAGEM_KEY, agora);
+        } else {
+            mensagemEl.style.display = 'none'; // Oculta imediatamente
+        }
+    </script>
+    <div class="info">
+        <div class="photo-profile">
+            <img src="https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png">
+            <div class="detals">
+                <h1>Usuário!</h1>
+                <p>Colaboradora</p>
+            </div>
+        </div>
+        <div class="balance">
+            <p>Pontos</p>
+            <span>0,00</span>
+        </div>
+        <div class="border"></div>
+        <div class="pending">
+            <p>Ticket-Médio</p>
+            <span id="*" class="skeleton shimmer"></span>
+        </div>
+    </div>
+
+    <div class="new_nav">
+        <div class="conta-info">
+            <p>Acessos</p>
+            <div class="option">
+                <div class="card-option">
+                    <a href="/users/45692327000100/CD1/colaborador/loja/push.html">
+                        <i class='bxr  bx-plus-circle'></i>
+                        <h3>Registrar</h3>
+                    </a>
+                </div>
+                <div class="card-option">
+                    <a href="/users/45692327000100/CD1/colaborador/loja/extrato.html">
+                        <i class='bx bx-copy-alt'></i>
+                        <h3>Extrato</h3>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="navigation">
+            <ul>
+                <li class="list active">
+                    <a href="#">
+                        <span class="icon"><i class='bx  bxs-home'></i></span>
+                        <span class="text">Home</span>
+                    </a>
+                </li>
+
+                <li class="list">
+                    <a href="/users/45692327000100/CD1/colaborador/loja/push.html">
+                        <span class="icon"><i class='bxr  bx-plus-circle'></i></span>
+                        <span class="text">Venda</span>
+                    </a>
+                </li>
+
+                <li class="list">
+                    <a href="/users/45692327000100/CD1/colaborador/loja/extrato.html">
+                        <span class="icon"><i class='bx bx-copy-alt'></i></span>
+                        <span class="text">Extrato</span>
+                    </a>
+                </li>
+
+                <li class="list">
+                    <a href="/index.html">
+                        <span class="icon"><i class='bx  bx-arrow-out-up-square-half bx-rotate-270'></i></span>
+                        <span class="text">Sair</span>
+                    </a>
+                </li>
+                <div class="indicator color11"></div>
+            </ul>
+        </div>
+
+        <!-- Link To JS -->
+        <script src="/assets/js/loading.js"></script>
+        <script src="/assets/js/mydateUser.js"></script>
+</body>
+
+</html>

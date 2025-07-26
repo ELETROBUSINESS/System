@@ -21,6 +21,11 @@ const users = [
     redirect: "/users/acap/id11072525/conta.html"
   },
   {
+    username: "loja",
+    password: "2025",
+    redirect: "/users/45692327000100/CD1/colaborador/loja/conta.html"
+  },
+  {
     username: "lapinha",
     password: "202020",
     redirect: "/users/lapinha/conta.html"
