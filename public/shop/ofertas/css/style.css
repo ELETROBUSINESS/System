@@ -558,3 +558,84 @@ p{
     border-bottom-left-radius: 20px;
     border-bottom-right-radius: 20px;
 }
+
+
+/* Seção principal da grade */
+.instagram-grid-section {
+    max-width: 900px; /* Largura máxima da grade */
+    margin: 40px auto; /* Centraliza a seção na página */
+    text-align: center;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    /* Removido o min-width para permitir que a seção se encolha */
+    /* Adicionado para garantir que a seção se ajuste se a tela for menor que 900px */
+    width: 100%; /* Ocupa 100% da largura disponível */
+    box-sizing: border-box; /* Inclui padding e borda na largura total */
+}
+
+.instagram-grid-section h2 {
+    margin-bottom: 30px;
+    color: #333;
+    font-size: 1.8em;
+}
+
+/* Contêiner da Grade */
+.instagram-grid-container {
+    display: grid;
+    /* Define 3 colunas de largura igual. O importante aqui é manter este valor. */
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px; /* Espaço entre os itens da grade */
+    padding: 0;
+    list-style: none; /* Remove marcadores de lista se usar ul/li */
+
+    /* Adicionado para lidar com o que acontece se a tela for muito pequena */
+    /* Permite que o contêiner encolha, mas define um tamanho mínimo para as colunas */
+    min-width: 280px; /* Exemplo: 3 colunas * 90px (tamanho mínimo) + 2*gap = ~280px */
+    /* Se a tela for menor que este min-width, ele criará um scroll horizontal */
+    overflow-x: auto; /* Adiciona scroll horizontal se o conteúdo for maior que a tela */
+}
+
+/* Item Individual da Grade */
+.instagram-grid-item {
+    display: block; /* Garante que o link ocupe todo o espaço */
+    position: relative;
+    overflow: hidden; /* Garante que a imagem não transborde */
+    border-radius: 5px;
+    background-color: #eee; /* Cor de fundo enquanto a imagem carrega */
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    /* Definir uma largura mínima para cada item para evitar que fiquem minúsculos */
+    min-width: 90px; /* Ajuste este valor conforme o quão pequenos você aceita que eles fiquem */
+}
+
+.instagram-grid-item:hover {
+    transform: translateY(-5px); /* Efeito de elevação ao passar o mouse */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.instagram-grid-item img {
+    width: 100%; /* A imagem preenche a largura do contêiner */
+    height: 100%; /* A imagem preenche a altura do contêiner */
+    display: block;
+    object-fit: cover; /* Garante que a imagem cubra o espaço sem distorção */
+    aspect-ratio: 1 / 1; /* Garante proporção quadrada */
+}
+
+/* Estilo para a chamada para ação do Instagram */
+.instagram-cta {
+    margin-top: 40px;
+    font-size: 1.1em;
+    color: #555;
+}
+
+.instagram-cta a {
+    color: #C13584; /* Cor típica do Instagram */
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.instagram-cta a:hover {
+    text-decoration: underline;
+}
