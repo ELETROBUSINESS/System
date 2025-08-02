@@ -64,18 +64,81 @@
             <h3>Nova conta</h3>
           </a>
         </div>
-
-      <p>Contas prestes a vencer</p>
-      <div class="shop  container">
-        <div class="mainContainer">
-          <div class="boletosContainer">
-            <div class="boletos-vencer" id="boletosContainer"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
   </div>
+
+  <div>
+        <p class="message">Contas prestes a vencer</p>
+        <div class="shop container">
+            <div class="mainContainer">
+                <div class="boletosContainer">
+                    <div class="boletos-vencer" id="boletosContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+  <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('boletosContainer');
+
+            // Loader antes do carregamento
+            container.innerHTML = `
+                <div class="loader">
+                    <div class="spinner"></div>
+                </div>
+            `;
+
+            // O URL do seu Apps Script implantado.
+            // CERTIFIQUE-SE DE QUE ESTE É O URL CORRETO DA SUA IMPLANTAÇÃO.
+            const url = "https://script.google.com/macros/s/AKfycbyPWy8SHpOTsZAqFKoUTNOrgJkZKVVtYAMRXNDBQ3Nnalkr2k5c6CrUYtfmSuTQ5rbqhw/exec?tipo=boletos&loja=lapinha";
+
+            fetch(url)
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error(`Erro HTTP! Status: ${res.status}`);
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    container.innerHTML = ''; // Limpa o loader
+
+                    if (data.error) {
+                        // Se o Apps Script retornar um objeto com 'error'
+                        container.innerHTML = `<p style="text-align:center;color:red;">Erro: ${data.error}</p>`;
+                        console.error('Erro retornado pelo Apps Script:', data.error);
+                        return;
+                    }
+
+                    if (data.length === 0) {
+                        container.innerHTML = '<p class="message">Nenhum boleto prestes a vencer encontrado.</p>';
+                        return;
+                    }
+
+                    data.forEach(boleto => {
+                        const div = document.createElement('div');
+                        div.classList.add('boleto-item');
+
+                        // O valor já vem como número do Apps Script, então podemos usar diretamente.
+                        // toLocaleString já formata para a moeda local com 2 casas decimais.
+                        const valorFormatado = parseFloat(boleto.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+
+                        div.innerHTML = `
+                            <i class="fi fi-rs-corporate-alt"></i>
+                            <span class="data">${boleto.vencimento}</span>
+                            <span class="empresa">${boleto.empresa}</span>
+                            <span class="valor">R$ ${valorFormatado}</span>
+                        `;
+
+                        container.appendChild(div);
+                    });
+                })
+                .catch(err => {
+                    container.innerHTML = '<p style="text-align:center;color:red;">Erro ao carregar boletos. Verifique sua conexão ou as permissões do script.</p>';
+                    console.error('Erro ao carregar boletos:', err);
+                });
+        });
+    </script>
 </body>
 
 </html>
