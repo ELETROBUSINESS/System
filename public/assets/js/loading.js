@@ -5,6 +5,7 @@ function AnimationLoading() {
 
     setTimeout(() => {
         pre_loading.style.display = "none";
+
     }, 500);
 }
 
