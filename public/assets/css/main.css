@@ -1143,15 +1143,17 @@ input[type="number"]::-webkit-inner-spin-button {
     padding: 10px;
     border-radius: 10px;
 }
-.balance span{
+
+.balance span {
     font-size: 22px;
     color: var(--secondary-color);
 }
-.balance p{
+
+.balance p {
     font-size: 12px;
 }
 
-.balance i{
+.balance i {
     left: 155px;
     top: 112px;
 }
@@ -1167,11 +1169,13 @@ input[type="number"]::-webkit-inner-spin-button {
     align-items: center;
     gap: 5px;
 }
-.pending span{
+
+.pending span {
     font-size: 15px;
     color: var(--secondary-color);
 }
-.pending p{
+
+.pending p {
     font-size: 12px;
 }
 
@@ -2056,19 +2060,25 @@ section {
     background: #ea070b;
     animation: progress 5s linear forwards;
 }
+
 .progress-bar-container {
     width: 100%;
     background-color: #dad3d3;
-    height: 5px; /* Altura da barra de progresso */
+    height: 5px;
+    /* Altura da barra de progresso */
     border-radius: 5px;
-    overflow: hidden; /* Garante que a barra de progresso não transborde */
+    overflow: hidden;
+    /* Garante que a barra de progresso não transborde */
 }
 
 .progress-bar2 {
     height: 100%;
-    width: 0%; /* Inicia em 0% */
-    background-color: #db0038; /* Cor da barra de progresso */
-    transition: width 5s linear; /* Transição suave por 5 segundos */
+    width: 0%;
+    /* Inicia em 0% */
+    background-color: #db0038;
+    /* Cor da barra de progresso */
+    transition: width 5s linear;
+    /* Transição suave por 5 segundos */
 }
 
 .card-option2 i {
@@ -2222,7 +2232,8 @@ section {
     max-width: 400px;
     margin: 0 auto;
     padding: 20px;
-    background-color: #fff; /* Fundo branco da calculadora */
+    background-color: #fff;
+    /* Fundo branco da calculadora */
     border-radius: 15px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
@@ -2253,7 +2264,8 @@ section {
     font-weight: 500;
     color: #333;
 }
-.display-value{
+
+.display-value {
     color: #000000;
 }
 
@@ -2322,7 +2334,8 @@ section {
     padding: 15px;
     border: none;
     border-radius: 8px;
-    background-color: var(--bs-color); /* Cor principal do seu design */
+    background-color: var(--bs-color);
+    /* Cor principal do seu design */
     color: #ffffff;
     font-size: 18px;
     font-weight: bold;
@@ -2342,4 +2355,71 @@ section {
 
 .visible {
     display: block !important;
+}
+
+
+/* Estilos do Pop-up */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.confirm-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin-top: 15px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.confirm-btn:hover {
+    background-color: #45a049;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Adicione este estilo para a seta */
+.boleto-item i.arrow {
+    margin-left: auto;
+    font-size: 1.5em;
+    color: #555;
 }

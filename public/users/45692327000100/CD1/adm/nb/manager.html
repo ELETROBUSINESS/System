@@ -93,15 +93,13 @@
           </a>
         </div>
         <div class="card-option">
-          <a
-            href="/users/45692327000100/CD1/adm/nb/bills.html">
+          <a href="/users/45692327000100/CD1/adm/nb/bills.html">
             <i class='bxr  bx-form'></i>
             <h3>Nova conta</h3>
           </a>
         </div>
         <div class="card-option">
-          <a
-            href="/users/45692327000100/CD1/adm/nb/debts.html">
+          <a href="/users/45692327000100/CD1/adm/nb/debts.html">
             <i class='bx  bx-copy-list'></i>
             <h3>Todos as contas</h3>
           </a>
@@ -116,33 +114,53 @@
                 -->
       </div>
 
+      <div id="updateBoletoModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+          <span class="close-btn">&times;</span>
+          <h2 id="modal-empresa"></h2>
+          <p>Vencimento: <span id="modal-vencimento"></span></p>
+          <p>Valor: <span id="modal-valor"></span></p>
+          <button id="btn-marcar-pago" class="confirm-btn">Marcar como Pago</button>
+          <p id="modal-status-message"></p>
+        </div>
+      </div>
+
       <div>
         <p class="message">Contas prestes a vencer</p>
         <div class="shop container">
-            <div class="mainContainer">
-                <div class="boletosContainer">
-                    <div class="boletos-vencer" id="boletosContainer"></div>
-                </div>
+          <div class="mainContainer">
+            <div class="boletosContainer">
+              <div class="boletos-vencer" id="boletosContainer"></div>
             </div>
+          </div>
         </div>
-    </div>
+      </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const container = document.getElementById('boletosContainer');
+      <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const container = document.getElementById('boletosContainer');
+        const updateBoletoModal = document.getElementById('updateBoletoModal');
+        const closeModalBtn = updateBoletoModal.querySelector('.close-btn');
+        const btnMarcarPago = document.getElementById('btn-marcar-pago');
+        const modalStatusMessage = document.getElementById('modal-status-message');
 
-            // Loader antes do carregamento
-            container.innerHTML = `
-                <div class="loader">
-                    <div class="spinner"></div>
-                </div>
-            `;
+        // Variável para armazenar os dados do boleto que será atualizado
+        let boletoParaAtualizar = null;
 
-            // O URL do seu Apps Script implantado.
-            // CERTIFIQUE-SE DE QUE ESTE É O URL CORRETO DA SUA IMPLANTAÇÃO.
-            const url = "https://script.google.com/macros/s/AKfycbyPWy8SHpOTsZAqFKoUTNOrgJkZKVVtYAMRXNDBQ3Nnalkr2k5c6CrUYtfmSuTQ5rbqhw/exec?tipo=boletos&loja=nubia";
+        // Loader antes do carregamento
+        container.innerHTML = `
+            <div class="loader">
+                <div class="spinner"></div>
+            </div>
+        `;
 
-            fetch(url)
+        // URL do seu Apps Script
+        const url = "https://script.google.com/macros/s/AKfycbyPWy8SHpOTsZAqFKoUTNOrgJkZKVVtYAMRXNDBQ3Nnalkr2k5c6CrUYtfmSuTQ5rbqhw/exec";
+        const loja = "nubia"; // Defina a loja aqui
+
+        // Função para buscar e exibir os boletos
+        function fetchBoletos() {
+            fetch(`${url}?tipo=boletos&loja=${loja}`)
                 .then(res => {
                     if (!res.ok) {
                         throw new Error(`Erro HTTP! Status: ${res.status}`);
@@ -153,7 +171,6 @@
                     container.innerHTML = ''; // Limpa o loader
 
                     if (data.error) {
-                        // Se o Apps Script retornar um objeto com 'error'
                         container.innerHTML = `<p style="text-align:center;color:red;">Erro: ${data.error}</p>`;
                         console.error('Erro retornado pelo Apps Script:', data.error);
                         return;
@@ -167,34 +184,110 @@
                     data.forEach(boleto => {
                         const div = document.createElement('div');
                         div.classList.add('boleto-item');
+                        div.setAttribute('data-empresa', boleto.empresa);
+                        div.setAttribute('data-vencimento', boleto.vencimento);
+                        div.setAttribute('data-valor', boleto.valor);
 
-                        // O valor já vem como número do Apps Script, então podemos usar diretamente.
-                        // toLocaleString já formata para a moeda local com 2 casas decimais.
                         const valorFormatado = parseFloat(boleto.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-
+                        
                         div.innerHTML = `
                             <i class="fi fi-rs-corporate-alt"></i>
-                            <span class="data">${boleto.vencimento}</span>
-                            <span class="empresa">${boleto.empresa}</span>
+                            <div class="boleto-info">
+                                <span class="empresa">${boleto.empresa}</span>
+                                <span class="data">${boleto.vencimento}</span>
+                            </div>
                             <span class="valor">R$ ${valorFormatado}</span>
+                            <i class="fi fi-rs-angle-right arrow"></i>
                         `;
-
                         container.appendChild(div);
+                    });
+
+                    // Adiciona o evento de clique para abrir o pop-up
+                    document.querySelectorAll('.boleto-item').forEach(item => {
+                        item.addEventListener('click', () => {
+                            const empresa = item.getAttribute('data-empresa');
+                            const vencimento = item.getAttribute('data-vencimento');
+                            const valor = item.getAttribute('data-valor');
+
+                            document.getElementById('modal-empresa').textContent = empresa;
+                            document.getElementById('modal-vencimento').textContent = vencimento;
+                            document.getElementById('modal-valor').textContent = `R$ ${parseFloat(valor).toFixed(2).replace('.', ',')}`;
+                            
+                            // Armazena o boleto para uso no evento de atualização
+                            boletoParaAtualizar = { empresa, vencimento, valor };
+                            
+                            modalStatusMessage.textContent = '';
+                            updateBoletoModal.style.display = 'flex';
+                        });
                     });
                 })
                 .catch(err => {
                     container.innerHTML = '<p style="text-align:center;color:red;">Erro ao carregar boletos. Verifique sua conexão ou as permissões do script.</p>';
                     console.error('Erro ao carregar boletos:', err);
                 });
-        });
-    </script>
+        }
+        
+        // Chamada inicial para buscar os boletos
+        fetchBoletos();
 
-  </div>
+        // Fechar o modal
+        closeModalBtn.addEventListener('click', () => {
+            updateBoletoModal.style.display = 'none';
+        });
+
+        // Lógica para enviar a requisição POST
+        btnMarcarPago.addEventListener('click', () => {
+            if (!boletoParaAtualizar) return;
+
+            const { empresa, vencimento } = boletoParaAtualizar;
+
+            modalStatusMessage.textContent = 'Atualizando...';
+
+            // Dados a serem enviados como JSON no POST
+            const payload = {
+                loja: loja,
+                empresa: empresa,
+                vencimento: vencimento,
+                novoStatus: 'pago'
+            };
+
+            fetch(url, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    modalStatusMessage.textContent = 'Status atualizado com sucesso!';
+                    modalStatusMessage.style.color = 'green';
+                    
+                    // Recarrega a lista de boletos após 2 segundos
+                    setTimeout(() => {
+                        updateBoletoModal.style.display = 'none';
+                        fetchBoletos();
+                    }, 2000);
+                    
+                } else {
+                    modalStatusMessage.textContent = `Erro ao atualizar: ${data.error}`;
+                    modalStatusMessage.style.color = 'red';
+                }
+            })
+            .catch(err => {
+                modalStatusMessage.textContent = 'Erro na requisição. Tente novamente.';
+                modalStatusMessage.style.color = 'red';
+                console.error('Erro na requisição POST:', err);
+            });
+        });
+    });
+</script>
+
+    </div>
 </body>
 
 </html>
 
 <!-- Link To JS -->
 <script src="/assets/js/loading.js"></script>
-<script src="/assets/js/recurses.js"></script>
-<script src="/assets/js/time.js"></script>
