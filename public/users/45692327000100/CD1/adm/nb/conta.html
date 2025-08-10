@@ -87,123 +87,64 @@
         <div class="new_nav">
             <script>
                 document.addEventListener('DOMContentLoaded', () => {
-                    const url = 'https://script.google.com/macros/s/AKfycbzbeCWhW4cyixLvkvpYYpv1UK72CfLYQblJv8jWSPPSSHFzNehv0vW5vLjHZrua-qeMJg/exec?tipo=boletos';
+                    const url = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=1`;
 
-                    let boletos = [];
-                    let currentIndex = 0;
-                    const displayDuration = 5000;
-                    let intervalId;
-                    let progressBarIntervalId;
+                    const valor1Element = document.getElementById('valor1');
+                    const valor2Element = document.getElementById('valor2');
+                    const toggleIcon = document.getElementById('toggle-balance-icon');
 
-                    const boletoEmpresaMobile = document.getElementById('boletoEmpresa');
-                    const boletoValorMobile = document.getElementById('boletoValor');
-                    const boletoVencimentoMobile = document.getElementById('boletoVencimento');
-                    const progressBarMobile = document.getElementById('progressBar');
+                    let valor1Original = '';
+                    let valor2Original = '';
 
-                    function updateBoletoDisplayMobile() {
-                        if (boletos.length === 0) {
-                            console.warn("Nenhum boleto para exibir.");
-                            return;
+                    // Inicializa a visibilidade, padrão para 'false' se não existir no localStorage
+                    let isBalanceVisible = localStorage.getItem('balanceVisible') === 'true';
+
+                    // Função para alternar a exibição dos valores e o ícone
+                    function toggleBalanceDisplay() {
+                        if (isBalanceVisible) {
+                            valor1Element.textContent = valor1Original;
+                            valor2Element.textContent = valor2Original;
+                        } else {
+                            valor1Element.textContent = 'R$ *******';
+                            valor2Element.textContent = 'R$ ********';
                         }
 
-                        const currentBoleto = boletos[currentIndex];
-                        boletoEmpresaMobile.textContent = currentBoleto.empresa;
-                        boletoValorMobile.textContent = `R$ ${currentBoleto.valor.toFixed(2).replace('.', ',')}`;
-                        boletoVencimentoMobile.textContent = currentBoleto.vencimento;
-
-                        resetProgressBarMobile();
-
-                        currentIndex = (currentIndex + 1) % boletos.length;
+                        // Use toggle para adicionar/remover as classes do ícone de forma mais simples
+                        toggleIcon.classList.toggle('bx-eye', isBalanceVisible);
+                        toggleIcon.classList.toggle('bx-eye-closed', !isBalanceVisible);
                     }
 
-                    function resetProgressBarMobile() {
-                        progressBarMobile.style.transition = 'none';
-                        progressBarMobile.style.width = '0%';
-                        void progressBarMobile.offsetWidth;
-                        progressBarMobile.style.transition = `width ${displayDuration / 1000}s linear`;
-                        progressBarMobile.style.width = '100%';
-                    }
-
-                    function startBoletoRotationMobile() {
-                        updateBoletoDisplayMobile();
-                        intervalId = setInterval(updateBoletoDisplayMobile, displayDuration);
-                    }
-
+                    // Lógica de fetch para buscar os dados
                     fetch(url)
                         .then(response => response.json())
                         .then(data => {
-                            if (data && data.length > 0) {
-                                boletos = data;
-                                startBoletoRotationMobile();
-                            } else {
-                                console.warn("Nenhum boleto encontrado ou dados inválidos.");
+                            if (valor1Element) {
+                                valor1Original = data.valor1;
+                                valor1Element.classList.remove('skeleton', 'shimmer');
                             }
+                            if (valor2Element) {
+                                valor2Original = data.valor2;
+                                valor2Element.classList.remove('skeleton', 'shimmer');
+                            }
+                            // Atualiza a exibição inicial dos valores
+                            toggleBalanceDisplay();
                         })
                         .catch(error => {
-                            console.error('Erro ao carregar os boletos mobile:', error);
+                            console.error('Erro ao buscar dados:', error);
+                            valor1Element.textContent = 'Erro ao carregar';
+                            valor2Element.textContent = 'Erro ao carregar';
                         });
+
+                    // Adiciona o evento de clique ao ícone
+                    if (toggleIcon) {
+                        toggleIcon.addEventListener('click', () => {
+                            isBalanceVisible = !isBalanceVisible;
+                            localStorage.setItem('balanceVisible', isBalanceVisible);
+                            toggleBalanceDisplay();
+                        });
+                    }
                 });
             </script>
-            <script>
-    document.addEventListener('DOMContentLoaded', () => {
-    const url = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=1`;
-
-    const valor1Element = document.getElementById('valor1');
-    const valor2Element = document.getElementById('valor2');
-    const toggleIcon = document.getElementById('toggle-balance-icon');
-
-    let valor1Original = '';
-    let valor2Original = '';
-
-    // Inicializa a visibilidade, padrão para 'false' se não existir no localStorage
-    let isBalanceVisible = localStorage.getItem('balanceVisible') === 'true';
-
-    // Função para alternar a exibição dos valores e o ícone
-    function toggleBalanceDisplay() {
-        if (isBalanceVisible) {
-            valor1Element.textContent = valor1Original;
-            valor2Element.textContent = valor2Original;
-        } else {
-            valor1Element.textContent = 'R$ *******';
-            valor2Element.textContent = 'R$ ********';
-        }
-        
-        // Use toggle para adicionar/remover as classes do ícone de forma mais simples
-        toggleIcon.classList.toggle('bx-eye', isBalanceVisible);
-        toggleIcon.classList.toggle('bx-eye-closed', !isBalanceVisible);
-    }
-
-    // Lógica de fetch para buscar os dados
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (valor1Element) {
-                valor1Original = data.valor1;
-                valor1Element.classList.remove('skeleton', 'shimmer');
-            }
-            if (valor2Element) {
-                valor2Original = data.valor2;
-                valor2Element.classList.remove('skeleton', 'shimmer');
-            }
-            // Atualiza a exibição inicial dos valores
-            toggleBalanceDisplay();
-        })
-        .catch(error => {
-            console.error('Erro ao buscar dados:', error);
-            valor1Element.textContent = 'Erro ao carregar';
-            valor2Element.textContent = 'Erro ao carregar';
-        });
-
-    // Adiciona o evento de clique ao ícone
-    if (toggleIcon) {
-        toggleIcon.addEventListener('click', () => {
-            isBalanceVisible = !isBalanceVisible;
-            localStorage.setItem('balanceVisible', isBalanceVisible);
-            toggleBalanceDisplay();
-        });
-    }
-});
-</script>
 
             <div class="conta-info">
                 <p>Prestes a vencer</p>
@@ -223,6 +164,81 @@
                         </div>
                     </div>
                 </a>
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', () => {
+                        const url = 'https://script.google.com/macros/s/AKfycbyPWy8SHpOTsZAqFKoUTNOrgJkZKVVtYAMRXNDBQ3Nnalkr2k5c6CrUYtfmSuTQ5rbqhw/exec?tipo=boletos&loja=nubia';
+
+                        let boletos = [];
+                        let currentIndex = 0;
+                        const displayDuration = 5000;
+                        let intervalId;
+
+                        const boletoEmpresa = document.getElementById('boletoEmpresa');
+                        const boletoValor = document.getElementById('boletoValor');
+                        const boletoVencimento = document.getElementById('boletoVencimento');
+                        const progressBar = document.getElementById('progressBar');
+
+                        function updateBoletoDisplay() {
+                            if (boletos.length === 0) {
+                                console.warn("Nenhum boleto para exibir.");
+                                boletoEmpresa.textContent = "Nenhum boleto";
+                                boletoValor.textContent = "";
+                                boletoVencimento.textContent = "";
+                                return;
+                            }
+
+                            const currentBoleto = boletos[currentIndex];
+                            boletoEmpresa.textContent = currentBoleto.empresa;
+                            const valor = parseFloat(currentBoleto.valor);
+                            boletoValor.textContent = `R$ ${valor.toFixed(2).replace('.', ',')}`;
+                            boletoVencimento.textContent = currentBoleto.vencimento;
+
+                            resetProgressBar();
+
+                            currentIndex = (currentIndex + 1) % boletos.length;
+                        }
+
+                        function resetProgressBar() {
+                            progressBar.style.transition = 'none';
+                            progressBar.style.width = '0%';
+                            void progressBar.offsetWidth;
+                            progressBar.style.transition = `width ${displayDuration / 1000}s linear`;
+                            progressBar.style.width = '100%';
+                        }
+
+                        function startBoletoRotation() {
+                            updateBoletoDisplay();
+                            intervalId = setInterval(updateBoletoDisplay, displayDuration);
+                        }
+
+                        fetch(url)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data && !data.error && data.length > 0) {
+                                    boletos = data;
+                                    startBoletoRotation();
+                                } else if (data && data.error) {
+                                    console.error('Erro da API:', data.error);
+                                    boletoEmpresa.textContent = "Erro!";
+                                    boletoValor.textContent = data.error;
+                                    boletoVencimento.textContent = "";
+                                } else {
+                                    console.warn("Nenhum boleto encontrado ou dados inválidos.");
+                                    boletoEmpresa.textContent = "Nenhum boleto";
+                                    boletoValor.textContent = "";
+                                    boletoVencimento.textContent = "";
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Erro ao carregar os boletos:', error);
+                                boletoEmpresa.textContent = "Erro de conexão";
+                                boletoValor.textContent = "Verifique a internet";
+                                boletoVencimento.textContent = "";
+                            });
+                    });
+                </script>
+
                 <div class="option">
                     <div class="card-option">
                         <a href="/users/45692327000100/CD1/adm/nb/formsPush.html">

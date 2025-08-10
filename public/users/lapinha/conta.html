@@ -148,7 +148,7 @@
             </script>
 
             <div class="conta-info">
-                <p>Prestes a vencer (em breve)</p>
+                <p>Prestes a vencer</p>
                 <a href="/users/lapinha/manager.html">
                     <div class="containerCard">
                         <div class="card-optionSize">
@@ -165,6 +165,81 @@
                         </div>
                     </div>
                 </a>
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', () => {
+                        // A URL agora inclui o parâmetro "loja=lapinha"
+                        const url = 'https://script.google.com/macros/s/AKfycbyPWy8SHpOTsZAqFKoUTNOrgJkZKVVtYAMRXNDBQ3Nnalkr2k5c6CrUYtfmSuTQ5rbqhw/exec?tipo=boletos&loja=lapinha';
+
+                        let boletos = [];
+                        let currentIndex = 0;
+                        const displayDuration = 5000;
+                        let intervalId;
+
+                        const boletoEmpresa = document.getElementById('boletoEmpresa');
+                        const boletoValor = document.getElementById('boletoValor');
+                        const boletoVencimento = document.getElementById('boletoVencimento');
+                        const progressBar = document.getElementById('progressBar');
+
+                        function updateBoletoDisplay() {
+                            if (boletos.length === 0) {
+                                console.warn("Nenhum boleto para exibir.");
+                                boletoEmpresa.textContent = "Nenhum boleto";
+                                boletoValor.textContent = "";
+                                boletoVencimento.textContent = "";
+                                return;
+                            }
+
+                            const currentBoleto = boletos[currentIndex];
+                            boletoEmpresa.textContent = currentBoleto.empresa;
+                            const valor = parseFloat(currentBoleto.valor);
+                            boletoValor.textContent = `R$ ${valor.toFixed(2).replace('.', ',')}`;
+                            boletoVencimento.textContent = currentBoleto.vencimento;
+
+                            resetProgressBar();
+
+                            currentIndex = (currentIndex + 1) % boletos.length;
+                        }
+
+                        function resetProgressBar() {
+                            progressBar.style.transition = 'none';
+                            progressBar.style.width = '0%';
+                            void progressBar.offsetWidth;
+                            progressBar.style.transition = `width ${displayDuration / 1000}s linear`;
+                            progressBar.style.width = '100%';
+                        }
+
+                        function startBoletoRotation() {
+                            updateBoletoDisplay();
+                            intervalId = setInterval(updateBoletoDisplay, displayDuration);
+                        }
+
+                        fetch(url)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data && !data.error && data.length > 0) {
+                                    boletos = data;
+                                    startBoletoRotation();
+                                } else if (data && data.error) {
+                                    console.error('Erro da API:', data.error);
+                                    boletoEmpresa.textContent = "Erro!";
+                                    boletoValor.textContent = data.error;
+                                    boletoVencimento.textContent = "";
+                                } else {
+                                    console.warn("Nenhum boleto encontrado ou dados inválidos.");
+                                    boletoEmpresa.textContent = "Nenhum boleto";
+                                    boletoValor.textContent = "";
+                                    boletoVencimento.textContent = "";
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Erro ao carregar os boletos:', error);
+                                boletoEmpresa.textContent = "Erro de conexão";
+                                boletoValor.textContent = "Verifique a internet";
+                                boletoVencimento.textContent = "";
+                            });
+                    });
+                </script>
                 <div class="option">
                     <div class="card-option">
                         <a href="/users/lapinha/formsPush.html">
