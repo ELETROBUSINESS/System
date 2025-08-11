@@ -70,7 +70,7 @@ formADM.addEventListener("submit", function (e) {
     var formDataString = keyValuePairs.join("&");
 
     // 🚨 ATENÇÃO: SUBSTITUA ESTE URL PELO NOVO URL DA SUA IMPLANTAÇÃO DO APPS SCRIPT
-    const appScriptURL = "https://script.google.com/macros/s/AKfycbyPWy8SHpOTsZAqFKoUTNOrgJkZKVVtYAMRXNDBQ3Nnalkr2k5c6CrUYtfmSuTQ5rbqhw/exec"; // EX: https://script.google.com/macros/s/AKfycbzHtsx2ppbUHEY-KK9XkHKxuUwNHW6SGSlO18HkmXX2E4BJ_SiE4VcaTsG8V2ePlucY3Q/exec
+    const appScriptURL = "https://script.google.com/macros/s/AKfycbxCCaxdYdC6J_QKsaoWTDquH915MHUnM9BykD39ZUujR2LB3lx9d9n5vAsHdJZJByaa7w/exec"; // EX: https://script.google.com/macros/s/AKfycbzHtsx2ppbUHEY-KK9XkHKxuUwNHW6SGSlO18HkmXX2E4BJ_SiE4VcaTsG8V2ePlucY3Q/exec
     
     fetch(
         appScriptURL,
