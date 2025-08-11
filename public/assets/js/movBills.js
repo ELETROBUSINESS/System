@@ -40,7 +40,7 @@ formbillsADM.addEventListener("submit", function (e) {
     // 🚨 ATENÇÃO: SUBSTITUA ESTE URL PELO NOVO URL DA SUA IMPLANTAÇÃO DO APPS SCRIPT
     // Use o MESMO URL que você usa para o formulário de vendas, pois o Apps Script
     // lida com ambos os tipos de requisição.
-    const appScriptURL = "https://script.google.com/macros/s/AKfycbyPWy8SHpOTsZAqFKoUTNOrgJkZKVVtYAMRXNDBQ3Nnalkr2k5c6CrUYtfmSuTQ5rbqhw/exec"; 
+    const appScriptURL = "https://script.google.com/macros/s/AKfycbxCCaxdYdC6J_QKsaoWTDquH915MHUnM9BykD39ZUujR2LB3lx9d9n5vAsHdJZJByaa7w/exec"; 
     
     fetch(
         appScriptURL,
