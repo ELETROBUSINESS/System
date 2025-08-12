@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendário de Eventos</title>
+    <link rel="icon" href="/assets/img/iconWeb.png">
+    <!-- Usando Boxicons para ícones -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+        :root {
+            /* Paleta de cores baseada em db0038 */
+            --primary-color: #db0038;
+            --dark-color: #c10031;
+            --light-color: #f0d3d8;
+            --highlight-color: #ffe3e8;
+            --border-color: #e0e6ef;
+            --text-dark: #333;
+            --text-light: #fff;
+            --bg-card: #fff;
+            --light-grey: #f8f9fa; /* Adicionado para consistência */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--light-grey);
+            color: var(--text-dark);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px 0;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 450px;
+            background-color: var(--bg-card);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .header .header-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .header .icons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .header .icons i {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            cursor: pointer;
+        }
+        
+        .search-container {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 0;
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.3s ease-out, margin-bottom 0.3s ease-out;
+        }
+        
+        .search-container.visible {
+            max-height: 50px;
+            margin-bottom: 20px;
+            transition: max-height 0.3s ease-in, margin-bottom 0.3s ease-in;
+        }
+
+        .search-container input {
+            flex-grow: 1;
+            padding: 10px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+            width: 100%;
+        }
+
+        .search-container input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .calendar-grid .day-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        .calendar-grid .day-number {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 35px;
+            height: 35px;
+            margin: 0 auto;
+            border-radius: 50%;
+            font-weight: 600;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        
+        .calendar-grid .day-number.today {
+            background-color: var(--primary-color);
+            color: var(--text-light);
+        }
+
+        .timeline-container {
+            margin-top: 20px;
+        }
+        
+        .date-divider {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin: 25px 0 15px;
+            border-bottom: 2px solid var(--light-color);
+            padding-bottom: 5px;
+        }
+
+        .event-timeline {
+            position: relative;
+            padding-left: 30px; /* Ajustado para remover o espaço do horário */
+        }
+
+        .event-timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px; /* Ajustado para a nova margem */
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: var(--light-color);
+        }
+        
+        .event-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        /* Marcador centralizado na linha */
+        .event-item::before {
+            content: '';
+            position: absolute;
+            left: -18px; /* Ajustado para a nova posição da linha */
+            top: 15px; /* Ajustado para centralizar com o texto */
+            transform: translateX(-50%);
+            width: 12px;
+            height: 12px;
+            background-color: var(--primary-color);
+            border: 2px solid var(--bg-card);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .event-card {
+            background-color: var(--light-grey);
+            border-radius: 10px;
+            padding: 15px;
+            flex-grow: 1;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            width: 100%;
+        }
+
+        .event-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .event-card.highlighted {
+            background-color: var(--highlight-color);
+            border: 1px solid var(--primary-color);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
+        }
+
+        .event-card h4 {
+            margin: 0;
+            font-size: 1rem;
+            color: var(--dark-color);
+        }
+
+        .event-card p {
+            margin: 5px 0 0;
+            font-size: 0.8rem;
+            color: #777;
+        }
+
+        .event-card .details {
+            display: none;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .event-card.expanded .details {
+            display: block;
+        }
+        
+        .event-card.expanded h4 {
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-container">
+        <div class="header">
+            <i class='bx bx-arrow-back' id="backButton"></i>
+            <span class="header-title" id="monthTitle">Agosto 2025</span>
+            <div class="icons">
+                <i class='bx bx-search' id="searchIcon"></i>
+            </div>
+        </div>
+
+        <div class="search-container" id="searchContainer">
+            <input type="text" id="searchInput" placeholder="Pesquisar eventos...">
+        </div>
+
+        <div class="calendar-grid" id="calendarGrid">
+            <!-- Dias da semana e números serão gerados aqui -->
+        </div>
+
+        <div class="timeline-container" id="timelineContainer">
+            <!-- Linha do tempo de eventos será gerada aqui -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const calendarGrid = document.getElementById('calendarGrid');
+            const timelineContainer = document.getElementById('timelineContainer');
+            const searchIcon = document.getElementById('searchIcon');
+            const searchContainer = document.getElementById('searchContainer');
+            const searchInput = document.getElementById('searchInput');
+            const monthTitle = document.getElementById('monthTitle');
+            const backButton = document.getElementById('backButton');
+
+            // Eventos do mês de agosto de 2025
+            const allEvents = [
+                { date: '2025-08-10', title: 'Dia dos pais', start: '', end: '', description: '' },
+                { date: '2025-08-15', title: 'Análise e Supervisão', start: '16:00', end: '17:00', description: 'Gerente: Visita para análise estrátegica, avaliação de performace de atendimento, coleta de opinião dos colaboradores e entrega de pendências.' },
+                { date: '2025-08-22', title: 'Gravação de vídeos estratégicos', start: '15:00', end: '16:30', description: 'Gravação de conteúdo para as redes sociais e campanhas futuras.' },
+                { date: '2025-08-15', title: 'Preparação de Campanha', start: '16:00', end: '17:00', description: 'Preparação de materias de campanha físico e alinhamento com colaboradores.' },
+                { date: '2025-08-25', title: 'Início da campanha de divulgação', start: '07:00', end: '19:00', description: 'Inicio da campanha de marketing(Fecha Mês).' },
+                { date: '2025-08-29', title: 'Pré divulgação do fecha mês + live', start: '07:00', end: '20:30', description: 'Divulgação da Transmissão ao vivo pós-fecha mês (Focando na venda de maquiagens).' },
+                { date: '2025-08-30', title: 'Preparação de ofertas', start: '14:00', end: '15:00', description: 'Preparação de ofertas físicas.' },
+                { date: '2025-08-31', title: 'Fecha Mês', start: '07:00', end: '19:00', description: 'Evento: Fecha Mês DTudo.' },
+            ];
+
+            const weekDayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            
+            const today = new Date();
+            const currentDate = new Date(2025, 7, 1);
+
+            // Função para agrupar eventos por data
+            const groupEventsByDate = (events) => {
+                const groupedEvents = {};
+                events.forEach(event => {
+                    const date = event.date;
+                    if (!groupedEvents[date]) {
+                        groupedEvents[date] = [];
+                    }
+                    groupedEvents[date].push(event);
+                });
+                return groupedEvents;
+            };
+
+            // Função para renderizar o minicalendário
+            const renderCalendar = () => {
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth();
+                const firstDayOfMonth = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                monthTitle.textContent = `${monthNames[month]} ${year}`;
+                calendarGrid.innerHTML = '';
+
+                // Adiciona labels dos dias da semana
+                weekDayNames.forEach(day => {
+                    const label = document.createElement('div');
+                    label.classList.add('day-label');
+                    label.textContent = day;
+                    calendarGrid.appendChild(label);
+                });
+
+                // Preenche os espaços vazios do início do mês
+                for (let i = 0; i < firstDayOfMonth; i++) {
+                    const emptyDiv = document.createElement('div');
+                    calendarGrid.appendChild(emptyDiv);
+                }
+
+                // Renderiza os dias do mês
+                for (let i = 1; i <= daysInMonth; i++) {
+                    const dayDiv = document.createElement('div');
+                    dayDiv.classList.add('day-number');
+                    dayDiv.textContent = i;
+                    
+                    if (year === today.getFullYear() && month === today.getMonth() && i === today.getDate()) {
+                        dayDiv.classList.add('today');
+                    }
+                    
+                    calendarGrid.appendChild(dayDiv);
+                }
+            };
+            
+            // Função para renderizar a linha do tempo de eventos
+            const renderTimeline = (filteredEvents = allEvents) => {
+                timelineContainer.innerHTML = '';
+                
+                const eventsForMonth = filteredEvents.filter(event => {
+                    const eventDate = new Date(event.date + 'T00:00:00');
+                    return eventDate.getFullYear() === currentDate.getFullYear() && eventDate.getMonth() === currentDate.getMonth();
+                });
+
+                const groupedEvents = groupEventsByDate(eventsForMonth);
+                
+                const sortedDates = Object.keys(groupedEvents).sort();
+
+                if (sortedDates.length === 0) {
+                    const noEventsMessage = document.createElement('p');
+                    noEventsMessage.textContent = 'Nenhum evento encontrado para este mês.';
+                    noEventsMessage.style.textAlign = 'center';
+                    noEventsMessage.style.marginTop = '40px';
+                    noEventsMessage.style.color = '#888';
+                    timelineContainer.appendChild(noEventsMessage);
+                    return;
+                }
+
+                sortedDates.forEach(dateString => {
+                    const date = new Date(dateString + 'T00:00:00');
+                    const dayName = weekDayNames[date.getDay()];
+                    const monthName = date.toLocaleDateString('pt-BR', { month: 'long' });
+                    
+                    const dateDivider = document.createElement('div');
+                    dateDivider.classList.add('date-divider');
+                    dateDivider.textContent = `${dayName}, ${date.getDate()} de ${monthName}`;
+                    timelineContainer.appendChild(dateDivider);
+                    
+                    const eventTimeline = document.createElement('div');
+                    eventTimeline.classList.add('event-timeline');
+                    timelineContainer.appendChild(eventTimeline);
+                    
+                    const dayEvents = groupedEvents[dateString].sort((a, b) => a.start.localeCompare(b.start));
+
+                    dayEvents.forEach(event => {
+                        const eventItem = document.createElement('div');
+                        eventItem.classList.add('event-item');
+                        
+                        const eventCard = document.createElement('div');
+                        eventCard.classList.add('event-card');
+                        
+                        const lowerCaseSearchTerm = searchInput.value.toLowerCase();
+                        if (lowerCaseSearchTerm && (event.title.toLowerCase().includes(lowerCaseSearchTerm) || event.date.includes(lowerCaseSearchTerm))) {
+                            eventCard.classList.add('highlighted');
+                        }
+                        
+                        eventCard.innerHTML = `
+                            <h4>${event.title}</h4>
+                            <p>${event.start ? `${event.start} - ${event.end}` : ''}</p>
+                            <div class="details">
+                                <p>${event.description}</p>
+                            </div>
+                        `;
+                        
+                        eventCard.addEventListener('click', () => {
+                            eventCard.classList.toggle('expanded');
+                        });
+                        
+                        eventItem.appendChild(eventCard);
+                        eventTimeline.appendChild(eventItem);
+                    });
+                });
+            };
+            
+            // Eventos para a barra de pesquisa e navegação
+            searchIcon.addEventListener('click', () => {
+                searchContainer.classList.toggle('visible');
+                if (searchContainer.classList.contains('visible')) {
+                    searchInput.focus();
+                } else {
+                    searchInput.value = '';
+                    renderTimeline();
+                }
+            });
+            
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                if (searchTerm.length > 0) {
+                    const filteredEvents = allEvents.filter(event => 
+                        event.title.toLowerCase().includes(searchTerm) || event.date.includes(searchTerm)
+                    );
+                    renderTimeline(filteredEvents);
+                } else {
+                    renderTimeline(allEvents); // Volta para todos os eventos se a pesquisa estiver vazia
+                }
+            });
+
+            // Evento para o botão de voltar
+            backButton.addEventListener('click', () => {
+                history.back();
+            });
+
+            // Inicialização
+            renderCalendar();
+            renderTimeline();
+        });
+    </script>
+</body>
+</html>
