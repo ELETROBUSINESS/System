@@ -160,9 +160,14 @@ function formatCardNumber(cardNumber) {
     return `•••• •••• •••• ${lastFourDigits}`;
 }
 
-/** Formata o limite como moeda brasileira */
+/** Formata o limite como moeda brasileira (versão corrigida) */
 function formatLimit(limit) {
-    const number = parseFloat(limit) || 0;
+    // Pré-tratamento: substitui a vírgula por um ponto
+    const limitStringCorrigida = limit.toString().replace(',', '.');
+    
+    // Agora o parseFloat vai ler o número com os centavos corretamente
+    const number = parseFloat(limitStringCorrigida) || 0;
+    
     return number.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
