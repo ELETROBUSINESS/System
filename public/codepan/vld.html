@@ -13,12 +13,18 @@
             flex-direction: column;
             background-color: #f0f0f0;
         }
+        /* Por padrão, o container principal começa escondido */
         .container {
+            display: none; 
             background-color: #fff;
             padding: 30px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             text-align: center;
+        }
+        #status-inicial {
+            font-size: 1.5em;
+            color: #555;
         }
         #codigo-recebido, #nome-pessoa {
             font-weight: bold;
@@ -28,62 +34,64 @@
 </head>
 <body>
 
-    <div class="container">
+    <div id="status-inicial">
+        <h2>Aguardando leitura do cartão...</h2>
+    </div>
+
+    <div class="container" id="info-container">
         <h1>Verificando Identidade</h1>
         <p>O código recebido do cartão foi:</p>
-        <h2 id="codigo-recebido">Aguardando leitura...</h2>
+        <h2 id="codigo-recebido">...</h2>
         <hr>
         <p>Resultado da busca:</p>
         <h2 id="nome-pessoa">...</h2>
     </div>
 
     <script>
-    // --- ETAPA 1: Capturar a chave (código do cartão) da URL ---
-    const urlParams = new URLSearchParams(window.location.search);
-    const idCartao = urlParams.get('id');
+        // --- ETAPA 1: Verificar se existe um ID e controlar a visibilidade ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const idCartao = urlParams.get('id');
 
-    // Mostra o código na tela
-    const elementoCodigo = document.getElementById('codigo-recebido');
-    if (idCartao) {
-        elementoCodigo.innerText = idCartao;
-        buscarNomeDoUsuario(idCartao);
-    } else {
-        elementoCodigo.innerText = "Nenhum código recebido.";
-    }
+        const elementoStatus = document.getElementById('status-inicial');
+        const elementoContainer = document.getElementById('info-container');
+
+        if (idCartao) {
+            // Se encontrou um ID, esconde o status e mostra o container
+            elementoStatus.style.display = 'none';
+            elementoContainer.style.display = 'block';
+
+            document.getElementById('codigo-recebido').innerText = idCartao;
+            buscarNomeDoUsuario(idCartao); // Inicia a busca
+        } else {
+            // Se NÃO encontrou um ID, mostra uma mensagem de erro
+            elementoStatus.innerHTML = "<h2>Erro: URL inválida. Utilize um cartão NFC.</h2>";
+        }
 
 
-    // --- ETAPA 2: Fazer a "ligação" para o Google Apps Script ---
-    function buscarNomeDoUsuario(id) {
-        // Cole aqui o URL do seu App da Web que você copiou
-        const scriptUrl = "https://script.google.com/macros/s/AKfycbzfBZz74Zlj-EHgNUxP2hWIzqw8MlaLiaOhNf_wIaOJgnA72HbMdk-yyZOErDIb4zU_fg/exec"; 
-        
-        // Lembre-se de usar o mesmo token que você definiu no script
-        const tokenSecreto = "senhaSuperSecreta123"; 
+        // --- ETAPA 2: Fazer a "ligação" para o Google Apps Script ---
+        function buscarNomeDoUsuario(id) {
+            const scriptUrl = "https://script.google.com/macros/s/AKfycbzfBZz74Zlj-EHgNUxP2hWIzqw8MlaLiaOhNf_wIaOJgnA72HbMdk-yyZOErDIb4zU_fg/exec"; 
+            const tokenSecreto = "senhaSuperSecreta123"; 
 
-        // Monta o link completo para a requisição
-        const urlCompleta = `${scriptUrl}?id=${id}&token=${tokenSecreto}`;
+            const urlCompleta = `${scriptUrl}?id=${id}&token=${tokenSecreto}`;
+            const elementoNome = document.getElementById('nome-pessoa');
+            elementoNome.innerText = "Buscando no banco de dados...";
 
-        const elementoNome = document.getElementById('nome-pessoa');
-        elementoNome.innerText = "Buscando no banco de dados...";
-
-        // A "ligação" acontece aqui!
-        fetch(urlCompleta)
-            .then(response => response.json()) // Converte a resposta para um formato que o JS entende (JSON)
-            .then(data => {
-                // "data" é o objeto que o nosso script retornou
-                if (data.erro) {
-                    elementoNome.innerText = data.erro; // Mostra a mensagem de erro
-                } else {
-                    elementoNome.innerText = data.nome; // Mostra o nome do usuário
-                }
-            })
-            .catch(error => {
-                // Se a "ligação" falhar (ex: sem internet), mostra um erro
-                console.error('Erro na requisição:', error);
-                elementoNome.innerText = "Erro ao contatar o servidor.";
-            });
-    }
-</script>
+            fetch(urlCompleta)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.erro) {
+                        elementoNome.innerText = data.erro;
+                    } else {
+                        elementoNome.innerText = data.nome;
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro na requisição:', error);
+                    elementoNome.innerText = "Erro ao contatar o servidor.";
+                });
+        }
+    </script>
 
 </body>
 </html>
