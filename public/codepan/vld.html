@@ -96,7 +96,6 @@
                 elementoStatus.innerHTML = `
             <h2>Acesso Negado</h2>
             <p>Você não tem permissão para visualizar esta página ou sua sessão expirou.</p>
-            <a href="./login.html">Fazer Login</a>
         `;
             }
         });
@@ -104,7 +103,7 @@
 
         // --- ETAPA 2: Fazer a "ligação" para o Google Apps Script (sem alterações) ---
         function buscarNomeDoUsuario(id) {
-            const scriptUrl = "URL_DO_SEU_APP_DA_WEB_AQUI";
+            const scriptUrl = "https://script.google.com/macros/s/AKfycbzfBZz74Zlj-EHgNUxP2hWIzqw8MlaLiaOhNf_wIaOJgnA72HbMdk-yyZOErDIb4zU_fg/exec";
             const tokenSecreto = "senhaSuperSecreta123";
 
             const urlCompleta = `${scriptUrl}?action=lookup&id=${id}&token=${tokenSecreto}`;
