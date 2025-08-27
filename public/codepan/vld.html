@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <title>Validação de Cartão</title>
@@ -13,25 +14,30 @@
             flex-direction: column;
             background-color: #f0f0f0;
         }
+
         /* Por padrão, o container principal começa escondido */
         .container {
-            display: none; 
+            display: none;
             background-color: #fff;
             padding: 30px;
             border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
+
         #status-inicial {
             font-size: 1.5em;
             color: #555;
         }
-        #codigo-recebido, #nome-pessoa {
+
+        #codigo-recebido,
+        #nome-pessoa {
             font-weight: bold;
             color: #0056b3;
         }
     </style>
 </head>
+
 <body>
 
     <div id="status-inicial">
@@ -48,32 +54,60 @@
     </div>
 
     <script>
-        // --- ETAPA 1: Verificar se existe um ID e controlar a visibilidade ---
-        const urlParams = new URLSearchParams(window.location.search);
-        const idCartao = urlParams.get('id');
+        // --- ETAPA 1: O "GUARDA" DE SEGURANÇA ---
+        document.addEventListener('DOMContentLoaded', function () {
+            const elementoStatus = document.getElementById('status-inicial');
+            const elementoContainer = document.getElementById('info-container');
 
-        const elementoStatus = document.getElementById('status-inicial');
-        const elementoContainer = document.getElementById('info-container');
+            // 1.1: Verifica se existe um token de login no "cofre"
+            const authTokenString = localStorage.getItem('authToken');
+            let tokenValido = false;
 
-        if (idCartao) {
-            // Se encontrou um ID, esconde o status e mostra o container
-            elementoStatus.style.display = 'none';
-            elementoContainer.style.display = 'block';
+            if (authTokenString) {
+                const authToken = JSON.parse(authTokenString);
+                const agora = new Date().getTime();
+                const tempoDeLogin = authToken.loginTime;
+                const vinteHorasEmMs = 20 * 60 * 60 * 1000;
 
-            document.getElementById('codigo-recebido').innerText = idCartao;
-            buscarNomeDoUsuario(idCartao); // Inicia a busca
-        } else {
-            // Se NÃO encontrou um ID, mostra uma mensagem de erro
-            elementoStatus.innerHTML = "<h2>Erro: URL inválida. Utilize um cartão NFC.</h2>";
-        }
+                // 1.2: Verifica se o token não expirou (menos de 20h)
+                if ((agora - tempoDeLogin) < vinteHorasEmMs) {
+                    tokenValido = true;
+                } else {
+                    // Se o token expirou, limpa ele do cofre
+                    localStorage.removeItem('authToken');
+                }
+            }
+
+            // 1.3: Verifica se o ID do cartão está na URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const idCartao = urlParams.get('id');
+
+            // 1.4: A GRANDE DECISÃO
+            if (tokenValido && idCartao) {
+                // Se o token é válido E existe um ID de cartão, mostra o container e busca os dados
+                elementoStatus.style.display = 'none';
+                elementoContainer.style.display = 'block';
+                document.getElementById('codigo-recebido').innerText = idCartao;
+                buscarNomeDoUsuario(idCartao);
+            } else {
+                // Se qualquer uma das condições falhar, mostra o erro e esconde o container
+                elementoContainer.style.display = 'none';
+                elementoStatus.style.display = 'block';
+                elementoStatus.innerHTML = `
+            <h2>Acesso Negado</h2>
+            <p>Você não tem permissão para visualizar esta página ou sua sessão expirou.</p>
+            <a href="./login.html">Fazer Login</a>
+        `;
+            }
+        });
 
 
-        // --- ETAPA 2: Fazer a "ligação" para o Google Apps Script ---
+        // --- ETAPA 2: Fazer a "ligação" para o Google Apps Script (sem alterações) ---
         function buscarNomeDoUsuario(id) {
-            const scriptUrl = "https://script.google.com/macros/s/AKfycbzfBZz74Zlj-EHgNUxP2hWIzqw8MlaLiaOhNf_wIaOJgnA72HbMdk-yyZOErDIb4zU_fg/exec"; 
-            const tokenSecreto = "senhaSuperSecreta123"; 
+            const scriptUrl = "URL_DO_SEU_APP_DA_WEB_AQUI";
+            const tokenSecreto = "senhaSuperSecreta123";
 
-            const urlCompleta = `${scriptUrl}?id=${id}&token=${tokenSecreto}`;
+            const urlCompleta = `${scriptUrl}?action=lookup&id=${id}&token=${tokenSecreto}`;
             const elementoNome = document.getElementById('nome-pessoa');
             elementoNome.innerText = "Buscando no banco de dados...";
 
@@ -94,4 +128,5 @@
     </script>
 
 </body>
+
 </html>
