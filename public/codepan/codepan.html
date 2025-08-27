@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerador de Código NFC</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+            background-color: #f0f0f0;
+        }
+        #codigo {
+            font-size: 2em;
+            font-family: monospace;
+            background-color: #fff;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        button {
+            font-size: 1.2em;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Gerador de Código de Identificação</h1>
+    <button onclick="gerarCodigo()">Gerar Novo Código</button>
+    <p id="codigo">Clique no botão para gerar...</p>
+
+    <script>
+        function gerarCodigo() {
+            // 1. Começa com o número 3
+            let codigo = '3';
+
+            // 2. Gera os outros 15 dígitos aleatórios
+            for (let i = 0; i < 15; i++) {
+                codigo += Math.floor(Math.random() * 10);
+            }
+
+            // 3. Formata o código com espaços
+            let codigoFormatado = '';
+            for (let i = 0; i < codigo.length; i++) {
+                if (i > 0 && i % 4 === 0) {
+                    codigoFormatado += ' ';
+                }
+                codigoFormatado += codigo[i];
+            }
+
+            // 4. Mostra o código na tela
+            document.getElementById('codigo').innerText = codigoFormatado;
+        }
+    </script>
+
+</body>
+</html>

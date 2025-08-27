@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Validação de Cartão</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        #codigo-recebido, #nome-pessoa {
+            font-weight: bold;
+            color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Verificando Identidade</h1>
+        <p>O código recebido do cartão foi:</p>
+        <h2 id="codigo-recebido">Aguardando leitura...</h2>
+        <hr>
+        <p>Resultado da busca:</p>
+        <h2 id="nome-pessoa">...</h2>
+    </div>
+
+    <script>
+    // --- ETAPA 1: Capturar a chave (código do cartão) da URL ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const idCartao = urlParams.get('id');
+
+    // Mostra o código na tela
+    const elementoCodigo = document.getElementById('codigo-recebido');
+    if (idCartao) {
+        elementoCodigo.innerText = idCartao;
+        buscarNomeDoUsuario(idCartao);
+    } else {
+        elementoCodigo.innerText = "Nenhum código recebido.";
+    }
+
+
+    // --- ETAPA 2: Fazer a "ligação" para o Google Apps Script ---
+    function buscarNomeDoUsuario(id) {
+        // Cole aqui o URL do seu App da Web que você copiou
+        const scriptUrl = "https://script.google.com/macros/s/AKfycbzfBZz74Zlj-EHgNUxP2hWIzqw8MlaLiaOhNf_wIaOJgnA72HbMdk-yyZOErDIb4zU_fg/exec"; 
+        
+        // Lembre-se de usar o mesmo token que você definiu no script
+        const tokenSecreto = "senhaSuperSecreta123"; 
+
+        // Monta o link completo para a requisição
+        const urlCompleta = `${scriptUrl}?id=${id}&token=${tokenSecreto}`;
+
+        const elementoNome = document.getElementById('nome-pessoa');
+        elementoNome.innerText = "Buscando no banco de dados...";
+
+        // A "ligação" acontece aqui!
+        fetch(urlCompleta)
+            .then(response => response.json()) // Converte a resposta para um formato que o JS entende (JSON)
+            .then(data => {
+                // "data" é o objeto que o nosso script retornou
+                if (data.erro) {
+                    elementoNome.innerText = data.erro; // Mostra a mensagem de erro
+                } else {
+                    elementoNome.innerText = data.nome; // Mostra o nome do usuário
+                }
+            })
+            .catch(error => {
+                // Se a "ligação" falhar (ex: sem internet), mostra um erro
+                console.error('Erro na requisição:', error);
+                elementoNome.innerText = "Erro ao contatar o servidor.";
+            });
+    }
+</script>
+
+</body>
+</html>
