@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atividade Avaliativa - PA e PG</title>
+    <!-- Biblioteca para gerar a imagem de compartilhamento -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 700px;
+            overflow: hidden;
+        }
+        h1, h2, h3 {
+            color: #4a4a4a;
+            text-align: center;
+        }
+        .question-block {
+            margin-bottom: 25px;
+            padding-left: 15px;
+            display: none; /* Esconde todas as questões por padrão */
+        }
+        .question-block.active {
+            display: block; /* Mostra apenas a questão ativa */
+        }
+        .question-block p {
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            cursor: pointer;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        label:hover {
+            background-color: #f5f5f5;
+        }
+        input[type="radio"] {
+            margin-right: 12px;
+        }
+        input[type="radio"]:checked + span {
+            font-weight: bold;
+            color: #c50037;
+        }
+        input[type="text"], input[type="date"] {
+            width: calc(100% - 22px);
+            padding: 11px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        button {
+            display: inline-block;
+            width: 100%;
+            padding: 15px;
+            background-color: #c50037; /* Cor principal */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-align: center;
+        }
+        button:hover {
+            background-color: #ab0030; /* Cor para detalhes */
+        }
+        .navigation-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        #prevButton {
+            background-color: #6c757d;
+        }
+        #prevButton:hover {
+            background-color: #5a6268;
+        }
+        #quizContainer, #resultsContainer, #shareContainerWrapper {
+            display: none;
+        }
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+        #progressBar {
+            width: 0%;
+            height: 15px;
+            background-color: #c50037;
+            border-radius: 10px;
+            transition: width 0.4s ease-in-out;
+        }
+        .gabarito-item {
+            margin-bottom: 10px;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .gabarito-item.correct {
+            background-color: #d4edda;
+            border-left: 5px solid #28a745;
+        }
+        .gabarito-item.incorrect {
+            background-color: #f8d7da;
+            border-left: 5px solid #dc3545;
+        }
+        #motivationalMessage {
+            text-align: center;
+            font-size: 1.2em;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .highlight {
+            color: #c50037;
+            font-size: 1.3em;
+        }
+        #validation-message {
+            color: #c50037;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+            margin-top: 15px;
+        }
+        #result-icon-container {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        /* Estilos da tela de compartilhamento */
+        #shareContainer {
+            background: linear-gradient(135deg, #c50037, #ab0030);
+            color: white;
+            text-align: center;
+            padding: 40px 20px;
+            border-radius: 12px;
+        }
+        #shareContainer h2 {
+            color: white;
+            font-size: 1.5em;
+        }
+        #shareContainer .share-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+        .stat-box {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .stat-box .value {
+            font-size: 2.2em;
+            font-weight: bold;
+        }
+        .stat-box .label {
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- SEÇÃO DE INFORMAÇÕES DO ALUNO -->
+        <div id="userInfo">
+            <h1>Atividade Avaliativa de PA e PG</h1>
+            <form id="userInfoForm">
+                <label for="nomeAluno">Nome do Aluno:</label>
+                <input type="text" id="nomeAluno" name="nomeAluno" required>
+                <label for="dataNascimento">Data de Nascimento:</label>
+                <input type="date" id="dataNascimento" name="dataNascimento" required>
+                <button type="submit">Iniciar Atividade</button>
+            </form>
+        </div>
+
+        <!-- SEÇÃO DO QUIZ -->
+        <div id="quizContainer">
+            <div class="progress-bar-container">
+                <div id="progressBar"></div>
+            </div>
+            <h2 id="welcomeMessage"></h2>
+            <form id="quizForm">
+                <div id="questions-wrapper">
+                    <!-- As questões serão inseridas aqui pelo JS -->
+                </div>
+                <p id="validation-message">Por favor, selecione uma resposta para continuar.</p>
+                <div class="navigation-buttons">
+                    <button type="button" id="prevButton">Voltar</button>
+                    <button type="button" id="nextButton">Próxima</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- SEÇÃO DE RESULTADOS -->
+        <div id="resultsContainer">
+            <div id="result-icon-container">
+                <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#c50037" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M12 11l-4 2-4-2"></path><path d="M12 11l4 2 4-2"></path><path d="M12 11V3"></path></svg>
+            </div>
+            <h2>Resultados Finais</h2>
+            <p id="score"></p>
+            <p id="weightedScore"></p>
+            <p id="motivationalMessage"></p>
+            <hr>
+            <h3>Seu Desempenho:</h3>
+            <div id="gabarito"></div>
+            <button type="button" id="shareButton">Compartilhar Resultado</button>
+        </div>
+        
+        <!-- TELA DE COMPARTILHAMENTO (WRAPPER) -->
+        <div id="shareContainerWrapper">
+            <div id="shareContainer">
+                 <h2>Meu Desempenho! 🚀</h2>
+                 <p><strong><span id="shareName"></span></strong></p>
+                 <div class="share-stats">
+                     <div class="stat-box">
+                         <div class="value" id="shareScore">0/6</div>
+                         <div class="label">Acertos</div>
+                     </div>
+                     <div class="stat-box">
+                         <div class="value" id="shareWeightedScore">0.0</div>
+                         <div class="label">Pontos (0-10)</div>
+                     </div>
+                 </div>
+            </div>
+            <div class="navigation-buttons" style="margin-top: 15px;">
+                 <button type="button" id="backToResultsButton" style="background-color: #6c757d;">Voltar</button>
+                 <button type="button" id="downloadButton">Baixar Imagem</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Elementos da DOM
+        const userInfoForm = document.getElementById('userInfoForm');
+        const quizContainer = document.getElementById('quizContainer');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const shareContainerWrapper = document.getElementById('shareContainerWrapper');
+        const shareContainer = document.getElementById('shareContainer');
+        const nomeAlunoInput = document.getElementById('nomeAluno');
+        const dataNascimentoInput = document.getElementById('dataNascimento');
+        const prevButton = document.getElementById('prevButton');
+        const nextButton = document.getElementById('nextButton');
+        const progressBar = document.getElementById('progressBar');
+        const questionsWrapper = document.getElementById('questions-wrapper');
+        const shareButton = document.getElementById('shareButton');
+        const downloadButton = document.getElementById('downloadButton');
+        const backToResultsButton = document.getElementById('backToResultsButton');
+        const validationMessage = document.getElementById('validation-message');
+
+        // URL do Google Apps Script
+        const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzKNrAmBBXZrpUO33LM09M_-x7kFM9YnyKgPC0YyTiQRimw-FzJ_W2UjHJUom4Rfo8q/exec';
+
+        // Dados das Questões
+        const questions = [
+            { question: "1. Um atleta corre 5 km no primeiro dia de treino. A cada dia seguinte, ele aumenta a distância em 3 km. Quantos quilômetros ele correrá no 8º dia?", options: { A: "21 km", B: "24 km", C: "26 km", D: "29 km" }, answer: "C", difficulty: 'easy' },
+            { question: "2. Um teatro possui 15 cadeiras na primeira fileira e 3 cadeiras a mais em cada fileira seguinte. Qual é o número total de cadeiras nas primeiras 10 fileiras?", options: { A: "285", B: "42", C: "150", D: "300" }, answer: "A", difficulty: 'easy' },
+            { question: "3. O lucro de uma empresa em janeiro foi de R$ 80.000,00 e, em maio, foi de R$ 64.000,00. Sabendo que a queda mensal do lucro seguiu uma Progressão Aritmética, qual foi o lucro da empresa em julho?", options: { A: "R$ 60.000,00", B: "R$ 56.000,00", C: "R$ 52.000,00", D: "R$ 48.000,00" }, answer: "B", difficulty: 'hard' },
+            { question: "4. Uma cultura de bactérias começa com 100 indivíduos e seu número dobra a cada hora. Quantas bactérias existirão na 5ª hora?", options: { A: "500", B: "800", C: "1.600", D: "3.200" }, answer: "C", difficulty: 'easy' },
+            { question: "5. Um investidor aplicou R$ 50,00 no primeiro mês. A cada mês seguinte, ele aplicou o dobro do valor do mês anterior. Qual o valor total que ele investiu ao final de 6 meses?", options: { A: "R$ 1.600,00", B: "R$ 3.150,00", C: "R$ 3.200,00", D: "R$ 1.550,00" }, answer: "B", difficulty: 'easy' },
+            { question: "6. Sabendo que a sequência (x-2, x, x+3) é uma Progressão Geométrica, determine o valor de 'x'.", options: { A: "4", B: "5", C: "6", D: "2" }, answer: "C", difficulty: 'hard' }
+        ];
+
+        // Estado do Quiz
+        let currentQuestionIndex = 0;
+        let userAnswers = new Array(questions.length).fill(null);
+        let studentName = '';
+        
+        function renderQuestions(){
+            let html = '';
+            questions.forEach((q, index) => {
+                html += `<div class="question-block" id="q${index}"> <p>${q.question}</p>`;
+                for(const key in q.options){
+                    const isChecked = userAnswers[index] === key ? 'checked' : '';
+                    html += `<label><input type="radio" name="q${index}" value="${key}" ${isChecked}> <span>${q.options[key]}</span></label>`;
+                }
+                html += `</div>`;
+            });
+            questionsWrapper.innerHTML = html;
+        }
+
+        function showQuestion(index) {
+            renderQuestions(); // Re-renderiza para manter o estado dos radios
+            const allQuestions = document.querySelectorAll('.question-block');
+            allQuestions.forEach(q => q.classList.remove('active'));
+            document.getElementById(`q${index}`).classList.add('active');
+            
+            progressBar.style.width = `${((index + 1) / questions.length) * 100}%`;
+            prevButton.style.display = index === 0 ? 'none' : 'inline-block';
+            nextButton.textContent = (index === questions.length - 1) ? "Finalizar e Ver Resultado" : "Próxima";
+        }
+        
+        function saveCurrentAnswer() {
+             const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
+             if (selectedOption) {
+                userAnswers[currentQuestionIndex] = selectedOption.value;
+             }
+        }
+
+        userInfoForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            studentName = nomeAlunoInput.value;
+            document.getElementById('welcomeMessage').textContent = `Boa sorte, ${studentName}!`;
+            document.getElementById('userInfo').style.display = 'none';
+            quizContainer.style.display = 'block';
+            showQuestion(currentQuestionIndex);
+        });
+        
+        nextButton.addEventListener('click', () => {
+            const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
+            if (!selectedOption) {
+                validationMessage.style.display = 'block';
+                setTimeout(() => { validationMessage.style.display = 'none'; }, 2500);
+                return;
+            }
+
+            saveCurrentAnswer();
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                showQuestion(currentQuestionIndex);
+            } else {
+                calculateAndShowResults();
+            }
+        });
+        
+        prevButton.addEventListener('click', () => {
+            saveCurrentAnswer();
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                showQuestion(currentQuestionIndex);
+            }
+        });
+
+        function calculateAndShowResults() {
+            let score = 0;
+            let weightedScore = 0;
+            const totalPossibleWeighted = 10; // 4 faceis (1 pt) + 2 dificeis (3 pts) = 10 pts
+
+            userAnswers.forEach((answer, index) => {
+                if (answer === questions[index].answer) {
+                    score++;
+                    weightedScore += (questions[index].difficulty === 'hard') ? 3 : 1;
+                }
+            });
+
+            quizContainer.style.display = 'none';
+            resultsContainer.style.display = 'block';
+
+            document.getElementById('score').innerHTML = `<strong>Acertos: ${score} de ${questions.length}.</strong>`;
+            document.getElementById('weightedScore').innerHTML = `<strong>Pontuação Final: ${weightedScore.toFixed(1)} de ${totalPossibleWeighted.toFixed(1)}</strong>`;
+
+            let message = '';
+            const percentage = (score / questions.length) * 100;
+            if (percentage === 100) {
+                message = `<span class="highlight">Amanhã você vai arrasar, ${studentName}!</span>`;
+            } else if (percentage >= 70) {
+                message = `Parabéns, ${studentName}! Você mandou muito bem!`;
+            } else if (percentage >= 50) {
+                message = `Bom trabalho, ${studentName}! Continue praticando.`;
+            } else {
+                message = `Não desanime, ${studentName}! A prática leva à perfeição.`;
+            }
+            document.getElementById('motivationalMessage').innerHTML = message;
+            
+            const gabaritoDiv = document.getElementById('gabarito');
+            gabaritoDiv.innerHTML = '';
+            userAnswers.forEach((answer, index) => {
+                const resultItem = document.createElement('div');
+                resultItem.classList.add('gabarito-item');
+                resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> ${answer === questions[index].answer ? 'Correta' : 'Incorreta'}`;
+                resultItem.classList.add(answer === questions[index].answer ? 'correct' : 'incorrect');
+                gabaritoDiv.appendChild(resultItem);
+            });
+            
+            // Prepara dados para compartilhar
+            document.getElementById('shareName').textContent = studentName;
+            document.getElementById('shareScore').textContent = `${score}/${questions.length}`;
+            document.getElementById('shareWeightedScore').textContent = weightedScore.toFixed(1);
+
+            sendDataToSheet(score, weightedScore);
+        }
+
+        function sendDataToSheet(finalScore, finalWeightedScore) {
+            const submissionData = new FormData();
+            submissionData.append('nomeAluno', studentName);
+            submissionData.append('dataNascimento', dataNascimentoInput.value);
+            submissionData.append('acertos', finalScore);
+            submissionData.append('pontuacao', finalWeightedScore);
+            submissionData.append('totalQuestoes', questions.length);
+            userAnswers.forEach((answer, index) => {
+                submissionData.append(`q${index + 1}`, answer || "N/A");
+            });
+
+            fetch(APPSCRIPT_URL, { method: 'POST', body: submissionData })
+            .then(response => {
+                if (response.ok) console.log('Dados enviados com sucesso.');
+                else return response.text().then(text => { throw new Error(text) });
+            })
+            .catch(error => {
+                console.error('Erro ao enviar os dados:', error);
+                alert('Ocorreu um erro ao salvar suas respostas.');
+            });
+        }
+        
+        shareButton.addEventListener('click', () => {
+            resultsContainer.style.display = 'none';
+            shareContainerWrapper.style.display = 'block';
+        });
+
+        backToResultsButton.addEventListener('click', () => {
+            shareContainerWrapper.style.display = 'none';
+            resultsContainer.style.display = 'block';
+        });
+
+        downloadButton.addEventListener('click', () => {
+            html2canvas(shareContainer).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `resultado-${studentName.replace(/\s+/g, '-').toLowerCase()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        });
+    </script>
+</body>
+</html>
+
