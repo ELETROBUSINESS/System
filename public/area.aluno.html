@@ -131,6 +131,11 @@
             background-color: #f8d7da;
             border-left: 5px solid #dc3545;
         }
+        /* ALTERAÇÃO 1: Adicionada classe de estilo para a resposta "Não soube responder" */
+        .gabarito-item.unanswered {
+            background-color: #fff3cd;
+            border-left: 5px solid #ffc107;
+        }
         #motivationalMessage {
             text-align: center;
             font-size: 1.2em;
@@ -196,7 +201,6 @@
                 <label for="nomeAluno">Nome do Aluno:</label>
                 <input type="text" id="nomeAluno" name="nomeAluno" required>
                 <label for="dataNascimento">Data de Nascimento:</label>
-                <!-- ALTERAÇÃO 1: 'type' mudado de "date" para "text" e adicionado placeholder -->
                 <input type="text" id="dataNascimento" name="dataNascimento" placeholder="Ex: 25/12/2005" required>
                 <button type="submit">Iniciar Atividade</button>
             </form>
@@ -302,7 +306,6 @@
                     const isChecked = userAnswers[index] === key ? 'checked' : '';
                     html += `<label><input type="radio" name="q${index}" value="${key}" ${isChecked}> <span>${q.options[key]}</span></label>`;
                 }
-                // ALTERAÇÃO 2: Adiciona a nova opção "Não consegui responder"
                 const isNotAnsweredChecked = userAnswers[index] === 'NAO_SEI' ? 'checked' : '';
                 html += `<label style="font-style: italic; color: #666;"><input type="radio" name="q${index}" value="NAO_SEI" ${isNotAnsweredChecked}> <span>Não consegui responder essa pergunta</span></label>`;
                 html += `</div>`;
@@ -311,7 +314,7 @@
         }
 
         function showQuestion(index) {
-            renderQuestions(); // Re-renderiza para manter o estado dos radios
+            renderQuestions();
             const allQuestions = document.querySelectorAll('.question-block');
             allQuestions.forEach(q => q.classList.remove('active'));
             document.getElementById(`q${index}`).classList.add('active');
@@ -365,7 +368,7 @@
         function calculateAndShowResults() {
             let score = 0;
             let weightedScore = 0;
-            const totalPossibleWeighted = 10; // 4 faceis (1 pt) + 2 dificeis (3 pts) = 10 pts
+            const totalPossibleWeighted = 10;
 
             userAnswers.forEach((answer, index) => {
                 if (answer === questions[index].answer) {
@@ -395,15 +398,25 @@
             
             const gabaritoDiv = document.getElementById('gabarito');
             gabaritoDiv.innerHTML = '';
+            // ALTERAÇÃO 2: Lógica de exibição do resultado modificada
             userAnswers.forEach((answer, index) => {
                 const resultItem = document.createElement('div');
                 resultItem.classList.add('gabarito-item');
-                resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> ${answer === questions[index].answer ? 'Correta' : 'Incorreta'}`;
-                resultItem.classList.add(answer === questions[index].answer ? 'correct' : 'incorrect');
+
+                if (answer === questions[index].answer) {
+                    resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> Correta`;
+                    resultItem.classList.add('correct');
+                } else if (answer === 'NAO_SEI') {
+                    resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> Não soube responder`;
+                    resultItem.classList.add('unanswered');
+                } else {
+                    resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> Incorreta`;
+                    resultItem.classList.add('incorrect');
+                }
+                
                 gabaritoDiv.appendChild(resultItem);
             });
             
-            // Prepara dados para compartilhar
             document.getElementById('shareName').textContent = studentName;
             document.getElementById('shareScore').textContent = `${score}/${questions.length}`;
             document.getElementById('shareWeightedScore').textContent = weightedScore.toFixed(1);
