@@ -196,7 +196,8 @@
                 <label for="nomeAluno">Nome do Aluno:</label>
                 <input type="text" id="nomeAluno" name="nomeAluno" required>
                 <label for="dataNascimento">Data de Nascimento:</label>
-                <input type="date" id="dataNascimento" name="dataNascimento" required>
+                <!-- ALTERAÇÃO 1: 'type' mudado de "date" para "text" e adicionado placeholder -->
+                <input type="text" id="dataNascimento" name="dataNascimento" placeholder="Ex: 25/12/2005" required>
                 <button type="submit">Iniciar Atividade</button>
             </form>
         </div>
@@ -275,7 +276,7 @@
         const backToResultsButton = document.getElementById('backToResultsButton');
         const validationMessage = document.getElementById('validation-message');
 
-        // URL do Google Apps Script
+        // URL do Google Apps Script (o seu URL aqui)
         const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzKNrAmBBXZrpUO33LM09M_-x7kFM9YnyKgPC0YyTiQRimw-FzJ_W2UjHJUom4Rfo8q/exec';
 
         // Dados das Questões
@@ -301,6 +302,9 @@
                     const isChecked = userAnswers[index] === key ? 'checked' : '';
                     html += `<label><input type="radio" name="q${index}" value="${key}" ${isChecked}> <span>${q.options[key]}</span></label>`;
                 }
+                // ALTERAÇÃO 2: Adiciona a nova opção "Não consegui responder"
+                const isNotAnsweredChecked = userAnswers[index] === 'NAO_SEI' ? 'checked' : '';
+                html += `<label style="font-style: italic; color: #666;"><input type="radio" name="q${index}" value="NAO_SEI" ${isNotAnsweredChecked}> <span>Não consegui responder essa pergunta</span></label>`;
                 html += `</div>`;
             });
             questionsWrapper.innerHTML = html;
@@ -415,7 +419,7 @@
             submissionData.append('pontuacao', finalWeightedScore);
             submissionData.append('totalQuestoes', questions.length);
             userAnswers.forEach((answer, index) => {
-                submissionData.append(`q${index + 1}`, answer || "N/A");
+                submissionData.append(`q${index + 1}`, answer || "Nao Respondida");
             });
 
             fetch(APPSCRIPT_URL, { method: 'POST', body: submissionData })
