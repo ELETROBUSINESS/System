@@ -4,220 +4,610 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <link rel="icon" href="/assets/img/iconWeb.png">
-  <title>A N F da Silva LTDA</title>
-
-  <!-- Link To CSS -->
-  <link rel="stylesheet" href="/assets/CSS/main.css">
-  <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+  <title>A N F da Silva LTDA | Gerenciamento</title>
   <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-  <link rel='stylesheet'
-    href='https://cdn-uicons.flaticon.com/3.0.0/uicons-regular-straight/css/uicons-regular-straight.css'>
-</head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
-<script> window.dataLayer = window.dataLayer || []; function gtag() { dataLayer.push(arguments); } gtag('js', new Date()); gtag('config', 'G-BV6V3GTMR0'); </script>
+  <link rel="stylesheet" href="/assets/css/main.css">
 
-<body class="painel-adm1" onload="AnimationLoading();">
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+  <style>
+    /* O CSS permanece o mesmo da versão anterior, com um pequeno acréscimo para o novo campo de seleção */
+    :root {
+      --cor-primaria: #c50037;
+      --cor-secundaria: #8f2d56;
+      --cor-fundo: #f8f9fa;
+      --cor-card: #ffffff;
+      --cor-texto-principal: #212529;
+      --cor-texto-secundario: #6c757d;
+      --cor-sombra: rgba(0, 0, 0, 0.08);
+      --cor-sucesso: #28a745;
+      --cor-borda: #dee2e6;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      background-color: var(--cor-fundo);
+      color: var(--cor-texto-principal);
+    }
+
+    header {
+      background-color: var(--cor-primaria);
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 2px 5px var(--cor-sombra);
+      border-bottom-left-radius: 20px;
+      border-bottom-right-radius: 20px;
+    }
+
+    header .back-button {
+      color: white;
+      font-size: 1.8em;
+      text-decoration: none;
+      margin-right: 15px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.4em;
+    }
+
+    main {
+      padding: 20px 15px;
+    }
+
+    .section-title {
+      font-size: 1em;
+      font-weight: 500;
+      color: var(--cor-texto-secundario);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 15px;
+      padding-left: 5px;
+    }
+
+    #contas-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .conta-card {
+      background-color: #e8e9eb;
+      border-radius: 12px;
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 4px 12px var(--cor-sombra);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .conta-card .icon-container {
+      background-color: #fff;
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-right: 15px;
+    }
+
+    .conta-card .icon-container i {
+      color: var(--cor-primaria);
+      font-size: 1.8em;
+    }
+
+    .conta-detalhes {
+      flex-grow: 1;
+    }
+
+    .conta-detalhes .descricao {
+      font-weight: 600;
+      font-size: 1.1em;
+      margin-bottom: 2px;
+    }
+
+    .conta-detalhes .valor {
+      font-size: 1em;
+      color: var(--cor-texto-principal);
+    }
+
+    .conta-card .vencimento {
+      font-weight: 500;
+      color: var(--cor-texto-secundario);
+      font-size: 0.9em;
+      align-self: flex-start;
+    }
+
+    .btn-pagar {
+      background-color: var(--cor-primaria);
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.8em;
+      margin-top: 8px;
+    }
+
+    .option {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+
+    .card-opcao {
+      background-color: var(--cor-card);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px var(--cor-sombra);
+      cursor: pointer;
+    }
+
+    .card-opcao a {
+      text-decoration: none;
+      color: var(--cor-texto-principal);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 10px;
+    }
+
+    .card-opcao i {
+      font-size: 2.2em;
+      color: var(--cor-primaria);
+    }
+
+    .card-opcao h3 {
+      margin: 8px 0 0 0;
+      font-size: 0.9em;
+      font-weight: 500;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 0.3s;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .modal-content {
+      background-color: var(--cor-card);
+      border-radius: 16px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    #modalNovaConta .modal-content {
+      padding: 20px;
+    }
+
+    #modalNovaConta .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+
+    #modalNovaConta .modal-header h2 {
+      margin: 0;
+      font-size: 1.8em;
+      font-weight: 700;
+    }
+
+    #modalNovaConta .modal-header h2 span {
+      border-bottom: 3px solid var(--cor-primaria);
+    }
+
+    #modalNovaConta .modal-header .icon-wrapper {
+      background-color: var(--cor-primaria);
+      color: white;
+      border-radius: 8px;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.4em;
+    }
+
+    #formNovaConta .form-group {
+      margin-bottom: 20px;
+    }
+
+    #formNovaConta .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--cor-texto-secundario);
+      font-size: 0.9em;
+    }
+
+    #formNovaConta .form-group input[type="text"],
+    #formNovaConta .form-group input[type="number"] {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      background-color: #f0f2f5;
+      border-radius: 10px;
+      box-sizing: border-box;
+      font-size: 1em;
+    }
+
+    #formNovaConta .form-group-icon {
+      position: relative;
+    }
+
+    #formNovaConta .form-group-icon i {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--cor-texto-secundario);
+    }
+
+    #formNovaConta .btn-submit {
+      background-color: var(--cor-primaria);
+      color: white;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      width: 100%;
+      font-size: 1.1em;
+      font-weight: bold;
+      transition: background-color 0.2s;
+    }
+
+    #formNovaConta .btn-submit:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+
+    #modalPagarConta .modal-content {
+      padding: 25px;
+    }
+
+    #modalPagarConta .modal-header h2 {
+      margin: 0 0 15px 0;
+      font-size: 1.4em;
+    }
+
+    .info-pagamento {
+      margin-bottom: 20px;
+    }
+
+    .info-pagamento p {
+      margin: 8px 0;
+      color: var(--cor-texto-secundario);
+    }
+
+    .info-pagamento span {
+      font-weight: 600;
+      color: var(--cor-texto-principal);
+    }
+
+    /* Estilo para o novo campo de seleção */
+    .info-pagamento select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--cor-borda);
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 1em;
+      margin-top: 5px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .modal-buttons button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #btnConfirmarPagamento {
+      background-color: var(--cor-sucesso);
+      color: white;
+    }
+
+    #btnCancelarPagamento {
+      background-color: #e9ecef;
+      color: var(--cor-texto-principal);
+    }
+
+    #feedback {
+      text-align: center;
+      margin: 10px 0;
+      font-weight: bold;
+    }
+
+    .loading-spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-top: 4px solid var(--cor-primaria);
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
   <header>
-    <div class="loading">
-      <div class="efect-loading"></div>
-    </div>
+    <a href="/users/45692327000100/CD1/adm/nb/conta.html" class="back-button"><i class='bx bx-arrow-back'></i></a>
+    <h1>Contas a Pagar</h1>
   </header>
-  <div class="info">
-    <div class="photo-profile">
-      <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg">
-      <div class="detals">
-        <h1>Olá, Nubia!</h1>
-        <p>CEO: D'TUDO | Dupão</p>
+  <main>
+    <br><br>
+    <h2 class="section-title">Prestes a vencer</h2>
+    <div id="feedback"></div>
+    <div id="contas-container"></div>
+    <h2 class="section-title" style="margin-top: 30px;">Opções</h2>
+    <div class="option">
+      <div class="card-opcao">
+        <a href="/users/45692327000100/CD1/adm/nb/pushBuy.html">
+          <i class='bx bx-dollar-circle'></i>
+          <h3>Saída</h3>
+        </a>
       </div>
-      <i class="fi fi-rr-shield-trust"></i>
+      <div class="card-opcao">
+        <a id="btnNovaConta">
+          <i class='bx bx-form'></i>
+          <h3>Nova conta</h3>
+        </a>
+      </div>
     </div>
-    <div class="balance">
-      <p>Débitos Pendentes</p>
-      <div class="saldo">
-        <span id="boletosPayDate" class="skeleton shimmer"></span>
+  </main>
+
+  <div id="modalNovaConta" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2><span>Nova</span> conta</h2>
+        <div class="icon-wrapper"><i class='bx bx-plus'></i></div>
+      </div>
+      <form id="formNovaConta">
+        <div class="form-group">
+          <label for="beneficiario">Pessoa/Empresa beneficiária</label>
+          <input type="text" id="beneficiario" placeholder="Digite o nome" required>
+        </div>
+        <div class="form-group">
+          <label for="valor">Valor da conta</label>
+          <input type="text" id="valor" placeholder="R$ 0,00" required>
+        </div>
+        <div class="form-group form-group-icon">
+          <label for="vencimento">Data de Vencimento</label>
+          <input type="text" id="vencimento" placeholder="DD/MM/AAAA" maxlength="10" required>
+          <i class='bx bx-calendar'></i>
+        </div>
+        <button type="submit" class="btn-submit">Registrar</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="modalPagarConta" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Confirmar Pagamento</h2>
+      </div>
+      <div class="info-pagamento">
+        <p>Descrição: <span id="pagar-descricao"></span></p>
+        <p>Valor: <span id="pagar-valor"></span></p>
+        <p>Vencimento: <span id="pagar-vencimento"></span></p>
+
+        <div class="form-group" style="margin-top:15px;">
+          <label for="forma-pagamento" style="font-weight:600;">Forma de Pagamento</label>
+          <select id="forma-pagamento" required>
+            <option value="Boleto">Boleto</option>
+            <option value="Dinheiro">Dinheiro</option>
+            <option value="Pix">Pix</option>
+            <option value="Cartão de Crédito">Cartão de Crédito</option>
+            <option value="Cartão de Débito">Cartão de Débito</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button id="btnCancelarPagamento">Cancelar</button>
+        <button id="btnConfirmarPagamento">Confirmar</button>
       </div>
     </div>
   </div>
-  <br>
 
   <script>
-    function carregarDadosPagina2() {
-      const url = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=2`;
+    // *** SUA URL DO APPS SCRIPT ***
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzkAs8dsJMepkQBhdL--XwO3wUQuQgvA-DFPEwraiz8ijiX9gkPMBuAeM5udQjzmJvzqQ/exec";
 
-      fetch(url)
-        .then(response => response.json())
-        .then(data => {
-          const campos = [
-            'boletosPayDate'
-          ];
+    // Seletores de Elementos
+    const contasContainer = document.getElementById('contas-container');
+    const feedbackEl = document.getElementById('feedback');
+    const modalNovaConta = document.getElementById('modalNovaConta');
+    const btnNovaConta = document.getElementById('btnNovaConta');
+    const formNovaConta = document.getElementById('formNovaConta');
+    const modalPagarConta = document.getElementById('modalPagarConta');
+    const btnConfirmarPagamento = document.getElementById('btnConfirmarPagamento');
+    const btnCancelarPagamento = document.getElementById('btnCancelarPagamento');
+    const inputVencimento = document.getElementById('vencimento');
+    const inputValor = document.getElementById('valor');
 
-          campos.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-              el.textContent = data[id];
-              el.classList.remove('skeleton', 'shimmer');
-            }
-          });
-        })
-        .catch(error => {
-          console.error('Erro ao buscar dados da página 2:', error);
-        });
-    } document.addEventListener('DOMContentLoaded', () => {
-      carregarDadosPagina2(); // Carrega ao abrir a página
-      setInterval(carregarDadosPagina2, 30000); // Atualiza a cada 10 segundos
+    // LÓGICA DO MODAL
+    btnNovaConta.onclick = () => { formNovaConta.reset(); modalNovaConta.style.display = 'flex'; };
+    window.onclick = (event) => {
+      if (event.target == modalNovaConta) modalNovaConta.style.display = 'none';
+      if (event.target == modalPagarConta) modalPagarConta.style.display = 'none';
+    };
+
+    // FORMATAÇÃO AUTOMÁTICA DE INPUTS
+    inputVencimento.addEventListener('input', (e) => {
+      let value = e.target.value.replace(/\D/g, '');
+      if (value.length > 2) value = value.slice(0, 2) + '/' + value.slice(2);
+      if (value.length > 5) value = value.slice(0, 5) + '/' + value.slice(5, 9);
+      e.target.value = value;
+    });
+    inputValor.addEventListener('input', (e) => {
+      let value = e.target.value.replace(/\D/g, '');
+      value = (parseInt(value, 10) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+      if (value === 'NaN') value = '';
+      e.target.value = 'R$ ' + value;
     });
 
-  </script>
+    // CARREGAR CONTAS
+    document.addEventListener('DOMContentLoaded', carregarContas);
+    async function carregarContas() {
+      setLoading(true, 'Carregando contas...');
+      try {
+        const response = await fetch(`${SCRIPT_URL}?action=getContas`);
+        if (!response.ok) throw new Error(`Erro de comunicação com o servidor.`);
+        const contas = await response.json();
+        renderizarContas(contas);
+      } catch (error) {
+        mostrarErro(error);
+      }
+    }
 
-  <div class="back">
-    <a class="btn-default" href="/users/45692327000100/CD1/adm/nb/conta.html" target="_self">
-      Voltar<i class='bx bxs-left-arrow-circle'></i>
-    </a>
-  </div>
+    function renderizarContas(contas) {
+      setLoading(false);
+      contasContainer.innerHTML = '';
+      if (contas.error) return mostrarErro({ message: contas.message });
+      if (contas.length === 0) {
+        contasContainer.innerHTML = '<p>Nenhuma conta a pagar encontrada. ✨</p>';
+        return;
+      }
+      contas.forEach(conta => {
+        const card = document.createElement('div');
+        card.className = 'conta-card';
+        card.innerHTML = `
+                    <div class="icon-container"><i class='bx bx-dollar'></i></div>
+                    <div class="conta-detalhes">
+                        <span class="descricao">${conta.descricao}</span>
+                        <span class="valor">R$ ${parseFloat(conta.valor).toFixed(2).replace('.', ',')}</span>
+                        <button class="btn-pagar" data-id="${conta.id}" data-descricao="${conta.descricao}" data-valor="R$ ${parseFloat(conta.valor).toFixed(2).replace('.', ',')}" data-vencimento="${conta.vencimento}">Pagar</button>
+                    </div>
+                    <span class="vencimento">${conta.vencimento}</span>`;
+        contasContainer.appendChild(card);
+      });
+      document.querySelectorAll('.btn-pagar').forEach(button => button.addEventListener('click', handleAbrirModalPagar));
+    }
 
-  <div class="new_nav">
-    <div class="conta-info">
-      <p>Gerenciar</p>
-      <div class="option">
-        <div class="card-option">
-          <a href="/users/45692327000100/CD1/adm/nb/pushBuy.html">
-            <i class='bxr  bx-dollar-circle'></i>
-            <h3>Saída</h3>
-          </a>
-        </div>
-        <div class="card-option">
-          <a href="/users/45692327000100/CD1/adm/nb/slip.html">
-            <i class='bxr  bx-scan-detail'></i>
-            <h3>Ler Boleto</h3>
-          </a>
-        </div>
-        <div class="card-option">
-          <a href="/users/45692327000100/CD1/adm/nb/bills.html">
-            <i class='bxr  bx-form'></i>
-            <h3>Nova conta</h3>
-          </a>
-        </div>
-        <div class="card-option">
-          <a href="/users/45692327000100/CD1/adm/nb/debts.html">
-            <i class='bx  bx-copy-list'></i>
-            <h3>Todos as contas</h3>
-          </a>
-        </div>
-      </div>
+    // ADICIONAR NOVA CONTA
+    formNovaConta.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitButton = formNovaConta.querySelector('.btn-submit');
+      submitButton.disabled = true;
+      submitButton.textContent = 'Salvando...';
+      modalNovaConta.style.display = 'none';
+      setLoading(true, 'Registrando...');
+      try {
+        const now = new Date();
+        const pad = (num) => num.toString().padStart(2, '0');
+        const id = `${pad(now.getDate())}${pad(now.getMonth() + 1)}${now.getFullYear()}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+        const [dia, mes, ano] = inputVencimento.value.split('/');
+        const dataFormatada = `${ano}-${mes}-${dia}`;
+        const valorNumerico = inputValor.value.replace(/\D/g, '') / 100;
+        const dadosConta = { id, descricao: document.getElementById('beneficiario').value, valor: valorNumerico, vencimento: dataFormatada };
+        const response = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'adicionarConta', data: dadosConta }) });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        await carregarContas();
+      } catch (error) {
+        mostrarErro(error);
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Registrar';
+      }
+    });
 
-      <div id="updateBoletoModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
-          <span class="close-btn">&times;</span>
-          <h2 id="modal-empresa"></h2>
-          <p>Vencimento: <span id="modal-vencimento"></span></p>
-          <p>Valor: <span id="modal-valor"></span></p>
-          <button id="btn-marcar-pago" class="confirm-btn">Marcar como Pago</button>
-          <p id="modal-status-message"></p>
-        </div>
-      </div>
+    // LÓGICA DO PAGAMENTO COM MODAL
+    function handleAbrirModalPagar(event) {
+      const button = event.target;
+      document.getElementById('pagar-descricao').textContent = button.dataset.descricao;
+      document.getElementById('pagar-valor').textContent = button.dataset.valor;
+      document.getElementById('pagar-vencimento').textContent = button.dataset.vencimento;
+      btnConfirmarPagamento.dataset.id = button.dataset.id;
+      modalPagarConta.style.display = 'flex';
+    }
 
-      <div>
-        <p class="message">Contas prestes a vencer</p>
-        <div class="shop container">
-          <div class="mainContainer">
-            <div class="boletosContainer">
-              <div class="boletos-vencer" id="boletosContainer"></div>
-            </div>
-          </div>
-        </div>
-      </div>
+    btnCancelarPagamento.onclick = () => modalPagarConta.style.display = 'none';
 
-      <script>
-        document.addEventListener('DOMContentLoaded', () => {
-          const container = document.getElementById('boletosContainer');
+    btnConfirmarPagamento.addEventListener('click', async (event) => {
+      const idConta = event.target.dataset.id;
+      // Pega o valor do novo campo de seleção
+      const formaPagamento = document.getElementById('forma-pagamento').value;
 
-          // =================================================================
-          // !!!!! IMPORTANTE !!!!!
-          // COLE A URL GERADA NO PASSO 1 (AO PUBLICAR A PLANILHA) AQUI
-          // =================================================================
-          const URL_PLANILHA_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQt6seiP0hxPrVNPEWeRBNJuvKTTag52r4vxyyiOKQxoKS1IibyWF92O3di1Bb_9YL8ONRSRdNbQR8Q/pub?gid=16033507&single=true&output=csv";
-
-          function showLoader() {
-            container.innerHTML = `<p class="loading">Carregando contas...</p>`;
-          }
-
-          async function fetchBoletos() {
-            showLoader();
-
-            if (URL_PLANILHA_CSV === "COLE_A_SUA_URL_CSV_AQUI") {
-              container.innerHTML = `<p class="error">ERRO: Você precisa colar a URL da sua planilha publicada na variável URL_PLANILHA_CSV no código.</p>`;
-              return;
-            }
-
-            try {
-              // 1. Busca o arquivo CSV
-              const response = await fetch(URL_PLANILHA_CSV);
-              if (!response.ok) {
-                throw new Error(`Não foi possível carregar a planilha. Status: ${response.statusText}`);
-              }
-              const csvText = await response.text();
-
-              // 2. Converte o texto CSV em um array de dados
-              const linhas = csvText.split('\n');
-              const dados = linhas.slice(1).map(linha => linha.split(',')); // Ignora a primeira linha (cabeçalho)
-
-              // 3. Define as colunas (começando do 0) e a loja a ser filtrada
-              const COLUNA_LOJA = 0;   // Coluna A
-              const COLUNA_VALOR = 1;  // Coluna B
-              const COLUNA_EMPRESA = 2;// Coluna C
-              const COLUNA_VENCIMENTO = 3; // Coluna D
-              const COLUNA_STATUS = 4; // Coluna E
-              const lojaParaFiltrar = 'nubia';
-
-              // 4. Filtra e processa apenas os boletos que importam
-              const boletos = dados.filter(linha =>
-                linha[COLUNA_LOJA] && linha[COLUNA_STATUS] &&
-                linha[COLUNA_LOJA].trim().toLowerCase() === lojaParaFiltrar &&
-                linha[COLUNA_STATUS].trim().toLowerCase() === 'a pagar'
-              );
-
-              container.innerHTML = ''; // Limpa a mensagem de "carregando"
-
-              if (boletos.length === 0) {
-                container.innerHTML = '<p>Nenhum boleto "a pagar" encontrado para esta loja.</p>';
-                return;
-              }
-
-              // 5. Exibe os boletos na tela
-              boletos.forEach(boleto => {
-                const empresa = boleto[COLUNA_EMPRESA];
-                const valor = boleto[COLUNA_VALOR];
-                const vencimento = boleto[COLUNA_VENCIMENTO];
-
-                // Tenta formatar a data de 'MM/DD/YYYY' ou 'YYYY-MM-DD' para 'DD/MM'
-                let vencimentoFormatado = vencimento;
-                try {
-                  const dataObj = new Date(vencimento);
-                  if (!isNaN(dataObj.getTime())) {
-                    const dia = ('0' + dataObj.getDate()).slice(-2);
-                    const mes = ('0' + (dataObj.getMonth() + 1)).slice(-2);
-                    vencimentoFormatado = `${dia}/${mes}`;
-                  }
-                } catch (e) { }
-
-                const div = document.createElement('div');
-                div.className = 'boleto-item';
-                div.innerHTML = `<strong>${empresa}</strong> | Vencimento: ${vencimentoFormatado} | Valor: R$ ${valor}`;
-                container.appendChild(div);
-              });
-
-            } catch (err) {
-              container.innerHTML = `<p class="error">ERRO FATAL: ${err.message}</p>`;
-              console.error(err);
-            }
-          }
-
-          fetchBoletos();
+      modalPagarConta.style.display = 'none';
+      setLoading(true, 'Registrando pagamento...');
+      try {
+        // Envia o ID e a forma de pagamento para o script
+        const response = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'pagarConta',
+            id: idConta,
+            paymentMethod: formaPagamento
+          })
         });
-      </script>
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        await carregarContas();
+      } catch (error) {
+        mostrarErro(error);
+      }
+    });
 
-      <!-- Link To JS -->
-      <script src="/assets/js/loading.js"></script>
+    // FUNÇÕES AUXILIARES
+    function setLoading(isLoading, message = '') {
+      feedbackEl.innerHTML = isLoading ? `<div class="loading-spinner"></div><p>${message}</p>` : '';
+      if (isLoading) feedbackEl.style.color = 'var(--cor-texto)';
+    }
+    function mostrarErro(error) {
+      setLoading(false);
+      feedbackEl.textContent = `Erro: ${error.message}`;
+      feedbackEl.style.color = 'var(--cor-primaria)';
+    }
+  </script>
+</body>
+
+</html>

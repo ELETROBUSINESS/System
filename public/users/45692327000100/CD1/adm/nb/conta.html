@@ -167,11 +167,12 @@
 
                 <script>
                     document.addEventListener('DOMContentLoaded', () => {
-                        const url = 'https://script.google.com/macros/s/AKfycbyPWy8SHpOTsZAqFKoUTNOrgJkZKVVtYAMRXNDBQ3Nnalkr2k5c6CrUYtfmSuTQ5rbqhw/exec?tipo=boletos&loja=nubia';
+                        // URL ATUALIZADA para o nosso novo Apps Script
+                        const url = 'https://script.google.com/macros/s/AKfycbzkAs8dsJMepkQBhdL--XwO3wUQuQgvA-DFPEwraiz8ijiX9gkPMBuAeM5udQjzmJvzqQ/exec?action=getContas';
 
-                        let boletos = [];
+                        let contas = [];
                         let currentIndex = 0;
-                        const displayDuration = 5000;
+                        const displayDuration = 5000; // Tempo de rotação em milissegundos
                         let intervalId;
 
                         const boletoEmpresa = document.getElementById('boletoEmpresa');
@@ -179,59 +180,57 @@
                         const boletoVencimento = document.getElementById('boletoVencimento');
                         const progressBar = document.getElementById('progressBar');
 
-                        function updateBoletoDisplay() {
-                            if (boletos.length === 0) {
-                                console.warn("Nenhum boleto para exibir.");
-                                boletoEmpresa.textContent = "Nenhum boleto";
-                                boletoValor.textContent = "";
+                        function updateContaDisplay() {
+                            if (contas.length === 0) {
+                                boletoEmpresa.textContent = "Nenhuma conta pendente";
+                                boletoValor.textContent = "Você está em dia! ✨";
                                 boletoVencimento.textContent = "";
+                                if (progressBar) progressBar.style.width = '0%';
                                 return;
                             }
 
-                            const currentBoleto = boletos[currentIndex];
-                            boletoEmpresa.textContent = currentBoleto.empresa;
-                            const valor = parseFloat(currentBoleto.valor);
+                            const currentConta = contas[currentIndex];
+
+                            // ATUALIZAÇÃO: Usando 'descricao' em vez de 'empresa'
+                            boletoEmpresa.textContent = currentConta.descricao;
+
+                            const valor = parseFloat(currentConta.valor);
                             boletoValor.textContent = `R$ ${valor.toFixed(2).replace('.', ',')}`;
-                            boletoVencimento.textContent = currentBoleto.vencimento;
+                            boletoVencimento.textContent = currentConta.vencimento;
 
                             resetProgressBar();
-
-                            currentIndex = (currentIndex + 1) % boletos.length;
+                            currentIndex = (currentIndex + 1) % contas.length;
                         }
 
                         function resetProgressBar() {
+                            if (!progressBar) return;
                             progressBar.style.transition = 'none';
                             progressBar.style.width = '0%';
+                            // Força o navegador a refazer o layout para reiniciar a animação
                             void progressBar.offsetWidth;
                             progressBar.style.transition = `width ${displayDuration / 1000}s linear`;
                             progressBar.style.width = '100%';
                         }
 
-                        function startBoletoRotation() {
-                            updateBoletoDisplay();
-                            intervalId = setInterval(updateBoletoDisplay, displayDuration);
+                        function startRotation() {
+                            updateContaDisplay();
+                            if (contas.length > 1) { // Só rotaciona se houver mais de uma conta
+                                intervalId = setInterval(updateContaDisplay, displayDuration);
+                            }
                         }
 
                         fetch(url)
                             .then(response => response.json())
                             .then(data => {
                                 if (data && !data.error && data.length > 0) {
-                                    boletos = data;
-                                    startBoletoRotation();
-                                } else if (data && data.error) {
-                                    console.error('Erro da API:', data.error);
-                                    boletoEmpresa.textContent = "Erro!";
-                                    boletoValor.textContent = data.error;
-                                    boletoVencimento.textContent = "";
+                                    contas = data;
+                                    startRotation();
                                 } else {
-                                    console.warn("Nenhum boleto encontrado ou dados inválidos.");
-                                    boletoEmpresa.textContent = "Nenhum boleto";
-                                    boletoValor.textContent = "";
-                                    boletoVencimento.textContent = "";
+                                    updateContaDisplay(); // Mostra a mensagem de "nenhuma conta"
                                 }
                             })
                             .catch(error => {
-                                console.error('Erro ao carregar os boletos:', error);
+                                console.error('Erro ao carregar as contas:', error);
                                 boletoEmpresa.textContent = "Erro de conexão";
                                 boletoValor.textContent = "Verifique a internet";
                                 boletoVencimento.textContent = "";
