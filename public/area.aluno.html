@@ -8,269 +8,333 @@
     <!-- Biblioteca para gerar a imagem de compartilhamento -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+        :root {
+            --main-color: #c50037;
+            --accent-color: #ab0030;
+            --text-color: #333;
+            --light-gray: #f4f4f9;
+            --white: #fff;
+            --gray-text: #6c757d;
+            --correct-color: #28a745;
+            --incorrect-color: #dc3545;
+            --unanswered-color: #ffc107;
+        }
 
         body {
             font-family: 'Roboto', Arial, sans-serif;
-            background-color: #f4f4f9;
-            color: #333;
-            line-height: 1.6;
+            background-color: var(--light-gray);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* --- Estilos Comuns de Telas --- */
+        .screen {
+            display: none;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+        .screen.active {
+            display: block;
+        }
+        
+        /* --- Novo Estilo da Tela de Login --- */
+        #loginScreen {
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            margin: 0;
             padding: 20px;
+            box-sizing: border-box;
         }
-        .container {
-            background: #fff;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 700px;
-            overflow: hidden;
-        }
-        h1, h2, h3 {
-            color: #4a4a4a;
+        #loginScreen .container {
             text-align: center;
+            padding: 40px;
         }
-        .question-block {
-            margin-bottom: 25px;
-            padding-left: 15px;
-            display: none; /* Esconde todas as questões por padrão */
-        }
-        .question-block.active {
-            display: block; /* Mostra apenas a questão ativa */
-        }
-        .question-block p {
-            font-weight: bold;
-            margin-bottom: 15px;
-            font-size: 1.1em;
-        }
-        label {
-            display: block;
+        #loginScreen h1 {
             margin-bottom: 10px;
-            cursor: pointer;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            transition: all 0.2s;
         }
-        label:hover {
-            background-color: #f5f5f5;
-        }
-        input[type="radio"] {
-            margin-right: 12px;
-        }
-        input[type="radio"]:checked + span {
-            font-weight: bold;
-            color: #c50037;
-        }
-        input[type="text"], input[type="date"] {
-            width: calc(100% - 22px);
-            padding: 11px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-        }
-        button {
-            display: inline-block;
-            width: 100%;
-            padding: 15px;
-            background-color: #c50037; /* Cor principal */
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 18px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            text-align: center;
-        }
-        button:hover {
-            background-color: #ab0030; /* Cor para detalhes */
-        }
-        .navigation-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        #prevButton {
-            background-color: #6c757d;
-        }
-        #prevButton:hover {
-            background-color: #5a6268;
-        }
-        #quizContainer, #resultsContainer, #shareContainerWrapper {
-            display: none;
-        }
-        .progress-bar-container {
-            width: 100%;
-            background-color: #e0e0e0;
-            border-radius: 10px;
-            margin-bottom: 25px;
-        }
-        #progressBar {
-            width: 0%;
-            height: 15px;
-            background-color: #c50037;
-            border-radius: 10px;
-            transition: width 0.4s ease-in-out;
-        }
-        .gabarito-item {
-            margin-bottom: 10px;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: bold;
-        }
-        .gabarito-item.correct {
-            background-color: #d4edda;
-            border-left: 5px solid #28a745;
-        }
-        .gabarito-item.incorrect {
-            background-color: #f8d7da;
-            border-left: 5px solid #dc3545;
-        }
-        /* ALTERAÇÃO 1: Adicionada classe de estilo para a resposta "Não soube responder" */
-        .gabarito-item.unanswered {
-            background-color: #fff3cd;
-            border-left: 5px solid #ffc107;
-        }
-        #motivationalMessage {
-            text-align: center;
-            font-size: 1.2em;
-            margin: 20px 0;
-            font-weight: bold;
-        }
-        .highlight {
-            color: #c50037;
-            font-size: 1.3em;
-        }
-        #validation-message {
-            color: #c50037;
-            text-align: center;
-            font-weight: bold;
-            display: none;
-            margin-top: 15px;
-        }
-        #result-icon-container {
-            text-align: center;
-            margin-bottom: 15px;
-        }
-
-        /* Estilos da tela de compartilhamento */
-        #shareContainer {
-            background: linear-gradient(135deg, #c50037, #ab0030);
-            color: white;
-            text-align: center;
-            padding: 40px 20px;
-            border-radius: 12px;
-        }
-        #shareContainer h2 {
-            color: white;
-            font-size: 1.5em;
-        }
-        #shareContainer .share-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 30px;
+        #loginScreen p {
+            color: var(--gray-text);
             margin-bottom: 30px;
         }
-        .stat-box {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 20px;
-            border-radius: 10px;
+        #loginForm label {
+            text-align: left;
+            font-weight: 500;
+            margin-bottom: 5px;
         }
-        .stat-box .value {
-            font-size: 2.2em;
-            font-weight: bold;
+
+        /* Classe para esconder a tela de login quando o token existir */
+        .token-client-pg {
+            display: none !important;
         }
-        .stat-box .label {
-            font-size: 0.9em;
+
+        .header-dash {
+            background: linear-gradient(90deg, var(--main-color), var(--accent-color));
+            color: var(--white);
+            padding: 20px 30px;
+            border-radius: 0 0 25px 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
+
+        .header-dash .header-content { text-align: center; }
+        .header-dash h1 { margin: 0; font-size: 1.5em; color: var(--white); }
+        .header-dash p { margin: 5px 0 0; opacity: 0.8; font-size: 0.9em; }
+        .profile-icon-header { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); cursor: pointer; }
+        .profile-icon-header svg { width: 32px; height: 32px; stroke: var(--white); }
+
+        .main-content { padding: 25px; padding-bottom: 100px; }
+        .icon-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 20px; text-align: center; }
+        .icon-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+        .icon-item .icon-circle { background-color: #f0f0f0; width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-bottom: 10px; transition: background-color 0.3s; }
+        .icon-item:hover .icon-circle { background-color: #e0e0e0; }
+        .icon-item svg { width: 28px; height: 28px; stroke: var(--main-color); }
+        .icon-item span { font-size: 0.9em; color: var(--text-color); }
+
+        .section-title { text-align: center; color: var(--gray-text); font-weight: 500; margin: 40px 0 20px; }
+        .activity-card { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; margin-bottom: 15px; }
+        .activity-card:hover { transform: translateY(-3px); box-shadow: 0 4px 15px rgba(0,0,0,0.12); }
+        .activity-info h3 { margin: 0; color: var(--text-color); font-size: 1.1em; }
+        .activity-info p { margin: 5px 0 0; color: var(--gray-text); font-size: 0.9em; }
+        .start-button { background-color: var(--main-color); color: var(--white); padding: 8px 16px; border-radius: 20px; font-weight: 500; font-size: 0.9em; }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--white); display: none; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--gray-text); cursor: pointer; }
+        .nav-item.active { color: var(--main-color); }
+        .nav-item svg { width: 24px; height: 24px; margin-bottom: 4px; }
+        .nav-item span { font-size: 0.8em; }
+        
+        #quizWrapper { padding-top: 40px; padding-bottom: 40px; }
+        .container { background: var(--white); padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 700px; margin: 0 auto; box-sizing: border-box; }
+        #quizWrapper h1, #quizWrapper h2, #quizWrapper h3 { color: #4a4a4a; text-align: center; }
+        .question-block { margin-bottom: 25px; padding-left: 15px; display: none; }
+        .question-block.active { display: block; }
+        .question-block p { font-weight: bold; margin-bottom: 15px; font-size: 1.1em; }
+        label { display: block; margin-bottom: 10px; cursor: pointer; padding: 12px; border: 1px solid #ddd; border-radius: 8px; transition: all 0.2s; }
+        label:hover { background-color: #f5f5f5; }
+        input[type="radio"] { margin-right: 12px; }
+        input[type="radio"]:checked + span { font-weight: bold; color: var(--main-color); }
+        input[type="text"], input[type="number"] { width: calc(100% - 22px); padding: 11px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; }
+        button { display: inline-block; width: 100%; padding: 15px; background-color: var(--main-color); color: white; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; transition: background-color 0.3s; text-align: center; }
+        button:hover { background-color: var(--accent-color); }
+        .navigation-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        #prevButton { background-color: var(--gray-text); }
+        #prevButton:hover { background-color: #5a6268; }
+        #quizContainer, #resultsContainer, #shareContainerWrapper, #quizConfirmation { display: none; }
+        .progress-bar-container { width: 100%; background-color: #e0e0e0; border-radius: 10px; margin-bottom: 25px; }
+        #progressBar { width: 0%; height: 15px; background-color: var(--main-color); border-radius: 10px; transition: width 0.4s ease-in-out; }
+        #motivationalMessage { text-align: center; font-size: 1.2em; margin: 20px 0; font-weight: bold; }
+        .highlight { color: var(--main-color); font-size: 1.3em; }
+        #validation-message { color: var(--main-color); text-align: center; font-weight: bold; display: none; margin-top: 15px; }
+        #result-icon-container { text-align: center; margin-bottom: 15px; }
+        
+        .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); z-index: 2000; display: none; justify-content: center; align-items: center; }
+        .popup-content { background: var(--white); padding: 30px; border-radius: 12px; text-align: center; width: 90%; max-width: 400px; position: relative; }
+        .popup-content h2 { margin-top: 0; }
+        .close-popup { position: absolute; top: 10px; right: 15px; font-size: 28px; cursor: pointer; color: #aaa; }
+        
+        .back-button { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--white); font-size: 24px; cursor: pointer; padding: 0 10px; width: auto; }
+        .disciplinas-list, .day-schedule ul, .profile-info-list { list-style: none; padding: 0; }
+        .disciplinas-list li, .day-schedule, .profile-info-list li { background: var(--white); padding: 20px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .disciplinas-list li span { display: block; font-size: 0.85em; color: var(--gray-text); margin-top: 5px; font-weight: 500;}
+        .day-schedule h3 { margin-top: 0; border-bottom: 2px solid var(--main-color); padding-bottom: 10px; }
+        .day-schedule li { padding: 8px 0; border-bottom: 1px solid #eee; }
+        .day-schedule li:last-child { border-bottom: none; }
+        
+        #profileScreen .profile-header { text-align: center; margin-bottom: 30px; }
+        #profileScreen .profile-header svg { width: 80px; height: 80px; stroke: var(--main-color); }
+        #profileScreen h2 { margin-top: 10px; }
+        .profile-info-list li { display: flex; justify-content: space-between; align-items: center; }
+        .profile-info-list .label { color: var(--gray-text); }
+        .profile-info-list .value { font-weight: bold; }
+        #logoutButton { background-color: var(--gray-text); margin-top: 20px; }
+
+        #quizConfirmation { text-align: center; }
+        #quizConfirmation h2 { margin-bottom: 10px; }
+        #quizConfirmation p { color: var(--gray-text); margin-top: 0; }
+        #quizConfirmation .profile-icon-large { margin: 20px 0; }
+        #quizConfirmation .profile-icon-large svg { width: 80px; height: 80px; stroke: var(--main-color); }
+        
+        #resultsSummary { display: flex; justify-content: space-around; text-align: center; margin: 20px 0; }
+        .summary-box { padding: 10px; }
+        .summary-box .count { font-size: 2em; font-weight: bold; }
+        .summary-box .label { font-size: 0.9em; color: var(--gray-text); }
+        .summary-correct .count { color: var(--correct-color); }
+        .summary-incorrect .count { color: var(--incorrect-color); }
+        .summary-unanswered .count { color: var(--unanswered-color); }
+
     </style>
 </head>
 <body>
-
-    <div class="container">
-        <!-- SEÇÃO DE INFORMAÇÕES DO ALUNO -->
-        <div id="userInfo">
-            <h1>Atividade Avaliativa de PA e PG</h1>
-            <form id="userInfoForm">
-                <label for="nomeAluno">Nome do Aluno:</label>
-                <input type="text" id="nomeAluno" name="nomeAluno" required>
-                <label for="dataNascimento">Data de Nascimento:</label>
-                <input type="text" id="dataNascimento" name="dataNascimento" placeholder="Ex: 25/12/2005" required>
-                <button type="submit">Iniciar Atividade</button>
+    <!-- TELA DE LOGIN -->
+    <div id="loginScreen" class="screen active">
+        <div class="container">
+            <h1>Bem-vindo(a)!</h1>
+            <p>Por favor, identifique-se para começar.</p>
+            <form id="loginForm">
+                <label for="studentNameInput">Nome Completo:</label>
+                <input type="text" id="studentNameInput" required>
+                <label for="studentBirthDateInput">Data de Nascimento:</label>
+                <input type="text" id="studentBirthDateInput" placeholder="DD/MM/AAAA" maxlength="10" required>
+                <button type="submit">Entrar</button>
             </form>
-        </div>
-
-        <!-- SEÇÃO DO QUIZ -->
-        <div id="quizContainer">
-            <div class="progress-bar-container">
-                <div id="progressBar"></div>
-            </div>
-            <h2 id="welcomeMessage"></h2>
-            <form id="quizForm">
-                <div id="questions-wrapper">
-                    <!-- As questões serão inseridas aqui pelo JS -->
-                </div>
-                <p id="validation-message">Por favor, selecione uma resposta para continuar.</p>
-                <div class="navigation-buttons">
-                    <button type="button" id="prevButton">Voltar</button>
-                    <button type="button" id="nextButton">Próxima</button>
-                </div>
-            </form>
-        </div>
-
-        <!-- SEÇÃO DE RESULTADOS -->
-        <div id="resultsContainer">
-            <div id="result-icon-container">
-                <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#c50037" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M12 11l-4 2-4-2"></path><path d="M12 11l4 2 4-2"></path><path d="M12 11V3"></path></svg>
-            </div>
-            <h2>Resultados Finais</h2>
-            <p id="score"></p>
-            <p id="weightedScore"></p>
-            <p id="motivationalMessage"></p>
-            <hr>
-            <h3>Seu Desempenho:</h3>
-            <div id="gabarito"></div>
-            <button type="button" id="shareButton">Compartilhar Resultado</button>
-        </div>
-        
-        <!-- TELA DE COMPARTILHAMENTO (WRAPPER) -->
-        <div id="shareContainerWrapper">
-            <div id="shareContainer">
-                 <h2>Meu Desempenho! 🚀</h2>
-                 <p><strong><span id="shareName"></span></strong></p>
-                 <div class="share-stats">
-                     <div class="stat-box">
-                         <div class="value" id="shareScore">0/6</div>
-                         <div class="label">Acertos</div>
-                     </div>
-                     <div class="stat-box">
-                         <div class="value" id="shareWeightedScore">0.0</div>
-                         <div class="label">Pontos (0-10)</div>
-                     </div>
-                 </div>
-            </div>
-            <div class="navigation-buttons" style="margin-top: 15px;">
-                 <button type="button" id="backToResultsButton" style="background-color: #6c757d;">Voltar</button>
-                 <button type="button" id="downloadButton">Baixar Imagem</button>
-            </div>
         </div>
     </div>
 
+    <!-- PAINEL DO ESTUDANTE -->
+    <div id="studentDashboard" class="screen">
+        <header class="header-dash">
+            <div class="header-content">
+                <h1 id="welcomeHeader">Olá!</h1>
+                <p>Seja bem-vindo(a) à sua área de estudos.</p>
+            </div>
+            <div class="profile-icon-header" id="profileIconHeader">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
+        </header>
+        <main class="main-content">
+            <div class="icon-grid">
+                <div class="icon-item dev-feature"><div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg></div><span>Notas</span></div>
+                <div class="icon-item dev-feature"><div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></div><span>Progresso</span></div>
+                <div class="icon-item" id="calendarButton"><div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></div><span>Calendário</span></div>
+                <div class="icon-item dev-feature"><div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg></div><span>Material</span></div>
+                <div class="icon-item" id="profileButton"><div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div><span>Meu Perfil</span></div>
+            </div>
+            <h3 class="section-title">Atividades Disponíveis</h3>
+            <div class="activity-card" data-quiz="pa-pg"><div class="activity-info"><h3>Simulado de PA e PG</h3><p>Matemática - Concluir até 25/09</p></div><div class="start-button"> Iniciar </div></div>
+            <div class="activity-card" data-quiz="quimica"><div class="activity-info"><h3>Simulado de Química</h3><p>Química - Concluir até 15/10</p></div><div class="start-button"> Iniciar </div></div>
+        </main>
+    </div>
+
+    <!-- TELA DE DISCIPLINAS, CALENDÁRIO, etc... -->
+    <div id="disciplinasScreen" class="screen">
+        <header class="header-dash"><button class="back-to-dash-button back-button">&larr;</button><h1>Disciplinas</h1></header>
+        <main class="main-content"><ul class="disciplinas-list">
+            <li>ARTES <span>Prof. Dalila</span></li><li>BIOLOGIA <span>Prof. Felipe</span></li><li>EDUCAÇÃO AMBIENTAL, SUSTENTABILIDADE E CLIMA <span>Prof. Karen</span></li><li>EDUCAÇÃO FÍSICA <span>Sem professor</span></li><li>FILOSOFIA <span>Prof. Fernanda</span></li><li>FÍSICA <span>Sem professor</span></li><li>GEOGRAFIA <span>Prof. Claudemir</span></li><li>HISTÓRIA <span>Prof. Zaira</span></li><li>LÍNGUA INGLESA <span>Prof. Dayane</span></li><li>LÍNGUA PORTUGUESA E SUAS LITERATURAS <span>Prof. Elaine</span></li><li>MATEMÁTICA <span>Prof. Vera</span></li><li>QUÍMICA <span>Prof. João Allan</span></li><li>SOCIOLOGIA <span>Prof. Glaucia</span></li>
+        </ul></main>
+    </div>
+    <div id="calendarScreen" class="screen">
+        <header class="header-dash"><button class="back-to-dash-button back-button">&larr;</button><h1>Horário da Turma</h1><p>Turma: M3MNM02</p></header>
+        <main class="main-content">
+            <div class="day-schedule"><h3>Segunda-feira</h3><ul><li><strong>1ª Aula:</strong> Livre</li><li><strong>2ª Aula:</strong> Sociologia (Prof. Glaucia)</li><li><strong>3ª Aula:</strong> Artes (Prof. Dalila)</li><li><strong>4ª Aula:</strong> Matemática (Prof. Vera)</li><li><strong>5ª Aula:</strong> Matemática (Prof. Vera)</li><li><strong>6ª Aula:</strong> Matemática (Prof. Vera)</li></ul></div>
+            <div class="day-schedule"><h3>Terça-feira</h3><ul><li><strong>1ª Aula:</strong> Biologia (Prof. Felipe)</li><li><strong>2ª Aula:</strong> Biologia (Prof. Felipe)</li><li><strong>3ª Aula:</strong> Ed. Ambiental (Prof. Karen)</li><li><strong>4ª Aula:</strong> Projeto de Vida (Prof. Gleisiane)</li><li><strong>5ª Aula:</strong> Matemática (Prof. Vera)</li><li><strong>6ª Aula:</strong> Matemática (Prof. Vera)</li></ul></div>
+            <div class="day-schedule"><h3>Quarta-feira</h3><ul><li><strong>1ª Aula:</strong> Geografia (Prof. Claudemir)</li><li><strong>2ª Aula:</strong> Geografia (Prof. Claudemir)</li><li><strong>3ª Aula:</strong> Física (Sem professor)</li><li><strong>4ª Aula:</strong> Física (Sem professor)</li><li><strong>5ª Aula:</strong> Química (Prof. Joao Allan)</li><li><strong>6ª Aula:</strong> Química (Prof. Joao Allan)</li></ul></div>
+            <div class="day-schedule"><h3>Quinta-feira</h3><ul><li><strong>1ª Aula:</strong> Língua Portuguesa (Prof. Elaine)</li><li><strong>2ª Aula:</strong> Língua Portuguesa (Prof. Elaine)</li><li><strong>3ª Aula:</strong> Língua Portuguesa (Prof. Elaine)</li><li><strong>4ª Aula:</strong> Filosofia (Prof. Fernanda)</li><li><strong>5ª Aula:</strong> Eletiva (Sem professor)</li><li><strong>6ª Aula:</strong> Inglês (Prof. Dayane)</li></ul></div>
+            <div class="day-schedule"><h3>Sexta-feira</h3><ul><li><strong>1ª Aula:</strong> Aprofundamento em Matemática II (Prof. Gleisiane)</li><li><strong>2ª Aula:</strong> Aprofundamento em Matemática II (Prof. Gleisiane)</li><li><strong>3ª Aula:</strong> Língua Portuguesa (Prof. Elaine)</li><li><strong>4ª Aula:</strong> Língua Portuguesa (Prof. Elaine)</li><li><strong>5ª Aula:</strong> História (Prof. Zaira)</li><li><strong>6ª Aula:</strong> História (Prof. Zaira)</li></ul></div>
+        </main>
+    </div>
+
+    <!-- TELA DE PERFIL -->
+    <div id="profileScreen" class="screen">
+        <header class="header-dash"><button class="back-to-dash-button back-button">&larr;</button><h1>Meu Perfil</h1></header>
+        <main class="main-content">
+            <div class="profile-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <h2 id="profileName"></h2>
+            </div>
+            <ul class="profile-info-list">
+                <li><span class="label">Escola</span> <span class="value">EEEM IRMA AGNES VINCQUIER</span></li>
+                <li><span class="label">Sala</span> <span class="value">02</span></li>
+                <li><span class="label">Código da Turma</span> <span class="value">M3MNM02</span></li>
+                <li><span class="label">Data de Nascimento</span> <span class="value" id="profileBirthDate"></span></li>
+            </ul>
+            <button id="logoutButton">Sair</button>
+        </main>
+    </div>
+
+    <!-- WRAPPER DO QUIZ -->
+    <div id="quizWrapper" class="screen">
+        <div class="container">
+            <div id="quizConfirmation">
+                 <h2 id="quizConfirmTitle"></h2>
+                 <p>Você está prestes a iniciar o simulado.</p>
+                 <div class="profile-icon-large">
+                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                 </div>
+                 <h3 id="quizConfirmName"></h3>
+                 <div class="navigation-buttons">
+                    <button type="button" class="back-to-dash-button">Voltar ao Painel</button>
+                    <button type="button" id="startConfirmedQuizButton">Iniciar Simulado</button>
+                 </div>
+            </div>
+            <div id="quizContainer">
+                <div class="progress-bar-container"><div id="progressBar"></div></div><h2 id="welcomeMessage"></h2>
+                <form id="quizForm"><div id="questions-wrapper"></div><p id="validation-message">Por favor, selecione uma resposta para continuar.</p>
+                    <div class="navigation-buttons"><button type="button" id="prevButton">Voltar</button><button type="button" id="nextButton">Próxima</button></div>
+                </form>
+            </div>
+            <div id="resultsContainer">
+                <div id="result-icon-container"><svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--main-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 17 17 23 15.79 13.88"></polyline></svg></div>
+                <h2>Resultados Finais</h2>
+                <div id="resultsSummary"></div>
+                <p id="motivationalMessage"></p> <hr>
+                <h3>Resumo Detalhado:</h3> <div id="gabarito"></div><button type="button" id="shareButton">Compartilhar Resultado</button>
+            </div>
+            <div id="shareContainerWrapper">
+                <div id="shareContainer"><h2>Meu Desempenho! 🚀</h2><p><strong><span id="shareName"></span></strong></p><div class="share-stats"><div class="stat-box"><div class="value" id="shareScore">0/6</div><div class="label">Acertos</div></div><div class="stat-box"><div class="value" id="shareWeightedScore">0.0</div><div class="label">Pontos (0-10)</div></div></div></div>
+                <div class="navigation-buttons" style="margin-top: 15px;"><button type="button" id="backToResultsButton" style="background-color: #6c757d;">Voltar</button><button type="button" id="downloadButton">Baixar Imagem</button></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- POP-UP DE AVISO -->
+    <div id="devPopup" class="popup-overlay"><div class="popup-content"><span class="close-popup">&times;</span><h2>Aviso</h2><p>Esta funcionalidade está em desenvolvimento em conjunto com a escola EEEM IRMA AGNES VINCQUIER.</p></div></div>
+    
+    <nav class="bottom-nav">
+        <div class="nav-item active" id="homeButton"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg><span>Home</span></div>
+        <div class="nav-item" id="disciplinasButton"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg><span>Disciplinas</span></div>
+        <div class="nav-item dev-feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M6 20v-4M18 20v-8"></path></svg><span>Ranking</span></div>
+    </nav>
+
     <script>
-        // Elementos da DOM
-        const userInfoForm = document.getElementById('userInfoForm');
+        // --- LÓGICA DE NAVEGAÇÃO E ESTADO GLOBAL ---
+        const allScreens = document.querySelectorAll('.screen');
+        const studentDashboard = document.getElementById('studentDashboard');
+        const quizWrapper = document.getElementById('quizWrapper');
+        const activityCards = document.querySelectorAll('.activity-card');
+        const disciplinasScreen = document.getElementById('disciplinasScreen');
+        const calendarScreen = document.getElementById('calendarScreen');
+        const loginScreen = document.getElementById('loginScreen');
+        const profileScreen = document.getElementById('profileScreen');
+        const homeButton = document.getElementById('homeButton');
+        const disciplinasButton = document.getElementById('disciplinasButton');
+        const calendarButton = document.getElementById('calendarButton');
+        const profileButton = document.getElementById('profileButton');
+        const profileIconHeader = document.getElementById('profileIconHeader');
+        const backToDashButtons = document.querySelectorAll('.back-to-dash-button');
+        const devPopup = document.getElementById('devPopup');
+        const closePopupButton = devPopup.querySelector('.close-popup');
+        const devFeatures = document.querySelectorAll('.dev-feature');
+        const navItems = document.querySelectorAll('.nav-item');
+        const loginForm = document.getElementById('loginForm');
+        const logoutButton = document.getElementById('logoutButton');
+        const studentBirthDateInput = document.getElementById('studentBirthDateInput');
+        const bottomNav = document.querySelector('.bottom-nav');
+        
+        let userToken = null;
+
+        function showScreen(screenToShow) {
+            allScreens.forEach(s => s.classList.remove('active'));
+            screenToShow.classList.add('active');
+        }
+        
+        function updateNav(activeButton) {
+            navItems.forEach(item => item.classList.remove('active'));
+            if(activeButton) activeButton.classList.add('active');
+        }
+
+        // --- LÓGICA DO QUIZ ---
         const quizContainer = document.getElementById('quizContainer');
         const resultsContainer = document.getElementById('resultsContainer');
         const shareContainerWrapper = document.getElementById('shareContainerWrapper');
-        const shareContainer = document.getElementById('shareContainer');
-        const nomeAlunoInput = document.getElementById('nomeAluno');
-        const dataNascimentoInput = document.getElementById('dataNascimento');
+        const quizConfirmation = document.getElementById('quizConfirmation');
         const prevButton = document.getElementById('prevButton');
         const nextButton = document.getElementById('nextButton');
         const progressBar = document.getElementById('progressBar');
@@ -279,67 +343,117 @@
         const downloadButton = document.getElementById('downloadButton');
         const backToResultsButton = document.getElementById('backToResultsButton');
         const validationMessage = document.getElementById('validation-message');
+        const startConfirmedQuizButton = document.getElementById('startConfirmedQuizButton');
 
-        // URL do Google Apps Script (o seu URL aqui)
         const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzKNrAmBBXZrpUO33LM09M_-x7kFM9YnyKgPC0YyTiQRimw-FzJ_W2UjHJUom4Rfo8q/exec';
-
-        // Dados das Questões
-        const questions = [
-            { question: "1. Um atleta corre 5 km no primeiro dia de treino. A cada dia seguinte, ele aumenta a distância em 3 km. Quantos quilômetros ele correrá no 8º dia?", options: { A: "21 km", B: "24 km", C: "26 km", D: "29 km" }, answer: "C", difficulty: 'easy' },
-            { question: "2. Um teatro possui 15 cadeiras na primeira fileira e 3 cadeiras a mais em cada fileira seguinte. Qual é o número total de cadeiras nas primeiras 10 fileiras?", options: { A: "285", B: "42", C: "150", D: "300" }, answer: "A", difficulty: 'easy' },
-            { question: "3. O lucro de uma empresa em janeiro foi de R$ 80.000,00 e, em maio, foi de R$ 64.000,00. Sabendo que a queda mensal do lucro seguiu uma Progressão Aritmética, qual foi o lucro da empresa em julho?", options: { A: "R$ 60.000,00", B: "R$ 56.000,00", C: "R$ 52.000,00", D: "R$ 48.000,00" }, answer: "B", difficulty: 'hard' },
-            { question: "4. Uma cultura de bactérias começa com 100 indivíduos e seu número dobra a cada hora. Quantas bactérias existirão na 5ª hora?", options: { A: "500", B: "800", C: "1.600", D: "3.200" }, answer: "C", difficulty: 'easy' },
-            { question: "5. Um investidor aplicou R$ 50,00 no primeiro mês. A cada mês seguinte, ele aplicou o dobro do valor do mês anterior. Qual o valor total que ele investiu ao final de 6 meses?", options: { A: "R$ 1.600,00", B: "R$ 3.150,00", C: "R$ 3.200,00", D: "R$ 1.550,00" }, answer: "B", difficulty: 'easy' },
-            { question: "6. Sabendo que a sequência (x-2, x, x+3) é uma Progressão Geométrica, determine o valor de 'x'.", options: { A: "4", B: "5", C: "6", D: "2" }, answer: "C", difficulty: 'hard' }
-        ];
-
-        // Estado do Quiz
+        
+        const quizzes = {
+            'pa-pg': { title: 'Simulado de PA e PG', questions: [ /* Questões preenchidas no final */ ] },
+            'quimica': { title: 'Simulado de Química', questions: [ /* Questões preenchidas no final */ ] }
+        };
+        
+        let currentQuizData = {};
         let currentQuestionIndex = 0;
-        let userAnswers = new Array(questions.length).fill(null);
-        let studentName = '';
-        
-        function renderQuestions(){
-            let html = '';
-            questions.forEach((q, index) => {
-                html += `<div class="question-block" id="q${index}"> <p>${q.question}</p>`;
-                for(const key in q.options){
-                    const isChecked = userAnswers[index] === key ? 'checked' : '';
-                    html += `<label><input type="radio" name="q${index}" value="${key}" ${isChecked}> <span>${q.options[key]}</span></label>`;
+        let userAnswers = [];
+
+        function startQuiz(quizType) {
+            currentQuizData = quizzes[quizType];
+            userAnswers = new Array(currentQuizData.questions.length).fill(null);
+            currentQuestionIndex = 0;
+            document.getElementById('quizConfirmTitle').textContent = currentQuizData.title;
+            document.getElementById('quizConfirmName').textContent = userToken.name;
+            showScreen(quizWrapper);
+            quizConfirmation.style.display = 'block';
+            quizContainer.style.display = 'none';
+            resultsContainer.style.display = 'none';
+            shareContainerWrapper.style.display = 'none';
+        }
+
+        // --- INICIALIZAÇÃO E AUTENTICAÇÃO ---
+        window.addEventListener('load', () => {
+            const savedToken = localStorage.getItem('studentToken');
+            if (savedToken) {
+                const parsedToken = JSON.parse(savedToken);
+                if (new Date().getTime() < parsedToken.expiry) {
+                    userToken = parsedToken;
+                    loginScreen.classList.add('token-client-pg');
+                    initializeDashboard();
+                } else {
+                    localStorage.removeItem('studentToken');
+                    loginScreen.classList.remove('token-client-pg');
+                    showScreen(loginScreen);
                 }
-                const isNotAnsweredChecked = userAnswers[index] === 'NAO_SEI' ? 'checked' : '';
-                html += `<label style="font-style: italic; color: #666;"><input type="radio" name="q${index}" value="NAO_SEI" ${isNotAnsweredChecked}> <span>Não consegui responder essa pergunta</span></label>`;
-                html += `</div>`;
-            });
-            questionsWrapper.innerHTML = html;
-        }
+            } else {
+                loginScreen.classList.remove('token-client-pg');
+                showScreen(loginScreen);
+            }
+        });
 
-        function showQuestion(index) {
-            renderQuestions();
-            const allQuestions = document.querySelectorAll('.question-block');
-            allQuestions.forEach(q => q.classList.remove('active'));
-            document.getElementById(`q${index}`).classList.add('active');
-            
-            progressBar.style.width = `${((index + 1) / questions.length) * 100}%`;
-            prevButton.style.display = index === 0 ? 'none' : 'inline-block';
-            nextButton.textContent = (index === questions.length - 1) ? "Finalizar e Ver Resultado" : "Próxima";
-        }
-        
-        function saveCurrentAnswer() {
-             const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
-             if (selectedOption) {
-                userAnswers[currentQuestionIndex] = selectedOption.value;
-             }
-        }
-
-        userInfoForm.addEventListener('submit', (e) => {
+        loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            studentName = nomeAlunoInput.value;
-            document.getElementById('welcomeMessage').textContent = `Boa sorte, ${studentName}!`;
-            document.getElementById('userInfo').style.display = 'none';
-            quizContainer.style.display = 'block';
-            showQuestion(currentQuestionIndex);
+            const name = document.getElementById('studentNameInput').value;
+            const birthDate = studentBirthDateInput.value;
+            const expiry = new Date().getTime() + (7 * 24 * 60 * 60 * 1000); // 7 dias
+            userToken = { name, birthDate, expiry };
+            localStorage.setItem('studentToken', JSON.stringify(userToken));
+            loginScreen.classList.add('token-client-pg');
+            initializeDashboard();
+        });
+
+        function initializeDashboard() {
+            document.getElementById('welcomeHeader').textContent = `Olá, ${userToken.name}!`;
+            bottomNav.style.display = 'flex';
+            showScreen(studentDashboard);
+            updateNav(homeButton);
+        }
+
+        logoutButton.addEventListener('click', () => {
+            localStorage.removeItem('studentToken');
+            userToken = null;
+            bottomNav.style.display = 'none';
+            loginScreen.classList.remove('token-client-pg');
+            showScreen(loginScreen);
         });
         
+        studentBirthDateInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 2) {
+                value = `${value.slice(0, 2)}/${value.slice(2)}`;
+            }
+            if (value.length > 5) {
+                value = `${value.slice(0, 5)}/${value.slice(5, 9)}`;
+            }
+            e.target.value = value;
+        });
+
+        // Event Listeners de Navegação
+        disciplinasButton.addEventListener('click', () => { showScreen(disciplinasScreen); updateNav(disciplinasButton); });
+        homeButton.addEventListener('click', () => { showScreen(studentDashboard); updateNav(homeButton); });
+        calendarButton.addEventListener('click', () => showScreen(calendarScreen));
+        backToDashButtons.forEach(btn => btn.addEventListener('click', () => showScreen(studentDashboard)));
+        profileButton.addEventListener('click', showProfile);
+        profileIconHeader.addEventListener('click', showProfile);
+        
+        function showProfile() {
+            document.getElementById('profileName').textContent = userToken.name;
+            document.getElementById('profileBirthDate').textContent = userToken.birthDate;
+            showScreen(profileScreen);
+            updateNav(null);
+        }
+
+        activityCards.forEach(card => card.addEventListener('click', (e) => startQuiz(e.currentTarget.dataset.quiz)));
+        startConfirmedQuizButton.addEventListener('click', () => {
+            quizConfirmation.style.display = 'none';
+            quizContainer.style.display = 'block';
+            document.getElementById('welcomeMessage').textContent = `Boa sorte, ${userToken.name}!`;
+            showQuestion(0);
+        });
+        
+        devFeatures.forEach(feature => feature.addEventListener('click', () => { devPopup.style.display = 'flex'; }));
+        closePopupButton.addEventListener('click', () => { devPopup.style.display = 'none'; });
+        window.addEventListener('click', (event) => { if (event.target === devPopup) devPopup.style.display = 'none'; });
+        
+        // --- LÓGICA COMPLETA DO QUIZ (COPIADA) ---
         nextButton.addEventListener('click', () => {
             const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
             if (!selectedOption) {
@@ -347,123 +461,122 @@
                 setTimeout(() => { validationMessage.style.display = 'none'; }, 2500);
                 return;
             }
-
             saveCurrentAnswer();
-            if (currentQuestionIndex < questions.length - 1) {
-                currentQuestionIndex++;
-                showQuestion(currentQuestionIndex);
-            } else {
-                calculateAndShowResults();
-            }
+            if (currentQuestionIndex < currentQuizData.questions.length - 1) {
+                currentQuestionIndex++; showQuestion(currentQuestionIndex);
+            } else { calculateAndShowResults(); }
         });
-        
         prevButton.addEventListener('click', () => {
             saveCurrentAnswer();
-            if (currentQuestionIndex > 0) {
-                currentQuestionIndex--;
-                showQuestion(currentQuestionIndex);
-            }
+            if (currentQuestionIndex > 0) { currentQuestionIndex--; showQuestion(currentQuestionIndex); }
         });
-
+        function renderQuestions(){
+            let html = '';
+            currentQuizData.questions.forEach((q, index) => {
+                html += `<div class="question-block" id="q${index}"> <p>${q.question}</p>`;
+                for(const key in q.options){
+                    const isChecked = userAnswers[index] === key ? 'checked' : '';
+                    html += `<label><input type="radio" name="q${index}" value="${key}" ${isChecked}> <span>${q.options[key]}</span></label>`;
+                }
+                const isNotAnsweredChecked = userAnswers[index] === 'NAO_SEI' ? 'checked' : '';
+                html += `<label style="font-style: italic; color: #666;"><input type="radio" name="q${index}" value="NAO_SEI" ${isNotAnsweredChecked}> <span>Não consegui responder</span></label>`;
+                html += `</div>`;
+            });
+            questionsWrapper.innerHTML = html;
+        }
+        function showQuestion(index) {
+            renderQuestions();
+            document.querySelectorAll('.question-block').forEach(q => q.classList.remove('active'));
+            document.getElementById(`q${index}`).classList.add('active');
+            progressBar.style.width = `${((index + 1) / currentQuizData.questions.length) * 100}%`;
+            prevButton.style.display = index === 0 ? 'none' : 'inline-block';
+            nextButton.textContent = (index === currentQuizData.questions.length - 1) ? "Finalizar e Ver Resultado" : "Próxima";
+        }
+        function saveCurrentAnswer() {
+             const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
+             if (selectedOption) userAnswers[currentQuestionIndex] = selectedOption.value;
+        }
         function calculateAndShowResults() {
-            let score = 0;
-            let weightedScore = 0;
+            let correct = 0, incorrect = 0, unanswered = 0, weightedScore = 0;
             const totalPossibleWeighted = 10;
-
             userAnswers.forEach((answer, index) => {
-                if (answer === questions[index].answer) {
-                    score++;
-                    weightedScore += (questions[index].difficulty === 'hard') ? 3 : 1;
+                if (answer === currentQuizData.questions[index].answer) {
+                    correct++;
+                    weightedScore += (currentQuizData.questions[index].difficulty === 'hard') ? 3 : 1;
+                } else if (answer === 'NAO_SEI' || answer === null) {
+                    unanswered++;
+                } else {
+                    incorrect++;
                 }
             });
-
             quizContainer.style.display = 'none';
             resultsContainer.style.display = 'block';
 
-            document.getElementById('score').innerHTML = `<strong>Acertos: ${score} de ${questions.length}.</strong>`;
-            document.getElementById('weightedScore').innerHTML = `<strong>Pontuação Final: ${weightedScore.toFixed(1)} de ${totalPossibleWeighted.toFixed(1)}</strong>`;
-
-            let message = '';
-            const percentage = (score / questions.length) * 100;
-            if (percentage === 100) {
-                message = `<span class="highlight">Amanhã você vai arrasar, ${studentName}!</span>`;
-            } else if (percentage >= 70) {
-                message = `Parabéns, ${studentName}! Você mandou muito bem!`;
-            } else if (percentage >= 50) {
-                message = `Bom trabalho, ${studentName}! Continue praticando.`;
-            } else {
-                message = `Não desanime, ${studentName}! A prática leva à perfeição.`;
-            }
-            document.getElementById('motivationalMessage').innerHTML = message;
+            document.getElementById('resultsSummary').innerHTML = `
+                <div class="summary-box summary-correct"><div class="count">${correct}</div><div class="label">Acertos</div></div>
+                <div class="summary-box summary-incorrect"><div class="count">${incorrect}</div><div class="label">Erros</div></div>
+                <div class="summary-box summary-unanswered"><div class="count">${unanswered}</div><div class="label">Não Resp.</div></div>
+            `;
             
+            let message = '';
+            const percentage = (correct / currentQuizData.questions.length) * 100;
+            if (percentage === 100) message = `<span class="highlight">Amanhã você vai arrasar, ${userToken.name}!</span>`;
+            else if (percentage >= 70) message = `Parabéns, ${userToken.name}! Você mandou muito bem!`;
+            else if (percentage >= 50) message = `Bom trabalho, ${userToken.name}! Continue praticando.`;
+            else message = `Não desanime, ${userToken.name}! A prática leva à perfeição.`;
+            document.getElementById('motivationalMessage').innerHTML = message;
+
             const gabaritoDiv = document.getElementById('gabarito');
             gabaritoDiv.innerHTML = '';
-            // ALTERAÇÃO 2: Lógica de exibição do resultado modificada
             userAnswers.forEach((answer, index) => {
                 const resultItem = document.createElement('div');
                 resultItem.classList.add('gabarito-item');
-
-                if (answer === questions[index].answer) {
-                    resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> Correta`;
-                    resultItem.classList.add('correct');
-                } else if (answer === 'NAO_SEI') {
-                    resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> Não soube responder`;
-                    resultItem.classList.add('unanswered');
-                } else {
-                    resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> Incorreta`;
-                    resultItem.classList.add('incorrect');
-                }
-                
+                if (answer === currentQuizData.questions[index].answer) { resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> Correta`; resultItem.classList.add('correct'); } 
+                else if (answer === 'NAO_SEI' || answer === null) { resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> Não soube responder`; resultItem.classList.add('unanswered'); } 
+                else { resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> Incorreta`; resultItem.classList.add('incorrect'); }
                 gabaritoDiv.appendChild(resultItem);
             });
-            
-            document.getElementById('shareName').textContent = studentName;
-            document.getElementById('shareScore').textContent = `${score}/${questions.length}`;
+            document.getElementById('shareName').textContent = userToken.name;
+            document.getElementById('shareScore').textContent = `${correct}/${currentQuizData.questions.length}`;
             document.getElementById('shareWeightedScore').textContent = weightedScore.toFixed(1);
-
-            sendDataToSheet(score, weightedScore);
+            sendDataToSheet(correct, weightedScore);
         }
-
         function sendDataToSheet(finalScore, finalWeightedScore) {
             const submissionData = new FormData();
-            submissionData.append('nomeAluno', studentName);
-            submissionData.append('dataNascimento', dataNascimentoInput.value);
+            submissionData.append('nomeAluno', userToken.name);
+            submissionData.append('dataNascimento', userToken.birthDate);
             submissionData.append('acertos', finalScore);
             submissionData.append('pontuacao', finalWeightedScore);
-            submissionData.append('totalQuestoes', questions.length);
+            submissionData.append('simuladoTitulo', currentQuizData.title);
+            submissionData.append('totalQuestoes', currentQuizData.questions.length);
             userAnswers.forEach((answer, index) => {
                 submissionData.append(`q${index + 1}`, answer || "Nao Respondida");
             });
-
             fetch(APPSCRIPT_URL, { method: 'POST', body: submissionData })
             .then(response => {
                 if (response.ok) console.log('Dados enviados com sucesso.');
                 else return response.text().then(text => { throw new Error(text) });
             })
-            .catch(error => {
-                console.error('Erro ao enviar os dados:', error);
-                alert('Ocorreu um erro ao salvar suas respostas.');
-            });
+            .catch(error => console.error('Erro ao enviar os dados:', error));
         }
-        
-        shareButton.addEventListener('click', () => {
-            resultsContainer.style.display = 'none';
-            shareContainerWrapper.style.display = 'block';
-        });
-
-        backToResultsButton.addEventListener('click', () => {
-            shareContainerWrapper.style.display = 'none';
-            resultsContainer.style.display = 'block';
-        });
-
+        shareButton.addEventListener('click', () => { resultsContainer.style.display = 'none'; shareContainerWrapper.style.display = 'block'; });
+        backToResultsButton.addEventListener('click', () => { shareContainerWrapper.style.display = 'none'; resultsContainer.style.display = 'block'; });
         downloadButton.addEventListener('click', () => {
             html2canvas(shareContainer).then(canvas => {
                 const link = document.createElement('a');
-                link.download = `resultado-${studentName.replace(/\s+/g, '-').toLowerCase()}.png`;
+                link.download = `resultado-${userToken.name.replace(/\s+/g, '-').toLowerCase()}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
             });
         });
+        
+        quizzes['pa-pg'].questions = [
+            { question: "1. Um atleta corre 5 km no primeiro dia de treino...", options: { A: "21 km", B: "24 km", C: "26 km", D: "29 km" }, answer: "C", difficulty: 'easy' }, { question: "2. Um teatro possui 15 cadeiras na primeira fileira...", options: { A: "285", B: "42", C: "150", D: "300" }, answer: "A", difficulty: 'easy' }, { question: "3. O lucro de uma empresa em janeiro foi de R$ 80.000,00...", options: { A: "R$ 60.000,00", B: "R$ 56.000,00", C: "R$ 52.000,00", D: "R$ 48.000,00" }, answer: "B", difficulty: 'hard' }, { question: "4. Uma cultura de bactérias começa com 100 indivíduos...", options: { A: "500", B: "800", C: "1.600", D: "3.200" }, answer: "C", difficulty: 'easy' }, { question: "5. Um investidor aplicou R$ 50,00 no primeiro mês...", options: { A: "R$ 1.600,00", B: "R$ 3.150,00", C: "R$ 3.200,00", D: "R$ 1.550,00" }, answer: "B", difficulty: 'easy' }, { question: "6. Sabendo que a sequência (x-2, x, x+3) é uma PG...", options: { A: "4", B: "5", C: "6", D: "2" }, answer: "C", difficulty: 'hard' }
+        ];
+        quizzes['quimica'].questions = [
+            { question: "1. Qual é o nome oficial (IUPAC) para o hidrocarboneto de cadeia normal com 5 átomos de carbono e apenas ligações simples?", options: { A: "Pentano", B: "Penteno", C: "Propano", D: "Butano" }, answer: "A", difficulty: 'easy' }, { question: "2. O composto But-2-eno é classificado como um:", options: { A: "Alcano", B: "Alcino", C: "Alceno", D: "Ciclano" }, answer: "C", difficulty: 'easy' }, { question: "3. A estrutura CH₃-CH₂-CH=CH₂ representa qual composto?", options: { A: "But-2-eno", B: "Butano", C: "But-1-ino", D: "But-1-eno" }, answer: "D", difficulty: 'easy' }, { question: "4. Qual dos compostos abaixo é um alcino, caracterizado por uma ligação tripla?", options: { A: "Eteno", B: "Propano", C: "Propeno", D: "Propino" }, answer: "D", difficulty: 'easy' }, { question: "5. Qual é o nome IUPAC para o composto a seguir: CH₃-CH(CH₃)-CH₂-CH(CH₃)-CH₃?", options: { A: "2,4-dimetil-hexano", B: "2,4-dimetil-pentano", C: "2-metil-4-metil-pentano", D: "3,5-dimetil-pentano" }, answer: "B", difficulty: 'hard' }, { question: "6. O composto conhecido como Tolueno, um importante solvente, é um hidrocarboneto aromático. Qual outro nome ele pode receber pela nomenclatura IUPAC?", options: { A: "Etil-benzeno", B: "Dimetil-benzeno", C: "Metil-benzeno", D: "Propil-benzeno" }, answer: "C", difficulty: 'hard' }
+        ];
+
     </script>
 </body>
 </html>
