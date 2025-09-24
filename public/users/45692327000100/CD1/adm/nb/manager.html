@@ -8,10 +8,10 @@
   <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
   <link rel="stylesheet" href="/assets/css/main.css">
 
-    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link rel='stylesheet'
-        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+  <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel='stylesheet'
+    href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
   <style>
     /* O CSS permanece o mesmo da versão anterior, com um pequeno acréscimo para o novo campo de seleção */
     :root {
@@ -374,10 +374,55 @@
         transform: rotate(360deg);
       }
     }
+
+
+    /* NOVOS ESTILOS PARA A MÁSCARA DE PAGAMENTO */
+    .payment-mask {
+      display: none;
+      /* Começa escondido */
+      position: fixed;
+      z-index: 2000;
+      /* Z-index alto para ficar sobre todos os elementos */
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.85);
+      /* Fundo branco semitransparente */
+      backdrop-filter: blur(4px);
+      /* Efeito de desfoque (para navegadores modernos) */
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      animation: fadeIn 0.3s;
+    }
+
+    .payment-mask .spinner {
+      border: 5px solid rgba(0, 0, 0, 0.1);
+      border-top: 5px solid var(--cor-primaria);
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+    }
+
+    .payment-mask p {
+      margin-top: 20px;
+      font-size: 1.1em;
+      font-weight: 500;
+      color: var(--cor-texto-principal);
+    }
   </style>
 </head>
 
 <body>
+  <div id="payment-mask" class="payment-mask">
+    <div class="payment-mask-content">
+      <div class="spinner"></div>
+      <p>Processando pagamento...</p>
+    </div>
+  </div>
+
   <header>
     <a href="/users/45692327000100/CD1/adm/nb/conta.html" class="back-button"><i class='bx bx-arrow-back'></i></a>
     <h1>Contas a Pagar</h1>
@@ -462,6 +507,8 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzkAs8dsJMepkQBhdL--XwO3wUQuQgvA-DFPEwraiz8ijiX9gkPMBuAeM5udQjzmJvzqQ/exec";
 
     // Seletores de Elementos
+    // Adicione esta linha junto com os outros 'const' no topo do script
+    const paymentMask = document.getElementById('payment-mask');
     const contasContainer = document.getElementById('contas-container');
     const feedbackEl = document.getElementById('feedback');
     const modalNovaConta = document.getElementById('modalNovaConta');
@@ -572,13 +619,14 @@
 
     btnCancelarPagamento.onclick = () => modalPagarConta.style.display = 'none';
 
+    // SUBSTITUA A VERSÃO ANTIGA DESTA FUNÇÃO PELA NOVA
     btnConfirmarPagamento.addEventListener('click', async (event) => {
       const idConta = event.target.dataset.id;
-      // Pega o valor do novo campo de seleção
       const formaPagamento = document.getElementById('forma-pagamento').value;
 
-      modalPagarConta.style.display = 'none';
-      setLoading(true, 'Registrando pagamento...');
+      modalPagarConta.style.display = 'none'; // Esconde o modal de confirmação
+      paymentMask.style.display = 'flex';     // MOSTRA a máscara de processamento
+
       try {
         // Envia o ID e a forma de pagamento para o script
         const response = await fetch(SCRIPT_URL, {
@@ -591,9 +639,17 @@
         });
         const result = await response.json();
         if (!result.success) throw new Error(result.message);
+
+        // Espera a lista de contas ser atualizada
         await carregarContas();
+
       } catch (error) {
+        // Se der erro, mostra a mensagem de erro
         mostrarErro(error);
+      } finally {
+        // O bloco 'finally' garante que a máscara será escondida
+        // tanto em caso de sucesso quanto em caso de erro.
+        paymentMask.style.display = 'none'; // ESCONDE a máscara
       }
     });
 
