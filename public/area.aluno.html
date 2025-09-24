@@ -133,6 +133,16 @@
         .summary-incorrect .count { color: var(--incorrect-color); }
         .summary-unanswered .count { color: var(--unanswered-color); }
 
+        .video-card { background: var(--white); border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); overflow: hidden; margin-top: 15px; }
+        .video-player-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; width: 100%; background: #000; }
+        .video-player-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+        .video-details { padding: 20px; }
+        .video-text h3 { text-align: left; margin: 0 0 10px 0; font-size: 1.1em; line-height: 1.3; }
+        .video-text p { text-align: left; margin: 0 0 15px 0; font-size: 0.9em; color: var(--gray-text); }
+        .channel-name { font-size: 0.8em; font-weight: 500; color: var(--gray-text); display: block; text-align: left; }
+        .video-button { background-color: var(--main-color); color: var(--white) !important; padding: 12px; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 500; margin-top: 20px; display: block; transition: background-color 0.3s; }
+        .video-button:hover { background-color: var(--accent-color); }
+
     </style>
 </head>
 <body>
@@ -173,6 +183,22 @@
             <h3 class="section-title">Atividades Disponíveis</h3>
             <div class="activity-card" data-quiz="pa-pg"><div class="activity-info"><h3>Simulado de PA e PG</h3><p>Matemática - Concluir até 25/09</p></div><div class="activity-actions"><div class="last-score">Última Nota: <span id="score-pa-pg">0.0</span></div><button class="start-button" id="button-pa-pg">Iniciar</button></div></div>
             <div class="activity-card" data-quiz="quimica"><div class="activity-info"><h3>Simulado de Química</h3><p>Química - Concluir até 15/10</p></div><div class="activity-actions"><div class="last-score">Última Nota: <span id="score-quimica">0.0</span></div><button class="start-button" id="button-quimica">Iniciar</button></div></div>
+            
+            <h3 class="section-title">Vídeo Aula Sugerida</h3>
+            <div class="video-card">
+                <div class="video-player-container">
+                    <iframe src="https://www.youtube.com/embed/QF5LLkmdIlE" title="NOMENCLATURA DOS HIDROCARBONETOS - QUÍMICA ORGÂNICA NO ENEM. Prof. Felipe Sobis" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
+                <div class="video-details">
+                    <div class="video-text">
+                        <h3>NOMENCLATURA DOS HIDROCARBONETOS - QUÍMICA ORGÂNICA NO ENEM</h3>
+                        <p>Revise os principais conceitos de nomenclatura de hidrocarbonetos com o Prof. Felipe Sobis.</p>
+                        <span class="channel-name">Canal: Curso Enem Gratuito</span>
+                    </div>
+                    <a href="https://www.youtube.com/watch?v=QF5LLkmdIlE" target="_blank" class="video-button">Abrir no YouTube</a>
+                </div>
+            </div>
+
         </main>
     </div>
 
