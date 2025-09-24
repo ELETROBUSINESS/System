@@ -171,26 +171,8 @@
                 <div class="icon-item" id="profileButton"><div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div><span>Meu Perfil</span></div>
             </div>
             <h3 class="section-title">Atividades Disponíveis</h3>
-            <div class="activity-card" data-quiz="pa-pg">
-                <div class="activity-info">
-                    <h3>Simulado de PA e PG</h3>
-                    <p>Matemática - Concluir até 25/09</p>
-                </div>
-                <div class="activity-actions">
-                    <div class="last-score">Última Nota: <span id="score-pa-pg">0.0</span></div>
-                    <button class="start-button" id="button-pa-pg">Iniciar</button>
-                </div>
-            </div>
-            <div class="activity-card" data-quiz="quimica">
-                <div class="activity-info">
-                    <h3>Simulado de Química</h3>
-                    <p>Química - Concluir até 15/10</p>
-                </div>
-                <div class="activity-actions">
-                    <div class="last-score">Última Nota: <span id="score-quimica">0.0</span></div>
-                    <button class="start-button" id="button-quimica">Iniciar</button>
-                </div>
-            </div>
+            <div class="activity-card" data-quiz="pa-pg"><div class="activity-info"><h3>Simulado de PA e PG</h3><p>Matemática - Concluir até 25/09</p></div><div class="activity-actions"><div class="last-score">Última Nota: <span id="score-pa-pg">0.0</span></div><button class="start-button" id="button-pa-pg">Iniciar</button></div></div>
+            <div class="activity-card" data-quiz="quimica"><div class="activity-info"><h3>Simulado de Química</h3><p>Química - Concluir até 15/10</p></div><div class="activity-actions"><div class="last-score">Última Nota: <span id="score-quimica">0.0</span></div><button class="start-button" id="button-quimica">Iniciar</button></div></div>
         </main>
     </div>
 
@@ -300,6 +282,7 @@
         const bottomNav = document.querySelector('.bottom-nav');
         
         let userToken = null;
+        let gradeUpdateInterval = null;
 
         function showScreen(screenToShow) {
             allScreens.forEach(s => s.classList.remove('active'));
@@ -354,16 +337,9 @@
         window.addEventListener('load', () => {
             const savedToken = localStorage.getItem('studentToken');
             if (savedToken) {
-                const parsedToken = JSON.parse(savedToken);
-                if (new Date().getTime() < parsedToken.expiry) {
-                    userToken = parsedToken;
-                    loginScreen.classList.add('token-client-pg');
-                    initializeDashboard();
-                } else {
-                    localStorage.removeItem('studentToken');
-                    loginScreen.classList.remove('token-client-pg');
-                    showScreen(loginScreen);
-                }
+                userToken = JSON.parse(savedToken);
+                loginScreen.classList.add('token-client-pg');
+                initializeDashboard();
             } else {
                 loginScreen.classList.remove('token-client-pg');
                 showScreen(loginScreen);
@@ -374,8 +350,7 @@
             e.preventDefault();
             const name = document.getElementById('studentNameInput').value;
             const birthDate = studentBirthDateInput.value;
-            const expiry = new Date().getTime() + (7 * 24 * 60 * 60 * 1000); // 7 dias
-            userToken = { name, birthDate, expiry };
+            userToken = { name, birthDate };
             localStorage.setItem('studentToken', JSON.stringify(userToken));
             loginScreen.classList.add('token-client-pg');
             initializeDashboard();
@@ -385,6 +360,8 @@
             document.getElementById('welcomeHeader').textContent = `Olá, ${userToken.name}!`;
             bottomNav.style.display = 'flex';
             updateActivityCards();
+            if (gradeUpdateInterval) clearInterval(gradeUpdateInterval);
+            gradeUpdateInterval = setInterval(updateActivityCards, 60000);
             showScreen(studentDashboard);
             updateNav(homeButton);
         }
@@ -408,8 +385,7 @@
 
         logoutButton.addEventListener('click', () => {
             localStorage.removeItem('studentToken');
-            // Opcional: remover também as notas salvas ao deslogar
-            // Object.keys(quizzes).forEach(quizId => localStorage.removeItem(`gradeToken-${quizId}`));
+            if(gradeUpdateInterval) clearInterval(gradeUpdateInterval);
             userToken = null;
             bottomNav.style.display = 'none';
             loginScreen.classList.remove('token-client-pg');
@@ -429,7 +405,7 @@
         calendarButton.addEventListener('click', () => showScreen(calendarScreen));
         backToDashButtons.forEach(btn => {
             btn.addEventListener('click', () => {
-                updateActivityCards(); // Atualiza as notas ao voltar para o painel
+                updateActivityCards();
                 showScreen(studentDashboard)
             });
         });
@@ -514,7 +490,6 @@
             quizContainer.style.display = 'none';
             resultsContainer.style.display = 'block';
             
-            // Salvar nota no token
             localStorage.setItem(`gradeToken-${currentQuizData.id}`, weightedScore.toFixed(1));
 
             document.getElementById('resultsSummary').innerHTML = `
