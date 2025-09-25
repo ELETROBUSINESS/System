@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/assets/img/iconWeb.png">
+    <title>Área do Aluno | ELETRO</title>
+    <!-- Biblioteca para gerar a imagem de compartilhamento -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+        :root {
+            --main-color: #c50037;
+            --accent-color: #ab0030;
+            --text-color: #333;
+            --light-gray: #f4f4f9;
+            --white: #fff;
+            --gray-text: #6c757d;
+            --correct-color: #28a745;
+            --incorrect-color: #dc3545;
+            --unanswered-color: #ffc107;
+        }
+
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: var(--light-gray);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        #loginScreen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #loginScreen .container {
+            text-align: center;
+            padding: 40px;
+        }
+
+        #loginScreen h1 {
+            margin-bottom: 10px;
+        }
+
+        #loginScreen p {
+            color: var(--gray-text);
+            margin-bottom: 30px;
+        }
+
+        #loginForm label {
+            text-align: left;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .token-client-pg {
+            display: none !important;
+        }
+
+        .header-dash {
+            background: linear-gradient(90deg, var(--main-color), var(--accent-color));
+            color: var(--white);
+            padding: 20px 30px;
+            border-radius: 0 0 25px 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .header-dash .header-content {
+            text-align: center;
+        }
+
+        .header-dash h1 {
+            margin: 0;
+            font-size: 1.5em;
+            color: var(--white);
+        }
+
+        .header-dash p {
+            margin: 5px 0 0;
+            opacity: 0.8;
+            font-size: 0.9em;
+        }
+
+        .profile-icon-header {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+        }
+
+        .profile-icon-header svg {
+            width: 32px;
+            height: 32px;
+            stroke: var(--white);
+        }
+
+        .main-content {
+            padding: 25px;
+            padding-bottom: 100px;
+        }
+
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 20px;
+            text-align: center;
+        }
+
+        .icon-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .icon-item .icon-circle {
+            background-color: #f0f0f0;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+            transition: background-color 0.3s;
+        }
+
+        .icon-item:hover .icon-circle {
+            background-color: #e0e0e0;
+        }
+
+        .icon-item svg {
+            width: 28px;
+            height: 28px;
+            stroke: var(--main-color);
+        }
+
+        .icon-item span {
+            font-size: 0.9em;
+            color: var(--text-color);
+        }
+
+        .section-title {
+            text-align: center;
+            color: var(--gray-text);
+            font-weight: 500;
+            margin: 40px 0 20px;
+        }
+
+        .activity-card {
+            background: var(--white);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 15px;
+        }
+
+        .activity-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+        }
+
+        .activity-info {
+            flex-grow: 1;
+        }
+
+        .activity-info h3 {
+            margin: 0;
+            color: var(--text-color);
+            font-size: 1.1em;
+        }
+
+        .activity-info p {
+            margin: 5px 0 0;
+            color: var(--gray-text);
+            font-size: 0.9em;
+        }
+
+        .activity-actions {
+            text-align: right;
+        }
+
+        .last-score {
+            font-size: 0.8em;
+            color: var(--gray-text);
+            margin-bottom: 5px;
+        }
+
+        .last-score span {
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .start-button {
+            background-color: var(--main-color);
+            color: var(--white);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.9em;
+            border: none;
+            cursor: pointer;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--white);
+            display: none;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--gray-text);
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: var(--main-color);
+        }
+
+        .nav-item svg {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-item span {
+            font-size: 0.8em;
+        }
+
+        #quizWrapper {
+            padding-top: 40px;
+            padding-bottom: 40px;
+        }
+
+        .container {
+            background: var(--white);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 700px;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        #quizWrapper h1,
+        #quizWrapper h2,
+        #quizWrapper h3 {
+            color: #4a4a4a;
+            text-align: center;
+        }
+
+        .question-block {
+            margin-bottom: 25px;
+            padding-left: 15px;
+            display: none;
+        }
+
+        .question-block.active {
+            display: block;
+        }
+
+        .question-block p {
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            cursor: pointer;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        label:hover {
+            background-color: #f5f5f5;
+        }
+
+        input[type="radio"] {
+            margin-right: 12px;
+        }
+
+        input[type="radio"]:checked+span {
+            font-weight: bold;
+            color: var(--main-color);
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: calc(100% - 22px);
+            padding: 11px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        button {
+            display: inline-block;
+            width: 100%;
+            padding: 15px;
+            background-color: var(--main-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-align: center;
+        }
+
+        button:hover {
+            background-color: var(--accent-color);
+        }
+
+        .navigation-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        #prevButton {
+            background-color: var(--gray-text);
+        }
+
+        #prevButton:hover {
+            background-color: #5a6268;
+        }
+
+        #quizContainer,
+        #resultsContainer,
+        #shareContainerWrapper,
+        #quizConfirmation {
+            display: none;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+
+        #progressBar {
+            width: 0%;
+            height: 15px;
+            background-color: var(--main-color);
+            border-radius: 10px;
+            transition: width 0.4s ease-in-out;
+        }
+
+        #motivationalMessage {
+            text-align: center;
+            font-size: 1.2em;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .highlight {
+            color: var(--main-color);
+            font-size: 1.3em;
+        }
+
+        #validation-message {
+            color: var(--main-color);
+            text-align: center;
+            font-weight: bold;
+            display: none;
+            margin-top: 15px;
+        }
+
+        #result-icon-container {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .popup-content {
+            background: var(--white);
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .popup-content h2 {
+            margin-top: 0;
+        }
+
+        .close-popup {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        .back-button {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--white);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0 10px;
+            width: auto;
+        }
+
+        .disciplinas-list,
+        .day-schedule ul,
+        .profile-info-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .disciplinas-list li,
+        .day-schedule,
+        .profile-info-list li {
+            background: var(--white);
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .disciplinas-list li span {
+            display: block;
+            font-size: 0.85em;
+            color: var(--gray-text);
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        .day-schedule h3 {
+            margin-top: 0;
+            border-bottom: 2px solid var(--main-color);
+            padding-bottom: 10px;
+        }
+
+        .day-schedule li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .day-schedule li:last-child {
+            border-bottom: none;
+        }
+
+        #profileScreen .profile-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        #profileScreen .profile-header svg {
+            width: 80px;
+            height: 80px;
+            stroke: var(--main-color);
+        }
+
+        #profileScreen h2 {
+            margin-top: 10px;
+        }
+
+        .profile-info-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .profile-info-list .label {
+            color: var(--gray-text);
+        }
+
+        .profile-info-list .value {
+            font-weight: bold;
+        }
+
+        #logoutButton {
+            background-color: var(--gray-text);
+            margin-top: 20px;
+        }
+
+        #quizConfirmation {
+            text-align: center;
+        }
+
+        #quizConfirmation h2 {
+            margin-bottom: 10px;
+        }
+
+        #quizConfirmation p {
+            color: var(--gray-text);
+            margin-top: 0;
+        }
+
+        #quizConfirmation .profile-icon-large {
+            margin: 20px 0;
+        }
+
+        #quizConfirmation .profile-icon-large svg {
+            width: 80px;
+            height: 80px;
+            stroke: var(--main-color);
+        }
+
+        #resultsSummary {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .summary-box {
+            padding: 10px;
+        }
+
+        .summary-box .count {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .summary-box .label {
+            font-size: 0.9em;
+            color: var(--gray-text);
+        }
+
+        .summary-correct .count {
+            color: var(--correct-color);
+        }
+
+        .summary-incorrect .count {
+            color: var(--incorrect-color);
+        }
+
+        .summary-unanswered .count {
+            color: var(--unanswered-color);
+        }
+
+        .video-card {
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        .video-player-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            width: 100%;
+            background: #000;
+        }
+
+        .video-player-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        .video-details {
+            padding: 20px;
+        }
+
+        .video-text h3 {
+            text-align: left;
+            margin: 0 0 10px 0;
+            font-size: 1.1em;
+            line-height: 1.3;
+        }
+
+        .video-text p {
+            text-align: left;
+            margin: 0 0 15px 0;
+            font-size: 0.9em;
+            color: var(--gray-text);
+        }
+
+        .channel-name {
+            font-size: 0.8em;
+            font-weight: 500;
+            color: var(--gray-text);
+            display: block;
+            text-align: left;
+        }
+
+        .video-button {
+            background-color: var(--main-color);
+            color: var(--white) !important;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: 500;
+            margin-top: 20px;
+            display: block;
+            transition: background-color 0.3s;
+        }
+
+        .video-button:hover {
+            background-color: var(--accent-color);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- PAINEL DO ESTUDANTE -->
+    <div id="studentDashboard" class="">
+        <header class="header-dash">
+            <div class="header-content">
+                <h1 id="welcomeHeader">Conteúdo disponível</h1>
+                <p>Seja bem-vindo(a) à sua área de estudos.</p>
+            </div>
+            <div class="profile-icon-header" id="profileIconHeader">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </div>
+        </header>
+        <main class="main-content">
+            <div class="icon-grid">
+                <a href="/apostila1-funcaodalinguagem.pdf">
+                    <div class="icon-item dev-feature">
+                    <div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                        </svg></div><span>APOSTILA1.pdf</span>
+                </div>
+                </a>
+            </div>
+            
+            <h3 class="section-title">Vídeo Aula Sugerida</h3>
+            <div class="video-card">
+                <div class="video-player-container">
+                    <iframe src="https://www.youtube.com/embed/Fed2zHk7Ja0"
+                        title="NOMENCLATURA DOS HIDROCARBONETOS - QUÍMICA ORGÂNICA NO ENEM. Prof. Felipe Sobis"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
+                <div class="video-details">
+                    <div class="video-text">
+                        <h3>Elementos da Comunicação e Funções da linguagem</h3>
+                        <p>A queridinha dos concursos está entre nós: Funções da Linguagem. Mas você sabe o que elas
+                            são? 🤔
+                            Pois bem, as funções da linguagem podem assumir diversos papéis de acordo com o elemento no
+                            qual você quer focar. Pra saber mais, dá logo o play no vídeo.</p>
+                        <span class="channel-name">Canal:
+                            Descomplica
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="video-card">
+                <div class="video-player-container">
+                    <iframe src="https://www.youtube.com/embed/fKFxDD2xjBU"
+                        title="NOMENCLATURA DOS HIDROCARBONETOS - QUÍMICA ORGÂNICA NO ENEM. Prof. Felipe Sobis"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
+                <div class="video-details">
+                    <div class="video-text">
+                        <h3>Resumo fácil para entender os elementos da comunicação</h3>
+                        <p>Hoje iremos conhecer os elementos da comunicação... assunto muito importante para o ENEM.</p>
+                        <span class="channel-name">Canal: Professor Beto Brito - Literatura Lega</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    
+</body>
+
+</html>

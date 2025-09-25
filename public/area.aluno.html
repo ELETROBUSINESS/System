@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,121 +31,641 @@
             padding: 0;
         }
 
-        .screen { display: none; width: 100%; max-width: 900px; margin: 0 auto; min-height: 100vh; }
-        .screen.active { display: block; }
-        
-        #loginScreen { display: flex; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
-        #loginScreen .container { text-align: center; padding: 40px; }
-        #loginScreen h1 { margin-bottom: 10px; }
-        #loginScreen p { color: var(--gray-text); margin-bottom: 30px; }
-        #loginForm label { text-align: left; font-weight: 500; margin-bottom: 5px; }
+        .screen {
+            display: none;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
 
-        .token-client-pg { display: none !important; }
+        .screen.active {
+            display: block;
+        }
 
-        .header-dash { background: linear-gradient(90deg, var(--main-color), var(--accent-color)); color: var(--white); padding: 20px 30px; border-radius: 0 0 25px 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); position: relative; display: flex; justify-content: center; align-items: center; }
-        .header-dash .header-content { text-align: center; }
-        .header-dash h1 { margin: 0; font-size: 1.5em; color: var(--white); }
-        .header-dash p { margin: 5px 0 0; opacity: 0.8; font-size: 0.9em; }
-        .profile-icon-header { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); cursor: pointer; }
-        .profile-icon-header svg { width: 32px; height: 32px; stroke: var(--white); }
+        #loginScreen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
 
-        .main-content { padding: 25px; padding-bottom: 100px; }
-        .icon-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 20px; text-align: center; }
-        .icon-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
-        .icon-item .icon-circle { background-color: #f0f0f0; width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-bottom: 10px; transition: background-color 0.3s; }
-        .icon-item:hover .icon-circle { background-color: #e0e0e0; }
-        .icon-item svg { width: 28px; height: 28px; stroke: var(--main-color); }
-        .icon-item span { font-size: 0.9em; color: var(--text-color); }
+        #loginScreen .container {
+            text-align: center;
+            padding: 40px;
+        }
 
-        .section-title { text-align: center; color: var(--gray-text); font-weight: 500; margin: 40px 0 20px; }
-        .activity-card { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; margin-bottom: 15px; }
-        .activity-card:hover { transform: translateY(-3px); box-shadow: 0 4px 15px rgba(0,0,0,0.12); }
-        .activity-info { flex-grow: 1; }
-        .activity-info h3 { margin: 0; color: var(--text-color); font-size: 1.1em; }
-        .activity-info p { margin: 5px 0 0; color: var(--gray-text); font-size: 0.9em; }
-        
-        .activity-actions { text-align: right; }
-        .last-score { font-size: 0.8em; color: var(--gray-text); margin-bottom: 5px; }
-        .last-score span { font-weight: bold; color: var(--text-color); }
-        .start-button { background-color: var(--main-color); color: var(--white); padding: 8px 16px; border-radius: 20px; font-weight: 500; font-size: 0.9em; border: none; cursor: pointer; }
+        #loginScreen h1 {
+            margin-bottom: 10px;
+        }
 
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--white); display: none; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--gray-text); cursor: pointer; }
-        .nav-item.active { color: var(--main-color); }
-        .nav-item svg { width: 24px; height: 24px; margin-bottom: 4px; }
-        .nav-item span { font-size: 0.8em; }
-        
-        #quizWrapper { padding-top: 40px; padding-bottom: 40px; }
-        .container { background: var(--white); padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 700px; margin: 0 auto; box-sizing: border-box; }
-        #quizWrapper h1, #quizWrapper h2, #quizWrapper h3 { color: #4a4a4a; text-align: center; }
-        .question-block { margin-bottom: 25px; padding-left: 15px; display: none; }
-        .question-block.active { display: block; }
-        .question-block p { font-weight: bold; margin-bottom: 15px; font-size: 1.1em; }
-        label { display: block; margin-bottom: 10px; cursor: pointer; padding: 12px; border: 1px solid #ddd; border-radius: 8px; transition: all 0.2s; }
-        label:hover { background-color: #f5f5f5; }
-        input[type="radio"] { margin-right: 12px; }
-        input[type="radio"]:checked + span { font-weight: bold; color: var(--main-color); }
-        input[type="text"], input[type="number"] { width: calc(100% - 22px); padding: 11px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; }
-        button { display: inline-block; width: 100%; padding: 15px; background-color: var(--main-color); color: white; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; transition: background-color 0.3s; text-align: center; }
-        button:hover { background-color: var(--accent-color); }
-        .navigation-buttons { display: flex; gap: 10px; margin-top: 20px; }
-        #prevButton { background-color: var(--gray-text); }
-        #prevButton:hover { background-color: #5a6268; }
-        #quizContainer, #resultsContainer, #shareContainerWrapper, #quizConfirmation { display: none; }
-        .progress-bar-container { width: 100%; background-color: #e0e0e0; border-radius: 10px; margin-bottom: 25px; }
-        #progressBar { width: 0%; height: 15px; background-color: var(--main-color); border-radius: 10px; transition: width 0.4s ease-in-out; }
-        #motivationalMessage { text-align: center; font-size: 1.2em; margin: 20px 0; font-weight: bold; }
-        .highlight { color: var(--main-color); font-size: 1.3em; }
-        #validation-message { color: var(--main-color); text-align: center; font-weight: bold; display: none; margin-top: 15px; }
-        #result-icon-container { text-align: center; margin-bottom: 15px; }
-        
-        .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); z-index: 2000; display: none; justify-content: center; align-items: center; }
-        .popup-content { background: var(--white); padding: 30px; border-radius: 12px; text-align: center; width: 90%; max-width: 400px; position: relative; }
-        .popup-content h2 { margin-top: 0; }
-        .close-popup { position: absolute; top: 10px; right: 15px; font-size: 28px; cursor: pointer; color: #aaa; }
-        
-        .back-button { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--white); font-size: 24px; cursor: pointer; padding: 0 10px; width: auto; }
-        .disciplinas-list, .day-schedule ul, .profile-info-list { list-style: none; padding: 0; }
-        .disciplinas-list li, .day-schedule, .profile-info-list li { background: var(--white); padding: 20px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .disciplinas-list li span { display: block; font-size: 0.85em; color: var(--gray-text); margin-top: 5px; font-weight: 500;}
-        .day-schedule h3 { margin-top: 0; border-bottom: 2px solid var(--main-color); padding-bottom: 10px; }
-        .day-schedule li { padding: 8px 0; border-bottom: 1px solid #eee; }
-        .day-schedule li:last-child { border-bottom: none; }
-        
-        #profileScreen .profile-header { text-align: center; margin-bottom: 30px; }
-        #profileScreen .profile-header svg { width: 80px; height: 80px; stroke: var(--main-color); }
-        #profileScreen h2 { margin-top: 10px; }
-        .profile-info-list li { display: flex; justify-content: space-between; align-items: center; }
-        .profile-info-list .label { color: var(--gray-text); }
-        .profile-info-list .value { font-weight: bold; }
-        #logoutButton { background-color: var(--gray-text); margin-top: 20px; }
+        #loginScreen p {
+            color: var(--gray-text);
+            margin-bottom: 30px;
+        }
 
-        #quizConfirmation { text-align: center; }
-        #quizConfirmation h2 { margin-bottom: 10px; }
-        #quizConfirmation p { color: var(--gray-text); margin-top: 0; }
-        #quizConfirmation .profile-icon-large { margin: 20px 0; }
-        #quizConfirmation .profile-icon-large svg { width: 80px; height: 80px; stroke: var(--main-color); }
-        
-        #resultsSummary { display: flex; justify-content: space-around; text-align: center; margin: 20px 0; }
-        .summary-box { padding: 10px; }
-        .summary-box .count { font-size: 2em; font-weight: bold; }
-        .summary-box .label { font-size: 0.9em; color: var(--gray-text); }
-        .summary-correct .count { color: var(--correct-color); }
-        .summary-incorrect .count { color: var(--incorrect-color); }
-        .summary-unanswered .count { color: var(--unanswered-color); }
+        #loginForm label {
+            text-align: left;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
 
-        .video-card { background: var(--white); border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); overflow: hidden; margin-top: 15px; }
-        .video-player-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; width: 100%; background: #000; }
-        .video-player-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
-        .video-details { padding: 20px; }
-        .video-text h3 { text-align: left; margin: 0 0 10px 0; font-size: 1.1em; line-height: 1.3; }
-        .video-text p { text-align: left; margin: 0 0 15px 0; font-size: 0.9em; color: var(--gray-text); }
-        .channel-name { font-size: 0.8em; font-weight: 500; color: var(--gray-text); display: block; text-align: left; }
-        .video-button { background-color: var(--main-color); color: var(--white) !important; padding: 12px; border-radius: 8px; text-align: center; text-decoration: none; font-weight: 500; margin-top: 20px; display: block; transition: background-color 0.3s; }
-        .video-button:hover { background-color: var(--accent-color); }
+        .token-client-pg {
+            display: none !important;
+        }
 
+        .header-dash {
+            background: linear-gradient(90deg, var(--main-color), var(--accent-color));
+            color: var(--white);
+            padding: 20px 30px;
+            border-radius: 0 0 25px 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .header-dash .header-content {
+            text-align: center;
+        }
+
+        .header-dash h1 {
+            margin: 0;
+            font-size: 1.5em;
+            color: var(--white);
+        }
+
+        .header-dash p {
+            margin: 5px 0 0;
+            opacity: 0.8;
+            font-size: 0.9em;
+        }
+
+        .profile-icon-header {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+        }
+
+        .profile-icon-header svg {
+            width: 32px;
+            height: 32px;
+            stroke: var(--white);
+        }
+
+        .main-content {
+            padding: 25px;
+            padding-bottom: 100px;
+        }
+
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 20px;
+            text-align: center;
+        }
+
+        .icon-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .icon-item .icon-circle {
+            background-color: #f0f0f0;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+            transition: background-color 0.3s;
+        }
+
+        .icon-item:hover .icon-circle {
+            background-color: #e0e0e0;
+        }
+
+        .icon-item svg {
+            width: 28px;
+            height: 28px;
+            stroke: var(--main-color);
+        }
+
+        .icon-item span {
+            font-size: 0.9em;
+            color: var(--text-color);
+        }
+
+        .section-title {
+            text-align: center;
+            color: var(--gray-text);
+            font-weight: 500;
+            margin: 40px 0 20px;
+        }
+
+        .activity-card {
+            background: var(--white);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 15px;
+        }
+
+        .activity-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+        }
+
+        .activity-info {
+            flex-grow: 1;
+        }
+
+        .activity-info h3 {
+            margin: 0;
+            color: var(--text-color);
+            font-size: 1.1em;
+        }
+
+        .activity-info p {
+            margin: 5px 0 0;
+            color: var(--gray-text);
+            font-size: 0.9em;
+        }
+
+        .activity-actions {
+            text-align: right;
+        }
+
+        .last-score {
+            font-size: 0.8em;
+            color: var(--gray-text);
+            margin-bottom: 5px;
+        }
+
+        .last-score span {
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .start-button {
+            background-color: var(--main-color);
+            color: var(--white);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.9em;
+            border: none;
+            cursor: pointer;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--white);
+            display: none;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--gray-text);
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: var(--main-color);
+        }
+
+        .nav-item svg {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-item span {
+            font-size: 0.8em;
+        }
+
+        #quizWrapper {
+            padding-top: 40px;
+            padding-bottom: 40px;
+        }
+
+        .container {
+            background: var(--white);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 700px;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        #quizWrapper h1,
+        #quizWrapper h2,
+        #quizWrapper h3 {
+            color: #4a4a4a;
+            text-align: center;
+        }
+
+        .question-block {
+            margin-bottom: 25px;
+            padding-left: 15px;
+            display: none;
+        }
+
+        .question-block.active {
+            display: block;
+        }
+
+        .question-block p {
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            cursor: pointer;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        label:hover {
+            background-color: #f5f5f5;
+        }
+
+        input[type="radio"] {
+            margin-right: 12px;
+        }
+
+        input[type="radio"]:checked+span {
+            font-weight: bold;
+            color: var(--main-color);
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: calc(100% - 22px);
+            padding: 11px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        button {
+            display: inline-block;
+            width: 100%;
+            padding: 15px;
+            background-color: var(--main-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-align: center;
+        }
+
+        button:hover {
+            background-color: var(--accent-color);
+        }
+
+        .navigation-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        #prevButton {
+            background-color: var(--gray-text);
+        }
+
+        #prevButton:hover {
+            background-color: #5a6268;
+        }
+
+        #quizContainer,
+        #resultsContainer,
+        #shareContainerWrapper,
+        #quizConfirmation {
+            display: none;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+
+        #progressBar {
+            width: 0%;
+            height: 15px;
+            background-color: var(--main-color);
+            border-radius: 10px;
+            transition: width 0.4s ease-in-out;
+        }
+
+        #motivationalMessage {
+            text-align: center;
+            font-size: 1.2em;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .highlight {
+            color: var(--main-color);
+            font-size: 1.3em;
+        }
+
+        #validation-message {
+            color: var(--main-color);
+            text-align: center;
+            font-weight: bold;
+            display: none;
+            margin-top: 15px;
+        }
+
+        #result-icon-container {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .popup-content {
+            background: var(--white);
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .popup-content h2 {
+            margin-top: 0;
+        }
+
+        .close-popup {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        .back-button {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--white);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0 10px;
+            width: auto;
+        }
+
+        .disciplinas-list,
+        .day-schedule ul,
+        .profile-info-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .disciplinas-list li,
+        .day-schedule,
+        .profile-info-list li {
+            background: var(--white);
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .disciplinas-list li span {
+            display: block;
+            font-size: 0.85em;
+            color: var(--gray-text);
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        .day-schedule h3 {
+            margin-top: 0;
+            border-bottom: 2px solid var(--main-color);
+            padding-bottom: 10px;
+        }
+
+        .day-schedule li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .day-schedule li:last-child {
+            border-bottom: none;
+        }
+
+        #profileScreen .profile-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        #profileScreen .profile-header svg {
+            width: 80px;
+            height: 80px;
+            stroke: var(--main-color);
+        }
+
+        #profileScreen h2 {
+            margin-top: 10px;
+        }
+
+        .profile-info-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .profile-info-list .label {
+            color: var(--gray-text);
+        }
+
+        .profile-info-list .value {
+            font-weight: bold;
+        }
+
+        #logoutButton {
+            background-color: var(--gray-text);
+            margin-top: 20px;
+        }
+
+        #quizConfirmation {
+            text-align: center;
+        }
+
+        #quizConfirmation h2 {
+            margin-bottom: 10px;
+        }
+
+        #quizConfirmation p {
+            color: var(--gray-text);
+            margin-top: 0;
+        }
+
+        #quizConfirmation .profile-icon-large {
+            margin: 20px 0;
+        }
+
+        #quizConfirmation .profile-icon-large svg {
+            width: 80px;
+            height: 80px;
+            stroke: var(--main-color);
+        }
+
+        #resultsSummary {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .summary-box {
+            padding: 10px;
+        }
+
+        .summary-box .count {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .summary-box .label {
+            font-size: 0.9em;
+            color: var(--gray-text);
+        }
+
+        .summary-correct .count {
+            color: var(--correct-color);
+        }
+
+        .summary-incorrect .count {
+            color: var(--incorrect-color);
+        }
+
+        .summary-unanswered .count {
+            color: var(--unanswered-color);
+        }
+
+        .video-card {
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        .video-player-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            width: 100%;
+            background: #000;
+        }
+
+        .video-player-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        .video-details {
+            padding: 20px;
+        }
+
+        .video-text h3 {
+            text-align: left;
+            margin: 0 0 10px 0;
+            font-size: 1.1em;
+            line-height: 1.3;
+        }
+
+        .video-text p {
+            text-align: left;
+            margin: 0 0 15px 0;
+            font-size: 0.9em;
+            color: var(--gray-text);
+        }
+
+        .channel-name {
+            font-size: 0.8em;
+            font-weight: 500;
+            color: var(--gray-text);
+            display: block;
+            text-align: left;
+        }
+
+        .video-button {
+            background-color: var(--main-color);
+            color: var(--white) !important;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: 500;
+            margin-top: 20px;
+            display: block;
+            transition: background-color 0.3s;
+        }
+
+        .video-button:hover {
+            background-color: var(--accent-color);
+        }
     </style>
 </head>
+
 <body>
     <!-- TELA DE LOGIN -->
     <div id="loginScreen" class="screen active">
@@ -169,63 +690,230 @@
                 <p>Seja bem-vindo(a) à sua área de estudos.</p>
             </div>
             <div class="profile-icon-header" id="profileIconHeader">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
             </div>
         </header>
         <main class="main-content">
             <div class="icon-grid">
-                <div class="icon-item dev-feature"><div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg></div><span>Notas</span></div>
-                <div class="icon-item dev-feature"><div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></div><span>Progresso</span></div>
-                <div class="icon-item" id="calendarButton"><div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></div><span>Calendário</span></div>
-                <div class="icon-item dev-feature"><div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg></div><span>Material</span></div>
-                <div class="icon-item" id="profileButton"><div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div><span>Meu Perfil</span></div>
+                <div class="icon-item dev-feature">
+                    <div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                        </svg></div><span>Notas</span>
+                </div>
+                <div class="icon-item dev-feature">
+                    <div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="20" x2="18" y2="10"></line>
+                            <line x1="12" y1="20" x2="12" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                        </svg></div><span>Progresso</span>
+                </div>
+                <div class="icon-item" id="calendarButton">
+                    <div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg></div><span>Calendário</span>
+                </div>
+                <div class="icon-item dev-feature">
+                    <div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                        </svg></div><span>Material</span>
+                </div>
+                <div class="icon-item" id="profileButton">
+                    <div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg></div><span>Meu Perfil</span>
+                </div>
             </div>
             <h3 class="section-title">Atividades Disponíveis</h3>
-            <div class="activity-card" data-quiz="pa-pg"><div class="activity-info"><h3>Simulado de PA e PG</h3><p>Matemática - Concluir até 25/09</p></div><div class="activity-actions"><div class="last-score">Última Nota: <span id="score-pa-pg">0.0</span></div><button class="start-button" id="button-pa-pg">Iniciar</button></div></div>
-            <div class="activity-card" data-quiz="quimica"><div class="activity-info"><h3>Simulado de Química</h3><p>Química - Concluir até 15/10</p></div><div class="activity-actions"><div class="last-score">Última Nota: <span id="score-quimica">0.0</span></div><button class="start-button" id="button-quimica">Iniciar</button></div></div>
-            
-            <h3 class="section-title">Vídeo Aula Sugerida</h3>
-            <div class="video-card">
-                <div class="video-player-container">
-                    <iframe src="https://www.youtube.com/embed/QF5LLkmdIlE" title="NOMENCLATURA DOS HIDROCARBONETOS - QUÍMICA ORGÂNICA NO ENEM. Prof. Felipe Sobis" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            <div class="activity-card" data-quiz="fdl">
+                <div class="activity-info">
+                    <h3>Simulado de Funções da Linguagem</h3>
+                    <p>Português - Concluir até 24/09 | Prof. Elaine</p>
+                    <br>
+                    <a href="/conteudo.temporario.html">Visualizar Material de Estudo</a>
                 </div>
-                <div class="video-details">
-                    <div class="video-text">
-                        <h3>NOMENCLATURA DOS HIDROCARBONETOS - QUÍMICA ORGÂNICA NO ENEM</h3>
-                        <p>Revise os principais conceitos de nomenclatura de hidrocarbonetos com o Prof. Felipe Sobis.</p>
-                        <span class="channel-name">Canal: Curso Enem Gratuito</span>
-                    </div>
-                    <a href="https://www.youtube.com/watch?v=QF5LLkmdIlE" target="_blank" class="video-button">Abrir no YouTube</a>
+                <div class="activity-actions">
+                    <div class="last-score">Última Nota: <span id="score-fdl">0.0</span></div>
+                    <button class="start-button" id="button-fdl">Iniciar</button>
                 </div>
             </div>
 
+            <div class="activity-card" data-quiz="pa-pg">
+                <div class="activity-info">
+                    <h3>Simulado de PA e PG</h3>
+                    <p>Matemática - Concluir até 25/09</p>
+                </div>
+                <div class="activity-actions">
+                    <div class="last-score">Última Nota: <span id="score-pa-pg">0.0</span></div><button
+                        class="start-button" id="button-pa-pg">Iniciar</button>
+                </div>
+            </div>
+            <div class="activity-card" data-quiz="quimica">
+                <div class="activity-info">
+                    <h3>Simulado de Química</h3>
+                    <p>Química - Concluir até 15/10</p>
+                </div>
+                <div class="activity-actions">
+                    <div class="last-score">Última Nota: <span id="score-quimica">0.0</span></div><button
+                        class="start-button" id="button-quimica">Iniciar</button>
+                </div>
+            </div>
+
+            <h3 class="section-title">Vídeo Aula Sugerida</h3>
+            <div class="video-card">
+                <div class="video-player-container">
+                    <iframe src="https://www.youtube.com/embed/Fed2zHk7Ja0"
+                        title="NOMENCLATURA DOS HIDROCARBONETOS - QUÍMICA ORGÂNICA NO ENEM. Prof. Felipe Sobis"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
+                <div class="video-details">
+                    <div class="video-text">
+                        <h3>Elementos da Comunicação e Funções da linguagem</h3>
+                        <p>A queridinha dos concursos está entre nós: Funções da Linguagem. Mas você sabe o que elas
+                            são? 🤔
+                            Pois bem, as funções da linguagem podem assumir diversos papéis de acordo com o elemento no
+                            qual você quer focar. Pra saber mais, dá logo o play no vídeo.</p>
+                        <span class="channel-name">Canal:
+                            Descomplica
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="video-card">
+                <div class="video-player-container">
+                    <iframe src="https://www.youtube.com/embed/fKFxDD2xjBU"
+                        title="NOMENCLATURA DOS HIDROCARBONETOS - QUÍMICA ORGÂNICA NO ENEM. Prof. Felipe Sobis"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
+                <div class="video-details">
+                    <div class="video-text">
+                        <h3>Resumo fácil para entender os elementos da comunicação</h3>
+                        <p>Hoje iremos conhecer os elementos da comunicação... assunto muito importante para o ENEM.</p>
+                        <span class="channel-name">Canal: Professor Beto Brito - Literatura Lega</span>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
     <!-- TELA DE DISCIPLINAS, CALENDÁRIO, etc... -->
     <div id="disciplinasScreen" class="screen">
-        <header class="header-dash"><button class="back-to-dash-button back-button">&larr;</button><h1>Disciplinas</h1></header>
-        <main class="main-content"><ul class="disciplinas-list">
-            <li>ARTES <span>Prof. Dalila</span></li><li>BIOLOGIA <span>Prof. Felipe</span></li><li>EDUCAÇÃO AMBIENTAL, SUSTENTABILIDADE E CLIMA <span>Prof. Karen</span></li><li>EDUCAÇÃO FÍSICA <span>Sem professor</span></li><li>FILOSOFIA <span>Prof. Fernanda</span></li><li>FÍSICA <span>Sem professor</span></li><li>GEOGRAFIA <span>Prof. Claudemir</span></li><li>HISTÓRIA <span>Prof. Zaira</span></li><li>LÍNGUA INGLESA <span>Prof. Dayane</span></li><li>LÍNGUA PORTUGUESA E SUAS LITERATURAS <span>Prof. Elaine</span></li><li>MATEMÁTICA <span>Prof. Vera</span></li><li>QUÍMICA <span>Prof. João Allan</span></li><li>SOCIOLOGIA <span>Prof. Glaucia</span></li>
-        </ul></main>
+        <header class="header-dash"><button class="back-to-dash-button back-button">&larr;</button>
+            <h1>Disciplinas</h1>
+        </header>
+        <main class="main-content">
+            <ul class="disciplinas-list">
+                <li>ARTES <span>Prof. Dalila</span></li>
+                <li>BIOLOGIA <span>Prof. Felipe</span></li>
+                <li>EDUCAÇÃO AMBIENTAL, SUSTENTABILIDADE E CLIMA <span>Prof. Karen</span></li>
+                <li>EDUCAÇÃO FÍSICA <span>Sem professor</span></li>
+                <li>FILOSOFIA <span>Prof. Fernanda</span></li>
+                <li>FÍSICA <span>Sem professor</span></li>
+                <li>GEOGRAFIA <span>Prof. Claudemir</span></li>
+                <li>HISTÓRIA <span>Prof. Zaira</span></li>
+                <li>LÍNGUA INGLESA <span>Prof. Dayane</span></li>
+                <li>LÍNGUA PORTUGUESA E SUAS LITERATURAS <span>Prof. Elaine</span></li>
+                <li>MATEMÁTICA <span>Prof. Vera</span></li>
+                <li>QUÍMICA <span>Prof. João Allan</span></li>
+                <li>SOCIOLOGIA <span>Prof. Glaucia</span></li>
+            </ul>
+        </main>
     </div>
     <div id="calendarScreen" class="screen">
-        <header class="header-dash"><button class="back-to-dash-button back-button">&larr;</button><h1>Horário da Turma</h1><p>Turma: M3MNM02</p></header>
+        <header class="header-dash"><button class="back-to-dash-button back-button">&larr;</button>
+            <h1>Horário da Turma</h1>
+            <p>Turma: M3MNM02</p>
+        </header>
         <main class="main-content">
-            <div class="day-schedule"><h3>Segunda-feira</h3><ul><li><strong>1ª Aula:</strong> Livre</li><li><strong>2ª Aula:</strong> Sociologia (Prof. Glaucia)</li><li><strong>3ª Aula:</strong> Artes (Prof. Dalila)</li><li><strong>4ª Aula:</strong> Matemática (Prof. Vera)</li><li><strong>5ª Aula:</strong> Matemática (Prof. Vera)</li><li><strong>6ª Aula:</strong> Matemática (Prof. Vera)</li></ul></div>
-            <div class="day-schedule"><h3>Terça-feira</h3><ul><li><strong>1ª Aula:</strong> Biologia (Prof. Felipe)</li><li><strong>2ª Aula:</strong> Biologia (Prof. Felipe)</li><li><strong>3ª Aula:</strong> Ed. Ambiental (Prof. Karen)</li><li><strong>4ª Aula:</strong> Projeto de Vida (Prof. Gleisiane)</li><li><strong>5ª Aula:</strong> Matemática (Prof. Vera)</li><li><strong>6ª Aula:</strong> Matemática (Prof. Vera)</li></ul></div>
-            <div class="day-schedule"><h3>Quarta-feira</h3><ul><li><strong>1ª Aula:</strong> Geografia (Prof. Claudemir)</li><li><strong>2ª Aula:</strong> Geografia (Prof. Claudemir)</li><li><strong>3ª Aula:</strong> Física (Sem professor)</li><li><strong>4ª Aula:</strong> Física (Sem professor)</li><li><strong>5ª Aula:</strong> Química (Prof. Joao Allan)</li><li><strong>6ª Aula:</strong> Química (Prof. Joao Allan)</li></ul></div>
-            <div class="day-schedule"><h3>Quinta-feira</h3><ul><li><strong>1ª Aula:</strong> Língua Portuguesa (Prof. Elaine)</li><li><strong>2ª Aula:</strong> Língua Portuguesa (Prof. Elaine)</li><li><strong>3ª Aula:</strong> Língua Portuguesa (Prof. Elaine)</li><li><strong>4ª Aula:</strong> Filosofia (Prof. Fernanda)</li><li><strong>5ª Aula:</strong> Eletiva (Sem professor)</li><li><strong>6ª Aula:</strong> Inglês (Prof. Dayane)</li></ul></div>
-            <div class="day-schedule"><h3>Sexta-feira</h3><ul><li><strong>1ª Aula:</strong> Aprofundamento em Matemática II (Prof. Gleisiane)</li><li><strong>2ª Aula:</strong> Aprofundamento em Matemática II (Prof. Gleisiane)</li><li><strong>3ª Aula:</strong> Língua Portuguesa (Prof. Elaine)</li><li><strong>4ª Aula:</strong> Língua Portuguesa (Prof. Elaine)</li><li><strong>5ª Aula:</strong> História (Prof. Zaira)</li><li><strong>6ª Aula:</strong> História (Prof. Zaira)</li></ul></div>
+            <div class="day-schedule">
+                <h3>Segunda-feira</h3>
+                <ul>
+                    <li><strong>1ª Aula:</strong> Livre</li>
+                    <li><strong>2ª Aula:</strong> Sociologia (Prof. Glaucia)</li>
+                    <li><strong>3ª Aula:</strong> Artes (Prof. Dalila)</li>
+                    <li><strong>4ª Aula:</strong> Matemática (Prof. Vera)</li>
+                    <li><strong>5ª Aula:</strong> Matemática (Prof. Vera)</li>
+                    <li><strong>6ª Aula:</strong> Matemática (Prof. Vera)</li>
+                </ul>
+            </div>
+            <div class="day-schedule">
+                <h3>Terça-feira</h3>
+                <ul>
+                    <li><strong>1ª Aula:</strong> Biologia (Prof. Felipe)</li>
+                    <li><strong>2ª Aula:</strong> Biologia (Prof. Felipe)</li>
+                    <li><strong>3ª Aula:</strong> Ed. Ambiental (Prof. Karen)</li>
+                    <li><strong>4ª Aula:</strong> Projeto de Vida (Prof. Gleisiane)</li>
+                    <li><strong>5ª Aula:</strong> Matemática (Prof. Vera)</li>
+                    <li><strong>6ª Aula:</strong> Matemática (Prof. Vera)</li>
+                </ul>
+            </div>
+            <div class="day-schedule">
+                <h3>Quarta-feira</h3>
+                <ul>
+                    <li><strong>1ª Aula:</strong> Geografia (Prof. Claudemir)</li>
+                    <li><strong>2ª Aula:</strong> Geografia (Prof. Claudemir)</li>
+                    <li><strong>3ª Aula:</strong> Física (Sem professor)</li>
+                    <li><strong>4ª Aula:</strong> Física (Sem professor)</li>
+                    <li><strong>5ª Aula:</strong> Química (Prof. Joao Allan)</li>
+                    <li><strong>6ª Aula:</strong> Química (Prof. Joao Allan)</li>
+                </ul>
+            </div>
+            <div class="day-schedule">
+                <h3>Quinta-feira</h3>
+                <ul>
+                    <li><strong>1ª Aula:</strong> Língua Portuguesa (Prof. Elaine)</li>
+                    <li><strong>2ª Aula:</strong> Língua Portuguesa (Prof. Elaine)</li>
+                    <li><strong>3ª Aula:</strong> Língua Portuguesa (Prof. Elaine)</li>
+                    <li><strong>4ª Aula:</strong> Filosofia (Prof. Fernanda)</li>
+                    <li><strong>5ª Aula:</strong> Eletiva (Sem professor)</li>
+                    <li><strong>6ª Aula:</strong> Inglês (Prof. Dayane)</li>
+                </ul>
+            </div>
+            <div class="day-schedule">
+                <h3>Sexta-feira</h3>
+                <ul>
+                    <li><strong>1ª Aula:</strong> Aprofundamento em Matemática II (Prof. Gleisiane)</li>
+                    <li><strong>2ª Aula:</strong> Aprofundamento em Matemática II (Prof. Gleisiane)</li>
+                    <li><strong>3ª Aula:</strong> Língua Portuguesa (Prof. Elaine)</li>
+                    <li><strong>4ª Aula:</strong> Língua Portuguesa (Prof. Elaine)</li>
+                    <li><strong>5ª Aula:</strong> História (Prof. Zaira)</li>
+                    <li><strong>6ª Aula:</strong> História (Prof. Zaira)</li>
+                </ul>
+            </div>
         </main>
     </div>
 
     <!-- TELA DE PERFIL -->
     <div id="profileScreen" class="screen">
-        <header class="header-dash"><button class="back-to-dash-button back-button">&larr;</button><h1>Meu Perfil</h1></header>
+        <header class="header-dash"><button class="back-to-dash-button back-button">&larr;</button>
+            <h1>Meu Perfil</h1>
+        </header>
         <main class="main-content">
             <div class="profile-header">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
                 <h2 id="profileName"></h2>
             </div>
             <ul class="profile-info-list">
@@ -242,44 +930,95 @@
     <div id="quizWrapper" class="screen">
         <div class="container">
             <div id="quizConfirmation">
-                 <h2 id="quizConfirmTitle"></h2>
-                 <p>Você está prestes a iniciar o simulado.</p>
-                 <div class="profile-icon-large">
-                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                 </div>
-                 <h3 id="quizConfirmName"></h3>
-                 <div class="navigation-buttons">
+                <h2 id="quizConfirmTitle"></h2>
+                <p>Você está prestes a iniciar o simulado.</p>
+                <div class="profile-icon-large">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+                <h3 id="quizConfirmName"></h3>
+                <div class="navigation-buttons">
                     <button type="button" class="back-to-dash-button">Voltar ao Painel</button>
                     <button type="button" id="startConfirmedQuizButton">Iniciar Simulado</button>
-                 </div>
+                </div>
             </div>
             <div id="quizContainer">
-                <div class="progress-bar-container"><div id="progressBar"></div></div><h2 id="welcomeMessage"></h2>
-                <form id="quizForm"><div id="questions-wrapper"></div><p id="validation-message">Por favor, selecione uma resposta para continuar.</p>
-                    <div class="navigation-buttons"><button type="button" id="prevButton">Voltar</button><button type="button" id="nextButton">Próxima</button></div>
+                <div class="progress-bar-container">
+                    <div id="progressBar"></div>
+                </div>
+                <h2 id="welcomeMessage"></h2>
+                <form id="quizForm">
+                    <div id="questions-wrapper"></div>
+                    <p id="validation-message">Por favor, selecione uma resposta para continuar.</p>
+                    <div class="navigation-buttons"><button type="button" id="prevButton">Voltar</button><button
+                            type="button" id="nextButton">Próxima</button></div>
                 </form>
             </div>
             <div id="resultsContainer">
-                <div id="result-icon-container"><svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--main-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 17 17 23 15.79 13.88"></polyline></svg></div>
+                <div id="result-icon-container"><svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"
+                        viewBox="0 0 24 24" fill="none" stroke="var(--main-color)" stroke-width="1.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="8" r="7"></circle>
+                        <polyline points="8.21 13.89 7 23 12 17 17 23 15.79 13.88"></polyline>
+                    </svg></div>
                 <h2>Resultados Finais</h2>
                 <div id="resultsSummary"></div>
-                <p id="motivationalMessage"></p> <hr>
-                <h3>Resumo Detalhado:</h3> <div id="gabarito"></div><button type="button" id="shareButton">Compartilhar Resultado</button>
+                <p id="motivationalMessage"></p>
+                <hr>
+                <h3>Resumo Detalhado:</h3>
+                <div id="gabarito"></div><button type="button" id="shareButton">Compartilhar Resultado</button>
             </div>
             <div id="shareContainerWrapper">
-                <div id="shareContainer"><h2>Meu Desempenho! 🚀</h2><p><strong><span id="shareName"></span></strong></p><div class="share-stats"><div class="stat-box"><div class="value" id="shareScore">0/6</div><div class="label">Acertos</div></div><div class="stat-box"><div class="value" id="shareWeightedScore">0.0</div><div class="label">Pontos (0-10)</div></div></div></div>
-                <div class="navigation-buttons" style="margin-top: 15px;"><button type="button" id="backToResultsButton" style="background-color: #6c757d;">Voltar</button><button type="button" id="downloadButton">Baixar Imagem</button></div>
+                <div id="shareContainer">
+                    <h2>Meu Desempenho! 🚀</h2>
+                    <p><strong><span id="shareName"></span></strong></p>
+                    <div class="share-stats">
+                        <div class="stat-box">
+                            <div class="value" id="shareScore">0/6</div>
+                            <div class="label">Acertos</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="value" id="shareWeightedScore">0.0</div>
+                            <div class="label">Pontos (0-10)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="navigation-buttons" style="margin-top: 15px;"><button type="button" id="backToResultsButton"
+                        style="background-color: #6c757d;">Voltar</button><button type="button"
+                        id="downloadButton">Baixar Imagem</button></div>
             </div>
         </div>
     </div>
-    
+
     <!-- POP-UP DE AVISO -->
-    <div id="devPopup" class="popup-overlay"><div class="popup-content"><span class="close-popup">&times;</span><h2>Aviso</h2><p>Esta funcionalidade está em desenvolvimento em conjunto com a escola EEEM IRMA AGNES VINCQUIER.</p></div></div>
-    
+    <div id="devPopup" class="popup-overlay">
+        <div class="popup-content"><span class="close-popup">&times;</span>
+            <h2>Aviso</h2>
+            <p>Esta funcionalidade está em desenvolvimento em conjunto com a escola EEEM IRMA AGNES VINCQUIER.</p>
+        </div>
+    </div>
+
     <nav class="bottom-nav">
-        <div class="nav-item active" id="homeButton"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg><span>Home</span></div>
-        <div class="nav-item" id="disciplinasButton"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg><span>Disciplinas</span></div>
-        <div class="nav-item dev-feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M6 20v-4M18 20v-8"></path></svg><span>Ranking</span></div>
+        <div class="nav-item active" id="homeButton"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg><span>Home</span></div>
+        <div class="nav-item" id="disciplinasButton"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+            </svg><span>Disciplinas</span></div>
+        <div class="nav-item dev-feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20v-6M6 20v-4M18 20v-8"></path>
+            </svg><span>Ranking</span></div>
     </nav>
 
     <script>
@@ -306,7 +1045,7 @@
         const logoutButton = document.getElementById('logoutButton');
         const studentBirthDateInput = document.getElementById('studentBirthDateInput');
         const bottomNav = document.querySelector('.bottom-nav');
-        
+
         let userToken = null;
         let gradeUpdateInterval = null;
 
@@ -314,10 +1053,10 @@
             allScreens.forEach(s => s.classList.remove('active'));
             screenToShow.classList.add('active');
         }
-        
+
         function updateNav(activeButton) {
             navItems.forEach(item => item.classList.remove('active'));
-            if(activeButton) activeButton.classList.add('active');
+            if (activeButton) activeButton.classList.add('active');
         }
 
         // --- LÓGICA DO QUIZ ---
@@ -336,12 +1075,12 @@
         const startConfirmedQuizButton = document.getElementById('startConfirmedQuizButton');
 
         const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzKNrAmBBXZrpUO33LM09M_-x7kFM9YnyKgPC0YyTiQRimw-FzJ_W2UjHJUom4Rfo8q/exec';
-        
+
         const quizzes = {
-            'pa-pg': { id: 'pa-pg', title: 'Simulado de PA e PG', questions: [ /* Questões preenchidas no final */ ] },
-            'quimica': { id: 'quimica', title: 'Simulado de Química', questions: [ /* Questões preenchidas no final */ ] }
+            'pa-pg': { id: 'pa-pg', title: 'Simulado de PA e PG', questions: [ /* Questões preenchidas no final */] },
+            'quimica': { id: 'quimica', title: 'Simulado de Química', questions: [ /* Questões preenchidas no final */] }
         };
-        
+
         let currentQuizData = {};
         let currentQuestionIndex = 0;
         let userAnswers = [];
@@ -391,7 +1130,7 @@
             showScreen(studentDashboard);
             updateNav(homeButton);
         }
-        
+
         function updateActivityCards() {
             activityCards.forEach(card => {
                 const quizId = card.dataset.quiz;
@@ -411,13 +1150,13 @@
 
         logoutButton.addEventListener('click', () => {
             localStorage.removeItem('studentToken');
-            if(gradeUpdateInterval) clearInterval(gradeUpdateInterval);
+            if (gradeUpdateInterval) clearInterval(gradeUpdateInterval);
             userToken = null;
             bottomNav.style.display = 'none';
             loginScreen.classList.remove('token-client-pg');
             showScreen(loginScreen);
         });
-        
+
         studentBirthDateInput.addEventListener('input', (e) => {
             let value = e.target.value.replace(/\D/g, '');
             if (value.length > 2) value = `${value.slice(0, 2)}/${value.slice(2)}`;
@@ -437,7 +1176,7 @@
         });
         profileButton.addEventListener('click', showProfile);
         profileIconHeader.addEventListener('click', showProfile);
-        
+
         function showProfile() {
             document.getElementById('profileName').textContent = userToken.name;
             document.getElementById('profileBirthDate').textContent = userToken.birthDate;
@@ -452,11 +1191,11 @@
             document.getElementById('welcomeMessage').textContent = `Boa sorte, ${userToken.name}!`;
             showQuestion(0);
         });
-        
+
         devFeatures.forEach(feature => feature.addEventListener('click', () => { devPopup.style.display = 'flex'; }));
         closePopupButton.addEventListener('click', () => { devPopup.style.display = 'none'; });
         window.addEventListener('click', (event) => { if (event.target === devPopup) devPopup.style.display = 'none'; });
-        
+
         // --- LÓGICA COMPLETA DO QUIZ ---
         nextButton.addEventListener('click', () => {
             const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
@@ -474,11 +1213,11 @@
             saveCurrentAnswer();
             if (currentQuestionIndex > 0) { currentQuestionIndex--; showQuestion(currentQuestionIndex); }
         });
-        function renderQuestions(){
+        function renderQuestions() {
             let html = '';
             currentQuizData.questions.forEach((q, index) => {
                 html += `<div class="question-block" id="q${index}"> <p>${q.question}</p>`;
-                for(const key in q.options){
+                for (const key in q.options) {
                     const isChecked = userAnswers[index] === key ? 'checked' : '';
                     html += `<label><input type="radio" name="q${index}" value="${key}" ${isChecked}> <span>${q.options[key]}</span></label>`;
                 }
@@ -497,8 +1236,8 @@
             nextButton.textContent = (index === currentQuizData.questions.length - 1) ? "Finalizar e Ver Resultado" : "Próxima";
         }
         function saveCurrentAnswer() {
-             const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
-             if (selectedOption) userAnswers[currentQuestionIndex] = selectedOption.value;
+            const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
+            if (selectedOption) userAnswers[currentQuestionIndex] = selectedOption.value;
         }
         function calculateAndShowResults() {
             let correct = 0, incorrect = 0, unanswered = 0, weightedScore = 0;
@@ -515,7 +1254,7 @@
             });
             quizContainer.style.display = 'none';
             resultsContainer.style.display = 'block';
-            
+
             localStorage.setItem(`gradeToken-${currentQuizData.id}`, weightedScore.toFixed(1));
 
             document.getElementById('resultsSummary').innerHTML = `
@@ -523,7 +1262,7 @@
                 <div class="summary-box summary-incorrect"><div class="count">${incorrect}</div><div class="label">Erros</div></div>
                 <div class="summary-box summary-unanswered"><div class="count">${unanswered}</div><div class="label">Não Resp.</div></div>
             `;
-            
+
             let message = '';
             const percentage = (correct / currentQuizData.questions.length) * 100;
             if (percentage === 100) message = `<span class="highlight">Amanhã você vai arrasar, ${userToken.name}!</span>`;
@@ -537,8 +1276,8 @@
             userAnswers.forEach((answer, index) => {
                 const resultItem = document.createElement('div');
                 resultItem.classList.add('gabarito-item');
-                if (answer === currentQuizData.questions[index].answer) { resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> Correta`; resultItem.classList.add('correct'); } 
-                else if (answer === 'NAO_SEI' || answer === null) { resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> Não soube responder`; resultItem.classList.add('unanswered'); } 
+                if (answer === currentQuizData.questions[index].answer) { resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> Correta`; resultItem.classList.add('correct'); }
+                else if (answer === 'NAO_SEI' || answer === null) { resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> Não soube responder`; resultItem.classList.add('unanswered'); }
                 else { resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> Incorreta`; resultItem.classList.add('incorrect'); }
                 gabaritoDiv.appendChild(resultItem);
             });
@@ -559,11 +1298,11 @@
                 submissionData.append(`q${index + 1}`, answer || "Nao Respondida");
             });
             fetch(APPSCRIPT_URL, { method: 'POST', body: submissionData })
-            .then(response => {
-                if (response.ok) console.log('Dados enviados com sucesso.');
-                else return response.text().then(text => { throw new Error(text) });
-            })
-            .catch(error => console.error('Erro ao enviar os dados:', error));
+                .then(response => {
+                    if (response.ok) console.log('Dados enviados com sucesso.');
+                    else return response.text().then(text => { throw new Error(text) });
+                })
+                .catch(error => console.error('Erro ao enviar os dados:', error));
         }
         shareButton.addEventListener('click', () => { resultsContainer.style.display = 'none'; shareContainerWrapper.style.display = 'block'; });
         backToResultsButton.addEventListener('click', () => { shareContainerWrapper.style.display = 'none'; resultsContainer.style.display = 'block'; });
@@ -575,7 +1314,7 @@
                 link.click();
             });
         });
-        
+
         quizzes['pa-pg'].questions = [
             { question: "1. Um atleta corre 5 km no primeiro dia de treino...", options: { A: "21 km", B: "24 km", C: "26 km", D: "29 km" }, answer: "C", difficulty: 'easy' }, { question: "2. Um teatro possui 15 cadeiras na primeira fileira...", options: { A: "285", B: "42", C: "150", D: "300" }, answer: "A", difficulty: 'easy' }, { question: "3. O lucro de uma empresa em janeiro foi de R$ 80.000,00...", options: { A: "R$ 60.000,00", B: "R$ 56.000,00", C: "R$ 52.000,00", D: "R$ 48.000,00" }, answer: "B", difficulty: 'hard' }, { question: "4. Uma cultura de bactérias começa com 100 indivíduos...", options: { A: "500", B: "800", C: "1.600", D: "3.200" }, answer: "C", difficulty: 'easy' }, { question: "5. Um investidor aplicou R$ 50,00 no primeiro mês...", options: { A: "R$ 1.600,00", B: "R$ 3.150,00", C: "R$ 3.200,00", D: "R$ 1.550,00" }, answer: "B", difficulty: 'easy' }, { question: "6. Sabendo que a sequência (x-2, x, x+3) é uma PG...", options: { A: "4", B: "5", C: "6", D: "2" }, answer: "C", difficulty: 'hard' }
         ];
@@ -583,7 +1322,80 @@
             { question: "1. Qual é o nome oficial (IUPAC) para o hidrocarboneto de cadeia normal com 5 átomos de carbono e apenas ligações simples?", options: { A: "Pentano", B: "Penteno", C: "Propano", D: "Butano" }, answer: "A", difficulty: 'easy' }, { question: "2. O composto But-2-eno é classificado como um:", options: { A: "Alcano", B: "Alcino", C: "Alceno", D: "Ciclano" }, answer: "C", difficulty: 'easy' }, { question: "3. A estrutura CH₃-CH₂-CH=CH₂ representa qual composto?", options: { A: "But-2-eno", B: "Butano", C: "But-1-ino", D: "But-1-eno" }, answer: "D", difficulty: 'easy' }, { question: "4. Qual dos compostos abaixo é um alcino, caracterizado por uma ligação tripla?", options: { A: "Eteno", B: "Propano", C: "Propeno", D: "Propino" }, answer: "D", difficulty: 'easy' }, { question: "5. Qual é o nome IUPAC para o composto a seguir: CH₃-CH(CH₃)-CH₂-CH(CH₃)-CH₃?", options: { A: "2,4-dimetil-hexano", B: "2,4-dimetil-pentano", C: "2-metil-4-metil-pentano", D: "3,5-dimetil-pentano" }, answer: "B", difficulty: 'hard' }, { question: "6. O composto conhecido como Tolueno, um importante solvente, é um hidrocarboneto aromático. Qual outro nome ele pode receber pela nomenclatura IUPAC?", options: { A: "Etil-benzeno", B: "Dimetil-benzeno", C: "Metil-benzeno", D: "Propil-benzeno" }, answer: "C", difficulty: 'hard' }
         ];
 
+        quizzes['fdl'] = {
+            id: 'fdl',
+            title: 'Simulado de Funções da Linguagem',
+            questions: [
+                {
+                    question: "1. No processo de comunicação, quem codifica a mensagem, ou seja, quem a elabora e envia?",
+                    options: {
+                        A: "Receptor",
+                        B: "Emissor",
+                        C: "Canal",
+                        D: "Mensagem"
+                    },
+                    answer: "B",
+                    difficulty: 'easy'
+                },
+                {
+                    question: "2. Na frase 'O céu está azul e o dia ensolarado', a principal função da linguagem é a referencial, pois o objetivo é:",
+                    options: {
+                        A: "Expressar os sentimentos do autor sobre o dia.",
+                        B: "Verificar se o interlocutor está ouvindo.",
+                        C: "Informar sobre um fato de forma objetiva.",
+                        D: "Usar a linguagem para falar da própria linguagem."
+                    },
+                    answer: "C",
+                    difficulty: 'easy'
+                },
+                {
+                    question: "3. Leia o slogan: 'Compre já o seu e garanta a diversão!'. Qual função da linguagem é predominante?",
+                    options: {
+                        A: "Função Poética",
+                        B: "Função Emotiva",
+                        C: "Função Fática",
+                        D: "Função Conativa (ou Apelativa)"
+                    },
+                    answer: "D",
+                    difficulty: 'easy' // Média
+                },
+                {
+                    question: "4. No trecho 'Ah, que saudade que eu sinto da minha terra natal!', o foco está no emissor e em seus sentimentos. Portanto, a função da linguagem que prevalece é a:",
+                    options: {
+                        A: "Emotiva (ou Expressiva)",
+                        B: "Referencial",
+                        C: "Metalinguística",
+                        D: "Poética"
+                    },
+                    answer: "A",
+                    difficulty: 'easy' // Média
+                },
+                {
+                    question: "5. Em uma conversa telefônica, a expressão 'Alô, está me ouvindo?' serve principalmente para testar o canal de comunicação. Esse é um exemplo clássico da função:",
+                    options: {
+                        A: "Metalinguística",
+                        B: "Referencial",
+                        C: "Fática",
+                        D: "Apelativa"
+                    },
+                    answer: "C",
+                    difficulty: 'hard'
+                },
+                {
+                    question: "6. A definição de uma palavra em um dicionário é o exemplo mais claro de qual função da linguagem, onde o código é usado para explicar o próprio código?",
+                    options: {
+                        A: "Função Poética",
+                        B: "Função Metalinguística",
+                        C: "Função Referencial",
+                        D: "Função Emotiva"
+                    },
+                    answer: "B",
+                    difficulty: 'hard'
+                }
+            ]
+        };
+
     </script>
 </body>
-</html>
 
+</html>
