@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/assets/img/iconWeb.png">
     <title>Área do Aluno | ELETRO</title>
-    <!-- Biblioteca para gerar a imagem de compartilhamento -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
@@ -318,6 +317,18 @@
             background-color: #f5f5f5;
         }
 
+        textarea.discursive-answer {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-family: 'Roboto', sans-serif;
+            font-size: 1em;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+
         input[type="radio"] {
             margin-right: 12px;
         }
@@ -595,6 +606,29 @@
             color: var(--unanswered-color);
         }
 
+        #gabarito .gabarito-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+
+        .gabarito-item.correct {
+            border-color: var(--correct-color);
+            background-color: #e9f7ea;
+        }
+
+        .gabarito-item.incorrect {
+            border-color: var(--incorrect-color);
+            background-color: #fce8e6;
+        }
+
+        .gabarito-item.unanswered {
+            border-color: var(--unanswered-color);
+            background-color: #fff8e1;
+        }
+
+
         .video-card {
             background: var(--white);
             border-radius: 12px;
@@ -663,11 +697,20 @@
         .video-button:hover {
             background-color: var(--accent-color);
         }
+
+
+        .poem-box {
+            background: #f9f9f9;
+            border-left: 4px solid var(--main-color);
+            padding: 15px;
+            margin-bottom: 15px;
+            font-style: italic;
+            white-space: pre-wrap;
+        }
     </style>
 </head>
 
 <body>
-    <!-- TELA DE LOGIN -->
     <div id="loginScreen" class="screen active">
         <div class="container">
             <h1>Bem-vindo(a)!</h1>
@@ -682,7 +725,6 @@
         </div>
     </div>
 
-    <!-- PAINEL DO ESTUDANTE -->
     <div id="studentDashboard" class="screen">
         <header class="header-dash">
             <div class="header-content">
@@ -739,6 +781,17 @@
                 </div>
             </div>
             <h3 class="section-title">Atividades Disponíveis</h3>
+            <div class="activity-card" data-quiz="historia">
+                <div class="activity-info">
+                    <h3>Simulado 2°Guerra Mundial + eventos</h3>
+                    <p>História - Concluir até 26/09 | Prof. Zaira</p>
+                </div>
+                <div class="activity-actions">
+                    <div class="last-score">Última Nota: <span id="score-historia">0.0</span></div>
+                    <button class="start-button" id="button-historia">Iniciar</button>
+                </div>
+            </div>
+
             <div class="activity-card" data-quiz="fdl">
                 <div class="activity-info">
                     <h3>Simulado de Funções da Linguagem</h3>
@@ -776,7 +829,7 @@
             <h3 class="section-title">Vídeo Aula Sugerida</h3>
             <div class="video-card">
                 <div class="video-player-container">
-                    <iframe src="https://www.youtube.com/embed/Fed2zHk7Ja0"
+                    <iframe src="https://www.youtube.com/embed/YEKQYiWnvcI"
                         title="NOMENCLATURA DOS HIDROCARBONETOS - QUÍMICA ORGÂNICA NO ENEM. Prof. Felipe Sobis"
                         frameborder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -784,21 +837,19 @@
                 </div>
                 <div class="video-details">
                     <div class="video-text">
-                        <h3>Elementos da Comunicação e Funções da linguagem</h3>
-                        <p>A queridinha dos concursos está entre nós: Funções da Linguagem. Mas você sabe o que elas
-                            são? 🤔
-                            Pois bem, as funções da linguagem podem assumir diversos papéis de acordo com o elemento no
-                            qual você quer focar. Pra saber mais, dá logo o play no vídeo.</p>
-                        <span class="channel-name">Canal:
-                            Descomplica
-                        </span>
+                        <h3>A tragédia de Hiroshima e Nagasaki</h3>
+                        <p>Em 6 de agosto de 1945, durante a Segunda Guerra Mundial, a primeira bomba atômica usada em
+                            ataque foi lançada pelos Estados Unidos sobre a cidade japonesa de Hiroshima. A explosão
+                            matou cerca de 80 mil pessoas imediatamente e outras 60 mil no decorrer de um ano pela
+                            exposição à radiação. Três dias depois, uma segunda bomba atômica foi lançada sobre a cidade
+                            de Nagasaki, onde morreram pelo menos 50 mil pessoas.</p>
+                        <span class="channel-name">Canal: Canal History Brasil</span>
                     </div>
                 </div>
             </div>
-
             <div class="video-card">
                 <div class="video-player-container">
-                    <iframe src="https://www.youtube.com/embed/fKFxDD2xjBU"
+                    <iframe src="https://www.youtube.com/embed/rq3zOuEI-eE"
                         title="NOMENCLATURA DOS HIDROCARBONETOS - QUÍMICA ORGÂNICA NO ENEM. Prof. Felipe Sobis"
                         frameborder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -806,16 +857,16 @@
                 </div>
                 <div class="video-details">
                     <div class="video-text">
-                        <h3>Resumo fácil para entender os elementos da comunicação</h3>
-                        <p>Hoje iremos conhecer os elementos da comunicação... assunto muito importante para o ENEM.</p>
-                        <span class="channel-name">Canal: Professor Beto Brito - Literatura Lega</span>
+                        <h3>OS EFEITOS DA BOMBA ATÔMICA - Nostalgia Animado</h3>
+                        <p>Entenda os efeitos da Bomba Atômica lançada em Hiroshima e Nagasaki no final da segunda
+                            guerra mundial.</p>
+                        <span class="channel-name">Canal: Canal Nostalgia</span>
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- TELA DE DISCIPLINAS, CALENDÁRIO, etc... -->
     <div id="disciplinasScreen" class="screen">
         <header class="header-dash"><button class="back-to-dash-button back-button">&larr;</button>
             <h1>Disciplinas</h1>
@@ -902,7 +953,6 @@
         </main>
     </div>
 
-    <!-- TELA DE PERFIL -->
     <div id="profileScreen" class="screen">
         <header class="header-dash"><button class="back-to-dash-button back-button">&larr;</button>
             <h1>Meu Perfil</h1>
@@ -926,7 +976,6 @@
         </main>
     </div>
 
-    <!-- WRAPPER DO QUIZ -->
     <div id="quizWrapper" class="screen">
         <div class="container">
             <div id="quizConfirmation">
@@ -993,7 +1042,6 @@
         </div>
     </div>
 
-    <!-- POP-UP DE AVISO -->
     <div id="devPopup" class="popup-overlay">
         <div class="popup-content"><span class="close-popup">&times;</span>
             <h2>Aviso</h2>
@@ -1077,8 +1125,10 @@
         const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzKNrAmBBXZrpUO33LM09M_-x7kFM9YnyKgPC0YyTiQRimw-FzJ_W2UjHJUom4Rfo8q/exec';
 
         const quizzes = {
-            'pa-pg': { id: 'pa-pg', title: 'Simulado de PA e PG', questions: [ /* Questões preenchidas no final */] },
-            'quimica': { id: 'quimica', title: 'Simulado de Química', questions: [ /* Questões preenchidas no final */] }
+            'pa-pg': { id: 'pa-pg', title: 'Simulado de PA e PG', questions: [] },
+            'quimica': { id: 'quimica', title: 'Simulado de Química', questions: [] },
+            'fdl': { id: 'fdl', title: 'Simulado de Funções da Linguagem', questions: [] },
+            'historia': { id: 'historia', title: 'Simulado de História - 2ª Guerra', questions: [] }
         };
 
         let currentQuizData = {};
@@ -1198,35 +1248,76 @@
 
         // --- LÓGICA COMPLETA DO QUIZ ---
         nextButton.addEventListener('click', () => {
-            const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
-            if (!selectedOption) {
-                validationMessage.style.display = 'block';
-                setTimeout(() => { validationMessage.style.display = 'none'; }, 2500);
-                return;
+            const currentQuestion = currentQuizData.questions[currentQuestionIndex];
+
+            if (currentQuestion.type !== 'discursive') {
+                const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
+                if (!selectedOption) {
+                    validationMessage.style.display = 'block';
+                    setTimeout(() => { validationMessage.style.display = 'none'; }, 2500);
+                    return;
+                }
             }
+
             saveCurrentAnswer();
             if (currentQuestionIndex < currentQuizData.questions.length - 1) {
                 currentQuestionIndex++; showQuestion(currentQuestionIndex);
             } else { calculateAndShowResults(); }
         });
+
         prevButton.addEventListener('click', () => {
             saveCurrentAnswer();
             if (currentQuestionIndex > 0) { currentQuestionIndex--; showQuestion(currentQuestionIndex); }
         });
+
         function renderQuestions() {
             let html = '';
             currentQuizData.questions.forEach((q, index) => {
                 html += `<div class="question-block" id="q${index}"> <p>${q.question}</p>`;
-                for (const key in q.options) {
-                    const isChecked = userAnswers[index] === key ? 'checked' : '';
-                    html += `<label><input type="radio" name="q${index}" value="${key}" ${isChecked}> <span>${q.options[key]}</span></label>`;
+
+                if (q.poem) {
+                    html += `<div class="poem-box">
+              <h4>Poema: "Rosa de Hiroshima"</h4>
+              <pre>
+                Pensem nas crianças
+Mudas telepáticas
+Pensem nas meninas
+Cegas inexatas
+Pensem nas mulheres
+Rotas alteradas
+Pensem nas feridas
+Como rosas cálidas
+Mas oh não se esqueçam
+Da rosa da rosa
+Da rosa de Hiroxima
+A rosa hereditária
+A rosa radioativa
+Estúpida e inválida
+A rosa com cirrose
+A antirrosa atômica
+Sem cor sem perfume
+Sem rosa sem nada.
+              </pre>
+          </div>`;
                 }
-                const isNotAnsweredChecked = userAnswers[index] === 'NAO_SEI' ? 'checked' : '';
-                html += `<label style="font-style: italic; color: #666;"><input type="radio" name="q${index}" value="NAO_SEI" ${isNotAnsweredChecked}> <span>Não consegui responder</span></label>`;
+
+                if (q.type === 'discursive') {
+                    const userAnswer = userAnswers[index] || '';
+                    html += `<textarea name="q${index}" class="discursive-answer" placeholder="Digite sua resposta aqui...">${userAnswer}</textarea>`;
+                } else {
+                    for (const key in q.options) {
+                        const isChecked = userAnswers[index] === key ? 'checked' : '';
+                        html += `<label><input type="radio" name="q${index}" value="${key}" ${isChecked}> <span>${q.options[key]}</span></label>`;
+                    }
+                    const isNotAnsweredChecked = userAnswers[index] === 'NAO_SEI' ? 'checked' : '';
+                    html += `<label style="font-style: italic; color: #666;"><input type="radio" name="q${index}" value="NAO_SEI" ${isNotAnsweredChecked}> <span>Não consegui responder</span></label>`;
+                }
+
                 html += `</div>`;
             });
             questionsWrapper.innerHTML = html;
         }
+
         function showQuestion(index) {
             renderQuestions();
             document.querySelectorAll('.question-block').forEach(q => q.classList.remove('active'));
@@ -1235,27 +1326,56 @@
             prevButton.style.display = index === 0 ? 'none' : 'inline-block';
             nextButton.textContent = (index === currentQuizData.questions.length - 1) ? "Finalizar e Ver Resultado" : "Próxima";
         }
+
         function saveCurrentAnswer() {
-            const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
-            if (selectedOption) userAnswers[currentQuestionIndex] = selectedOption.value;
+            const currentQuestion = currentQuizData.questions[currentQuestionIndex];
+            if (currentQuestion.type === 'discursive') {
+                const textarea = document.querySelector(`#q${currentQuestionIndex} .discursive-answer`);
+                userAnswers[currentQuestionIndex] = textarea.value;
+            } else {
+                const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
+                if (selectedOption) userAnswers[currentQuestionIndex] = selectedOption.value;
+            }
         }
+
         function calculateAndShowResults() {
-            let correct = 0, incorrect = 0, unanswered = 0, weightedScore = 0;
+            let correct = 0, incorrect = 0, unanswered = 0;
             const totalPossibleWeighted = 10;
+            let weightedScore = 0;
+
             userAnswers.forEach((answer, index) => {
-                if (answer === currentQuizData.questions[index].answer) {
-                    correct++;
-                    weightedScore += (currentQuizData.questions[index].difficulty === 'hard') ? 3 : 1;
-                } else if (answer === 'NAO_SEI' || answer === null) {
-                    unanswered++;
-                } else {
-                    incorrect++;
+                const question = currentQuizData.questions[index];
+
+                if (question.type === 'discursive') {
+                    if (!answer || answer.trim() === '') {
+                        unanswered++;
+                    } else {
+                        const userAnswerLower = answer.toLowerCase();
+                        const allKeywordsFound = question.keywords.every(kw => userAnswerLower.includes(kw.toLowerCase()));
+                        if (allKeywordsFound) {
+                            correct++;
+                            weightedScore += (question.difficulty === 'hard') ? 3 : 1.5;
+                        } else {
+                            incorrect++;
+                        }
+                    }
+                } else { // Multiple choice
+                    if (answer === question.answer) {
+                        correct++;
+                        weightedScore += (question.difficulty === 'hard') ? 2 : 1;
+                    } else if (answer === 'NAO_SEI' || answer === null) {
+                        unanswered++;
+                    } else {
+                        incorrect++;
+                    }
                 }
             });
+
             quizContainer.style.display = 'none';
             resultsContainer.style.display = 'block';
 
-            localStorage.setItem(`gradeToken-${currentQuizData.id}`, weightedScore.toFixed(1));
+            const finalWeightedScore = Math.min(weightedScore, totalPossibleWeighted);
+            localStorage.setItem(`gradeToken-${currentQuizData.id}`, finalWeightedScore.toFixed(1));
 
             document.getElementById('resultsSummary').innerHTML = `
                 <div class="summary-box summary-correct"><div class="count">${correct}</div><div class="label">Acertos</div></div>
@@ -1265,7 +1385,7 @@
 
             let message = '';
             const percentage = (correct / currentQuizData.questions.length) * 100;
-            if (percentage === 100) message = `<span class="highlight">Amanhã você vai arrasar, ${userToken.name}!</span>`;
+            if (percentage === 100) message = `<span class="highlight">Gabaritou! Parabéns, ${userToken.name}!</span>`;
             else if (percentage >= 70) message = `Parabéns, ${userToken.name}! Você mandou muito bem!`;
             else if (percentage >= 50) message = `Bom trabalho, ${userToken.name}! Continue praticando.`;
             else message = `Não desanime, ${userToken.name}! A prática leva à perfeição.`;
@@ -1274,18 +1394,43 @@
             const gabaritoDiv = document.getElementById('gabarito');
             gabaritoDiv.innerHTML = '';
             userAnswers.forEach((answer, index) => {
+                const question = currentQuizData.questions[index];
                 const resultItem = document.createElement('div');
                 resultItem.classList.add('gabarito-item');
-                if (answer === currentQuizData.questions[index].answer) { resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> Correta`; resultItem.classList.add('correct'); }
-                else if (answer === 'NAO_SEI' || answer === null) { resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> Não soube responder`; resultItem.classList.add('unanswered'); }
-                else { resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> Incorreta`; resultItem.classList.add('incorrect'); }
+                let statusClass = 'unanswered';
+                let statusText = 'Não Respondida';
+
+                if (question.type === 'discursive') {
+                    if (!answer || answer.trim() === '') {
+                        statusClass = 'unanswered';
+                        statusText = 'Não Respondida';
+                    } else {
+                        const userAnswerLower = answer.toLowerCase();
+                        const allKeywordsFound = question.keywords.every(kw => userAnswerLower.includes(kw.toLowerCase()));
+                        if (allKeywordsFound) {
+                            statusClass = 'correct'; statusText = 'Correta';
+                        } else {
+                            statusClass = 'incorrect'; statusText = 'Incorreta';
+                        }
+                    }
+                    resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> ${statusText}. <br><small><i>Sua resposta:</i> "${answer || '...'}"</small><br><small><i>Palavras-chave esperadas:</i> ${question.keywords.join(', ')}</small>`;
+                } else {
+                    if (answer === question.answer) { statusClass = 'correct'; statusText = 'Correta'; }
+                    else if (answer === 'NAO_SEI' || answer === null) { statusClass = 'unanswered'; statusText = 'Não soube responder'; }
+                    else { statusClass = 'incorrect'; statusText = 'Incorreta'; }
+                    resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> ${statusText}`;
+                }
+
+                resultItem.classList.add(statusClass);
                 gabaritoDiv.appendChild(resultItem);
             });
+
             document.getElementById('shareName').textContent = userToken.name;
             document.getElementById('shareScore').textContent = `${correct}/${currentQuizData.questions.length}`;
-            document.getElementById('shareWeightedScore').textContent = weightedScore.toFixed(1);
-            sendDataToSheet(correct, weightedScore);
+            document.getElementById('shareWeightedScore').textContent = finalWeightedScore.toFixed(1);
+            sendDataToSheet(correct, finalWeightedScore);
         }
+
         function sendDataToSheet(finalScore, finalWeightedScore) {
             const submissionData = new FormData();
             submissionData.append('nomeAluno', userToken.name);
@@ -1307,7 +1452,7 @@
         shareButton.addEventListener('click', () => { resultsContainer.style.display = 'none'; shareContainerWrapper.style.display = 'block'; });
         backToResultsButton.addEventListener('click', () => { shareContainerWrapper.style.display = 'none'; resultsContainer.style.display = 'block'; });
         downloadButton.addEventListener('click', () => {
-            html2canvas(shareContainer).then(canvas => {
+            html2canvas(document.getElementById('shareContainer')).then(canvas => {
                 const link = document.createElement('a');
                 link.download = `resultado-${userToken.name.replace(/\s+/g, '-').toLowerCase()}.png`;
                 link.href = canvas.toDataURL('image/png');
@@ -1315,85 +1460,35 @@
             });
         });
 
+        // --- BANCO DE QUESTÕES ---
         quizzes['pa-pg'].questions = [
-            { question: "1. Um atleta corre 5 km no primeiro dia de treino...", options: { A: "21 km", B: "24 km", C: "26 km", D: "29 km" }, answer: "C", difficulty: 'easy' }, { question: "2. Um teatro possui 15 cadeiras na primeira fileira...", options: { A: "285", B: "42", C: "150", D: "300" }, answer: "A", difficulty: 'easy' }, { question: "3. O lucro de uma empresa em janeiro foi de R$ 80.000,00...", options: { A: "R$ 60.000,00", B: "R$ 56.000,00", C: "R$ 52.000,00", D: "R$ 48.000,00" }, answer: "B", difficulty: 'hard' }, { question: "4. Uma cultura de bactérias começa com 100 indivíduos...", options: { A: "500", B: "800", C: "1.600", D: "3.200" }, answer: "C", difficulty: 'easy' }, { question: "5. Um investidor aplicou R$ 50,00 no primeiro mês...", options: { A: "R$ 1.600,00", B: "R$ 3.150,00", C: "R$ 3.200,00", D: "R$ 1.550,00" }, answer: "B", difficulty: 'easy' }, { question: "6. Sabendo que a sequência (x-2, x, x+3) é uma PG...", options: { A: "4", B: "5", C: "6", D: "2" }, answer: "C", difficulty: 'hard' }
+            { type: 'multipleChoice', question: "1. Um atleta corre 5 km no primeiro dia de treino...", options: { A: "21 km", B: "24 km", C: "26 km", D: "29 km" }, answer: "C", difficulty: 'easy' }, { type: 'multipleChoice', question: "2. Um teatro possui 15 cadeiras na primeira fileira...", options: { A: "285", B: "42", C: "150", D: "300" }, answer: "A", difficulty: 'easy' }, { type: 'multipleChoice', question: "3. O lucro de uma empresa em janeiro foi de R$ 80.000,00...", options: { A: "R$ 60.000,00", B: "R$ 56.000,00", C: "R$ 52.000,00", D: "R$ 48.000,00" }, answer: "B", difficulty: 'hard' }, { type: 'multipleChoice', question: "4. Uma cultura de bactérias começa com 100 indivíduos...", options: { A: "500", B: "800", C: "1.600", D: "3.200" }, answer: "C", difficulty: 'easy' }, { type: 'multipleChoice', question: "5. Um investidor aplicou R$ 50,00 no primeiro mês...", options: { A: "R$ 1.600,00", B: "R$ 3.150,00", C: "R$ 3.200,00", D: "R$ 1.550,00" }, answer: "B", difficulty: 'easy' }, { type: 'multipleChoice', question: "6. Sabendo que a sequência (x-2, x, x+3) é uma PG...", options: { A: "4", B: "5", C: "6", D: "2" }, answer: "C", difficulty: 'hard' }
         ];
         quizzes['quimica'].questions = [
-            { question: "1. Qual é o nome oficial (IUPAC) para o hidrocarboneto de cadeia normal com 5 átomos de carbono e apenas ligações simples?", options: { A: "Pentano", B: "Penteno", C: "Propano", D: "Butano" }, answer: "A", difficulty: 'easy' }, { question: "2. O composto But-2-eno é classificado como um:", options: { A: "Alcano", B: "Alcino", C: "Alceno", D: "Ciclano" }, answer: "C", difficulty: 'easy' }, { question: "3. A estrutura CH₃-CH₂-CH=CH₂ representa qual composto?", options: { A: "But-2-eno", B: "Butano", C: "But-1-ino", D: "But-1-eno" }, answer: "D", difficulty: 'easy' }, { question: "4. Qual dos compostos abaixo é um alcino, caracterizado por uma ligação tripla?", options: { A: "Eteno", B: "Propano", C: "Propeno", D: "Propino" }, answer: "D", difficulty: 'easy' }, { question: "5. Qual é o nome IUPAC para o composto a seguir: CH₃-CH(CH₃)-CH₂-CH(CH₃)-CH₃?", options: { A: "2,4-dimetil-hexano", B: "2,4-dimetil-pentano", C: "2-metil-4-metil-pentano", D: "3,5-dimetil-pentano" }, answer: "B", difficulty: 'hard' }, { question: "6. O composto conhecido como Tolueno, um importante solvente, é um hidrocarboneto aromático. Qual outro nome ele pode receber pela nomenclatura IUPAC?", options: { A: "Etil-benzeno", B: "Dimetil-benzeno", C: "Metil-benzeno", D: "Propil-benzeno" }, answer: "C", difficulty: 'hard' }
+            { type: 'multipleChoice', question: "1. Qual é o nome oficial (IUPAC) para o hidrocarboneto de cadeia normal com 5 átomos de carbono e apenas ligações simples?", options: { A: "Pentano", B: "Penteno", C: "Propano", D: "Butano" }, answer: "A", difficulty: 'easy' }, { type: 'multipleChoice', question: "2. O composto But-2-eno é classificado como um:", options: { A: "Alcano", B: "Alcino", C: "Alceno", D: "Ciclano" }, answer: "C", difficulty: 'easy' }, { type: 'multipleChoice', question: "3. A estrutura CH₃-CH₂-CH=CH₂ representa qual composto?", options: { A: "But-2-eno", B: "Butano", C: "But-1-ino", D: "But-1-eno" }, answer: "D", difficulty: 'easy' }, { type: 'multipleChoice', question: "4. Qual dos compostos abaixo é um alcino, caracterizado por uma ligação tripla?", options: { A: "Eteno", B: "Propano", C: "Propeno", D: "Propino" }, answer: "D", difficulty: 'easy' }, { type: 'multipleChoice', question: "5. Qual é o nome IUPAC para o composto a seguir: CH₃-CH(CH₃)-CH₂-CH(CH₃)-CH₃?", options: { A: "2,4-dimetil-hexano", B: "2,4-dimetil-pentano", C: "2-metil-4-metil-pentano", D: "3,5-dimetil-pentano" }, answer: "B", difficulty: 'hard' }, { type: 'multipleChoice', question: "6. O composto conhecido como Tolueno, um importante solvente, é um hidrocarboneto aromático. Qual outro nome ele pode receber pela nomenclatura IUPAC?", options: { A: "Etil-benzeno", B: "Dimetil-benzeno", C: "Metil-benzeno", D: "Propil-benzeno" }, answer: "C", difficulty: 'hard' }
         ];
-
-        quizzes['fdl'] = {
-            id: 'fdl',
-            title: 'Simulado de Funções da Linguagem',
-            questions: [
-                {
-                    question: "1. No processo de comunicação, quem codifica a mensagem, ou seja, quem a elabora e envia?",
-                    options: {
-                        A: "Receptor",
-                        B: "Emissor",
-                        C: "Canal",
-                        D: "Mensagem"
-                    },
-                    answer: "B",
-                    difficulty: 'easy'
-                },
-                {
-                    question: "2. Na frase 'O céu está azul e o dia ensolarado', a principal função da linguagem é a referencial, pois o objetivo é:",
-                    options: {
-                        A: "Expressar os sentimentos do autor sobre o dia.",
-                        B: "Verificar se o interlocutor está ouvindo.",
-                        C: "Informar sobre um fato de forma objetiva.",
-                        D: "Usar a linguagem para falar da própria linguagem."
-                    },
-                    answer: "C",
-                    difficulty: 'easy'
-                },
-                {
-                    question: "3. Leia o slogan: 'Compre já o seu e garanta a diversão!'. Qual função da linguagem é predominante?",
-                    options: {
-                        A: "Função Poética",
-                        B: "Função Emotiva",
-                        C: "Função Fática",
-                        D: "Função Conativa (ou Apelativa)"
-                    },
-                    answer: "D",
-                    difficulty: 'easy' // Média
-                },
-                {
-                    question: "4. No trecho 'Ah, que saudade que eu sinto da minha terra natal!', o foco está no emissor e em seus sentimentos. Portanto, a função da linguagem que prevalece é a:",
-                    options: {
-                        A: "Emotiva (ou Expressiva)",
-                        B: "Referencial",
-                        C: "Metalinguística",
-                        D: "Poética"
-                    },
-                    answer: "A",
-                    difficulty: 'easy' // Média
-                },
-                {
-                    question: "5. Em uma conversa telefônica, a expressão 'Alô, está me ouvindo?' serve principalmente para testar o canal de comunicação. Esse é um exemplo clássico da função:",
-                    options: {
-                        A: "Metalinguística",
-                        B: "Referencial",
-                        C: "Fática",
-                        D: "Apelativa"
-                    },
-                    answer: "C",
-                    difficulty: 'hard'
-                },
-                {
-                    question: "6. A definição de uma palavra em um dicionário é o exemplo mais claro de qual função da linguagem, onde o código é usado para explicar o próprio código?",
-                    options: {
-                        A: "Função Poética",
-                        B: "Função Metalinguística",
-                        C: "Função Referencial",
-                        D: "Função Emotiva"
-                    },
-                    answer: "B",
-                    difficulty: 'hard'
-                }
-            ]
-        };
+        quizzes['fdl'].questions = [
+            { type: 'multipleChoice', question: "1. No processo de comunicação, quem codifica a mensagem, ou seja, quem a elabora e envia?", options: { A: "Receptor", B: "Emissor", C: "Canal", D: "Mensagem" }, answer: "B", difficulty: 'easy' }, { type: 'multipleChoice', question: "2. Na frase 'O céu está azul e o dia ensolarado', a principal função da linguagem é a referencial, pois o objetivo é:", options: { A: "Expressar os sentimentos do autor sobre o dia.", B: "Verificar se o interlocutor está ouvindo.", C: "Informar sobre um fato de forma objetiva.", D: "Usar a linguagem para falar da própria linguagem." }, answer: "C", difficulty: 'easy' }, { type: 'multipleChoice', question: "3. Leia o slogan: 'Compre já o seu e garanta a diversão!'. Qual função da linguagem é predominante?", options: { A: "Função Poética", B: "Função Emotiva", C: "Função Fática", D: "Função Conativa (ou Apelativa)" }, answer: "D", difficulty: 'easy' }, { type: 'multipleChoice', question: "4. No trecho 'Ah, que saudade que eu sinto da minha terra natal!', o foco está no emissor e em seus sentimentos. Portanto, a função da linguagem que prevalece é a:", options: { A: "Emotiva (ou Expressiva)", B: "Referencial", C: "Metalinguística", D: "Poética" }, answer: "A", difficulty: 'easy' }, { type: 'multipleChoice', question: "5. Em uma conversa telefônica, a expressão 'Alô, está me ouvindo?' serve principalmente para testar o canal de comunicação. Esse é um exemplo clássico da função:", options: { A: "Metalinguística", B: "Referencial", C: "Fática", D: "Apelativa" }, answer: "C", difficulty: 'hard' }, { type: 'multipleChoice', question: "6. A definição de uma palavra em um dicionário é o exemplo mais claro de qual função da linguagem, onde o código é usado para explicar o próprio código?", options: { A: "Função Poética", B: "Função Metalinguística", C: "Função Referencial", D: "Função Emotiva" }, answer: "B", difficulty: 'hard' }
+        ];
+        quizzes['historia'].questions = [
+            // Nível Médio
+            { type: 'discursive', question: "1. (Discursiva) Após ler o poema 'Rosa de Hiroshima', qual é o assunto principal abordado?", keywords: ['bomba'], poem: true, difficulty: 'easy' },
+            { type: 'discursive', question: "3. (Discursiva) O poema retrata qual acontecimento histórico específico?", keywords: ['bomba'], difficulty: 'easy' },
+            { type: 'multipleChoice', question: "4. A Segunda Guerra Mundial foi travada por duas grandes alianças militares. O grupo formado por Alemanha, Itália e Japão era conhecido como:", options: { A: "Aliados", B: "Tríplice Entente", C: "Eixo", D: "Potências Centrais" }, answer: "C", difficulty: 'easy' },
+            { type: 'multipleChoice', question: "5. Qual era o nome do projeto secreto dos EUA que desenvolveu a bomba atômica?", options: { A: "Projeto Apolo", B: "Projeto Overlord", C: "Projeto Manhattan", D: "Projeto Trinity" }, answer: "C", difficulty: 'easy' },
+            { type: 'multipleChoice', question: "6. Quais os apelidos das bombas que atingiram Hiroshima e Nagasaki, respectivamente?", options: { A: "'Fat Man' e 'Little Boy'", B: "'Little Boy' e 'Fat Man'", C: "'Enola Gay' e 'Bockscar'", D: "'Firestorm' e 'Earthquake'" }, answer: "B", difficulty: 'easy' },
+            { type: 'multipleChoice', question: "7. Qual foi a justificativa oficial dos EUA para usar as bombas?", options: { A: "Demonstrar superioridade para a URSS.", B: "Vingar o ataque a Pearl Harbor.", C: "Testar a eficácia da nova arma.", D: "Acelerar o fim da guerra e evitar mais mortes de soldados." }, answer: "D", difficulty: 'easy' },
+            { type: 'multipleChoice', question: "8. No poema, os versos 'Pensem nas meninas / Cegas inexatas' referem-se principalmente:", options: { A: "Às dificuldades de locomoção na cidade destruída.", B: "Às sequelas físicas e psicológicas permanentes nos sobreviventes.", C: "À perda de documentos durante a explosão.", D: "A uma crítica à condição da mulher na sociedade japonesa." }, answer: "B", difficulty: 'easy' },
+            { type: 'multipleChoice', question: "9. Qual cidade foi o alvo da segunda bomba nuclear?", options: { A: "Tóquio", B: "Quioto", C: "Nagasaki", D: "Osaka" }, answer: "C", difficulty: 'easy' },
+            { type: 'multipleChoice', question: "10. O lançamento das bombas deu início a um período de tensão global entre EUA e URSS, conhecido como:", options: { A: "Belle Époque", B: "Guerra Fria", C: "Globalização", D: "Descolonização" }, answer: "B", difficulty: 'easy' },
+            // Nível Difícil
+            { type: 'multipleChoice', question: "11. A citação de Oppenheimer, 'Agora eu me tornei a Morte, o destruidor de mundos', revela:", options: { A: "O orgulho dos cientistas por sua criação invencível.", B: "A indiferença da equipe científica às consequências.", C: "Uma profunda consciência do poder terrível e da responsabilidade moral.", D: "A certeza de que a arma traria uma paz mundial definitiva." }, answer: "C", difficulty: 'hard' },
+            { type: 'multipleChoice', question: "12. A metáfora 'A rosa hereditária' no poema aponta para qual consequência da radiação?", options: { A: "A destruição da agricultura local.", B: "A perda da memória histórica.", C: "A transmissão de problemas genéticos e doenças para os descendentes.", D: "A herança de uma dívida de guerra." }, answer: "C", difficulty: 'hard' },
+            { type: 'multipleChoice', question: "13. (ENEM 2013) A decisão dos EUA de lançar as bombas atômicas foi construída com base em uma lógica que:", options: { A: "considerava o uso de armas um meio de democratizar o Japão.", B: "priorizava a sobrevida da população civil japonesa.", C: "visava gerar o maior número de vítimas civis para abalar psicologicamente o governo.", D: "partia do princípio de que a guerra só acabaria com a destruição total do inimigo.", E: "previa a necessidade de vingar a qualquer custo a derrota em Pearl Harbor." }, answer: "D", difficulty: 'hard' },
+            { type: 'multipleChoice', question: "14. Historiadores críticos afirmam que o verdadeiro alvo do ataque nuclear não era Tóquio, mas Moscou. O que isso significa?", options: { A: "Que os EUA planejavam atacar a União Soviética em seguida.", B: "Que o objetivo era enviar uma mensagem de poderio militar à União Soviética.", C: "Que a URSS havia ajudado secretamente o Japão.", D: "Que os EUA temiam uma aliança entre Japão e URSS." }, answer: "B", difficulty: 'hard' },
+            { type: 'multipleChoice', question: "15. Por que era estrategicamente importante para os EUA escolher uma cidade relativamente intacta como Hiroshima?", options: { A: "Para minimizar o número de vítimas civis.", B: "Para permitir uma melhor avaliação dos efeitos e do poder destrutivo da bomba.", C: "Para facilitar o trabalho de equipes de resgate.", D: "Porque o Japão havia solicitado que cidades culturais fossem poupadas." }, answer: "B", difficulty: 'hard' },
+            { type: 'multipleChoice', question: "16. Quais são as consequências de longo prazo dos eventos de agosto de 1945? I. A corrida armamentista entre EUA e URSS. II. O surgimento de movimentos pacifistas. III. O Japão adotou uma constituição pacifista. Estão corretas:", options: { A: "I, apenas.", B: "I e II, apenas.", C: "II e III, apenas.", D: "I, II e III." }, answer: "D", difficulty: 'hard' }
+        ];
 
     </script>
 </body>
