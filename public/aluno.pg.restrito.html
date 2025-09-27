@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Alunos - Turma M3MM02</title>
+    <style>
+        /* Estilo Base Seduc - Simples e Profissional */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden; /* Garante que a tabela não ultrapasse as bordas arredondadas */
+        }
+
+        .header {
+            background-color: #0056a0; /* Azul institucional Seduc */
+            color: #ffffff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.8em;
+        }
+        
+        .header p {
+            margin: 5px 0 0;
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .table-container {
+            padding: 20px;
+            overflow-x: auto; /* Adiciona rolagem horizontal em telas pequenas */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95em;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        thead tr {
+            background-color: #f8f9fa;
+        }
+
+        th {
+            font-weight: 600;
+            color: #0056a0;
+        }
+
+        tbody tr:nth-of-type(even) {
+            background-color: #f8f9fa;
+        }
+
+        tbody tr:hover {
+            background-color: #e9ecef;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.5em;
+            }
+            .header p {
+                font-size: 1em;
+            }
+            th, td {
+                padding: 10px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>SEDUC - Acesso do Aluno</h1>
+            <p>Turma: M3MM02</p>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>NOME DO ALUNO</th>
+                        <th>EMAIL</th>
+                        <th>SENHA</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>AGATA VICTORIA DOS SANTOS SANTOS</td>
+                        <td>agata.santos6095@aluno.seduc.pa.gov.br</td>
+                        <td>seduc7037</td>
+                    </tr>
+                    <tr>
+                        <td>ALICE SANTOS DE ALMEIDA</td>
+                        <td>alice.almeida6608@aluno.seduc.pa.gov.br</td>
+                        <td>seduc3021</td>
+                    </tr>
+                    <tr>
+                        <td>ANA GRAZIELE PIRES CASTRO</td>
+                        <td>ana.castro9846@aluno.seduc.pa.gov.br</td>
+                        <td>seduc8427</td>
+                    </tr>
+                    <tr>
+                        <td>ANA KARYN DE FARIAS COSTA</td>
+                        <td>ana.costa9163@aluno.seduc.pa.gov.br</td>
+                        <td>seduc3775</td>
+                    </tr>
+                    <tr>
+                        <td>ANDRIELY PANTOJA PEREIRA</td>
+                        <td>andriely.pereira2174@aluno.seduc.pa.gov.br</td>
+                        <td>seduc1166</td>
+                    </tr>
+                    <tr>
+                        <td>ANTONIO JEFERSON SILVA E SILVA</td>
+                        <td>antonio.silva391@aluno.seduc.pa.gov.br</td>
+                        <td>seduc9169</td>
+                    </tr>
+                    <tr>
+                        <td>ARTHUR ALBUQUERQUE DA LUZ</td>
+                        <td>arthur.luz4583@aluno.seduc.pa.gov.br</td>
+                        <td>seduc1956</td>
+                    </tr>
+                    <tr>
+                        <td>CALEBE RODRIGUES DA ROCHA</td>
+                        <td>calebe.rocha9138@aluno.seduc.pa.gov.br</td>
+                        <td>seduc6542</td>
+                    </tr>
+                    <tr>
+                        <td>CLARA CRISTINE SOUSA DOS SANTOS</td>
+                        <td>clara.santos8423@aluno.seduc.pa.gov.br</td>
+                        <td>seduc4391</td>
+                    </tr>
+                    <tr>
+                        <td>DANILO OLIVEIRA DA SILVA</td>
+                        <td>danilo.silva5187@aluno.seduc.pa.gov.br</td>
+                        <td>seduc8007</td>
+                    </tr>
+                    <tr>
+                        <td>EDIELSON SOUSA BRAGA</td>
+                        <td>edielson.braga8049@aluno.seduc.pa.gov.br</td>
+                        <td>seduc6900</td>
+                    </tr>
+                    <tr>
+                        <td>ERIKE VINICIOS FREITAS ALENCAR</td>
+                        <td>erike.alencar8659@aluno.seduc.pa.gov.br</td>
+                        <td>seduc3321</td>
+                    </tr>
+                    <tr>
+                        <td>FELIPE MOREIRA FERREIRA</td>
+                        <td>felipe.ferreira2501@aluno.seduc.pa.gov.br</td>
+                        <td>seduc1929</td>
+                    </tr>
+                    <tr>
+                        <td>FRANCISCO ARTUR PIRES FERREIRA</td>
+                        <td>francisco.ferreira117@aluno.seduc.pa.gov.br</td>
+                        <td>seduc9545</td>
+                    </tr>
+                    <tr>
+                        <td>GEICIANE NASCIMENTO DA SILVA</td>
+                        <td>geiciane.silva5102@aluno.seduc.pa.gov.br</td>
+                        <td>seduc9712</td>
+                    </tr>
+                    <tr>
+                        <td>GILVAN LAURIANO DE MATOS</td>
+                        <td>gilvan.matos9133@aluno.seduc.pa.gov.br</td>
+                        <td>seduc3010</td>
+                    </tr>
+                    <tr>
+                        <td>JHEYSON RICARDO BARBOSA DE OLIVEIRA</td>
+                        <td>jheyson.oliveira7656@aluno.seduc.pa.gov.br</td>
+                        <td>seduc7568</td>
+                    </tr>
+                    <tr>
+                        <td>JOAO VICTOR DE CASTILHO NASCIMENTO</td>
+                        <td>joao.nascimento3485@aluno.seduc.pa.gov.br</td>
+                        <td>seduc5754</td>
+                    </tr>
+                    <tr>
+                        <td>JOAO VITOR DE CASTRO MACIEL</td>
+                        <td>joao.maciel3318@aluno.seduc.pa.gov.br</td>
+                        <td>seduc4482</td>
+                    </tr>
+                    <tr>
+                        <td>KAROLINY SAMPAIO DA SILVA</td>
+                        <td>karoliny.silva6800@aluno.seduc.pa.gov.br</td>
+                        <td>seduc3101</td>
+                    </tr>
+                    <tr>
+                        <td>KAYLLA ELOISE CAMPOS LOPES PEREIRA</td>
+                        <td>kaylla.pereira3563@aluno.seduc.pa.gov.br</td>
+                        <td>seduc8149</td>
+                    </tr>
+                    <tr>
+                        <td>LORRANY VICTORIA SANTOS SOUZA</td>
+                        <td>lorrany.souza9197@aluno.seduc.pa.gov.br</td>
+                        <td>seduc2044</td>
+                    </tr>
+                    <tr>
+                        <td>MARCOLE SA DOS SANTOS SOUSA</td>
+                        <td>marcole.sousa81463@aluno.seduc.pa.gov.br</td>
+                        <td>seduc7913</td>
+                    </tr>
+                    <tr>
+                        <td>MARIA CLARA BEZERRA ALVES</td>
+                        <td>maria.alves1510@aluno.seduc.pa.gov.br</td>
+                        <td>seduc6062</td>
+                    </tr>
+                    <tr>
+                        <td>MARIA EDUARDA BARBOSA SOUZA</td>
+                        <td>maria.souza95150@aluno.seduc.pa.gov.br</td>
+                        <td>seduc45712</td>
+                    </tr>
+                    <tr>
+                        <td>NATHAN PAZ DE OLIVEIRA</td>
+                        <td>nathan.oliveira1072@aluno.seduc.pa.gov.br</td>
+                        <td>seduc9808</td>
+                    </tr>
+                    <tr>
+                        <td>PAULA CARINA TRAVASSOS CORREA</td>
+                        <td>paula.correa3041@aluno.seduc.pa.gov.br</td>
+                        <td>seduc7342</td>
+                    </tr>
+                    <tr>
+                        <td>SAMANTA DE OLIVEIRA SILVA</td>
+                        <td>samanta.silva2058@aluno.seduc.pa.gov.br</td>
+                        <td>seduc8309</td>
+                    </tr>
+                    <tr>
+                        <td>SAYLLON KAYKY DAMASCENO</td>
+                        <td>sayllon.damasceno4849@aluno.seduc.pa.gov.br</td>
+                        <td>seduc9551</td>
+                    </tr>
+                    <tr>
+                        <td>SERGIO FERREIRA DE SOUZA FILHO</td>
+                        <td>sergio.filho3906@aluno.seduc.pa.gov.br</td>
+                        <td>seduc2124</td>
+                    </tr>
+                    <tr>
+                        <td>TAIANE PEREIRA FERNANDES</td>
+                        <td>taiane.fernandes7477@aluno.seduc.pa.gov.br</td>
+                        <td>seduc1499</td>
+                    </tr>
+                    <tr>
+                        <td>THAYLLANE FERREIRA QUEIROZ</td>
+                        <td>thayllane.queiroz907@aluno.seduc.pa.gov.br</td>
+                        <td>seduc4000</td>
+                    </tr>
+                    <tr>
+                        <td>VITOR EMANUEL DE CASTRO PEREIRA</td>
+                        <td>vitor.pereira4045@aluno.seduc.pa.gov.br</td>
+                        <td>seduc9883</td>
+                    </tr>
+                    <tr>
+                        <td>WENDEL GOMES DE SOUZA DOS SANTOS</td>
+                        <td>wendel.santos7224@aluno.seduc.pa.gov.br</td>
+                        <td>seduc9574</td>
+                    </tr>
+                    <tr>
+                        <td>YUSLEI CASSIA FERREIRA DA SILVA</td>
+                        <td>yuslei.silva3079@aluno.seduc.pa.gov.br</td>
+                        <td>seduc1294</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</body>
+</html>
