@@ -17,13 +17,14 @@
         /* Tela de login */
         #login-container {
             display: none;
+            /* só começa invisível */
             height: 100vh;
             width: 100%;
             background: #f8f9fa;
-            display: flex;
             justify-content: center;
             align-items: center;
         }
+
 
         #login-box {
             background: #fff;
@@ -475,6 +476,18 @@
             }
 
             function verificarAcesso() {
+                if (token && exp && agora < parseInt(exp)) {
+                    // Token válido
+                    document.getElementById("conteudo").style.display = "block";
+                    document.getElementById("login-container").style.display = "none"; // ✅ esconde login
+                } else {
+                    // Token inválido ou expirado
+                    localStorage.removeItem(TOKEN_KEY);
+                    localStorage.removeItem(TOKEN_EXP_KEY);
+                    document.getElementById("conteudo").style.display = "none"; // ✅ esconde conteúdo
+                    document.getElementById("login-container").style.display = "flex"; // mostra login
+                }
+
                 mostrarLoading(true);
                 setTimeout(() => {
                     const token = localStorage.getItem(TOKEN_KEY);
