@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | ELETRO</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
+    <!-- CSS INTEGRADO -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+        :root {
+            --primary-color: #d60039;
+            --secondary-color: #ff104f;
+            --bg-color: #1a0f2a;
+            --text-color: #ffffff;
+            --input-bg: rgba(255, 255, 255, 0.1);
+            --border-radius: 1rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-image: linear-gradient(45deg, var(--bg-color) 0%, #2a1a45 100%);
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px 5%;
+            z-index: 1000;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-color);
+            text-decoration: none;
+        }
+
+        .screen1 {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .form-login {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .input-box {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-box input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            background: var(--input-bg);
+            border: 1px solid transparent;
+            border-radius: 0.5rem;
+            color: var(--text-color);
+            font-size: 1rem;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        .input-box input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .input-box input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--secondary-color);
+        }
+
+        .input-box .bx {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.25rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .btn_form {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: none;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            color: var(--text-color);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.3s;
+        }
+
+        .btn_form:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(255, 16, 79, 0.4);
+        }
+
+        .desc {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .hidden {
+            display: none;
+        }
+        
+        /* Estilos para info do usuário salvo */
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: var(--input-bg);
+            border-radius: 0.5rem;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--secondary-color);
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .user-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .change-user {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 0;
+            text-align: left;
+        }
+
+        .change-user:hover {
+            text-decoration: underline;
+            color: var(--text-color);
+        }
+        
+        /* Animação de Loading */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s ease;
+        }
+        .efect-loading {
+            width: 60px;
+            height: 60px;
+            border: 5px solid var(--input-bg);
+            border-top-color: var(--secondary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+    </style>
+</head>
+
+<body>
+    <!-- ELEMENTO DE LOADING -->
+    <div class="loading">
+        <div class="efect-loading"></div>
+    </div>
+
+    <header>
+        <a href="#" class="logo">⚡ ELETRO</a>
+    </header>
+
+    <div class="screen1">
+        <div class="form-login">
+            <form id="login-form" novalidate>
+                <h2 class="section-title">Login</h2>
+
+                <!-- ETAPA 1: Inserir Usuário -->
+                <div id="username-step">
+                    <div class="input-box">
+                        <input type="text" placeholder="Usuário" id="login-username" required>
+                        <i class="bx bxs-user"></i>
+                    </div>
+                    <!-- IMPORTANTE: Botão é 'type="button"' para não submeter o formulário -->
+                    <button class="btn_form" type="button" id="continue-btn">Continuar</button>
+                </div>
+
+                <!-- ETAPA 2: Inserir Senha -->
+                <div id="password-step" class="hidden">
+                    <div class="user-info">
+                        <img src="" alt="Avatar" class="user-avatar" id="user-avatar">
+                        <div class="user-details">
+                            <span class="user-name" id="user-name"></span>
+                            <button type="button" class="change-user" id="change-user-btn">Trocar usuário</button>
+                        </div>
+                    </div>
+
+                    <div class="input-box">
+                        <input type="password" placeholder="Senha" id="login-password" required>
+                        <i class="bx bxs-lock-alt"></i>
+                    </div>
+                    <!-- IMPORTANTE: Este botão é 'type="submit"' para fazer o login -->
+                    <button class="btn_form" type="submit">Entrar</button>
+                </div>
+
+                <div class="desc">
+                    <p>* Ao entrar você concorda com nossas politicas e diretrizes</p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+     <script>
+        // ===================================
+        // ARQUIVO: usersData.js
+        // ===================================
+        const users = [
+            {
+                username: "DTUDOVARIEDADES",
+                password: "251914",
+                profilePic: "/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg",
+                redirect: "/users/45692327000100/CD1/adm/nb/conta.html"
+            },
+            {
+                username: "evelyn",
+                password: "152510",
+                profilePic: "https://placehold.co/150/ff104f/ffffff?text=E",
+                redirect: "/users/45692327000100/CD1/colaborador/evelyn/conta.html"
+            },
+            {
+                username: "ryan",
+                password: "182011",
+                profilePic: "https://placehold.co/150/2a1a45/ffffff?text=R",
+                redirect: "/users/45692327000100/CD1/colaborador/ryan/conta.html"
+            },
+            {
+                username: "acap",
+                password: "251102",
+                profilePic: "https://placehold.co/150/3498db/ffffff?text=A",
+                redirect: "/users/acap/id11072525/conta.html"
+            },
+            {
+                username: "loja",
+                password: "2025",
+                profilePic: "https://placehold.co/150/f1c40f/ffffff?text=L",
+                redirect: "/users/45692327000100/CD1/colaborador/loja/conta.html"
+            },
+            {
+                username: "lapinha",
+                password: "202020",
+                profilePic: "https://placehold.co/150/9b59b6/ffffff?text=L",
+                redirect: "/users/lapinha/conta.html"
+            }
+        ];
+
+        // ===================================
+        // ARQUIVO: loading.js
+        // ===================================
+        const pre_loading = document.querySelector("div.loading");
+        function AnimationLoading() {
+            pre_loading.style.opacity = "0";
+            setTimeout(() => {
+                pre_loading.style.display = "none";
+            }, 500);
+        }
+        // Aciona a animação assim que o DOM estiver pronto
+        document.addEventListener('DOMContentLoaded', AnimationLoading);
+
+
+        // ===================================
+        // ARQUIVO: login.js (LÓGICA DE DOIS TOKENS)
+        // ===================================
+        document.addEventListener("DOMContentLoaded", () => {
+            // Seletores dos elementos do DOM
+            const loginForm = document.getElementById("login-form");
+            const usernameStep = document.getElementById("username-step");
+            const passwordStep = document.getElementById("password-step");
+            
+            const usernameInput = document.getElementById("login-username");
+            const passwordInput = document.getElementById("login-password");
+
+            const userAvatar = document.getElementById("user-avatar");
+            const userName = document.getElementById("user-name");
+            
+            const continueBtn = document.getElementById("continue-btn");
+            const changeUserBtn = document.getElementById("change-user-btn");
+
+            // CONSTANTES DE EXPIRAÇÃO
+            const SESSION_EXPIRY_MS = 30 * 60 * 1000; // 30 minutos
+            const REMEMBER_ME_EXPIRY_MS = 120 * 24 * 60 * 60 * 1000; // 120 dias
+
+            let currentUser = null;
+
+            // Função utilitária para gerar o objeto do token
+            const createToken = (user, expiresInMs) => {
+                return {
+                    username: user.username,
+                    profilePic: user.profilePic,
+                    redirect: user.redirect,
+                    expires: new Date().getTime() + expiresInMs
+                };
+            };
+
+            const showPasswordStep = (user) => {
+                userAvatar.src = user.profilePic;
+                userName.textContent = user.username;
+                
+                usernameStep.classList.add("hidden");
+                passwordStep.classList.remove("hidden");
+                
+                // Usar setTimeout garante que o navegador renderize o elemento antes de focar
+                setTimeout(() => {
+                    passwordInput.focus();
+                }, 100);
+            };
+            
+            const showUsernameStep = () => {
+                passwordStep.classList.add("hidden");
+                usernameStep.classList.remove("hidden");
+                usernameInput.value = "";
+                passwordInput.value = "";
+                currentUser = null;
+                
+                // Remove AMBOS os tokens
+                localStorage.removeItem("session_token");
+                localStorage.removeItem("remember_me_token");
+                
+                usernameInput.focus();
+            };
+
+            // 1. VERIFICA OS TOKENS AO CARREGAR
+            const sessionTokenString = localStorage.getItem("session_token");
+            const rememberMeTokenString = localStorage.getItem("remember_me_token");
+
+            if (sessionTokenString) {
+                // Tenta validar o token de sessão para acesso direto
+                try {
+                    const sessionToken = JSON.parse(sessionTokenString);
+                    if (new Date().getTime() < sessionToken.expires) {
+                        // Sessão ativa: Pula para a página interna
+                        window.location.href = sessionToken.redirect;
+                        return; // Impede a continuação do código
+                    } else {
+                        // Sessão expirada: Remove o token de sessão
+                        localStorage.removeItem("session_token");
+                        console.log("Token de sessão expirado.");
+                    }
+                } catch (e) {
+                    localStorage.removeItem("session_token");
+                }
+            }
+
+            if (rememberMeTokenString) {
+                // Tenta validar o token de "Lembrar-me" para preenchimento
+                try {
+                    const rememberMeToken = JSON.parse(rememberMeTokenString);
+                    if (new Date().getTime() < rememberMeToken.expires) {
+                        // Token "Lembrar-me" válido: Pula para a Etapa 2 (Senha)
+                        const foundUser = users.find(u => u.username.toLowerCase() === rememberMeToken.username.toLowerCase());
+                        if (foundUser) {
+                            currentUser = foundUser;
+                            showPasswordStep(currentUser);
+                            return; // Impede a continuação do código
+                        } else {
+                            // Usuário do token não encontrado no array (talvez excluído)
+                            localStorage.removeItem("remember_me_token");
+                        }
+                    } else {
+                        // Token "Lembrar-me" expirado: Remove o token
+                        localStorage.removeItem("remember_me_token");
+                        console.log("Token 'Lembrar-me' expirado.");
+                    }
+                } catch (e) {
+                    localStorage.removeItem("remember_me_token");
+                }
+            }
+            
+            // Se nenhum token for válido, mostra a Etapa 1
+            usernameInput.focus();
+
+
+            // 2. LÓGICA DO BOTÃO "CONTINUAR"
+            continueBtn.addEventListener("click", () => {
+                const usernameValue = usernameInput.value;
+                if (!usernameValue) {
+                    alert("Por favor, insira um nome de usuário.");
+                    return;
+                }
+                const foundUser = users.find(u => u.username.toLowerCase() === usernameValue.toLowerCase());
+
+                if (foundUser) {
+                    currentUser = foundUser;
+                    
+                    // Cria e armazena o token de "Lembrar-me" AQUI também, 
+                    // para lembrar o usuário mesmo que ele não finalize o login.
+                    const rememberMeToken = createToken(currentUser, REMEMBER_ME_EXPIRY_MS);
+                    localStorage.setItem("remember_me_token", JSON.stringify(rememberMeToken));
+
+                    showPasswordStep(currentUser);
+                } else {
+                    alert("Usuário não encontrado.");
+                }
+            });
+
+            // 3. LÓGICA DE SUBMISSÃO FINAL (BOTÃO "ENTRAR")
+            loginForm.addEventListener("submit", (e) => {
+                e.preventDefault();
+                
+                if (!currentUser) {
+                    alert("Ocorreu um erro. Por favor, tente novamente.");
+                    showUsernameStep();
+                    return;
+                }
+
+                const passwordValue = passwordInput.value;
+                if (!passwordValue) {
+                    alert("Por favor, insira sua senha.");
+                    return;
+                }
+                
+                if (currentUser.password === passwordValue) {
+                    // CRIA E ARMAZENA O TOKEN DE SESSÃO (CURTO)
+                    const sessionToken = createToken(currentUser, SESSION_EXPIRY_MS);
+                    localStorage.setItem("session_token", JSON.stringify(sessionToken));
+
+                    // RE-ARMAZENA O TOKEN DE "LEMBRAR-ME" (LONGO) para garantir que ele esteja fresco
+                    const rememberMeToken = createToken(currentUser, REMEMBER_ME_EXPIRY_MS);
+                    localStorage.setItem("remember_me_token", JSON.stringify(rememberMeToken));
+                    
+                    window.location.href = currentUser.redirect;
+                } else {
+                    alert("Senha inválida.");
+                }
+            });
+
+            // 4. LÓGICA DO BOTÃO "TROCAR USUÁRIO"
+            changeUserBtn.addEventListener("click", showUsernameStep);
+        });
+    </script>
+</body>
+</html>
+

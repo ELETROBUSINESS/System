@@ -9,6 +9,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap');
+
 
         :root {
             --main-color: #c50037;
@@ -20,6 +22,7 @@
             --correct-color: #28a745;
             --incorrect-color: #dc3545;
             --unanswered-color: #ffc107;
+            --hint-color: #007bff;
         }
 
         body {
@@ -275,7 +278,7 @@
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 700px;
+            max-width: 800px;
             margin: 0 auto;
             box-sizing: border-box;
         }
@@ -289,7 +292,6 @@
 
         .question-block {
             margin-bottom: 25px;
-            padding-left: 15px;
             display: none;
         }
 
@@ -297,20 +299,45 @@
             display: block;
         }
 
-        .question-block p {
+        .question-block .question-text {
             font-weight: bold;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             font-size: 1.1em;
+            line-height: 1.5;
+            color: #333;
         }
+
+        /* --- NOVOS ESTILOS PARA LAYOUT ENEM --- */
+        .question-support-text {
+            background-color: #f8f9fa;
+            border-left: 4px solid #e0e0e0;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: 'Merriweather', serif;
+            font-size: 1em;
+            line-height: 1.7;
+            text-align: justify;
+        }
+
+        .question-support-text h4 {
+            margin-top: 0;
+            font-family: 'Roboto', sans-serif;
+            font-weight: 700;
+            color: #555;
+        }
+
+        /* --- FIM DOS NOVOS ESTILOS --- */
+
 
         label {
             display: block;
             margin-bottom: 10px;
             cursor: pointer;
-            padding: 12px;
+            padding: 12px 15px;
             border: 1px solid #ddd;
             border-radius: 8px;
             transition: all 0.2s;
+            line-height: 1.5;
         }
 
         label:hover {
@@ -379,6 +406,21 @@
             background-color: #5a6268;
         }
 
+        .hint-button {
+            display: inline-block;
+            width: auto;
+            padding: 6px 14px;
+            font-size: 0.9em;
+            font-weight: 500;
+            background-color: var(--hint-color);
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+
+        .hint-button:hover {
+            background-color: #0056b3;
+        }
+
         #quizContainer,
         #resultsContainer,
         #shareContainerWrapper,
@@ -426,6 +468,7 @@
             margin-bottom: 15px;
         }
 
+        /* --- Estilos do Pop-up de Dicas --- */
         .popup-overlay {
             position: fixed;
             top: 0;
@@ -437,6 +480,8 @@
             display: none;
             justify-content: center;
             align-items: center;
+            padding: 15px;
+            box-sizing: border-box;
         }
 
         .popup-content {
@@ -445,12 +490,21 @@
             border-radius: 12px;
             text-align: center;
             width: 90%;
-            max-width: 400px;
+            max-width: 500px;
             position: relative;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
         }
 
         .popup-content h2 {
             margin-top: 0;
+            color: var(--main-color);
+        }
+
+        .popup-content p {
+            font-size: 1.1em;
+            line-height: 1.6;
+            color: var(--text-color);
+            text-align: left;
         }
 
         .close-popup {
@@ -460,6 +514,33 @@
             font-size: 28px;
             cursor: pointer;
             color: #aaa;
+        }
+
+        .popup-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .popup-buttons button {
+            font-size: 1em;
+            padding: 12px;
+        }
+
+        .popup-buttons .try-again-btn {
+            background-color: var(--hint-color);
+        }
+
+        .popup-buttons .try-again-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .popup-buttons .skip-btn {
+            background-color: var(--gray-text);
+        }
+
+        .popup-buttons .skip-btn:hover {
+            background-color: #5a6268;
         }
 
         .back-button {
@@ -710,6 +791,9 @@
     </style>
 </head>
 
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
+<script> window.dataLayer = window.dataLayer || []; function gtag() { dataLayer.push(arguments); } gtag('js', new Date()); gtag('config', 'G-BV6V3GTMR0'); </script>
+
 <body>
     <div id="loginScreen" class="screen active">
         <div class="container">
@@ -781,6 +865,18 @@
                 </div>
             </div>
             <h3 class="section-title">Atividades Disponíveis</h3>
+
+            <div class="activity-card" data-quiz="literatura">
+                <div class="activity-info">
+                    <h3>Simulado de Literatura - Habilidades Essenciais</h3>
+                    <p>Português - Foco em Habilidades do ENEM | Adm.Gilvan</p>
+                </div>
+                <div class="activity-actions">
+                    <div class="last-score">Última Nota: <span id="score-literatura">0.0</span></div>
+                    <button class="start-button" id="button-literatura">Iniciar</button>
+                </div>
+            </div>
+
             <div class="activity-card" data-quiz="historia">
                 <div class="activity-info">
                     <h3>Simulado 2°Guerra Mundial + eventos</h3>
@@ -796,8 +892,6 @@
                 <div class="activity-info">
                     <h3>Simulado de Funções da Linguagem</h3>
                     <p>Português - Concluir até 24/09 | Prof. Elaine</p>
-                    <br>
-                    <a href="/conteudo.temporario.html">Visualizar Material de Estudo</a>
                 </div>
                 <div class="activity-actions">
                     <div class="last-score">Última Nota: <span id="score-fdl">0.0</span></div>
@@ -811,7 +905,8 @@
                     <p>Matemática - Concluir até 25/09</p>
                 </div>
                 <div class="activity-actions">
-                    <div class="last-score">Última Nota: <span id="score-pa-pg">0.0</span></div><button
+                    <div class="last-score">Última Nota: <span id="score-pa-pg">0.0</span></div>
+                    <button
                         class="start-button" id="button-pa-pg">Iniciar</button>
                 </div>
             </div>
@@ -821,49 +916,12 @@
                     <p>Química - Concluir até 15/10</p>
                 </div>
                 <div class="activity-actions">
-                    <div class="last-score">Última Nota: <span id="score-quimica">0.0</span></div><button
+                    <div class="last-score">Última Nota: <span id="score-quimica">0.0</span></div>
+                    <button
                         class="start-button" id="button-quimica">Iniciar</button>
                 </div>
             </div>
 
-            <h3 class="section-title">Vídeo Aula Sugerida</h3>
-            <div class="video-card">
-                <div class="video-player-container">
-                    <iframe src="https://www.youtube.com/embed/YEKQYiWnvcI"
-                        title="NOMENCLATURA DOS HIDROCARBONETOS - QUÍMICA ORGÂNICA NO ENEM. Prof. Felipe Sobis"
-                        frameborder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-                </div>
-                <div class="video-details">
-                    <div class="video-text">
-                        <h3>A tragédia de Hiroshima e Nagasaki</h3>
-                        <p>Em 6 de agosto de 1945, durante a Segunda Guerra Mundial, a primeira bomba atômica usada em
-                            ataque foi lançada pelos Estados Unidos sobre a cidade japonesa de Hiroshima. A explosão
-                            matou cerca de 80 mil pessoas imediatamente e outras 60 mil no decorrer de um ano pela
-                            exposição à radiação. Três dias depois, uma segunda bomba atômica foi lançada sobre a cidade
-                            de Nagasaki, onde morreram pelo menos 50 mil pessoas.</p>
-                        <span class="channel-name">Canal: Canal History Brasil</span>
-                    </div>
-                </div>
-            </div>
-            <div class="video-card">
-                <div class="video-player-container">
-                    <iframe src="https://www.youtube.com/embed/rq3zOuEI-eE"
-                        title="NOMENCLATURA DOS HIDROCARBONETOS - QUÍMICA ORGÂNICA NO ENEM. Prof. Felipe Sobis"
-                        frameborder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-                </div>
-                <div class="video-details">
-                    <div class="video-text">
-                        <h3>OS EFEITOS DA BOMBA ATÔMICA - Nostalgia Animado</h3>
-                        <p>Entenda os efeitos da Bomba Atômica lançada em Hiroshima e Nagasaki no final da segunda
-                            guerra mundial.</p>
-                        <span class="channel-name">Canal: Canal Nostalgia</span>
-                    </div>
-                </div>
-            </div>
         </main>
     </div>
 
@@ -1049,6 +1107,17 @@
         </div>
     </div>
 
+    <div id="hintPopup" class="popup-overlay">
+        <div class="popup-content">
+            <span class="close-popup" id="closeHintPopup">&times;</span>
+            <h2 id="hintPopupTitle">Dica da Questão</h2>
+            <p id="hintPopupText"></p>
+            <div class="popup-buttons" id="hintPopupButtons">
+            </div>
+        </div>
+    </div>
+
+
     <nav class="bottom-nav">
         <div class="nav-item active" id="homeButton"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1100,6 +1169,7 @@
         function showScreen(screenToShow) {
             allScreens.forEach(s => s.classList.remove('active'));
             screenToShow.classList.add('active');
+            window.scrollTo(0, 0);
         }
 
         function updateNav(activeButton) {
@@ -1122,9 +1192,17 @@
         const validationMessage = document.getElementById('validation-message');
         const startConfirmedQuizButton = document.getElementById('startConfirmedQuizButton');
 
+        // --- Elementos do Pop-up de Dicas ---
+        const hintPopup = document.getElementById('hintPopup');
+        const closeHintPopup = document.getElementById('closeHintPopup');
+        const hintPopupTitle = document.getElementById('hintPopupTitle');
+        const hintPopupText = document.getElementById('hintPopupText');
+        const hintPopupButtons = document.getElementById('hintPopupButtons');
+
         const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzKNrAmBBXZrpUO33LM09M_-x7kFM9YnyKgPC0YyTiQRimw-FzJ_W2UjHJUom4Rfo8q/exec';
 
         const quizzes = {
+            'literatura': { id: 'literatura', title: 'Simulado de Literatura', questions: [] },
             'pa-pg': { id: 'pa-pg', title: 'Simulado de PA e PG', questions: [] },
             'quimica': { id: 'quimica', title: 'Simulado de Química', questions: [] },
             'fdl': { id: 'fdl', title: 'Simulado de Funções da Linguagem', questions: [] },
@@ -1199,7 +1277,7 @@
         }
 
         logoutButton.addEventListener('click', () => {
-            localStorage.removeItem('studentToken');
+            localStorage.clear(); // Limpa todas as notas salvas também
             if (gradeUpdateInterval) clearInterval(gradeUpdateInterval);
             userToken = null;
             bottomNav.style.display = 'none';
@@ -1234,7 +1312,12 @@
             updateNav(null);
         }
 
-        activityCards.forEach(card => card.addEventListener('click', (e) => startQuiz(e.currentTarget.dataset.quiz)));
+        activityCards.forEach(card => card.addEventListener('click', (e) => {
+            if (e.target.classList.contains('start-button')) {
+                startQuiz(e.currentTarget.dataset.quiz)
+            }
+        }));
+
         startConfirmedQuizButton.addEventListener('click', () => {
             quizConfirmation.style.display = 'none';
             quizContainer.style.display = 'block';
@@ -1247,9 +1330,15 @@
         window.addEventListener('click', (event) => { if (event.target === devPopup) devPopup.style.display = 'none'; });
 
         // --- LÓGICA COMPLETA DO QUIZ ---
+        function goToNextQuestion() {
+            saveCurrentAnswer();
+            if (currentQuestionIndex < currentQuizData.questions.length - 1) {
+                currentQuestionIndex++; showQuestion(currentQuestionIndex);
+            } else { calculateAndShowResults(); }
+        }
+
         nextButton.addEventListener('click', () => {
             const currentQuestion = currentQuizData.questions[currentQuestionIndex];
-
             if (currentQuestion.type !== 'discursive') {
                 const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
                 if (!selectedOption) {
@@ -1258,11 +1347,7 @@
                     return;
                 }
             }
-
-            saveCurrentAnswer();
-            if (currentQuestionIndex < currentQuizData.questions.length - 1) {
-                currentQuestionIndex++; showQuestion(currentQuestionIndex);
-            } else { calculateAndShowResults(); }
+            goToNextQuestion();
         });
 
         prevButton.addEventListener('click', () => {
@@ -1273,33 +1358,16 @@
         function renderQuestions() {
             let html = '';
             currentQuizData.questions.forEach((q, index) => {
-                html += `<div class="question-block" id="q${index}"> <p>${q.question}</p>`;
+                html += `<div class="question-block" id="q${index}">`;
 
-                if (q.poem) {
-                    html += `<div class="poem-box">
-              <h4>Poema: "Rosa de Hiroshima"</h4>
-              <pre>
-                Pensem nas crianças
-Mudas telepáticas
-Pensem nas meninas
-Cegas inexatas
-Pensem nas mulheres
-Rotas alteradas
-Pensem nas feridas
-Como rosas cálidas
-Mas oh não se esqueçam
-Da rosa da rosa
-Da rosa de Hiroxima
-A rosa hereditária
-A rosa radioativa
-Estúpida e inválida
-A rosa com cirrose
-A antirrosa atômica
-Sem cor sem perfume
-Sem rosa sem nada.
-              </pre>
-          </div>`;
+                if (q.text1) {
+                    html += `<div class="question-support-text"><h4>Texto I</h4>${q.text1}</div>`;
                 }
+                if (q.text2) {
+                    html += `<div class="question-support-text"><h4>Texto II</h4>${q.text2}</div>`;
+                }
+
+                html += `<p class="question-text"><b>Questão ${index + 1}:</b> ${q.question}</p>`;
 
                 if (q.type === 'discursive') {
                     const userAnswer = userAnswers[index] || '';
@@ -1307,15 +1375,33 @@ Sem rosa sem nada.
                 } else {
                     for (const key in q.options) {
                         const isChecked = userAnswers[index] === key ? 'checked' : '';
-                        html += `<label><input type="radio" name="q${index}" value="${key}" ${isChecked}> <span>${q.options[key]}</span></label>`;
+                        html += `<label><input type="radio" name="q${index}" value="${key}" data-question-index="${index}" ${isChecked}> <span>${q.options[key]}</span></label>`;
                     }
                     const isNotAnsweredChecked = userAnswers[index] === 'NAO_SEI' ? 'checked' : '';
-                    html += `<label style="font-style: italic; color: #666;"><input type="radio" name="q${index}" value="NAO_SEI" ${isNotAnsweredChecked}> <span>Não consegui responder</span></label>`;
+                    html += `<label style="font-style: italic; color: #666;"><input type="radio" name="q${index}" value="NAO_SEI" data-question-index="${index}" ${isNotAnsweredChecked}> <span>Não consegui responder</span></label>`;
                 }
 
+                html += `<button type="button" class="hint-button" data-question-index="${index}">Precisa de uma Dica?</button>`;
                 html += `</div>`;
             });
             questionsWrapper.innerHTML = html;
+
+            // Adicionar event listeners aos botões de dica e radio buttons
+            document.querySelectorAll('.hint-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const index = e.target.dataset.questionIndex;
+                    showHint(index);
+                });
+            });
+
+            document.querySelectorAll('input[name^="q"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    if (e.target.value === 'NAO_SEI') {
+                        const index = e.target.dataset.questionIndex;
+                        showHint(index, true); // O 'true' indica que é para mostrar os botões de ação
+                    }
+                });
+            });
         }
 
         function showQuestion(index) {
@@ -1326,6 +1412,33 @@ Sem rosa sem nada.
             prevButton.style.display = index === 0 ? 'none' : 'inline-block';
             nextButton.textContent = (index === currentQuizData.questions.length - 1) ? "Finalizar e Ver Resultado" : "Próxima";
         }
+
+        function showHint(index, showActionButtons = false) {
+            const question = currentQuizData.questions[index];
+            hintPopupText.textContent = question.tip;
+            hintPopupTitle.textContent = `Dica da Questão ${parseInt(index) + 1}`;
+
+            hintPopupButtons.innerHTML = ''; // Limpa botões anteriores
+            if (showActionButtons) {
+                hintPopupButtons.innerHTML = `
+                    <button type="button" class="try-again-btn">Tentar responder com a dica</button>
+                    <button type="button" class="skip-btn">Avançar sem responder</button>
+                `;
+                hintPopupButtons.querySelector('.try-again-btn').addEventListener('click', () => {
+                    hintPopup.style.display = 'none';
+                });
+                hintPopupButtons.querySelector('.skip-btn').addEventListener('click', () => {
+                    hintPopup.style.display = 'none';
+                    goToNextQuestion();
+                });
+            }
+
+            hintPopup.style.display = 'flex';
+        }
+
+        closeHintPopup.addEventListener('click', () => {
+            hintPopup.style.display = 'none';
+        });
 
         function saveCurrentAnswer() {
             const currentQuestion = currentQuizData.questions[currentQuestionIndex];
@@ -1340,41 +1453,27 @@ Sem rosa sem nada.
 
         function calculateAndShowResults() {
             let correct = 0, incorrect = 0, unanswered = 0;
-            const totalPossibleWeighted = 10;
+            const totalQuestions = currentQuizData.questions.length;
+            const pointsPerQuestion = 10 / totalQuestions;
             let weightedScore = 0;
 
             userAnswers.forEach((answer, index) => {
                 const question = currentQuizData.questions[index];
-
-                if (question.type === 'discursive') {
-                    if (!answer || answer.trim() === '') {
-                        unanswered++;
-                    } else {
-                        const userAnswerLower = answer.toLowerCase();
-                        const allKeywordsFound = question.keywords.every(kw => userAnswerLower.includes(kw.toLowerCase()));
-                        if (allKeywordsFound) {
-                            correct++;
-                            weightedScore += (question.difficulty === 'hard') ? 3 : 1.5;
-                        } else {
-                            incorrect++;
-                        }
-                    }
-                } else { // Multiple choice
-                    if (answer === question.answer) {
-                        correct++;
-                        weightedScore += (question.difficulty === 'hard') ? 2 : 1;
-                    } else if (answer === 'NAO_SEI' || answer === null) {
-                        unanswered++;
-                    } else {
-                        incorrect++;
-                    }
+                if (answer === question.answer) {
+                    correct++;
+                } else if (answer === 'NAO_SEI' || answer === null) {
+                    unanswered++;
+                } else {
+                    incorrect++;
                 }
             });
+
+            weightedScore = correct * pointsPerQuestion;
 
             quizContainer.style.display = 'none';
             resultsContainer.style.display = 'block';
 
-            const finalWeightedScore = Math.min(weightedScore, totalPossibleWeighted);
+            const finalWeightedScore = Math.min(weightedScore, 10);
             localStorage.setItem(`gradeToken-${currentQuizData.id}`, finalWeightedScore.toFixed(1));
 
             document.getElementById('resultsSummary').innerHTML = `
@@ -1400,26 +1499,10 @@ Sem rosa sem nada.
                 let statusClass = 'unanswered';
                 let statusText = 'Não Respondida';
 
-                if (question.type === 'discursive') {
-                    if (!answer || answer.trim() === '') {
-                        statusClass = 'unanswered';
-                        statusText = 'Não Respondida';
-                    } else {
-                        const userAnswerLower = answer.toLowerCase();
-                        const allKeywordsFound = question.keywords.every(kw => userAnswerLower.includes(kw.toLowerCase()));
-                        if (allKeywordsFound) {
-                            statusClass = 'correct'; statusText = 'Correta';
-                        } else {
-                            statusClass = 'incorrect'; statusText = 'Incorreta';
-                        }
-                    }
-                    resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> ${statusText}. <br><small><i>Sua resposta:</i> "${answer || '...'}"</small><br><small><i>Palavras-chave esperadas:</i> ${question.keywords.join(', ')}</small>`;
-                } else {
-                    if (answer === question.answer) { statusClass = 'correct'; statusText = 'Correta'; }
-                    else if (answer === 'NAO_SEI' || answer === null) { statusClass = 'unanswered'; statusText = 'Não soube responder'; }
-                    else { statusClass = 'incorrect'; statusText = 'Incorreta'; }
-                    resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> ${statusText}`;
-                }
+                if (answer === question.answer) { statusClass = 'correct'; statusText = 'Correta'; }
+                else if (answer === 'NAO_SEI' || answer === null) { statusClass = 'unanswered'; statusText = 'Não soube responder'; }
+                else { statusClass = 'incorrect'; statusText = 'Incorreta'; }
+                resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> ${statusText}`;
 
                 resultItem.classList.add(statusClass);
                 gabaritoDiv.appendChild(resultItem);
@@ -1461,6 +1544,149 @@ Sem rosa sem nada.
         });
 
         // --- BANCO DE QUESTÕES ---
+
+        // NOVO BANCO DE QUESTÕES DE LITERATURA
+        quizzes['literatura'].questions = [
+            {
+                type: 'multipleChoice',
+                text1: "Em Memórias Póstumas de Brás Cubas, Machado de Assis rompe com o padrão tradicional da literatura do século XIX. A escolha de um narrador já falecido, que decide contar sua vida após a morte, afasta qualquer expectativa de moralidade ou exemplaridade. Brás Cubas não busca justificar erros, nem ensinar lições, apenas diverte-se narrando com ironia seus fracassos e vaidades. O texto desmonta o ideal romântico do herói virtuoso e expõe as contradições da elite brasileira da época.",
+                text2: "Críticos literários destacam que a força de Memórias Póstumas de Brás Cubas não está apenas na ironia ou na crítica social, mas na inovação formal. A narrativa fragmentada, repleta de digressões, cria um diálogo direto com o leitor, rompendo a linearidade e aproximando a obra da modernidade literária. Mais do que uma sátira da elite, a obra é um estudo sobre a condição humana, revelando o tédio, o egoísmo e a mediocridade como aspectos universais.",
+                question: "Os textos apresentam diferentes enfoques da mesma obra. Qual alternativa melhor resume essa diferença?",
+                options: {
+                    a: "O Texto I enfatiza a crítica social e o retrato da elite, enquanto o Texto II destaca a inovação formal e a reflexão sobre a condição humana.",
+                    b: "O Texto I vê a obra como fragmentada e moderna, enquanto o Texto II a considera uma narrativa linear e tradicional.",
+                    c: "O Texto I entende que o narrador busca ensinar lições de moral, enquanto o Texto II afirma que não há lição a ser ensinada.",
+                    d: "O Texto I critica o excesso de digressões, enquanto o Texto II valoriza a objetividade narrativa de Machado.",
+                    e: "Ambos os textos concordam que a obra é apenas uma sátira humorística sem maior relevância."
+                },
+                answer: "a",
+                tip: "Habilidade H03: Leia o Texto I e identifique suas palavras-chave (ex: 'crítica social', 'elite'). Faça o mesmo com o Texto II (ex: 'inovação formal', 'condição humana'). A alternativa correta será aquela que contrastar exatamente esses pontos principais."
+            },
+            {
+                type: 'multipleChoice',
+                text1: "“Lucas saiu cedo de casa naquela manhã. Levava consigo uma mala pequena, na qual havia colocado apenas roupas e um caderno de anotações. Ao atravessar a cidade, parou diante da estação de trem. Ali, ficou observando as pessoas que chegavam e partiam, imaginando como seria sua vida em outro lugar.”",
+                question: "O termo “Ali” retoma:",
+                options: { a: "A casa de Lucas.", b: "A estação de trem.", c: "A cidade.", d: "O caderno de anotações.", e: "A mala pequena." },
+                answer: "b",
+                tip: "Habilidade H10: A palavra 'Ali' indica um lugar. Para descobrir a que lugar ela se refere, pergunte ao texto: 'Onde Lucas ficou observando as pessoas?'. A resposta estará na frase imediatamente anterior."
+            },
+            {
+                type: 'multipleChoice',
+                text1: "Reportagem (1970) – “O avanço da televisão preocupa especialistas. O tempo que antes era dedicado aos livros vem sendo substituído por longas horas diante da tela. Essa mudança ameaça a formação intelectual das novas gerações.”",
+                text2: "Reportagem (2023) – “As redes sociais, quando usadas de forma crítica, têm aproximado jovens da literatura. Grupos de leitura online e resenhas em vídeo têm despertado o interesse por obras clássicas, democratizando o acesso ao livro.”",
+                question: "As diferentes formas de tratar a leitura estão ligadas:",
+                options: {
+                    a: "À diferença de época e ao modo como cada meio de comunicação é avaliado.",
+                    b: "Apenas ao fato de que um texto é jornalístico e o outro é digital.",
+                    c: "Ao uso de dados estatísticos em ambos os casos.",
+                    d: "À mesma visão negativa sobre a tecnologia.",
+                    e: "À crítica à leitura digital, comum a ambos."
+                },
+                answer: "a",
+                tip: "Habilidade H11: Observe as datas (1970 vs. 2023) e as tecnologias (TV vs. Redes Sociais). A chave está em perceber como a mudança no tempo e na tecnologia altera a opinião sobre o impacto na leitura."
+            },
+            {
+                type: 'multipleChoice',
+                text1: "“Helena sempre sonhou em ser bailarina, mas sua família queria que estudasse medicina. Entre ensaios escondidos e provas difíceis, ela tentava equilibrar os dois mundos. Quando recebeu a chance de uma audição em uma companhia renomada, percebeu que teria de escolher entre o sonho e as expectativas familiares.”",
+                question: "O conflito central é:",
+                options: {
+                    a: "A falta de recursos financeiros de Helena.",
+                    b: "O dilema entre seguir a medicina ou a dança.",
+                    c: "A dificuldade em realizar as provas escolares.",
+                    d: "O encontro de Helena com uma companhia de dança.",
+                    e: "O apoio incondicional da família."
+                },
+                answer: "b",
+                tip: "Habilidade H13: O conflito narrativo é o principal problema ou oposição que o protagonista enfrenta. Qual é a escolha fundamental que move a história de Helena? É uma luta interna entre dois caminhos."
+            },
+            {
+                type: 'multipleChoice',
+                text1: "“Em uma pequena vila, todos os dias os vizinhos se reuniam na praça para conversar. As casas eram simples, pintadas de cores claras, e havia sempre crianças brincando nas ruas. Um dia, porém, o cotidiano foi interrompido quando uma misteriosa carta apareceu na porta da prefeitura.”",
+                question: "O elemento principal do enredo é:",
+                options: {
+                    a: "As casas pintadas de cores claras.",
+                    b: "As crianças brincando nas ruas.",
+                    c: "A reunião dos vizinhos na praça.",
+                    d: "O surgimento de uma carta misteriosa.",
+                    e: "A rotina da pequena vila."
+                },
+                answer: "d",
+                tip: "Habilidade H14: O texto primeiro descreve o cenário (informação secundária). O elemento principal é o fato novo que quebra essa rotina e dá início à ação. Procure pela palavra que indica uma mudança, como 'porém' ou 'mas'."
+            },
+            {
+                type: 'multipleChoice',
+                text1: "Crônica – “O celular roubou a atenção da leitura. Basta observar os jovens no metrô: poucos seguram livros, mas quase todos olham para uma tela.”",
+                text2: "Reportagem – “Pesquisas recentes mostram que, apesar da popularidade dos celulares, a leitura digital tem crescido entre jovens brasileiros, que usam aplicativos e e-books para ampliar o acesso a obras.”",
+                question: "Os textos divergem porque:",
+                options: {
+                    a: "O primeiro critica o impacto negativo do celular, enquanto o segundo mostra que ele pode favorecer a leitura.",
+                    b: "Ambos afirmam que os jovens leem menos por causa do celular.",
+                    c: "O primeiro mostra dados estatísticos, enquanto o segundo traz apenas impressões pessoais.",
+                    d: "O segundo considera o celular prejudicial, ao contrário do primeiro.",
+                    e: "Os dois concordam que a leitura digital substitui a leitura em papel de forma definitiva."
+                },
+                answer: "a",
+                tip: "Habilidade H03: Resuma a ideia central de cada texto em uma frase. Texto I: Celular atrapalha a leitura. Texto II: Celular pode ajudar na leitura. A alternativa correta vai refletir essa oposição de ideias."
+            },
+            {
+                type: 'multipleChoice',
+                text1: "“Ana estudava horas por dia. Porém, isso não garantia boas notas. Apesar do esforço, ela sentia que algo faltava.”",
+                question: "O termo “isso” retoma:",
+                options: {
+                    a: "As boas notas de Ana.",
+                    b: "A dedicação de Ana aos estudos.",
+                    c: "A sensação de algo faltar.",
+                    d: "A dedicação de outras pessoas.",
+                    e: "O resultado final das provas."
+                },
+                answer: "b",
+                tip: "Habilidade H10: Para saber o que o pronome 'isso' retoma, substitua-o pela informação da frase anterior. 'Porém, [estudar horas por dia] não garantia boas notas'. A frase continua fazendo sentido? Se sim, você encontrou a resposta."
+            },
+            {
+                type: 'multipleChoice',
+                text1: "Editorial de jornal (1960) – “A televisão ameaça os jovens leitores. O tempo antes dedicado ao estudo é desperdiçado diante de telas brilhantes.”",
+                text2: "Blog de professor (2022) – “As redes sociais podem aproximar jovens da literatura. Resenhas e clubes de leitura online são formas de estimular o hábito.”",
+                question: "A principal diferença é:",
+                options: {
+                    a: "A visão negativa da TV em 1960 versus a visão positiva das redes sociais em 2022.",
+                    b: "O gênero textual distinto: reportagem versus blog.",
+                    c: "O uso de poesia em um texto e de prosa no outro.",
+                    d: "A defesa comum da tecnologia.",
+                    e: "O mesmo ponto de vista, mas em linguagens diferentes."
+                },
+                answer: "a",
+                tip: "Habilidade H11: Assim como em questões anteriores, foque na data e na tecnologia. Um texto de 1960 vê a TV como 'ameaça'. Um texto de 2022 vê as redes sociais como uma ferramenta que pode 'aproximar'. A diferença está na avaliação (positiva ou negativa) da tecnologia de cada época."
+            },
+            {
+                type: 'multipleChoice',
+                text1: "“Certo dia, Pedro encontrou uma carteira no chão. Dentro havia dinheiro suficiente para pagar suas dívidas e documentos de identificação. O rapaz hesitou: deveria devolver ao dono ou usar o dinheiro para resolver sua situação financeira?”",
+                question: "O conflito está em:",
+                options: {
+                    a: "A presença de documentos na carteira.",
+                    b: "O encontro de Pedro com dinheiro.",
+                    c: "O dilema moral entre devolver ou ficar com a carteira.",
+                    d: "A falta de testemunhas no momento do achado.",
+                    e: "A quantia exata encontrada."
+                },
+                answer: "c",
+                tip: "Habilidade H13: O conflito é a tensão da história. Não é o ato de achar a carteira, mas a dúvida que isso gera em Pedro. Procure a alternativa que descreve a escolha difícil, a luta interna do personagem."
+            },
+            {
+                type: 'multipleChoice',
+                text1: "“Na cidade havia uma praça antiga, com árvores frondosas e um coreto no centro. Todos os sábados aconteciam encontros musicais. Mas em uma manhã chuvosa, os moradores se espantaram: uma estátua desconhecida havia sido colocada no meio da praça, sem que ninguém soubesse por quem.”",
+                question: "O fato principal é:",
+                options: {
+                    a: "As árvores frondosas.",
+                    b: "O coreto da praça.",
+                    c: "Os encontros musicais.",
+                    d: "O surgimento da estátua misteriosa.",
+                    e: "A chuva na manhã descrita."
+                },
+                answer: "d",
+                tip: "Habilidade H14: As informações sobre a praça, as árvores e os encontros são o cenário, o pano de fundo (secundário). O fato principal é o evento inesperado que quebra a normalidade e que certamente dará início a uma nova história."
+            }
+        ];
+
         quizzes['pa-pg'].questions = [
             { type: 'multipleChoice', question: "1. Um atleta corre 5 km no primeiro dia de treino...", options: { A: "21 km", B: "24 km", C: "26 km", D: "29 km" }, answer: "C", difficulty: 'easy' }, { type: 'multipleChoice', question: "2. Um teatro possui 15 cadeiras na primeira fileira...", options: { A: "285", B: "42", C: "150", D: "300" }, answer: "A", difficulty: 'easy' }, { type: 'multipleChoice', question: "3. O lucro de uma empresa em janeiro foi de R$ 80.000,00...", options: { A: "R$ 60.000,00", B: "R$ 56.000,00", C: "R$ 52.000,00", D: "R$ 48.000,00" }, answer: "B", difficulty: 'hard' }, { type: 'multipleChoice', question: "4. Uma cultura de bactérias começa com 100 indivíduos...", options: { A: "500", B: "800", C: "1.600", D: "3.200" }, answer: "C", difficulty: 'easy' }, { type: 'multipleChoice', question: "5. Um investidor aplicou R$ 50,00 no primeiro mês...", options: { A: "R$ 1.600,00", B: "R$ 3.150,00", C: "R$ 3.200,00", D: "R$ 1.550,00" }, answer: "B", difficulty: 'easy' }, { type: 'multipleChoice', question: "6. Sabendo que a sequência (x-2, x, x+3) é uma PG...", options: { A: "4", B: "5", C: "6", D: "2" }, answer: "C", difficulty: 'hard' }
         ];

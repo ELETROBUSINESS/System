@@ -15,6 +15,48 @@
 </head>
 
 <body class="painel-adm1" onload="AnimationLoading()">
+
+    <script>
+    (function () {
+        // Pega o token de sessão do armazenamento local do navegador (Curta validade: 30 minutos)
+        const tokenString = localStorage.getItem('session_token');
+        
+        // Define o URL de redirecionamento para o login
+        const LOGIN_URL = '/users/e-finance.html'; // <--- CORREÇÃO AQUI
+
+        // Se não existir um token de sessão, o acesso é negado
+        if (!tokenString) {
+            console.log("Acesso negado: Nenhum token de sessão encontrado.");
+            // Redireciona para a página de login
+            window.location.href = LOGIN_URL; 
+            return;
+        }
+
+        try {
+            const token = JSON.parse(tokenString);
+            const agora = new Date().getTime();
+
+            // Verifica se a data de expiração do token de sessão já passou
+            if (agora > token.expires) {
+                console.log("Acesso negado: O token de sessão expirou.");
+                // Limpa o token expirado do armazenamento
+                localStorage.removeItem('session_token');
+                // Redireciona para a página de login
+                window.location.href = LOGIN_URL; // <--- CORREÇÃO AQUI
+            } else {
+                // Se o token for válido, permite o acesso à página
+                console.log('Acesso permitido. Bem-vindo, ' + token.username);
+            }
+        } catch (error) {
+            // Se o token estiver corrompido ou mal formatado
+            console.error('Erro ao processar o token de sessão:', error);
+            localStorage.removeItem('session_token');
+            // Redireciona para a página de login por segurança
+            window.location.href = LOGIN_URL; // <--- CORREÇÃO AQUI
+        }
+    })();
+</script>
+
     <div class="mensagerLocal">
         <div class="mensager">
             <img src="/assets/img/eFriend.png">
@@ -158,16 +200,14 @@
                                 <a class="add_btn" href="/users/45692327000100/CD1/adm/nb/manager.html">Ver mais</a>
                             </div>
                             <span class="lpan l2" id="boletoVencimento"></span>
-                        </div>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar2" id="progressBar"></div>
+                            <div id="paginationIndicators" class="pagination-indicators-container"></div>
                         </div>
                     </div>
                 </a>
 
                 <script>
                     document.addEventListener('DOMContentLoaded', () => {
-                        // URL ATUALIZADA para o nosso novo Apps Script
+                        // Usando a URL que você tem salva para o seu Apps Script
                         const url = 'https://script.google.com/macros/s/AKfycbzkAs8dsJMepkQBhdL--XwO3wUQuQgvA-DFPEwraiz8ijiX9gkPMBuAeM5udQjzmJvzqQ/exec?action=getContas';
 
                         let contas = [];
@@ -178,38 +218,49 @@
                         const boletoEmpresa = document.getElementById('boletoEmpresa');
                         const boletoValor = document.getElementById('boletoValor');
                         const boletoVencimento = document.getElementById('boletoVencimento');
-                        const progressBar = document.getElementById('progressBar');
+                        // NOVO ELEMENTO: o contêiner das bolinhas
+                        const paginationIndicators = document.getElementById('paginationIndicators');
+
+                        function createPaginationIndicators() {
+                            paginationIndicators.innerHTML = ''; // Limpa indicadores antigos
+                            if (contas.length <= 1) return; // Não mostra bolinhas se for 0 ou 1 item
+
+                            for (let i = 0; i < contas.length; i++) {
+                                const dot = document.createElement('div');
+                                dot.classList.add('pagination-dot');
+                                paginationIndicators.appendChild(dot);
+                            }
+                        }
 
                         function updateContaDisplay() {
+                            const dots = document.querySelectorAll('.pagination-dot');
+
                             if (contas.length === 0) {
                                 boletoEmpresa.textContent = "Nenhuma conta pendente";
                                 boletoValor.textContent = "Você está em dia! ✨";
                                 boletoVencimento.textContent = "";
-                                if (progressBar) progressBar.style.width = '0%';
+                                paginationIndicators.innerHTML = '';
                                 return;
                             }
 
                             const currentConta = contas[currentIndex];
 
-                            // ATUALIZAÇÃO: Usando 'descricao' em vez de 'empresa'
+                            // ATUALIZAÇÃO DO CONTEÚDO (Mantida a lógica original)
                             boletoEmpresa.textContent = currentConta.descricao;
-
                             const valor = parseFloat(currentConta.valor);
                             boletoValor.textContent = `R$ ${valor.toFixed(2).replace('.', ',')}`;
                             boletoVencimento.textContent = currentConta.vencimento;
 
-                            resetProgressBar();
-                            currentIndex = (currentIndex + 1) % contas.length;
-                        }
+                            // ATUALIZAÇÃO DAS BOLINHAS
+                            dots.forEach((dot, index) => {
+                                dot.classList.remove('active');
+                                if (index === currentIndex) {
+                                    dot.classList.add('active');
+                                }
+                            });
 
-                        function resetProgressBar() {
-                            if (!progressBar) return;
-                            progressBar.style.transition = 'none';
-                            progressBar.style.width = '0%';
-                            // Força o navegador a refazer o layout para reiniciar a animação
-                            void progressBar.offsetWidth;
-                            progressBar.style.transition = `width ${displayDuration / 1000}s linear`;
-                            progressBar.style.width = '100%';
+                            // Prepara para o próximo ciclo
+                            currentIndex = (currentIndex + 1) % contas.length;
                         }
 
                         function startRotation() {
@@ -219,14 +270,16 @@
                             }
                         }
 
+                        // Início do carregamento dos dados
                         fetch(url)
                             .then(response => response.json())
                             .then(data => {
                                 if (data && !data.error && data.length > 0) {
                                     contas = data;
+                                    createPaginationIndicators(); // Cria as bolinhas
                                     startRotation();
                                 } else {
-                                    updateContaDisplay(); // Mostra a mensagem de "nenhuma conta"
+                                    updateContaDisplay();
                                 }
                             })
                             .catch(error => {

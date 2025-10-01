@@ -1,50 +1,635 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR" class="scroll-smooth">
+
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="google-adsense-account" content="ca-pub-9060080612658200">
 
     <link rel="icon" href="/assets/img/iconWeb.png">
-    <title>Login | ELETRO</title>
+    <title>ELETRO - Digitalize seu Empreendimento</title>
 
-    <link rel="stylesheet" href="/assets/css/login.css">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts: Poppins (for headings) and Inter (for body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Poppins:wght@600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Custom Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class', // Enable dark mode using a class
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif'],
+                        'display': ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        'brand-primary': '#c50037',
+                        'brand-primary-dark': '#ab0030',
+                        'brand-dark': '#111827',
+                        'brand-light': '#F9FAFB',
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom Styles -->
+    <style>
+        /* Light Theme as default */
+        body {
+            @apply bg-brand-light text-slate-800;
+        }
+
+        /* Dark Theme styles */
+        .dark body {
+            @apply bg-brand-dark text-slate-200;
+        }
+
+        .gradient-bg-light {
+            background-color: #ffffff;
+        }
+
+        .dark .gradient-bg-dark {
+            background-color: #111827;
+        }
+
+        .text-gradient {
+            background: linear-gradient(90deg, #c50037, #e11d48);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Typing animation cursor */
+        .typing-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 1.2em;
+            background-color: #c50037;
+            animation: blink 0.7s infinite;
+            margin-left: 4px;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0;
+            }
+        }
+
+        /* Scroll-triggered animations for Mission Section */
+        .mission-section-item {
+            @apply transition-all duration-700 ease-out;
+            opacity: 0;
+            transform: translateY(40px);
+        }
+
+        .mission-section-item.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        i {
+            color: #c50037;
+            font-size: 100px;
+        }
+
+        .mob2 {
+            font-size: 50px;
+        }
+    </style>
 </head>
 
-<body onload="AnimationLoading();">
-    <header><div class="loading"><div class="efect-loading"></div></div>
-        <div class="nav container">
-            <a href="/index.html" class="logo"><img src="/assets/img/logoWhite.png"> ELETRO</a>         
+<body class="font-sans antialiased transition-colors duration-300">
+
+    <!-- Header -->
+    <header id="header"
+        class="bg-brand-light/80 dark:bg-brand-dark/80 backdrop-blur-sm sticky top-0 z-50 transition-all duration-300 border-b border-gray-200 dark:border-gray-800">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="#" class="text-2xl font-display font-bold text-brand-primary">ELETRO BUSINESS</a>
+            <nav class="hidden md:flex space-x-8 items-center">
+                <a href="#objetivo"
+                    class="text-slate-700 dark:text-slate-300 hover:text-brand-primary dark:hover:text-brand-primary transition-colors duration-300">Nosso
+                    Objetivo</a>
+                <!-- Services Dropdown -->
+                <div class="relative group">
+                    <button
+                        class="text-slate-700 dark:text-slate-300 hover:text-brand-primary dark:hover:text-brand-primary transition-colors duration-300 flex items-center">
+                        Serviços
+                        <svg class="w-4 h-4 ml-1 transform group-hover:rotate-180 transition-transform" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </button>
+                    <div
+                        class="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-white dark:bg-slate-800 rounded-lg shadow-xl border dark:border-slate-700 opacity-0 group-hover:opacity-100 transform scale-95 group-hover:scale-100 transition-all duration-200 pointer-events-none group-hover:pointer-events-auto z-50">
+                        <div class="p-2">
+                            <h3 class="px-3 py-2 text-xs font-bold text-slate-400 uppercase">Acessos Diretos</h3>
+                            <a href="/users/e-finance.html"
+                                class="block w-full text-left px-3 py-2 rounded-md text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Plataforma
+                                de Finanças</a>
+                            <a href="#servicos"
+                                class="block w-full text-left px-3 py-2 rounded-md text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Sou
+                                Prestador de Serviços</a>
+                            <a href="#servicos"
+                                class="block w-full text-left px-3 py-2 rounded-md text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Ver
+                                todos os serviços</a>
+                        </div>
+                    </div>
+                </div>
+                <a href="#missao"
+                    class="text-slate-700 dark:text-slate-300 hover:text-brand-primary dark:hover:text-brand-primary transition-colors duration-300">Missão</a>
+                <a href="/users/e-finance.html"
+                    class="text-slate-700 dark:text-slate-300 hover:text-brand-primary dark:hover:text-brand-primary transition-colors duration-300">Login</a>
+                <a href="#contato"
+                    class="bg-brand-primary hover:bg-brand-primary-dark text-white font-bold py-2 px-5 rounded-lg transition-transform duration-300 hover:scale-105">Fale
+                    Conosco</a>
+                <button id="theme-toggle"
+                    class="p-2 rounded-full text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">
+                    <svg id="theme-icon-light" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <svg id="theme-icon-dark" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                </button>
+            </nav>
+            <button id="mobile-menu-button" class="md:hidden text-brand-dark dark:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                </svg>
+            </button>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden px-6 pb-4 bg-brand-light dark:bg-brand-dark">
+            <a href="#objetivo"
+                class="block py-2 text-center text-slate-700 dark:text-slate-300 hover:text-brand-primary transition-colors duration-300">Nosso
+                Objetivo</a>
+            <a href="#servicos"
+                class="block py-2 text-center text-slate-700 dark:text-slate-300 hover:text-brand-primary transition-colors duration-300">Serviços</a>
+            <a href="#missao"
+                class="block py-2 text-center text-slate-700 dark:text-slate-300 hover:text-brand-primary transition-colors duration-300">Missão</a>
+            <a href="#contato"
+                class="block mt-2 w-full bg-brand-primary hover:bg-brand-primary-dark text-white font-bold py-2 px-5 rounded-lg transition-transform duration-300 hover:scale-105 text-center">Fale
+                Conosco</a>
         </div>
     </header>
 
-    <div class="screen1">
-        <div class="form-login">
-            <form class="form_login">
-                <h2 class="section-title">Login</h2>
-                <div class="input-box">
-                    <input type="text" placeholder="Usuário" id="login" required>
-                    <i class="bx bxs-user"></i>
-                </div>
+    <!-- Main Content -->
+    <main>
+        <!-- Hero Section -->
+        <section
+            class="relative h-screen flex items-center justify-center text-center overflow-hidden bg-white dark:bg-brand-dark">
+            <canvas id="particle-canvas" class="absolute inset-0 z-0"></canvas>
+            <div class="container mx-auto px-6 z-10">
+                <h1
+                    class="text-4xl md:text-6xl lg:text-7xl font-display font-extrabold text-slate-800 dark:text-white leading-tight mb-4 animate-fade-in-up">
+                    Sua empresa na <span class="text-gradient">velocidade do futuro.</span>
+                </h1>
+                <p id="typing-slogan"
+                    class="text-lg md:text-xl text-slate-600 dark:text-slate-300 min-h-[56px] sm:min-h-[auto] max-w-3xl mx-auto mb-8 animate-fade-in-up"
+                    style="animation-delay: 0.2s;"></p>
+                <a href="#servicos"
+                    class="bg-brand-primary hover:bg-brand-primary-dark text-white font-bold py-3 px-8 text-lg rounded-lg transition-transform duration-300 hover:scale-105 inline-block animate-fade-in-up"
+                    style="animation-delay: 0.4s;">
+                    Descubra Como
+                </a>
+            </div>
+        </section>
 
-                <div class="input-box">
-                    <input type="password" placeholder="Senha" id="senha" required>
-                    <i class="bx bxs-lock-alt"></i>
+        <!-- Objetivo Section -->
+        <section id="objetivo" class="py-20 lg:py-32 bg-brand-light dark:bg-slate-900">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl md:text-4xl font-display font-bold text-slate-900 dark:text-white">Nosso <span
+                            class="text-brand-primary">Objetivo</span> é o Seu <span
+                            class="text-brand-primary">Sucesso</span>.</h2>
+                    <p class="mt-4 text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">Convertemos desafios em
+                        oportunidades, utilizando a tecnologia para impulsionar o crescimento do seu negócio.</p>
                 </div>
-                
-                <button class="btn_form" type="submit">Entrar</button>
-                
-                <div class="desc">
-                    <p>* Ao entrar você concorda com nossas politicas e diretrizes</p>
+                <div class="grid md:grid-cols-3 gap-10 text-center">
+                    <div
+                        class="bg-white dark:bg-slate-800 p-8 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-primary transition-all duration-300 transform hover:-translate-y-2 shadow-sm hover:shadow-xl">
+                        <div
+                            class="flex items-center justify-center h-16 w-16 bg-brand-primary/10 text-brand-primary rounded-full mx-auto mb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="h-8 w-8">
+                                <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z">
+                                </path>
+                                <path d="m9 12 2 2 4-4"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-display font-bold mb-3 text-slate-900 dark:text-white">Validação Rápida
+                        </h3>
+                        <p class="text-slate-600 dark:text-slate-400">Implementamos soluções que geram resultados
+                            visíveis em pouco tempo, validando cada passo da sua transformação digital.</p>
+                    </div>
+                    <div
+                        class="bg-white dark:bg-slate-800 p-8 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-primary transition-all duration-300 transform hover:-translate-y-2 shadow-sm hover:shadow-xl">
+                        <div
+                            class="flex items-center justify-center h-16 w-16 bg-brand-primary/10 text-brand-primary rounded-full mx-auto mb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="h-8 w-8">
+                                <line x1="12" x2="12" y1="20" y2="10"></line>
+                                <line x1="18" x2="18" y1="20" y2="4"></line>
+                                <line x1="6" x2="6" y1="20" y2="16"></line>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-display font-bold mb-3 text-slate-900 dark:text-white">Decisões
+                            Inteligentes</h3>
+                        <p class="text-slate-600 dark:text-slate-400">Fornecemos dados e ferramentas que transformam
+                            informações em insights, permitindo que você tome as melhores decisões estratégicas.</p>
+                    </div>
+                    <div
+                        class="bg-white dark:bg-slate-800 p-8 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-primary transition-all duration-300 transform hover:-translate-y-2 shadow-sm hover:shadow-xl">
+                        <div
+                            class="flex items-center justify-center h-16 w-16 bg-brand-primary/10 text-brand-primary rounded-full mx-auto mb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="h-8 w-8">
+                                <polyline points="16 18 22 12 16 6"></polyline>
+                                <polyline points="8 6 2 12 8 18"></polyline>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-display font-bold mb-3 text-slate-900 dark:text-white">Tecnologia
+                            Simplificada</h3>
+                        <p class="text-slate-600 dark:text-slate-400">Cuidamos da complexidade técnica para que você
+                            possa focar no que faz de melhor: gerenciar e expandir sua empresa.</p>
+                    </div>
                 </div>
-            </form>
+            </div>
+        </section>
+
+        <!-- Missão Section -->
+        <section id="missao" class="py-20 lg:py-32 bg-brand-light dark:bg-brand-dark overflow-x-hidden">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-20">
+                    <h2 class="text-3xl md:text-4xl font-display font-bold text-slate-900 dark:text-white">Nossa <span
+                            class="text-gradient">Missão</span></h2>
+                    <p class="mt-4 text-lg text-slate-600 dark:text-slate-400 max-w-3xl mx-auto">Acreditamos no poder da
+                        tecnologia para transformar e capacitar. Nossos pilares são o conhecimento e o crescimento.</p>
+                </div>
+                <div class="space-y-24">
+                    <!-- Mission Item 1 -->
+                    <div class="mission-section-item grid md:grid-cols-2 gap-12 items-center">
+                        <div class="text-center md:text-left">
+                            <h3 class="text-2xl font-display font-bold text-slate-900 dark:text-white mb-4">Transmitir
+                                Conhecimento</h3>
+                            <p class="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">Capacitamos a próxima
+                                geração, oferecendo a jovens a oportunidade de mergulhar no mundo tecnológico,
+                                desenvolvendo habilidades que definirão o futuro e abrirão portas para carreiras
+                                inovadoras.</p>
+                        </div>
+                        <div
+                            class="flex items-center justify-center bg-slate-100 dark:bg-slate-800/50 rounded-xl aspect-video p-8">
+                            <i class='bx  bx-brain'></i>
+                        </div>
+                    </div>
+                    <!-- Mission Item 2 -->
+                    <div class="mission-section-item grid md:grid-cols-2 gap-12 items-center">
+                        <div
+                            class="flex items-center justify-center bg-slate-100 dark:bg-slate-800/50 rounded-xl aspect-video p-8 md:order-last">
+                            <i class='bx  bx-store'></i>
+                        </div>
+                        <div class="text-center md:text-left">
+                            <h3 class="text-2xl font-display font-bold text-slate-900 dark:text-white mb-4">Impulsionar
+                                Empreendedores</h3>
+                            <p class="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">Somos parceiros
+                                estratégicos de empreendedores, utilizando tecnologia de ponta e táticas inovadoras para
+                                acelerar o crescimento, otimizar processos e garantir o sucesso de seus negócios no
+                                cenário digital.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Serviços Section -->
+        <section id="servicos" class="py-20 lg:py-32 bg-slate-50 dark:bg-slate-900">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl md:text-4xl font-display font-bold text-slate-900 dark:text-white">Soluções
+                        Completas para seu <span class="text-gradient">Negócio</span></h2>
+                    <p class="mt-4 text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">Escolha o serviço ideal
+                        para sua necessidade e comece a transformação agora mesmo.</p>
+                </div>
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <!-- Service Cards -->
+                    <div
+                        class="bg-white dark:bg-slate-800 rounded-xl overflow-hidden group flex flex-col border border-slate-200 dark:border-slate-700">
+                        <div class="p-8 flex-grow">
+                            <div class="mb-4 text-brand-primary">
+                                <i class='bx  bx-dollar-circle mob2'></i>
+                            </div>
+                            <h3 class="text-2xl font-display font-bold text-slate-900 dark:text-white mb-3">Financeiro
+                            </h3>
+                            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">Nossa plataforma centraliza a
+                                gestão financeira: contas a pagar, receitas, ticket médio e outras informações cruciais
+                                para decisões estratégicas.</p>
+                        </div>
+                        <a href="#contato"
+                            class="block bg-brand-primary/10 text-brand-primary font-semibold py-4 px-8 text-center mt-auto hover:bg-brand-primary hover:text-white transition-all duration-300">Quero
+                            Organizar</a>
+                    </div>
+                    <div
+                        class="bg-white dark:bg-slate-800 rounded-xl overflow-hidden group flex flex-col border border-slate-200 dark:border-slate-700">
+                        <div class="p-8 flex-grow">
+                            <div class="mb-4 text-brand-primary">
+                                <i class='bx  bx-laptop mob2'></i>
+                            </div>
+                            <h3 class="text-2xl font-display font-bold text-slate-900 dark:text-white mb-3">Digitalizar
+                                meu Negócio</h3>
+                            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">Oferecemos um serviço
+                                personalizado para digitalizar sua empresa por completo, da presença online aos sistemas
+                                de gestão.</p>
+                        </div>
+                        <a href="#contato"
+                            class="block bg-brand-primary/10 text-brand-primary font-semibold py-4 px-8 text-center mt-auto hover:bg-brand-primary hover:text-white transition-all duration-300">Quero
+                            Digitalizar</a>
+                    </div>
+                    <div
+                        class="bg-white dark:bg-slate-800 rounded-xl overflow-hidden group flex flex-col border border-slate-200 dark:border-slate-700">
+                        <div class="p-8 flex-grow">
+                            <div class="mb-4 text-brand-primary"><svg xmlns="http://www.w3.org/2000/svg" width="24"
+                                    height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg></div>
+                            <h3 class="text-2xl font-display font-bold text-slate-900 dark:text-white mb-3">Prestador de
+                                Serviço</h3>
+                            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">Um portal exclusivo para
+                                profissionais encontrarem projetos, conectarem-se com empresas e gerenciarem seus
+                                trabalhos.</p>
+                        </div>
+                        <a href="#contato"
+                            class="block bg-brand-primary/10 text-brand-primary font-semibold py-4 px-8 text-center mt-auto hover:bg-brand-primary hover:text-white transition-all duration-300">Quero
+                            Acessar</a>
+                    </div>
+                    <div
+                        class="bg-white dark:bg-slate-800 rounded-xl overflow-hidden group flex flex-col border border-slate-200 dark:border-slate-700">
+                        <div class="p-8 flex-grow">
+                            <div class="mb-4 text-brand-primary"><svg xmlns="http://www.w3.org/2000/svg" width="24"
+                                    height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="7" y1="7" x2="7" y2="7"></line>
+                                    <line x1="12" y1="7" x2="17" y2="7"></line>
+                                    <line x1="7" y1="12" x2="12" y2="12"></line>
+                                    <line x1="17" y1="12" x2="17" y2="12"></line>
+                                    <line x1="7" y1="17" x2="17" y2="17"></line>
+                                </svg></div>
+                            <h3 class="text-2xl font-display font-bold text-slate-900 dark:text-white mb-3">Editor de
+                                Vídeos</h3>
+                            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">Contrate um editor
+                                profissional para transformar suas gravações em vídeos de alta qualidade que engajam e
+                                convertem seu público.</p>
+                        </div>
+                        <a href="#contato"
+                            class="block bg-brand-primary/10 text-brand-primary font-semibold py-4 px-8 text-center mt-auto hover:bg-brand-primary hover:text-white transition-all duration-300">Contratar
+                            Editor</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer id="contato" class="bg-white dark:bg-brand-dark border-t border-gray-200 dark:border-slate-800">
+        <div class="container mx-auto px-6 pt-16 pb-8">
+            <div class="text-center mb-12">
+                <h3 class="text-2xl md:text-3xl font-display font-bold text-slate-900 dark:text-white mb-4">Pronto para
+                    dar o próximo passo?</h3>
+                <p class="text-slate-600 dark:text-slate-400 max-w-xl mx-auto mb-8">Clique no botão abaixo e vamos
+                    conversar sobre como a ELETRO pode impulsionar seus resultados.</p>
+                <a href="https://wa.me/5591986341760" target="_blank" rel="noopener noreferrer"
+                    class="bg-brand-primary hover:bg-brand-primary-dark text-white font-bold py-3 px-8 text-lg rounded-lg transition-transform duration-300 hover:scale-105 inline-flex items-center space-x-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="currentColor" class="w-5 h-5">
+                        <path
+                            d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.886-.001 2.269.655 4.387 1.876 6.269l.16.292-1.04 3.793 3.912-1.031.282.165z" />
+                    </svg>
+                    <span>Entrar em Contato no WhatsApp</span>
+                </a>
+            </div>
+            <div class="grid md:grid-cols-4 gap-8 text-center md:text-left">
+                <div>
+                    <h4 class="text-lg font-display font-bold text-brand-primary mb-4">ELETRO BUSINESS</h4>
+                    <p class="text-slate-500 dark:text-slate-400">Digitalizando empreendimentos para o futuro.</p>
+                </div>
+                <div>
+                    <h5 class="font-bold text-slate-700 dark:text-slate-200 mb-4">Navegação</h5>
+                    <ul class="space-y-2">
+                        <li><a href="#objetivo"
+                                class="text-slate-500 dark:text-slate-400 hover:text-brand-primary">Objetivo</a></li>
+                        <li><a href="#servicos"
+                                class="text-slate-500 dark:text-slate-400 hover:text-brand-primary">Serviços</a></li>
+                        <li><a href="#missao"
+                                class="text-slate-500 dark:text-slate-400 hover:text-brand-primary">Missão</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5 class="font-bold text-slate-700 dark:text-slate-200 mb-4">Legal</h5>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-slate-500 dark:text-slate-400 hover:text-brand-primary">Política de
+                                Privacidade</a></li>
+                        <li><a href="#" class="text-slate-500 dark:text-slate-400 hover:text-brand-primary">Termos de
+                                Serviço</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5 class="font-bold text-slate-700 dark:text-slate-200 mb-4">CNPJ</h5>
+                    <p class="text-slate-500 dark:text-slate-400">62.642.076/0001-78</p>
+                </div>
+            </div>
+            <div
+                class="mt-12 pt-8 border-t border-slate-200 dark:border-slate-800 text-center text-slate-500 dark:text-slate-400">
+                <p>&copy; 2025 ELETRO BUSINESS. Todos os direitos reservados.</p>
+            </div>
         </div>
-        <!-- Link To JS -->
-         <script src="/assets/js/usersData.js"></script>
-        <script src="/assets/js/loginSimple.js"></script>
-        <script src="/assets/js/loading.js"></script>
-    </div>
+    </footer>
+
+    <!-- JavaScript for Interactions -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Theme Toggle ---
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const themeIconLight = document.getElementById('theme-icon-light');
+            const themeIconDark = document.getElementById('theme-icon-dark');
+            const htmlElement = document.documentElement;
+
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    htmlElement.classList.add('dark');
+                    themeIconLight.classList.remove('hidden');
+                    themeIconDark.classList.add('hidden');
+                } else {
+                    htmlElement.classList.remove('dark');
+                    themeIconLight.classList.add('hidden');
+                    themeIconDark.classList.remove('hidden');
+                }
+            };
+
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+            applyTheme(initialTheme);
+
+            themeToggleBtn.addEventListener('click', () => {
+                const isDark = htmlElement.classList.contains('dark');
+                const newTheme = isDark ? 'light' : 'dark';
+                localStorage.setItem('theme', newTheme);
+                applyTheme(newTheme);
+            });
+
+            // --- Mobile Menu ---
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            mobileMenu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenu.classList.add('hidden');
+                });
+            });
+
+            // --- Typing Animation ---
+            const sloganElement = document.getElementById('typing-slogan');
+            if (sloganElement) {
+                const slogans = [
+                    "Ajudamos empreendimentos a se digitalizar. Não deixe seu negócio ficar para trás!",
+                    "Transformamos sua visão em realidade digital. Inove, cresça e domine o mercado.",
+                    "Tecnologia e estratégia para o seu sucesso. O futuro do seu negócio começa aqui."
+                ];
+                let sloganIndex = 0; let charIndex = 0; let isDeleting = false;
+                function type() {
+                    const currentSlogan = slogans[sloganIndex];
+                    let displayText = currentSlogan.substring(0, charIndex);
+                    sloganElement.innerHTML = `${displayText}<span class="typing-cursor"></span>`;
+                    if (!isDeleting && charIndex < currentSlogan.length) { charIndex++; setTimeout(type, 100); }
+                    else if (isDeleting && charIndex > 0) { charIndex--; setTimeout(type, 50); }
+                    else { isDeleting = !isDeleting; if (!isDeleting) { sloganIndex = (sloganIndex + 1) % slogans.length; } setTimeout(type, isDeleting ? 2000 : 500); }
+                }
+                type();
+            }
+
+            // --- Mission Section Scroll Animation ---
+            const missionItems = document.querySelectorAll('.mission-section-item');
+            const missionObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    entry.target.classList.toggle('is-visible', entry.isIntersecting);
+                });
+            }, { threshold: 0.2 });
+            missionItems.forEach(item => missionObserver.observe(item));
+
+            // --- Particle Canvas Animation for Hero ---
+            const canvas = document.getElementById('particle-canvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+
+            const setCanvasSize = () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            };
+
+            const isDarkMode = () => document.documentElement.classList.contains('dark');
+
+            class Particle {
+                constructor(x, y, dirX, dirY, size, color) {
+                    this.x = x; this.y = y; this.dirX = dirX; this.dirY = dirY; this.size = size; this.color = color;
+                }
+                draw() {
+                    ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                    ctx.fillStyle = this.color; ctx.fill();
+                }
+                update() {
+                    if (this.x > canvas.width || this.x < 0) this.dirX = -this.dirX;
+                    if (this.y > canvas.height || this.y < 0) this.dirY = -this.dirY;
+                    this.x += this.dirX; this.y += this.dirY;
+                    this.draw();
+                }
+            }
+
+            const init = () => {
+                particles = [];
+                const numberOfParticles = (canvas.width * canvas.height) / 9000;
+                const color = isDarkMode() ? 'rgba(255, 255, 255, 0.5)' : 'rgba(51, 65, 85, 0.5)';
+                for (let i = 0; i < numberOfParticles; i++) {
+                    const size = Math.random() * 2 + 1;
+                    const x = Math.random() * (innerWidth - size * 2) + size;
+                    const y = Math.random() * (innerHeight - size * 2) + size;
+                    const dirX = (Math.random() * .4) - .2;
+                    const dirY = (Math.random() * .4) - .2;
+                    particles.push(new Particle(x, y, dirX, dirY, size, color));
+                }
+            };
+
+            const connect = () => {
+                const lineColor = isDarkMode() ? 'rgba(255, 255, 255, 0.08)' : 'rgba(51, 65, 85, 0.08)';
+                for (let a = 0; a < particles.length; a++) {
+                    for (let b = a; b < particles.length; b++) {
+                        const distance = ((particles[a].x - particles[b].x) ** 2) + ((particles[a].y - particles[b].y) ** 2);
+                        if (distance < (canvas.width / 7) * (canvas.height / 7)) {
+                            ctx.strokeStyle = lineColor;
+                            ctx.lineWidth = 1;
+                            ctx.beginPath();
+                            ctx.moveTo(particles[a].x, particles[a].y);
+                            ctx.lineTo(particles[b].x, particles[b].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+            };
+
+            const animate = () => {
+                requestAnimationFrame(animate);
+                ctx.clearRect(0, 0, innerWidth, innerHeight);
+                for (let i = 0; i < particles.length; i++) { particles[i].update(); }
+                connect();
+            };
+
+            setCanvasSize();
+            init();
+            animate();
+
+            window.addEventListener('resize', () => { setCanvasSize(); init(); });
+            new MutationObserver(init).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        });
+    </script>
 </body>
+
 </html>

@@ -1100,7 +1100,7 @@ input[type="number"]::-webkit-inner-spin-button {
     display: flex;
     flex-direction: column;
     width: 100%;
-    background-image: url(/assets/bannerHidle.png);
+    background-image: url(/assets/bannerHidle2.png);
     border-bottom-right-radius: 20px;
     border-bottom-left-radius: 20px;
 }
@@ -1950,12 +1950,34 @@ section {
     display: flex;
     align-items: center;
     width: 100%;
-    background-color: #eeeeee;
+    background-color: #ffffff;
     box-shadow: 5px 4px 7px -7px var(--bg-color);
     border-radius: 12px;
     padding: 10px 15px;
     gap: 10px;
     margin-bottom: 0px;
+}
+
+/* Estilos para o Contêiner e as Bolinhas */
+.pagination-indicators-container {
+    display: flex;
+    justify-content: center; /* Centraliza as bolinhas */
+    align-items: center;
+    padding: 5px 0;
+    height: 10px; /* Altura mínima */
+}
+
+.pagination-dot {
+    height: 6px;
+    width: 6px;
+    background-color: #dad3d3; /* Cor cinza claro para bolinhas inativas (usei a cor da sua antiga progress bar) */
+    border-radius: 50%;
+    margin: 0 4px;
+    transition: background-color 0.3s ease;
+}
+
+.pagination-dot.active {
+    background-color: var(--bs-color); /* Cor principal do tema para a bolinha ativa */
 }
 
 .info-pmin {
