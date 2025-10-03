@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/assets/img/iconWeb.png">
+    <title>Área do Aluno | ELETRO</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js/id=G-BV6V3GTMR0"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-BV6V3GTMR0');
+    </script>
+</head>
+
+<body>
+    <div id="loginScreen" class="screen active">
+        </div>
+
+    <div id="studentDashboard" class="screen">
+        <header class="header-card" id="headerProfileButton">
+            <div class="profile-info">
+                <div class="profile-initial" id="profileInitial"></div>
+                <div class="profile-text">
+                    <h1 id="profileNameHeader">Olá, ...</h1>
+                    <p id="profileSubtext">Nível 1</p>
+                </div>
+            </div>
+            <div class="profile-verified">
+                <i class='bx bxs-check-circle'></i>
+            </div>
+        </header>
+
+        <section class="gamification-bar">
+            <div class="stat-item">
+                <i class='bx bxs-moon'></i>
+                <span id="xpDisplay">0</span>
+            </div>
+            <div class="stat-item">
+                <i class='bx bxs-hot'></i>
+                <span id="streakDisplay">0</span>
+            </div>
+            <div class="stat-item">
+                <i class='bx bxs-bolt'></i>
+                <span id="pointsDisplay">0</span>
+            </div>
+            <div class="stat-item">
+                <i class='bx bxs-heart'></i>
+                <span id="livesDisplay">5</span>
+            </div>
+        </section>
+
+        <main class="main-content">
+            <h3 class="section-title">Trilha do Conhecimento</h3>
+            <div class="trilha-container" id="trilhaContainer">
+                </div>
+        </main>
+    </div>
+
+    <div id="disciplinasScreen" class="screen">
+        </div>
+    <div id="calendarScreen" class="screen">
+        </div>
+    <div id="profileScreen" class="screen">
+        </div>
+    <div id="quizWrapper" class="screen">
+        </div>
+
+    <div id="devPopup" class="popup-overlay">
+        </div>
+    <div id="hintPopup" class="popup-overlay">
+        </div>
+
+    <div id="menuPopup" class="popup-overlay">
+        <div class="popup-content">
+            <span class="close-popup" id="closeMenuPopup">&times;</span>
+            <h2>Menu</h2>
+            <div class="menu-grid">
+                <div class="icon-item" id="menuNotasButton">
+                    <div class="icon-circle"><i class='bx bx-clipboard'></i></div><span>Notas</span>
+                </div>
+                <div class="icon-item" id="menuProgressoButton">
+                    <div class="icon-circle"><i class='bx bx-bar-chart-alt-2'></i></div><span>Progresso</span>
+                </div>
+                <div class="icon-item" id="menuCalendarButton">
+                    <div class="icon-circle"><i class='bx bx-calendar'></i></div><span>Calendário</span>
+                </div>
+                <div class="icon-item" id="menuMaterialButton">
+                    <div class="icon-circle"><i class='bx bx-book-open'></i></div><span>Material</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <nav class="bottom-nav">
+        <div class="nav-item active" id="homeButton">
+            <i class='bx bxs-home'></i>
+            <span>Home</span>
+        </div>
+        <div class="nav-item" id="disciplinasButton">
+            <i class='bx bxs-file'></i>
+            <span>Disciplinas</span>
+        </div>
+        <div class="nav-item dev-feature">
+            <i class='bx bxs-trophy'></i>
+            <span>Ranking</span>
+        </div>
+        <div class="nav-item" id="hamburgerButton">
+            <i class='bx bx-menu'></i>
+            <span>Menu</span>
+        </div>
+    </nav>
+
+    <script src="questoes.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>

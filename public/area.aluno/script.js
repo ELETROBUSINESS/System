@@ -1,0 +1,510 @@
+// --- LÓGICA DE NAVEGAÇÃO E ESTADO GLOBAL ---
+const allScreens = document.querySelectorAll('.screen');
+const studentDashboard = document.getElementById('studentDashboard');
+const quizWrapper = document.getElementById('quizWrapper');
+const disciplinasScreen = document.getElementById('disciplinasScreen');
+const calendarScreen = document.getElementById('calendarScreen');
+const loginScreen = document.getElementById('loginScreen');
+const profileScreen = document.getElementById('profileScreen');
+const homeButton = document.getElementById('homeButton');
+const disciplinasButton = document.getElementById('disciplinasButton');
+const backToDashButtons = document.querySelectorAll('.back-to-dash-button');
+const devPopup = document.getElementById('devPopup');
+const closePopupButton = devPopup.querySelector('.close-popup');
+const devFeatures = document.querySelectorAll('.dev-feature');
+const navItems = document.querySelectorAll('.nav-item');
+const loginForm = document.getElementById('loginForm');
+const logoutButton = document.getElementById('logoutButton');
+const studentBirthDateInput = document.getElementById('studentBirthDateInput');
+const bottomNav = document.querySelector('.bottom-nav');
+
+// --- NOVOS ELEMENTOS DO DOM ---
+const headerProfileButton = document.getElementById('headerProfileButton');
+const profileInitial = document.getElementById('profileInitial');
+const profileNameHeader = document.getElementById('profileNameHeader');
+const profileSubtext = document.getElementById('profileSubtext');
+const xpDisplay = document.getElementById('xpDisplay');
+const streakDisplay = document.getElementById('streakDisplay');
+const pointsDisplay = document.getElementById('pointsDisplay');
+const livesDisplay = document.getElementById('livesDisplay');
+const trilhaContainer = document.getElementById('trilhaContainer');
+const hamburgerButton = document.getElementById('hamburgerButton');
+const menuPopup = document.getElementById('menuPopup');
+const closeMenuPopup = document.getElementById('closeMenuPopup');
+const menuCalendarButton = document.getElementById('menuCalendarButton');
+
+
+let userToken = null;
+let gradeUpdateInterval = null;
+
+function showScreen(screenToShow) {
+    allScreens.forEach(s => s.classList.remove('active'));
+    screenToShow.classList.add('active');
+    window.scrollTo(0, 0);
+}
+
+function updateNav(activeButton) {
+    navItems.forEach(item => item.classList.remove('active'));
+    if (activeButton) activeButton.classList.add('active');
+}
+
+// --- LÓGICA DO QUIZ ---
+const quizContainer = document.getElementById('quizContainer');
+const resultsContainer = document.getElementById('resultsContainer');
+const shareContainerWrapper = document.getElementById('shareContainerWrapper');
+const quizConfirmation = document.getElementById('quizConfirmation');
+const prevButton = document.getElementById('prevButton');
+const nextButton = document.getElementById('nextButton');
+const progressBar = document.getElementById('progressBar');
+const questionsWrapper = document.getElementById('questions-wrapper');
+const shareButton = document.getElementById('shareButton');
+const downloadButton = document.getElementById('downloadButton');
+const backToResultsButton = document.getElementById('backToResultsButton');
+const validationMessage = document.getElementById('validation-message');
+const startConfirmedQuizButton = document.getElementById('startConfirmedQuizButton');
+
+// --- Elementos do Pop-up de Dicas ---
+const hintPopup = document.getElementById('hintPopup');
+const closeHintPopup = document.getElementById('closeHintPopup');
+const hintPopupTitle = document.getElementById('hintPopupTitle');
+const hintPopupText = document.getElementById('hintPopupText');
+const hintPopupButtons = document.getElementById('hintPopupButtons');
+
+const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyPWy8SHpOTsZAqFKoUTNOrgJkZKVVtYAMRXNDBQ3Nnalkr2k5c6CrUYtfmSuTQ5rbqhw/exec';
+
+let currentQuizData = {};
+let currentQuestionIndex = 0;
+let userAnswers = [];
+
+function startQuiz(quizId) {
+    currentQuizData = quizzes[quizId];
+    userAnswers = new Array(currentQuizData.questions.length).fill(null);
+    currentQuestionIndex = 0;
+    document.getElementById('quizConfirmTitle').textContent = currentQuizData.title;
+    document.getElementById('quizConfirmName').textContent = userToken.name;
+    showScreen(quizWrapper);
+    quizConfirmation.style.display = 'block';
+    quizContainer.style.display = 'none';
+    resultsContainer.style.display = 'none';
+    shareContainerWrapper.style.display = 'none';
+}
+
+// --- INICIALIZAÇÃO E AUTENTICAÇÃO ---
+window.addEventListener('load', () => {
+    const savedToken = localStorage.getItem('studentToken');
+    if (savedToken) {
+        userToken = JSON.parse(savedToken);
+        loginScreen.classList.add('token-client-pg');
+        initializeDashboard();
+    } else {
+        loginScreen.classList.remove('token-client-pg');
+        showScreen(loginScreen);
+    }
+});
+
+loginForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = document.getElementById('studentNameInput').value;
+    const birthDate = studentBirthDateInput.value;
+    userToken = { name, birthDate };
+    localStorage.setItem('studentToken', JSON.stringify(userToken));
+    
+    if (!localStorage.getItem('studentXP')) {
+        localStorage.setItem('studentXP', '0');
+        localStorage.setItem('studentStreak', '0');
+        localStorage.setItem('studentPoints', '0');
+        localStorage.setItem('studentLives', '5');
+        localStorage.setItem('completedQuizzes', JSON.stringify([]));
+    }
+
+    loginScreen.classList.add('token-client-pg');
+    initializeDashboard();
+});
+
+function getGamificationData() {
+    return {
+        xp: parseInt(localStorage.getItem('studentXP') || '0'),
+        streak: parseInt(localStorage.getItem('studentStreak') || '0'),
+        points: parseInt(localStorage.getItem('studentPoints') || '0'),
+        lives: parseInt(localStorage.getItem('studentLives') || '5'),
+        completed: JSON.parse(localStorage.getItem('completedQuizzes') || '[]')
+    };
+}
+
+function initializeDashboard() {
+    const gameData = getGamificationData();
+    const nivel = Math.floor(gameData.xp / 100) + 1;
+
+    // Atualiza Header
+    profileNameHeader.textContent = `Olá, ${userToken.name.split(' ')[0]}!`;
+    profileInitial.textContent = userToken.name.charAt(0).toUpperCase();
+    profileSubtext.textContent = `Nível ${nivel}`;
+
+    // Atualiza Barra de Gamificação
+    xpDisplay.textContent = gameData.xp;
+    streakDisplay.textContent = gameData.streak;
+    pointsDisplay.textContent = gameData.points;
+    livesDisplay.textContent = gameData.lives;
+
+    renderTrilha();
+    
+    bottomNav.style.display = 'flex';
+    if (gradeUpdateInterval) clearInterval(gradeUpdateInterval);
+    gradeUpdateInterval = setInterval(renderTrilha, 60000);
+    showScreen(studentDashboard);
+    updateNav(homeButton);
+}
+
+function renderTrilha() {
+    trilhaContainer.innerHTML = '';
+    const completedQuizzes = getGamificationData().completed;
+    let nextQuizFound = false;
+
+    Object.keys(quizzes).forEach(quizId => {
+        const quiz = quizzes[quizId];
+        let status = 'locked';
+        let icon = 'bxs-lock';
+
+        if (completedQuizzes.includes(quizId)) {
+            status = 'completed';
+            icon = 'bxs-check-shield';
+        } else if (!nextQuizFound) {
+            status = 'unlocked';
+            icon = 'bxs-joystick-button';
+            nextQuizFound = true;
+        }
+
+        const nodeHTML = `
+            <div class="trilha-node">
+                <div class="node-wrapper">
+                    <div class="node-icon ${status}" data-quiz-id="${quizId}">
+                        <i class='bx ${icon}'></i>
+                    </div>
+                    <div class="node-content">
+                        <h4>${quiz.title}</h4>
+                        <button class="start-trilha-button" data-quiz-id="${quizId}">Iniciar</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        trilhaContainer.innerHTML += nodeHTML;
+    });
+
+    // Adiciona event listeners para a nova lógica da trilha
+    document.querySelectorAll('.trilha-node .node-icon').forEach(icon => {
+        if (!icon.classList.contains('node-locked')) {
+            icon.addEventListener('click', (e) => {
+                const wrapper = e.currentTarget.closest('.node-wrapper');
+                const content = wrapper.querySelector('.node-content');
+                
+                // Fecha outros que estiverem abertos
+                document.querySelectorAll('.node-content.active').forEach(activeContent => {
+                    if (activeContent !== content) {
+                        activeContent.classList.remove('active');
+                    }
+                });
+
+                // Alterna a visibilidade do conteúdo clicado
+                content.classList.toggle('active');
+            });
+        }
+    });
+
+    document.querySelectorAll('.start-trilha-button').forEach(button => {
+        button.addEventListener('click', (e) => startQuiz(e.currentTarget.dataset.quizId));
+    });
+}
+
+
+logoutButton.addEventListener('click', () => {
+    localStorage.clear();
+    if (gradeUpdateInterval) clearInterval(gradeUpdateInterval);
+    userToken = null;
+    bottomNav.style.display = 'none';
+    loginScreen.classList.remove('token-client-pg');
+    showScreen(loginScreen);
+});
+
+studentBirthDateInput.addEventListener('input', (e) => {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 2) value = `${value.slice(0, 2)}/${value.slice(2)}`;
+    if (value.length > 5) value = `${value.slice(0, 5)}/${value.slice(5, 9)}`;
+    e.target.value = value;
+});
+
+// Event Listeners de Navegação
+disciplinasButton.addEventListener('click', () => { showScreen(disciplinasScreen); updateNav(disciplinasButton); });
+homeButton.addEventListener('click', () => { showScreen(studentDashboard); updateNav(homeButton); });
+backToDashButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        initializeDashboard();
+        showScreen(studentDashboard);
+    });
+});
+headerProfileButton.addEventListener('click', showProfile);
+
+hamburgerButton.addEventListener('click', () => { menuPopup.style.display = 'flex'; });
+closeMenuPopup.addEventListener('click', () => { menuPopup.style.display = 'none'; });
+menuCalendarButton.addEventListener('click', () => {
+    showScreen(calendarScreen);
+    menuPopup.style.display = 'none';
+});
+document.getElementById('menuNotasButton').addEventListener('click', () => devPopup.style.display = 'flex');
+document.getElementById('menuProgressoButton').addEventListener('click', () => devPopup.style.display = 'flex');
+document.getElementById('menuMaterialButton').addEventListener('click', () => devPopup.style.display = 'flex');
+
+
+function showProfile() {
+    document.getElementById('profileName').textContent = userToken.name;
+    document.getElementById('profileBirthDate').textContent = userToken.birthDate;
+    showScreen(profileScreen);
+    updateNav(null);
+}
+
+startConfirmedQuizButton.addEventListener('click', () => {
+    quizConfirmation.style.display = 'none';
+    quizContainer.style.display = 'block';
+    document.getElementById('welcomeMessage').textContent = `Boa sorte, ${userToken.name}!`;
+    showQuestion(0);
+});
+
+devFeatures.forEach(feature => feature.addEventListener('click', () => { devPopup.style.display = 'flex'; }));
+closePopupButton.addEventListener('click', () => { devPopup.style.display = 'none'; });
+window.addEventListener('click', (event) => { if (event.target === devPopup) devPopup.style.display = 'none'; });
+
+// --- LÓGICA COMPLETA DO QUIZ ---
+// ... (goToNextQuestion, nextButton, prevButton, etc., sem alterações) ...
+function goToNextQuestion() {
+    saveCurrentAnswer();
+    if (currentQuestionIndex < currentQuizData.questions.length - 1) {
+        currentQuestionIndex++; showQuestion(currentQuestionIndex);
+    } else { calculateAndShowResults(); }
+}
+
+nextButton.addEventListener('click', () => {
+    const currentQuestion = currentQuizData.questions[currentQuestionIndex];
+    if (currentQuestion.type !== 'discursive') {
+        const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
+        if (!selectedOption) {
+            validationMessage.style.display = 'block';
+            setTimeout(() => { validationMessage.style.display = 'none'; }, 2500);
+            return;
+        }
+    }
+    goToNextQuestion();
+});
+
+prevButton.addEventListener('click', () => {
+    saveCurrentAnswer();
+    if (currentQuestionIndex > 0) { currentQuestionIndex--; showQuestion(currentQuestionIndex); }
+});
+
+function renderQuestions() {
+    let html = '';
+    currentQuizData.questions.forEach((q, index) => {
+        html += `<div class="question-block" id="q${index}">`;
+
+        if (q.text1) {
+            html += `<div class="question-support-text"><h4>Texto I</h4>${q.text1}</div>`;
+        }
+        if (q.text2) {
+            html += `<div class="question-support-text"><h4>Texto II</h4>${q.text2}</div>`;
+        }
+
+        html += `<p class="question-text"><b>Questão ${index + 1}:</b> ${q.question}</p>`;
+
+        if (q.type === 'discursive') {
+            const userAnswer = userAnswers[index] || '';
+            html += `<textarea name="q${index}" class="discursive-answer" placeholder="Digite sua resposta aqui...">${userAnswer}</textarea>`;
+        } else {
+            for (const key in q.options) {
+                const isChecked = userAnswers[index] === key ? 'checked' : '';
+                html += `<label><input type="radio" name="q${index}" value="${key}" data-question-index="${index}" ${isChecked}> <span>${q.options[key]}</span></label>`;
+            }
+            const isNotAnsweredChecked = userAnswers[index] === 'NAO_SEI' ? 'checked' : '';
+            html += `<label style="font-style: italic; color: #666;"><input type="radio" name="q${index}" value="NAO_SEI" data-question-index="${index}" ${isNotAnsweredChecked}> <span>Não consegui responder</span></label>`;
+        }
+
+        if(q.tip) {
+            html += `<button type="button" class="hint-button" data-question-index="${index}">Precisa de uma Dica?</button>`;
+        }
+        html += `</div>`;
+    });
+    questionsWrapper.innerHTML = html;
+
+    document.querySelectorAll('.hint-button').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const index = e.target.dataset.questionIndex;
+            showHint(index);
+        });
+    });
+
+    document.querySelectorAll('input[name^="q"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (e.target.value === 'NAO_SEI') {
+                const index = e.target.dataset.questionIndex;
+                showHint(index, true);
+            }
+        });
+    });
+}
+
+function showQuestion(index) {
+    renderQuestions();
+    document.querySelectorAll('.question-block').forEach(q => q.classList.remove('active'));
+    document.getElementById(`q${index}`).classList.add('active');
+    progressBar.style.width = `${((index + 1) / currentQuizData.questions.length) * 100}%`;
+    prevButton.style.display = index === 0 ? 'none' : 'inline-block';
+    nextButton.textContent = (index === currentQuizData.questions.length - 1) ? "Finalizar e Ver Resultado" : "Próxima";
+}
+
+function showHint(index, showActionButtons = false) {
+    const question = currentQuizData.questions[index];
+    hintPopupText.textContent = question.tip;
+    hintPopupTitle.textContent = `Dica da Questão ${parseInt(index) + 1}`;
+
+    hintPopupButtons.innerHTML = '';
+    if (showActionButtons) {
+        hintPopupButtons.innerHTML = `
+            <button type="button" class="try-again-btn">Tentar responder com a dica</button>
+            <button type="button" class="skip-btn">Avançar sem responder</button>
+        `;
+        hintPopupButtons.querySelector('.try-again-btn').addEventListener('click', () => {
+            hintPopup.style.display = 'none';
+        });
+        hintPopupButtons.querySelector('.skip-btn').addEventListener('click', () => {
+            hintPopup.style.display = 'none';
+            goToNextQuestion();
+        });
+    }
+
+    hintPopup.style.display = 'flex';
+}
+
+closeHintPopup.addEventListener('click', () => {
+    hintPopup.style.display = 'none';
+});
+
+function saveCurrentAnswer() {
+    const currentQuestion = currentQuizData.questions[currentQuestionIndex];
+    if (currentQuestion.type === 'discursive') {
+        const textarea = document.querySelector(`#q${currentQuestionIndex} .discursive-answer`);
+        userAnswers[currentQuestionIndex] = textarea.value;
+    } else {
+        const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
+        if (selectedOption) userAnswers[currentQuestionIndex] = selectedOption.value;
+    }
+}
+
+function calculateAndShowResults() {
+    let correct = 0, incorrect = 0, unanswered = 0;
+    const totalQuestions = currentQuizData.questions.length;
+    let xpGanhos = 0;
+    let pontosGanhos = 0;
+
+    userAnswers.forEach((answer, index) => {
+        const question = currentQuizData.questions[index];
+        if (answer === question.answer) {
+            correct++;
+            xpGanhos += 10;
+            pontosGanhos += 5;
+        } else if (answer === 'NAO_SEI' || answer === null) {
+            unanswered++;
+        } else {
+            incorrect++;
+        }
+    });
+    
+    // --- ATUALIZAÇÃO DA GAMIFICAÇÃO ---
+    const gameData = getGamificationData();
+    gameData.xp += xpGanhos;
+    gameData.points += pontosGanhos;
+    gameData.streak += 1;
+
+    if (!gameData.completed.includes(currentQuizData.id)) {
+        gameData.completed.push(currentQuizData.id);
+    }
+
+    localStorage.setItem('studentXP', gameData.xp);
+    localStorage.setItem('studentPoints', gameData.points);
+    localStorage.setItem('studentStreak', gameData.streak);
+    localStorage.setItem('completedQuizzes', JSON.stringify(gameData.completed));
+    // --- FIM DA ATUALIZAÇÃO ---
+
+    const weightedScore = correct * (10 / totalQuestions);
+    const finalWeightedScore = Math.min(weightedScore, 10);
+    localStorage.setItem(`gradeToken-${currentQuizData.id}`, finalWeightedScore.toFixed(1));
+
+    quizContainer.style.display = 'none';
+    resultsContainer.style.display = 'block';
+
+    document.getElementById('resultsSummary').innerHTML = `
+        <div class="summary-box summary-correct"><div class="count">${correct}</div><div class="label">Acertos</div></div>
+        <div class="summary-box summary-incorrect"><div class="count">${incorrect}</div><div class="label">Erros</div></div>
+        <div class="summary-box summary-unanswered"><div class="count">${unanswered}</div><div class="label">Não Resp.</div></div>
+    `;
+
+    let message = '';
+    const percentage = (correct / totalQuestions) * 100;
+
+    if (percentage === 100) message = `<span class="highlight">Gabaritou! Parabéns, ${userToken.name}!</span>`;
+    else if (percentage >= 70) message = `Parabéns, ${userToken.name}! Você mandou muito bem!`;
+    else if (percentage >= 50) message = `Bom trabalho, ${userToken.name}! Continue praticando.`;
+    else message = `Não desanime, ${userToken.name}! A prática leva à perfeição.`;
+
+    message += `<br><strong>Você ganhou +${xpGanhos} XP e +${pontosGanhos} Pontos!</strong>`;
+    document.getElementById('motivationalMessage').innerHTML = message;
+
+    const gabaritoDiv = document.getElementById('gabarito');
+    gabaritoDiv.innerHTML = '';
+    userAnswers.forEach((answer, index) => {
+        const question = currentQuizData.questions[index];
+        const resultItem = document.createElement('div');
+        resultItem.classList.add('gabarito-item');
+        let statusClass = 'unanswered';
+        let statusText = 'Não Respondida';
+
+        if (answer === question.answer) { statusClass = 'correct'; statusText = 'Correta'; }
+        else if (answer === 'NAO_SEI' || answer === null) { statusClass = 'unanswered'; statusText = 'Não soube responder'; }
+        else { statusClass = 'incorrect'; statusText = 'Incorreta'; }
+        resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> ${statusText}`;
+
+        resultItem.classList.add(statusClass);
+        gabaritoDiv.appendChild(resultItem);
+    });
+
+    document.getElementById('shareName').textContent = userToken.name;
+    document.getElementById('shareScore').textContent = `${correct}/${currentQuizData.questions.length}`;
+    document.getElementById('shareWeightedScore').textContent = finalWeightedScore.toFixed(1);
+    sendDataToSheet(correct, finalWeightedScore);
+}
+
+function sendDataToSheet(finalScore, finalWeightedScore) {
+    const submissionData = new FormData();
+    submissionData.append('nomeAluno', userToken.name);
+    submissionData.append('dataNascimento', userToken.birthDate);
+    submissionData.append('acertos', finalScore);
+    submissionData.append('pontuacao', finalWeightedScore);
+    submissionData.append('simuladoTitulo', currentQuizData.title);
+    submissionData.append('totalQuestoes', currentQuizData.questions.length);
+    userAnswers.forEach((answer, index) => {
+        submissionData.append(`q${index + 1}`, answer || "Nao Respondida");
+    });
+    fetch(APPSCRIPT_URL, { method: 'POST', body: submissionData })
+        .then(response => {
+            if (response.ok) console.log('Dados enviados com sucesso.');
+            else return response.text().then(text => { throw new Error(text) });
+        })
+        .catch(error => console.error('Erro ao enviar os dados:', error));
+}
+
+shareButton.addEventListener('click', () => { resultsContainer.style.display = 'none'; shareContainerWrapper.style.display = 'block'; });
+backToResultsButton.addEventListener('click', () => { shareContainerWrapper.style.display = 'none'; resultsContainer.style.display = 'block'; });
+downloadButton.addEventListener('click', () => {
+    html2canvas(document.getElementById('shareContainer')).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `resultado-${userToken.name.replace(/\s+/g, '-').toLowerCase()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    });
+});
