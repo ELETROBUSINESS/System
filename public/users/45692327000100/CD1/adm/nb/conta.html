@@ -17,45 +17,45 @@
 <body class="painel-adm1" onload="AnimationLoading()">
 
     <script>
-    (function () {
-        // Pega o token de sessão do armazenamento local do navegador (Curta validade: 30 minutos)
-        const tokenString = localStorage.getItem('session_token');
-        
-        // Define o URL de redirecionamento para o login
-        const LOGIN_URL = '/users/e-finance.html'; // <--- CORREÇÃO AQUI
+        (function () {
+            // Pega o token de sessão do armazenamento local do navegador (Curta validade: 30 minutos)
+            const tokenString = localStorage.getItem('session_token');
 
-        // Se não existir um token de sessão, o acesso é negado
-        if (!tokenString) {
-            console.log("Acesso negado: Nenhum token de sessão encontrado.");
-            // Redireciona para a página de login
-            window.location.href = LOGIN_URL; 
-            return;
-        }
+            // Define o URL de redirecionamento para o login
+            const LOGIN_URL = '/users/e-finance.html'; // <--- CORREÇÃO AQUI
 
-        try {
-            const token = JSON.parse(tokenString);
-            const agora = new Date().getTime();
-
-            // Verifica se a data de expiração do token de sessão já passou
-            if (agora > token.expires) {
-                console.log("Acesso negado: O token de sessão expirou.");
-                // Limpa o token expirado do armazenamento
-                localStorage.removeItem('session_token');
+            // Se não existir um token de sessão, o acesso é negado
+            if (!tokenString) {
+                console.log("Acesso negado: Nenhum token de sessão encontrado.");
                 // Redireciona para a página de login
-                window.location.href = LOGIN_URL; // <--- CORREÇÃO AQUI
-            } else {
-                // Se o token for válido, permite o acesso à página
-                console.log('Acesso permitido. Bem-vindo, ' + token.username);
+                window.location.href = LOGIN_URL;
+                return;
             }
-        } catch (error) {
-            // Se o token estiver corrompido ou mal formatado
-            console.error('Erro ao processar o token de sessão:', error);
-            localStorage.removeItem('session_token');
-            // Redireciona para a página de login por segurança
-            window.location.href = LOGIN_URL; // <--- CORREÇÃO AQUI
-        }
-    })();
-</script>
+
+            try {
+                const token = JSON.parse(tokenString);
+                const agora = new Date().getTime();
+
+                // Verifica se a data de expiração do token de sessão já passou
+                if (agora > token.expires) {
+                    console.log("Acesso negado: O token de sessão expirou.");
+                    // Limpa o token expirado do armazenamento
+                    localStorage.removeItem('session_token');
+                    // Redireciona para a página de login
+                    window.location.href = LOGIN_URL; // <--- CORREÇÃO AQUI
+                } else {
+                    // Se o token for válido, permite o acesso à página
+                    console.log('Acesso permitido. Bem-vindo, ' + token.username);
+                }
+            } catch (error) {
+                // Se o token estiver corrompido ou mal formatado
+                console.error('Erro ao processar o token de sessão:', error);
+                localStorage.removeItem('session_token');
+                // Redireciona para a página de login por segurança
+                window.location.href = LOGIN_URL; // <--- CORREÇÃO AQUI
+            }
+        })();
+    </script>
 
     <div class="mensagerLocal">
         <div class="mensager">
@@ -311,12 +311,6 @@
                         </a>
                     </div>
                     <div class="card-option">
-                        <a href="/users/45692327000100/CD1/adm/nb/event.html">
-                            <i class='bx  bx-calendar-detail'></i>
-                            <h3>Calendário</h3>
-                        </a>
-                    </div>
-                    <div class="card-option">
                         <a href="/users/45692327000100/CD1/adm/nb/lojas.html">
                             <i class='bxr bx-store'></i>
                             <h3>Lojas</h3>
@@ -367,14 +361,38 @@
                 </a>
             </li>
             <li class="list">
-                <a href="/index.html">
-                    <span class="icon"><i class='bx bx-arrow-out-up-square-half bx-rotate-270'></i></span>
+                <a href="#" id="logout-btn">
+                    <span class="icon"><i class='bx bx-log-out'></i></span>
                     <span class="text">Sair</span>
                 </a>
             </li>
             <div class="indicator color11"></div>
         </ul>
     </div>
+
+    <script>
+    // Seleciona o botão "Sair" que acabamos de modificar
+    const logoutButton = document.getElementById('logout-btn');
+
+    // Verifica se o botão realmente existe na página antes de adicionar o evento
+    if (logoutButton) {
+        // Adiciona um "ouvinte" que espera por um clique no botão
+        logoutButton.addEventListener('click', (event) => {
+            // 1. Impede que o link 'href' faça sua ação padrão (que seria navegar para '#')
+            event.preventDefault();
+
+            console.log("Botão de logout clicado.");
+
+            // 2. Remove APENAS o token de sessão (acesso) do armazenamento do navegador
+            localStorage.removeItem('session_token');
+            console.log("Token de sessão removido. O token 'Lembrar-me' foi mantido.");
+
+            // 3. Redireciona o usuário de volta para a página de login
+            //    Ajuste o caminho se o seu arquivo de login tiver outro nome ou local.
+            window.location.href = '/users/e-finance.html'; 
+        });
+    }
+</script>
 
     <script src="/assets/js/loading.js"></script>
 </body>

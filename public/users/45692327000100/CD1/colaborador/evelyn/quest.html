@@ -13,7 +13,8 @@
     <link rel="stylesheet" href="/assets/css/main.css">
     <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+    <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
 </head>
 
 <!-- Google tag (gtag.js) -->
@@ -93,14 +94,38 @@
                 </a>
             </li>
             <li class="list">
-                <a href="/index.html">
-                    <span class="icon"><i class='bx  bx-arrow-out-up-square-half bx-rotate-270'></i></span>
+                <a href="#" id="logout-btn">
+                    <span class="icon"><i class='bx bx-log-out'></i></span>
                     <span class="text">Sair</span>
                 </a>
             </li>
             <div class="indicator color11"></div>
         </ul>
     </div>
+
+    <script>
+        // Seleciona o botão "Sair" que acabamos de modificar
+        const logoutButton = document.getElementById('logout-btn');
+
+        // Verifica se o botão realmente existe na página antes de adicionar o evento
+        if (logoutButton) {
+            // Adiciona um "ouvinte" que espera por um clique no botão
+            logoutButton.addEventListener('click', (event) => {
+                // 1. Impede que o link 'href' faça sua ação padrão (que seria navegar para '#')
+                event.preventDefault();
+
+                console.log("Botão de logout clicado.");
+
+                // 2. Remove APENAS o token de sessão (acesso) do armazenamento do navegador
+                localStorage.removeItem('session_token');
+                console.log("Token de sessão removido. O token 'Lembrar-me' foi mantido.");
+
+                // 3. Redireciona o usuário de volta para a página de login
+                //    Ajuste o caminho se o seu arquivo de login tiver outro nome ou local.
+                window.location.href = '/users/e-finance.html';
+            });
+        }
+    </script>
 
     <!-- Link To JS -->
     <script src="/assets/js/loading.js"></script>

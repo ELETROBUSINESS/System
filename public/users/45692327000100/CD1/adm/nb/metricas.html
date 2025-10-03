@@ -4,336 +4,430 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Insights | ELETRO</title>
 
-    <link rel="icon" href="/assets/img/iconWeb.png">
-    <title>Gerenciador | Nubia</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Link To CSS -->
-    <link rel="stylesheet" href="/assets/css/main.css">
-    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+    <!-- ApexCharts (para gráficos modernos) -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <!-- Boxicons (para ícones) -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <!-- Flaticon Icons (para o ícone de escudo) -->
     <link rel='stylesheet'
         href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
 
-    <!-- Links para o gráfico -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-</head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
-<script>
-    window.dataLayer = window.dataLayer || [];
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap"
+        rel="stylesheet">
 
-    function gtag() {
-        dataLayer.push(arguments);
-    }
-    gtag('js', new Date());
-    gtag('config', 'G-BV6V3GTMR0');
-</script>
-
-<body class="painel-adm1" onload="constDate();">
-    <div class="info">
-        <div class="photo-profile">
-            <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg">
-            <div class="detals">
-                <h1>Olá, Nubia!</h1>
-                <p>CEO: D'TUDO | Dupão</p>
-            </div>
-            <i class="fi fi-rr-shield-trust"></i>
-        </div>
-        <div class="balance">
-            <p>Vendas a receber</p>
-            <div class="saldo">
-                <span id="valor2" class="skeleton shimmer"></span>
-            </div>
-        </div>
-        <div class="dashboard-chart-container">
-            <h2 class="chart-title">Dashboard</h2>
-            <div class="chart-wrapper">
-                <canvas id="dailyRevenueChart"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const url = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=1`;
-
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    const el1 = document.getElementById('valor1');
-                    const el2 = document.getElementById('valor2');
-
-                    if (el1) {
-                        el1.textContent = data.valor1;
-                        el1.classList.remove('skeleton', 'shimmer');
-                    }
-
-                    if (el2) {
-                        el2.textContent = data.valor2;
-                        el2.classList.remove('skeleton', 'shimmer');
-                    }
-                })
-                .catch(error => {
-                    console.error('Erro ao buscar dados:', error);
-                });
-        });
-    </script>
-
-        <div class="" id="dataLoading">
-            <div class="dataLoading">
-                <div class="loadingB"></div>
-                <span>Consolidando dados..</span>
-            </div>
-        </div>
-
-        <div class="containerCard">
-            <a href="/users/45692327000100/CD1/adm/nb/lojas.html">
-                <div class="card-optionSize">
-                    <i class='bxr bx-calendar-alt-2'></i>
-                    <div>
-                        <h1>Imposto (jul)</h1>
-                        <span>Projeção: R$909,70</span>
-                    </div>
-                    <span class="l2 add_btn">Ver mais</span>
-                </div>
-            </a>
-        </div>
-
-        <div class="invoicing">
-            <i class="fi fi-rr-money-bill-transfer"></i>
-            <div class="detals">
-                <h1>Faturamento</h1>
-                <span id="faturamentoDate" class="skeleton shimmer"></span>
-            </div>
-        </div>
-
-        <div>
-            <a class="invoicing" href="/users/45692327000100/CD1/adm/nb/manager.html">
-                <i class="fi fi-rr-payroll-calendar"></i>
-                <div class="detals">
-                    <h1>Contas a pagar</h1>
-                    <span id="boletosPayDate" class="skeleton shimmer"></span>
-                </div>
-            </a>
-        </div>
-
-        <div class="invoicing">
-            <i class="fi fi-rr-message-dollar"></i>
-            <div class="detals">
-                <h1>Lucro</h1>
-                <span id="lucroDate" class="skeleton shimmer"></span>
-            </div>
-        </div>
-
-        <div class="invoicing">
-            <i class="fi fi-rr-users-alt"></i>
-            <div class="detals">
-                <h1>Clientes</h1>
-                <span id="clientesDate" class="skeleton shimmer"></span>
-            </div>
-        </div>
-
-        <div class="invoicing">
-            <i class="fi fi-rr-user-salary"></i>
-            <div class="detals">
-                <h1>Ticket-Médio da loja</h1>
-                <span id="ticketLJDate" class="skeleton shimmer"></span>
-            </div>
-        </div>
-
-        <div class="metrics">
-            <iframe width="350px" height="200px" seamless frameborder="0" scrolling="no"
-                src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSKbfop8dJVMDj74qymflYlFXejtTxAAR4TvdICldr5Q2pvRgomrYpNThBC6ht6zgbJ2o-qz1URouEA/pubchart?oid=1600994259&amp;format=interactive"></iframe>
-        </div>
-    </div>
-
-    <script>
-        function carregarDadosPagina2() {
-            const url = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=2`;
-
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    const campos = [
-                        'faturamentoDate',
-                        'boletosPayDate',
-                        'lucroDate',
-                        'clientesDate',
-                        'ticketLJDate',
-                        'movCardDate'
-                    ];
-
-                    campos.forEach(id => {
-                        const el = document.getElementById(id);
-                        if (el) {
-                            el.textContent = data[id];
-                            el.classList.remove('skeleton', 'shimmer');
-                        }
-                    });
-                })
-                .catch(error => {
-                    console.error('Erro ao buscar dados da página 2:', error);
-                });
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
         }
-        document.addEventListener('DOMContentLoaded', () => {
-            carregarDadosPagina2(); // Carrega ao abrir a página
-            setInterval(carregarDadosPagina2, 30000); // Atualiza a cada 30 segundos
-        });
-    </script>
 
-    <!-- Script para o gráfico (agora no lugar correto, depois das bibliotecas) -->
-    <script>
-        // **IMPORTANTE**: Substitua este URL pelo seu URL de implantação do Apps Script
-        const SCRIPT_URL_FATURAMENTO = 'https://script.google.com/macros/s/AKfycbzbeCWhW4cyixLvkvpYYpv1UK72CfLYQblJv8jWSPPSSHFzNehv0vW5vLjHZrua-qeMJg/exec';
-        
-        let dailyRevenueChart;
-        let previousRevenues = []; // Armazena os dados de faturamento anteriores para comparação
+        .info {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            background-image: url(/assets/bannerHidle2.png);
+            border-bottom-right-radius: 20px;
+            border-bottom-left-radius: 20px;
+        }
 
-        const fetchDataAndUpdateChart = async () => {
-            try {
-                const response = await fetch(SCRIPT_URL_FATURAMENTO);
-                const data = await response.json();
+        .infoQ1 {
+            border-bottom-right-radius: 0px;
+            border-bottom-left-radius: 0px;
+        }
+        .info p {
+            color: #f1f1f1;
+            font-size: 10px;
+        }
 
-                if (data.error) {
-                    console.error('Erro do Apps Script:', data.error);
-                    document.getElementById('dailyRevenueChart').textContent = `Erro: ${data.error}`;
-                    return;
-                }
-                
-                const uniqueData = Array.from(new Map(data.map(item => [new Date(item.dia).toISOString().split('T')[0], item])).values());
-                uniqueData.sort((a, b) => new Date(a.dia) - new Date(b.dia));
+        .info iframe {
+            width: 100px;
+            height: 20px;
+        }
 
-                const last7DaysData = uniqueData.slice(-7);
-                const labels = last7DaysData.map(item => new Date(item.dia).toLocaleDateString('pt-BR', { weekday: 'short' }));
-                const revenues = last7DaysData.map(item => item.faturamento);
+        .info span {
+            font-size: 18px;
+            font-weight: 600;
+        }
 
-                const hasDataChanged = JSON.stringify(revenues) !== JSON.stringify(previousRevenues);
-                previousRevenues = revenues;
+        .info i {
+            font-size: 20px;
+            color: #f1f1f1;
+            position: absolute;
+            right: 25px;
+            top: 25px;
+        }
 
-                const backgroundColors = revenues.map((value, index) => {
-                    if (index === revenues.length - 1) {
-                        return '#eeeeee';
-                    }
-                    return 'transparent';
-                });
+        .balance {
+            margin: 7px 18px 12px 18px;
+            background-color: #ff7ca711;
+            padding: 10px;
+            border-radius: 10px;
+        }
 
-                const borderColors = revenues.map(() => '#eeeeee');
+        .balance span {
+            font-size: 22px;
+            color: var(--secondary-color);
+        }
 
-                if (dailyRevenueChart) {
-                    // Se o gráfico já existe, apenas atualiza os dados e anima.
-                    dailyRevenueChart.data.labels = labels;
-                    dailyRevenueChart.data.datasets[0].data = revenues;
-                    dailyRevenueChart.data.datasets[0].backgroundColor = backgroundColors;
-                    dailyRevenueChart.data.datasets[0].borderColor = borderColors;
-                    
-                    // A animação será aplicada automaticamente nas barras que mudaram.
-                    dailyRevenueChart.update();
+        .balance p {
+            font-size: 12px;
+        }
 
-                } else {
-                    // Se o gráfico não existe, cria ele.
-                    const ctx = document.getElementById('dailyRevenueChart').getContext('2d');
-                    const chartData = {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Faturamento',
-                            data: revenues,
-                            backgroundColor: backgroundColors,
-                            borderColor: borderColors,
-                            borderWidth: 2,
-                            borderRadius: 6,
-                        }]
-                    };
+        .balance i {
+            left: 155px;
+            top: 112px;
+        }
 
-                    const chartOptions = {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: true,
-                                labels: {
-                                    usePointStyle: true,
-                                    pointStyle: 'rectRounded',
-                                    borderRadius: 5,
-                                }
-                            },
-                            tooltip: {
-                                enabled: true,
-                                callbacks: {
-                                    label: function (context) {
-                                        let label = context.dataset.label || '';
-                                        if (label) {
-                                            label += ': ';
-                                        }
-                                        if (context.parsed.y !== null) {
-                                            label += new Intl.NumberFormat('pt-BR', {
-                                                style: 'currency',
-                                                currency: 'BRL'
-                                            }).format(context.parsed.y);
-                                        }
-                                        return label;
-                                    }
-                                }
-                            },
-                        },
-                        scales: {
-                            x: {
-                                grid: {
-                                    display: false
-                                },
-                                ticks: {
-                                    color: '#333'
-                                }
-                            },
-                            y: {
-                                beginAtZero: true,
-                                grid: {
-                                    display: false
-                                },
-                                ticks: {
-                                    display: false
-                                }
-                            }
-                        },
-                        layout: {
-                            padding: {
-                                left: 10,
-                                right: 10,
-                                top: 20,
-                                bottom: 10
-                            }
-                        },
-                        // Animação inicial
-                        animation: {
-                            duration: 500,
-                            easing: 'easeInOutQuad',
-                            delay: (context) => {
-                                const index = context.dataIndex;
-                                return index * 200;
-                            }
-                        }
-                    };
+        .border {
+            margin: 0px 25px 0px 25px;
+            border-bottom: 1px solid #ff7dafc4;
+        }
 
-                    dailyRevenueChart = new Chart(ctx, {
-                        type: 'bar',
-                        data: chartData,
-                        options: chartOptions,
-                    });
-                }
+        .pending {
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
 
-            } catch (error) {
-                console.error('Erro ao buscar dados do gráfico:', error);
-                document.getElementById('dailyRevenueChart').textContent = 'Erro ao carregar o gráfico.';
+        .pending span {
+            font-size: 15px;
+            color: #f3f4f6;
+        }
+
+        .pending p {
+            font-size: 12px;
+        }
+
+        .photo-profile {
+            display: flex;
+        }
+
+        .photo-profile .detals {
+            margin: 21px 0px 0px 12px;
+        }
+
+        .iconImg {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .iconImg img {
+            width: 30px;
+        }
+
+        .iconImg p {
+            font-size: 15px;
+        }
+
+        .detals {
+            justify-content: center;
+            align-items: center;
+        }
+
+        .detals span {
+            color: #000000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detals h1 {
+            font-size: 20px;
+            color: #f1f1f1;
+            font-weight: 500;
+        }
+
+        .detals p {
+            font-size: 12px;
+            color: #cbe5e1;
+            font-weight: 500;
+        }
+
+        .photo-profile img {
+            position: relative;
+            margin-top: 20px;
+            margin-left: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 15px;
+            border: 1px solid #a1003e;
+            box-shadow: 5px 4px 7px -7px var(--bg-color);
+        }
+
+        .font-poppins {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .shimmer {
+            position: relative;
+            overflow: hidden;
+            background-color: #e2e8f0;
+        }
+
+        .shimmer::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+            animation: shimmer-animation 1.5s infinite;
+        }
+
+        @keyframes shimmer-animation {
+            100% {
+                left: 100%;
             }
-        };
+        }
 
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+
+        /* Estilo do cabeçalho para corresponder ao padrão */
+        .header-banner {
+            background-color: #d60039;
+            /* Recriando o efeito de grid do banner com CSS para não depender de um arquivo de imagem */
+            background-image:
+                linear-gradient(rgba(255, 255, 255, .07) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, .07) 1px, transparent 1px);
+            background-size: 40px 40px;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+
+    <!-- Conteúdo Principal (sem a barra lateral) -->
+    <main class="w-full">
+
+        <!-- Cabeçalho Padrão (Estilo Atualizado) -->
+        <header class="mb-8">
+            <div class="info">
+                <div class="photo-profile">
+                    <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg">
+                    <div class="detals">
+                        <h1>Olá, Nubia!</h1>
+                        <p>CEO: D'TUDO | Dupão</p>
+                    </div>
+                    <i class="fi fi-rr-shield-trust"></i>
+                </div>
+                <div class="balance">
+                    <div class="pending">
+                        <p>Vendas a receber: </p>
+                        <span id="valor2" class="skeleton shimmer"></span>
+                    </div>
+                </div>
+
+                <a href="/users/45692327000100/CD1/adm/nb/conta.html" class="bg-white/20 hover:bg-white/30 text-white font-bold py-2 px-4 rounded-lg inline-flex items-center gap-2 transition-colors whitespace-nowrap">
+                        <i class="bx bx-arrow-back text-xl"></i>
+                        <span>Voltar ao Menu Inicial</span>
+                    </a>
+                <!--<div class="border"></div>-->
+            </div>
+        </header>
+
+        <!-- Container para o restante do conteúdo com padding -->
+        <div class="px-6 md:px-8 lg:px-10 pb-10">
+            <!-- Grid de Métricas (KPIs) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Card de Faturamento -->
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-semibold text-gray-500">Faturamento (Hoje)</h3>
+                            <div class="w-10 h-10 flex items-center justify-center bg-green-100 rounded-lg">
+                                <i class='bx bx-trending-up text-xl text-green-600'></i>
+                            </div>
+                        </div>
+                        <div id="faturamentoDate" class="text-4xl font-bold text-gray-800 mt-2 shimmer h-10 rounded-md">
+                        </div>
+                    </div>
+                    <!--<p class="text-sm text-green-500 mt-4 font-semibold">+5.2% vs. mês anterior</p>-->
+                </div>
+                <!-- Card de Contas a Pagar -->
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-semibold text-gray-500">Contas a Pagar (Mês)</h3>
+                            <div class="w-10 h-10 flex items-center justify-center bg-red-100 rounded-lg">
+                                <i class='bx bx-trending-down text-xl text-red-600'></i>
+                            </div>
+                        </div>
+                        <div id="boletosPayDate" class="text-4xl font-bold text-gray-800 mt-2 shimmer h-10 rounded-md">
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-400 mt-4 font-semibold">Total de despesas pendentes</p>
+                </div>
+                <!-- Card de Lucro -->
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-semibold text-gray-500">Lucro (Hoje)</h3>
+                            <div class="w-10 h-10 flex items-center justify-center bg-blue-100 rounded-lg">
+                                <i class='bx bx-dollar-circle text-xl text-blue-600'></i>
+                            </div>
+                        </div>
+                        <div id="lucroDate" class="text-4xl font-bold text-gray-800 mt-2 shimmer h-10 rounded-md"></div>
+                    </div>
+                    <!--<p class="text-sm text-green-500 mt-4 font-semibold">+8.1% vs. mês anterior</p>-->
+                </div>
+                <!-- Card de Ticket Médio -->
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-semibold text-gray-500">Ticket Médio</h3>
+                            <div class="w-10 h-10 flex items-center justify-center bg-yellow-100 rounded-lg">
+                                <i class='bx bx-purchase-tag-alt text-xl text-yellow-600'></i>
+                            </div>
+                        </div>
+                        <div id="ticketLJDate" class="text-4xl font-bold text-gray-800 mt-2 shimmer h-10 rounded-md">
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-400 mt-4 font-semibold">Valor médio por venda</p>
+                </div>
+            </div>
+
+            <!-- Seção de Gráficos -->
+            <div class="grid grid-cols-1 gap-6">
+                <!-- Gráfico de Faturamento Diário (Gráfico de Área) -->
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                    <h3 class="text-lg font-bold font-poppins text-gray-800 mb-4">Faturamento Diário (Últimos 7 dias)
+                    </h3>
+                    <div id="daily-revenue-chart" class="h-80 shimmer rounded-lg"></div>
+                </div>
+
+                <!-- Gráfico de Clientes (Gráfico de Rosca) - Comentado -->
+                <!--
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                    <h3 class="text-lg font-bold font-poppins text-gray-800 mb-4">Novos vs. Recorrentes</h3>
+                    <div id="customer-type-chart" class="h-80 shimmer rounded-lg flex items-center justify-center"></div>
+                </div>
+                -->
+            </div>
+        </div>
+    </main>
+
+    <script>
         document.addEventListener('DOMContentLoaded', () => {
-            fetchDataAndUpdateChart(); // Carrega na abertura da página
-            setInterval(fetchDataAndUpdateChart, 30000); // Atualiza a cada 30 segundos
+
+            const formatCurrency = (value) => {
+                if (typeof value !== 'string') return 'R$ 0,00';
+                const number = parseFloat(value.replace('R$', '').replace(/\./g, '').replace(',', '.').trim());
+                return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(isNaN(number) ? 0 : number);
+            };
+
+            // --- Carregar Dados do Cabeçalho (Vendas a Receber) ---
+            const headerUrl = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=1`;
+            fetch(headerUrl)
+                .then(response => response.json())
+                .then(data => {
+                    const el = document.getElementById('valor2');
+                    if (el && data.valor2) {
+                        el.textContent = formatCurrency(data.valor2);
+                        el.classList.remove('shimmer', 'h-9', 'w-48', 'rounded-md', 'bg-white/20');
+                    }
+                })
+                .catch(error => console.error('Erro ao buscar dados do cabeçalho:', error));
+
+            // --- Carregar Dados dos KPIs ---
+            const kpiUrl = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=2`;
+            fetch(kpiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    const kpiFields = ['faturamentoDate', 'boletosPayDate', 'lucroDate', 'ticketLJDate'];
+                    kpiFields.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el && data[id]) {
+                            el.textContent = formatCurrency(data[id]);
+                            el.classList.remove('shimmer', 'h-10', 'rounded-md');
+                        }
+                    });
+                })
+                .catch(error => console.error('Erro ao buscar dados dos KPIs:', error));
+
+
+            // --- GRÁFICO 1: Faturamento Diário (ApexCharts) ---
+            const revenueChartUrl = 'https://script.google.com/macros/s/AKfycbzbeCWhW4cyixLvkvpYYpv1UK72CfLYQblJv8jWSPPSSHFzNehv0vW5vLjHZrua-qeMJg/exec';
+            fetch(revenueChartUrl)
+                .then(response => response.json())
+                .then(data => {
+                    const chartEl = document.getElementById('daily-revenue-chart');
+                    if (data && data.length > 0) {
+                        chartEl.classList.remove('shimmer', 'rounded-lg');
+                        const sortedData = data.sort((a, b) => new Date(a.dia) - new Date(b.dia));
+                        const last7Days = sortedData.slice(-7);
+                        const chartOptions = {
+                            chart: { type: 'area', height: '100%', toolbar: { show: false }, zoom: { enabled: false } },
+                            series: [{ name: 'Faturamento', data: last7Days.map(item => item.faturamento) }],
+                            xaxis: {
+                                categories: last7Days.map(item => new Date(item.dia).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })),
+                                labels: { style: { colors: '#6b7280', fontWeight: 600 } },
+                                axisBorder: { show: false },
+                                axisTicks: { show: false }
+                            },
+                            yaxis: { labels: { style: { colors: '#6b7280', fontWeight: 600 }, formatter: (value) => `R$ ${value.toFixed(0)}` } },
+                            dataLabels: { enabled: false },
+                            stroke: { curve: 'smooth', width: 3 },
+                            colors: ['#ef4444'],
+                            fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.1, stops: [0, 100] } },
+                            grid: { borderColor: '#e5e7eb', strokeDashArray: 4 },
+                            tooltip: { x: { format: 'dd MMM' }, y: { formatter: (value) => `R$ ${value.toFixed(2).replace('.', ',')}` } }
+                        };
+                        const chart = new ApexCharts(chartEl, chartOptions);
+                        chart.render();
+                    }
+                })
+                .catch(error => console.error('Erro ao buscar dados do gráfico de faturamento:', error));
+
+            /* --- GRÁFICO 2: Tipos de Clientes (Código Comentado) ---
+            const customerChartEl = document.getElementById('customer-type-chart');
+            if(customerChartEl) {
+                customerChartEl.classList.remove('shimmer', 'rounded-lg');
+                const customerChartOptions = {
+                    chart: { type: 'donut', height: '100%' },
+                    series: [72, 28],
+                    labels: ['Clientes Recorrentes', 'Novos Clientes'],
+                    colors: ['#ef4444', '#f87171'],
+                    legend: { position: 'bottom', fontFamily: 'Inter', fontWeight: 600, labels: { colors: '#4b5563' } },
+                    dataLabels: { enabled: true, formatter: (val) => `${val.toFixed(0)}%`, style: { fontSize: '14px', fontFamily: 'Poppins, sans-serif', fontWeight: 'bold' }, dropShadow: { enabled: false } },
+                    plotOptions: { pie: { donut: { labels: { show: true, total: { show: true, label: 'Total de Clientes', color: '#4b5563', fontSize: '16px', fontWeight: 'bold', formatter: () => '42' } } } } },
+                    tooltip: { y: { formatter: (value) => `${value}%` } }
+                };
+                const customerChart = new ApexCharts(customerChartEl, customerChartOptions);
+                customerChart.render();
+            }
+            */
         });
     </script>
-    <script src="/assets/js/loading.js"></script>
-    <script src="/assets/js/recurses.js"></script>
 </body>
 
 </html>
