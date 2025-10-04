@@ -855,10 +855,28 @@ button:hover {
     color: var(--gray-text);
 }
 
-.stat-item .bxs-hot { color: #ff9900; }
-.stat-item .bxs-heart { color: var(--incorrect-color); }
-.stat-item .bxs-bolt { color: #ffc107; }
-.stat-item .bxs-moon { color: #4a4a6a; }
+.stat-item .bxs-hot {
+    color: #ff9900;
+}
+
+.stat-item .bxs-heart {
+    color: var(--incorrect-color);
+}
+
+.stat-item .bxs-bolt {
+    color: #ffc107;
+}
+
+/* A classe bx-moon-crater não é padrão, pode não aparecer. se não aparecer, podemos usar bxs-moon */
+.stat-item .bx-moon-crater {
+    color: #4a4a6a;
+}
+
+/* NOVA CLASSE PARA O ÍCONE DE SEQUÊNCIA INATIVO */
+.stat-item i.inactive {
+    color: #d3d3d3;
+    opacity: 0.7;
+}
 
 
 /* --- Trilha de Atividades (Duolingo Style) --- */
@@ -906,6 +924,11 @@ button:hover {
     position: relative;
 }
 
+/* NOVA REGRA PARA TRAZER O CARD ATIVO PARA FRENTE */
+.node-wrapper.active {
+    z-index: 20;
+}
+
 .node-content {
     background: var(--white);
     padding: 15px;
@@ -917,15 +940,16 @@ button:hover {
     transform: scale(0.95);
     transition: all 0.2s ease-in-out;
     position: absolute;
-    bottom: -15px; /* Posição inicial */
+    bottom: -15px;
     width: 100%;
+    z-index: 10;
 }
 
 .node-content.active {
     visibility: visible;
     opacity: 1;
     transform: scale(1);
-    bottom: -90px; /* Desliza para baixo ao ativar */
+    bottom: -90px;
 }
 
 .node-content h4 {
@@ -942,7 +966,8 @@ button:hover {
 }
 
 .node-icon {
-    position: relative; /* Mudado para relative */
+    position: relative;
+    /* Mudado para relative */
     width: 70px;
     height: 70px;
     border-radius: 50%;
@@ -954,16 +979,28 @@ button:hover {
     cursor: pointer;
     border-bottom: 5px solid rgba(0, 0, 0, 0.2);
     transition: transform 0.2s;
-    margin: 0 auto; /* Centraliza o ícone */
+    margin: 0 auto;
+    /* Centraliza o ícone */
 }
+
 .node-icon:active {
     transform: translateY(2px);
     border-bottom-width: 3px;
 }
 
-.node-unlocked { background-color: var(--main-color); }
-.node-completed { background-color: var(--correct-color); }
-.node-locked { background-color: #bdc3c7; cursor: not-allowed; border-bottom-color: #7f8c8d; }
+.node-unlocked {
+    background-color: var(--main-color);
+}
+
+.node-completed {
+    background-color: var(--correct-color);
+}
+
+.node-locked {
+    background-color: #c7bdbd;
+    cursor: not-allowed;
+    border-bottom-color: #7f8c8d;
+}
 
 /* --- Menu Hamburger --- */
 .bottom-nav .nav-item i {
@@ -989,4 +1026,23 @@ button:hover {
 #menuPopup .icon-item .icon-circle i {
     font-size: 32px;
     color: var(--main-color);
+}
+
+
+/* --- Estilos para o popup de Dicas --- */
+#hintPopupText {
+    line-height: 1.8;
+}
+
+#hintPopupText strong {
+    color: var(--main-color);
+    display: block;
+    margin-top: 10px;
+}
+
+#hintPopupText code {
+    background-color: #f0f0f0;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', Courier, monospace;
 }

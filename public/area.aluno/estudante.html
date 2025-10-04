@@ -22,7 +22,18 @@
 
 <body>
     <div id="loginScreen" class="screen active">
+        <div class="container">
+            <h1>Bem-vindo(a)!</h1>
+            <p>Por favor, identifique-se para começar.</p>
+            <form id="loginForm">
+                <label for="studentNameInput">Nome Completo:</label>
+                <input type="text" id="studentNameInput" required>
+                <label for="studentBirthDateInput">Data de Nascimento:</label>
+                <input type="text" id="studentBirthDateInput" placeholder="DD/MM/AAAA" maxlength="10" required>
+                <button type="submit">Entrar</button>
+            </form>
         </div>
+    </div>
 
     <div id="studentDashboard" class="screen">
         <header class="header-card" id="headerProfileButton">
@@ -40,11 +51,11 @@
 
         <section class="gamification-bar">
             <div class="stat-item">
-                <i class='bx bxs-moon'></i>
+                <i class='bx bx-moon-crater'></i>
                 <span id="xpDisplay">0</span>
             </div>
             <div class="stat-item">
-                <i class='bx bxs-hot'></i>
+                <i id="streakIcon" class='bx bxs-hot'></i>
                 <span id="streakDisplay">0</span>
             </div>
             <div class="stat-item">
@@ -65,18 +76,149 @@
     </div>
 
     <div id="disciplinasScreen" class="screen">
-        </div>
+        <header class="header-dash"><button class="back-to-dash-button back-button">&larr;</button>
+            <h1>Disciplinas</h1>
+        </header>
+        <main class="main-content">
+            <ul class="disciplinas-list">
+                <li>ARTES <span>Prof. Dalila</span></li>
+                <li>BIOLOGIA <span>Prof. Felipe</span></li>
+                <li>EDUCAÇÃO AMBIENTAL, SUSTENTABILIDADE E CLIMA <span>Prof. Karen</span></li>
+                <li>EDUCAÇÃO FÍSICA <span>Sem professor</span></li>
+                <li>FILOSOFIA <span>Prof. Fernanda</span></li>
+                <li>FÍSICA <span>Sem professor</span></li>
+                <li>GEOGRAFIA <span>Prof. Claudemir</span></li>
+                <li>HISTÓRIA <span>Prof. Zaira</span></li>
+                <li>LÍNGUA INGLESA <span>Prof. Dayane</span></li>
+                <li>LÍNGUA PORTUGUESA E SUAS LITERATURAS <span>Prof. Elaine</span></li>
+                <li>MATEMÁTICA <span>Prof. Vera</span></li>
+                <li>QUÍMICA <span>Prof. João Allan</span></li>
+                <li>SOCIOLOGIA <span>Prof. Glaucia</span></li>
+            </ul>
+        </main>
+    </div>
     <div id="calendarScreen" class="screen">
-        </div>
+        <header class="header-dash"><button class="back-to-dash-button back-button">&larr;</button>
+            <h1>Horário da Turma</h1>
+            <p>Turma: M3MNM02</p>
+        </header>
+        <main class="main-content">
+            <div class="day-schedule">
+                <h3>Segunda-feira</h3>
+                <ul>
+                    <li><strong>1ª Aula:</strong> Livre</li>
+                    <li><strong>2ª Aula:</strong> Sociologia (Prof. Glaucia)</li>
+                    <li><strong>3ª Aula:</strong> Artes (Prof. Dalila)</li>
+                    <li><strong>4ª Aula:</strong> Matemática (Prof. Vera)</li>
+                    <li><strong>5ª Aula:</strong> Matemática (Prof. Vera)</li>
+                    <li><strong>6ª Aula:</strong> Matemática (Prof. Vera)</li>
+                </ul>
+            </div>
+             </main>
+    </div>
     <div id="profileScreen" class="screen">
-        </div>
+        <header class="header-dash"><button class="back-to-dash-button back-button">&larr;</button>
+            <h1>Meu Perfil</h1>
+        </header>
+        <main class="main-content">
+            <div class="profile-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <h2 id="profileName"></h2>
+            </div>
+            <ul class="profile-info-list">
+                <li><span class="label">Escola</span> <span class="value">EEEM IRMA AGNES VINCQUIER</span></li>
+                <li><span class="label">Sala</span> <span class="value">02</span></li>
+                <li><span class="label">Código da Turma</span> <span class="value">M3MNM02</span></li>
+                <li><span class="label">Data de Nascimento</span> <span class="value" id="profileBirthDate"></span></li>
+            </ul>
+            <button id="logoutButton">Sair</button>
+        </main>
+    </div>
     <div id="quizWrapper" class="screen">
+        <div class="container">
+            <div id="quizConfirmation">
+                <h2 id="quizConfirmTitle"></h2>
+                <p>Você está prestes a iniciar o simulado.</p>
+                <div class="profile-icon-large">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+                <h3 id="quizConfirmName"></h3>
+                <div class="navigation-buttons">
+                    <button type="button" class="back-to-dash-button">Voltar ao Painel</button>
+                    <button type="button" id="startConfirmedQuizButton">Iniciar Simulado</button>
+                </div>
+            </div>
+            <div id="quizContainer" style="display: none;">
+                <div class="progress-bar-container">
+                    <div id="progressBar"></div>
+                </div>
+                <h2 id="welcomeMessage"></h2>
+                <form id="quizForm">
+                    <div id="questions-wrapper"></div>
+                    <p id="validation-message">Por favor, selecione uma resposta para continuar.</p>
+                    <div class="navigation-buttons"><button type="button" id="prevButton">Voltar</button><button
+                            type="button" id="nextButton">Próxima</button></div>
+                </form>
+            </div>
+            <div id="resultsContainer" style="display: none;">
+                <div id="result-icon-container"><svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"
+                        viewBox="0 0 24 24" fill="none" stroke="var(--main-color)" stroke-width="1.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="8" r="7"></circle>
+                        <polyline points="8.21 13.89 7 23 12 17 17 23 15.79 13.88"></polyline>
+                    </svg></div>
+                <h2>Resultados Finais</h2>
+                <div id="resultsSummary"></div>
+                <p id="motivationalMessage"></p>
+                <hr>
+                <h3>Resumo Detalhado:</h3>
+                <div id="gabarito"></div><button type="button" id="shareButton">Compartilhar Resultado</button>
+            </div>
+            <div id="shareContainerWrapper" style="display: none;">
+                <div id="shareContainer">
+                    <h2>Meu Desempenho! 🚀</h2>
+                    <p><strong><span id="shareName"></span></strong></p>
+                    <div class="share-stats">
+                        <div class="stat-box">
+                            <div class="value" id="shareScore">0/6</div>
+                            <div class="label">Acertos</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="value" id="shareWeightedScore">0.0</div>
+                            <div class="label">Pontos (0-10)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="navigation-buttons" style="margin-top: 15px;"><button type="button" id="backToResultsButton"
+                        style="background-color: #6c757d;">Voltar</button><button type="button"
+                        id="downloadButton">Baixar Imagem</button></div>
+            </div>
         </div>
+    </div>
 
     <div id="devPopup" class="popup-overlay">
+        <div class="popup-content"><span class="close-popup">&times;</span>
+            <h2>Aviso</h2>
+            <p>Esta funcionalidade está em desenvolvimento em conjunto com a escola EEEM IRMA AGNES VINCQUIER.</p>
         </div>
+    </div>
     <div id="hintPopup" class="popup-overlay">
+        <div class="popup-content">
+            <span class="close-popup" id="closeHintPopup">&times;</span>
+            <h2 id="hintPopupTitle">Dica da Questão</h2>
+            <p id="hintPopupText"></p>
+            <div class="popup-buttons" id="hintPopupButtons">
+            </div>
         </div>
+    </div>
 
     <div id="menuPopup" class="popup-overlay">
         <div class="popup-content">
@@ -98,7 +240,6 @@
             </div>
         </div>
     </div>
-
 
     <nav class="bottom-nav">
         <div class="nav-item active" id="homeButton">

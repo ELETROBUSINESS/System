@@ -1,4 +1,6 @@
 // --- LÓGICA DE NAVEGAÇÃO E ESTADO GLOBAL ---
+console.log("Script carregado. Aguardando eventos...");
+
 const allScreens = document.querySelectorAll('.screen');
 const studentDashboard = document.getElementById('studentDashboard');
 const quizWrapper = document.getElementById('quizWrapper');
@@ -32,12 +34,14 @@ const hamburgerButton = document.getElementById('hamburgerButton');
 const menuPopup = document.getElementById('menuPopup');
 const closeMenuPopup = document.getElementById('closeMenuPopup');
 const menuCalendarButton = document.getElementById('menuCalendarButton');
+const streakIcon = document.getElementById('streakIcon');
 
 
 let userToken = null;
 let gradeUpdateInterval = null;
 
 function showScreen(screenToShow) {
+    console.log(`Navegando para a tela: ${screenToShow.id}`);
     allScreens.forEach(s => s.classList.remove('active'));
     screenToShow.classList.add('active');
     window.scrollTo(0, 0);
@@ -45,7 +49,10 @@ function showScreen(screenToShow) {
 
 function updateNav(activeButton) {
     navItems.forEach(item => item.classList.remove('active'));
-    if (activeButton) activeButton.classList.add('active');
+    if (activeButton) {
+        console.log(`Atualizando navegação para: ${activeButton.id}`);
+        activeButton.classList.add('active');
+    }
 }
 
 // --- LÓGICA DO QUIZ ---
@@ -77,6 +84,7 @@ let currentQuestionIndex = 0;
 let userAnswers = [];
 
 function startQuiz(quizId) {
+    console.log(`Função startQuiz iniciada para o quiz: ${quizId}`);
     currentQuizData = quizzes[quizId];
     userAnswers = new Array(currentQuizData.questions.length).fill(null);
     currentQuestionIndex = 0;
@@ -91,12 +99,15 @@ function startQuiz(quizId) {
 
 // --- INICIALIZAÇÃO E AUTENTICAÇÃO ---
 window.addEventListener('load', () => {
+    console.log("Página carregada. Verificando token de login...");
     const savedToken = localStorage.getItem('studentToken');
     if (savedToken) {
+        console.log("Token encontrado. Inicializando dashboard.");
         userToken = JSON.parse(savedToken);
         loginScreen.classList.add('token-client-pg');
         initializeDashboard();
     } else {
+        console.log("Nenhum token encontrado. Exibindo tela de login.");
         loginScreen.classList.remove('token-client-pg');
         showScreen(loginScreen);
     }
@@ -104,12 +115,14 @@ window.addEventListener('load', () => {
 
 loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
+    console.log("Formulário de login enviado.");
     const name = document.getElementById('studentNameInput').value;
     const birthDate = studentBirthDateInput.value;
     userToken = { name, birthDate };
     localStorage.setItem('studentToken', JSON.stringify(userToken));
-    
+
     if (!localStorage.getItem('studentXP')) {
+        console.log("Novo usuário detectado. Inicializando dados de gamificação.");
         localStorage.setItem('studentXP', '0');
         localStorage.setItem('studentStreak', '0');
         localStorage.setItem('studentPoints', '0');
@@ -132,22 +145,27 @@ function getGamificationData() {
 }
 
 function initializeDashboard() {
+    console.log("Inicializando o dashboard do aluno.");
     const gameData = getGamificationData();
     const nivel = Math.floor(gameData.xp / 100) + 1;
 
-    // Atualiza Header
     profileNameHeader.textContent = `Olá, ${userToken.name.split(' ')[0]}!`;
     profileInitial.textContent = userToken.name.charAt(0).toUpperCase();
     profileSubtext.textContent = `Nível ${nivel}`;
 
-    // Atualiza Barra de Gamificação
     xpDisplay.textContent = gameData.xp;
     streakDisplay.textContent = gameData.streak;
     pointsDisplay.textContent = gameData.points;
     livesDisplay.textContent = gameData.lives;
 
+    if (gameData.streak > 0) {
+        streakIcon.classList.remove('inactive');
+    } else {
+        streakIcon.classList.add('inactive');
+    }
+
     renderTrilha();
-    
+
     bottomNav.style.display = 'flex';
     if (gradeUpdateInterval) clearInterval(gradeUpdateInterval);
     gradeUpdateInterval = setInterval(renderTrilha, 60000);
@@ -156,6 +174,7 @@ function initializeDashboard() {
 }
 
 function renderTrilha() {
+    console.log("Renderizando a trilha de atividades...");
     trilhaContainer.innerHTML = '';
     const completedQuizzes = getGamificationData().completed;
     let nextQuizFound = false;
@@ -190,33 +209,41 @@ function renderTrilha() {
         trilhaContainer.innerHTML += nodeHTML;
     });
 
-    // Adiciona event listeners para a nova lógica da trilha
     document.querySelectorAll('.trilha-node .node-icon').forEach(icon => {
         if (!icon.classList.contains('node-locked')) {
             icon.addEventListener('click', (e) => {
+                console.log("Ícone da trilha clicado.");
                 const wrapper = e.currentTarget.closest('.node-wrapper');
                 const content = wrapper.querySelector('.node-content');
-                
-                // Fecha outros que estiverem abertos
-                document.querySelectorAll('.node-content.active').forEach(activeContent => {
-                    if (activeContent !== content) {
-                        activeContent.classList.remove('active');
+
+                // Lógica para fechar outros cards abertos
+                document.querySelectorAll('.node-wrapper.active').forEach(activeWrapper => {
+                    if (activeWrapper !== wrapper) {
+                        activeWrapper.classList.remove('active');
+                        activeWrapper.querySelector('.node-content').classList.remove('active');
                     }
                 });
 
-                // Alterna a visibilidade do conteúdo clicado
+                // Alterna (abre/fecha) o card atual
+                wrapper.classList.toggle('active');
                 content.classList.toggle('active');
             });
         }
     });
 
     document.querySelectorAll('.start-trilha-button').forEach(button => {
-        button.addEventListener('click', (e) => startQuiz(e.currentTarget.dataset.quizId));
+        button.addEventListener('click', (e) => {
+            const quizId = e.currentTarget.dataset.quizId;
+            console.log(`Botão 'Iniciar' da trilha clicado! ID do Quiz: ${quizId}`);
+            startQuiz(quizId);
+        });
     });
+    console.log("Renderização da trilha concluída.");
 }
 
 
 logoutButton.addEventListener('click', () => {
+    console.log("Botão de logout clicado.");
     localStorage.clear();
     if (gradeUpdateInterval) clearInterval(gradeUpdateInterval);
     userToken = null;
@@ -237,24 +264,29 @@ disciplinasButton.addEventListener('click', () => { showScreen(disciplinasScreen
 homeButton.addEventListener('click', () => { showScreen(studentDashboard); updateNav(homeButton); });
 backToDashButtons.forEach(btn => {
     btn.addEventListener('click', () => {
+        console.log("Botão 'Voltar ao Painel' clicado.");
         initializeDashboard();
         showScreen(studentDashboard);
     });
 });
-headerProfileButton.addEventListener('click', showProfile);
+headerProfileButton.addEventListener('click', () => {
+    console.log("Header do perfil clicado.");
+    showProfile();
+});
 
-hamburgerButton.addEventListener('click', () => { menuPopup.style.display = 'flex'; });
+hamburgerButton.addEventListener('click', () => { console.log("Menu hamburger clicado."); menuPopup.style.display = 'flex'; });
 closeMenuPopup.addEventListener('click', () => { menuPopup.style.display = 'none'; });
 menuCalendarButton.addEventListener('click', () => {
+    console.log("Botão 'Calendário' do menu clicado.");
     showScreen(calendarScreen);
     menuPopup.style.display = 'none';
 });
-document.getElementById('menuNotasButton').addEventListener('click', () => devPopup.style.display = 'flex');
-document.getElementById('menuProgressoButton').addEventListener('click', () => devPopup.style.display = 'flex');
-document.getElementById('menuMaterialButton').addEventListener('click', () => devPopup.style.display = 'flex');
-
+document.getElementById('menuNotasButton').addEventListener('click', () => { console.log("Botão 'Notas' (em dev) clicado."); devPopup.style.display = 'flex'; });
+document.getElementById('menuProgressoButton').addEventListener('click', () => { console.log("Botão 'Progresso' (em dev) clicado."); devPopup.style.display = 'flex'; });
+document.getElementById('menuMaterialButton').addEventListener('click', () => { console.log("Botão 'Material' (em dev) clicado."); devPopup.style.display = 'flex'; });
 
 function showProfile() {
+    console.log("Mostrando tela do perfil.");
     document.getElementById('profileName').textContent = userToken.name;
     document.getElementById('profileBirthDate').textContent = userToken.birthDate;
     showScreen(profileScreen);
@@ -262,26 +294,30 @@ function showProfile() {
 }
 
 startConfirmedQuizButton.addEventListener('click', () => {
+    console.log("Botão 'Iniciar Simulado' (confirmação) clicado.");
     quizConfirmation.style.display = 'none';
     quizContainer.style.display = 'block';
     document.getElementById('welcomeMessage').textContent = `Boa sorte, ${userToken.name}!`;
     showQuestion(0);
 });
 
-devFeatures.forEach(feature => feature.addEventListener('click', () => { devPopup.style.display = 'flex'; }));
+devFeatures.forEach(feature => feature.addEventListener('click', () => { console.log("Item 'em desenvolvimento' clicado."); devPopup.style.display = 'flex'; }));
 closePopupButton.addEventListener('click', () => { devPopup.style.display = 'none'; });
 window.addEventListener('click', (event) => { if (event.target === devPopup) devPopup.style.display = 'none'; });
 
 // --- LÓGICA COMPLETA DO QUIZ ---
-// ... (goToNextQuestion, nextButton, prevButton, etc., sem alterações) ...
 function goToNextQuestion() {
     saveCurrentAnswer();
     if (currentQuestionIndex < currentQuizData.questions.length - 1) {
         currentQuestionIndex++; showQuestion(currentQuestionIndex);
-    } else { calculateAndShowResults(); }
+    } else {
+        console.log("Quiz finalizado. Calculando resultados...");
+        calculateAndShowResults();
+    }
 }
 
 nextButton.addEventListener('click', () => {
+    console.log("Botão 'Próxima' clicado.");
     const currentQuestion = currentQuizData.questions[currentQuestionIndex];
     if (currentQuestion.type !== 'discursive') {
         const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
@@ -295,6 +331,7 @@ nextButton.addEventListener('click', () => {
 });
 
 prevButton.addEventListener('click', () => {
+    console.log("Botão 'Voltar' clicado.");
     saveCurrentAnswer();
     if (currentQuestionIndex > 0) { currentQuestionIndex--; showQuestion(currentQuestionIndex); }
 });
@@ -325,7 +362,7 @@ function renderQuestions() {
             html += `<label style="font-style: italic; color: #666;"><input type="radio" name="q${index}" value="NAO_SEI" data-question-index="${index}" ${isNotAnsweredChecked}> <span>Não consegui responder</span></label>`;
         }
 
-        if(q.tip) {
+        if (q.tip) {
             html += `<button type="button" class="hint-button" data-question-index="${index}">Precisa de uma Dica?</button>`;
         }
         html += `</div>`;
@@ -350,6 +387,7 @@ function renderQuestions() {
 }
 
 function showQuestion(index) {
+    console.log(`Mostrando questão ${index + 1}`);
     renderQuestions();
     document.querySelectorAll('.question-block').forEach(q => q.classList.remove('active'));
     document.getElementById(`q${index}`).classList.add('active');
@@ -359,8 +397,9 @@ function showQuestion(index) {
 }
 
 function showHint(index, showActionButtons = false) {
+    console.log(`Mostrando dica para a questão ${index + 1}`);
     const question = currentQuizData.questions[index];
-    hintPopupText.textContent = question.tip;
+    hintPopupText.innerHTML = question.tip; 
     hintPopupTitle.textContent = `Dica da Questão ${parseInt(index) + 1}`;
 
     hintPopupButtons.innerHTML = '';
@@ -414,7 +453,7 @@ function calculateAndShowResults() {
             incorrect++;
         }
     });
-    
+
     // --- ATUALIZAÇÃO DA GAMIFICAÇÃO ---
     const gameData = getGamificationData();
     gameData.xp += xpGanhos;
@@ -508,3 +547,4 @@ downloadButton.addEventListener('click', () => {
         link.click();
     });
 });
+// A CHAVE EXTRA QUE CAUSAVA O ERRO FOI REMOVIDA DAQUI.
