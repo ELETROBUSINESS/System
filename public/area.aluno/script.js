@@ -166,6 +166,58 @@ function initializeDashboard() {
     updateNav(homeButton);
 }
 
+// FUNÇÃO RENDERTRILHA COM A NOVA LÓGICA SEQUENCIAL
+function renderTrilha() {
+    console.log("Renderizando a trilha de atividades com lógica sequencial...");
+    trilhaContainer.innerHTML = '';
+    const completedQuizzes = getGamificationData().completed;
+    const quizOrder = Object.keys(quizzes);
+
+    let lastCompletedIndex = -1;
+    quizOrder.forEach((quizId, index) => {
+        if (completedQuizzes.includes(quizId)) {
+            lastCompletedIndex = index;
+        }
+    });
+
+    quizOrder.forEach((quizId, index) => {
+        const quiz = quizzes[quizId];
+        let status = 'locked';
+        let icon = 'bxs-lock';
+
+        if (completedQuizzes.includes(quizId)) {
+            status = 'completed';
+            icon = 'bxs-check-shield';
+        } else if (index === lastCompletedIndex + 1) {
+            status = 'unlocked';
+            icon = 'bxs-joystick-button';
+        }
+
+        const nodeHTML = `
+            <div class="trilha-node">
+                <div class="node-wrapper">
+                    <div class="node-icon ${status}" data-quiz-id="${quizId}" title="${quiz.title}">
+                        <i class='bx ${icon}'></i>
+                    </div>
+                </div>
+            </div>
+        `;
+        trilhaContainer.innerHTML += nodeHTML;
+    });
+
+    document.querySelectorAll('.trilha-node .node-icon').forEach(icon => {
+        if (!icon.classList.contains('node-locked')) {
+            icon.addEventListener('click', (e) => {
+                const quizId = e.currentTarget.dataset.quizId;
+                console.log(`Ícone da trilha clicado! Iniciando quiz: ${quizId}`);
+                startQuiz(quizId);
+            });
+        }
+    });
+
+    console.log("Renderização da trilha concluída.");
+}
+
 // FUNÇÃO RENDERTRILHA SIMPLIFICADA
 function renderTrilha() {
     console.log("Renderizando a trilha de atividades...");
