@@ -28,6 +28,7 @@ body {
     max-width: 900px;
     margin: 0 auto;
     min-height: 100vh;
+    padding-bottom: 80px;
 }
 
 .screen.active {
@@ -39,6 +40,18 @@ body {
     justify-content: center;
     align-items: center;
     padding: 20px;
+    box-sizing: border-box;
+    min-height: 100vh;
+}
+
+.container {
+    background: var(--white);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
     box-sizing: border-box;
 }
 
@@ -78,147 +91,16 @@ body {
     align-items: center;
 }
 
-.header-dash .header-content {
-    text-align: center;
-}
-
-.header-dash h1 {
-    margin: 0;
-    font-size: 1.5em;
-    color: var(--white);
-}
-
-.header-dash p {
-    margin: 5px 0 0;
-    opacity: 0.8;
-    font-size: 0.9em;
-}
-
-.profile-icon-header {
-    position: absolute;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-}
-
-.profile-icon-header svg {
-    width: 32px;
-    height: 32px;
-    stroke: var(--white);
-}
-
 .main-content {
     padding: 25px;
     padding-bottom: 100px;
-}
-
-.icon-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 20px;
-    text-align: center;
-}
-
-.icon-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    cursor: pointer;
-}
-
-.icon-item .icon-circle {
-    background-color: #f0f0f0;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 10px;
-    transition: background-color 0.3s;
-}
-
-.icon-item:hover .icon-circle {
-    background-color: #e0e0e0;
-}
-
-.icon-item svg {
-    width: 28px;
-    height: 28px;
-    stroke: var(--main-color);
-}
-
-.icon-item span {
-    font-size: 0.9em;
-    color: var(--text-color);
 }
 
 .section-title {
     text-align: center;
     color: var(--gray-text);
     font-weight: 500;
-    margin: 40px 0 20px;
-}
-
-.activity-card {
-    background: var(--white);
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    margin-bottom: 15px;
-}
-
-.activity-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
-}
-
-.activity-info {
-    flex-grow: 1;
-}
-
-.activity-info h3 {
-    margin: 0;
-    color: var(--text-color);
-    font-size: 1.1em;
-}
-
-.activity-info p {
-    margin: 5px 0 0;
-    color: var(--gray-text);
-    font-size: 0.9em;
-}
-
-.activity-actions {
-    text-align: right;
-}
-
-.last-score {
-    font-size: 0.8em;
-    color: var(--gray-text);
-    margin-bottom: 5px;
-}
-
-.last-score span {
-    font-weight: bold;
-    color: var(--text-color);
-}
-
-.start-button {
-    background-color: var(--main-color);
-    color: var(--white);
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-weight: 500;
-    font-size: 0.9em;
-    border: none;
-    cursor: pointer;
+    margin: 0 0 20px;
 }
 
 .bottom-nav {
@@ -246,12 +128,6 @@ body {
     color: var(--main-color);
 }
 
-.nav-item svg {
-    width: 24px;
-    height: 24px;
-    margin-bottom: 4px;
-}
-
 .nav-item span {
     font-size: 0.8em;
 }
@@ -259,17 +135,6 @@ body {
 #quizWrapper {
     padding-top: 40px;
     padding-bottom: 40px;
-}
-
-.container {
-    background: var(--white);
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    max-width: 800px;
-    margin: 0 auto;
-    box-sizing: border-box;
 }
 
 #quizWrapper h1,
@@ -296,7 +161,6 @@ body {
     color: #333;
 }
 
-/* --- NOVOS ESTILOS PARA LAYOUT ENEM --- */
 .question-support-text {
     background-color: #f8f9fa;
     border-left: 4px solid #e0e0e0;
@@ -315,8 +179,6 @@ body {
     color: #555;
 }
 
-/* --- FIM DOS NOVOS ESTILOS --- */
-
 
 label {
     display: block;
@@ -331,18 +193,6 @@ label {
 
 label:hover {
     background-color: #f5f5f5;
-}
-
-textarea.discursive-answer {
-    width: 100%;
-    min-height: 120px;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-family: 'Roboto', sans-serif;
-    font-size: 1em;
-    box-sizing: border-box;
-    resize: vertical;
 }
 
 input[type="radio"] {
@@ -410,13 +260,6 @@ button:hover {
     background-color: #0056b3;
 }
 
-#quizContainer,
-#resultsContainer,
-#shareContainerWrapper,
-#quizConfirmation {
-    display: none;
-}
-
 .progress-bar-container {
     width: 100%;
     background-color: #e0e0e0;
@@ -457,7 +300,6 @@ button:hover {
     margin-bottom: 15px;
 }
 
-/* --- Estilos do Pop-up de Dicas --- */
 .popup-overlay {
     position: fixed;
     top: 0;
@@ -503,33 +345,6 @@ button:hover {
     font-size: 28px;
     cursor: pointer;
     color: #aaa;
-}
-
-.popup-buttons {
-    display: flex;
-    gap: 10px;
-    margin-top: 25px;
-}
-
-.popup-buttons button {
-    font-size: 1em;
-    padding: 12px;
-}
-
-.popup-buttons .try-again-btn {
-    background-color: var(--hint-color);
-}
-
-.popup-buttons .try-again-btn:hover {
-    background-color: #0056b3;
-}
-
-.popup-buttons .skip-btn {
-    background-color: var(--gray-text);
-}
-
-.popup-buttons .skip-btn:hover {
-    background-color: #5a6268;
 }
 
 .back-button {
@@ -620,19 +435,6 @@ button:hover {
     margin-top: 20px;
 }
 
-#quizConfirmation {
-    text-align: center;
-}
-
-#quizConfirmation h2 {
-    margin-bottom: 10px;
-}
-
-#quizConfirmation p {
-    color: var(--gray-text);
-    margin-top: 0;
-}
-
 #quizConfirmation .profile-icon-large {
     margin: 20px 0;
 }
@@ -648,10 +450,6 @@ button:hover {
     justify-content: space-around;
     text-align: center;
     margin: 20px 0;
-}
-
-.summary-box {
-    padding: 10px;
 }
 
 .summary-box .count {
@@ -697,86 +495,6 @@ button:hover {
     border-color: var(--unanswered-color);
     background-color: #fff8e1;
 }
-
-.video-card {
-    background: var(--white);
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    overflow: hidden;
-    margin-top: 15px;
-}
-
-.video-player-container {
-    position: relative;
-    padding-bottom: 56.25%;
-    height: 0;
-    overflow: hidden;
-    width: 100%;
-    background: #000;
-}
-
-.video-player-container iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: 0;
-}
-
-.video-details {
-    padding: 20px;
-}
-
-.video-text h3 {
-    text-align: left;
-    margin: 0 0 10px 0;
-    font-size: 1.1em;
-    line-height: 1.3;
-}
-
-.video-text p {
-    text-align: left;
-    margin: 0 0 15px 0;
-    font-size: 0.9em;
-    color: var(--gray-text);
-}
-
-.channel-name {
-    font-size: 0.8em;
-    font-weight: 500;
-    color: var(--gray-text);
-    display: block;
-    text-align: left;
-}
-
-.video-button {
-    background-color: var(--main-color);
-    color: var(--white) !important;
-    padding: 12px;
-    border-radius: 8px;
-    text-align: center;
-    text-decoration: none;
-    font-weight: 500;
-    margin-top: 20px;
-    display: block;
-    transition: background-color 0.3s;
-}
-
-.video-button:hover {
-    background-color: var(--accent-color);
-}
-
-.poem-box {
-    background: #f9f9f9;
-    border-left: 4px solid var(--main-color);
-    padding: 15px;
-    margin-bottom: 15px;
-    font-style: italic;
-    white-space: pre-wrap;
-}
-
-/* --- NOVOS ESTILOS ADICIONADOS --- */
 
 /* --- Header Remodelado (Estilo Cartão) --- */
 .header-card {
@@ -867,17 +585,14 @@ button:hover {
     color: #ffc107;
 }
 
-/* A classe bx-moon-crater não é padrão, pode não aparecer. se não aparecer, podemos usar bxs-moon */
 .stat-item .bx-moon-crater {
     color: #4a4a6a;
 }
 
-/* NOVA CLASSE PARA O ÍCONE DE SEQUÊNCIA INATIVO */
 .stat-item i.inactive {
     color: #d3d3d3;
     opacity: 0.7;
 }
-
 
 /* --- Trilha de Atividades (Duolingo Style) --- */
 .trilha-container {
@@ -918,31 +633,8 @@ button:hover {
     transform: translateX(-60px);
 }
 
-.node-wrapper {
-    width: 70%;
-    max-width: 300px;
-    position: relative;
-}
-
-/* NOVA REGRA PARA TRAZER O CARD ATIVO PARA FRENTE */
 .node-wrapper.active {
     z-index: 20;
-}
-
-.node-content {
-    background: var(--white);
-    padding: 15px;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    text-align: center;
-    visibility: hidden;
-    opacity: 0;
-    transform: scale(0.95);
-    transition: all 0.2s ease-in-out;
-    position: absolute;
-    bottom: -15px;
-    width: 100%;
-    z-index: 10;
 }
 
 .node-content.active {
@@ -965,9 +657,19 @@ button:hover {
     display: inline-block;
 }
 
+.node-wrapper {
+    width: 70%;
+    max-width: 300px;
+    position: relative;
+}
+
+/* A caixa de conteúdo agora fica escondida e não será mais usada no fluxo atual */
+.node-content {
+    display: none;
+}
+
 .node-icon {
     position: relative;
-    /* Mudado para relative */
     width: 70px;
     height: 70px;
     border-radius: 50%;
@@ -980,7 +682,6 @@ button:hover {
     border-bottom: 5px solid rgba(0, 0, 0, 0.2);
     transition: transform 0.2s;
     margin: 0 auto;
-    /* Centraliza o ícone */
 }
 
 .node-icon:active {

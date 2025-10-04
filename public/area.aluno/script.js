@@ -11,9 +11,6 @@ const profileScreen = document.getElementById('profileScreen');
 const homeButton = document.getElementById('homeButton');
 const disciplinasButton = document.getElementById('disciplinasButton');
 const backToDashButtons = document.querySelectorAll('.back-to-dash-button');
-const devPopup = document.getElementById('devPopup');
-const closePopupButton = devPopup.querySelector('.close-popup');
-const devFeatures = document.querySelectorAll('.dev-feature');
 const navItems = document.querySelectorAll('.nav-item');
 const loginForm = document.getElementById('loginForm');
 const logoutButton = document.getElementById('logoutButton');
@@ -35,6 +32,7 @@ const menuPopup = document.getElementById('menuPopup');
 const closeMenuPopup = document.getElementById('closeMenuPopup');
 const menuCalendarButton = document.getElementById('menuCalendarButton');
 const streakIcon = document.getElementById('streakIcon');
+const rankingButton = document.getElementById('rankingButton');
 
 
 let userToken = null;
@@ -58,24 +56,17 @@ function updateNav(activeButton) {
 // --- LÓGICA DO QUIZ ---
 const quizContainer = document.getElementById('quizContainer');
 const resultsContainer = document.getElementById('resultsContainer');
-const shareContainerWrapper = document.getElementById('shareContainerWrapper');
-const quizConfirmation = document.getElementById('quizConfirmation');
 const prevButton = document.getElementById('prevButton');
 const nextButton = document.getElementById('nextButton');
 const progressBar = document.getElementById('progressBar');
 const questionsWrapper = document.getElementById('questions-wrapper');
-const shareButton = document.getElementById('shareButton');
-const downloadButton = document.getElementById('downloadButton');
-const backToResultsButton = document.getElementById('backToResultsButton');
 const validationMessage = document.getElementById('validation-message');
-const startConfirmedQuizButton = document.getElementById('startConfirmedQuizButton');
 
 // --- Elementos do Pop-up de Dicas ---
 const hintPopup = document.getElementById('hintPopup');
 const closeHintPopup = document.getElementById('closeHintPopup');
 const hintPopupTitle = document.getElementById('hintPopupTitle');
 const hintPopupText = document.getElementById('hintPopupText');
-const hintPopupButtons = document.getElementById('hintPopupButtons');
 
 const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyPWy8SHpOTsZAqFKoUTNOrgJkZKVVtYAMRXNDBQ3Nnalkr2k5c6CrUYtfmSuTQ5rbqhw/exec';
 
@@ -83,18 +74,20 @@ let currentQuizData = {};
 let currentQuestionIndex = 0;
 let userAnswers = [];
 
+// FUNÇÃO STARTQUIZ SIMPLIFICADA
 function startQuiz(quizId) {
     console.log(`Função startQuiz iniciada para o quiz: ${quizId}`);
     currentQuizData = quizzes[quizId];
     userAnswers = new Array(currentQuizData.questions.length).fill(null);
     currentQuestionIndex = 0;
-    document.getElementById('quizConfirmTitle').textContent = currentQuizData.title;
-    document.getElementById('quizConfirmName').textContent = userToken.name;
+    
+    // Pula a confirmação e vai direto para as questões
     showScreen(quizWrapper);
-    quizConfirmation.style.display = 'block';
-    quizContainer.style.display = 'none';
+    quizContainer.style.display = 'block';
     resultsContainer.style.display = 'none';
-    shareContainerWrapper.style.display = 'none';
+    
+    document.getElementById('welcomeMessage').textContent = `Boa sorte, ${userToken.name}!`;
+    showQuestion(0);
 }
 
 // --- INICIALIZAÇÃO E AUTENTICAÇÃO ---
@@ -173,6 +166,7 @@ function initializeDashboard() {
     updateNav(homeButton);
 }
 
+// FUNÇÃO RENDERTRILHA SIMPLIFICADA
 function renderTrilha() {
     console.log("Renderizando a trilha de atividades...");
     trilhaContainer.innerHTML = '';
@@ -196,12 +190,8 @@ function renderTrilha() {
         const nodeHTML = `
             <div class="trilha-node">
                 <div class="node-wrapper">
-                    <div class="node-icon ${status}" data-quiz-id="${quizId}">
+                    <div class="node-icon ${status}" data-quiz-id="${quizId}" title="${quiz.title}">
                         <i class='bx ${icon}'></i>
-                    </div>
-                    <div class="node-content">
-                        <h4>${quiz.title}</h4>
-                        <button class="start-trilha-button" data-quiz-id="${quizId}">Iniciar</button>
                     </div>
                 </div>
             </div>
@@ -212,32 +202,13 @@ function renderTrilha() {
     document.querySelectorAll('.trilha-node .node-icon').forEach(icon => {
         if (!icon.classList.contains('node-locked')) {
             icon.addEventListener('click', (e) => {
-                console.log("Ícone da trilha clicado.");
-                const wrapper = e.currentTarget.closest('.node-wrapper');
-                const content = wrapper.querySelector('.node-content');
-
-                // Lógica para fechar outros cards abertos
-                document.querySelectorAll('.node-wrapper.active').forEach(activeWrapper => {
-                    if (activeWrapper !== wrapper) {
-                        activeWrapper.classList.remove('active');
-                        activeWrapper.querySelector('.node-content').classList.remove('active');
-                    }
-                });
-
-                // Alterna (abre/fecha) o card atual
-                wrapper.classList.toggle('active');
-                content.classList.toggle('active');
+                const quizId = e.currentTarget.dataset.quizId;
+                console.log(`Ícone da trilha clicado! Iniciando quiz: ${quizId}`);
+                startQuiz(quizId);
             });
         }
     });
 
-    document.querySelectorAll('.start-trilha-button').forEach(button => {
-        button.addEventListener('click', (e) => {
-            const quizId = e.currentTarget.dataset.quizId;
-            console.log(`Botão 'Iniciar' da trilha clicado! ID do Quiz: ${quizId}`);
-            startQuiz(quizId);
-        });
-    });
     console.log("Renderização da trilha concluída.");
 }
 
@@ -281,9 +252,13 @@ menuCalendarButton.addEventListener('click', () => {
     showScreen(calendarScreen);
     menuPopup.style.display = 'none';
 });
-document.getElementById('menuNotasButton').addEventListener('click', () => { console.log("Botão 'Notas' (em dev) clicado."); devPopup.style.display = 'flex'; });
-document.getElementById('menuProgressoButton').addEventListener('click', () => { console.log("Botão 'Progresso' (em dev) clicado."); devPopup.style.display = 'flex'; });
-document.getElementById('menuMaterialButton').addEventListener('click', () => { console.log("Botão 'Material' (em dev) clicado."); devPopup.style.display = 'flex'; });
+
+// Listeners para funcionalidades sem tela (não fazem nada por enquanto)
+document.getElementById('menuNotasButton').addEventListener('click', () => { console.log("Botão 'Notas' (sem ação) clicado."); menuPopup.style.display = 'none'; });
+document.getElementById('menuProgressoButton').addEventListener('click', () => { console.log("Botão 'Progresso' (sem ação) clicado."); menuPopup.style.display = 'none'; });
+document.getElementById('menuMaterialButton').addEventListener('click', () => { console.log("Botão 'Material' (sem ação) clicado."); menuPopup.style.display = 'none'; });
+rankingButton.addEventListener('click', () => { console.log("Botão 'Ranking' (sem ação) clicado."); });
+
 
 function showProfile() {
     console.log("Mostrando tela do perfil.");
@@ -292,18 +267,6 @@ function showProfile() {
     showScreen(profileScreen);
     updateNav(null);
 }
-
-startConfirmedQuizButton.addEventListener('click', () => {
-    console.log("Botão 'Iniciar Simulado' (confirmação) clicado.");
-    quizConfirmation.style.display = 'none';
-    quizContainer.style.display = 'block';
-    document.getElementById('welcomeMessage').textContent = `Boa sorte, ${userToken.name}!`;
-    showQuestion(0);
-});
-
-devFeatures.forEach(feature => feature.addEventListener('click', () => { console.log("Item 'em desenvolvimento' clicado."); devPopup.style.display = 'flex'; }));
-closePopupButton.addEventListener('click', () => { devPopup.style.display = 'none'; });
-window.addEventListener('click', (event) => { if (event.target === devPopup) devPopup.style.display = 'none'; });
 
 // --- LÓGICA COMPLETA DO QUIZ ---
 function goToNextQuestion() {
@@ -317,16 +280,13 @@ function goToNextQuestion() {
 }
 
 nextButton.addEventListener('click', () => {
-    console.log("Botão 'Próxima' clicado.");
-    const currentQuestion = currentQuizData.questions[currentQuestionIndex];
-    if (currentQuestion.type !== 'discursive') {
-        const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
-        if (!selectedOption) {
-            validationMessage.style.display = 'block';
-            setTimeout(() => { validationMessage.style.display = 'none'; }, 2500);
-            return;
-        }
+    const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
+    if (!selectedOption) {
+        validationMessage.style.display = 'block';
+        setTimeout(() => { validationMessage.style.display = 'none'; }, 2500);
+        return;
     }
+    console.log("Botão 'Próxima' clicado.");
     goToNextQuestion();
 });
 
@@ -340,28 +300,11 @@ function renderQuestions() {
     let html = '';
     currentQuizData.questions.forEach((q, index) => {
         html += `<div class="question-block" id="q${index}">`;
-
-        if (q.text1) {
-            html += `<div class="question-support-text"><h4>Texto I</h4>${q.text1}</div>`;
-        }
-        if (q.text2) {
-            html += `<div class="question-support-text"><h4>Texto II</h4>${q.text2}</div>`;
-        }
-
         html += `<p class="question-text"><b>Questão ${index + 1}:</b> ${q.question}</p>`;
-
-        if (q.type === 'discursive') {
-            const userAnswer = userAnswers[index] || '';
-            html += `<textarea name="q${index}" class="discursive-answer" placeholder="Digite sua resposta aqui...">${userAnswer}</textarea>`;
-        } else {
-            for (const key in q.options) {
-                const isChecked = userAnswers[index] === key ? 'checked' : '';
-                html += `<label><input type="radio" name="q${index}" value="${key}" data-question-index="${index}" ${isChecked}> <span>${q.options[key]}</span></label>`;
-            }
-            const isNotAnsweredChecked = userAnswers[index] === 'NAO_SEI' ? 'checked' : '';
-            html += `<label style="font-style: italic; color: #666;"><input type="radio" name="q${index}" value="NAO_SEI" data-question-index="${index}" ${isNotAnsweredChecked}> <span>Não consegui responder</span></label>`;
+        for (const key in q.options) {
+            const isChecked = userAnswers[index] === key ? 'checked' : '';
+            html += `<label><input type="radio" name="q${index}" value="${key}"> <span>${q.options[key]}</span></label>`;
         }
-
         if (q.tip) {
             html += `<button type="button" class="hint-button" data-question-index="${index}">Precisa de uma Dica?</button>`;
         }
@@ -373,15 +316,6 @@ function renderQuestions() {
         button.addEventListener('click', (e) => {
             const index = e.target.dataset.questionIndex;
             showHint(index);
-        });
-    });
-
-    document.querySelectorAll('input[name^="q"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            if (e.target.value === 'NAO_SEI') {
-                const index = e.target.dataset.questionIndex;
-                showHint(index, true);
-            }
         });
     });
 }
@@ -396,27 +330,11 @@ function showQuestion(index) {
     nextButton.textContent = (index === currentQuizData.questions.length - 1) ? "Finalizar e Ver Resultado" : "Próxima";
 }
 
-function showHint(index, showActionButtons = false) {
+function showHint(index) {
     console.log(`Mostrando dica para a questão ${index + 1}`);
     const question = currentQuizData.questions[index];
-    hintPopupText.innerHTML = question.tip; 
+    hintPopupText.innerHTML = question.tip;
     hintPopupTitle.textContent = `Dica da Questão ${parseInt(index) + 1}`;
-
-    hintPopupButtons.innerHTML = '';
-    if (showActionButtons) {
-        hintPopupButtons.innerHTML = `
-            <button type="button" class="try-again-btn">Tentar responder com a dica</button>
-            <button type="button" class="skip-btn">Avançar sem responder</button>
-        `;
-        hintPopupButtons.querySelector('.try-again-btn').addEventListener('click', () => {
-            hintPopup.style.display = 'none';
-        });
-        hintPopupButtons.querySelector('.skip-btn').addEventListener('click', () => {
-            hintPopup.style.display = 'none';
-            goToNextQuestion();
-        });
-    }
-
     hintPopup.style.display = 'flex';
 }
 
@@ -425,18 +343,16 @@ closeHintPopup.addEventListener('click', () => {
 });
 
 function saveCurrentAnswer() {
-    const currentQuestion = currentQuizData.questions[currentQuestionIndex];
-    if (currentQuestion.type === 'discursive') {
-        const textarea = document.querySelector(`#q${currentQuestionIndex} .discursive-answer`);
-        userAnswers[currentQuestionIndex] = textarea.value;
-    } else {
-        const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
-        if (selectedOption) userAnswers[currentQuestionIndex] = selectedOption.value;
+    const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
+    if (selectedOption) {
+        userAnswers[currentQuestionIndex] = selectedOption.value;
     }
 }
 
 function calculateAndShowResults() {
-    let correct = 0, incorrect = 0, unanswered = 0;
+    let correct = 0,
+        incorrect = 0,
+        unanswered = 0;
     const totalQuestions = currentQuizData.questions.length;
     let xpGanhos = 0;
     let pontosGanhos = 0;
@@ -447,14 +363,13 @@ function calculateAndShowResults() {
             correct++;
             xpGanhos += 10;
             pontosGanhos += 5;
-        } else if (answer === 'NAO_SEI' || answer === null) {
+        } else if (answer === null) {
             unanswered++;
         } else {
             incorrect++;
         }
     });
 
-    // --- ATUALIZAÇÃO DA GAMIFICAÇÃO ---
     const gameData = getGamificationData();
     gameData.xp += xpGanhos;
     gameData.points += pontosGanhos;
@@ -468,11 +383,6 @@ function calculateAndShowResults() {
     localStorage.setItem('studentPoints', gameData.points);
     localStorage.setItem('studentStreak', gameData.streak);
     localStorage.setItem('completedQuizzes', JSON.stringify(gameData.completed));
-    // --- FIM DA ATUALIZAÇÃO ---
-
-    const weightedScore = correct * (10 / totalQuestions);
-    const finalWeightedScore = Math.min(weightedScore, 10);
-    localStorage.setItem(`gradeToken-${currentQuizData.id}`, finalWeightedScore.toFixed(1));
 
     quizContainer.style.display = 'none';
     resultsContainer.style.display = 'block';
@@ -504,7 +414,7 @@ function calculateAndShowResults() {
         let statusText = 'Não Respondida';
 
         if (answer === question.answer) { statusClass = 'correct'; statusText = 'Correta'; }
-        else if (answer === 'NAO_SEI' || answer === null) { statusClass = 'unanswered'; statusText = 'Não soube responder'; }
+        else if (answer === null) { statusClass = 'unanswered'; statusText = 'Não soube responder'; }
         else { statusClass = 'incorrect'; statusText = 'Incorreta'; }
         resultItem.innerHTML = `<strong>Questão ${index + 1}:</strong> ${statusText}`;
 
@@ -512,9 +422,6 @@ function calculateAndShowResults() {
         gabaritoDiv.appendChild(resultItem);
     });
 
-    document.getElementById('shareName').textContent = userToken.name;
-    document.getElementById('shareScore').textContent = `${correct}/${currentQuizData.questions.length}`;
-    document.getElementById('shareWeightedScore').textContent = finalWeightedScore.toFixed(1);
     sendDataToSheet(correct, finalWeightedScore);
 }
 
@@ -547,4 +454,3 @@ downloadButton.addEventListener('click', () => {
         link.click();
     });
 });
-// A CHAVE EXTRA QUE CAUSAVA O ERRO FOI REMOVIDA DAQUI.

@@ -137,6 +137,11 @@ const quizzes = {
             }
         ]
     },
-};
 
-// ... (O restante do arquivo com as questões anteriores permanece igual)
+    // --- SIMULADOS ANTERIORES ---
+    'literatura': { id: 'literatura', title: 'Simulado de Literatura', questions: [ ] },
+    'pa-pg': { id: 'pa-pg', title: 'Simulado de PA e PG', questions: [] },
+    'quimica': { id: 'quimica', title: 'Simulado de Química', questions: [] },
+    'fdl': { id: 'fdl', title: 'Simulado de Funções da Linguagem', questions: [] },
+    'historia': { id: 'historia', title: 'Simulado de História - 2ª Guerra', questions: [] }
+};

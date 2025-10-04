@@ -71,7 +71,7 @@
         <main class="main-content">
             <h3 class="section-title">Trilha do Conhecimento</h3>
             <div class="trilha-container" id="trilhaContainer">
-                </div>
+            </div>
         </main>
     </div>
 
@@ -114,7 +114,7 @@
                     <li><strong>6ª Aula:</strong> Matemática (Prof. Vera)</li>
                 </ul>
             </div>
-             </main>
+        </main>
     </div>
     <div id="profileScreen" class="screen">
         <header class="header-dash"><button class="back-to-dash-button back-button">&larr;</button>
@@ -140,22 +140,6 @@
     </div>
     <div id="quizWrapper" class="screen">
         <div class="container">
-            <div id="quizConfirmation">
-                <h2 id="quizConfirmTitle"></h2>
-                <p>Você está prestes a iniciar o simulado.</p>
-                <div class="profile-icon-large">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                </div>
-                <h3 id="quizConfirmName"></h3>
-                <div class="navigation-buttons">
-                    <button type="button" class="back-to-dash-button">Voltar ao Painel</button>
-                    <button type="button" id="startConfirmedQuizButton">Iniciar Simulado</button>
-                </div>
-            </div>
             <div id="quizContainer" style="display: none;">
                 <div class="progress-bar-container">
                     <div id="progressBar"></div>
@@ -180,43 +164,16 @@
                 <p id="motivationalMessage"></p>
                 <hr>
                 <h3>Resumo Detalhado:</h3>
-                <div id="gabarito"></div><button type="button" id="shareButton">Compartilhar Resultado</button>
-            </div>
-            <div id="shareContainerWrapper" style="display: none;">
-                <div id="shareContainer">
-                    <h2>Meu Desempenho! 🚀</h2>
-                    <p><strong><span id="shareName"></span></strong></p>
-                    <div class="share-stats">
-                        <div class="stat-box">
-                            <div class="value" id="shareScore">0/6</div>
-                            <div class="label">Acertos</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="value" id="shareWeightedScore">0.0</div>
-                            <div class="label">Pontos (0-10)</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="navigation-buttons" style="margin-top: 15px;"><button type="button" id="backToResultsButton"
-                        style="background-color: #6c757d;">Voltar</button><button type="button"
-                        id="downloadButton">Baixar Imagem</button></div>
+                <div id="gabarito"></div><button type="button" class="back-to-dash-button">Voltar ao Painel</button>
             </div>
         </div>
     </div>
 
-    <div id="devPopup" class="popup-overlay">
-        <div class="popup-content"><span class="close-popup">&times;</span>
-            <h2>Aviso</h2>
-            <p>Esta funcionalidade está em desenvolvimento em conjunto com a escola EEEM IRMA AGNES VINCQUIER.</p>
-        </div>
-    </div>
     <div id="hintPopup" class="popup-overlay">
         <div class="popup-content">
             <span class="close-popup" id="closeHintPopup">&times;</span>
             <h2 id="hintPopupTitle">Dica da Questão</h2>
             <p id="hintPopupText"></p>
-            <div class="popup-buttons" id="hintPopupButtons">
-            </div>
         </div>
     </div>
 
@@ -250,7 +207,7 @@
             <i class='bx bxs-file'></i>
             <span>Disciplinas</span>
         </div>
-        <div class="nav-item dev-feature">
+        <div class="nav-item" id="rankingButton">
             <i class='bx bxs-trophy'></i>
             <span>Ranking</span>
         </div>
