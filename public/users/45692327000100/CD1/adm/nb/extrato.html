@@ -27,139 +27,158 @@
     gtag('config', 'G-BV6V3GTMR0');
 </script>
 
-<body>
-
-    <body class="painel-adm1" onload="AnimationLoading();">
-        <header>
-            <div class="loading">
-                <div class="efect-loading"></div>
-            </div>
-        </header>
-        <div class="info">
-            <div class="photo-profile">
-                <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg">
-                <div class="detals">
-                    <h1>Olá, Nubia!</h1>
-                    <p>CEO: D'TUDO | Dupão</p>
-                    <br>
-                </div>
+<body class="painel-adm1" onload="AnimationLoading();">
+    <header>
+        <div class="loading">
+            <div class="efect-loading"></div>
+        </div>
+    </header>
+    <div class="info">
+        <div class="photo-profile">
+            <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg">
+            <div class="detals">
+                <h1>Olá, Nubia!</h1>
+                <p>CEO: D'TUDO | Dupão</p>
+                <br>
             </div>
         </div>
+    </div>
 
-        <div class="new_nav">
+    <div class="new_nav">
+        <div class="conta-info">
+            <div class="filter-selector">
+                <button class="filter-btn active" data-filter="entrada"> <i class='bx bx-trending-up'></i> Entradas
+                </button>
+                <button class="filter-btn" data-filter="saida">
+                    <i class='bx bx-trending-down'></i> Saídas
+                </button>
+            </div>
 
-            <div class="conta-info">
-                <div class="shop container">
-                    <p>Últimas operações(8)</p>
-                    <div class="shop container">
-                        <div class="mainContainer">
-                            <div class="boletosContainer">
-                                <div class="boletos-vencer" id="boletosContainer"></div>
-                                <br>
-                                <br>
-                                <br>
-                            </div>
-                        </div>
-                    </div>
+            <div class="mainContainer">
+                <div class="transaction-list-container" id="transactionContainer"></div>
+                <br>
+                <br>
+                <br>
+            </div>
 
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    const container = document.getElementById('transactionContainer');
+                    const filterButtons = document.querySelectorAll('.filter-btn');
+                    let allTransactions = [];
 
-                    <script>
-                        document.addEventListener('DOMContentLoaded', () => {
-                            const container = document.getElementById('boletosContainer');
+                    const normalizeString = (str) => {
+                        if (!str) return '';
+                        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+                    };
 
-                            // Loader antes do carregamento
-                            container.innerHTML = `
-                        <div class="loader">
-                            <div class="spinner"></div>
-                        </div>
-                    `;
+                    const renderTransactions = (filter) => {
+                        container.innerHTML = '';
+                        const normalizedFilter = normalizeString(filter);
 
-                            // URL para o extrato da Núbia
-                            const url = "https://script.google.com/macros/s/AKfycbw4AyWVzzxfnwxgtUSR7p1ehjG62ufEPYQv8M3_tm9gTwGhRJ-lNhfI5QoIBLAV2x1gSA/exec?tipo=extratoID3";
-
-                            fetch(url)
-                                .then(res => res.json())
-                                .then(data => {
-                                    container.innerHTML = '';
-
-                                    data.forEach(boleto => {
-                                        const div = document.createElement('div');
-                                        div.classList.add('boleto-item');
-
-                                        // Lógica para adicionar a classe 'lEntrada' ou 'lSaida'
-                                        if (boleto.tipoOperacao && boleto.tipoOperacao.toLowerCase() === 'entrada') {
-                                            div.classList.add('lEntrada');
-                                        } else if (boleto.tipoOperacao && boleto.tipoOperacao.toLowerCase() === 'saída') {
-                                            div.classList.add('lSaida');
-                                        }
-
-                                        div.innerHTML = `
-                                    <i class='bx bx-shopping-bag'></i> 
-                                    <span class="data">${boleto.data}</span>
-                                    <span class="payment">${boleto.formaPagamento}</span>
-                                    <span class="valor">R$${boleto.valor}</span> 
-                                `; // Removi o "R$ " daqui, pois o Apps Script já envia formatado
-
-                                        container.appendChild(div);
-                                    });
-                                })
-                                .catch(err => {
-                                    container.innerHTML = '<p style="text-align:center;color:red;">Erro ao carregar boletos.</p>';
-                                    console.error('Erro ao carregar extrato:', err);
-                                });
+                        // ALTERAÇÃO 2: A condição 'todos' foi removida da lógica de filtro
+                        const filteredTransactions = allTransactions.filter(transaction => {
+                            return normalizeString(transaction.type) === normalizedFilter;
                         });
-                    </script>
-                </div>
-            </div>
+
+                        if (filteredTransactions.length === 0) {
+                            container.innerHTML = '<p style="text-align:center;color:#555;margin-top:20px;">Nenhuma operação encontrada para hoje.</p>';
+                            return;
+                        }
+
+                        filteredTransactions.forEach(transaction => {
+                            const div = document.createElement('div');
+                            div.classList.add('extrato-item');
+
+                            const valorFormatado = parseFloat(transaction.total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+                            div.innerHTML = `
+                                <i class='bx bx-shopping-bag extrato-icon'></i>
+                                <div class="extrato-details">
+                                    <span class="extrato-payment">${transaction.payment}</span>
+                                    <span class="extrato-data">
+                                        ${transaction.timestamp}
+                                        ${transaction.descricao ? `<span class="extrato-descricao"> - ${transaction.descricao}</span>` : ''}
+                                    </span> 
+                                </div>
+                                <span class="extrato-valor">${valorFormatado}</span>
+                            `;
+                            container.appendChild(div);
+                        });
+                    };
+
+                    container.innerHTML = `<div class="loader"><div class="spinner"></div></div>`;
+
+                    const url = "https://script.google.com/macros/s/AKfycbzd_UOW_Ei9nPxNwmJdEtX4q3XDXu_WWktWUvH70ooAFM8C1bB6r7m39E18vl5dRjDZ/exec";
+
+                    fetch(url)
+                        .then(res => res.json())
+                        .then(data => {
+                            allTransactions = data;
+                            // ALTERAÇÃO 1: O filtro padrão agora é 'entrada'
+                            renderTransactions('entrada');
+                        })
+                        .catch(err => {
+                            container.innerHTML = '<p style="text-align:center;color:red;">Erro ao carregar o extrato.</p>';
+                            console.error('Erro ao carregar extrato:', err);
+                        });
+
+                    filterButtons.forEach(button => {
+                        button.addEventListener('click', () => {
+                            filterButtons.forEach(btn => btn.classList.remove('active'));
+                            button.classList.add('active');
+                            renderTransactions(button.dataset.filter);
+                        });
+                    });
+                });
+            </script>
         </div>
+    </div>
 
-        <div class="navigation">
-            <ul>
-                <li class="list">
-                    <a href="/users/45692327000100/CD1/adm/nb/conta.html">
-                        <span class="icon"><i class='bx  bx-home'></i></span>
-                        <span class="text">Home</span>
-                    </a>
-                </li>
+    <div class="navigation">
+        <ul>
+            <li class="list">
+                <a href="/users/45692327000100/CD1/adm/nb/conta.html">
+                    <span class="icon"><i class="fi fi-rr-shop"></i></span>
+                    <span class="text">Home</span>
+                </a>
+            </li>
 
-                <li class="list">
-                    <a href="/users/45692327000100/CD1/adm/nb/metricas.html">
-                        <span class="icon"><i class='bxr  bx-bar-chart-square'></i></span>
-                        <span class="text">Métrica</span>
-                    </a>
-                </li>
+            <li class="list">
+                <a href="/users/45692327000100/CD1/adm/nb/metricas.html">
+                    <span class="icon"><i class='bx  bx-bar-chart-big'></i></span>
+                    <span class="text">Métrica</span>
+                </a>
+            </li>
 
-                <li class="list">
-                    <a href="/users/45692327000100/CD1/adm/nb/push.html">
-                        <span class="icon"><i class='bxr  bx-plus-circle'></i></span>
-                        <span class="text">Venda</span>
-                    </a>
-                </li>
+            <li class="list">
+                <a href="/users/45692327000100/CD1/adm/nb/push.html">
+                    <span class="icon"><i class='bxr  bx-plus-circle'></i></span>
+                    <span class="text">Venda</span>
+                </a>
+            </li>
 
-                <li class="list active">
-                    <a href="#">
-                        <span class="icon"><i class='bx bxs-copy-alt'></i></span>
-                        <span class="text">Extrato</span>
-                    </a>
-                </li>
+            <li class="list active">
+                <a href="#">
+                    <span class="icon"><i class='bx bxs-copy-alt'></i></span>
+                    <span class="text">Extrato</span>
+                </a>
+            </li>
 
-                <li class="list">
-                    <a href="/index.html">
-                        <span class="icon"><i class='bx  bx-arrow-out-up-square-half bx-rotate-270'></i></span>
-                        <span class="text">Sair</span>
-                    </a>
-                </li>
-                <div class="indicator color11"></div>
-            </ul>
-        </div>
+            <li class="list">
+                <a href="/index.html">
+                    <span class="icon"><i class='bx  bx-arrow-out-up-square-half bx-rotate-270'></i></span>
+                    <span class="text">Sair</span>
+                </a>
+            </li>
+            <div class="indicator color11"></div>
+        </ul>
+    </div>
 
 
-        <!-- Link To JS -->
-        <script src="/assets/js/loading.js"></script>
-        <script src="/assets/js/recurses.js"></script>
-    </body>
-
-</html>
+    <!-- Link To JS -->
+    <script src="/assets/js/loading.js"></script>
+    <script src="/assets/js/recurses.js"></script>
 </body>
 
 </html>

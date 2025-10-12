@@ -1078,6 +1078,13 @@ input[type="number"]::-webkit-inner-spin-button {
     margin-left: 1rem;
 }
 
+.card-main-content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 12px;
+}
+
 .color22 i {
     color: #0d9066;
 }
@@ -1949,35 +1956,43 @@ section {
 .card-optionSize {
     display: flex;
     align-items: center;
+    gap: 8px;
+}
+
+.card-optionSizeMain {
+    display: flex;
+    flex-direction: column;
     width: 100%;
     background-color: #ffffff;
     box-shadow: 5px 4px 7px -7px var(--bg-color);
     border-radius: 12px;
     padding: 10px 15px;
-    gap: 10px;
     margin-bottom: 0px;
 }
 
 /* Estilos para o Contêiner e as Bolinhas */
 .pagination-indicators-container {
     display: flex;
-    justify-content: center; /* Centraliza as bolinhas */
+    justify-content: center;
     align-items: center;
+    margin-top: 10px;
     padding: 5px 0;
-    height: 10px; /* Altura mínima */
+    height: 10px;
 }
 
 .pagination-dot {
     height: 6px;
     width: 6px;
-    background-color: #dad3d3; /* Cor cinza claro para bolinhas inativas (usei a cor da sua antiga progress bar) */
+    background-color: #dad3d3;
+    /* Cor cinza claro para bolinhas inativas (usei a cor da sua antiga progress bar) */
     border-radius: 50%;
     margin: 0 4px;
     transition: background-color 0.3s ease;
 }
 
 .pagination-dot.active {
-    background-color: var(--bs-color); /* Cor principal do tema para a bolinha ativa */
+    background-color: var(--bs-color);
+    /* Cor principal do tema para a bolinha ativa */
 }
 
 .info-pmin {
@@ -2205,6 +2220,12 @@ section {
 .mainContainer {
     padding: 20px;
 }
+.boletosContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Adiciona um espaço consistente entre os cards */
+}
+
 
 .boleto-item {
     margin-bottom: 20px;
@@ -2216,6 +2237,66 @@ section {
     padding: 15px;
     border-radius: 10px;
     align-items: center;
+}
+
+.boleto-content-row {
+    display: flex;
+    align-items: center;
+    /* Alinha tudo verticalmente ao centro */
+    width: 100%;
+    gap: 12px;
+    /* Espaço entre os elementos */
+}
+
+.boleto-info-wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#boletoEmpresa {
+    line-height: 1.2;
+}
+
+#boletoValor {
+    font-size: 15px;
+    color: #555;
+}
+
+.boleto-details {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.boleto-due-date {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    right: 30px;
+    gap: 10px;
+    flex-shrink: 0;
+}
+.boleto-due-date i{
+    font-size: 13px;
+    color: white;
+}
+
+.add-btn-plus {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 28px;
+    height: 28px;
+    background-color: var(--bs-color);
+    color: white;
+    border-radius: 8px;
+    font-size: 20px;
+}
+
+.add-btn-plus:hover {
+    background-color: #a1003e;
 }
 
 .boleto-item span {
@@ -2445,12 +2526,211 @@ section {
     font-size: 1.5em;
     color: #555;
 }
+/* ============================================= */
+/* SUGESTÃO DE MELHORIA v2 PARA EXTRATO          */
+/* ============================================= */
 
-.dashboard-chart-container{
+/* Estilo para o container dos botões de filtro */
+.filter-selector {
+    display: flex;
+    gap: 8px;
+    padding: 20px 20px 10px 20px;
+    justify-content: center;
+}
+
+/* Estilo dos botões de filtro */
+.filter-selector .filter-btn {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px;
+    border: 1.5px solid #e0e0e0;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* Estilo do botão de filtro ATIVO */
+.filter-selector .filter-btn.active {
+    background-color: var(--bs-color);
+    color: var(--secondary-color);
+    border-color: var(--bs-color);
+}
+
+.filter-selector .filter-btn i {
+    font-size: 18px;
+}
+
+/* Container da lista de transações */
+.transaction-list-container {
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Estilo principal do card de extrato (sem a borda) */
+.extrato-item {
+    display: flex;
+    align-items: center;
+    background-color: #ffffff;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    transition: transform 0.2s ease-in-out;
+}
+
+.extrato-item:hover {
+    transform: translateY(-2px);
+}
+
+/* Ícone */
+.extrato-icon {
+    font-size: 24px;
+    color: #4a4a4a;
+    margin-right: 16px;
+}
+
+/* Agrupador dos detalhes */
+.extrato-details {
+    flex-grow: 1;
+}
+
+/* Forma de Pagamento */
+.extrato-payment {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #212121;
+    text-transform: capitalize;
+}
+
+/* Valor da Transação */
+.extrato-valor {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #212121;
+}
+
+/* Garante que a data e a descrição fiquem na mesma linha */
+.extrato-data {
+    display: flex; /* Muda para flex para alinhar itens */
+    white-space: nowrap; /* Impede que o texto quebre para a linha de baixo */
+    overflow: hidden; /* Esconde o que passar do limite */
+    text-overflow: ellipsis; /* Adiciona "..." no final */
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+/* Estilo específico para a descrição */
+.extrato-descricao {
+    margin-left: 5px; /* Pequeno espaço entre a hora e a descrição */
+    color: #888; /* Um cinza um pouco mais claro */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dashboard-chart-container {
     text-align: center;
 }
-.chart-title{
+
+.chart-title {
     font-size: 1rem;
     font-weight: 600;
     color: #eeeeee;
+}
+
+
+/* ============================================= */
+/* ESTILOS SEÇÃO FATURAMENTO                     */
+/* ============================================= */
+
+.faturamento-section {
+    padding: 10px 15px;
+}
+
+.faturamento-container {
+    background-color: #ffffff;
+    box-shadow: 5px 4px 7px -7px var(--bg-color);
+    border-radius: 12px;
+    padding: 12px;
+}
+
+.loja-selector {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid #E0E0E0;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+.loja-selector .loja-btn {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px;
+    border: none;
+    background-color: transparent;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #555;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.loja-selector .loja-btn.active {
+    background-color: var(--bs-color);
+    color: var(--secondary-color);
+}
+
+.loja-selector .loja-btn i {
+    font-size: 16px;
+}
+
+.faturamento-display .valor-principal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.faturamento-display #faturamento-valor {
+    font-size: 28px;
+    font-weight: 600;
+    color: #212121;
+    min-height: 42px; /* Altura para evitar pulo de layout durante o loading */
+}
+
+.faturamento-display .metricas-link {
+    font-size: 14px;
+    font-weight: 500;
+    color: #212121;
+    display: flex;
+    align-items: center;
+}
+
+.faturamento-display .metricas-link i {
+    font-size: 20px;
+}
+
+.faturamento-display #faturamento-hoje {
+    font-size: 13px;
+    color: #505050;
+    font-weight: 500;
+    margin-top: 2px;
+    text-align: left;
+}
+
+/* Ajuste no skeleton para a nova altura do faturamento */
+#faturamento-valor.skeleton {
+    width: 180px;
+    height: 42px;
 }
