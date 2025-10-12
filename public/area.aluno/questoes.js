@@ -1,147 +1,158 @@
-// --- BANCO DE QUESTÕES ---
+// --- BANCO DE QUESTÕES ESTRUTURADO PELAS HABILIDADES DO PDF ---
 
 const quizzes = {
-    // --- NOVOS SIMULADOS DE MATEMÁTICA BÁSICA ---
-    'soma': {
-        id: 'soma',
-        title: 'Simulado de Soma',
+    // --- MÓDULO 1: FUNÇÕES (MAIORES DIFICULDADES) ---
+    'trilha-h08': {
+        id: 'trilha-h08',
+        title: 'H08: Gráfico e a Lei da Função Afim',
         questions: [
             {
                 type: 'multipleChoice',
-                question: "Maria foi à feira e comprou 12 bananas e 8 maçãs. Quantas frutas ela comprou no total?",
-                options: { a: "18", b: "20", c: "22", d: "15" },
-                answer: "b",
-                tip: "<strong>Passo 1: Anote as informações.</strong><br>Bananas: 12<br>Maçãs: 8<br><br><strong>Passo 2: Entenda o que se pede.</strong><br>A palavra 'total' indica que devemos juntar as quantidades, ou seja, somar.<br><br><strong>Passo 3: Calcule.</strong><br>12 (bananas) + 8 (maçãs) = 20<br><br><strong>Resultado:</strong> Maria comprou 20 frutas."
+                question: "O gráfico de uma função afim, f(x) = ax + b, passa pelos pontos (0, 5) e (2, 11). Qual é a lei de formação dessa função?",
+                options: { a: "f(x) = 5x + 3", b: "f(x) = 2x + 5", c: "f(x) = 3x + 5", d: "f(x) = 6x + 5" },
+                answer: "c",
+                tipType: 'graph',
+                tipData: {
+                    points: [{x: 0, y: 5}, {x: 2, y: 11}],
+                    range: {xMin: -2, xMax: 12, yMin: -2, yMax: 12} // Define a área visível do gráfico
+                },
+                tip: "Pense no gráfico como um mapa! A regra <strong>f(x) = ax + b</strong> é o segredo para desenhar a linha reta.<br><br><strong>'b' é o ponto de partida:</strong> É onde a linha cruza o 'elevador' (eixo Y). O ponto (0, 5) nos diz que começamos no 5º andar. Então, <strong>b = 5</strong>.<br><br><strong>'a' é o segredo da inclinação:</strong> Ele diz quantos andares subimos para cada passo que damos para a direita. Para ir do ponto (0, 5) ao (2, 11), demos 2 passos para a direita e subimos 6 andares (de 5 para 11). Quantos andares subimos por passo?",
+                example: {
+                    problem: "<strong>Exemplo Mágico:</strong> Uma reta passa pelo ponto de partida (0, 1) e pelo ponto (2, 5). Vamos descobrir a regra dela!",
+                    tipType: 'graph',
+                    tipData: {
+                        points: [{x: 0, y: 1}, {x: 2, y: 5}],
+                        range: {xMin: -2, xMax: 6, yMin: -2, yMax: 6}
+                    },
+                    text: "<strong>Passo 1: Achar o 'b'.</strong><br>O ponto de partida no 'elevador' Y é (0, 1). Então, <strong>b = 1</strong>. Nossa regra começa assim: f(x) = ax + 1.<br><br><strong>Passo 2: Achar o 'a'.</strong><br>Para ir de (0, 1) até (2, 5), demos 2 passos para a direita e subimos 4 andares (de 1 para 5).<br>Se subimos 4 andares em 2 passos, quantos andares subimos por passo?<br>4 ÷ 2 = 2. Então, <strong>a = 2</strong>.<br><br><strong>Resposta Mágica:</strong> A regra é <strong>f(x) = 2x + 1</strong>!"
+                }
             },
             {
                 type: 'multipleChoice',
-                question: "Pedro estava jogando videogame. Ele fez 150 pontos na primeira fase e 250 pontos na segunda fase. Qual foi a pontuação total de Pedro?",
-                options: { a: "300", b: "350", c: "400", d: "450" },
-                answer: "c",
-                tip: "<strong>Passo 1: Anote as informações.</strong><br>Fase 1: 150 pontos<br>Fase 2: 250 pontos<br><br><strong>Passo 2: Entenda o que se pede.</strong><br>A 'pontuação total' pede para juntarmos os pontos das duas fases.<br><br><strong>Passo 3: Calcule.</strong><br>Você pode somar por partes para facilitar:<br>100 + 200 = 300<br>50 + 50 = 100<br>Agora junte os resultados: 300 + 100 = 400<br><br><strong>Resultado:</strong> A pontuação total de Pedro foi 400."
-            },
-            {
-                type: 'multipleChoice',
-                question: "Em uma estante há 35 livros de ficção e 45 livros de não-ficção. Quantos livros há na estante?",
-                options: { a: "70", b: "75", c: "80", d: "85" },
-                answer: "c",
-                tip: "<strong>Passo 1: Anote as informações.</strong><br>Livros de ficção: 35<br>Livros de não-ficção: 45<br><br><strong>Passo 2: Entenda o que se pede.</strong><br>A pergunta 'Quantos livros há na estante?' quer saber o total de livros.<br><br><strong>Passo 3: Calcule.</strong><br>35 + 45<br>Uma forma rápida é pensar: 30 + 40 = 70. Depois, some as unidades: 5 + 5 = 10. Agora, junte tudo: 70 + 10 = 80.<br><br><strong>Resultado:</strong> Há 80 livros na estante."
-            }
-        ]
-    },
-    'subtracao': {
-        id: 'subtracao',
-        title: 'Simulado de Subtração',
-        questions: [
-            {
-                type: 'multipleChoice',
-                question: "Ana tinha R$50,00 e gastou R$15,00 em um lanche. Com quanto dinheiro ela ficou?",
-                options: { a: "R$25,00", b: "R$30,00", c: "R$35,00", d: "R$45,00" },
-                answer: "c",
-                tip: "<strong>Passo 1: Anote as informações.</strong><br>Dinheiro inicial: R$50,00<br>Gasto: R$15,00<br><br><strong>Passo 2: Entenda o que se pede.</strong><br>A palavra 'gastou' e a pergunta 'com quanto ficou?' indicam que devemos retirar um valor do outro, ou seja, subtrair.<br><br><strong>Passo 3: Calcule.</strong><br>50 - 15<br>Um jeito fácil é tirar 10 de 50, que dá 40. Depois, tirar os 5 restantes de 40, que dá 35.<br><br><strong>Resultado:</strong> Ana ficou com R$35,00."
-            },
-            {
-                type: 'multipleChoice',
-                question: "Um pote continha 30 biscoitos. João comeu 6. Quantos biscoitos restaram no pote?",
-                options: { a: "24", b: "25", c: "14", d: "36" },
+                question: "Um gráfico de uma função do 1º grau intercepta o eixo y no ponto -2 e passa pelo ponto (3, 7). Qual é a expressão algébrica que representa essa função?",
+                options: { a: "y = 3x - 2", b: "y = -2x + 3", c: "y = 7x + 3", d: "y = 9x - 2" },
                 answer: "a",
-                tip: "<strong>Passo 1: Anote as informações.</strong><br>Total de biscoitos: 30<br>Biscoitos comidos: 6<br><br><strong>Passo 2: Entenda o que se pede.</strong><br>A palavra 'restaram' significa o que sobrou após algo ser retirado. É uma conta de subtração.<br><br><strong>Passo 3: Calcule.</strong><br>30 - 6 = 24<br><br><strong>Resultado:</strong> Restaram 24 biscoitos no pote."
+                tip: "O coeficiente linear (b) é o ponto onde o gráfico corta o eixo y. Use o outro ponto para encontrar o coeficiente angular (a)."
             },
             {
                 type: 'multipleChoice',
-                question: "Um ônibus partiu com 42 passageiros. Na primeira parada, desceram 12 passageiros. Quantos passageiros continuaram no ônibus?",
-                options: { a: "20", b: "30", c: "40", d: "54" },
-                answer: "b",
-                tip: "<strong>Passo 1: Anote as informações.</strong><br>Passageiros no início: 42<br>Passageiros que desceram: 12<br><br><strong>Passo 2: Entenda o que se pede.</strong><br>A palavra 'desceram' indica uma retirada de pessoas do total.<br><br><strong>Passo 3: Calcule.</strong><br>42 - 12<br>Método rápido: 40 - 10 = 30. E 2 - 2 = 0. Então, o resultado é 30.<br><br><strong>Resultado:</strong> 30 passageiros continuaram no ônibus."
+                question: "Analisando um gráfico, vemos uma reta decrescente que passa pelos pontos (0, 4) e (2, 0). Qual função corresponde a este gráfico?",
+                options: { a: "f(x) = 4x + 2", b: "f(x) = 2x + 4", c: "f(x) = -2x + 4", d: "f(x) = -4x + 2" },
+                answer: "c",
+                tip: "Uma reta decrescente possui um coeficiente angular (a) negativo. O ponto onde x=0 indica o coeficiente linear (b)."
             }
         ]
     },
-    'multiplicacao': {
-        id: 'multiplicacao',
-        title: 'Simulado de Multiplicação',
+    'trilha-h12': {
+        id: 'trilha-h12',
+        title: 'H12: Identificando Funções Exponenciais',
         questions: [
             {
                 type: 'multipleChoice',
-                question: "Uma caixa de lápis de cor tem 12 lápis. Se a professora comprar 5 caixas, quantos lápis ela terá no total?",
-                options: { a: "50", b: "55", c: "60", d: "65" },
+                question: "Qual das seguintes funções representa um crescimento exponencial?",
+                options: { a: "f(x) = x²", b: "f(x) = 2x + 1", c: "f(x) = 3 * (1.5)^x", d: "f(x) = 5 * (0.5)^x" },
                 answer: "c",
-                tip: "<strong>Passo 1: Anote as informações.</strong><br>Lápis por caixa: 12<br>Número de caixas: 5<br><br><strong>Passo 2: Entenda o que se pede.</strong><br>Queremos saber o total de lápis, repetindo a quantidade '12' por '5' vezes. Isso é uma multiplicação.<br><br><strong>Passo 3: Calcule.</strong><br>12 x 5<br>Dica: 10 x 5 = 50. E 2 x 5 = 10. Agora some os dois: 50 + 10 = 60.<br><br><strong>Resultado:</strong> A professora terá 60 lápis."
+                tip: "Uma função exponencial tem a variável 'x' no expoente. O crescimento ocorre quando a base é maior que 1."
             },
             {
                 type: 'multipleChoice',
-                question: "Em um auditório, as cadeiras estão organizadas em 8 fileiras, com 10 cadeiras em cada fileira. Quantas cadeiras há no auditório?",
-                options: { a: "18", b: "80", c: "88", d: "108" },
+                question: "O gráfico de uma função exponencial f(x) = a^x sempre passa por um ponto específico, desde que a > 0 e a ≠ 1. Que ponto é esse?",
+                options: { a: "(0, 0)", b: "(1, 0)", c: "(0, 1)", d: "(1, 1)" },
+                answer: "c",
+                tip: "Lembre-se da propriedade de potenciação em que todo número (diferente de zero) elevado a zero resulta em 1."
+            },
+            {
+                type: 'multipleChoice',
+                question: "A expressão y = 100 * (0.8)^t descreve o decaimento de uma substância ao longo do tempo 't'. Esta é uma função:",
+                options: { a: "Linear crescente", b: "Exponencial decrescente", c: "Quadrática", d: "Exponencial crescente" },
                 answer: "b",
-                tip: "<strong>Passo 1: Anote as informações.</strong><br>Número de fileiras: 8<br>Cadeiras por fileira: 10<br><br><strong>Passo 2: Entenda o que se pede.</strong><br>A organização em fileiras iguais sugere uma multiplicação para achar o total.<br><br><strong>Passo 3: Calcule.</strong><br>8 x 10<br>Dica: Multiplicar por 10 é só adicionar um zero no final do outro número. Então, 8 vira 80.<br><br><strong>Resultado:</strong> Há 80 cadeiras no auditório."
+                tip: "A variável está no expoente, o que a torna exponencial. A base da potência (0.8) é um número entre 0 e 1."
+            }
+        ]
+    },
+    'trilha-h13': {
+        id: 'trilha-h13',
+        title: 'H13: Problemas com Função Exponencial',
+        questions: [
+            {
+                type: 'multipleChoice',
+                question: "Uma população de bactérias dobra a cada hora. Se a população inicial é de 500 bactérias, qual será a população após 3 horas? A função é P(t) = 500 * 2^t.",
+                options: { a: "1500", b: "3000", c: "4000", d: "8000" },
+                answer: "c",
+                tip: "Substitua o 't' (tempo) pelo valor 3 na função fornecida e calcule a potência primeiro."
             },
             {
                 type: 'multipleChoice',
-                question: "Se Carlos economizar R$25,00 por semana, quanto ele terá economizado após 4 semanas?",
-                options: { a: "R$29,00", b: "R$50,00", c: "R$75,00", d: "R$100,00" },
+                question: "Um investimento de R$1.000,00 rende juros de 10% ao mês em regime de juros compostos. Qual será o montante após 2 meses? A fórmula é M = 1000 * (1.10)^t.",
+                options: { a: "R$1.200,00", b: "R$1.210,00", c: "R$1.100,00", d: "R$2.000,00" },
+                answer: "b",
+                tip: "Use t=2 na fórmula. Lembre-se que (1.10)² é o mesmo que 1.10 * 1.10."
+            },
+            {
+                type: 'multipleChoice',
+                question: "O valor de um carro deprecia 20% ao ano. Se ele custa R$50.000,00 hoje, qual será seu valor após 2 anos? A função é V(t) = 50000 * (0.8)^t.",
+                options: { a: "R$30.000,00", b: "R$32.000,00", c: "R$40.000,00", d: "R$10.000,00" },
+                answer: "b",
+                tip: "Se o carro deprecia 20%, seu valor restante é 80% do valor do ano anterior, por isso a base é 0.8. Calcule para t=2."
+            }
+        ]
+    },
+    'trilha-h21': {
+        id: 'trilha-h21',
+        title: 'H21: Volume e Área de Sólidos',
+        questions: [
+            {
+                type: 'multipleChoice',
+                question: "Uma piscina retangular tem 10 metros de comprimento, 5 metros de largura e 2 metros de profundidade. Qual é o seu volume em metros cúbicos?",
+                options: { a: "17 m³", b: "50 m³", c: "100 m³", d: "200 m³" },
+                answer: "c",
+                tip: "Imagine que você quer encher a piscina com bloquinhos de 1 metro. O volume é quantos bloquinhos cabem aí dentro!<br><br>Para descobrir, é só multiplicar os três lados: <strong>Comprimento × Largura × Profundidade</strong>.",
+                example: {
+                    problem: "<strong>Exemplo:</strong> Uma caixa de brinquedos tem 3 metros de comprimento, 2 metros de largura e 1 metro de altura. Qual o volume dela?",
+                    text: "<strong>É só multiplicar!</strong><br>Volume = 3 (comprimento) × 2 (largura) × 1 (altura)<br>Volume = 6 × 1<br><strong>Volume = 6 m³</strong><br><br><strong>Resposta do Exemplo:</strong> Cabem 6 bloquinhos gigantes de 1 metro dentro da caixa!"
+                }
+            },
+            {
+                type: 'multipleChoice',
+                question: "Um cilindro (lata de refrigerante) tem raio da base de 3 cm e altura de 10 cm. Qual é a área da sua base? (Considere π ≈ 3.14)",
+                options: { a: "28.26 cm²", b: "31.4 cm²", c: "90 cm²", d: "94.2 cm²" },
+                answer: "a",
+                tip: "A base de um cilindro é um círculo. A área de um círculo é calculada pela fórmula A = π * r²."
+            },
+            {
+                type: 'multipleChoice',
+                question: "Para pintar uma caixa cúbica com 4 metros de aresta, qual a área total a ser pintada?",
+                options: { a: "16 m²", b: "64 m²", c: "80 m²", d: "96 m²" },
                 answer: "d",
-                tip: "<strong>Passo 1: Anote as informações.</strong><br>Valor por semana: R$25,00<br>Total de semanas: 4<br><br><strong>Passo 2: Entenda o que se pede.</strong><br>A quantia se repete a cada semana. Para saber o total, multiplicamos.<br><br><strong>Passo 3: Calcule.</strong><br>25 x 4<br>Pense em moedas: 4 moedas de 25 centavos formam 1 real. Da mesma forma, 4 x 25 é igual a 100.<br><br><strong>Resultado:</strong> Carlos terá economizado R$100,00."
+                tip: "Um cubo tem 6 faces quadradas iguais. Calcule a área de uma face (lado * lado) e depois multiplique por 6."
             }
         ]
     },
-    'divisao': {
-        id: 'divisao',
-        title: 'Simulado de Divisão',
+    'revisao-1': {
+        id: 'revisao-1',
+        title: 'Revisão 1: Funções e Sólidos',
         questions: [
             {
                 type: 'multipleChoice',
-                question: "Mariana tem 40 balas para dividir igualmente entre seus 5 amigos. Quantas balas cada amigo receberá?",
-                options: { a: "6", b: "7", c: "8", d: "9" },
+                question: "O gráfico de uma função afim passa pelos pontos (0, -1) e (1, 2). Qual é a sua lei de formação?",
+                options: { a: "f(x) = 2x - 1", b: "f(x) = -x + 2", c: "f(x) = 3x - 1", d: "f(x) = x + 1" },
                 answer: "c",
-                tip: "<strong>Passo 1: Anote as informações.</strong><br>Total de balas: 40<br>Número de amigos: 5<br><br><strong>Passo 2: Entenda o que se pede.</strong><br>A expressão 'dividir igualmente' indica uma conta de divisão.<br><br><strong>Passo 3: Calcule.</strong><br>40 ÷ 5<br>Você pode pensar na tabuada do 5: Qual número multiplicado por 5 dá 40? 5 x 8 = 40.<br><br><strong>Resultado:</strong> Cada amigo receberá 8 balas."
+                tip: "Habilidade H08: O ponto com x=0 te dá o valor de 'b'. Use o outro ponto para achar a inclinação 'a'."
             },
             {
                 type: 'multipleChoice',
-                question: "Uma biblioteca recebeu uma doação de 90 livros e quer organizá-los em 10 prateleiras, com a mesma quantidade em cada uma. Quantos livros ficarão por prateleira?",
-                options: { a: "9", b: "10", c: "80", d: "100" },
-                answer: "a",
-                tip: "<strong>Passo 1: Anote as informações.</strong><br>Total de livros: 90<br>Número de prateleiras: 10<br><br><strong>Passo 2: Entenda o que se pede.</strong><br>Organizar em quantidades iguais é uma divisão.<br><br><strong>Passo 3: Calcule.</strong><br>90 ÷ 10<br>Dica rápida: Dividir por 10 é só cortar o zero do final. Então, 90 vira 9.<br><br><strong>Resultado:</strong> Ficarão 9 livros por prateleira."
+                question: "Uma cultura de células triplica a cada dia. Se começamos com 20 células, qual a função que modela essa situação, onde 'd' é o número de dias?",
+                options: { a: "C(d) = 20 + 3d", b: "C(d) = 20 * 3^d", c: "C(d) = 3 * 20^d", d: "C(d) = 20 * d³" },
+                answer: "b",
+                tip: "Habilidade H12/H13: O valor inicial multiplica a base de crescimento elevada ao tempo."
             },
             {
                 type: 'multipleChoice',
-                question: "Três amigos foram a uma pizzaria e a conta deu R$75,00. Se eles dividirem o valor igualmente, quanto cada um deverá pagar?",
-                options: { a: "R$15,00", b: "R$20,00", c: "R$25,00", d: "R$30,00" },
+                question: "Qual o volume de uma caixa de sapatos com 30 cm de comprimento, 20 cm de largura e 10 cm de altura?",
+                options: { a: "60 cm³", b: "600 cm³", c: "6000 cm³", d: "60000 cm³" },
                 answer: "c",
-                tip: "<strong>Passo 1: Anote as informações.</strong><br>Valor da conta: R$75,00<br>Número de amigos: 3<br><br><strong>Passo 2: Entenda o que se pede.</strong><br>A palavra 'dividirem' já nos diz qual operação usar.<br><br><strong>Passo 3: Calcule.</strong><br>75 ÷ 3<br>Você pode pensar: 60 dividido por 3 é 20. Sobra 15 (75 - 60). E 15 dividido por 3 é 5. Agora some os resultados: 20 + 5 = 25.<br><br><strong>Resultado:</strong> Cada amigo deverá pagar R$25,00."
+                tip: "Habilidade H21: Volume de um paralelepípedo = comprimento × largura × altura."
             }
         ]
-    },
-    'porcentagem': {
-        id: 'porcentagem',
-        title: 'Simulado de Porcentagem',
-        questions: [
-            {
-                type: 'multipleChoice',
-                question: "Uma camiseta que custa R$80,00 está com 10% de desconto. Qual é o valor do desconto?",
-                options: { a: "R$1,00", b: "R$8,00", c: "R$10,00", d: "R$70,00" },
-                answer: "b",
-                tip: "<strong>Passo 1: Anote as informações.</strong><br>Valor da camiseta: R$80,00<br>Desconto: 10%<br><br><strong>Passo 2: Entenda o que se pede.</strong><br>Calcular 10% de 80.<br><br><strong>Passo 3: Calcule.</strong><br>Método rápido para 10%: Apenas 'ande' com a vírgula uma casa para a esquerda. O número 80,00 vira 8,00.<br><code>80,00 → 8,00</code><br><br><strong>Resultado:</strong> O valor do desconto é de R$8,00."
-            },
-            {
-                type: 'multipleChoice',
-                question: "João tem uma poupança que rende 2% ao mês. No primeiro mês ele aportou R$100,00. Qual será o valor do juros recebido no próximo mês?",
-                options: { a: "R$1,00", b: "R$2,00", c: "R$102,00", d: "R$20,00" },
-                answer: "b",
-                tip: "<strong>Passo 1: Anote as informações.</strong><br>Aporte: R$100,00<br>Juros: 2%<br><br><strong>Passo 2: Entenda o que se pede.</strong><br>Calcular 2% de 100.<br><br><strong>Passo 3: Calcule.</strong><br>Porcentagem é uma divisão por 100. Então, calculamos:<br><code>(100 x 2) / 100</code><br>Dica rápida: Como temos '100' multiplicando e dividindo, podemos cortá-los. Sobra apenas o 2.<br><code>(<strong>100</strong> x 2) / <strong>100</strong> = 2</code><br><br><strong>Resultado:</strong> O valor do juros é R$2,00."
-            },
-            {
-                type: 'multipleChoice',
-                question: "Em uma turma de 40 alunos, 50% foram aprovados. Quantos alunos foram aprovados?",
-                options: { a: "10", b: "20", c: "30", d: "40" },
-                answer: "b",
-                tip: "<strong>Passo 1: Anote as informações.</strong><br>Total de alunos: 40<br>Aprovados: 50%<br><br><strong>Passo 2: Entenda o que se pede.</strong><br>Calcular 50% de 40.<br><br><strong>Passo 3: Calcule.</strong><br>Dica rápida: 50% é sempre a <strong>metade</strong> de um valor. Qual é a metade de 40?<br><code>40 / 2 = 20</code><br><br><strong>Resultado:</strong> 20 alunos foram aprovados."
-            }
-        ]
-    },
-
-    // --- SIMULADOS ANTERIORES ---
-    'literatura': { id: 'literatura', title: 'Simulado de Literatura', questions: [ ] },
-    'pa-pg': { id: 'pa-pg', title: 'Simulado de PA e PG', questions: [] },
-    'quimica': { id: 'quimica', title: 'Simulado de Química', questions: [] },
-    'fdl': { id: 'fdl', title: 'Simulado de Funções da Linguagem', questions: [] },
-    'historia': { id: 'historia', title: 'Simulado de História - 2ª Guerra', questions: [] }
+    }
 };

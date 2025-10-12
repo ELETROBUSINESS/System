@@ -8,21 +8,15 @@
     <link rel="icon" href="/assets/img/iconWeb.png">
     <title>ELETRO - Digitalize seu Empreendimento</title>
 
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Google Fonts: Poppins (for headings) and Inter (for body) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link rel='stylesheet'
-        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Poppins:wght@600;700;800&display=swap"
         rel="stylesheet">
 
-    <!-- Custom Tailwind Configuration -->
     <script>
         tailwind.config = {
             darkMode: 'class', // Enable dark mode using a class
@@ -52,9 +46,8 @@
         }
     </script>
 
-    <!-- Custom Styles -->
     <style>
-        /* Light Theme as default */
+        /* Base styles are now light theme by default */
         body {
             @apply bg-brand-light text-slate-800;
         }
@@ -63,15 +56,7 @@
         .dark body {
             @apply bg-brand-dark text-slate-200;
         }
-
-        .gradient-bg-light {
-            background-color: #ffffff;
-        }
-
-        .dark .gradient-bg-dark {
-            background-color: #111827;
-        }
-
+        
         .text-gradient {
             background: linear-gradient(90deg, #c50037, #e11d48);
             -webkit-background-clip: text;
@@ -89,25 +74,17 @@
         }
 
         @keyframes blink {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0;
-            }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
         }
 
-        /* Scroll-triggered animations for Mission Section */
-        .mission-section-item {
+        /* Scroll-triggered animations */
+        .scroll-animate {
             @apply transition-all duration-700 ease-out;
             opacity: 0;
             transform: translateY(40px);
         }
-
-        .mission-section-item.is-visible {
+        .scroll-animate.is-visible {
             opacity: 1;
             transform: translateY(0);
         }
@@ -120,21 +97,27 @@
         .mob2 {
             font-size: 50px;
         }
+
+        /* Utility to hide scrollbar */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
     </style>
 </head>
 
 <body class="font-sans antialiased transition-colors duration-300">
 
-    <!-- Header -->
     <header id="header"
-        class="bg-brand-light/80 dark:bg-brand-dark/80 backdrop-blur-sm sticky top-0 z-50 transition-all duration-300 border-b border-gray-200 dark:border-gray-800">
+        class="bg-brand-light/80 dark:bg-brand-dark/80 backdrop-blur-sm sticky top-0 z-40 transition-all duration-300 border-b border-gray-200 dark:border-gray-800">
         <div class="container mx-auto px-6 py-4 flex justify-between items-center">
             <a href="#" class="text-2xl font-display font-bold text-brand-primary">ELETRO BUSINESS</a>
             <nav class="hidden md:flex space-x-8 items-center">
                 <a href="#objetivo"
-                    class="text-slate-700 dark:text-slate-300 hover:text-brand-primary dark:hover:text-brand-primary transition-colors duration-300">Nosso
-                    Objetivo</a>
-                <!-- Services Dropdown -->
+                    class="text-slate-700 dark:text-slate-300 hover:text-brand-primary dark:hover:text-brand-primary transition-colors duration-300">Nosso Objetivo</a>
                 <div class="relative group">
                     <button
                         class="text-slate-700 dark:text-slate-300 hover:text-brand-primary dark:hover:text-brand-primary transition-colors duration-300 flex items-center">
@@ -150,24 +133,20 @@
                         <div class="p-2">
                             <h3 class="px-3 py-2 text-xs font-bold text-slate-400 uppercase">Acessos Diretos</h3>
                             <a href="/users/e-finance.html"
-                                class="block w-full text-left px-3 py-2 rounded-md text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Plataforma
-                                de Finanças</a>
+                                class="block w-full text-left px-3 py-2 rounded-md text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Plataforma de Finanças</a>
                             <a href="#servicos"
-                                class="block w-full text-left px-3 py-2 rounded-md text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Sou
-                                Prestador de Serviços</a>
+                                class="block w-full text-left px-3 py-2 rounded-md text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Sou Prestador de Serviços</a>
                             <a href="#servicos"
-                                class="block w-full text-left px-3 py-2 rounded-md text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Ver
-                                todos os serviços</a>
+                                class="block w-full text-left px-3 py-2 rounded-md text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Ver todos os serviços</a>
                         </div>
                     </div>
                 </div>
                 <a href="#missao"
                     class="text-slate-700 dark:text-slate-300 hover:text-brand-primary dark:hover:text-brand-primary transition-colors duration-300">Missão</a>
-                <a href="/users/e-finance.html"
-                    class="text-slate-700 dark:text-slate-300 hover:text-brand-primary dark:hover:text-brand-primary transition-colors duration-300">Login</a>
-                <a href="#contato"
-                    class="bg-brand-primary hover:bg-brand-primary-dark text-white font-bold py-2 px-5 rounded-lg transition-transform duration-300 hover:scale-105">Fale
-                    Conosco</a>
+                
+                <button id="login-popup-button"
+                    class="bg-brand-primary hover:bg-brand-primary-dark text-white font-bold py-2 px-5 rounded-lg transition-transform duration-300 hover:scale-105">Login</button>
+                
                 <button id="theme-toggle"
                     class="p-2 rounded-full text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">
                     <svg id="theme-icon-light" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24"
@@ -189,28 +168,23 @@
                 </svg>
             </button>
         </div>
-        <!-- Mobile Menu -->
         <div id="mobile-menu" class="hidden md:hidden px-6 pb-4 bg-brand-light dark:bg-brand-dark">
             <a href="#objetivo"
-                class="block py-2 text-center text-slate-700 dark:text-slate-300 hover:text-brand-primary transition-colors duration-300">Nosso
-                Objetivo</a>
+                class="block py-2 text-center text-slate-700 dark:text-slate-300 hover:text-brand-primary transition-colors duration-300">Nosso Objetivo</a>
             <a href="#servicos"
                 class="block py-2 text-center text-slate-700 dark:text-slate-300 hover:text-brand-primary transition-colors duration-300">Serviços</a>
             <a href="#missao"
                 class="block py-2 text-center text-slate-700 dark:text-slate-300 hover:text-brand-primary transition-colors duration-300">Missão</a>
             <a href="#contato"
-                class="block mt-2 w-full bg-brand-primary hover:bg-brand-primary-dark text-white font-bold py-2 px-5 rounded-lg transition-transform duration-300 hover:scale-105 text-center">Fale
-                Conosco</a>
+                class="block mt-2 w-full bg-brand-primary hover:bg-brand-primary-dark text-white font-bold py-2 px-5 rounded-lg transition-transform duration-300 hover:scale-105 text-center">Fale Conosco</a>
         </div>
     </header>
 
-    <!-- Main Content -->
     <main>
-        <!-- Hero Section -->
         <section
             class="relative h-screen flex items-center justify-center text-center overflow-hidden bg-white dark:bg-brand-dark">
             <canvas id="particle-canvas" class="absolute inset-0 z-0"></canvas>
-            <div class="container mx-auto px-6 z-10">
+            <div class="container mx-auto px-6 z-10 flex flex-col items-center">
                 <h1
                     class="text-4xl md:text-6xl lg:text-7xl font-display font-extrabold text-slate-800 dark:text-white leading-tight mb-4 animate-fade-in-up">
                     Sua empresa na <span class="text-gradient">velocidade do futuro.</span>
@@ -218,16 +192,21 @@
                 <p id="typing-slogan"
                     class="text-lg md:text-xl text-slate-600 dark:text-slate-300 min-h-[56px] sm:min-h-[auto] max-w-3xl mx-auto mb-8 animate-fade-in-up"
                     style="animation-delay: 0.2s;"></p>
+                
                 <a href="#servicos"
                     class="bg-brand-primary hover:bg-brand-primary-dark text-white font-bold py-3 px-8 text-lg rounded-lg transition-transform duration-300 hover:scale-105 inline-block animate-fade-in-up"
                     style="animation-delay: 0.4s;">
                     Descubra Como
                 </a>
+                
+                <button id="existing-client-button" class="mt-6 text-slate-600 dark:text-slate-400 font-medium hover:text-brand-primary dark:hover:text-brand-primary transition-colors duration-300 animate-fade-in-up" style="animation-delay: 0.6s;">
+                    Já sou cliente
+                </button>
+
             </div>
         </section>
 
-        <!-- Objetivo Section -->
-        <section id="objetivo" class="py-20 lg:py-32 bg-brand-light dark:bg-slate-900">
+        <section id="objetivo" class="py-20 lg:py-32 bg-brand-light dark:bg-slate-900 overflow-hidden">
             <div class="container mx-auto px-6">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl md:text-4xl font-display font-bold text-slate-900 dark:text-white">Nosso <span
@@ -237,8 +216,7 @@
                         oportunidades, utilizando a tecnologia para impulsionar o crescimento do seu negócio.</p>
                 </div>
                 <div class="grid md:grid-cols-3 gap-10 text-center">
-                    <div
-                        class="bg-white dark:bg-slate-800 p-8 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-primary transition-all duration-300 transform hover:-translate-y-2 shadow-sm hover:shadow-xl">
+                    <div class="scroll-animate bg-white dark:bg-slate-800 p-8 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-primary transition-all duration-300 transform hover:-translate-y-2 shadow-sm hover:shadow-xl">
                         <div
                             class="flex items-center justify-center h-16 w-16 bg-brand-primary/10 text-brand-primary rounded-full mx-auto mb-6">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
@@ -254,8 +232,7 @@
                         <p class="text-slate-600 dark:text-slate-400">Implementamos soluções que geram resultados
                             visíveis em pouco tempo, validando cada passo da sua transformação digital.</p>
                     </div>
-                    <div
-                        class="bg-white dark:bg-slate-800 p-8 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-primary transition-all duration-300 transform hover:-translate-y-2 shadow-sm hover:shadow-xl">
+                    <div class="scroll-animate bg-white dark:bg-slate-800 p-8 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-primary transition-all duration-300 transform hover:-translate-y-2 shadow-sm hover:shadow-xl" style="transition-delay: 150ms;">
                         <div
                             class="flex items-center justify-center h-16 w-16 bg-brand-primary/10 text-brand-primary rounded-full mx-auto mb-6">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
@@ -271,8 +248,7 @@
                         <p class="text-slate-600 dark:text-slate-400">Fornecemos dados e ferramentas que transformam
                             informações em insights, permitindo que você tome as melhores decisões estratégicas.</p>
                     </div>
-                    <div
-                        class="bg-white dark:bg-slate-800 p-8 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-primary transition-all duration-300 transform hover:-translate-y-2 shadow-sm hover:shadow-xl">
+                    <div class="scroll-animate bg-white dark:bg-slate-800 p-8 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-primary transition-all duration-300 transform hover:-translate-y-2 shadow-sm hover:shadow-xl" style="transition-delay: 300ms;">
                         <div
                             class="flex items-center justify-center h-16 w-16 bg-brand-primary/10 text-brand-primary rounded-full mx-auto mb-6">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
@@ -291,7 +267,6 @@
             </div>
         </section>
 
-        <!-- Missão Section -->
         <section id="missao" class="py-20 lg:py-32 bg-brand-light dark:bg-brand-dark overflow-x-hidden">
             <div class="container mx-auto px-6">
                 <div class="text-center mb-20">
@@ -301,8 +276,7 @@
                         tecnologia para transformar e capacitar. Nossos pilares são o conhecimento e o crescimento.</p>
                 </div>
                 <div class="space-y-24">
-                    <!-- Mission Item 1 -->
-                    <div class="mission-section-item grid md:grid-cols-2 gap-12 items-center">
+                    <div class="scroll-animate grid md:grid-cols-2 gap-12 items-center">
                         <div class="text-center md:text-left">
                             <h3 class="text-2xl font-display font-bold text-slate-900 dark:text-white mb-4">Transmitir
                                 Conhecimento</h3>
@@ -310,17 +284,19 @@
                                 geração, oferecendo a jovens a oportunidade de mergulhar no mundo tecnológico,
                                 desenvolvendo habilidades que definirão o futuro e abrirão portas para carreiras
                                 inovadoras.</p>
+                            <a href="#" id="student-login-button" class="inline-block mt-6 bg-brand-primary/10 text-brand-primary font-bold py-2 px-5 rounded-lg transition-all duration-300 hover:bg-brand-primary hover:text-white">
+                                Sou Aluno
+                            </a>
                         </div>
                         <div
                             class="flex items-center justify-center bg-slate-100 dark:bg-slate-800/50 rounded-xl aspect-video p-8">
-                            <i class='bx  bx-brain'></i>
+                            <i class='bx bx-brain'></i>
                         </div>
                     </div>
-                    <!-- Mission Item 2 -->
-                    <div class="mission-section-item grid md:grid-cols-2 gap-12 items-center">
+                    <div class="scroll-animate grid md:grid-cols-2 gap-12 items-center" style="transition-delay: 200ms;">
                         <div
                             class="flex items-center justify-center bg-slate-100 dark:bg-slate-800/50 rounded-xl aspect-video p-8 md:order-last">
-                            <i class='bx  bx-store'></i>
+                            <i class='bx bx-store'></i>
                         </div>
                         <div class="text-center md:text-left">
                             <h3 class="text-2xl font-display font-bold text-slate-900 dark:text-white mb-4">Impulsionar
@@ -335,8 +311,7 @@
             </div>
         </section>
 
-        <!-- Serviços Section -->
-        <section id="servicos" class="py-20 lg:py-32 bg-slate-50 dark:bg-slate-900">
+        <section id="servicos" class="py-20 lg:py-32 bg-slate-50 dark:bg-slate-900 overflow-hidden">
             <div class="container mx-auto px-6">
                 <div class="text-center mb-16">
                     <h2 class="text-3xl md:text-4xl font-display font-bold text-slate-900 dark:text-white">Soluções
@@ -345,12 +320,11 @@
                         para sua necessidade e comece a transformação agora mesmo.</p>
                 </div>
                 <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    <!-- Service Cards -->
                     <div
-                        class="bg-white dark:bg-slate-800 rounded-xl overflow-hidden group flex flex-col border border-slate-200 dark:border-slate-700">
+                        class="scroll-animate bg-white dark:bg-slate-800 rounded-xl overflow-hidden group flex flex-col border border-slate-200 dark:border-slate-700">
                         <div class="p-8 flex-grow">
                             <div class="mb-4 text-brand-primary">
-                                <i class='bx  bx-dollar-circle mob2'></i>
+                                <i class='bx bx-dollar-circle mob2'></i>
                             </div>
                             <h3 class="text-2xl font-display font-bold text-slate-900 dark:text-white mb-3">Financeiro
                             </h3>
@@ -363,10 +337,10 @@
                             Organizar</a>
                     </div>
                     <div
-                        class="bg-white dark:bg-slate-800 rounded-xl overflow-hidden group flex flex-col border border-slate-200 dark:border-slate-700">
+                        class="scroll-animate bg-white dark:bg-slate-800 rounded-xl overflow-hidden group flex flex-col border border-slate-200 dark:border-slate-700" style="transition-delay: 150ms;">
                         <div class="p-8 flex-grow">
                             <div class="mb-4 text-brand-primary">
-                                <i class='bx  bx-laptop mob2'></i>
+                                <i class='bx bx-laptop mob2'></i>
                             </div>
                             <h3 class="text-2xl font-display font-bold text-slate-900 dark:text-white mb-3">Digitalizar
                                 meu Negócio</h3>
@@ -379,7 +353,7 @@
                             Digitalizar</a>
                     </div>
                     <div
-                        class="bg-white dark:bg-slate-800 rounded-xl overflow-hidden group flex flex-col border border-slate-200 dark:border-slate-700">
+                        class="scroll-animate bg-white dark:bg-slate-800 rounded-xl overflow-hidden group flex flex-col border border-slate-200 dark:border-slate-700" style="transition-delay: 300ms;">
                         <div class="p-8 flex-grow">
                             <div class="mb-4 text-brand-primary"><svg xmlns="http://www.w3.org/2000/svg" width="24"
                                     height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -400,7 +374,7 @@
                             Acessar</a>
                     </div>
                     <div
-                        class="bg-white dark:bg-slate-800 rounded-xl overflow-hidden group flex flex-col border border-slate-200 dark:border-slate-700">
+                        class="scroll-animate bg-white dark:bg-slate-800 rounded-xl overflow-hidden group flex flex-col border border-slate-200 dark:border-slate-700" style="transition-delay: 450ms;">
                         <div class="p-8 flex-grow">
                             <div class="mb-4 text-brand-primary"><svg xmlns="http://www.w3.org/2000/svg" width="24"
                                     height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -427,7 +401,6 @@
         </section>
     </main>
 
-    <!-- Footer -->
     <footer id="contato" class="bg-white dark:bg-brand-dark border-t border-gray-200 dark:border-slate-800">
         <div class="container mx-auto px-6 pt-16 pb-8">
             <div class="text-center mb-12">
@@ -482,7 +455,89 @@
         </div>
     </footer>
 
-    <!-- JavaScript for Interactions -->
+    <div id="login-popup" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden transition-opacity duration-300 opacity-0">
+        <div id="login-popup-content" class="bg-brand-light dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg transform transition-all duration-300 scale-95 opacity-0 overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-700 sticky top-0 bg-brand-light dark:bg-slate-800 z-10">
+                <h2 class="text-2xl font-display font-bold text-slate-800 dark:text-white">Acesse sua plataforma</h2>
+                <button id="close-popup-button" class="text-slate-500 dark:text-slate-400 hover:text-brand-primary dark:hover:text-brand-primary transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="p-8">
+                <div id="empreendimentos-section">
+                    <h4 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">Meus Empreendimentos</h4>
+                    <div class="flex overflow-x-auto snap-x snap-mandatory space-x-6 pb-4 scrollbar-hide">
+                        <div class="snap-start flex-shrink-0 w-4/5 sm:w-3/5">
+                            <div class="bg-white dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-700 h-full flex flex-col justify-between hover:border-brand-primary hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+                                <div>
+                                    <i class='bx bx-store-alt' style="font-size: 40px;"></i>
+                                    <h3 class="text-xl font-display font-bold text-slate-900 dark:text-white mt-3 mb-2">Minha Loja</h3>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Acesse o painel de gestão completo para seu negócio.</p>
+                                </div>
+                                <a href="/users/e-finance.html" class="block w-full text-center bg-brand-primary text-white font-bold py-2.5 px-4 rounded-lg hover:bg-brand-primary-dark transition-colors">Entrar</a>
+                            </div>
+                        </div>
+                        <div class="snap-start flex-shrink-0 w-4/5 sm:w-3/5">
+                            <div class="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-xl border border-slate-200 dark:border-slate-700 h-full flex flex-col justify-between opacity-60 cursor-not-allowed">
+                                <div>
+                                    <i class='bx bxs-dog text-slate-400 dark:text-slate-500' style="font-size: 40px;"></i>
+                                    <h3 class="text-xl font-display font-bold text-slate-500 dark:text-slate-400 mt-3 mb-2">Meu Pet</h3>
+                                    <p class="text-sm text-slate-400 dark:text-slate-500 mb-6">Gestão para petshops e clínicas veterinárias.</p>
+                                </div>
+                                <div class="w-full text-center bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 font-bold py-2.5 px-4 rounded-lg">
+                                    Em desenvolvimento
+                                </div>
+                            </div>
+                        </div>
+                        <div class="snap-start flex-shrink-0 w-4/5 sm:w-3/5">
+                            <div class="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-xl border border-slate-200 dark:border-slate-700 h-full flex flex-col justify-between opacity-60 cursor-not-allowed">
+                                <div>
+                                    <i class='bx bx-dumbbell text-slate-400 dark:text-slate-500' style="font-size: 40px;"></i>
+                                    <h3 class="text-xl font-display font-bold text-slate-500 dark:text-slate-400 mt-3 mb-2">Minha Academia</h3>
+                                    <p class="text-sm text-slate-400 dark:text-slate-500 mb-6">Sistema para academias e estúdios.</p>
+                                </div>
+                                <div class="w-full text-center bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 font-bold py-2.5 px-4 rounded-lg">
+                                    Em desenvolvimento
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="estudo-section" class="mt-8">
+                    <h4 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">Área de Estudo</h4>
+                     <div class="flex overflow-x-auto snap-x snap-mandatory space-x-6 pb-4 scrollbar-hide">
+                        <div class="snap-start flex-shrink-0 w-4/5 sm:w-3/5">
+                            <div class="bg-white dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-700 h-full flex flex-col justify-between hover:border-brand-primary hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+                                <div>
+                                    <i class='bx bx-book-open' style="font-size: 40px;"></i>
+                                    <h3 class="text-xl font-display font-bold text-slate-900 dark:text-white mt-3 mb-2">Aprenda+</h3>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Revise conteúdos para o enem e componentes aos quais está com dificuldade em sua escola.</p>
+                                </div>
+                                <a href="/area.aluno/estudante.html" class="block w-full text-center bg-brand-primary text-white font-bold py-2.5 px-4 rounded-lg hover:bg-brand-primary-dark transition-colors">Acessar</a>
+                            </div>
+                        </div>
+                        <div class="snap-start flex-shrink-0 w-4/5 sm:w-3/5">
+                            <div class="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-xl border border-slate-200 dark:border-slate-700 h-full flex flex-col justify-between opacity-60 cursor-not-allowed">
+                                <div>
+                                    <i class='bx bx-line-chart text-slate-400 dark:text-slate-500' style="font-size: 40px;"></i>
+                                    <h3 class="text-xl font-display font-bold text-slate-500 dark:text-slate-400 mt-3 mb-2">Financeiro</h3>
+                                    <p class="text-sm text-slate-400 dark:text-slate-500 mb-6">Aprenda mais sobre o mundo das finanças e esteja preparado para o futuro.</p>
+                                </div>
+                                <div class="w-full text-center bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 font-bold py-2.5 px-4 rounded-lg">
+                                    Em desenvolvimento
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- Theme Toggle ---
@@ -504,8 +559,7 @@
             };
 
             const savedTheme = localStorage.getItem('theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+            const initialTheme = savedTheme || 'light';
             applyTheme(initialTheme);
 
             themeToggleBtn.addEventListener('click', () => {
@@ -525,6 +579,59 @@
                 link.addEventListener('click', () => {
                     mobileMenu.classList.add('hidden');
                 });
+            });
+
+            // --- Login Pop-up Modal Logic ---
+            const loginPopup = document.getElementById('login-popup');
+            const loginPopupContent = document.getElementById('login-popup-content');
+            const closePopupButton = document.getElementById('close-popup-button');
+            const empreendimentosSection = document.getElementById('empreendimentos-section');
+            const estudoSection = document.getElementById('estudo-section');
+
+            const openModal = (mode = 'default') => {
+                if (!loginPopup || !empreendimentosSection || !estudoSection) return;
+
+                if (mode === 'student') {
+                    empreendimentosSection.classList.add('hidden');
+                    estudoSection.classList.remove('hidden');
+                } else { 
+                    empreendimentosSection.classList.remove('hidden');
+                    estudoSection.classList.remove('hidden');
+                }
+
+                loginPopup.classList.remove('hidden');
+                setTimeout(() => {
+                    loginPopup.classList.remove('opacity-0');
+                    loginPopupContent.classList.remove('opacity-0', 'scale-95');
+                }, 10);
+            };
+
+            const closeModal = () => {
+                if (!loginPopup) return;
+                loginPopup.classList.add('opacity-0');
+                loginPopupContent.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => {
+                    loginPopup.classList.add('hidden');
+                }, 300);
+            };
+
+            document.getElementById('login-popup-button')?.addEventListener('click', () => openModal('default'));
+            document.getElementById('existing-client-button')?.addEventListener('click', () => openModal('default'));
+            document.getElementById('student-login-button')?.addEventListener('click', (e) => {
+                e.preventDefault(); 
+                openModal('student');
+            });
+
+            if (closePopupButton) closePopupButton.addEventListener('click', closeModal);
+            if (loginPopup) {
+                loginPopup.addEventListener('click', (event) => {
+                    if (event.target === loginPopup) closeModal();
+                });
+            }
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && !loginPopup.classList.contains('hidden')) {
+                    closeModal();
+                }
             });
 
             // --- Typing Animation ---
@@ -547,14 +654,17 @@
                 type();
             }
 
-            // --- Mission Section Scroll Animation ---
-            const missionItems = document.querySelectorAll('.mission-section-item');
-            const missionObserver = new IntersectionObserver((entries) => {
+            // --- Scroll Animations ---
+            const animatedItems = document.querySelectorAll('.scroll-animate');
+            const scrollObserver = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
-                    entry.target.classList.toggle('is-visible', entry.isIntersecting);
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        scrollObserver.unobserve(entry.target); 
+                    }
                 });
-            }, { threshold: 0.2 });
-            missionItems.forEach(item => missionObserver.observe(item));
+            }, { threshold: 0.1 });
+            animatedItems.forEach(item => scrollObserver.observe(item));
 
             // --- Particle Canvas Animation for Hero ---
             const canvas = document.getElementById('particle-canvas');
