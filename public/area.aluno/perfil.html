@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Perfil | Área do Aluno</title>
+    <link rel="stylesheet" href="style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+    <script src="auth.js"></script>
+    
+    <main id="profileScreen" class="screen active">
+        <header class="header-dash">
+            <a href="estudante.html" class="back-button-header"><i class='bx bx-chevron-left'></i></a>
+            <h1>Meu Perfil</h1>
+        </header>
+
+        <div class="main-content">
+            <div class="profile-header">
+                <div class="profile-photo-placeholder">
+                    <i class='bx bxs-user'></i>
+                </div>
+                <h2 id="profileName">Carregando...</h2>
+                <p>Turma: M3MNM02</p>
+            </div>
+
+            <ul class="profile-info-list">
+                <li><span class="label">Escola</span> <span class="value">EEEM IRMA AGNES VINCQUIER</span></li>
+                <li><span class="label">Data de Nascimento</span> <span class="value" id="profileBirthDate"></span></li>
+            </ul>
+
+            <h3 class="section-title" style="margin-top: 40px;">Conquistas</h3>
+            <div class="conquistas-container">
+                <div class="conquista-item locked"><i class='bx bxs-lock'></i><span>Iniciante</span></div>
+                <div class="conquista-item locked"><i class='bx bxs-lock'></i><span>Mestre das Funções</span></div>
+                <div class="conquista-item locked"><i class='bx bxs-lock'></i><span>Rei da Geometria</span></div>
+            </div>
+
+            <button id="logoutButton" class="btn-default" style="background-color: var(--gray-text); width: 100%; margin-top: 30px;">Sair</button>
+        </div>
+    </main>
+
+    <nav class="navigation">
+        <ul>
+            <li class="list" data-page="estudante.html">
+                <a href="estudante.html">
+                    <span class="icon"><i class='bx bxs-home'></i></span>
+                    <span class="text">Trilha</span>
+                </a>
+            </li>
+            <li class="list" data-page="revisao.html">
+                <a href="revisao.html">
+                    <span class="icon"><i class='bx bxs-file-find'></i></span>
+                    <span class="text">Revisão</span>
+                </a>
+            </li>
+            <li class="list active" data-page="perfil.html">
+                <a href="perfil.html">
+                    <span class="icon"><i class='bx bxs-user-circle'></i></span>
+                    <span class="text">Perfil</span>
+                </a>
+            </li>
+            <div class="indicator"></div>
+        </ul>
+    </nav>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const userToken = JSON.parse(localStorage.getItem('studentToken'));
+            if (userToken) {
+                document.getElementById('profileName').textContent = userToken.name;
+                document.getElementById('profileBirthDate').textContent = userToken.birthDate;
+            }
+
+            document.getElementById('logoutButton').addEventListener('click', () => {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            });
+        });
+    </script>
+</body>
+</html>

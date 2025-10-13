@@ -1,48 +1,96 @@
 // --- BANCO DE QUESTÕES ESTRUTURADO PELAS HABILIDADES DO PDF ---
 
 const quizzes = {
-    // --- MÓDULO 1: FUNÇÕES (MAIORES DIFICULDADES) ---
+
     'trilha-h08': {
         id: 'trilha-h08',
         title: 'H08: Gráfico e a Lei da Função Afim',
+        videoId: 'bUP_ft_G-L4',
+        
+        tip: {
+            text: "Pense no gráfico como um mapa! A regra <strong>f(x) = ax + b</strong> é o segredo para desenhar a linha reta.<br><br><strong>'b' é o ponto de partida:</strong> É onde a linha cruza o 'elevador' (eixo Y). O ponto (0, 5) nos diz que começamos no 5º andar. Então, <strong>b = 5</strong>.<br><br><strong>'a' é o segredo da inclinação:</strong> Ele diz quantos andares subimos para cada passo que damos para a direita. Para ir do ponto (0, 5) ao (2, 11), demos 2 passos para a direita e subimos 6 andares (de 5 para 11). Quantos andares subimos por passo?",
+            type: 'graph',
+            data: {
+                points: [{x: 0, y: 5}, {x: 2, y: 11}],
+                range: {xMin: -2, xMax: 12, yMin: -2, yMax: 12}
+            }
+        },
+
         questions: [
             {
-                type: 'multipleChoice',
-                question: "O gráfico de uma função afim, f(x) = ax + b, passa pelos pontos (0, 5) e (2, 11). Qual é a lei de formação dessa função?",
-                options: { a: "f(x) = 5x + 3", b: "f(x) = 2x + 5", c: "f(x) = 3x + 5", d: "f(x) = 6x + 5" },
-                answer: "c",
-                tipType: 'graph',
-                tipData: {
-                    points: [{x: 0, y: 5}, {x: 2, y: 11}],
-                    range: {xMin: -2, xMax: 12, yMin: -2, yMax: 12} // Define a área visível do gráfico
-                },
-                tip: "Pense no gráfico como um mapa! A regra <strong>f(x) = ax + b</strong> é o segredo para desenhar a linha reta.<br><br><strong>'b' é o ponto de partida:</strong> É onde a linha cruza o 'elevador' (eixo Y). O ponto (0, 5) nos diz que começamos no 5º andar. Então, <strong>b = 5</strong>.<br><br><strong>'a' é o segredo da inclinação:</strong> Ele diz quantos andares subimos para cada passo que damos para a direita. Para ir do ponto (0, 5) ao (2, 11), demos 2 passos para a direita e subimos 6 andares (de 5 para 11). Quantos andares subimos por passo?",
-                example: {
-                    problem: "<strong>Exemplo Mágico:</strong> Uma reta passa pelo ponto de partida (0, 1) e pelo ponto (2, 5). Vamos descobrir a regra dela!",
-                    tipType: 'graph',
-                    tipData: {
-                        points: [{x: 0, y: 1}, {x: 2, y: 5}],
-                        range: {xMin: -2, xMax: 6, yMin: -2, yMax: 6}
+                steps: [
+                    {
+                        header: "Passo 1: Encontre o valor de 'b'",
+                        instruction: "A fórmula é <strong>f(x) = ax + b</strong>. O ponto <strong>(0, 5)</strong> nos mostra o valor de 'b'. Preencha a lacuna:",
+                        template: "f(x) = ax + {blank}",
+                        blankOptions: [5, 0, 2, 11],
+                        correctAnswer: 5,
+                        explanation: "Correto! O valor de 'b' é sempre a coordenada Y quando a coordenada X é 0."
                     },
-                    text: "<strong>Passo 1: Achar o 'b'.</strong><br>O ponto de partida no 'elevador' Y é (0, 1). Então, <strong>b = 1</strong>. Nossa regra começa assim: f(x) = ax + 1.<br><br><strong>Passo 2: Achar o 'a'.</strong><br>Para ir de (0, 1) até (2, 5), demos 2 passos para a direita e subimos 4 andares (de 1 para 5).<br>Se subimos 4 andares em 2 passos, quantos andares subimos por passo?<br>4 ÷ 2 = 2. Então, <strong>a = 2</strong>.<br><br><strong>Resposta Mágica:</strong> A regra é <strong>f(x) = 2x + 1</strong>!"
-                }
-            },
-            {
-                type: 'multipleChoice',
-                question: "Um gráfico de uma função do 1º grau intercepta o eixo y no ponto -2 e passa pelo ponto (3, 7). Qual é a expressão algébrica que representa essa função?",
-                options: { a: "y = 3x - 2", b: "y = -2x + 3", c: "y = 7x + 3", d: "y = 9x - 2" },
-                answer: "a",
-                tip: "O coeficiente linear (b) é o ponto onde o gráfico corta o eixo y. Use o outro ponto para encontrar o coeficiente angular (a)."
-            },
-            {
-                type: 'multipleChoice',
-                question: "Analisando um gráfico, vemos uma reta decrescente que passa pelos pontos (0, 4) e (2, 0). Qual função corresponde a este gráfico?",
-                options: { a: "f(x) = 4x + 2", b: "f(x) = 2x + 4", c: "f(x) = -2x + 4", d: "f(x) = -4x + 2" },
-                answer: "c",
-                tip: "Uma reta decrescente possui um coeficiente angular (a) negativo. O ponto onde x=0 indica o coeficiente linear (b)."
+                    {
+                        header: "Passo 2: Substitua o valor de 'y'",
+                        instruction: "Agora vamos usar o outro ponto, <strong>(2, 11)</strong>, na fórmula base <strong>y = ax + b</strong>. Em (x, y), qual número representa o 'y'?",
+                        template: "{blank} = a * x + b",
+                        blankOptions: [11, 2, 5, 0],
+                        correctAnswer: 11,
+                        explanation: "Perfeito! Em um ponto (x, y), o segundo número é sempre o valor de y."
+                    },
+                    {
+                        header: "Passo 2: Substitua o valor de 'x'",
+                        instruction: "Ótimo! Agora, na mesma fórmula e usando o mesmo ponto <strong>(2, 11)</strong>, qual número representa o 'x'?",
+                        template: "11 = a * {blank} + b",
+                        blankOptions: [2, 11, 5, 0],
+                        correctAnswer: 2,
+                        explanation: "Isso! O primeiro número no par (x, y) é sempre o valor de x."
+                    },
+                    {
+                        header: "Passo 2: Substitua o valor de 'b'",
+                        instruction: "Excelente! Para completar a equação, qual foi o valor de 'b' que encontramos no Passo 1?",
+                        template: "11 = a * 2 + {blank}",
+                        blankOptions: [5, 11, 2, 3],
+                        correctAnswer: 5,
+                        explanation: "Exatamente! Esse foi o ponto de partida que encontramos antes."
+                    },
+                    {
+                        header: "Passo 3: Resolvendo para 'a' - Parte 1",
+                        instruction: "Agora temos a equação <strong>11 = a * 2 + 5</strong>. Para isolar o 'a', primeiro passamos o <strong>+5</strong> para o outro lado. Lembre-se: ele muda o sinal! Preencha a operação correta:",
+                        template: "11 {blank} 5 = a * 2",
+                        blankOptions: ["-", "+", "×", "÷"],
+                        correctAnswer: "-",
+                        explanation: "Isso mesmo! O que é positivo de um lado, vira negativo do outro."
+                    },
+                    {
+                        header: "Passo 3: Resolvendo para 'a' - Parte 2",
+                        instruction: "Perfeito. Agora, quanto é <strong>11 - 5</strong>?",
+                        template: "{blank} = a * 2",
+                        blankOptions: [6, 16, -6, 5],
+                        correctAnswer: 6,
+                        explanation: "Ótimo! Simplificamos a equação."
+                    },
+                    {
+                        header: "Passo 3: Resolvendo para 'a' - Parte 3",
+                        instruction: "Estamos quase lá! Agora temos <strong>6 = a * 2</strong>. O <strong>* 2</strong> passa para o outro lado dividindo. Qual o resultado final de 'a'?",
+                        template: "{blank} = a",
+                        blankOptions: [3, 4, 12, 8],
+                        correctAnswer: 3,
+                        explanation: "Correto! 6 dividido por 2 é igual a 3. Você encontrou o coeficiente angular!"
+                    },
+                    {
+                        header: "Passo Final: Monte a função",
+                        instruction: "Junte os valores de 'a' e 'b' que você descobriu para formar a lei da função.",
+                        template: "f(x) = {blank}x + {blank}",
+                        correctAnswers: [3, 5], 
+                        blankOptions: [
+                            [3, 2, 5, 11],
+                            [5, 11, 3, 2]
+                        ],
+                        explanation: "Perfeito! Você montou a função corretamente."
+                    }
+                ]
             }
         ]
     },
+
     'trilha-h12': {
         id: 'trilha-h12',
         title: 'H12: Identificando Funções Exponenciais',

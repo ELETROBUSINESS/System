@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/assets/img/iconWeb.png">
+    <title>Login | Área do Aluno</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="loginScreen" class="screen active">
+        <div class="container">
+            <h1>Bem-vindo(a) de volta!</h1>
+            <p>Por favor, identifique-se para continuar sua jornada de aprendizado.</p>
+            <form id="loginForm">
+                <div class="input-box">
+                    <label class="form-label" for="studentNameInput">Nome Completo:</label>
+                    <input class="form-control" type="text" id="studentNameInput" required>
+                </div>
+                <div class="input-box">
+                    <label class="form-label" for="studentBirthDateInput">Data de Nascimento:</label>
+                    <input class="form-control" type="text" id="studentBirthDateInput" placeholder="DD/MM/AAAA" maxlength="10" required>
+                </div>
+                <button type="submit" class="btn-default" style="width: 100%; margin-top: 20px;">Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Se o usuário já estiver logado, redireciona para o dashboard
+            if (localStorage.getItem('studentToken')) {
+                window.location.href = 'estudante.html';
+            }
+
+            const loginForm = document.getElementById('loginForm');
+            const studentBirthDateInput = document.getElementById('studentBirthDateInput');
+
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = document.getElementById('studentNameInput').value;
+                const birthDate = studentBirthDateInput.value;
+                const userToken = { name, birthDate };
+                localStorage.setItem('studentToken', JSON.stringify(userToken));
+
+                // Inicializa dados se for o primeiro login
+                if (!localStorage.getItem('studentXP')) {
+                    localStorage.setItem('studentXP', '0');
+                    localStorage.setItem('studentStreak', '0');
+                    localStorage.setItem('studentPoints', '0');
+                    localStorage.setItem('studentLives', '1000'); // Vidas ajustadas para 1000
+                    localStorage.setItem('completedQuizzes', JSON.stringify([]));
+                }
+                
+                window.location.href = 'estudante.html';
+            });
+
+            // Máscara para data de nascimento
+            studentBirthDateInput.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 2) value = `${value.slice(0, 2)}/${value.slice(2)}`;
+                if (value.length > 5) value = `${value.slice(0, 5)}/${value.slice(5, 9)}`;
+                e.target.value = value;
+            });
+        });
+    </script>
+</body>
+</html>
