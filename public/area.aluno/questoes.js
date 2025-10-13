@@ -5,7 +5,7 @@ const quizzes = {
     'trilha-h08': {
         id: 'trilha-h08',
         title: 'H08: Gráfico e a Lei da Função Afim',
-        videoId: 'bUP_ft_G-L4',
+        videoId: '9U3rkjaVp7I',
         
         tip: {
             text: "Pense no gráfico como um mapa! A regra <strong>f(x) = ax + b</strong> é o segredo para desenhar a linha reta.<br><br><strong>'b' é o ponto de partida:</strong> É onde a linha cruza o 'elevador' (eixo Y). O ponto (0, 5) nos diz que começamos no 5º andar. Então, <strong>b = 5</strong>.<br><br><strong>'a' é o segredo da inclinação:</strong> Ele diz quantos andares subimos para cada passo que damos para a direita. Para ir do ponto (0, 5) ao (2, 11), demos 2 passos para a direita e subimos 6 andares (de 5 para 11). Quantos andares subimos por passo?",
