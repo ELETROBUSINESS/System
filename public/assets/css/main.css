@@ -2734,3 +2734,152 @@ section {
     width: 180px;
     height: 42px;
 }
+
+
+/* ============================================= */
+/* ANIMAÇÕES SUGERIDAS                           */
+/* ============================================= */
+
+/* Animação de Fade-in e subida suave */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* Aplicação com delay para um efeito escalonado */
+.card-option a {
+  animation: fadeInUp 0.5s ease-out forwards;
+  opacity: 0; /* Começa invisível */
+}
+
+/* Adiciona um atraso diferente para cada botão */
+.card-option:nth-child(1) a { animation-delay: 0.1s; }
+.card-option:nth-child(2) a { animation-delay: 0.2s; }
+.card-option:nth-child(3) a { animation-delay: 0.3s; }
+.card-option:nth-child(4) a { animation-delay: 0.4s; }
+.card-option:nth-child(5) a { animation-delay: 0.5s; }
+
+/* Animação para a troca de valor do faturamento */
+@keyframes fade-in-out {
+  0% { opacity: 1; }
+  50% { opacity: 0; transform: translateY(-5px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.valor-faturamento-animando {
+  animation: fade-in-out 0.4s ease-in-out;
+}
+
+
+/* =================================================================== */
+/* CSS RESPONSIVO PARA VERSÃO DESKTOP (Telas maiores que 992px)      */
+/* =================================================================== */
+
+@media screen and (min-width: 992px) {
+
+    /* 1. Abre espaço na página para a nova barra lateral */
+    body {
+        padding-left: 260px; /* Largura da barra lateral */
+    }
+
+    /* 2. Transforma a navegação de rodapé em barra lateral fixa */
+    .navigation {
+        position: fixed; /* Fixa a barra na tela */
+        left: 0;
+        top: 0;
+        width: 260px; /* Define a largura da barra */
+        height: 100vh; /* Ocupa 100% da altura da tela */
+        
+        background: #ffffff; /* Cor da navbar branca */
+        border-right: 1px solid #f0f0f0; /* Efeito de borda sutil */
+        box-shadow: 4px 0 15px rgba(0, 0, 0, 0.04); /* Sombra para profundidade */
+
+        flex-direction: column; /* Organiza os itens verticalmente */
+        justify-content: flex-start; /* Alinha os itens ao topo */
+        padding: 2rem 1rem; /* Adiciona espaçamento interno */
+        border-radius: 0;
+        z-index: 1000;
+    }
+
+    .navigation ul {
+        flex-direction: column; /* Empilha os itens da lista */
+        width: 100%;
+        gap: 0.5rem; /* Espaço entre os botões */
+    }
+
+    .navigation ul li {
+        width: 100%;
+        height: auto;
+    }
+
+    .navigation ul li a {
+        flex-direction: row; /* Alinha ícone e texto lado a lado */
+        justify-content: flex-start; /* Alinha à esquerda */
+        padding: 0.9rem 1rem;
+        border-radius: 8px;
+        gap: 1rem; /* Espaço entre ícone e texto */
+    }
+    
+    /* Faz o texto ficar sempre visível e com a cor correta */
+    .navigation ul li a .text {
+        position: static;
+        opacity: 1;
+        transform: none;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: #555; /* Cor escura para o texto padrão */
+    }
+    
+    /* --- ALTERAÇÃO PRINCIPAL AQUI --- */
+    /* Estilo para TODOS os ícones no desktop (ativo ou não) */
+    .navigation ul li a .icon {
+        transform: none !important; /* Garante que o ícone NÃO se mova para cima */
+        line-height: 1;
+        color: #555; /* Cor escura para o ícone padrão */
+        opacity: 0.8;
+    }
+
+    /* Estilo para o item ATIVO (vermelho) */
+    .navigation ul li.active a {
+        background-color: var(--bs-color); /* Fundo vermelho */
+    }
+
+    /* Muda a cor do ícone e do texto APENAS quando o item está ativo */
+    .navigation ul li.active a .icon,
+    .navigation ul li.active a .text {
+        color: var(--secondary-color); /* Texto e ícone brancos */
+        opacity: 1;
+    }
+    
+    /* Esconde o indicador circular do menu mobile */
+    .navigation .indicator {
+        display: none;
+    }
+
+    /* Esconde os botões de ação na versão de PC */
+    .option {
+        display: none;
+    }
+
+    /* Centraliza e limita a largura do conteúdo principal para melhor leitura */
+    .main-content {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    /* Garante que o banner continue no lugar certo */
+    .info {
+        border-radius: 20px;
+    }
+}
