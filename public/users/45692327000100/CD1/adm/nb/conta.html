@@ -7,7 +7,7 @@
     <link rel="icon" href="/assets/img/iconWeb.png">
     <title>Minha Empresa | D'TUDO</title>
 
-    <link rel="stylesheet" href="/assets/css/main.css">
+     <link rel="stylesheet" href="/assets/css/main.css">
     <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
@@ -17,42 +17,27 @@
 <body class="painel-adm1" onload="AnimationLoading()">
 
     <script>
-        (function () {
-            // Pega o token de sessão do armazenamento local do navegador (Curta validade: 30 minutos)
+        (function() {
             const tokenString = localStorage.getItem('session_token');
-
-            // Define o URL de redirecionamento para o login
-            const LOGIN_URL = '/users/e-finance.html'; // <--- CORREÇÃO AQUI
-
-            // Se não existir um token de sessão, o acesso é negado
+            const LOGIN_URL = '/users/e-finance.html';
             if (!tokenString) {
                 console.log("Acesso negado: Nenhum token de sessão encontrado.");
-                // Redireciona para a página de login
                 window.location.href = LOGIN_URL;
                 return;
             }
-
             try {
                 const token = JSON.parse(tokenString);
-                const agora = new Date().getTime();
-
-                // Verifica se a data de expiração do token de sessão já passou
-                if (agora > token.expires) {
+                if (new Date().getTime() > token.expires) {
                     console.log("Acesso negado: O token de sessão expirou.");
-                    // Limpa o token expirado do armazenamento
                     localStorage.removeItem('session_token');
-                    // Redireciona para a página de login
-                    window.location.href = LOGIN_URL; // <--- CORREÇÃO AQUI
+                    window.location.href = LOGIN_URL;
                 } else {
-                    // Se o token for válido, permite o acesso à página
                     console.log('Acesso permitido. Bem-vindo, ' + token.username);
                 }
             } catch (error) {
-                // Se o token estiver corrompido ou mal formatado
                 console.error('Erro ao processar o token de sessão:', error);
                 localStorage.removeItem('session_token');
-                // Redireciona para a página de login por segurança
-                window.location.href = LOGIN_URL; // <--- CORREÇÃO AQUI
+                window.location.href = LOGIN_URL;
             }
         })();
     </script>
@@ -71,30 +56,22 @@
         const MENSAGEM_KEY = 'ultimaMensagemEletro';
         const INTERVALO_HORAS = 20;
         const INTERVALO_MS = INTERVALO_HORAS * 60 * 60 * 1000;
-
         const agora = new Date().getTime();
         const ultimaVisualizacao = localStorage.getItem(MENSAGEM_KEY);
-
         const mensagemEl = document.querySelector('.mensagerLocal');
 
-        // Se nunca viu ou já passou 20 horas
         if (!ultimaVisualizacao || (agora - parseInt(ultimaVisualizacao)) > INTERVALO_MS) {
             mensagemEl.style.display = 'flex';
-
-            // Começa animação de desaparecimento após 10s
             setTimeout(() => {
                 mensagemEl.style.transition = "opacity 0.5s ease";
                 mensagemEl.style.opacity = 0;
-
                 setTimeout(() => {
                     mensagemEl.style.display = "none";
                 }, 500);
             }, 6200);
-
-            // Salva data/hora da visualização
             localStorage.setItem(MENSAGEM_KEY, agora);
         } else {
-            mensagemEl.style.display = 'none'; // Oculta imediatamente
+            mensagemEl.style.display = 'none';
         }
     </script>
     <header>
@@ -117,31 +94,27 @@
                 <p>Saldo</p>
                 <div class="saldo">
                     <span id="valor1" class="skeleton shimmer"></span>
-                    <i class='bx  bx-eye' id="toggle-balance-icon"></i>
+                    <i class='bx bx-eye' id="toggle-balance-icon"></i>
                 </div>
                 <div class="pending">
                     <p>Vendas a receber: </p>
                     <span id="valor2" class="skeleton shimmer"></span>
                 </div>
             </div>
-            <!--<div class="border"></div>-->
         </div>
+
         <div class="new_nav">
             <script>
                 document.addEventListener('DOMContentLoaded', () => {
                     const url = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=1`;
-
                     const valor1Element = document.getElementById('valor1');
                     const valor2Element = document.getElementById('valor2');
                     const toggleIcon = document.getElementById('toggle-balance-icon');
 
                     let valor1Original = '';
                     let valor2Original = '';
-
-                    // Inicializa a visibilidade, padrão para 'false' se não existir no localStorage
                     let isBalanceVisible = localStorage.getItem('balanceVisible') === 'true';
 
-                    // Função para alternar a exibição dos valores e o ícone
                     function toggleBalanceDisplay() {
                         if (isBalanceVisible) {
                             valor1Element.textContent = valor1Original;
@@ -150,34 +123,23 @@
                             valor1Element.textContent = 'R$ *******';
                             valor2Element.textContent = 'R$ ********';
                         }
-
-                        // Use toggle para adicionar/remover as classes do ícone de forma mais simples
                         toggleIcon.classList.toggle('bx-eye', isBalanceVisible);
                         toggleIcon.classList.toggle('bx-eye-closed', !isBalanceVisible);
                     }
 
-                    // Lógica de fetch para buscar os dados
                     fetch(url)
                         .then(response => response.json())
                         .then(data => {
-                            if (valor1Element) {
-                                valor1Original = data.valor1;
-                                valor1Element.classList.remove('skeleton', 'shimmer');
-                            }
-                            if (valor2Element) {
-                                valor2Original = data.valor2;
-                                valor2Element.classList.remove('skeleton', 'shimmer');
-                            }
-                            // Atualiza a exibição inicial dos valores
+                            valor1Original = data.valor1;
+                            valor2Original = data.valor2;
+                            valor1Element.classList.remove('skeleton', 'shimmer');
+                            valor2Element.classList.remove('skeleton', 'shimmer');
                             toggleBalanceDisplay();
-                        })
-                        .catch(error => {
-                            console.error('Erro ao buscar dados:', error);
-                            valor1Element.textContent = 'Erro ao carregar';
-                            valor2Element.textContent = 'Erro ao carregar';
+                        }).catch(error => {
+                            valor1Element.textContent = 'Erro';
+                            valor2Element.textContent = 'Erro';
                         });
 
-                    // Adiciona o evento de clique ao ícone
                     if (toggleIcon) {
                         toggleIcon.addEventListener('click', () => {
                             isBalanceVisible = !isBalanceVisible;
@@ -190,40 +152,36 @@
 
             <div class="conta-info">
                 <p>Prestes a vencer</p>
-                <a href="/users/45692327000100/CD1/adm/nb/manager.html">
-                    <div class="containerCard fade-in-up">
-                        <div class="card-optionSizeMain">
-                            <div class="card-optionSize">
-                                <i class='bx  bx-receipt'  ></i> 
-                                <div class="boleto-content-row">
-                                    <div class="boleto-details">
-                                        <h1 id="boletoEmpresa"></h1>
-                                        <span id="boletoValor"></span>
-                                    </div>
-                                    <div class="boleto-due-date">
-                                        <span class="lpan" id="boletoVencimento"></span>
-                                        <a href="/users/45692327000100/CD1/adm/nb/manager.html" class="add-btn-plus">
-                                            <i class='bx bx-plus'></i>
-                                        </a>
-                                    </div>
+                <div class="containerCard">
+                    <div class="card-optionSizeMain">
+                        <div class="card-optionSize">
+                            <i class='bx bx-receipt'></i>
+                            <div class="boleto-content-row">
+                                <div class="boleto-details">
+                                    <h1 id="boletoEmpresa">Carregando...</h1>
+                                    <span id="boletoValor"></span>
+                                </div>
+                                <div class="boleto-due-date">
+                                    <span class="lpan" id="boletoVencimento"></span>
+                                    <a href="/users/45692327000100/CD1/adm/nb/manager.html" class="add-btn-plus">
+                                        <i class='bx bx-plus'></i>
+                                    </a>
                                 </div>
                             </div>
-
-                            <!-- Indicadores de paginação -->
-                            <div id="paginationIndicators" class="pagination-indicators-container"></div>
                         </div>
+                        <div id="paginationIndicators" class="pagination-indicators-container"></div>
                     </div>
-                </a>
+                </div>
 
                 <script>
                     document.addEventListener('DOMContentLoaded', () => {
                         const url = 'https://script.google.com/macros/s/AKfycbzkAs8dsJMepkQBhdL--XwO3wUQuQgvA-DFPEwraiz8ijiX9gkPMBuAeM5udQjzmJvzqQ/exec?action=getContas';
-
                         let contas = [];
                         let currentIndex = 0;
                         const displayDuration = 5000;
                         let intervalId;
 
+                        const cardContent = document.querySelector('.card-optionSize');
                         const boletoEmpresa = document.getElementById('boletoEmpresa');
                         const boletoValor = document.getElementById('boletoValor');
                         const boletoVencimento = document.getElementById('boletoVencimento');
@@ -232,7 +190,6 @@
                         function createPaginationIndicators() {
                             paginationIndicators.innerHTML = '';
                             if (contas.length <= 1) return;
-
                             for (let i = 0; i < contas.length; i++) {
                                 const dot = document.createElement('div');
                                 dot.classList.add('pagination-dot');
@@ -244,31 +201,28 @@
                             if (contas.length === 0) {
                                 boletoEmpresa.textContent = "Nenhuma conta pendente";
                                 boletoValor.textContent = "Você está em dia! ✨";
-                                boletoVencimento.textContent = "";
                                 paginationIndicators.innerHTML = '';
                                 return;
                             }
 
-                            const dots = document.querySelectorAll('.pagination-dot');
                             const currentConta = contas[currentIndex];
+                            cardContent.classList.add('slide-out-up');
 
-                            boletoEmpresa.textContent = currentConta.descricao;
-                            const valor = parseFloat(currentConta.valor);
-                            boletoValor.textContent = `R$ ${valor.toFixed(2).replace('.', ',')}`;
-                            boletoVencimento.textContent = currentConta.vencimento;
+                            setTimeout(() => {
+                                boletoEmpresa.textContent = currentConta.descricao;
+                                boletoValor.textContent = `R$ ${parseFloat(currentConta.valor).toFixed(2).replace('.', ',')}`;
+                                boletoVencimento.textContent = currentConta.vencimento;
+                                
+                                cardContent.classList.remove('slide-out-up');
+                                cardContent.classList.add('slide-in-down');
 
-                            dots.forEach((dot, index) => {
-                                dot.classList.toggle('active', index === currentIndex);
-                            });
+                                const dots = document.querySelectorAll('.pagination-dot');
+                                dots.forEach((dot, index) => dot.classList.toggle('active', index === currentIndex));
+
+                                setTimeout(() => cardContent.classList.remove('slide-in-down'), 500);
+                            }, 250);
 
                             currentIndex = (currentIndex + 1) % contas.length;
-                        }
-
-                        function startRotation() {
-                            updateContaDisplay();
-                            if (contas.length > 1) {
-                                intervalId = setInterval(updateContaDisplay, displayDuration);
-                            }
                         }
 
                         fetch(url)
@@ -277,21 +231,20 @@
                                 if (data && !data.error && data.length > 0) {
                                     contas = data.slice(0, 8);
                                     createPaginationIndicators();
-                                    startRotation();
+                                    if (contas.length > 0) updateContaDisplay();
+                                    if (contas.length > 1) {
+                                        intervalId = setInterval(updateContaDisplay, displayDuration);
+                                    }
                                 } else {
                                     updateContaDisplay();
                                 }
-                            })
-                            .catch(error => {
-                                console.error('Erro ao carregar as contas:', error);
+                            }).catch(error => {
                                 boletoEmpresa.textContent = "Erro de conexão";
-                                boletoValor.textContent = "Verifique a internet";
                             });
                     });
                 </script>
 
-                <!-- SEÇÃO DE FATURAMENTO ATUALIZADA -->
-                <div class="faturamento-section fade-in-up">
+                <div class="faturamento-section">
                     <div class="faturamento-container">
                         <div class="loja-selector">
                             <button class="loja-btn active" data-loja="dtudo">
@@ -310,91 +263,56 @@
                         </div>
                     </div>
                 </div>
-
                 <script>
                     document.addEventListener('DOMContentLoaded', () => {
                         const btnsLoja = document.querySelectorAll('.loja-btn');
                         const valorFaturamentoEl = document.getElementById('faturamento-valor');
-                        // URL que busca os dados da página de métricas
                         const FATURAMENTO_URL = 'https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=2';
+                        let faturamentoDtudo = 'R$ 0,00';
 
-                        let faturamentoDtudo = 'R$ 0,00'; // Valor padrão
-                        let isDataLoaded = false;
-
-                        // Função para atualizar a tela com base na loja selecionada
                         function updateDisplay(lojaId) {
-                            // Se a loja for 'D'Tudo'
-                            if (lojaId === 'dtudo') {
-                                // Se os dados ainda não foram carregados, exibe o skeleton
-                                if (!isDataLoaded) {
-                                    valorFaturamentoEl.classList.add('skeleton', 'shimmer');
-                                    valorFaturamentoEl.textContent = '';
-                                } else {
-                                    // Se já carregou, exibe o valor
-                                    valorFaturamentoEl.textContent = faturamentoDtudo;
-                                }
-                            } else if (lojaId === 'dupao') {
-                                // Se for 'Dupão', exibe o valor zerado e remove o skeleton
-                                valorFaturamentoEl.classList.remove('skeleton', 'shimmer');
-                                valorFaturamentoEl.textContent = 'R$ 0,00';
-                            }
+                            if (document.querySelector(`.loja-btn[data-loja="${lojaId}"]`).classList.contains('active')) return;
+                            
+                            valorFaturamentoEl.classList.add('valor-faturamento-animando');
+                            
+                            setTimeout(() => {
+                                valorFaturamentoEl.textContent = (lojaId === 'dtudo') ? faturamentoDtudo : 'R$ 0,00';
+                                valorFaturamentoEl.classList.remove('valor-faturamento-animando');
+                            }, 200);
 
-                            // Alterna a classe 'active' nos botões
-                            btnsLoja.forEach(btn => {
-                                btn.classList.toggle('active', btn.dataset.loja === lojaId);
-                            });
+                            btnsLoja.forEach(btn => btn.classList.toggle('active', btn.dataset.loja === lojaId));
                         }
-
-                        // Busca os dados da URL
+                        
                         fetch(FATURAMENTO_URL)
                             .then(response => response.json())
                             .then(data => {
-                                // Verifica se a resposta contém o campo 'faturamentoDate'
                                 if (data && data.faturamentoDate) {
-                                    // Armazena o valor já formatado vindo do Apps Script
                                     faturamentoDtudo = data.faturamentoDate;
-                                    isDataLoaded = true; // Marca que os dados foram carregados
-                                    
-                                    // Verifica se o botão 'D'Tudo' está ativo para atualizar a tela
-                                    const activeBtn = document.querySelector('.loja-btn.active');
-                                    if (activeBtn && activeBtn.dataset.loja === 'dtudo') {
+                                    if (document.querySelector('.loja-btn.active').dataset.loja === 'dtudo') {
                                         valorFaturamentoEl.textContent = faturamentoDtudo;
                                         valorFaturamentoEl.classList.remove('skeleton', 'shimmer');
                                     }
-                                } else {
-                                    // Se não encontrar o dado, remove o loading e mostra o valor padrão
-                                    isDataLoaded = true;
-                                    updateDisplay('dtudo'); // Atualiza para mostrar o valor padrão "R$ 0,00"
                                 }
-                            })
-                            .catch(error => {
+                            }).catch(error => {
                                 console.error('Erro ao buscar faturamento:', error);
-                                isDataLoaded = true;
                                 valorFaturamentoEl.textContent = 'Erro';
-                                valorFaturamentoEl.classList.remove('skeleton', 'shimmer');
                             });
-
-                        // Adiciona o evento de clique para os botões
-                        btnsLoja.forEach(btn => {
-                            btn.addEventListener('click', () => {
-                                updateDisplay(btn.dataset.loja);
-                            });
-                        });
+                        
+                        btnsLoja.forEach(btn => btn.addEventListener('click', () => updateDisplay(btn.dataset.loja)));
                     });
                 </script>
-                <!-- FIM DA SEÇÃO DE FATURAMENTO -->
-
-
+                
+                <!-- BOTÕES DE OPÇÕES PARA MOBILE -->
                 <div class="option">
                     <div class="card-option">
                         <a href="/users/45692327000100/CD1/adm/nb/formsPush.html">
-                            <i class='bxr bx-plus-circle'></i>
+                            <i class='bx bx-plus-circle'></i>
                             <h3>Registrar</h3>
                         </a>
                     </div>
                     <div class="card-option">
                         <a href="/users/45692327000100/CD1/adm/nb/manager.html">
-                            <i class='bxr bx-scan-barcode'></i>
+                            <i class='bx bx-scan'></i>
                             <h3>Despesas</h3>
                         </a>
                     </div>
@@ -404,33 +322,48 @@
                             <h3>Extrato</h3>
                         </a>
                     </div>
-
+                </div>
+                
+                <!-- NOVA SEÇÃO DE OPÇÕES APENAS PARA DESKTOP -->
+                <div class="desktop-options">
+                    <div class="card-option">
+                        <a href="#">
+                            <i class='bx bx-file-blank'></i>
+                            <h3>DAS Imposto</h3>
+                        </a>
+                    </div>
+                    <div class="card-option">
+                        <a href="#">
+                            <i class='bx bx-group'></i>
+                            <h3>Funcionários</h3>
+                        </a>
+                    </div>
                 </div>
 
             </div>
+        </div>
     </main>
 
-    <div class="navigation">
+    <div class="navigation" id="main-navigation">
+        <button class="sidebar-toggle" id="sidebarToggle">
+            <i class='bx bx-menu'></i>
+        </button>
         <ul>
             <li class="list active">
                 <a href="#">
-                    <span class="icon">
-                        <i class="fi fi-ss-shop"></i>
-                    </span>
+                    <span class="icon"><i class='bx bxs-store-alt'></i></span>
                     <span class="text">Loja</span>
                 </a>
             </li>
             <li class="list">
                 <a href="/users/45692327000100/CD1/adm/nb/metricas.html">
-                    <span class="icon">
-                        <i class='bx  bx-bar-chart-big'></i>
-                    </span>
+                    <span class="icon"><i class='bx bx-bar-chart-alt-2'></i></span>
                     <span class="text">Métrica</span>
                 </a>
             </li>
             <li class="list">
                 <a href="/users/45692327000100/CD1/adm/nb/push.html">
-                    <span class="icon"><i class='bxr bx-plus-circle'></i></span>
+                    <span class="icon"><i class='bx bx-plus-circle'></i></span>
                     <span class="text">Venda</span>
                 </a>
             </li>
@@ -449,21 +382,38 @@
             <div class="indicator color11"></div>
         </ul>
     </div>
-
+    
     <script>
-        const logoutButton = document.getElementById('logout-btn');
-        if (logoutButton) {
-            logoutButton.addEventListener('click', (event) => {
-                event.preventDefault();
-                console.log("Botão de logout clicado.");
-                localStorage.removeItem('session_token');
-                console.log("Token de sessão removido.");
-                window.location.href = '/users/e-finance.html';
-            });
-        }
+        document.addEventListener('DOMContentLoaded', () => {
+            const navigation = document.getElementById('main-navigation');
+            const toggleButton = document.getElementById('sidebarToggle');
+            const body = document.querySelector('body');
+            const logoutButton = document.getElementById('logout-btn');
+
+            if (sessionStorage.getItem('sidebarAnimated') !== 'true') {
+                if(window.innerWidth >= 992) {
+                    navigation.classList.add('run-animation');
+                    sessionStorage.setItem('sidebarAnimated', 'true');
+                }
+            }
+
+            if (toggleButton) {
+                toggleButton.addEventListener('click', () => {
+                    body.classList.toggle('sidebar-collapsed');
+                });
+            }
+
+            if (logoutButton) {
+                logoutButton.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    localStorage.removeItem('session_token');
+                    window.location.href = '/users/e-finance.html';
+                });
+            }
+        });
     </script>
 
     <script src="/assets/js/loading.js"></script>
-</body>
 
+</body>
 </html>

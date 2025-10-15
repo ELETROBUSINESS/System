@@ -2780,106 +2780,304 @@ section {
   animation: fade-in-out 0.4s ease-in-out;
 }
 
+/* =================================================================== */
+/* ANIMAÇÃO VERTICAL PARA O CARD "PRESTES A VENCER"                  */
+/* =================================================================== */
+
+/* Garante que a animação ocorra dentro dos limites do card */
+.card-optionSizeMain {
+    overflow: hidden;
+    position: relative;
+    min-height: 60px; /* Evita que o card "pule" durante a troca */
+}
+
+@keyframes slide-in-down {
+    from {
+        opacity: 0;
+        transform: translateY(-100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slide-out-up {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(100%);
+    }
+}
+
+.slide-in-down {
+    animation: slide-in-down 0.5s forwards cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.slide-out-up {
+    animation: slide-out-up 0.25s forwards cubic-bezier(0.55, 0.085, 0.68, 0.53);
+}
+
+
+/* =================================================================== */
+/* ... (todo o seu CSS original até a seção de responsividade) ... */
+/* =================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+/* ... (omitting for brevity) ... */
+
+/* =================================================================== */
+/* ANIMAÇÃO VERTICAL PARA O CARD "PRESTES A VENCER"                  */
+/* =================================================================== */
+.card-optionSizeMain {
+    overflow: hidden;
+    position: relative;
+    min-height: 60px;
+}
+.card-optionSize {
+    transition: transform 0.3s, opacity 0.3s;
+}
+
+@keyframes slide-in-down {
+    from { opacity: 0; transform: translateY(-100%); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-out-up {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(100%); }
+}
+.slide-in-down {
+    animation: slide-in-down 0.5s forwards cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.slide-out-up {
+    animation: slide-out-up 0.25s forwards cubic-bezier(0.55, 0.085, 0.68, 0.53);
+}
+
+/* Esconde elementos de desktop por padrão */
+.sidebar-toggle,
+.desktop-only-nav-item {
+    display: none;
+}
+
+/* =================================================================== */
+/* ... (todo o seu CSS original até a seção de responsividade) ... */
+/* =================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+/* ... (omitting for brevity) ... */
+
+/* =================================================================== */
+/* ANIMAÇÃO VERTICAL PARA O CARD "PRESTES A VENCER"                  */
+/* =================================================================== */
+.card-optionSizeMain {
+    overflow: hidden;
+    position: relative;
+    min-height: 60px;
+}
+.card-optionSize {
+    transition: transform 0.3s, opacity 0.3s;
+}
+
+@keyframes slide-in-down {
+    from { opacity: 0; transform: translateY(-100%); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-out-up {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(100%); }
+}
+.slide-in-down {
+    animation: slide-in-down 0.5s forwards cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.slide-out-up {
+    animation: slide-out-up 0.25s forwards cubic-bezier(0.55, 0.085, 0.68, 0.53);
+}
+
+/* Esconde elementos de desktop por padrão */
+.sidebar-toggle,
+.desktop-options {
+    display: none;
+}
+
+/* =================================================================== */
+/* ... (todo o seu CSS original até a seção de responsividade) ... */
+/* =================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+/* =================================================================== */
+/* ANIMAÇÃO VERTICAL PARA O CARD "PRESTES A VENCER"                  */
+/* =================================================================== */
+.card-optionSizeMain {
+    overflow: hidden;
+    position: relative;
+    min-height: 60px;
+}
+.card-optionSize {
+    transition: transform 0.3s, opacity 0.3s;
+}
+
+@keyframes slide-in-down {
+    from { opacity: 0; transform: translateY(-100%); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-out-up {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(100%); }
+}
+.slide-in-down {
+    animation: slide-in-down 0.5s forwards cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.slide-out-up {
+    animation: slide-out-up 0.25s forwards cubic-bezier(0.55, 0.085, 0.68, 0.53);
+}
+
+/* Esconde elementos de desktop por padrão */
+.sidebar-toggle,
+.desktop-options {
+    display: none;
+}
 
 /* =================================================================== */
 /* CSS RESPONSIVO PARA VERSÃO DESKTOP (Telas maiores que 992px)      */
 /* =================================================================== */
-
 @media screen and (min-width: 992px) {
-
-    /* 1. Abre espaço na página para a nova barra lateral */
+    @keyframes slide-in-sidebar {
+        from { transform: translateX(-100%); }
+        to { transform: translateX(0); }
+    }
+    
+    /* ESTADO PADRÃO (EXPANDIDO) */
     body {
-        padding-left: 260px; /* Largura da barra lateral */
+        padding-left: 260px;
+        transition: padding-left 0.4s ease-in-out;
     }
 
-    /* 2. Transforma a navegação de rodapé em barra lateral fixa */
+    .balance i {
+    left: 740px;
+    top: 142px;
+}
+
     .navigation {
-        position: fixed; /* Fixa a barra na tela */
+        position: fixed;
         left: 0;
         top: 0;
-        width: 260px; /* Define a largura da barra */
-        height: 100vh; /* Ocupa 100% da altura da tela */
-        
-        background: #ffffff; /* Cor da navbar branca */
-        border-right: 1px solid #f0f0f0; /* Efeito de borda sutil */
-        box-shadow: 4px 0 15px rgba(0, 0, 0, 0.04); /* Sombra para profundidade */
-
-        flex-direction: column; /* Organiza os itens verticalmente */
-        justify-content: flex-start; /* Alinha os itens ao topo */
-        padding: 2rem 1rem; /* Adiciona espaçamento interno */
+        width: 260px;
+        height: 100vh;
+        background: #ffffff;
+        border-right: 1px solid #f0f0f0;
+        box-shadow: 4px 0 15px rgba(0, 0, 0, 0.04);
+        flex-direction: column;
+        justify-content: flex-start;
+        padding: 1.5rem 1rem;
         border-radius: 0;
         z-index: 1000;
+        transition: width 0.4s ease-in-out;
+    }
+
+    .navigation.run-animation {
+        animation: slide-in-sidebar 0.5s ease-out forwards;
     }
 
     .navigation ul {
-        flex-direction: column; /* Empilha os itens da lista */
+        flex-direction: column;
         width: 100%;
-        gap: 0.5rem; /* Espaço entre os botões */
+        gap: 0.5rem;
     }
-
+    
+    /* CORREÇÃO 2: Garante que o LI ocupe o espaço necessário */
     .navigation ul li {
-        width: 100%;
+        width: 100%; /* Ocupa toda a largura da navbar */
         height: auto;
     }
 
     .navigation ul li a {
-        flex-direction: row; /* Alinha ícone e texto lado a lado */
-        justify-content: flex-start; /* Alinha à esquerda */
+        flex-direction: row;
+        justify-content: flex-start;
         padding: 0.9rem 1rem;
         border-radius: 8px;
-        gap: 1rem; /* Espaço entre ícone e texto */
+        gap: 1rem;
+        overflow: hidden;
     }
     
-    /* Faz o texto ficar sempre visível e com a cor correta */
     .navigation ul li a .text {
         position: static;
         opacity: 1;
+        width: auto;
         transform: none;
         font-size: 0.95rem;
         font-weight: 500;
-        color: #555; /* Cor escura para o texto padrão */
+        color: #555;
+        white-space: nowrap;
+        transition: opacity 0.2s ease, width 0.2s ease;
     }
     
-    /* --- ALTERAÇÃO PRINCIPAL AQUI --- */
-    /* Estilo para TODOS os ícones no desktop (ativo ou não) */
-    .navigation ul li a .icon {
-        transform: none !important; /* Garante que o ícone NÃO se mova para cima */
+    .navigation ul li a .icon,
+    .navigation ul li.active a .icon {
+        transform: none !important;
         line-height: 1;
-        color: #555; /* Cor escura para o ícone padrão */
+        color: #555;
         opacity: 0.8;
+        flex-shrink: 0;
     }
 
-    /* Estilo para o item ATIVO (vermelho) */
-    .navigation ul li.active a {
-        background-color: var(--bs-color); /* Fundo vermelho */
-    }
+    .navigation ul li.active a { background-color: var(--bs-color); }
+    .navigation ul li.active a .icon, 
+    .navigation ul li.active a .text { color: var(--secondary-color); opacity: 1; }
+    
+    .navigation .indicator { display: none; }
+    .option { display: none; }
+    .main-content { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+    .info { border-radius: 20px; }
 
-    /* Muda a cor do ícone e do texto APENAS quando o item está ativo */
-    .navigation ul li.active a .icon,
-    .navigation ul li.active a .text {
-        color: var(--secondary-color); /* Texto e ícone brancos */
-        opacity: 1;
+    /* Mostra e estiliza o botão de recolher */
+    .sidebar-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        top: 1.5rem;
+        right: -15px;
+        width: 30px;
+        height: 30px;
+        background: #fff;
+        border: 1px solid #f0f0f0;
+        border-radius: 50%;
+        color: #555;
+        cursor: pointer;
+        font-size: 20px;
+        z-index: 1001;
+        transition: transform 0.4s ease, right 0.4s ease;
     }
     
-    /* Esconde o indicador circular do menu mobile */
-    .navigation .indicator {
-        display: none;
+    /* Mostra e estiliza as opções de desktop */
+    .desktop-options {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 1.5rem;
     }
 
-    /* Esconde os botões de ação na versão de PC */
-    .option {
-        display: none;
+    .desktop-options .card-option a {
+        width: 120px;
+        height: 100px;
     }
-
-    /* Centraliza e limita a largura do conteúdo principal para melhor leitura */
-    .main-content {
-        max-width: 1100px;
-        margin: 0 auto;
-        padding: 2rem;
+    
+    /* ESTADO RECOLHIDO */
+    body.sidebar-collapsed {
+        padding-left: 90px;
     }
-
-    /* Garante que o banner continue no lugar certo */
-    .info {
-        border-radius: 20px;
+    body.sidebar-collapsed .navigation {
+        width: 90px;
+    }
+    body.sidebar-collapsed .sidebar-toggle {
+        transform: rotate(180deg);
+    }
+    body.sidebar-collapsed .navigation ul li a .text {
+        opacity: 0;
+        width: 0;
+    }
+    body.sidebar-collapsed .navigation ul li a {
+        justify-content: center;
     }
 }

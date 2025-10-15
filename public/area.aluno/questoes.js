@@ -5,10 +5,10 @@ const quizzes = {
     'trilha-h08': {
         id: 'trilha-h08',
         title: 'H08: Gráfico e a Lei da Função Afim',
-        videoId: 'bUP_ft_G-L4',
+        videoId: '9U3rkjaVp7I',
         
         tip: {
-            text: "Pense na regra <strong>f(x) = ax + b</strong> como uma receita de bolo!<br><br><strong>'b' é o ingrediente fixo:</strong> O bolo sempre começa com ele. O ponto (0, 5) mostra que o 'b' da nossa receita é <strong>5</strong>.<br><br><strong>'a' é o multiplicador mágico:</strong> Para cada 'x' (ingrediente) que você coloca, ele é multiplicado por 'a'. Para ir do ponto (0, 5) para (2, 11), andamos 2 para o lado e subimos 6 para cima. Se subimos 6 em 2 passos, quantos subimos em 1 passo só?",
+            text: "Pense no gráfico como um mapa! A regra <strong>f(x) = ax + b</strong> é o segredo para desenhar a linha reta.<br><br><strong>'b' é o ponto de partida:</strong> É onde a linha cruza o 'elevador' (eixo Y). O ponto (0, 5) nos diz que começamos no 5º andar. Então, <strong>b = 5</strong>.<br><br><strong>'a' é o segredo da inclinação:</strong> Ele diz quantos andares subimos para cada passo que damos para a direita. Para ir do ponto (0, 5) ao (2, 11), demos 2 passos para a direita e subimos 6 andares (de 5 para 11). Quantos andares subimos por passo?",
             type: 'graph',
             data: {
                 points: [{x: 0, y: 5}, {x: 2, y: 11}],
@@ -20,71 +20,71 @@ const quizzes = {
             {
                 steps: [
                     {
-                        header: "Passo 1: Achar o 'ingrediente fixo' (b)",
-                        instruction: "Toda receita <strong>f(x) = ax + b</strong> tem um começo! O ponto <strong>(0, 5)</strong> mostra onde a nossa linha começa no eixo Y. Qual é o nosso ponto de partida 'b'?",
+                        header: "Passo 1: Encontre o valor de 'b'",
+                        instruction: "A fórmula é <strong>f(x) = ax + b</strong>. O ponto <strong>(0, 5)</strong> nos mostra o valor de 'b'. Preencha a lacuna:",
                         template: "f(x) = ax + {blank}",
                         blankOptions: [5, 0, 2, 11],
                         correctAnswer: 5,
-                        explanation: "Isso! O 'b' é sempre o número que acompanha o zero, nosso ponto de partida no eixo Y."
+                        explanation: "Correto! O valor de 'b' é sempre a coordenada Y quando a coordenada X é 0."
                     },
                     {
-                        header: "Passo 2: Montando a equação",
-                        instruction: "Legal! Nossa receita é <strong>f(x) = ax + 5</strong>. Agora vamos usar o outro ponto, <strong>(2, 11)</strong>. Na regra <strong>y = ax + b</strong>, o 'y' é o resultado final. Qual é o resultado final no ponto (2, 11)?",
+                        header: "Passo 2: Substitua o valor de 'y'",
+                        instruction: "Agora vamos usar o outro ponto, <strong>(2, 11)</strong>, na fórmula base <strong>y = ax + b</strong>. Em (x, y), qual número representa o 'y'?",
                         template: "{blank} = a * x + b",
                         blankOptions: [11, 2, 5, 0],
                         correctAnswer: 11,
-                        explanation: "Perfeito! O 'y' é sempre o segundo número do par. Ele é o resultado que a nossa 'máquina' de função solta."
+                        explanation: "Perfeito! Em um ponto (x, y), o segundo número é sempre o valor de y."
                     },
                     {
-                        header: "Passo 2: Montando a equação",
-                        instruction: "Show! Agora, usando o mesmo ponto <strong>(2, 11)</strong>, qual número estamos colocando dentro da 'máquina' no lugar do 'x'?",
+                        header: "Passo 2: Substitua o valor de 'x'",
+                        instruction: "Ótimo! Agora, na mesma fórmula e usando o mesmo ponto <strong>(2, 11)</strong>, qual número representa o 'x'?",
                         template: "11 = a * {blank} + b",
                         blankOptions: [2, 11, 5, 0],
                         correctAnswer: 2,
-                        explanation: "Isso mesmo! O 'x' é o primeiro número do par. Ele é o ingrediente que colocamos na receita."
+                        explanation: "Isso! O primeiro número no par (x, y) é sempre o valor de x."
                     },
                     {
-                        header: "Passo 2: Montando a equação",
-                        instruction: "Estamos quase lá! Complete a equação com o 'ingrediente fixo' (o 'b') que você achou no começo.",
+                        header: "Passo 2: Substitua o valor de 'b'",
+                        instruction: "Excelente! Para completar a equação, qual foi o valor de 'b' que encontramos no Passo 1?",
                         template: "11 = a * 2 + {blank}",
                         blankOptions: [5, 11, 2, 3],
                         correctAnswer: 5,
-                        explanation: "Exatamente! Agora a nossa equação está pronta para ser resolvida."
+                        explanation: "Exatamente! Esse foi o ponto de partida que encontramos antes."
                     },
                     {
-                        header: "Passo 3: Resolvendo o mistério do 'a'",
-                        instruction: "Temos <strong>11 = a * 2 + 5</strong>. Para descobrir o 'a', primeiro tiramos o '5' que está somando. Se ele está somando de um lado, ele passa para o outro fazendo o quê?",
+                        header: "Passo 3: Resolvendo para 'a' - Parte 1",
+                        instruction: "Agora temos a equação <strong>11 = a * 2 + 5</strong>. Para isolar o 'a', primeiro passamos o <strong>+5</strong> para o outro lado. Lembre-se: ele muda o sinal! Preencha a operação correta:",
                         template: "11 {blank} 5 = a * 2",
                         blankOptions: ["-", "+", "×", "÷"],
                         correctAnswer: "-",
-                        explanation: "Isso mesmo! Na matemática, para trocar de lado, a gente inverte a operação. O contrário de somar é diminuir!"
+                        explanation: "Isso mesmo! O que é positivo de um lado, vira negativo do outro."
                     },
                     {
-                        header: "Passo 3: Resolvendo o mistério do 'a'",
-                        instruction: "Beleza! E quanto dá <strong>11 - 5</strong>?",
+                        header: "Passo 3: Resolvendo para 'a' - Parte 2",
+                        instruction: "Perfeito. Agora, quanto é <strong>11 - 5</strong>?",
                         template: "{blank} = a * 2",
                         blankOptions: [6, 16, -6, 5],
                         correctAnswer: 6,
-                        explanation: "Ótimo! A equação ficou mais simples: 6 = a * 2."
+                        explanation: "Ótimo! Simplificamos a equação."
                     },
                     {
-                        header: "Passo 3: Resolvendo o mistério do 'a'",
-                        instruction: "Agora, para deixar o 'a' sozinho, o <strong>* 2</strong> que está multiplicando passa para o outro lado fazendo o contrário. Qual o valor final de 'a'?",
+                        header: "Passo 3: Resolvendo para 'a' - Parte 3",
+                        instruction: "Estamos quase lá! Agora temos <strong>6 = a * 2</strong>. O <strong>* 2</strong> passa para o outro lado dividindo. Qual o resultado final de 'a'?",
                         template: "{blank} = a",
                         blankOptions: [3, 4, 12, 8],
                         correctAnswer: 3,
-                        explanation: "Correto! 6 dividido por 2 é 3. Você descobriu o 'multiplicador mágico'!"
+                        explanation: "Correto! 6 dividido por 2 é igual a 3. Você encontrou o coeficiente angular!"
                     },
                     {
-                        header: "Passo Final: A Receita Completa!",
-                        instruction: "Agora é só juntar as peças! Monte a receita final com o 'multiplicador mágico' (a) e o 'ingrediente fixo' (b).",
+                        header: "Passo Final: Monte a função",
+                        instruction: "Junte os valores de 'a' e 'b' que você descobriu para formar a lei da função.",
                         template: "f(x) = {blank}x + {blank}",
                         correctAnswers: [3, 5], 
                         blankOptions: [
                             [3, 2, 5, 11],
                             [5, 11, 3, 2]
                         ],
-                        explanation: "Parabéns! Você desvendou a regra da função!"
+                        explanation: "Perfeito! Você montou a função corretamente."
                     }
                 ]
             }
