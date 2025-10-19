@@ -21,8 +21,10 @@
     <link rel='stylesheet'
         href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
 
-    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
-    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+    <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+    <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,316 +32,107 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap"
         rel="stylesheet">
-
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-        }
-
-        .info {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            background-image: url(/assets/bannerHidle2.png);
-            border-bottom-right-radius: 20px;
-            border-bottom-left-radius: 20px;
-        }
-
-        .infoQ1 {
-            border-bottom-right-radius: 0px;
-            border-bottom-left-radius: 0px;
-        }
-        .info p {
-            color: #f1f1f1;
-            font-size: 10px;
-        }
-
-        .info iframe {
-            width: 100px;
-            height: 20px;
-        }
-
-        .info span {
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .info i {
-            font-size: 20px;
-            color: #f1f1f1;
-            position: absolute;
-            right: 25px;
-            top: 25px;
-        }
-
-        .balance {
-            margin: 7px 18px 12px 18px;
-            background-color: #ff7ca711;
-            padding: 10px;
-            border-radius: 10px;
-        }
-
-        .balance span {
-            font-size: 22px;
-            color: var(--secondary-color);
-        }
-
-        .balance p {
-            font-size: 12px;
-        }
-
-        .balance i {
-            left: 155px;
-            top: 112px;
-        }
-
-        .border {
-            margin: 0px 25px 0px 25px;
-            border-bottom: 1px solid #ff7dafc4;
-        }
-
-        .pending {
-            margin-top: 8px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .pending span {
-            font-size: 15px;
-            color: #f3f4f6;
-        }
-
-        .pending p {
-            font-size: 12px;
-        }
-
-        .photo-profile {
-            display: flex;
-        }
-
-        .photo-profile .detals {
-            margin: 21px 0px 0px 12px;
-        }
-
-        .iconImg {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .iconImg img {
-            width: 30px;
-        }
-
-        .iconImg p {
-            font-size: 15px;
-        }
-
-        .detals {
-            justify-content: center;
-            align-items: center;
-        }
-
-        .detals span {
-            color: #000000;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .detals h1 {
-            font-size: 20px;
-            color: #f1f1f1;
-            font-weight: 500;
-        }
-
-        .detals p {
-            font-size: 12px;
-            color: #cbe5e1;
-            font-weight: 500;
-        }
-
-        .photo-profile img {
-            position: relative;
-            margin-top: 20px;
-            margin-left: 20px;
-            width: 50px;
-            height: 50px;
-            border-radius: 15px;
-            border: 1px solid #a1003e;
-            box-shadow: 5px 4px 7px -7px var(--bg-color);
-        }
-
-        .font-poppins {
-            font-family: 'Poppins', sans-serif;
-        }
-
-        .shimmer {
-            position: relative;
-            overflow: hidden;
-            background-color: #e2e8f0;
-        }
-
-        .shimmer::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
-            animation: shimmer-animation 1.5s infinite;
-        }
-
-        @keyframes shimmer-animation {
-            100% {
-                left: 100%;
-            }
-        }
-
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #d1d5db;
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #9ca3af;
-        }
-
-        /* Estilo do cabeçalho para corresponder ao padrão */
-        .header-banner {
-            background-color: #d60039;
-            /* Recriando o efeito de grid do banner com CSS para não depender de um arquivo de imagem */
-            background-image:
-                linear-gradient(rgba(255, 255, 255, .07) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, .07) 1px, transparent 1px);
-            background-size: 40px 40px;
-            border-bottom-left-radius: 20px;
-            border-bottom-right-radius: 20px;
-        }
-    </style>
 </head>
 
-<body class="bg-gray-100">
-
-    <!-- Conteúdo Principal (sem a barra lateral) -->
-    <main class="w-full">
-
-        <!-- Cabeçalho Padrão (Estilo Atualizado) -->
-        <header class="mb-8">
-            <div class="info">
-                <div class="photo-profile">
-                    <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg">
-                    <div class="detals">
-                        <h1>Olá, Nubia!</h1>
-                        <p>CEO: D'TUDO | Dupão</p>
-                    </div>
-                    <i class="fi fi-rr-shield-trust"></i>
+<body class="painel-adm1" onload="AnimationLoading()">
+    <main class="main-content">
+        <div class="info">
+            <div class="photo-profile">
+                <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg">
+                <div class="detals">
+                    <h1>Olá, Nubia!</h1>
+                    <p>CEO: D'TUDO | Dupão</p>
                 </div>
-                <div class="balance">
-                    <div class="pending">
-                        <p>Vendas a receber: </p>
-                        <span id="valor2" class="skeleton shimmer"></span>
-                    </div>
-                </div>
-
-                <a href="/users/45692327000100/CD1/adm/nb/conta.html" class="bg-white/20 hover:bg-white/30 text-white font-bold py-2 px-4 rounded-lg inline-flex items-center gap-2 transition-colors whitespace-nowrap">
-                        <i class="bx bx-arrow-back text-xl"></i>
-                        <span>Voltar ao Menu Inicial</span>
-                    </a>
-                <!--<div class="border"></div>-->
+                <i class="fi fi-rr-shield-trust"></i>
             </div>
-        </header>
-
-        <!-- Container para o restante do conteúdo com padding -->
-        <div class="px-6 md:px-8 lg:px-10 pb-10">
-            <!-- Grid de Métricas (KPIs) -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <!-- Card de Faturamento -->
-                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between">
-                            <h3 class="font-semibold text-gray-500">Faturamento (Hoje)</h3>
-                            <div class="w-10 h-10 flex items-center justify-center bg-green-100 rounded-lg">
-                                <i class='bx bx-trending-up text-xl text-green-600'></i>
-                            </div>
-                        </div>
-                        <div id="faturamentoDate" class="text-4xl font-bold text-gray-800 mt-2 shimmer h-10 rounded-md">
-                        </div>
-                    </div>
-                    <!--<p class="text-sm text-green-500 mt-4 font-semibold">+5.2% vs. mês anterior</p>-->
-                </div>
-                <!-- Card de Contas a Pagar -->
-                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between">
-                            <h3 class="font-semibold text-gray-500">Contas a Pagar (Mês)</h3>
-                            <div class="w-10 h-10 flex items-center justify-center bg-red-100 rounded-lg">
-                                <i class='bx bx-trending-down text-xl text-red-600'></i>
-                            </div>
-                        </div>
-                        <div id="boletosPayDate" class="text-4xl font-bold text-gray-800 mt-2 shimmer h-10 rounded-md">
-                        </div>
-                    </div>
-                    <p class="text-sm text-gray-400 mt-4 font-semibold">Total de despesas pendentes</p>
-                </div>
-                <!-- Card de Lucro -->
-                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between">
-                            <h3 class="font-semibold text-gray-500">Lucro (Hoje)</h3>
-                            <div class="w-10 h-10 flex items-center justify-center bg-blue-100 rounded-lg">
-                                <i class='bx bx-dollar-circle text-xl text-blue-600'></i>
-                            </div>
-                        </div>
-                        <div id="lucroDate" class="text-4xl font-bold text-gray-800 mt-2 shimmer h-10 rounded-md"></div>
-                    </div>
-                    <!--<p class="text-sm text-green-500 mt-4 font-semibold">+8.1% vs. mês anterior</p>-->
-                </div>
-                <!-- Card de Ticket Médio -->
-                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between">
-                            <h3 class="font-semibold text-gray-500">Ticket Médio</h3>
-                            <div class="w-10 h-10 flex items-center justify-center bg-yellow-100 rounded-lg">
-                                <i class='bx bx-purchase-tag-alt text-xl text-yellow-600'></i>
-                            </div>
-                        </div>
-                        <div id="ticketLJDate" class="text-4xl font-bold text-gray-800 mt-2 shimmer h-10 rounded-md">
-                        </div>
-                    </div>
-                    <p class="text-sm text-gray-400 mt-4 font-semibold">Valor médio por venda</p>
+            <div class="balance">
+                <div class="pending">
+                    <p>Vendas a receber: </p>
+                    <span id="valor2" class="skeleton shimmer"></span>
                 </div>
             </div>
+        </div>
+    </main>
 
-            <!-- Seção de Gráficos -->
-            <div class="grid grid-cols-1 gap-6">
-                <!-- Gráfico de Faturamento Diário (Gráfico de Área) -->
-                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                    <h3 class="text-lg font-bold font-poppins text-gray-800 mb-4">Faturamento Diário (Últimos 7 dias)
-                    </h3>
-                    <div id="daily-revenue-chart" class="h-80 shimmer rounded-lg"></div>
+    <!-- Container para o restante do conteúdo com padding -->
+    <div class="px-6 md:px-8 lg:px-10 pb-10">
+        <!-- Grid de Métricas (KPIs) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Card de Faturamento -->
+            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-semibold text-gray-500">Faturamento (Hoje)</h3>
+                        <div class="w-10 h-10 flex items-center justify-center bg-green-100 rounded-lg">
+                            <i class='bx bx-trending-up text-xl text-green-600'></i>
+                        </div>
+                    </div>
+                    <div id="faturamentoDate" class="text-4xl font-bold text-gray-800 mt-2 shimmer h-10 rounded-md">
+                    </div>
                 </div>
+                <!--<p class="text-sm text-green-500 mt-4 font-semibold">+5.2% vs. mês anterior</p>-->
+            </div>
+            <!-- Card de Contas a Pagar -->
+            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-semibold text-gray-500">Contas a Pagar (Mês)</h3>
+                        <div class="w-10 h-10 flex items-center justify-center bg-red-100 rounded-lg">
+                            <i class='bx bx-trending-down text-xl text-red-600'></i>
+                        </div>
+                    </div>
+                    <div id="boletosPayDate" class="text-4xl font-bold text-gray-800 mt-2 shimmer h-10 rounded-md">
+                    </div>
+                </div>
+                <p class="text-sm text-gray-400 mt-4 font-semibold">Total de despesas pendentes</p>
+            </div>
+            <!-- Card de Lucro -->
+            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-semibold text-gray-500">Lucro (Hoje)</h3>
+                        <div class="w-10 h-10 flex items-center justify-center bg-blue-100 rounded-lg">
+                            <i class='bx bx-dollar-circle text-xl text-blue-600'></i>
+                        </div>
+                    </div>
+                    <div id="lucroDate" class="text-4xl font-bold text-gray-800 mt-2 shimmer h-10 rounded-md"></div>
+                </div>
+                <!--<p class="text-sm text-green-500 mt-4 font-semibold">+8.1% vs. mês anterior</p>-->
+            </div>
+            <!-- Card de Ticket Médio -->
+            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-semibold text-gray-500">Ticket Médio</h3>
+                        <div class="w-10 h-10 flex items-center justify-center bg-yellow-100 rounded-lg">
+                            <i class='bx bx-purchase-tag-alt text-xl text-yellow-600'></i>
+                        </div>
+                    </div>
+                    <div id="ticketLJDate" class="text-4xl font-bold text-gray-800 mt-2 shimmer h-10 rounded-md">
+                    </div>
+                </div>
+                <p class="text-sm text-gray-400 mt-4 font-semibold">Valor médio por venda</p>
+            </div>
+        </div>
 
-                <!-- Gráfico de Clientes (Gráfico de Rosca) - Comentado -->
-                <!--
+        <!-- Seção de Gráficos -->
+        <div class="grid grid-cols-1 gap-6">
+            <!-- Gráfico de Faturamento Diário (Gráfico de Área) -->
+            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                <h3 class="text-lg font-bold font-poppins text-gray-800 mb-4">Faturamento Diário (Últimos 7 dias)
+                </h3>
+                <div id="daily-revenue-chart" class="h-80 shimmer rounded-lg"></div>
+            </div>
+
+            <!-- Gráfico de Clientes (Gráfico de Rosca) - Comentado -->
+            <!--
                 <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                     <h3 class="text-lg font-bold font-poppins text-gray-800 mb-4">Novos vs. Recorrentes</h3>
                     <div id="customer-type-chart" class="h-80 shimmer rounded-lg flex items-center justify-center"></div>
                 </div>
                 -->
-            </div>
         </div>
-    </main>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -434,7 +227,40 @@
         });
     </script>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navigation = document.getElementById('main-navigation');
+            const toggleButton = document.getElementById('sidebarToggle');
+            const body = document.querySelector('body');
+            const logoutButton = document.getElementById('logout-btn');
+
+            if (sessionStorage.getItem('sidebarAnimated') !== 'true') {
+                if(window.innerWidth >= 992) {
+                    navigation.classList.add('run-animation');
+                    sessionStorage.setItem('sidebarAnimated', 'true');
+                }
+            }
+
+            if (toggleButton) {
+                toggleButton.addEventListener('click', () => {
+                    body.classList.toggle('sidebar-collapsed');
+                });
+            }
+
+            if (logoutButton) {
+                logoutButton.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    localStorage.removeItem('session_token');
+                    window.location.href = '/users/e-finance.html';
+                });
+            }
+        });
+    </script>
+
     <div class="navigation">
+        <button class="sidebar-toggle" id="sidebarToggle">
+            <i class='bx bx-menu'></i>
+        </button>
         <ul>
             <li class="list">
                 <a href="/users/45692327000100/CD1/adm/nb/conta.html">
