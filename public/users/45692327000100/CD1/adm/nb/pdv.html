@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frente de Caixa (PDV) - Seu Sistema</title>
+    <!-- Importação da Fonte (Inter) --><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Importação da biblioteca Boxicons --><link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <style>
+        /* ======================================== */
+        /* == ESTILOS GLOBAIS E VARIÁVEIS        == */
+        /* ======================================== */
+        
+        :root {
+            --primary-red: #db0038; 
+            --primary-red-dark: #c00030;
+            --bg-light: #FAFAFA;
+            --card-white: #FFFFFF;
+            --text-dark: #222222;
+            --text-light: #777777;
+            --border-color: #F0F0F0;
+            --success-green: #28a745;
+            --warning-red: #E53935;
+            --info-blue: #1976D2; 
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            display: block;
+            height: 100vh;
+            /* overflow: hidden; */ /* Removido para permitir rolagem se necessário */
+            padding-bottom: 60px; /* Espaço para o rodapé do relógio */
+            position: relative; /* Para posicionar o relógio */
+        }
+
+        /* ======================================== */
+        /* == ANIMAÇÕES                          == */
+        /* ======================================== */
+        
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes flash {
+            0% { background-color: rgba(219, 0, 56, 0.1); }
+            100% { background-color: transparent; }
+        }
+        .new-item-flash { animation: flash 0.5s ease-out; }
+        
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .pop-animation { animation: pop 0.3s ease-out; }
+
+        @keyframes bx-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .bx-spin { animation: bx-spin 1s linear infinite; }
+
+        /* (NOVO) Animação do ponto pulsante do relógio */
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* ======================================== */
+        /* == ESTILOS DE ATALHO / ACESSIBILIDADE == */
+        /* ======================================== */
+        
+        .shortcut-hint {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 8px;
+            padding-left: 4px;
+            transition: opacity 0.2s ease;
+        }
+
+        .nav-focus {
+            outline: 2px solid var(--info-blue) !important;
+            box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.3) !important;
+            border-radius: 8px; 
+        }
+        
+        .discount-nav-hint {
+            display: none; 
+            font-size: 0.85rem;
+            color: var(--info-blue);
+            font-weight: 500;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+
+        /* ======================================== */
+        /* == ESTILOS DE DESCONTO E PAGAMENTO    == */
+        /* ======================================== */
+        .summary-row-interactive {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            border-radius: 8px;
+            padding: 8px 0; 
+            margin: -8px 0; 
+        }
+        .summary-row-interactive:hover { background-color: var(--bg-light); }
+        
+        .summary-row .value.editable {
+            color: var(--primary-red);
+            font-weight: 600;
+            text-decoration: underline dashed 1px;
+            text-underline-offset: 4px;
+        }
+
+        .discount-popover {
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease-out;
+            background-color: var(--bg-light);
+            padding: 0 16px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        .discount-popover.active {
+            max-height: 300px; 
+            padding: 16px 16px;
+        }
+        .discount-popover label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        .discount-popover-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        .discount-perc-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .perc-btn {
+            flex-grow: 1;
+            padding: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background-color: var(--card-white);
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .perc-btn:hover {
+            background-color: var(--primary-red);
+            border-color: var(--primary-red);
+            color: white;
+        }
+
+        .btn-remove-discount {
+            background: none; border: none;
+            color: var(--warning-red);
+            font-size: 0.9rem; font-weight: 600;
+            cursor: pointer; margin-top: 16px;
+            display: flex; align-items: center; gap: 4px;
+            padding: 8px; width: 100%; justify-content: center;
+            border: 1px dashed transparent;
+        }
+        .btn-remove-discount:hover { text-decoration: underline; }
+        .btn-remove-discount.nav-focus {
+             border: 1px dashed var(--info-blue);
+             background-color: var(--card-white);
+        }
+
+        .effective-discount-display {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 0.85rem; color: var(--text-light); font-weight: 500;
+            margin-top: 12px; min-height: 1.2em; 
+        }
+        .effective-discount-display i { color: var(--text-light); }
+
+        /* ======================================== */
+        /* == TOOLTIPS                           == */
+        /* ======================================== */
+        
+        .tooltip { position: relative; display: block; }
+        .tooltip .tooltip-text {
+            visibility: hidden; width: max-content; max-width: 220px;
+            background-color: #333; color: #fff; text-align: center;
+            border-radius: 6px; padding: 8px 12px;
+            position: absolute; z-index: 10; bottom: 110%; left: 50%;
+            transform: translateX(-50%); opacity: 0;
+            transition: opacity 0.2s, visibility 0.2s;
+            font-size: 0.85rem; font-weight: 500;
+        }
+        .tooltip .tooltip-text::after {
+            content: ""; position: absolute; top: 100%; left: 50%;
+            margin-left: -5px; border-width: 5px; border-style: solid;
+            border-color: #333 transparent transparent transparent;
+        }
+        .tooltip:hover .tooltip-text { visibility: visible; opacity: 1; }
+
+        /* ======================================== */
+        /* == NAVBAR                             == */
+        /* ======================================== */
+        .navbar {
+            display: flex; gap: 24px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 24px; position: relative;
+        }
+        .navbar-item {
+            padding: 12px 0; text-decoration: none; color: var(--text-light);
+            font-weight: 600; position: relative; transition: color 0.2s ease;
+        }
+        .navbar-item:hover { color: var(--text-dark); }
+        .navbar-item.active { color: var(--primary-red); }
+        .navbar-highlight {
+            position: absolute; bottom: -1px; height: 3px;
+            background-color: var(--primary-red);
+            transition: left 0.3s ease, width 0.3s ease;
+            border-radius: 2px;
+        }
+
+        /* ======================================== */
+        /* == CONTEÚDO PRINCIPAL (PDV)           == */
+        /* ======================================== */
+        
+        .main-content {
+            width: 100%; height: 100%; /* Ajustado para caber o rodapé */
+            padding: 32px; overflow-y: auto;
+        }
+        
+        .page-content { animation: slideInUp 0.5s ease-out; }
+        .page-content h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 16px; }
+
+        .main-content h1 { font-size: 2rem; font-weight: 700; margin-bottom: 16px; }
+
+        .pdv-layout {
+            display: grid; grid-template-columns: 2fr 1fr; gap: 24px;
+            min-height: calc(100vh - 200px - 60px); /* Ajustado para navbar e relógio */
+        }
+
+        .pdv-main { display: flex; flex-direction: column; gap: 16px; }
+
+        .card {
+            background-color: var(--card-white); border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03); padding: 24px; 
+        }
+
+        .barcode-scanner { position: relative; }
+        .barcode-scanner i {
+            position: absolute; left: 18px; top: 50%;
+            transform: translateY(-50%); color: var(--text-light);
+        }
+        .barcode-scanner input {
+            width: 100%; padding: 18px 18px 18px 50px; font-size: 1rem;
+            border-radius: 12px; border: 1px solid #ddd; transition: all 0.2s ease;
+        }
+        .barcode-scanner input:disabled { background-color: #f9f9f9; cursor: not-allowed; }
+        .barcode-scanner input:focus {
+            outline: none; border-color: var(--primary-red);
+            box-shadow: 0 0 0 3px rgba(219, 0, 56, 0.2);
+        }
+
+        .item-list-container {
+            flex-grow: 1; overflow-y: auto; border: 1px solid var(--border-color);
+            border-radius: 16px; background-color: var(--card-white); padding: 0; 
+        }
+        .item-list-container.empty {
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column; color: var(--text-light); min-height: 300px;
+        }
+        .item-list-container.empty span { font-size: 1.1rem; font-weight: 500; }
+
+        .item-list-table { width: 100%; border-collapse: collapse; }
+        .item-list-table th, .item-list-table td { padding: 16px; text-align: left; }
+        .item-list-table thead { border-bottom: 1px solid var(--border-color); background-color: #fdfdfd; }
+        .item-list-table th {
+            font-size: 0.8rem; text-transform: uppercase;
+            color: var(--text-light); font-weight: 600;
+        }
+        .item-list-table tbody tr { border-bottom: 1px solid var(--border-color); }
+        .item-list-table tbody tr:last-child { border-bottom: none; }
+        .product-info { display: flex; align-items: center; gap: 12px; }
+        .product-image {
+            width: 48px; height: 48px; border-radius: 8px; background-color: var(--bg-light);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-light); flex-shrink: 0;
+        }
+        .product-details .name { font-weight: 600; color: var(--text-dark); }
+        .product-details .barcode { font-size: 0.85rem; color: var(--text-light); }
+        .quantity-control { display: flex; align-items: center; gap: 8px; }
+        .qty-btn {
+            background-color: var(--bg-light); border: 1px solid var(--border-color);
+            border-radius: 50%; width: 28px; height: 28px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text-dark); transition: all 0.2s ease;
+        }
+        .qty-btn:hover { background-color: #eee; }
+        .qty-display { font-weight: 600; min-width: 20px; text-align: center; }
+        .item-price { font-weight: 500; }
+        .item-total { font-weight: 600; }
+        .remove-btn {
+            background: none; border: none; color: var(--text-light); cursor: pointer;
+            padding: 4px; border-radius: 4px; transition: all 0.2s ease;
+        }
+        .remove-btn:hover { color: var(--warning-red); background-color: #FFEBEE; }
+
+        .pdv-summary .card { padding: 24px; display: flex; flex-direction: column; height: 100%; }
+        .pdv-summary h2 {
+            font-size: 1.5rem; font-weight: 600; margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-color); padding-bottom: 16px;
+        }
+        .summary-row { display: flex; justify-content: space-between; font-size: 1rem; margin-bottom: 16px; }
+        .summary-row .label { color: var(--text-light); display: flex; align-items: center; gap: 8px; }
+        .summary-row .value { font-weight: 500; }
+        .summary-total { border-top: 1px dashed var(--border-color); padding-top: 24px; margin-top: auto; }
+        .summary-total .label { font-size: 1.2rem; font-weight: 600; }
+        .summary-total .value {
+            font-size: 2.2rem; font-weight: 700; color: var(--primary-red);
+            transition: transform 0.2s ease; 
+        }
+        
+        .btn {
+            font-family: 'Inter', sans-serif; width: 100%; padding: 16px;
+            font-size: 1rem; font-weight: 600; border: none; border-radius: 12px;
+            cursor: pointer; transition: all 0.2s ease; margin-top: 8px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn:disabled { background-color: #ccc; color: #888; cursor: not-allowed; }
+        .btn-primary:disabled { background-color: #f0a0b8; color: #fff; }
+        .btn-secondary:disabled { background-color: #eee; color: #aaa; border-color: #ddd; }
+        .btn-primary { background-color: var(--primary-red); color: white; }
+        .btn-primary:hover { background-color: var(--primary-red-dark); }
+        .btn-secondary { background-color: var(--card-white); color: var(--text-dark); border: 1px solid #ddd; }
+        .btn-secondary:hover { background-color: var(--bg-light); }
+        .btn-danger { background-color: var(--warning-red); color: white; }
+        .btn-danger:hover { background-color: #D32F2F; }
+
+        /* ======================================== */
+        /* == MODAIS                             == */
+        /* ======================================== */
+        
+        .modal-overlay {
+            position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.5);
+            display: grid; place-items: center; opacity: 0; visibility: hidden;
+            transition: all 0.2s ease; z-index: 1000;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content {
+            background-color: var(--card-white); border-radius: 16px; padding: 32px;
+            width: 100%; max-width: 450px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transform: scale(0.95); transition: all 0.2s ease;
+        }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .modal-header h3 { font-size: 1.5rem; font-weight: 600; }
+        .close-modal-btn { background: none; border: none; cursor: pointer; color: var(--text-light); padding: 4px; }
+        .modal-body p { color: var(--text-light); margin-bottom: 24px; line-height: 1.6; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-weight: 500; margin-bottom: 8px; }
+        .form-group input {
+            width: 100%; padding: 12px 14px; font-size: 1rem;
+            border-radius: 8px; border: 1px solid #ddd;
+        }
+        .form-group input:focus {
+             outline: none; border-color: var(--primary-red);
+             box-shadow: 0 0 0 3px rgba(219, 0, 56, 0.2);
+        }
+        .modal-footer { margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end; }
+        
+        /* Modal de Pagamento */
+        .payment-options { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+        .payment-option {
+            border: 1px solid var(--border-color); border-radius: 12px; padding: 24px 16px;
+            display: flex; flex-direction: column; align-items: center; gap: 12px;
+            cursor: pointer; transition: all 0.2s ease;
+        }
+        .payment-option:hover, .payment-option.selected, .payment-option.nav-focus { 
+            border-color: var(--primary-red); background-color: rgba(219, 0, 56, 0.05);
+            color: var(--primary-red);
+        }
+        .payment-option span { font-weight: 600; }
+        
+        /* Modal de Recibo / Confirmação / Alerta */
+        .modal-icon {
+            width: 80px; height: 80px; border-radius: 50%; display: grid;
+            place-items: center; margin: 0 auto 24px auto;
+        }
+        .modal-icon.success { background-color: rgba(40, 167, 69, 0.1); color: var(--success-green); }
+        .modal-icon.danger { background-color: rgba(229, 57, 53, 0.1); color: var(--warning-red); }
+        .modal-icon.info { background-color: rgba(25, 118, 210, 0.1); color: var(--info-blue); }
+        .modal-body.centered { text-align: center; }
+
+        /* ======================================== */
+        /* == PÁGINAS ADICIONAIS                 == */
+        /* ======================================== */
+        
+        .products-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        .products-table th, .products-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .products-table th { background-color: var(--bg-light); font-size: 0.9rem; color: var(--text-light); }
+        .products-table td { font-weight: 500; }
+        .products-table td:first-child { font-weight: 600; color: var(--text-dark); }
+        
+        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--border-color); }
+        .setting-info { max-width: 70%; }
+        .setting-info h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 4px; }
+        .setting-info p { font-size: 0.9rem; color: var(--text-light); line-height: 1.5; }
+        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .4s; border-radius: 28px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px;
+            background-color: white; transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--primary-red); }
+        input:focus + .slider { box-shadow: 0 0 1px var(--primary-red); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        /* ======================================== */
+        /* == (NOVO) ESTILOS DO RELÓGIO          == */
+        /* ======================================== */
+        .pn {
+            position: fixed; /* Fixa no rodapé */
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--card-white);
+            border-top: 1px solid var(--border-color);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: flex-end; /* Alinha à direita */
+            align-items: center;
+            z-index: 500; /* Garante que fique acima de outros conteúdos */
+        }
+        .pn-hr {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .loading1 { /* O ponto pulsante */
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--success-green); /* Verde para indicar "online" */
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+        /* A div interna não é necessária se só queremos o ponto */
+        /* .efect-loading1 { } */
+        
+        .horario {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 1rem;
+        }
+
+
+        /* ======================================== */
+        /* == RESPONSIVIDADE                     == */
+        /* ======================================== */
+        
+        @media (max-width: 1024px) {
+            .pdv-layout { grid-template-columns: 1fr; height: auto; }
+            .pdv-summary .card { height: auto; }
+            .main-content { padding: 24px; }
+            body { padding-bottom: 50px; } /* Ajuste no padding para relógio menor */
+            .pn { padding: 8px 16px; }
+            .horario { font-size: 0.9rem; }
+        }
+        
+        @media (max-width: 768px) {
+            body { display: block; padding-bottom: 40px; } /* Ajuste menor ainda */
+            .sidebar { display: none; }
+            .main-content { padding: 16px; height: 100%; width: 100%; }
+            .main-content h1 { font-size: 1.5rem; margin-bottom: 16px; }
+            .pdv-layout { min-height: calc(100vh - 80px - 40px); gap: 16px; }
+            .modal-content { width: 90%; padding: 24px; }
+            .payment-options { grid-template-columns: 1fr; }
+            .navbar { gap: 16px; margin-bottom: 16px; }
+            .navbar-item { font-size: 0.9rem; }
+            .pn { justify-content: center; } /* Centraliza relógio no mobile */
+        }
+
+    </style>
+</head>
+<body>
+
+    <main class="main-content">
+        <h1>Frente de Caixa (PDV)</h1>
+
+        <!-- Navbar Estilizada --><nav class="navbar" id="main-navbar">
+            <a href="#" class="navbar-item active" data-page="pdv">PDV</a>
+            <a href="#" class="navbar-item" data-page="produtos">Produtos</a>
+            <a href="#" class="navbar-item" data-page="clientes">Clientes</a>
+            <a href="#" class="navbar-item" data-page="configuracoes">Configurações</a>
+            <div class="navbar-highlight" id="navbar-highlight"></div>
+        </nav>
+
+        <!-- PÁGINA 1: PDV (ATIVA) --><div id="pdv-page" class="page-content">
+            <div class="pdv-layout">
+                <!-- Coluna da Esquerda: Itens --><div class="pdv-main">
+                    <div class="tooltip">
+                        <div class="barcode-scanner">
+                            <i class='bx bx-barcode-reader'></i> 
+                            <input type="text" id="barcode-input" placeholder="Ler código de barras..." autofocus>
+                        </div>
+                        <span class="tooltip-text">Digite o código e pressione 'Enter' para adicionar</span>
+                    </div>
+                    <p class="shortcut-hint" id="barcode-hint">Atalho: (F2) para focar</p>
+                    
+                    <div class="item-list-container" id="item-list-container">
+                        <!-- Estado Vazio Inicial -->
+                        <div class="empty-state" id="empty-state">
+                            <span>Nenhum item na venda</span>
+                        </div>
+                        
+                        <!-- Tabela de Itens --><table class="item-list-table" id="item-list-table" style="display: none;">
+                            <thead>
+                                <tr>
+                                    <th>Produto</th> <th>Qtd.</th> <th>Preço Unit.</th> <th>Total</th> <th></th> 
+                                </tr>
+                            </thead>
+                            <tbody id="cart-items-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Coluna da Direita: Resumo --><aside class="pdv-summary">
+                    <div class="card">
+                        <h2>Resumo da Venda</h2>
+                        
+                        <div class="summary-row">
+                            <span class="label">Subtotal (<span id="item-count">0</span> itens)</span>
+                            <span class="value" id="summary-subtotal">R$ 0,00</span>
+                        </div>
+                        
+                        <div class="summary-row summary-row-interactive" id="discount-toggle-row" title="Adicionar desconto">
+                            <span class="label"> <i class='bx bx-purchase-tag' ></i> Descontos (F3) </span>
+                            <span class="value editable" id="summary-discount">- R$ 0,00</span>
+                        </div>
+
+                        <!-- Popover de Desconto --><div class="discount-popover" id="discount-popover">
+                            <div class="form-group">
+                                <label for="discount-input-r">Valor do Desconto (R$)</label>
+                                <input type="number" id="discount-input-r" placeholder="0,00" step="0.01">
+                            </div>
+                            <span class="discount-popover-label">Desconto Rápido (%)</span>
+                            <div class="discount-perc-buttons" id="perc-btn-container">
+                                <button class="perc-btn" data-perc="1">1%</button> <button class="perc-btn" data-perc="3">3%</button>
+                                <button class="perc-btn" data-perc="5">5%</button> <button class="perc-btn" data-perc="8">8%</button>
+                            </div>
+                            <div class="effective-discount-display" id="effective-discount-display">
+                                <i class='bx bx-badge-percent'></i><span id="discount-percentage-text"></span>
+                            </div>
+                            <button class="btn-remove-discount" id="remove-discount-btn">
+                                <i class='bx bx-x' ></i> Remover Desconto
+                            </button>
+                            <span class="discount-nav-hint" id="remove-discount-hint">Pressione 'Enter' para remover</span>
+                        </div>
+                        
+                        <div class="summary-row summary-row-interactive" id="payment-toggle-row" title="Selecionar forma de pagamento">
+                            <span class="label"> <i class='bx bx-credit-card' ></i> Pagamento (F4) </span>
+                            <span class="value editable" id="summary-payment-method">Não selecionado</span>
+                        </div>
+                        
+                        <div class="summary-total">
+                            <div class="summary-row">
+                                <span class="label">Total</span>
+                                <span class="value" id="summary-total">R$ 0,00</span>
+                            </div>
+                        </div>
+                        
+                        <div class="tooltip">
+                            <button class="btn btn-primary" id="finish-sale-btn">
+                                <i class='bx bx-check-circle'></i> Finalizar Venda (F9)
+                            </button>
+                            <span class="tooltip-text">Finaliza a venda e gera o recibo</span>
+                        </div>
+                        <div class="tooltip">
+                            <button class="btn btn-secondary" id="cancel-sale-btn">
+                                <i class='bx bx-x-circle'></i> Cancelar Venda (F10)
+                            </button>
+                            <span class="tooltip-text">Limpa todos os itens da venda atual</span>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+        
+        <!-- PÁGINA 2: PRODUTOS --><div id="produtos-page" class="page-content" style="display: none;">
+            <div class="card" style="max-width: 800px; margin: 0 auto;">
+                <h2>Produtos Cadastrados</h2>
+                <p style="color: var(--text-light); margin-top: -16px; margin-bottom: 16px;">
+                    Novos produtos adicionados pelo "Cadastro Rápido" do PDV aparecerão aqui.
+                </p>
+                <div id="produtos-table-container"></div>
+            </div>
+        </div>
+
+        <!-- PÁGINA 3: CLIENTES --><div id="clientes-page" class="page-content" style="display: none;">
+            <div class="card" style="max-width: 800px; margin: 0 auto;">
+                <h2>Clientes</h2>
+                <p style="color: var(--text-light);">
+                    A funcionalidade de gerenciamento de clientes será implementada em breve.
+                </p>
+            </div>
+        </div>
+        
+        <!-- PÁGINA 4: CONFIGURAÇÕES --><div id="configuracoes-page" class="page-content" style="display: none;">
+            <div class="card" style="max-width: 800px; margin: 0 auto;">
+                <h2>Configurações</h2>
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <h3>Arredondamento Inteligente de Troco</h3>
+                        <p>
+                            Quando ativado, os descontos por porcentagem arredondam o valor total da compra para o R$ 0,50 mais próximo, facilitando o troco.
+                        </p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="smart-rounding-toggle" checked> <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAIS -->
+    <!-- Modal 1: Cadastro Rápido --><div class="modal-overlay" id="quick-add-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Produto não encontrado</h3>
+                <button class="close-modal-btn" data-target="quick-add-modal"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <p>O código <strong id="scanned-barcode"></strong> não está cadastrado. Adicione um item rápido para esta venda.</p>
+                <form id="quick-add-form">
+                    <div class="form-group">
+                        <label for="quick-product-name">Nome do Produto</label>
+                        <input type="text" id="quick-product-name" required data-primary-focus="true">
+                    </div>
+                    <div class="form-group">
+                        <label for="quick-product-price">Preço (R$)</label>
+                        <input type="number" id="quick-product-price" step="0.01" min="0.01" placeholder="0,00" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary close-modal-btn" data-target="quick-add-modal">Cancelar</button>
+                <button class="btn btn-primary" id="quick-add-submit-btn">Adicionar à Venda</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal 2: Seleção de Pagamento --><div class="modal-overlay" id="payment-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Forma de Pagamento</h3>
+                <button class="close-modal-btn" data-target="payment-modal"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <p>Selecione como o cliente irá pagar o valor de <strong id="payment-total">R$ 0,00</strong>.</p>
+                <div class="payment-options">
+                    <div class="payment-option" data-method="Dinheiro" data-primary-focus="true">
+                        <i class='bx bx-dollar-circle' style="font-size: 32px;"></i> <span>Dinheiro (F6)</span>
+                    </div>
+                    <div class="payment-option" data-method="PIX">
+                        <i class='bx bx-scan' style="font-size: 32px;"></i> <span>PIX (F7)</span>
+                    </div>
+                    <div class="payment-option" data-method="Cartão">
+                        <i class='bx bx-credit-card' style="font-size: 32px;"></i> <span>Cartão (F8)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal 3: Recibo --><div class="modal-overlay" id="receipt-modal">
+        <div class="modal-content">
+            <div class="modal-body centered">
+                <div class="modal-icon success"><i class='bx bx-check' style="font-size: 40px;"></i></div>
+                <h3 style="font-size: 1.5rem; margin-bottom: 8px;">Venda Finalizada!</h3>
+                <p>Venda no valor de <strong id="receipt-total">R$ 0,00</strong> registrada com sucesso.</p>
+                <div class="modal-footer" style="flex-direction: column;">
+                    <button class="btn btn-primary"><i class='bx bx-printer'></i> Imprimir Recibo (Não Fiscal)</button>
+                    <button class="btn btn-secondary" id="new-sale-btn" data-primary-focus="true">
+                        <i class='bx bx-rotate-left'></i> Nova Venda
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 4: Confirmação --><div class="modal-overlay" id="confirm-modal">
+        <div class="modal-content">
+            <div class="modal-body centered">
+                <div class="modal-icon danger"><i class='bx bx-error-alt' style="font-size: 40px;"></i></div>
+                <h3 style="font-size: 1.5rem; margin-bottom: 8px;" id="confirm-title">Tem certeza?</h3>
+                <p id="confirm-message">Esta ação não pode ser desfeita.</p>
+                <div class="modal-footer" style="justify-content: center;">
+                    <button class="btn btn-secondary close-modal-btn" data-target="confirm-modal">Cancelar</button>
+                    <button class="btn btn-danger" id="confirm-action-btn" data-primary-focus="true">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal 5: Alerta --><div class="modal-overlay" id="alert-modal">
+        <div class="modal-content">
+            <div class="modal-body centered">
+                <div class="modal-icon info"><i class='bx bx-info-circle' style="font-size: 40px;"></i></div>
+                <h3 style="font-size: 1.5rem; margin-bottom: 8px;" id="alert-title">Atenção</h3>
+                <p id="alert-message">Ocorreu um erro.</p>
+                <div class="modal-footer" style="justify-content: center;">
+                    <button class="btn btn-primary close-modal-btn" data-target="alert-modal" data-primary-focus="true">Entendi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- (NOVO) Relógio no rodapé -->
+    <div class="pn">
+        <div class="pn-hr">
+            <div class="loading1"></div>
+            <p class="horario" id="horario">00:00:00</p>
+        </div>
+    </div>
+
+
+    <!-- SCRIPT --><script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- URL DA API PARA PRODUTOS (Google Apps Script) ---
+            const PRODUTO_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzvd0BBLEEQlu-ksnIbsmnYcjQNQuZcTrsCmXMKHGM5g7DPEk3Nj95X47LKbj7rRSAT/exec"; 
+            
+            // --- URL DA API PARA REGISTRO DE VENDAS ---
+            // Certifique-se de que esta URL está correta e atualizada!
+            const REGISTRO_VENDA_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCCaxdYdC6J_QKsaoWTDquH915MHUnM9BykD39ZUujR2LB3lx9d9n5vAsHdJZJByaa7w/exec"; 
+
+            // --- Estado da Aplicação ---
+            let cart = []; 
+            let lastScannedBarcode = null;
+            let confirmCallback = null; 
+            let discount = 0; 
+            let selectedPaymentMethod = null; 
+            let elementToRestoreFocus = null; 
+            let isSmartRoundingEnabled = true; 
+            let lastSaleData = null; 
+
+            // --- Seletores do DOM ---
+            const barcodeInput = document.getElementById('barcode-input');
+            const barcodeHint = document.getElementById('barcode-hint'); 
+            const cartItemsBody = document.getElementById('cart-items-body');
+            const itemListContainer = document.getElementById('item-list-container');
+            const emptyState = document.getElementById('empty-state');
+            const itemListTable = document.getElementById('item-list-table');
+            const summarySubtotal = document.getElementById('summary-subtotal');
+            const summaryTotal = document.getElementById('summary-total');
+            const itemCount = document.getElementById('item-count');
+            const summaryDiscount = document.getElementById('summary-discount');
+            const discountToggleRow = document.getElementById('discount-toggle-row');
+            const discountPopover = document.getElementById('discount-popover');
+            const discountInputR = document.getElementById('discount-input-r');
+            const percBtnContainer = document.getElementById('perc-btn-container');
+            const removeDiscountBtn = document.getElementById('remove-discount-btn');
+            const effectiveDiscountDisplay = document.getElementById('effective-discount-display'); 
+            const discountPercentageText = document.getElementById('discount-percentage-text'); 
+            const paymentToggleRow = document.getElementById('payment-toggle-row');
+            const summaryPaymentMethod = document.getElementById('summary-payment-method');
+            const finishSaleBtn = document.getElementById('finish-sale-btn');
+            const cancelSaleBtn = document.getElementById('cancel-sale-btn');
+            const quickAddModal = document.getElementById('quick-add-modal');
+            const paymentModal = document.getElementById('payment-modal');
+            const receiptModal = document.getElementById('receipt-modal');
+            const confirmModal = document.getElementById('confirm-modal');
+            const alertModal = document.getElementById('alert-modal');
+            const scannedBarcodeEl = document.getElementById('scanned-barcode');
+            const quickAddForm = document.getElementById('quick-add-form');
+            const quickAddName = document.getElementById('quick-product-name');
+            const quickAddPrice = document.getElementById('quick-product-price');
+            const quickAddSubmitBtn = document.getElementById('quick-add-submit-btn');
+            const paymentTotalEl = document.getElementById('payment-total');
+            const paymentOptions = document.querySelectorAll('.payment-option');
+            const receiptTotalEl = document.getElementById('receipt-total');
+            const newSaleBtn = document.getElementById('new-sale-btn'); 
+            const alertTitle = document.getElementById('alert-title');
+            const alertMessage = document.getElementById('alert-message');
+            const confirmTitle = document.getElementById('confirm-title');
+            const confirmMessage = document.getElementById('confirm-message');
+            const confirmActionBtn = document.getElementById('confirm-action-btn');
+            const mainNavbar = document.getElementById('main-navbar');
+            const navbarItems = document.querySelectorAll('.navbar-item');
+            const navbarHighlight = document.getElementById('navbar-highlight');
+            const allPages = document.querySelectorAll('.page-content');
+            const produtosTableContainer = document.getElementById('produtos-table-container');
+            const smartRoundingToggle = document.getElementById('smart-rounding-toggle');
+            const discountNavElements = [ discountInputR, ...document.querySelectorAll('.perc-btn'), removeDiscountBtn ];
+            let discountNavIndex = 0;
+            const removeDiscountHint = document.getElementById('remove-discount-hint');
+            const horarioElement = document.getElementById('horario'); // (NOVO) Para o relógio
+
+            // --- Funções de Formatação ---
+            const formatCurrency = (value) => {
+                const numericValue = Number(value);
+                if (isNaN(numericValue)) return 'R$ 0,00'; 
+                return numericValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            };
+            const formatTimestamp = (date) => {
+                const pad = (n) => n < 10 ? '0' + n : n;
+                const d = date.getDate(), mo = date.getMonth() + 1, y = date.getFullYear();
+                const h = date.getHours(), mi = date.getMinutes(), s = date.getSeconds();
+                return `${pad(d)}/${pad(mo)}/${y} ${pad(h)}:${pad(mi)}:${pad(s)}`;
+            };
+            // (NOVO) Função para formatar apenas a hora
+            const formatTime = (date) => {
+                const pad = (n) => n < 10 ? '0' + n : n;
+                const h = date.getHours(), mi = date.getMinutes(), s = date.getSeconds();
+                return `${pad(h)}:${pad(mi)}:${pad(s)}`;
+            };
+
+            // --- Funções de Renderização ---
+            const renderCart = () => {
+                cartItemsBody.innerHTML = '';
+                if (cart.length === 0) {
+                    emptyState.style.display = 'flex'; itemListTable.style.display = 'none';
+                    itemListContainer.classList.add('empty');
+                } else {
+                    emptyState.style.display = 'none'; itemListTable.style.display = 'table';
+                    itemListContainer.classList.remove('empty');
+                    cart.forEach(item => {
+                        const tr = document.createElement('tr'); tr.dataset.id = item.id;
+                        if (item.isNew) {
+                            tr.classList.add('new-item-flash'); delete item.isNew; 
+                            setTimeout(() => { tr.classList.remove('new-item-flash'); }, 500);
+                        }
+                        tr.innerHTML = `
+                            <td><div class="product-info"><div class="product-image"><i class='bx bx-package'></i></div><div class="product-details"><span class="name">${item.name}</span><span class="barcode">#${item.id}</span></div></div></td>
+                            <td><div class="quantity-control"><button class="qty-btn" data-action="decrease" data-id="${item.id}"><i class='bx bx-minus'></i></button><span class="qty-display">${item.quantity}</span><button class="qty-btn" data-action="increase" data-id="${item.id}"><i class='bx bx-plus'></i></button></div></td>
+                            <td class="item-price">${formatCurrency(item.price)}</td> <td class="item-total">${formatCurrency(item.price * item.quantity)}</td>
+                            <td><button class="remove-btn" data-id="${item.id}" title="Remover item"><i class='bx bx-trash'></i></button></td>
+                        `;
+                        cartItemsBody.appendChild(tr);
+                    });
+                }
+                updateSummary();
+            };
+            
+            const updateSummary = () => {
+                const subtotal = getSubtotal(); 
+                const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
+                const total = subtotal - discount; 
+                
+                summarySubtotal.textContent = formatCurrency(subtotal);
+                summaryDiscount.textContent = formatCurrency(discount > 0 ? discount * -1 : 0);
+                if (discount > 0 && subtotal > 0) {
+                    const percentage = (discount / subtotal) * 100;
+                    discountPercentageText.textContent = `(${percentage.toFixed(2)}% desconto efetivo)`;
+                    effectiveDiscountDisplay.style.display = 'flex';
+                } else {
+                    discountPercentageText.textContent = '';
+                    effectiveDiscountDisplay.style.display = 'none';
+                }
+                summaryTotal.textContent = formatCurrency(total);
+                itemCount.textContent = totalItems;
+                paymentTotalEl.textContent = formatCurrency(total);
+                receiptTotalEl.textContent = formatCurrency(total);
+                
+                if (totalItems > 0 || cart.length > 0) {
+                    summaryTotal.classList.add('pop-animation');
+                    setTimeout(() => { summaryTotal.classList.remove('pop-animation'); }, 300);
+                }
+                lastSaleData = { subtotal: subtotal, discount: discount, total: total, paymentMethod: selectedPaymentMethod };
+            };
+            
+            const renderProdutosPage = async () => {
+                produtosTableContainer.innerHTML = '<p style="text-align: center; color: var(--text-light);"><i class="bx bx-loader-alt bx-spin"></i> Carregando produtos...</p>';
+                try {
+                    const response = await fetch(PRODUTO_SCRIPT_URL); 
+                    if (!response.ok) throw new Error("Erro de rede ao buscar produtos.");
+                    const result = await response.json();
+                    if (result.status === 'success') {
+                        const products = result.data;
+                        produtosTableContainer.innerHTML = ''; 
+                        if (products.length === 0) {
+                            produtosTableContainer.innerHTML = '<p style="text-align: center; color: var(--text-light);">Nenhum produto cadastrado.</p>'; return;
+                        }
+                        const table = document.createElement('table'); table.className = 'products-table';
+                        table.innerHTML = `<thead><tr><th>Nome</th><th>Código</th><th>Preço</th></tr></thead><tbody></tbody>`;
+                        const tbody = table.querySelector('tbody');
+                        products.forEach(product => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `<td>${product.name}</td><td>${product.id}</td><td>${formatCurrency(product.price)}</td>`;
+                            tbody.appendChild(tr);
+                        });
+                        produtosTableContainer.appendChild(table);
+                    } else { throw new Error(result.message || "Erro ao carregar produtos."); }
+                } catch (error) { produtosTableContainer.innerHTML = `<p style="text-align: center; color: var(--warning-red);">${error.message}</p>`; }
+            };
+
+            // --- Funções de Lógica do Carrinho ---
+            const addToCart = (product) => {
+                const existingItem = cart.find(item => item.id === product.id);
+                if (existingItem) { existingItem.quantity += 1; } 
+                else { cart.push({ ...product, quantity: 1, isNew: true }); }
+                renderCart(); 
+            };
+            const updateQuantity = (id, action) => {
+                const item = cart.find(item => item.id === id); if (!item) return;
+                if (action === 'increase') { item.quantity += 1; } 
+                else if (action === 'decrease') {
+                    item.quantity -= 1;
+                    if (item.quantity === 0) { removeFromCart(id); return; }
+                }
+                renderCart(); 
+            };
+            const removeFromCart = (id) => { cart = cart.filter(item => item.id !== id); renderCart(); };
+            const clearCart = () => { cart = []; removeDiscount(); resetPaymentMethod(); lastSaleData = null; renderCart(); };
+ 
+            // Funções de Modal com Acessibilidade
+            const openModal = (modalEl) => {
+                elementToRestoreFocus = document.activeElement; modalEl.classList.add('active');
+                const primaryFocus = modalEl.querySelector('[data-primary-focus="true"]');
+                if (primaryFocus) { setTimeout(() => primaryFocus.focus(), 100); }
+            };
+            const closeModal = (modalEl) => {
+                modalEl.classList.remove('active');
+                if (elementToRestoreFocus) { elementToRestoreFocus.focus(); elementToRestoreFocus = null; }
+            };
+            const showCustomAlert = (title, message) => { alertTitle.textContent = title; alertMessage.textContent = message; openModal(alertModal); };
+            const showCustomConfirm = (title, message, onConfirm) => { confirmTitle.textContent = title; confirmMessage.textContent = message; confirmCallback = onConfirm; openModal(confirmModal); };
+            const resetPaymentMethod = () => {
+                selectedPaymentMethod = null; summaryPaymentMethod.textContent = "Não selecionado";
+                summaryPaymentMethod.style.fontWeight = '500'; summaryPaymentMethod.style.color = 'var(--text-light)'; 
+                updateSummary(); 
+            };
+
+            // --- Funções de Desconto ---
+            const getSubtotal = () => cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+            const applyDiscount = (requestedDiscount, isPercentage = false) => {
+                const subtotal = getSubtotal();
+                if (subtotal === 0) { if (requestedDiscount !== 0) { showCustomAlert("Carrinho Vazio", "Adicione itens antes de aplicar um desconto."); } return; }
+                let calculatedDiscount = isPercentage ? subtotal * (requestedDiscount / 100) : requestedDiscount;
+                const newTotal = subtotal - calculatedDiscount;
+                const roundedTotal = isSmartRoundingEnabled ? Math.round(newTotal * 2) / 2 : newTotal;
+                const finalDiscount = subtotal - roundedTotal;
+                discount = (finalDiscount > subtotal) ? subtotal : ((finalDiscount < 0) ? 0 : finalDiscount);
+                discountInputR.value = discount > 0 ? discount.toFixed(2) : ''; 
+                updateSummary();
+            };
+            const removeDiscount = () => { discount = 0; discountInputR.value = ''; updateSummary(); };
+
+            // --- Funções de API ---
+            async function buscarProdutoNaAPI(barcode) {
+                barcodeInput.disabled = true; barcodeHint.textContent = "Buscando...";
+                try {
+                    const response = await fetch(`${PRODUTO_SCRIPT_URL}?codigo=${encodeURIComponent(barcode)}`);
+                    if (!response.ok) throw new Error("Erro de rede");
+                    const result = await response.json();
+                    return (result.status === 'success') ? result.data : null; 
+                } catch (error) { console.error("Erro ao buscar produto:", error); showCustomAlert("Erro de Rede", "Não foi possível conectar ao banco de dados de produtos."); return null; } 
+                finally { barcodeInput.disabled = false; barcodeHint.textContent = "Atalho: (F2) para focar"; barcodeInput.focus(); }
+            }
+            async function cadastrarProdutoNaAPI(product) {
+                quickAddSubmitBtn.disabled = true; quickAddSubmitBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Cadastrando...";
+                try {
+                    const params = new URLSearchParams({ action: 'cadastrar', codigo: product.id, nome: product.name, preco: product.price });
+                    const response = await fetch(`${PRODUTO_SCRIPT_URL}?${params.toString()}`, { method: 'GET' });
+                    if (!response.ok) throw new Error("Erro de rede ao cadastrar produto.");
+                    const result = await response.json();
+                    if (result.status === 'success') { return result.data; } 
+                    else { throw new Error(result.message || "Erro desconhecido ao cadastrar produto."); }
+                } catch (error) { console.error("Erro ao cadastrar produto:", error); showCustomAlert("Erro ao Cadastrar Produto", error.message); return null; } 
+                finally { quickAddSubmitBtn.disabled = false; quickAddSubmitBtn.innerHTML = "Adicionar à Venda"; }
+            }
+
+            // --- Handlers de Ação ---
+            const handleScan = async () => {
+                const barcode = barcodeInput.value.trim(); if (!barcode) return;
+                const product = await buscarProdutoNaAPI(barcode);
+                if (product) { addToCart(product); } 
+                else { lastScannedBarcode = barcode; scannedBarcodeEl.textContent = barcode; quickAddForm.reset(); openModal(quickAddModal); }
+                barcodeInput.value = '';
+            };
+            const handleQuickAddSubmit = async () => {
+                const name = quickAddName.value; const price = parseFloat(quickAddPrice.value);
+                if (!name || isNaN(price) || price <= 0) { showCustomAlert("Dados Inválidos", "Por favor, preencha o nome e um preço válido."); return; }
+                const newProduct = { id: lastScannedBarcode, name: name, price: price };
+                const produtoCadastrado = await cadastrarProdutoNaAPI(newProduct);
+                if (produtoCadastrado) { addToCart(produtoCadastrado); closeModal(quickAddModal); }
+            };
+            const handlePaymentSelection = (method) => {
+                selectedPaymentMethod = method; summaryPaymentMethod.textContent = method; 
+                summaryPaymentMethod.style.fontWeight = '600'; summaryPaymentMethod.style.color = 'var(--text-dark)';
+                paymentOptions.forEach(opt => opt.classList.remove('selected'));
+                const selectedOption = document.querySelector(`.payment-option[data-method="${method}"]`);
+                if (selectedOption) { selectedOption.classList.add('selected'); }
+                updateSummary(); 
+                closeModal(paymentModal); 
+            };
+            const updateDiscountNavFocus = (focusEl = true) => {
+                discountNavElements.forEach(el => el.classList.remove('nav-focus'));
+                const currentEl = discountNavElements[discountNavIndex];
+                if (currentEl) {
+                    currentEl.classList.add('nav-focus');
+                    if (focusEl) { currentEl.focus(); if (currentEl.tagName === 'INPUT') { currentEl.select(); } }
+                    removeDiscountHint.style.display = (currentEl.id === 'remove-discount-btn') ? 'block' : 'none';
+                }
+            };
+
+            // --- Event Listeners ---
+            barcodeInput.addEventListener('focus', () => barcodeHint.style.opacity = '0');
+            barcodeInput.addEventListener('blur', () => barcodeHint.style.opacity = '1');
+            barcodeInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); handleScan(); } });
+            cartItemsBody.addEventListener('click', (e) => {
+                const button = e.target.closest('button'); if (!button) return;
+                const { action, id } = button.dataset;
+                if (action === 'increase' || action === 'decrease') { updateQuantity(id, action); } 
+                else if (button.classList.contains('remove-btn')) { showCustomConfirm("Remover Item", "Tem certeza?", () => { removeFromCart(id); closeModal(confirmModal); }); }
+            });
+            discountToggleRow.addEventListener('click', () => { discountPopover.classList.toggle('active'); });
+            percBtnContainer.addEventListener('click', (e) => {
+                const button = e.target.closest('.perc-btn');
+                if (button && button.dataset.perc) { applyDiscount(parseFloat(button.dataset.perc), true); }
+            });
+            discountInputR.addEventListener('input', (e) => { applyDiscount(parseFloat(e.target.value) || 0, false); });
+            removeDiscountBtn.addEventListener('click', removeDiscount);
+            paymentToggleRow.addEventListener('click', () => {
+                if (cart.length > 0) { openModal(paymentModal); } 
+                else { showCustomAlert("Carrinho Vazio", "Adicione itens antes."); }
+            });
+            finishSaleBtn.addEventListener('click', () => {
+                if (cart.length === 0) { showCustomAlert("Carrinho Vazio", "Adicione itens."); return; }
+                if (!selectedPaymentMethod) { showCustomAlert("Pagamento", "Selecione a forma de pagamento."); openModal(paymentModal); return; }
+                openModal(receiptModal);
+            });
+            cancelSaleBtn.addEventListener('click', () => {
+                if (cart.length === 0) return;
+                showCustomConfirm("Cancelar Venda", "Tem certeza?", () => { clearCart(); closeModal(confirmModal); });
+            });
+            confirmActionBtn.addEventListener('click', () => { if (confirmCallback) { confirmCallback(); confirmCallback = null; } });
+            document.querySelectorAll('.close-modal-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const modal = e.target.closest('.modal-overlay');
+                    if(modal && modal.id !== 'receipt-modal') { closeModal(modal); }
+                });
+            });
+
+            // (MODIFICADO) Botão "Nova Venda" agora usa a lógica adaptada do seu código original
+            newSaleBtn.addEventListener('click', async () => {
+                if (!lastSaleData) { console.error("Nenhum dado da última venda para registrar."); return; }
+                if (!REGISTRO_VENDA_SCRIPT_URL || REGISTRO_VENDA_SCRIPT_URL === "COLE_A_URL_DO_SEU_SCRIPT_DE_REGISTRO_AQUI") {
+                     showCustomAlert("Erro de Configuração", "A URL para registrar a venda não foi definida corretamente no código HTML.");
+                     // Mantém o botão habilitado para que o usuário possa tentar novamente depois de corrigir a URL (se aplicável)
+                     // Ou desabilitar permanentemente se for um erro de código fixo: newSaleBtn.disabled = true; 
+                    return; 
+                }
+
+                newSaleBtn.disabled = true; newSaleBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Registrando...";
+
+                const now = new Date(); const timestamp = formatTimestamp(now);
+                // (MODIFICADO) Adiciona formType: 'venda'
+                const formData = new URLSearchParams({
+                    formType: 'venda', // Parâmetro ausente adicionado
+                    seller: 'nubia', 
+                    type: 'entrada', 
+                    value: lastSaleData.subtotal.toFixed(2), 
+                    payment: lastSaleData.paymentMethod || 'N/A', 
+                    desconto: lastSaleData.discount.toFixed(2), 
+                    total: lastSaleData.total.toFixed(2), 
+                    Timestamp: timestamp 
+                });
+
+                console.log("Enviando para registro:", formData.toString());
+
+                try {
+                    const response = await fetch(REGISTRO_VENDA_SCRIPT_URL, {
+                        redirect: "follow", 
+                        method: "POST",
+                        body: formData.toString(), 
+                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    });
+
+                    if (response.ok) {
+                        try {
+                           const responseText = await response.text(); 
+                           console.log("Registro bem-sucedido! Resposta:", responseText);
+                           // Você pode verificar a resposta aqui se o backend retornar algo útil
+                           // Ex: const result = JSON.parse(responseText); if(!result.success) throw new Error(result.error);
+                        } catch(readError) {
+                            console.log("Registro enviado, mas não foi possível ler a resposta.", readError);
+                            // Considerar sucesso mesmo assim, pois o POST foi enviado
+                        }
+                    } else {
+                        let errorText = `Falha no registro. Status: ${response.status}`;
+                        try { errorText = await response.text(); } catch(readError) { /* Ignora */ }
+                        // Tenta extrair a mensagem de erro do JSON, se houver
+                        try {
+                           const errorJson = JSON.parse(errorText);
+                           if(errorJson && errorJson.error) {
+                               errorText = errorJson.error; // Usa a mensagem de erro específica do backend
+                           }
+                        } catch(parseError) { /* Ignora se não for JSON */ }
+                        
+                        throw new Error(errorText);
+                    }
+
+                } catch (error) {
+                    console.error("Erro ao registrar venda:", error);
+                    showCustomAlert("Erro no Registro", `A venda foi finalizada, mas houve um erro ao registrá-la na planilha: ${error.message}`);
+                } finally {
+                    newSaleBtn.disabled = false; newSaleBtn.innerHTML = "<i class='bx bx-rotate-left'></i> Nova Venda";
+                    closeModal(receiptModal);
+                    clearCart();
+                    barcodeInput.focus();
+                }
+            });
+
+            quickAddName.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); quickAddPrice.focus(); } });
+            quickAddPrice.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); quickAddSubmitBtn.click(); } });
+            quickAddSubmitBtn.addEventListener('click', handleQuickAddSubmit);
+            quickAddForm.addEventListener('submit', (e) => { e.preventDefault(); handleQuickAddSubmit(); });
+            paymentOptions.forEach(option => { option.addEventListener('click', () => { handlePaymentSelection(option.dataset.method); }); });
+            smartRoundingToggle.addEventListener('change', (e) => { isSmartRoundingEnabled = e.target.checked; if (discount > 0) { applyDiscount(discount, false); } });
+
+            // Lógica da Navbar SPA
+            const updateNavbarHighlight = (activeItem) => {
+                if (!activeItem) return;
+                const itemRect = activeItem.getBoundingClientRect(); const navbarRect = mainNavbar.getBoundingClientRect();
+                navbarHighlight.style.width = `${itemRect.width}px`; navbarHighlight.style.left = `${itemRect.left - navbarRect.left}px`;
+            };
+            navbarItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault(); navbarItems.forEach(navItem => navItem.classList.remove('active'));
+                    item.classList.add('active'); updateNavbarHighlight(item);
+                    allPages.forEach(page => page.style.display = 'none');
+                    const pageId = item.dataset.page + '-page'; const targetPage = document.getElementById(pageId);
+                    if (targetPage) { targetPage.style.display = 'block'; }
+                    if (pageId === 'produtos-page') { renderProdutosPage(); }
+                    console.log(`Navegando para: ${item.dataset.page}`);
+                });
+            });
+            window.addEventListener('resize', () => { updateNavbarHighlight(document.querySelector('.navbar-item.active')); });
+
+            // (NOVO) Função para atualizar o relógio
+            function updateClock() {
+                if (horarioElement) {
+                    horarioElement.textContent = formatTime(new Date());
+                }
+            }
+
+            // Listener Global de Teclas de Atalho
+            document.addEventListener('keydown', (e) => {
+                // ... (código dos atalhos F2-F10 e navegação modais permanece o mesmo) ...
+                if (discountPopover.classList.contains('active') && ['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft', 'Enter'].includes(e.key)) {
+                    if (['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'].includes(e.key)) { e.preventDefault(); }
+                    if (e.key === 'Enter' && document.activeElement === discountInputR) { e.preventDefault(); discountInputR.blur(); barcodeInput.focus(); return; }
+                    switch (e.key) {
+                        case 'ArrowDown': discountNavIndex = (discountNavIndex < 5) ? 5 : 0; break;
+                        case 'ArrowRight': discountNavIndex = (discountNavIndex < 4) ? discountNavIndex + 1 : (discountNavIndex === 4 ? 0 : 0); break;
+                        case 'ArrowUp': discountNavIndex = (discountNavIndex === 5) ? 0 : (discountNavIndex > 0 ? discountNavIndex - 1 : 5); break;
+                        case 'ArrowLeft': discountNavIndex = (discountNavIndex > 0 && discountNavIndex < 5) ? discountNavIndex - 1 : (discountNavIndex === 0 ? 4 : 4); break;
+                        case 'Enter': e.preventDefault(); const currentEl = discountNavElements[discountNavIndex]; if (currentEl && currentEl.tagName === 'BUTTON') currentEl.click(); break;
+                    }
+                    updateDiscountNavFocus(); return; 
+                }
+                if (paymentModal.classList.contains('active')) {
+                    switch (e.key) {
+                        case 'F6': e.preventDefault(); handlePaymentSelection('Dinheiro'); break;
+                        case 'F7': e.preventDefault(); handlePaymentSelection('PIX'); break;
+                        case 'F8': e.preventDefault(); handlePaymentSelection('Cartão'); break;
+                        case 'Escape': e.preventDefault(); closeModal(paymentModal); break;
+                    } return; 
+                }
+                if (confirmModal.classList.contains('active')) { if (e.key === 'Enter') { e.preventDefault(); confirmActionBtn.click(); } if (e.key === 'Escape') { e.preventDefault(); closeModal(confirmModal); } return; }
+                if (receiptModal.classList.contains('active')) { if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); newSaleBtn.click(); } return; }
+                if (alertModal.classList.contains('active')) { if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); closeModal(alertModal); } return; }
+                if (quickAddModal.classList.contains('active')) { if (e.key === 'Escape') { e.preventDefault(); closeModal(quickAddModal); } return; }
+                switch (e.key) {
+                    case 'F2': e.preventDefault(); barcodeInput.focus(); barcodeInput.select(); break;
+                    case 'F3': e.preventDefault(); discountToggleRow.click(); discountNavIndex = 0; updateDiscountNavFocus(); break;
+                    case 'F4': e.preventDefault(); paymentToggleRow.click(); break;
+                    case 'F9': e.preventDefault(); finishSaleBtn.click(); break;
+                    case 'F10': e.preventDefault(); cancelSaleBtn.click(); break;
+                }
+            });
+
+            // --- Inicialização ---
+            renderCart(); resetPaymentMethod(); barcodeInput.focus();
+            const activeNavbarItem = document.querySelector('.navbar-item.active');
+            if (activeNavbarItem) { setTimeout(() => { updateNavbarHighlight(activeNavbarItem); allPages.forEach(page => page.style.display = 'none'); document.getElementById('pdv-page').style.display = 'block'; }, 50); }
+            
+            // (NOVO) Inicia o relógio
+            updateClock(); // Chama uma vez imediatamente
+            setInterval(updateClock, 1000); // Atualiza a cada segundo
+        });
+    </script>
+</body>
+</html>
