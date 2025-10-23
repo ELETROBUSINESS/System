@@ -70,7 +70,7 @@
         }
         .bx-spin { animation: bx-spin 1s linear infinite; }
 
-        /* (NOVO) Animação do ponto pulsante do relógio */
+        /* Animação do ponto pulsante do relógio */
         @keyframes pulse {
             0% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.5); opacity: 0.5; }
@@ -273,7 +273,10 @@
             width: 100%; padding: 18px 18px 18px 50px; font-size: 1rem;
             border-radius: 12px; border: 1px solid #ddd; transition: all 0.2s ease;
         }
-        .barcode-scanner input:disabled { background-color: #f9f9f9; cursor: not-allowed; }
+        .barcode-scanner input:disabled { 
+            background-color: #f9f9f9; 
+            cursor: wait; 
+        }
         .barcode-scanner input:focus {
             outline: none; border-color: var(--primary-red);
             box-shadow: 0 0 0 3px rgba(219, 0, 56, 0.2);
@@ -439,7 +442,7 @@
         input:checked + .slider:before { transform: translateX(22px); }
 
         /* ======================================== */
-        /* == (NOVO) ESTILOS DO RELÓGIO          == */
+        /* == ESTILOS DO RELÓGIO                 == */
         /* ======================================== */
         .pn {
             position: fixed; /* Fixa no rodapé */
@@ -523,11 +526,13 @@
                     <div class="tooltip">
                         <div class="barcode-scanner">
                             <i class='bx bx-barcode-reader'></i> 
-                            <input type="text" id="barcode-input" placeholder="Ler código de barras..." autofocus>
+                            <!-- (MODIFICADO) Input começa desabilitado -->
+                            <input type="text" id="barcode-input" placeholder="Carregando produtos..." disabled>
                         </div>
                         <span class="tooltip-text">Digite o código e pressione 'Enter' para adicionar</span>
                     </div>
-                    <p class="shortcut-hint" id="barcode-hint">Atalho: (F2) para focar</p>
+                    <!-- (MODIFICADO) Dica de atalho dinâmica -->
+                    <p class="shortcut-hint" id="barcode-hint">Carregando produtos...</p>
                     
                     <div class="item-list-container" id="item-list-container">
                         <!-- Estado Vazio Inicial -->
@@ -641,6 +646,18 @@
                         <input type="checkbox" id="smart-rounding-toggle" checked> <span class="slider"></span>
                     </label>
                 </div>
+                <!-- (NOVO) Botão para recarregar o cache -->
+                 <div class="setting-row">
+                    <div class="setting-info">
+                        <h3>Cache de Produtos</h3>
+                        <p>
+                            Recarrega a lista de produtos da planilha. Útil se você fez alterações manuais no Google Planilhas.
+                        </p>
+                    </div>
+                    <button class="btn btn-secondary" id="reload-cache-btn" style="width: auto; padding: 10px 16px;">
+                        <i class='bx bx-sync'></i> Recarregar
+                    </button>
+                </div>
             </div>
         </div>
     </main>
@@ -702,7 +719,10 @@
                 <h3 style="font-size: 1.5rem; margin-bottom: 8px;">Venda Finalizada!</h3>
                 <p>Venda no valor de <strong id="receipt-total">R$ 0,00</strong> registrada com sucesso.</p>
                 <div class="modal-footer" style="flex-direction: column;">
-                    <button class="btn btn-primary"><i class='bx bx-printer'></i> Imprimir Recibo (Não Fiscal)</button>
+                    <!-- Botão de impressão agora tem um ID -->
+                    <button class="btn btn-primary" id="print-receipt-btn">
+                        <i class='bx bx-printer'></i> Imprimir Recibo (Não Fiscal)
+                    </button>
                     <button class="btn btn-secondary" id="new-sale-btn" data-primary-focus="true">
                         <i class='bx bx-rotate-left'></i> Nova Venda
                     </button>
@@ -738,7 +758,7 @@
         </div>
     </div>
     
-    <!-- (NOVO) Relógio no rodapé -->
+    <!-- Relógio no rodapé -->
     <div class="pn">
         <div class="pn-hr">
             <div class="loading1"></div>
@@ -754,10 +774,10 @@
             const PRODUTO_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzvd0BBLEEQlu-ksnIbsmnYcjQNQuZcTrsCmXMKHGM5g7DPEk3Nj95X47LKbj7rRSAT/exec"; 
             
             // --- URL DA API PARA REGISTRO DE VENDAS ---
-            // Certifique-se de que esta URL está correta e atualizada!
             const REGISTRO_VENDA_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCCaxdYdC6J_QKsaoWTDquH915MHUnM9BykD39ZUujR2LB3lx9d9n5vAsHdJZJByaa7w/exec"; 
 
             // --- Estado da Aplicação ---
+            let localProductCache = null; 
             let cart = []; 
             let lastScannedBarcode = null;
             let confirmCallback = null; 
@@ -766,6 +786,7 @@
             let elementToRestoreFocus = null; 
             let isSmartRoundingEnabled = true; 
             let lastSaleData = null; 
+            let barcodeScanTimeout = null; // (NOVO) Para debounce do scan
 
             // --- Seletores do DOM ---
             const barcodeInput = document.getElementById('barcode-input');
@@ -803,6 +824,7 @@
             const paymentOptions = document.querySelectorAll('.payment-option');
             const receiptTotalEl = document.getElementById('receipt-total');
             const newSaleBtn = document.getElementById('new-sale-btn'); 
+            const printReceiptBtn = document.getElementById('print-receipt-btn'); 
             const alertTitle = document.getElementById('alert-title');
             const alertMessage = document.getElementById('alert-message');
             const confirmTitle = document.getElementById('confirm-title');
@@ -814,10 +836,11 @@
             const allPages = document.querySelectorAll('.page-content');
             const produtosTableContainer = document.getElementById('produtos-table-container');
             const smartRoundingToggle = document.getElementById('smart-rounding-toggle');
+            const reloadCacheBtn = document.getElementById('reload-cache-btn'); 
             const discountNavElements = [ discountInputR, ...document.querySelectorAll('.perc-btn'), removeDiscountBtn ];
             let discountNavIndex = 0;
             const removeDiscountHint = document.getElementById('remove-discount-hint');
-            const horarioElement = document.getElementById('horario'); // (NOVO) Para o relógio
+            const horarioElement = document.getElementById('horario'); 
 
             // --- Funções de Formatação ---
             const formatCurrency = (value) => {
@@ -831,7 +854,6 @@
                 const h = date.getHours(), mi = date.getMinutes(), s = date.getSeconds();
                 return `${pad(d)}/${pad(mo)}/${y} ${pad(h)}:${pad(mi)}:${pad(s)}`;
             };
-            // (NOVO) Função para formatar apenas a hora
             const formatTime = (date) => {
                 const pad = (n) => n < 10 ? '0' + n : n;
                 const h = date.getHours(), mi = date.getMinutes(), s = date.getSeconds();
@@ -892,29 +914,25 @@
                 lastSaleData = { subtotal: subtotal, discount: discount, total: total, paymentMethod: selectedPaymentMethod };
             };
             
-            const renderProdutosPage = async () => {
-                produtosTableContainer.innerHTML = '<p style="text-align: center; color: var(--text-light);"><i class="bx bx-loader-alt bx-spin"></i> Carregando produtos...</p>';
-                try {
-                    const response = await fetch(PRODUTO_SCRIPT_URL); 
-                    if (!response.ok) throw new Error("Erro de rede ao buscar produtos.");
-                    const result = await response.json();
-                    if (result.status === 'success') {
-                        const products = result.data;
-                        produtosTableContainer.innerHTML = ''; 
-                        if (products.length === 0) {
-                            produtosTableContainer.innerHTML = '<p style="text-align: center; color: var(--text-light);">Nenhum produto cadastrado.</p>'; return;
-                        }
-                        const table = document.createElement('table'); table.className = 'products-table';
-                        table.innerHTML = `<thead><tr><th>Nome</th><th>Código</th><th>Preço</th></tr></thead><tbody></tbody>`;
-                        const tbody = table.querySelector('tbody');
-                        products.forEach(product => {
-                            const tr = document.createElement('tr');
-                            tr.innerHTML = `<td>${product.name}</td><td>${product.id}</td><td>${formatCurrency(product.price)}</td>`;
-                            tbody.appendChild(tr);
-                        });
-                        produtosTableContainer.appendChild(table);
-                    } else { throw new Error(result.message || "Erro ao carregar produtos."); }
-                } catch (error) { produtosTableContainer.innerHTML = `<p style="text-align: center; color: var(--warning-red);">${error.message}</p>`; }
+            const renderProdutosPage = () => { 
+                produtosTableContainer.innerHTML = ''; 
+                if (!localProductCache) { 
+                     produtosTableContainer.innerHTML = '<p style="text-align: center; color: var(--text-light);"><i class="bx bx-loader-alt bx-spin"></i> Carregando produtos...</p>';
+                     if (localProductCache === null) carregarCacheDeProdutos();
+                     return;
+                }
+                if (localProductCache.length === 0) {
+                    produtosTableContainer.innerHTML = '<p style="text-align: center; color: var(--text-light);">Nenhum produto cadastrado.</p>'; return;
+                }
+                const table = document.createElement('table'); table.className = 'products-table';
+                table.innerHTML = `<thead><tr><th>Nome</th><th>Código</th><th>Preço</th></tr></thead><tbody></tbody>`;
+                const tbody = table.querySelector('tbody');
+                localProductCache.forEach(product => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${product.name}</td><td>${product.id}</td><td>${formatCurrency(product.price)}</td>`;
+                    tbody.appendChild(tr);
+                });
+                produtosTableContainer.appendChild(table);
             };
 
             // --- Funções de Lógica do Carrinho ---
@@ -970,15 +988,31 @@
             const removeDiscount = () => { discount = 0; discountInputR.value = ''; updateSummary(); };
 
             // --- Funções de API ---
-            async function buscarProdutoNaAPI(barcode) {
-                barcodeInput.disabled = true; barcodeHint.textContent = "Buscando...";
+            async function carregarCacheDeProdutos() {
+                barcodeInput.disabled = true; barcodeInput.placeholder = "Carregando produtos...";
+                barcodeHint.textContent = "Carregando produtos..."; localProductCache = null; 
                 try {
-                    const response = await fetch(`${PRODUTO_SCRIPT_URL}?codigo=${encodeURIComponent(barcode)}`);
-                    if (!response.ok) throw new Error("Erro de rede");
+                    const response = await fetch(PRODUTO_SCRIPT_URL); 
+                    if (!response.ok) throw new Error("Erro de rede ao carregar produtos.");
                     const result = await response.json();
-                    return (result.status === 'success') ? result.data : null; 
-                } catch (error) { console.error("Erro ao buscar produto:", error); showCustomAlert("Erro de Rede", "Não foi possível conectar ao banco de dados de produtos."); return null; } 
-                finally { barcodeInput.disabled = false; barcodeHint.textContent = "Atalho: (F2) para focar"; barcodeInput.focus(); }
+                    if (result.status === 'success') {
+                        localProductCache = result.data; 
+                        console.log(`Cache carregado com ${localProductCache.length} produtos.`);
+                        barcodeHint.textContent = "Atalho: (F2) para focar";
+                    } else { throw new Error(result.message || "Erro ao carregar produtos."); }
+                } catch (error) {
+                    console.error("Erro ao carregar cache de produtos:", error);
+                    showCustomAlert("Erro de Cache", "Não foi possível carregar a lista de produtos. A busca pode ficar lenta.");
+                    localProductCache = []; 
+                    barcodeHint.textContent = "Erro ao carregar. Tente recarregar (F5).";
+                } finally {
+                    barcodeInput.disabled = false; barcodeInput.placeholder = "Ler código de barras...";
+                    barcodeInput.focus();
+                }
+            }
+            function buscarProdutoLocalmente(barcode) {
+                if (localProductCache === null) { showCustomAlert("Aguarde", "O cache de produtos ainda está sendo carregado."); return null; }
+                return localProductCache.find(p => p.id === barcode) || null;
             }
             async function cadastrarProdutoNaAPI(product) {
                 quickAddSubmitBtn.disabled = true; quickAddSubmitBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Cadastrando...";
@@ -987,23 +1021,80 @@
                     const response = await fetch(`${PRODUTO_SCRIPT_URL}?${params.toString()}`, { method: 'GET' });
                     if (!response.ok) throw new Error("Erro de rede ao cadastrar produto.");
                     const result = await response.json();
-                    if (result.status === 'success') { return result.data; } 
-                    else { throw new Error(result.message || "Erro desconhecido ao cadastrar produto."); }
+                    if (result.status === 'success') {
+                        if (localProductCache) { localProductCache.push(result.data); }
+                        return result.data; 
+                    } else { throw new Error(result.message || "Erro desconhecido ao cadastrar produto."); }
                 } catch (error) { console.error("Erro ao cadastrar produto:", error); showCustomAlert("Erro ao Cadastrar Produto", error.message); return null; } 
                 finally { quickAddSubmitBtn.disabled = false; quickAddSubmitBtn.innerHTML = "Adicionar à Venda"; }
             }
+            
+            // (NOVO!) Função para registrar a venda (separada do botão)
+            async function registrarVendaAtual() {
+                if (!lastSaleData) { throw new Error("Nenhum dado da última venda para registrar."); }
+                if (!REGISTRO_VENDA_SCRIPT_URL || REGISTRO_VENDA_SCRIPT_URL.includes("COLE_A_URL")) {
+                    throw new Error("URL de registro de venda não configurada.");
+                }
+
+                const now = new Date(); const timestamp = formatTimestamp(now);
+                const formData = new URLSearchParams({
+                    formType: 'venda', seller: 'nubia', type: 'entrada', 
+                    value: lastSaleData.subtotal.toFixed(2), 
+                    payment: lastSaleData.paymentMethod || 'N/A', 
+                    desconto: lastSaleData.discount.toFixed(2), 
+                    total: lastSaleData.total.toFixed(2), 
+                    Timestamp: timestamp 
+                });
+
+                console.log("Enviando para registro:", formData.toString());
+                
+                const response = await fetch(REGISTRO_VENDA_SCRIPT_URL, {
+                    redirect: "follow", method: "POST",
+                    body: formData.toString(), 
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                });
+
+                if (response.ok) {
+                    try {
+                        const responseText = await response.text(); 
+                        console.log("Registro bem-sucedido! Resposta:", responseText);
+                        // Aqui você poderia validar a resposta se necessário
+                    } catch(readError) { console.log("Registro enviado, mas não foi possível ler a resposta.", readError); }
+                } else {
+                    let errorText = `Falha no registro. Status: ${response.status}`;
+                    try { errorText = await response.text(); } catch(readError) { /* Ignora */ }
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        if(errorJson && errorJson.error) { errorText = errorJson.error; }
+                    } catch(parseError) { /* Ignora se não for JSON */ }
+                    throw new Error(errorText); // Lança o erro para ser pego pelo .catch
+                }
+            }
 
             // --- Handlers de Ação ---
-            const handleScan = async () => {
-                const barcode = barcodeInput.value.trim(); if (!barcode) return;
-                const product = await buscarProdutoNaAPI(barcode);
+            
+            // (MODIFICADO) Lógica do scan
+            const handleScan = () => {
+                const barcode = barcodeInput.value.trim(); 
+                if (!barcode) return;
+                const product = buscarProdutoLocalmente(barcode);
                 if (product) { addToCart(product); } 
-                else { lastScannedBarcode = barcode; scannedBarcodeEl.textContent = barcode; quickAddForm.reset(); openModal(quickAddModal); }
-                barcodeInput.value = '';
+                else if (localProductCache !== null) { 
+                    lastScannedBarcode = barcode; scannedBarcodeEl.textContent = barcode; 
+                    quickAddForm.reset(); openModal(quickAddModal); 
+                }
+                barcodeInput.value = ''; // Limpa o input após processar
             };
+            
+            // (NOVO!) Função Debounce
+            const debounce = (func, delay) => {
+                clearTimeout(barcodeScanTimeout); // Limpa o timeout anterior
+                barcodeScanTimeout = setTimeout(func, delay); // Define um novo timeout
+            };
+            
             const handleQuickAddSubmit = async () => {
                 const name = quickAddName.value; const price = parseFloat(quickAddPrice.value);
-                if (!name || isNaN(price) || price <= 0) { showCustomAlert("Dados Inválidos", "Por favor, preencha o nome e um preço válido."); return; }
+                if (!name || isNaN(price) || price <= 0) { showCustomAlert("Dados Inválidos", "Preencha nome e preço."); return; }
                 const newProduct = { id: lastScannedBarcode, name: name, price: price };
                 const produtoCadastrado = await cadastrarProdutoNaAPI(newProduct);
                 if (produtoCadastrado) { addToCart(produtoCadastrado); closeModal(quickAddModal); }
@@ -1017,6 +1108,17 @@
                 updateSummary(); 
                 closeModal(paymentModal); 
             };
+            const handlePrintReceipt = () => { /* ... (código de impressão permanece o mesmo) ... */
+                if (!lastSaleData || cart.length === 0) { showCustomAlert("Erro", "Não há dados da venda para imprimir."); return; }
+                const now = new Date();
+                const cnpj = "45.692.327/0001-00"; const nomeFantasia = "Dtudo Variedades e Utilidades"; const endereco = "Rua Jarbas Passarinho, SN";
+                let itemLinesHtml = '';
+                cart.forEach(item => { itemLinesHtml += `<div class="receipt-item"><div class="item-name">${item.name}</div><div class="item-details">${item.quantity} x ${formatCurrency(item.price)}<span>${formatCurrency(item.quantity * item.price)}</span></div></div>`; });
+                const receiptHtml = `<html><head><title>Recibo</title><style>@media print{body{margin:0;padding:0;background:#fff;}.print-iframe{display:none;}}@page{margin:5mm;}body{font-family:'Courier New','monospace';font-size:10pt;color:#000;max-width:300px;margin:0 auto;padding:10px;}.receipt-header{text-align:center;padding-bottom:10px;border-bottom:1px dashed #000;}.receipt-header h3{margin:0 0 5px 0;font-size:1.2rem;}.receipt-header p{margin:2px 0;font-size:0.9rem;}.receipt-title{text-align:center;font-weight:bold;margin:10px 0;font-size:0.9rem;}.receipt-items{border-bottom:1px dashed #000;padding-bottom:10px;}.receipt-item{margin-bottom:8px;font-size:0.9rem;}.item-name{font-weight:bold;}.item-details{display:flex;justify-content:space-between;padding-left:10px;}.receipt-summary{padding-top:10px;}.summary-line{display:flex;justify-content:space-between;margin-bottom:5px;font-size:0.9rem;}.summary-line.total{font-size:1.1rem;font-weight:bold;margin-top:8px;}.receipt-footer{text-align:center;margin-top:20px;font-size:0.8rem;}</style></head><body><div class="receipt-header"><h3>${nomeFantasia}</h3><p>${endereco}</p><p>CNPJ: ${cnpj}</p><p>${formatTimestamp(now)}</p></div><p class="receipt-title">COMPROVANTE (NÃO É DOCUMENTO FISCAL)</p><div class="receipt-items">${itemLinesHtml}</div><div class="receipt-summary"><div class="summary-line"><span>Subtotal:</span><span>${formatCurrency(lastSaleData.subtotal)}</span></div><div class="summary-line"><span>Desconto:</span><span>${formatCurrency(lastSaleData.discount > 0 ? lastSaleData.discount * -1 : 0)}</span></div><div class="summary-line total"><span>TOTAL:</span><span>${formatCurrency(lastSaleData.total)}</span></div><div class="summary-line"><span>Pagamento:</span><span>${lastSaleData.paymentMethod || 'N/A'}</span></div></div><div class="receipt-footer"><p>Obrigado pela preferência!</p></div></body></html>`;
+                const iframe = document.createElement('iframe'); iframe.style.display = 'none'; iframe.className = 'print-iframe';
+                document.body.appendChild(iframe); iframe.contentDocument.open(); iframe.contentDocument.write(receiptHtml); iframe.contentDocument.close();
+                iframe.onload = () => { try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch (error) { console.error("Erro ao tentar imprimir:", error); showCustomAlert("Erro de Impressão", "Não foi possível abrir o diálogo de impressão."); } setTimeout(() => { document.body.removeChild(iframe); }, 1000); };
+             };
             const updateDiscountNavFocus = (focusEl = true) => {
                 discountNavElements.forEach(el => el.classList.remove('nav-focus'));
                 const currentEl = discountNavElements[discountNavIndex];
@@ -1030,7 +1132,10 @@
             // --- Event Listeners ---
             barcodeInput.addEventListener('focus', () => barcodeHint.style.opacity = '0');
             barcodeInput.addEventListener('blur', () => barcodeHint.style.opacity = '1');
-            barcodeInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); handleScan(); } });
+            // (MODIFICADO) Usa 'input' e debounce em vez de 'keypress' + Enter
+            barcodeInput.addEventListener('input', () => {
+                debounce(handleScan, 300); // Espera 300ms após parar de digitar
+            });
             cartItemsBody.addEventListener('click', (e) => {
                 const button = e.target.closest('button'); if (!button) return;
                 const { action, id } = button.dataset;
@@ -1048,11 +1153,26 @@
                 if (cart.length > 0) { openModal(paymentModal); } 
                 else { showCustomAlert("Carrinho Vazio", "Adicione itens antes."); }
             });
-            finishSaleBtn.addEventListener('click', () => {
+            
+            // (MODIFICADO) Listener do botão Finalizar Venda
+            finishSaleBtn.addEventListener('click', async () => {
                 if (cart.length === 0) { showCustomAlert("Carrinho Vazio", "Adicione itens."); return; }
                 if (!selectedPaymentMethod) { showCustomAlert("Pagamento", "Selecione a forma de pagamento."); openModal(paymentModal); return; }
-                openModal(receiptModal);
+                
+                finishSaleBtn.disabled = true; finishSaleBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Registrando...";
+                
+                try {
+                    await registrarVendaAtual(); // Tenta registrar a venda PRIMEIRO
+                    openModal(receiptModal); // Se o registro deu certo, abre o recibo
+                } catch (error) {
+                    console.error("Erro ao registrar venda ANTES de mostrar recibo:", error);
+                    showCustomAlert("Erro no Registro", `Não foi possível registrar a venda na planilha: ${error.message}. Por favor, tente finalizar novamente.`);
+                    // Não abre o modal de recibo se o registro falhar
+                } finally {
+                    finishSaleBtn.disabled = false; finishSaleBtn.innerHTML = "<i class='bx bx-check-circle'></i> Finalizar Venda (F9)";
+                }
             });
+
             cancelSaleBtn.addEventListener('click', () => {
                 if (cart.length === 0) return;
                 showCustomConfirm("Cancelar Venda", "Tem certeza?", () => { clearCart(); closeModal(confirmModal); });
@@ -1061,78 +1181,17 @@
             document.querySelectorAll('.close-modal-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const modal = e.target.closest('.modal-overlay');
+                    // (MODIFICADO) Não fecha o modal de recibo aqui, só o de nova venda
                     if(modal && modal.id !== 'receipt-modal') { closeModal(modal); }
                 });
             });
+            printReceiptBtn.addEventListener('click', handlePrintReceipt);
 
-            // (MODIFICADO) Botão "Nova Venda" agora usa a lógica adaptada do seu código original
-            newSaleBtn.addEventListener('click', async () => {
-                if (!lastSaleData) { console.error("Nenhum dado da última venda para registrar."); return; }
-                if (!REGISTRO_VENDA_SCRIPT_URL || REGISTRO_VENDA_SCRIPT_URL === "COLE_A_URL_DO_SEU_SCRIPT_DE_REGISTRO_AQUI") {
-                     showCustomAlert("Erro de Configuração", "A URL para registrar a venda não foi definida corretamente no código HTML.");
-                     // Mantém o botão habilitado para que o usuário possa tentar novamente depois de corrigir a URL (se aplicável)
-                     // Ou desabilitar permanentemente se for um erro de código fixo: newSaleBtn.disabled = true; 
-                    return; 
-                }
-
-                newSaleBtn.disabled = true; newSaleBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Registrando...";
-
-                const now = new Date(); const timestamp = formatTimestamp(now);
-                // (MODIFICADO) Adiciona formType: 'venda'
-                const formData = new URLSearchParams({
-                    formType: 'venda', // Parâmetro ausente adicionado
-                    seller: 'nubia', 
-                    type: 'entrada', 
-                    value: lastSaleData.subtotal.toFixed(2), 
-                    payment: lastSaleData.paymentMethod || 'N/A', 
-                    desconto: lastSaleData.discount.toFixed(2), 
-                    total: lastSaleData.total.toFixed(2), 
-                    Timestamp: timestamp 
-                });
-
-                console.log("Enviando para registro:", formData.toString());
-
-                try {
-                    const response = await fetch(REGISTRO_VENDA_SCRIPT_URL, {
-                        redirect: "follow", 
-                        method: "POST",
-                        body: formData.toString(), 
-                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    });
-
-                    if (response.ok) {
-                        try {
-                           const responseText = await response.text(); 
-                           console.log("Registro bem-sucedido! Resposta:", responseText);
-                           // Você pode verificar a resposta aqui se o backend retornar algo útil
-                           // Ex: const result = JSON.parse(responseText); if(!result.success) throw new Error(result.error);
-                        } catch(readError) {
-                            console.log("Registro enviado, mas não foi possível ler a resposta.", readError);
-                            // Considerar sucesso mesmo assim, pois o POST foi enviado
-                        }
-                    } else {
-                        let errorText = `Falha no registro. Status: ${response.status}`;
-                        try { errorText = await response.text(); } catch(readError) { /* Ignora */ }
-                        // Tenta extrair a mensagem de erro do JSON, se houver
-                        try {
-                           const errorJson = JSON.parse(errorText);
-                           if(errorJson && errorJson.error) {
-                               errorText = errorJson.error; // Usa a mensagem de erro específica do backend
-                           }
-                        } catch(parseError) { /* Ignora se não for JSON */ }
-                        
-                        throw new Error(errorText);
-                    }
-
-                } catch (error) {
-                    console.error("Erro ao registrar venda:", error);
-                    showCustomAlert("Erro no Registro", `A venda foi finalizada, mas houve um erro ao registrá-la na planilha: ${error.message}`);
-                } finally {
-                    newSaleBtn.disabled = false; newSaleBtn.innerHTML = "<i class='bx bx-rotate-left'></i> Nova Venda";
-                    closeModal(receiptModal);
-                    clearCart();
-                    barcodeInput.focus();
-                }
+            // (MODIFICADO) Botão "Nova Venda" agora só limpa e fecha
+            newSaleBtn.addEventListener('click', () => {
+                closeModal(receiptModal);
+                clearCart();
+                barcodeInput.focus();
             });
 
             quickAddName.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); quickAddPrice.focus(); } });
@@ -1143,30 +1202,23 @@
             smartRoundingToggle.addEventListener('change', (e) => { isSmartRoundingEnabled = e.target.checked; if (discount > 0) { applyDiscount(discount, false); } });
 
             // Lógica da Navbar SPA
-            const updateNavbarHighlight = (activeItem) => {
+            const updateNavbarHighlight = (activeItem) => { /* ... (código permanece o mesmo) ... */
                 if (!activeItem) return;
                 const itemRect = activeItem.getBoundingClientRect(); const navbarRect = mainNavbar.getBoundingClientRect();
                 navbarHighlight.style.width = `${itemRect.width}px`; navbarHighlight.style.left = `${itemRect.left - navbarRect.left}px`;
-            };
-            navbarItems.forEach(item => {
-                item.addEventListener('click', (e) => {
+             };
+            navbarItems.forEach(item => { item.addEventListener('click', (e) => { /* ... (código permanece o mesmo) ... */
                     e.preventDefault(); navbarItems.forEach(navItem => navItem.classList.remove('active'));
                     item.classList.add('active'); updateNavbarHighlight(item);
                     allPages.forEach(page => page.style.display = 'none');
                     const pageId = item.dataset.page + '-page'; const targetPage = document.getElementById(pageId);
                     if (targetPage) { targetPage.style.display = 'block'; }
                     if (pageId === 'produtos-page') { renderProdutosPage(); }
-                    console.log(`Navegando para: ${item.dataset.page}`);
-                });
-            });
+             }); });
             window.addEventListener('resize', () => { updateNavbarHighlight(document.querySelector('.navbar-item.active')); });
+            reloadCacheBtn.addEventListener('click', () => { showCustomConfirm("Recarregar Produtos", "Buscar a lista mais recente?", () => { closeModal(confirmModal); carregarCacheDeProdutos(); }); });
 
-            // (NOVO) Função para atualizar o relógio
-            function updateClock() {
-                if (horarioElement) {
-                    horarioElement.textContent = formatTime(new Date());
-                }
-            }
+            function updateClock() { if (horarioElement) { horarioElement.textContent = formatTime(new Date()); } }
 
             // Listener Global de Teclas de Atalho
             document.addEventListener('keydown', (e) => {
@@ -1174,45 +1226,25 @@
                 if (discountPopover.classList.contains('active') && ['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft', 'Enter'].includes(e.key)) {
                     if (['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'].includes(e.key)) { e.preventDefault(); }
                     if (e.key === 'Enter' && document.activeElement === discountInputR) { e.preventDefault(); discountInputR.blur(); barcodeInput.focus(); return; }
-                    switch (e.key) {
-                        case 'ArrowDown': discountNavIndex = (discountNavIndex < 5) ? 5 : 0; break;
-                        case 'ArrowRight': discountNavIndex = (discountNavIndex < 4) ? discountNavIndex + 1 : (discountNavIndex === 4 ? 0 : 0); break;
-                        case 'ArrowUp': discountNavIndex = (discountNavIndex === 5) ? 0 : (discountNavIndex > 0 ? discountNavIndex - 1 : 5); break;
-                        case 'ArrowLeft': discountNavIndex = (discountNavIndex > 0 && discountNavIndex < 5) ? discountNavIndex - 1 : (discountNavIndex === 0 ? 4 : 4); break;
-                        case 'Enter': e.preventDefault(); const currentEl = discountNavElements[discountNavIndex]; if (currentEl && currentEl.tagName === 'BUTTON') currentEl.click(); break;
-                    }
+                    switch (e.key) { case 'ArrowDown': discountNavIndex = (discountNavIndex < 5) ? 5 : 0; break; case 'ArrowRight': discountNavIndex = (discountNavIndex < 4) ? discountNavIndex + 1 : (discountNavIndex === 4 ? 0 : 0); break; case 'ArrowUp': discountNavIndex = (discountNavIndex === 5) ? 0 : (discountNavIndex > 0 ? discountNavIndex - 1 : 5); break; case 'ArrowLeft': discountNavIndex = (discountNavIndex > 0 && discountNavIndex < 5) ? discountNavIndex - 1 : (discountNavIndex === 0 ? 4 : 4); break; case 'Enter': e.preventDefault(); const currentEl = discountNavElements[discountNavIndex]; if (currentEl && currentEl.tagName === 'BUTTON') currentEl.click(); break; }
                     updateDiscountNavFocus(); return; 
                 }
-                if (paymentModal.classList.contains('active')) {
-                    switch (e.key) {
-                        case 'F6': e.preventDefault(); handlePaymentSelection('Dinheiro'); break;
-                        case 'F7': e.preventDefault(); handlePaymentSelection('PIX'); break;
-                        case 'F8': e.preventDefault(); handlePaymentSelection('Cartão'); break;
-                        case 'Escape': e.preventDefault(); closeModal(paymentModal); break;
-                    } return; 
-                }
+                if (paymentModal.classList.contains('active')) { switch (e.key) { case 'F6': e.preventDefault(); handlePaymentSelection('Dinheiro'); break; case 'F7': e.preventDefault(); handlePaymentSelection('PIX'); break; case 'F8': e.preventDefault(); handlePaymentSelection('Cartão'); break; case 'Escape': e.preventDefault(); closeModal(paymentModal); break; } return; }
                 if (confirmModal.classList.contains('active')) { if (e.key === 'Enter') { e.preventDefault(); confirmActionBtn.click(); } if (e.key === 'Escape') { e.preventDefault(); closeModal(confirmModal); } return; }
-                if (receiptModal.classList.contains('active')) { if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); newSaleBtn.click(); } return; }
+                if (receiptModal.classList.contains('active')) { if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); newSaleBtn.click(); } return; } // Modificado: newSaleBtn click
                 if (alertModal.classList.contains('active')) { if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); closeModal(alertModal); } return; }
                 if (quickAddModal.classList.contains('active')) { if (e.key === 'Escape') { e.preventDefault(); closeModal(quickAddModal); } return; }
-                switch (e.key) {
-                    case 'F2': e.preventDefault(); barcodeInput.focus(); barcodeInput.select(); break;
-                    case 'F3': e.preventDefault(); discountToggleRow.click(); discountNavIndex = 0; updateDiscountNavFocus(); break;
-                    case 'F4': e.preventDefault(); paymentToggleRow.click(); break;
-                    case 'F9': e.preventDefault(); finishSaleBtn.click(); break;
-                    case 'F10': e.preventDefault(); cancelSaleBtn.click(); break;
-                }
-            });
+                switch (e.key) { case 'F2': e.preventDefault(); barcodeInput.focus(); barcodeInput.select(); break; case 'F3': e.preventDefault(); discountToggleRow.click(); discountNavIndex = 0; updateDiscountNavFocus(); break; case 'F4': e.preventDefault(); paymentToggleRow.click(); break; case 'F9': e.preventDefault(); finishSaleBtn.click(); break; case 'F10': e.preventDefault(); cancelSaleBtn.click(); break; }
+             });
 
             // --- Inicialização ---
-            renderCart(); resetPaymentMethod(); barcodeInput.focus();
+            renderCart(); resetPaymentMethod(); 
             const activeNavbarItem = document.querySelector('.navbar-item.active');
             if (activeNavbarItem) { setTimeout(() => { updateNavbarHighlight(activeNavbarItem); allPages.forEach(page => page.style.display = 'none'); document.getElementById('pdv-page').style.display = 'block'; }, 50); }
-            
-            // (NOVO) Inicia o relógio
-            updateClock(); // Chama uma vez imediatamente
-            setInterval(updateClock, 1000); // Atualiza a cada segundo
+            updateClock(); setInterval(updateClock, 1000); 
+            carregarCacheDeProdutos();
         });
     </script>
 </body>
 </html>
+
