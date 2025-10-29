@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Gestão e Coordenação</title>
+    <!-- Carrega o Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carrega a fonte Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+    <!-- Carrega a biblioteca Boxicons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        /* Define a fonte Inter como padrão */
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Oculta a página até o Firebase verificar o login */
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            background-color: #f1f5f9;
+            /* Cor de fundo um pouco mais suave */
+        }
+
+        /* Pequeno ajuste para as transições de texto não quebrarem a linha */
+        .sidebar-label,
+        .sidebar-section,
+        #logo-text {
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        /* Adiciona transição suave para os ícones */
+        #toggleSidebarBtn i {
+            transition: opacity 0.3s ease;
+        }
+
+        /* Estilo para os ícones da Boxicons se alinharem com o texto */
+        .nav-link i,
+        .btn-icon i {
+            vertical-align: middle;
+            line-height: 1;
+            /* Garante alinhamento */
+        }
+
+        /* Oculta a página até que o JS decida qual mostrar */
+        .page-content {
+            display: none;
+        }
+
+        /* A página ativa é mostrada */
+        .page-content.active {
+            display: block;
+        }
+
+        /* --- Estilos do Modal QR Code --- */
+        #qr-code-modal {
+            /* Estilo base do overlay */
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            pointer-events: none;
+            /* Começa sem bloquear cliques */
+        }
+
+        #qr-code-modal.show {
+            /* Estilo quando visível */
+            opacity: 1;
+            pointer-events: auto;
+            /* Permite interação */
+        }
+
+        #qr-code-modal .modal-content {
+            /* Conteúdo do modal */
+            transform: scale(0.95);
+            opacity: 0;
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+
+        #qr-code-modal.show .modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        #qr-code-container img {
+            /* Imagem do QR Code gerada */
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+
+    <!--
+      Inspiração de UI/UX:
+      O layout geral (sidebar colapsável + área de conteúdo) é inspirado
+      em dashboards modernos como Notion, Linear e Clerk.
+     -->
+
+    <div class="flex h-screen bg-white">
+        <!-- Barra Lateral (Sidebar) -->
+        <aside id="sidebar" class="w-64 bg-white shadow-lg flex flex-col transition-all duration-300 ease-in-out">
+
+            <!-- Logo e Botão de Minimizar -->
+            <div class="flex items-center justify-between h-16 px-4 border-b">
+                <h1 id="logo-text" class="text-xl font-bold text-blue-800 transition-all duration-300">Portal de Gestão
+                </h1>
+                <button id="toggleSidebarBtn"
+                    class="p-1 rounded-md text-gray-600 hover:bg-gray-100 hover:text-gray-900">
+                    <!-- Ícones para fechar/abrir (Boxicons) -->
+                    <i id="toggle-icon-open" class='bx bxs-chevron-left-circle text-2xl'></i>
+                    <i id="toggle-icon-close" class='bx bxs-chevron-right-circle text-2xl hidden'></i>
+                </button>
+            </div>
+
+            <!-- Navegação Principal -->
+            <nav class="flex-grow px-2 py-4 overflow-y-auto">
+                <!-- Seção 1: Acessos Principais -->
+                <a href="javascript:void(0)" onclick="showPage('page-inicio', this)"
+                    class="nav-link flex items-center px-3 py-3 rounded-md text-sm font-medium bg-blue-100 text-blue-700 transition-all duration-300">
+                    <i class='bx bxs-home text-2xl text-blue-700'></i>
+                    <span class="sidebar-label ml-3 transition-all duration-300">Início</span>
+                </a>
+
+                <a href="javascript:void(0)" onclick="showPage('page-escola', this)"
+                    class="nav-link mt-1 flex items-center px-3 py-3 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-all duration-300 group">
+                    <i class='bx bxs-school text-2xl text-gray-400 group-hover:text-gray-600'></i>
+                    <span class="sidebar-label ml-3 transition-all duration-300">Escola</span>
+                </a>
+
+                <a href="javascript:void(0)" onclick="showPage('page-alunos-suspensos', this)"
+                    class="nav-link mt-1 flex items-center px-3 py-3 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-all duration-300 group">
+                    <i class='bx bxs-user-x text-2xl text-gray-400 group-hover:text-gray-600'></i>
+                    <span class="sidebar-label ml-3 transition-all duration-300">Alunos Suspensos</span>
+                </a>
+
+                <a href="javascript:void(0)" onclick="openQrCodeModal(this)"
+                    class="nav-link flex items-center px-3 py-3 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-all duration-300 group">
+                    <i class='bx bx-mobile-alt text-2xl text-gray-400 group-hover:text-gray-600'></i>
+                    <span class="sidebar-label ml-3 transition-all duration-300">Celular</span>
+                </a>
+
+                <!-- Seção 2: Financeiro -->
+                <div class="mt-6">
+                    <h3
+                        class="sidebar-section px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider transition-all duration-300">
+                        Financeiro</h3>
+                    <div class="mt-2 space-y-1">
+                        <a href="javascript:void(0)" onclick="showPage('page-notas-fiscais', this)"
+                            class="nav-link flex items-center px-3 py-3 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-all duration-300 group">
+                            <i class='bx bxs-spreadsheet text-2xl text-gray-400 group-hover:text-gray-600'></i>
+                            <span class="sidebar-label ml-3 transition-all duration-300">Notas Fiscais</span>
+                        </a>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Item de Sair (Fixo no final) -->
+            <div class="mt-auto p-2 border-t">
+                <a href="#" id="logout-button"
+                    class="nav-link flex items-center px-3 py-3 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-all duration-300 group">
+                    <i class='bx bxs-log-out text-2xl text-gray-400 group-hover:text-gray-600'></i>
+                    <span class="sidebar-label ml-3 transition-all duration-300">Sair</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ===== NOVO MODAL QR CODE ===== -->
+        <div id="qr-code-modal"
+            class="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <!-- Adicionado 'hidden' e z-index -->
+            <div class="modal-content bg-white p-7 rounded-lg shadow-xl w-11/12 max-w-sm text-center">
+                <!-- Ícone de Celular -->
+                <svg class="w-16 h-16 text-gray-700 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                </svg>
+
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">Acessar no Celular</h3>
+                <p class="text-gray-600 mb-6">Escaneie o QR Code abaixo com a câmera do seu celular para abrir o portal.
+                </p>
+
+                <!-- Container onde o QR Code será gerado -->
+                <div id="qr-code-container"
+                    class="flex justify-center items-center mb-6 p-4 bg-gray-100 rounded-lg min-h-[200px]">
+                    <!-- O QR Code aparecerá aqui -->
+                </div>
+
+                <!-- Botão Fechar -->
+                <div class="flex justify-center">
+                    <button id="close-qr-code-btn"
+                        class="px-6 py-2 rounded-lg bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition">Fechar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conteúdo Principal (Container das Páginas) -->
+        <main id="main-content" class="flex-1 h-screen overflow-y-auto bg-gray-50">
+
+            <!-- ============================== -->
+            <!-- PÁGINA 1: INÍCIO (DASHBOARD)   -->
+            <!-- ============================== -->
+            <div id="page-inicio" class="page-content active p-6 md:p-10">
+
+                <!-- 1. Cartão de Boas-Vindas -->
+                <div class="bg-blue-800 text-white rounded-xl shadow-lg p-8 mb-8">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+                        <div>
+                            <h2 class="text-3xl font-bold">Olá, <span id="user-display-name">Usuário</span>!</h2>
+                            <p class="text-blue-200 mt-1">Cargo: Diretora | E. E. Irmã Agnes Vincquier</p>
+                        </div>
+                        <div class="mt-6 md:mt-0 md:text-right">
+                            <div class="text-lg">
+                                <span class="font-semibold text-blue-200">Pendências:</span>
+                                <span class="font-bold text-white text-xl ml-2">1</span>
+                            </div>
+                            <div class="text-lg mt-1">
+                                <span class="font-semibold text-blue-200">Próximo Prazo:</span>
+                                <span class="font-bold text-white text-xl ml-2">31/10/2025</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wrapper da grade de conteúdo principal -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                    <!-- Coluna da Esquerda (Maior) -->
+                    <div class="lg:col-span-2">
+                        <!-- 3. Grade de Módulos (Pastas) -->
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-800 mb-4">Acesso Rápido as Pastas</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+                                <!-- Cartão 1: Gestão -->
+                                <!-- Link modificado -->
+                                <a href="gestao.html#tab=gestao"
+                                    class="bg-white rounded-xl shadow-md p-6 flex items-center space-x-4 transition-all hover:shadow-lg hover:-translate-y-1">
+                                    <div class="flex-shrink-0 bg-blue-100 rounded-lg p-4">
+                                        <i class='bx bxs-folder text-3xl text-blue-700'></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-lg font-semibold text-gray-900">Gestão e Coordenação</h4>
+                                        <p class="text-gray-600 text-sm mt-1">Relatórios do corpo docente e
+                                            administrativo.</p>
+                                    </div>
+                                </a>
+
+                                <!-- Cartão 2: Professores -->
+                                <!-- Link modificado -->
+                                <a href="gestao.html#tab=professores"
+                                    class="bg-white rounded-xl shadow-md p-6 flex items-center space-x-4 transition-all hover:shadow-lg hover:-translate-y-1">
+                                    <div class="flex-shrink-0 bg-green-100 rounded-lg p-4">
+                                        <i class='bx bxs-user-voice text-3xl text-green-700'></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-lg font-semibold text-gray-900">Professores</h4>
+                                        <p class="text-gray-600 text-sm mt-1">Documentos, frequências e planos de aula.
+                                        </p>
+                                    </div>
+                                </a>
+
+                                <!-- Cartão 3: Reforço -->
+                                <!-- Link modificado -->
+                                <a href="gestao.html#tab=reforco"
+                                    class="bg-white rounded-xl shadow-md p-6 flex items-center space-x-4 transition-all hover:shadow-lg hover:-translate-y-1">
+                                    <div class="flex-shrink-0 bg-yellow-100 rounded-lg p-4">
+                                        <i class='bx bxs-book-reader text-3xl text-yellow-700'></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-lg font-semibold text-gray-900">Reforço Escolar</h4>
+                                        <p class="text-gray-600 text-sm mt-1">Controle de alunos e progresso.</p>
+                                    </div>
+                                </a>
+
+                                <!-- Cartão 4: Vigia (Exemplo) -->
+                                <!-- Link modificado -->
+                                <a href="gestao.html#tab=vigia"
+                                    class="bg-white rounded-xl shadow-md p-6 flex items-center space-x-4 transition-all hover:shadow-lg hover:-translate-y-1">
+                                    <div class="flex-shrink-0 bg-purple-100 rounded-lg p-4">
+                                        <i class='bx bxs-shield-alt-2 text-3xl text-purple-700'></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-lg font-semibold text-gray-900">Vigias</h4>
+                                        <p class="text-gray-600 text-sm mt-1">Relatórios de frequência dos vigias.</p>
+                                    </div>
+                                </a>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coluna da Direita (Menor) -->
+                    <div class="lg:col-span-1 space-y-8">
+                        <!-- 2. Seção de Prazos Importantes -->
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-800 mb-4">Prazos Importantes</h3>
+                            <!-- Cartão de Relatório Pendente -->
+                            <!-- Link modificado -->
+                            <a href="gestao.html#tab=gestao"
+                                class="block bg-white rounded-xl shadow-md p-5 transition-shadow hover:shadow-lg">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 bg-yellow-100 rounded-full p-3">
+                                            <i class='bx bxs-file-blank text-2xl text-yellow-600'></i>
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-lg font-semibold text-gray-900">Relatório do Corpo Docente
+                                            </div>
+                                            <div class="text-sm text-gray-600 font-medium">Pendente de revisão</div>
+                                        </div>
+                                    </div>
+                                    <span class="p-2 rounded-full text-gray-500">
+                                        <i class='bx bx-chevron-right text-2xl'></i>
+                                    </span>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- 4. NOVO: Avisos Recentes -->
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-800 mb-4">Avisos Recentes</h3>
+                            <div class="bg-white rounded-xl shadow-md p-6 space-y-4">
+                                <!-- Aviso 1 -->
+                                <div>
+                                    <span
+                                        class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">REUNIÃO</span>
+                                    <p class="font-medium text-gray-900 mt-2">Reunião pedagógica geral</p>
+                                    <p class="text-sm text-gray-600">Data e horário a definir.</p>
+                                </div>
+                                <hr>
+                                <!-- Aviso 2 -->
+                                <div>
+                                    <span
+                                        class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-200 text-gray-700">GERAL</span>
+                                    <p class="font-medium text-gray-900 mt-2">Ponto facultativo</p>
+                                    <p class="text-sm text-gray-600">Dia 27/10/2025 não haverá expediente.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div> <!-- Fim da Coluna da Direita -->
+                </div> <!-- Fim do Grid Wrapper -->
+
+            </div>
+
+            <!-- ============================== -->
+            <!-- PÁGINA 2: ESCOLA               -->
+            <!-- ============================== -->
+            <div id="page-escola" class="page-content p-6 md:p-10">
+                <h2 class="text-3xl font-bold text-gray-800 mb-8">Dados da Instituição</h2>
+
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="md:flex">
+                        <div class="md:flex-shrink-0">
+                            <!-- Placeholder para Imagem da Escola -->
+                            <div class="h-48 w-full object-cover md:w-48 bg-gray-200 flex items-center justify-center">
+                                <i class='bx bxs-school text-6xl text-gray-400'></i>
+                            </div>
+                        </div>
+                        <div class="p-8">
+                            <div class="uppercase tracking-wide text-sm text-blue-700 font-semibold">Escola Estadual
+                            </div>
+                            <h3 class="mt-1 text-3xl font-bold text-gray-900">E. E. Irmã Agnes Vincquier</h3>
+                            <p class="mt-2 text-gray-600">Informações principais da instituição.</p>
+
+                            <ul class="mt-6 space-y-4 text-gray-700">
+                                <li class="flex items-center">
+                                    <i class='bx bxs-id-card text-xl text-blue-600'></i>
+                                    <span class="ml-3"><strong class="font-medium text-gray-900">Código
+                                            INEP/CNE:</strong> (Dado não fornecido)</span>
+                                </li>
+                                <li class="flex items-center">
+                                    <i class='bx bxs-user-detail text-xl text-blue-600'></i>
+                                    <span class="ml-3"><strong class="font-medium text-gray-900">Diretor(a):</strong>
+                                        ANDRÉA GUIMARÃES DA SILVA</span>
+                                </li>
+                                <li class="flex items-center">
+                                    <i class='bx bxs-map text-xl text-blue-600'></i>
+                                    <span class="ml-3"><strong class="font-medium text-gray-900">Endereço:</strong> R.
+                                        Luiz Batista Nonato, 372-472</span>
+                                </li>
+                                <li class="flex items-center">
+                                    <i class='bx bxs-phone text-xl text-blue-600'></i>
+                                    <span class="ml-3"><strong class="font-medium text-gray-900">Telefone:</strong>
+                                        (Dado não fornecido)</span>
+                                </li>
+                                <li class="flex items-center">
+                                    <i class='bx bxs-envelope text-xl text-blue-600'></i>
+                                    <span class="ml-3"><strong class="font-medium text-gray-900">Email:</strong> (Dado
+                                        não fornecido)</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================== -->
+            <!-- PÁGINA 3: ALUNOS SUSPENSOS     -->
+            <!-- ============================== -->
+            <div id="page-alunos-suspensos" class="page-content p-6 md:p-10">
+                <h2 class="text-3xl font-bold text-gray-800 mb-8">Controle de Alunos Suspensos</h2>
+                <div id="auth-status" class="hidden mb-4 p-4 bg-yellow-100 text-yellow-800 rounded-md">
+                    Aguardando autenticação para carregar dados...
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                    <!-- Coluna 1: Formulário de Registro -->
+                    <div class="lg:col-span-1">
+                        <div class="bg-white rounded-xl shadow-md p-6">
+                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Registrar Nova Suspensão</h3>
+                            <form id="suspension-form" class="space-y-4">
+                                <div>
+                                    <label for="student-name" class="block text-sm font-medium text-gray-700">Nome do
+                                        Aluno</label>
+                                    <input type="text" id="student-name" required
+                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label for="suspension-date" class="block text-sm font-medium text-gray-700">Data da
+                                        Suspensão</label>
+                                    <input type="date" id="suspension-date" required
+                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label for="suspension-days" class="block text-sm font-medium text-gray-700">Dias de
+                                        Suspensão</label>
+                                    <input type="number" id="suspension-days" min="1" required
+                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <button type="submit"
+                                    class="w-full btn-icon flex items-center justify-center bg-blue-700 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-800 transition-colors">
+                                    <i class='bx bx-plus-circle text-xl mr-2'></i>
+                                    Registrar Aluno
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Coluna 2: Lista de Alunos -->
+                    <div class="lg:col-span-2">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Alunos Suspensos Atualmente</h3>
+                        <div id="suspension-list-container" class="space-y-4">
+                            <!-- Carregando... -->
+                            <div id="loading-suspensions" class="text-center text-gray-500 p-4">Carregando dados...
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ============================== -->
+            <!-- PÁGINA 4: NOTAS FISCAIS        -->
+            <!-- ============================== -->
+            <div id="page-notas-fiscais" class="page-content p-6 md:p-10">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-3xl font-bold text-gray-800">Gestão de Notas Fiscais</h2>
+                    <!-- Botão Adicionar removido -->
+                </div>
+
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Nº da Nota</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Fornecedor</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Data Emissão</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Valor</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Status</th>
+                                    <!-- Coluna Ações removida -->
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <!-- Linha de Exemplo 1 -->
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">000123
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Papelaria Central</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">20/10/2025</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">R$ 450,00</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span
+                                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                            Paga
+                                        </span>
+                                    </td>
+                                    <!-- Célula Detalhes removida -->
+                                </tr>
+                                <!-- Linha de Exemplo 2 -->
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">000124
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Material de Limpeza
+                                        Ltda.</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">22/10/2025</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">R$ 1.200,00</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span
+                                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                            Pendente
+                                        </span>
+                                    </td>
+                                    <!-- Célula Detalhes removida -->
+                                </tr>
+                                <!-- Mais linhas podem ser adicionadas aqui -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- SDKs do Firebase (Sempre da fonte oficial do Google) -->
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+
+    <!-- SEU SCRIPT PRINCIPAL (agora como um módulo) -->
+        <script type="module">
+        // Importa as funções que você precisa
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import {
+            getAuth,
+            onAuthStateChanged,
+            signOut
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import {
+            getFirestore,
+            collection,
+            addDoc,
+            deleteDoc,
+            doc,
+            onSnapshot,
+            query,
+            orderBy,
+            setLogLevel
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // --- VARIÁVEIS GLOBAIS ---
+        let db;
+        let auth;
+        let userId;
+        let appId;
+        let suspensionsCollectionRef;
+        let qrCodeModal;
+        let closeQrCodeBtn;
+        let qrCodeContainer;
+        let qrcode = null; // Instância do QR Code
+
+        // Flags de inicialização
+        let isDomReady = false;
+        let isAuthReady = false;
+
+        // --- INICIALIZAÇÃO DO FIREBASE ---
+        try {
+            const firebaseConfig = {
+                apiKey: "AIzaSyB56Wb9wAkDifB1b0x8n6vHd0kpZzMbnjw",
+                authDomain: "apigestao.firebaseapp.com",
+                projectId: "apigestao",
+                storageBucket: "apigestao.firebasestorage.app",
+                messagingSenderId: "635855926771",
+                appId: "1:635855926771:web:f1940e9fc9dc508d824e86",
+                measurementId: "G-PPGZB1ER92"
+            };
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            appId = firebaseConfig.appId || 'default-app-id';
+            setLogLevel('debug');
+            console.log("Firebase App inicializado. Aguardando autenticação...");
+            const authStatusEl = document.getElementById('auth-status');
+            if (authStatusEl) authStatusEl.classList.remove('hidden');
+
+            // --- GUARDIÃO DE AUTENTICAÇÃO ---
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    userId = user.uid;
+                    console.log("Guardião: Usuário logado:", user.email);
+                    if (authStatusEl) authStatusEl.classList.add('hidden');
+                    const userDisplay = document.getElementById('user-display-name');
+                    if (userDisplay && user.email) {
+                        const namePart = user.email.split('@')[0];
+                        const capitalizedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+                        userDisplay.textContent = capitalizedName;
+                    }
+                    isAuthReady = true;
+                    tryAppInit();
+                    document.body.style.opacity = 1;
+                } else {
+                    console.log("Guardião: Nenhum usuário. Redirecionando para login.html");
+                    window.location.replace('login.html');
+                }
+            });
+
+        } catch (e) {
+            console.error("Erro ao inicializar o Firebase:", e);
+            // ... (tratamento de erro como estava antes) ...
+            document.body.style.opacity = 1;
+        }
+
+        // --- Função de verificação ---
+        function tryAppInit() {
+            if (isDomReady && isAuthReady) {
+                console.log("DOM e Auth prontos. Inicializando lógica da aplicação.");
+                initializePageLogic();
+            } else {
+                console.log(`Aguardando... DOM: ${isDomReady}, Auth: ${isAuthReady}`);
+            }
+        }
+
+        // --- FUNÇÃO DE CÁLCULO (HELPER) ---
+        window.calculateTimeRemaining = function (suspensionDateStr, daysStr) {
+            // ... (código da função como estava antes) ...
+             const days = parseInt(daysStr);
+            if (isNaN(days) || !suspensionDateStr) { return { returnDate: 'Inválido', daysRemaining: 'N/A', status: 'Erro', statusColor: 'text-gray-500', iconColor: 'bg-gray-100' }; }
+            const suspensionDate = new Date(suspensionDateStr + 'T00:00:00');
+            if (isNaN(suspensionDate.getTime())) { return { returnDate: 'Data Inválida', daysRemaining: 'N/A', status: 'Erro', statusColor: 'text-gray-500', iconColor: 'bg-gray-100' }; }
+            const returnDateObj = new Date(suspensionDate.getTime());
+            returnDateObj.setDate(returnDateObj.getDate() + days);
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            const timeLeftMs = returnDateObj.getTime() - today.getTime();
+            const daysRemaining = Math.ceil(timeLeftMs / (1000 * 60 * 60 * 24));
+            const returnDate = returnDateObj.toLocaleDateString('pt-BR');
+            if (daysRemaining <= 0) { return { returnDate, daysRemaining: 0, status: 'Liberado', statusColor: 'text-green-600', iconColor: 'bg-green-100' }; }
+            else { return { returnDate, daysRemaining, status: 'Ativo', statusColor: 'text-red-600', iconColor: 'bg-red-100' }; }
+        }
+        
+        // --- FUNÇÃO DE REMOÇÃO (ALUNOS) ---
+        window.removeSuspension = async function (studentId) {
+             console.log("Removendo documento:", studentId);
+            try {
+                const docRef = doc(db, `artifacts/${appId}/public/data/alunosSuspensos`, studentId);
+                await deleteDoc(docRef);
+            } catch (e) { console.error("Erro ao remover aluno: ", e); alert("Falha ao remover registro."); }
+        }
+
+        // --- LÓGICA DA PÁGINA (SÓ RODA APÓS AUTH E DOM) ---
+        function initializePageLogic() {
+
+            // Define a referência da coleção
+            const collectionPath = `artifacts/${appId}/public/data/alunosSuspensos`;
+            console.log("Usando caminho da coleção (Compartilhada):", collectionPath);
+            suspensionsCollectionRef = collection(db, collectionPath);
+
+            const suspensionForm = document.getElementById('suspension-form');
+            const listContainer = document.getElementById('suspension-list-container');
+            const loadingIndicator = document.getElementById('loading-suspensions');
+
+            // C = CREATE (Registrar Aluno)
+            if (suspensionForm) {
+                suspensionForm.addEventListener('submit', async function (e) {
+                    // ... (código do submit como estava antes) ...
+                     e.preventDefault();
+                    const nameInput = document.getElementById('student-name');
+                    const dateInput = document.getElementById('suspension-date');
+                    const daysInput = document.getElementById('suspension-days');
+                    const name = nameInput?.value; const suspensionDate = dateInput?.value; const days = daysInput?.value;
+                    if (!name || !suspensionDate || !days) { console.warn("Formulário incompleto."); return; }
+                    try {
+                        const docRef = await addDoc(suspensionsCollectionRef, { nome: name, dataSuspensao: suspensionDate, dias: parseInt(days), criadoEm: new Date(), registradoPor: auth.currentUser?.email || 'desconhecido' });
+                        console.log("Aluno registrado com ID: ", docRef.id); suspensionForm.reset();
+                    } catch (e) { console.error("Erro ao adicionar aluno: ", e); alert("Falha ao registrar aluno. Tente novamente."); }
+                });
+            } else { console.warn("Elemento #suspension-form não encontrado."); }
+
+
+            // R = READ (Carregar Alunos EM TEMPO REAL)
+            if (listContainer && loadingIndicator) {
+                loadSuspensionsRealtime();
+            } else { console.warn("Elementos #suspension-list-container ou #loading-suspensions não encontrados."); }
+
+            function loadSuspensionsRealtime() {
+                const q = query(suspensionsCollectionRef, orderBy("criadoEm", "desc"));
+                onSnapshot(q, (querySnapshot) => {
+                    // ... (código do onSnapshot como estava antes) ...
+                     if (!listContainer || !loadingIndicator) return;
+                    listContainer.innerHTML = ''; loadingIndicator.classList.add('hidden');
+                    if (querySnapshot.empty) { listContainer.innerHTML = `<div class="text-center text-gray-500 p-4">Nenhum aluno suspenso no momento.</div>`; return; }
+                    querySnapshot.forEach((doc) => {
+                        const student = doc.data(); const studentId = doc.id;
+                        const { returnDate, daysRemaining, status, statusColor, iconColor } = window.calculateTimeRemaining(student.dataSuspensao, student.dias);
+                        const card = `<div class="bg-white rounded-xl shadow-md p-5 flex items-center justify-between"> <div class="flex items-center"> <div class="flex-shrink-0 ${iconColor} rounded-full p-3"> <i class='bx ${status === 'Liberado' ? 'bxs-user-check' : 'bxs-user-x'} text-2xl ${statusColor}'></i> </div> <div class="ml-4"> <div class="text-lg font-semibold text-gray-900">${student.nome}</div> <div class="text-sm text-gray-600"> ${status === 'Liberado' ? `Suspensão concluída em: <strong>${returnDate}</strong>` : `Retorna em: <strong>${returnDate}</strong> (Faltam <strong>${daysRemaining}</strong> dia(s))` } </div> <div class="text-xs text-gray-400 mt-1">Registrado por: ${student.registradoPor || 'N/A'}</div> </div> </div> <button onclick="removeSuspension('${studentId}')" class="p-2 rounded-full ${status === 'Liberado' ? 'text-green-500 hover:bg-green-100' : 'text-red-500 hover:bg-red-100'}" title="${status === 'Liberado' ? 'Limpar registro' : 'Encerrar suspensão'}"> <i class='bx ${status === 'Liberado' ? 'bx-check-double' : 'bxs-trash'} text-xl'></i> </button> </div>`;
+                        listContainer.innerHTML += card;
+                    });
+                }, (error) => { console.error("Erro ao carregar suspensões: ", error); if (listContainer) listContainer.innerHTML = `<div class="text-center text-red-500 p-4">Erro ao carregar dados. Verifique o console.</div>`; });
+            }
+
+             // --- LÓGICA DO MODAL QR CODE ---
+            window.openQrCodeModal = function(navElement) {
+                 // Verifica se os elementos do modal existem ANTES de usá-los
+                 if (!qrCodeModal || !qrCodeContainer) {
+                     console.error("Erro: Elementos do modal QR Code não encontrados ao tentar abrir.");
+                     // Tenta buscar os elementos novamente (caso de race condition extremo)
+                     qrCodeModal = document.getElementById('qr-code-modal');
+                     qrCodeContainer = document.getElementById('qr-code-container');
+                     if (!qrCodeModal || !qrCodeContainer) return; // Se ainda não achar, desiste
+                 }
+
+                const url = "http://eletrobusiness.com.br/users/escola/home.html";
+                qrCodeContainer.innerHTML = '';
+
+                if (typeof QRCode !== 'undefined') {
+                    if (!qrcode) {
+                        qrcode = new QRCode(qrCodeContainer, { text: url, width: 200, height: 200, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
+                    } else {
+                        qrcode.clear();
+                        qrcode.makeCode(url);
+                    }
+                } else { qrCodeContainer.innerHTML = '<p class="text-red-500 text-sm">Erro: Biblioteca QRCode não carregada.</p>'; }
+
+                qrCodeModal.classList.remove('hidden');
+                requestAnimationFrame(() => { qrCodeModal.classList.add('show'); });
+
+                // Atualiza estilo da navegação
+                 document.querySelectorAll('.nav-link').forEach(link => { link.classList.remove('bg-blue-100', 'text-blue-700'); link.classList.add('text-gray-700', 'hover:bg-gray-100', 'hover:text-gray-900'); const icon = link.querySelector('i'); if (icon) { icon.classList.remove('text-blue-700'); icon.classList.add('text-gray-400', 'group-hover:text-gray-600'); } });
+                 if (navElement) { navElement.classList.add('bg-blue-100', 'text-blue-700'); navElement.classList.remove('text-gray-700', 'hover:bg-gray-100', 'hover:text-gray-900'); const activeIcon = navElement.querySelector('i'); if (activeIcon) { activeIcon.classList.add('text-blue-700'); activeIcon.classList.remove('text-gray-400', 'group-hover:text-gray-600'); } }
+            }
+
+            // Listener para fechar o modal QR Code (AGORA DENTRO DE initializePageLogic)
+            if (closeQrCodeBtn && qrCodeModal) {
+                closeQrCodeBtn.addEventListener('click', () => {
+                    qrCodeModal.classList.remove('show');
+                    setTimeout(() => { if (!qrCodeModal.classList.contains('show')) { qrCodeModal.classList.add('hidden'); } }, 300);
+                });
+            } else { console.warn("Botão de fechar ou modal QR Code não encontrado ao adicionar listener."); }
+
+            // Listener para fechar o modal clicando fora dele (AGORA DENTRO DE initializePageLogic)
+            if (qrCodeModal) {
+                qrCodeModal.addEventListener('click', (event) => {
+                    if (event.target === qrCodeModal) {
+                        qrCodeModal.classList.remove('show');
+                        setTimeout(() => { if (!qrCodeModal.classList.contains('show')) { qrCodeModal.classList.add('hidden'); } }, 300);
+                    }
+                });
+            } else { console.warn("Modal QR Code não encontrado ao adicionar listener de clique fora."); }
+            // --- FIM DA LÓGICA DO MODAL QR CODE ---
+
+        } // --- Fim do initializePageLogic ---
+
+
+        // --- LÓGICA DE UI (INDEPENDENTE DO FIREBASE, RODA QUANDO O DOM ESTÁ PRONTO) ---
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            // --- ATRIBUIÇÃO DOS ELEMENTOS DO MODAL QR CODE ---
+            // Atribui os elementos aqui, garantindo que o DOM existe
+            qrCodeModal = document.getElementById('qr-code-modal');
+            closeQrCodeBtn = document.getElementById('close-qr-code-btn');
+            qrCodeContainer = document.getElementById('qr-code-container');
+            // --- FIM DA ATRIBUIÇÃO ---
+
+            // --- LÓGICA DA SIDEBAR ---
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('toggleSidebarBtn');
+            const logoText = document.getElementById('logo-text');
+            const labels = document.querySelectorAll('.sidebar-label');
+            const sections = document.querySelectorAll('.sidebar-section');
+            const iconOpen = document.getElementById('toggle-icon-open');
+            const iconClose = document.getElementById('toggle-icon-close');
+
+            if (toggleBtn && sidebar && logoText && iconOpen && iconClose && labels.length > 0 && sections.length > 0) {
+                toggleBtn.addEventListener('click', function () {
+                    // ... (código da sidebar como estava antes) ...
+                     sidebar.classList.toggle('w-64'); sidebar.classList.toggle('w-20'); logoText.classList.toggle('hidden'); logoText.classList.toggle('opacity-0'); iconOpen.classList.toggle('hidden'); iconClose.classList.toggle('hidden'); labels.forEach(label => { label.classList.toggle('hidden'); label.classList.toggle('opacity-0'); }); sections.forEach(section => { section.classList.toggle('hidden'); section.classList.toggle('opacity-0'); });
+                });
+            } else { console.warn("Um ou mais elementos da sidebar não foram encontrados."); }
+
+            // --- LÓGICA DE NAVEGAÇÃO (SPA) ---
+            window.showPage = function (pageId, navElement) {
+                // ... (código da showPage como estava antes) ...
+                 document.querySelectorAll('.page-content').forEach(page => { page.classList.remove('active'); });
+                 const pageToShow = document.getElementById(pageId); if (pageToShow) { pageToShow.classList.add('active'); } else { console.warn(`Página com ID ${pageId} não encontrada.`); }
+                 document.querySelectorAll('.nav-link').forEach(link => { link.classList.remove('bg-blue-100', 'text-blue-700'); link.classList.add('text-gray-700', 'hover:bg-gray-100', 'hover:text-gray-900'); const icon = link.querySelector('i'); if (icon) { icon.classList.remove('text-blue-700'); icon.classList.add('text-gray-400', 'group-hover:text-gray-600'); } });
+                 if (navElement) { navElement.classList.add('bg-blue-100', 'text-blue-700'); navElement.classList.remove('text-gray-700', 'hover:bg-gray-100', 'hover:text-gray-900'); const activeIcon = navElement.querySelector('i'); if (activeIcon) { activeIcon.classList.add('text-blue-700'); activeIcon.classList.remove('text-gray-400', 'group-hover:text-gray-600'); } }
+            }
+
+            // --- LÓGICA DE LOGOUT ---
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', async (e) => {
+                    // ... (código do logout como estava antes) ...
+                     e.preventDefault(); try { await signOut(auth); } catch (error) { console.error("Erro ao fazer logout:", error); }
+                });
+            } else { console.warn("Botão de logout não encontrado."); }
+
+            // Marca o DOM como pronto e tenta inicializar
+            isDomReady = true;
+            tryAppInit();
+        });
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Portal de Gestão Escolar</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Boxicons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        /* Fonte Inter */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Fundo cinza claro */
+        }
+        .login-card {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 420px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            outline: none;
+        }
+        .form-input:focus {
+            border-color: #0d47a1; /* Azul escuro */
+            box-shadow: 0 0 0 2px rgba(13, 71, 161, 0.2);
+        }
+        .btn-primary {
+            background-color: #0d47a1; /* Azul escuro */
+            color: white;
+            font-weight: 600;
+            padding: 12px;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+            width: 100%;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-primary:hover {
+            background-color: #0b3b84;
+        }
+        .btn-primary:disabled {
+            background-color: #a0aec0;
+            cursor: not-allowed;
+        }
+        #error-message {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #fca5a5;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+    <div class="login-card">
+        <!-- Logo e Título -->
+        <div class="text-center mb-8">
+            <i class='bx bxs-school text-5xl text-blue-900'></i>
+            <h1 class="text-3xl font-bold text-gray-800 mt-2">Portal de Gestão</h1>
+            <p class="text-gray-600">Acesso restrito à diretoria e coordenação.</p>
+        </div>
+
+        <!-- Formulário de Login -->
+        <form id="login-form">
+            <!-- Mensagem de Erro/Status -->
+            <div id="status-message" class="mb-4"></div>
+
+            <!-- Email -->
+            <div class="mb-4">
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <input type="email" id="email" class="form-input" placeholder="seuemail@escola.com" required>
+            </div>
+
+            <!-- Senha -->
+            <div class="mb-6">
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+                <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+            </div>
+
+            <!-- Botão Entrar -->
+            <button type="submit" id="login-button" class="btn-primary">
+                Entrar
+            </button>
+        </form>
+
+        <!-- Link "Esqueci minha senha" -->
+        <div class="text-center mt-6">
+            <a href="#" class="text-sm text-blue-800 hover:underline">Esqueceu sua senha?</a>
+        </div>
+    </div>
+
+    <!-- Scripts do Firebase -->
+    <!-- Usamos 'type="module"' para permitir 'import' -->
+    <script type="module">
+        // Importa as funções necessárias do Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged, 
+            signInWithEmailAndPassword 
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+        // --- INICIALIZAÇÃO DO FIREBASE ---
+        let auth;
+        try {
+            // IMPLEMENTAÇÃO MANUAL DO SEU FIREBASECONFIG
+            // Conforme solicitado, estamos usando seu config para apontar para o projeto correto.
+            const firebaseConfig = {
+              apiKey: "AIzaSyB56Wb9wAkDifB1b0x8n6vHd0kpZzMbnjw",
+              authDomain: "apigestao.firebaseapp.com",
+              projectId: "apigestao",
+              storageBucket: "apigestao.firebasestorage.app",
+              messagingSenderId: "635855926771",
+              appId: "1:635855926771:web:f1940e9fc9dc508d824e86",
+              measurementId: "G-PPGZB1ER92"
+            };
+
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            console.log("Firebase Auth inicializado (Usando Config Manual).");
+
+        } catch (e) {
+            console.error("Erro fatal ao carregar Firebase:", e);
+            showStatus("Erro crítico ao conectar. Verifique o console.", true);
+        }
+
+        // --- ELEMENTOS DO DOM ---
+        const loginForm = document.getElementById('login-form');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginButton = document.getElementById('login-button');
+        const statusMessage = document.getElementById('status-message');
+
+        // --- "VIGIA" DE AUTENTICAÇÃO ---
+        // Fica observando se o usuário está logado ou não
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Usuário está logado!
+                console.log("Usuário logado:", user.email);
+                // Redireciona para o dashboard (home.html)
+                // Usamos 'replace' para que o usuário não possa "voltar" para a pág de login
+                window.location.replace('home.html');
+            } else {
+                // Usuário está deslogado
+                console.log("Nenhum usuário logado.");
+                // Garante que o formulário esteja visível e pronto
+                document.body.style.opacity = 1; // Mostra a página
+            }
+        });
+
+        // --- LÓGICA DE LOGIN ---
+        // Ação disparada ao clicar em "Entrar"
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Impede o recarregamento da página
+
+            const email = emailInput.value;
+            const password = passwordInput.value;
+
+            setLoading(true); // Desativa o botão e mostra "carregando"
+
+            try {
+                // Tenta fazer o login no Firebase com o email e senha fornecidos
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                
+                // Sucesso!
+                console.log('Login bem-sucedido!', userCredential.user);
+                showStatus("Login bem-sucedido! Redirecionando...", false);
+                // Não precisamos fazer mais nada, o 'onAuthStateChanged' (o "vigia")
+                // vai detectar a mudança e fazer o redirecionamento.
+
+            } catch (error) {
+                // Falha no login
+                console.error("Erro no login:", error.code, error.message);
+                const friendlyMessage = getFirebaseErrorMessage(error.code);
+                showStatus(friendlyMessage, true); // Mostra erro amigável
+                setLoading(false); // Reativa o botão
+            }
+        });
+
+        // --- FUNÇÕES AUXILIARES ---
+
+        // Controla o estado de "carregando" do botão
+        function setLoading(isLoading) {
+            loginButton.disabled = isLoading;
+            loginButton.innerHTML = isLoading 
+                ? '<i class="bx bx-loader-alt bx-spin text-xl"></i>' 
+                : 'Entrar';
+        }
+
+        // Mostra mensagens de status ou erro
+        function showStatus(message, isError = false) {
+            statusMessage.innerHTML = `<div id="${isError ? 'error-message' : 'success-message'}">${message}</div>`;
+            
+            // Adiciona classes de estilo para sucesso (opcional, mas bom)
+            if (!isError && message) {
+                const successMsg = document.getElementById('success-message');
+                if (successMsg) {
+                    successMsg.className = 'bg-green-100 border border-green-300 text-green-800 p-3 rounded-lg text-center text-sm';
+                }
+            }
+        }
+
+        // Traduz erros comuns do Firebase para o português
+        function getFirebaseErrorMessage(code) {
+            switch (code) {
+                case 'auth/wrong-password':
+                    return 'Senha incorreta. Tente novamente.';
+                case 'auth/user-not-found':
+                    return 'Nenhum usuário encontrado com este email.';
+                case 'auth/invalid-email':
+                    return 'O formato do email é inválido.';
+                case 'auth/invalid-credential':
+                    return 'Credenciais inválidas (email ou senha).';
+                case 'auth/too-many-requests':
+                    return 'Muitas tentativas de login. Tente novamente mais tarde.';
+                case 'auth/operation-not-allowed':
+                    return 'Erro: O login por Email/Senha não está ativado no Firebase. (Verifique o Console > Authentication > Sign-in method).';
+                default:
+                    return 'Ocorreu um erro inesperado. Tente novamente.';
+            }
+        }
+
+    </script>
+</body>
+</html>
+

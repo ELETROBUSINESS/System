@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Gestão - Relatório Docente</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+
+    <style>
+        /* Define a fonte Inter como padrão (opcional, mas bom) */
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Oculta a página até o Firebase verificar o login */
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            background-color: #f1f5f9;
+        }
+
+        /* --- Estilos da Página A4 --- */
+        .report-content-wrapper {
+            position: relative;
+            background-color: white;
+            padding: 2cm;
+            margin-left: auto;
+            margin-right: auto;
+            width: 21cm;
+            min-height: 29.7cm;
+            /* Essencial para a quebra de página natural */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        /* --- ESTILOS DE IMPRESSÃO (CORRIGIDO) --- */
+        @media print {
+            body {
+                background-color: #fff;
+                padding: 0;
+                margin: 0;
+                opacity: 1 !important;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            /* Esconde todas as páginas que NÃO devem ser impressas */
+            [data-page] {
+                display: none !important;
+            }
+
+            /* Mostra APENAS as páginas marcadas para impressão */
+            [data-page].active-print-page {
+                display: block !important;
+                /* Força uma quebra de página DEPOIS de cada relatório */
+                page-break-after: always;
+            }
+
+            /* Evita uma página em branco extra no final */
+            [data-page].active-print-page:last-of-type {
+                /* Corrigido seletor para :last-of-type */
+                page-break-after: auto;
+            }
+
+            .report-content-wrapper {
+                box-shadow: none;
+                border: none;
+                /* Mantém o padding: 2cm original para todas as páginas */
+                width: 100%;
+                max-width: 100%;
+                border-radius: 0;
+                min-height: auto;
+                /* Deixa o conteúdo definir a altura na impressão */
+            }
+
+            /* --- O resto das regras permanece igual --- */
+            table,
+            th,
+            td {
+                border-color: #000 !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }
+
+            tr {
+                page-break-inside: avoid;
+            }
+
+            [contenteditable="true"] {
+                border-bottom: 1px solid transparent !important;
+            }
+
+            [contenteditable="true"]:empty::before {
+                content: "";
+            }
+
+            img:not([src]) {
+                display: none;
+            }
+
+            .image-placeholder {
+                display: none;
+            }
+
+            #row-context-menu {
+                display: none;
+            }
+        }
+
+        /* --- Estilos para campos editáveis --- */
+        [contenteditable="true"] {
+            cursor: pointer;
+            padding: 2px 4px;
+            border-bottom: 1px dashed #9ca3af;
+            transition: all 0.2s ease-in-out;
+            border-radius: 4px;
+        }
+
+        [contenteditable="true"]:hover {
+            background-color: #fef9c3;
+            border-bottom: 1px dashed #3b82f6;
+        }
+
+        [contenteditable="true"]:focus {
+            outline: 2px solid #3b82f6;
+            background-color: #fff;
+            border-bottom: 1px solid transparent;
+        }
+
+        [contenteditable="true"]:empty::before {
+            content: attr(placeholder);
+            color: #9ca3af;
+            font-style: italic;
+            font-size: 10px;
+        }
+
+        /* --- Estilos da Tabela --- */
+        .report-table-body tr {
+            transition: margin-bottom 0.3s ease;
+        }
+
+        .day-cell {
+            width: 35px;
+            max-width: 35px;
+            height: 35px;
+            padding-left: 0.125rem;
+            padding-right: 0.125rem;
+            text-align: center;
+            vertical-align: middle;
+            font-weight: 500;
+        }
+
+        /* --- Estilos da Navegação --- */
+        .nav-tab.active {
+            border-bottom: 4px solid #2563eb;
+            color: #1f2937;
+            font-weight: 600;
+        }
+
+        .nav-tab {
+            padding-bottom: 8px;
+        }
+
+        /* --- Menu de Contexto --- */
+        #row-context-menu {
+            position: fixed;
+            display: none;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 20;
+            width: 190px;
+            padding: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .context-menu-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: left;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .context-menu-btn:hover {
+            background-color: #f3f4f6;
+        }
+
+        .context-menu-btn.delete {
+            color: #ef4444;
+        }
+
+        .context-menu-btn.delete:hover {
+            background-color: #fee2e2;
+        }
+
+        /* --- Estilos do Modal (Genérico - LIMPO e CORRIGIDO) --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            /* z-index alto */
+
+            /* Começa escondido e invisível */
+            display: none;
+            opacity: 0;
+            pointer-events: none;
+            /* Garante que não bloqueie cliques quando escondido */
+
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+            /* Mostra */
+            opacity: 1;
+            /* Torna visível */
+            pointer-events: auto;
+            /* Permite interação com o modal */
+        }
+
+        .modal-content {
+            background: white;
+            padding: 28px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            /* Responsivo */
+            text-align: center;
+
+            /* Animação */
+            transform: scale(0.95);
+            opacity: 0;
+            transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out;
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+            /* Animação */
+            opacity: 1;
+            /* Animação */
+        }
+
+        /* Aplica o estilo base aos modais específicos e define seus tamanhos */
+        #delete-modal {}
+
+        /* Herda .modal-overlay */
+        #delete-modal-content {
+            max-width: 400px;
+            /* Herda .modal-content + tamanho específico */
+        }
+
+        #day-range-modal {}
+
+        /* Herda .modal-overlay */
+        #day-range-modal .modal-content {
+            max-width: 400px;
+            /* Herda .modal-content + tamanho específico */
+        }
+
+        #print-modal {}
+
+        /* Herda .modal-overlay */
+        #print-modal .modal-content {
+            max-width: 450px;
+            /* Herda .modal-content + tamanho específico */
+        }
+
+
+        /* Placeholder para Assinatura/Logo */
+        .image-placeholder {
+            border: 2px dashed #d1d5db;
+            background-color: #f9fafb;
+            color: #6b7280;
+            font-size: 12px;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        img.loaded-image {
+            display: block;
+        }
+
+        img.loaded-image+.image-placeholder {
+            display: none;
+        }
+
+        /* --- Estilos da Caixa de Dicas --- */
+        #hint-body-content {
+            transition: max-height 0.5s ease-out, opacity 0.3s ease-out;
+            max-height: 200px;
+            opacity: 1;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body class="font-sans leading-normal text-gray-800 p-4 md:p-8">
+
+    <!-- Modal de Deleção -->
+    <div id="delete-modal" class="no-print modal-overlay">
+        <div id="delete-modal-content" class="modal-content"> <!-- Adicionada classe modal-content -->
+            <svg class="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                </path>
+            </svg>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">Apagar Linha</h3>
+            <p class="text-gray-600 mb-6">Você tem certeza que deseja apagar esta linha? Esta ação não pode ser
+                desfeita.</p>
+            <div class="flex justify-center gap-4">
+                <button id="cancel-delete-btn"
+                    class="px-6 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition">Cancelar</button>
+                <button id="confirm-delete-btn"
+                    class="px-6 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition">Sim,
+                    apagar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Impressão -->
+    <div id="print-modal" class="no-print modal-overlay">
+        <div class="modal-content">
+            <svg class="w-16 h-16 text-blue-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                </path>
+            </svg>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">Opções de Impressão</h3>
+            <p class="text-gray-600 mb-6">Selecione quais relatórios você deseja imprimir.</p>
+            <div id="print-options-list" class="space-y-3 text-left mb-8 max-w-sm mx-auto">
+                <label class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer">
+                    <input type="checkbox" data-print-page="gestao"
+                        class="print-page-checkbox h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    <span class="text-base font-medium text-gray-800">Gestão e Coordenação</span>
+                </label>
+                <label class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer">
+                    <input type="checkbox" data-print-page="professores"
+                        class="print-page-checkbox h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    <span class="text-base font-medium text-gray-800">Professores</span>
+                </label>
+                <label class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer">
+                    <input type="checkbox" data-print-page="reforco"
+                        class="print-page-checkbox h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    <span class="text-base font-medium text-gray-800">Reforço</span>
+                </label>
+                <label class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer">
+                    <input type="checkbox" data-print-page="vigia"
+                        class="print-page-checkbox h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    <span class="text-base font-medium text-gray-800">Vigia</span>
+                </label>
+            </div>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <button id="cancel-print-btn"
+                    class="px-6 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition">Cancelar</button>
+                <button id="print-all-btn"
+                    class="px-6 py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition order-first sm:order-none">Imprimir
+                    Todos</button>
+                <button id="print-selected-btn"
+                    class="px-6 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">Imprimir
+                    Selecionados</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Dias -->
+    <div id="day-range-modal" class="no-print modal-overlay">
+        <div class="modal-content">
+            <svg class="w-16 h-16 text-blue-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">Selecionar Período</h3>
+            <p class="text-gray-600 mb-6">Escolha o intervalo de dias para exibir na tabela.</p>
+            <div class="flex justify-center gap-4">
+                <button id="range-btn-1-16"
+                    class="px-6 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">Dias
+                    1-16</button>
+                <button id="range-btn-17-31"
+                    class="px-6 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition">Dias
+                    17-31</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menu de Contexto (Clique Direito) -->
+    <div id="row-context-menu" class="no-print">
+        <button id="menu-add-row" class="context-menu-btn">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6">
+                </path>
+            </svg>
+            Adicionar linha abaixo
+        </button>
+        <button id="menu-delete-row" class="context-menu-btn delete">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                </path>
+            </svg>
+            Apagar esta linha
+        </button>
+    </div>
+
+    <!-- Container Principal da Página -->
+    <div class="max-w-7xl mx-auto">
+
+        <header class="no-print mb-4 p-6 bg-white rounded-lg shadow-md">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Portal de Gestão e Coordenação</h1>
+                    <p class="text-lg text-gray-600">Relatório Interativo do Corpo Docente e Administrativo</p>
+                </div>
+                <a href="home.html" id="backButton"
+                    class="no-print flex items-center px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg shadow-md transition duration-200">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Voltar para Home
+                </a>
+                <div class="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                    <!-- Botão de Salvar -->
+                    <button id="saveDataButton"
+                        class="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-200 flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4">
+                            </path>
+                        </svg>
+                        Salvar Todos os Dados
+                    </button>
+                    <!-- Botão de Imprimir -->
+                    <button id="printButton"
+                        class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-200 flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                            </path>
+                        </svg>
+                        Imprimir Relatórios
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <nav class="no-print bg-white px-6 pt-2 rounded-lg shadow-md mb-8">
+            <div class="flex space-x-8 border-b border-gray-200">
+                <button data-tab="gestao" class="nav-tab text-lg text-gray-500 hover:text-gray-700 active">Gestão e
+                    Coordenação</button>
+                <button data-tab="professores"
+                    class="nav-tab text-lg text-gray-500 hover:text-gray-700">Professores</button>
+                <button data-tab="reforco" class="nav-tab text-lg text-gray-500 hover:text-gray-700">Reforço</button>
+                <button data-tab="vigia" class="nav-tab text-lg text-gray-500 hover:text-gray-700">Vigia</button>
+                <button data-tab="configuracoes"
+                    class="nav-tab text-lg text-gray-500 hover:text-gray-700">Configurações</button>
+            </div>
+        </nav>
+
+        <div id="page-configuracoes" data-page="configuracoes" class="no-print bg-white p-6 rounded-lg shadow-md mb-8"
+            style="display: none;">
+            <h2 class="text-2xl font-bold mb-4">Configurações do Portal</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="brasao_url" class="block text-sm font-medium text-gray-700">URL da Imagem do Brasão
+                        (Logo)</label>
+                    <input type="text" id="brasao_url"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                        placeholder="https://.../logo.png">
+                </div>
+                <div>
+                    <label for="assinatura_url" class="block text-sm font-medium text-gray-700">URL da Imagem da
+                        Assinatura</label>
+                    <input type="text" id="assinatura_url"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                        placeholder="https://.../assinatura.png">
+                </div>
+                <button id="saveSettingsButton"
+                    class="w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200">
+                    Salvar Configurações
+                </button>
+            </div>
+        </div>
+
+        <!-- ========================== Páginas de Relatório ========================== -->
+
+        <div id="page-gestao" data-page="gestao">
+            <div id="hint-box"
+                class="no-print mt-6 mb-8 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg flex justify-between items-start">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-lg font-semibold text-blue-800">Como usar esta página:</h3>
+                        <div id="hint-body-content">
+                            <p class="text-md text-blue-700 mt-1"> <strong>Para editar:</strong> Clique em qualquer
+                                campo do relatório (nomes, dias, etc.). </p>
+                            <p class="text-md text-blue-700 mt-1"> <strong>Adicionar/Apagar:</strong> Clique com o
+                                <strong>botão direito</strong> em qualquer célula da linha para ver as opções. </p>
+                            <p class="text-md text-blue-700 mt-1"> <strong>Mudar Dias (1-16 / 17-31):</strong> Clique em
+                                qualquer <strong>número</strong> no cabeçalho da tabela (1, 2, 3...). </p>
+                            <p class="text-md text-blue-700 mt-1"> <strong>Brasão e Assinatura:</strong> Vá na aba
+                                "Configurações" para adicionar as URLs das imagens. </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex-shrink-0 ml-4 flex items-center space-x-2">
+                    <button id="toggle-hint-btn" class="text-blue-400 hover:text-blue-600 focus:outline-none"
+                        title="Mostrar/Esconder Dicas"><svg id="toggle-hint-icon"
+                            class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7">
+                            </path>
+                        </svg></button>
+                    <button id="close-hint-btn" class="text-blue-400 hover:text-blue-600 focus:outline-none"
+                        title="Fechar Dicas Permanentemente"><svg class="w-5 h-5" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg></button>
+                </div>
+            </div>
+            <div id="report-content-gestao" class="report-content-wrapper">
+                <header class="text-center text-sm mb-4">
+                    <img id="logo-brasao-gestao" src="" alt="Brasão da Escola"
+                        class="mx-auto h-24 w-auto mb-4 loaded-image" style="display: none;"
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="image-placeholder mx-auto h-24 w-24 mb-4">[Brasão]</div>
+                    <h2 class="font-bold text-base" contenteditable="true" data-field="header_secretaria">SECRETARIA
+                        EXECUTIVA DE EDUCAÇÃO</h2>
+                    <h3 class="font-semibold" contenteditable="true" data-field="header_escola">EEEM Irmã Agnes
+                        Vincquier e Anexo I</h3>
+                    <p class="text-xs" contenteditable="true" data-field="header_gerencia">GERÊNCIA DE CONTROLE DA FOLHA
+                        DE PAGAMENTO</p>
+                    <h1 class="text-base font-bold mt-4" contenteditable="true" data-field="header_titulo">RELATÓRIO DO
+                        CORPO DOCENTE E ADMINISTRATIVO (SEDE E ANEXO I)</h1>
+                </header>
+                <div class="text-sm font-semibold mb-2"> MÊS: <span contenteditable="true" class="font-bold p-1"
+                        data-field="info_mes" placeholder="Ex: NOVEMBRO DE 2025">NOVEMBRO DE 2025</span> </div>
+                <table class="w-full text-xs border-collapse border border-gray-500">
+                    <thead class="bg-gray-100 font-bold">
+                        <tr>
+                            <th class="p-2 border border-gray-400 text-left" colspan="4">BOLETIM DE FREQUÊNCIA</th>
+                            <th class="p-2 border border-gray-400 text-left" colspan="17"> PERIODO DE APURAÇÃO: <span
+                                    contenteditable="true" class="font-normal p-1" data-field="info_periodo"
+                                    placeholder="Ex: 01 a 16 DE OUTUBRO DE 2025">01 a 16 DE OUTUBRO DE 2025</span> </th>
+                        </tr>
+                    </thead>
+                    <thead class="bg-gray-100 font-bold">
+                        <tr>
+                            <th class="p-2 border border-gray-400 text-left" style="width: 30%;">NOME</th>
+                            <th class="p-2 border border-gray-400" style="width: 10%;">ID. FUNC</th>
+                            <th class="p-2 border border-gray-400" style="width: 8%;">CARGA HOR.</th>
+                            <th class="p-2 border border-gray-400" style="width: 8%;">COD. FREQ <span
+                                    class="font-normal"
+                                    title="Códigos comuns: LSD (Licença Saúde), F (Falta), C (Compensação)">ⓘ</span>
+                            </th>
+                            <th class="day-cell border border-gray-400 text-center">1</th>
+                            <th class="day-cell border border-gray-400 text-center">2</th>
+                            <th class="day-cell border border-gray-400 text-center">3</th>
+                            <th class="day-cell border border-gray-400 text-center">4</th>
+                            <th class="day-cell border border-gray-400 text-center">5</th>
+                            <th class="day-cell border border-gray-400 text-center">6</th>
+                            <th class="day-cell border border-gray-400 text-center">7</th>
+                            <th class="day-cell border border-gray-400 text-center">8</th>
+                            <th class="day-cell border border-gray-400 text-center">9</th>
+                            <th class="day-cell border border-gray-400 text-center">10</th>
+                            <th class="day-cell border border-gray-400 text-center">11</th>
+                            <th class="day-cell border border-gray-400 text-center">12</th>
+                            <th class="day-cell border border-gray-400 text-center">13</th>
+                            <th class="day-cell border border-gray-400 text-center">14</th>
+                            <th class="day-cell border border-gray-400 text-center">15</th>
+                            <th class="day-cell border border-gray-400 text-center">16</th>
+                            <th class="day-cell border border-gray-400 text-center">T</th>
+                        </tr>
+                    </thead>
+                    <tbody id="report-table-body-gestao" class="report-table-body"></tbody>
+                </table>
+                <footer class="mt-16 text-sm">
+                    <div class="text-right mb-12"><span contenteditable="true" data-field="footer_local_data"
+                            placeholder="Cidade, DD de MES de AAAA">IPIXUNA DO PARÁ, 16 DE OUTUBRO DE 2025.</span></div>
+                    <div class="w-72 mx-auto text-center">
+                        <img id="img-assinatura-gestao" src="" alt="Assinatura"
+                            class="mx-auto h-20 w-auto mb-2 loaded-image" style="display: none;"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="image-placeholder mx-auto h-20 w-full mb-2">[Assinatura]</div>
+                        <div class="border-t border-gray-500 pt-2">
+                            <div class="text-xs text-gray-700">(Assinatura Carregada Acima)</div>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
+
+        <div id="page-professores" data-page="professores" style="display: none;">
+            <div id="report-content-professores" class="report-content-wrapper">
+                <header class="text-center text-sm mb-4">
+                    <img id="logo-brasao-professores" src="" alt="Brasão da Escola"
+                        class="mx-auto h-24 w-auto mb-4 loaded-image" style="display: none;"
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="image-placeholder mx-auto h-24 w-24 mb-4">[Brasão]</div>
+                    <h2 class="font-bold text-base" contenteditable="true" data-field="header_secretaria">SECRETARIA
+                        EXECUTIVA DE EDUCAÇÃO</h2>
+                    <h3 class="font-semibold" contenteditable="true" data-field="header_escola">EEEM Irmã Agnes
+                        Vincquier e Anexo I</h3>
+                    <p class="text-xs" contenteditable="true" data-field="header_gerencia">GERÊNCIA DE CONTROLE DA FOLHA
+                        DE PAGAMENTO</p>
+                    <h1 class="text-base font-bold mt-4" contenteditable="true" data-field="header_titulo">RELATÓRIO DO
+                        CORPO DOCENTE (PROFESSORES)</h1>
+                </header>
+                <div class="text-sm font-semibold mb-2"> MÊS: <span contenteditable="true" class="font-bold p-1"
+                        data-field="info_mes" placeholder="Ex: NOVEMBRO DE 2025">NOVEMBRO DE 2025</span> </div>
+                <table class="w-full text-xs border-collapse border border-gray-500">
+                    <thead class="bg-gray-100 font-bold">
+                        <tr>
+                            <th class="p-2 border border-gray-400 text-left" colspan="4">BOLETIM DE FREQUÊNCIA</th>
+                            <th class="p-2 border border-gray-400 text-left" colspan="17"> PERIODO DE APURAÇÃO: <span
+                                    contenteditable="true" class="font-normal p-1" data-field="info_periodo"
+                                    placeholder="Ex: 01 a 16 DE OUTUBRO DE 2025">01 a 16 DE OUTUBRO DE 2025</span> </th>
+                        </tr>
+                    </thead>
+                    <thead class="bg-gray-100 font-bold">
+                        <tr>
+                            <th class="p-2 border border-gray-400 text-left" style="width: 30%;">NOME</th>
+                            <th class="p-2 border border-gray-400" style="width: 10%;">ID. FUNC</th>
+                            <th class="p-2 border border-gray-400" style="width: 8%;">CARGA HOR.</th>
+                            <th class="p-2 border border-gray-400" style="width: 8%;">COD. FREQ <span
+                                    class="font-normal"
+                                    title="Códigos comuns: LSD (Licença Saúde), F (Falta), C (Compensação)">ⓘ</span>
+                            </th>
+                            <th class="day-cell border border-gray-400 text-center">1</th>
+                            <th class="day-cell border border-gray-400 text-center">2</th>
+                            <th class="day-cell border border-gray-400 text-center">3</th>
+                            <th class="day-cell border border-gray-400 text-center">4</th>
+                            <th class="day-cell border border-gray-400 text-center">5</th>
+                            <th class="day-cell border border-gray-400 text-center">6</th>
+                            <th class="day-cell border border-gray-400 text-center">7</th>
+                            <th class="day-cell border border-gray-400 text-center">8</th>
+                            <th class="day-cell border border-gray-400 text-center">9</th>
+                            <th class="day-cell border border-gray-400 text-center">10</th>
+                            <th class="day-cell border border-gray-400 text-center">11</th>
+                            <th class="day-cell border border-gray-400 text-center">12</th>
+                            <th class="day-cell border border-gray-400 text-center">13</th>
+                            <th class="day-cell border border-gray-400 text-center">14</th>
+                            <th class="day-cell border border-gray-400 text-center">15</th>
+                            <th class="day-cell border border-gray-400 text-center">16</th>
+                            <th class="day-cell border border-gray-400 text-center">T</th>
+                        </tr>
+                    </thead>
+                    <tbody id="report-table-body-professores" class="report-table-body"></tbody>
+                </table>
+                <footer class="mt-16 text-sm">
+                    <div class="text-right mb-12"><span contenteditable="true" data-field="footer_local_data"
+                            placeholder="Cidade, DD de MES de AAAA">IPIXUNA DO PARÁ, 16 DE OUTUBRO DE 2025.</span></div>
+                    <div class="w-72 mx-auto text-center">
+                        <img id="img-assinatura-professores" src="" alt="Assinatura"
+                            class="mx-auto h-20 w-auto mb-2 loaded-image" style="display: none;"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="image-placeholder mx-auto h-20 w-full mb-2">[Assinatura]</div>
+                        <div class="border-t border-gray-500 pt-2">
+                            <div class="text-xs text-gray-700">(Assinatura Carregada Acima)</div>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
+
+        <div id="page-reforco" data-page="reforco" style="display: none;">
+            <div id="report-content-reforco" class="report-content-wrapper">
+                <header class="text-center text-sm mb-4">
+                    <img id="logo-brasao-reforco" src="" alt="Brasão da Escola"
+                        class="mx-auto h-24 w-auto mb-4 loaded-image" style="display: none;"
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="image-placeholder mx-auto h-24 w-24 mb-4">[Brasão]</div>
+                    <h2 class="font-bold text-base" contenteditable="true" data-field="header_secretaria">SECRETARIA
+                        EXECUTIVA DE EDUCAÇÃO</h2>
+                    <h3 class="font-semibold" contenteditable="true" data-field="header_escola">EEEM Irmã Agnes
+                        Vincquier e Anexo I</h3>
+                    <p class="text-xs" contenteditable="true" data-field="header_gerencia">GERÊNCIA DE CONTROLE DA FOLHA
+                        DE PAGAMENTO</p>
+                    <h1 class="text-base font-bold mt-4" contenteditable="true" data-field="header_titulo">RELATÓRIO DE
+                        REFORÇO ESCOLAR</h1>
+                </header>
+                <div class="text-sm font-semibold mb-2"> MÊS: <span contenteditable="true" class="font-bold p-1"
+                        data-field="info_mes" placeholder="Ex: NOVEMBRO DE 2025">NOVEMBRO DE 2025</span> </div>
+                <table class="w-full text-xs border-collapse border border-gray-500">
+                    <thead class="bg-gray-100 font-bold">
+                        <tr>
+                            <th class="p-2 border border-gray-400 text-left" colspan="4">BOLETIM DE FREQUÊNCIA</th>
+                            <th class="p-2 border border-gray-400 text-left" colspan="17"> PERIODO DE APURAÇÃO: <span
+                                    contenteditable="true" class="font-normal p-1" data-field="info_periodo"
+                                    placeholder="Ex: 01 a 16 DE OUTUBRO DE 2025">01 a 16 DE OUTUBRO DE 2025</span> </th>
+                        </tr>
+                    </thead>
+                    <thead class="bg-gray-100 font-bold">
+                        <tr>
+                            <th class="p-2 border border-gray-400 text-left" style="width: 30%;">NOME</th>
+                            <th class="p-2 border border-gray-400" style="width: 10%;">ID. FUNC</th>
+                            <th class="p-2 border border-gray-400" style="width: 8%;">CARGA HOR.</th>
+                            <th class="p-2 border border-gray-400" style="width: 8%;">COD. FREQ <span
+                                    class="font-normal"
+                                    title="Códigos comuns: LSD (Licença Saúde), F (Falta), C (Compensação)">ⓘ</span>
+                            </th>
+                            <th class="day-cell border border-gray-400 text-center">1</th>
+                            <th class="day-cell border border-gray-400 text-center">2</th>
+                            <th class="day-cell border border-gray-400 text-center">3</th>
+                            <th class="day-cell border border-gray-400 text-center">4</th>
+                            <th class="day-cell border border-gray-400 text-center">5</th>
+                            <th class="day-cell border border-gray-400 text-center">6</th>
+                            <th class="day-cell border border-gray-400 text-center">7</th>
+                            <th class="day-cell border border-gray-400 text-center">8</th>
+                            <th class="day-cell border border-gray-400 text-center">9</th>
+                            <th class="day-cell border border-gray-400 text-center">10</th>
+                            <th class="day-cell border border-gray-400 text-center">11</th>
+                            <th class="day-cell border border-gray-400 text-center">12</th>
+                            <th class="day-cell border border-gray-400 text-center">13</th>
+                            <th class="day-cell border border-gray-400 text-center">14</th>
+                            <th class="day-cell border border-gray-400 text-center">15</th>
+                            <th class="day-cell border border-gray-400 text-center">16</th>
+                            <th class="day-cell border border-gray-400 text-center">T</th>
+                        </tr>
+                    </thead>
+                    <tbody id="report-table-body-reforco" class="report-table-body"></tbody>
+                </table>
+                <footer class="mt-16 text-sm">
+                    <div class="text-right mb-12"><span contenteditable="true" data-field="footer_local_data"
+                            placeholder="Cidade, DD de MES de AAAA">IPIXUNA DO PARÁ, 16 DE OUTUBRO DE 2025.</span></div>
+                    <div class="w-72 mx-auto text-center">
+                        <img id="img-assinatura-reforco" src="" alt="Assinatura"
+                            class="mx-auto h-20 w-auto mb-2 loaded-image" style="display: none;"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="image-placeholder mx-auto h-20 w-full mb-2">[Assinatura]</div>
+                        <div class="border-t border-gray-500 pt-2">
+                            <div class="text-xs text-gray-700">(Assinatura Carregada Acima)</div>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
+
+        <div id="page-vigia" data-page="vigia" style="display: none;">
+            <div id="report-content-vigia" class="report-content-wrapper">
+                <header class="text-center text-sm mb-4">
+                    <img id="logo-brasao-vigia" src="" alt="Brasão da Escola"
+                        class="mx-auto h-24 w-auto mb-4 loaded-image" style="display: none;"
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="image-placeholder mx-auto h-24 w-24 mb-4">[Brasão]</div>
+                    <h2 class="font-bold text-base" contenteditable="true" data-field="header_secretaria">SECRETARIA
+                        EXECUTIVA DE EDUCAÇÃO</h2>
+                    <h3 class="font-semibold" contenteditable="true" data-field="header_escola">EEEM Irmã Agnes
+                        Vincquier e Anexo I</h3>
+                    <p class="text-xs" contenteditable="true" data-field="header_gerencia">GERÊNCIA DE CONTROLE DA FOLHA
+                        DE PAGAMENTO</p>
+                    <h1 class="text-base font-bold mt-4" contenteditable="true" data-field="header_titulo">RELATÓRIO DE
+                        FREQUÊNCIA (VIGIAS)</h1>
+                </header>
+                <div class="text-sm font-semibold mb-2"> MÊS: <span contenteditable="true" class="font-bold p-1"
+                        data-field="info_mes" placeholder="Ex: NOVEMBRO DE 2025">NOVEMBRO DE 2025</span> </div>
+                <table class="w-full text-xs border-collapse border border-gray-500">
+                    <thead class="bg-gray-100 font-bold">
+                        <tr>
+                            <th class="p-2 border border-gray-400 text-left" colspan="4">BOLETIM DE FREQUÊNCIA</th>
+                            <th class="p-2 border border-gray-400 text-left" colspan="17"> PERIODO DE APURAÇÃO: <span
+                                    contenteditable="true" class="font-normal p-1" data-field="info_periodo"
+                                    placeholder="Ex: 01 a 16 DE OUTUBRO DE 2025">01 a 16 DE OUTUBRO DE 2025</span> </th>
+                        </tr>
+                    </thead>
+                    <thead class="bg-gray-100 font-bold">
+                        <tr>
+                            <th class="p-2 border border-gray-400 text-left" style="width: 30%;">NOME</th>
+                            <th class="p-2 border border-gray-400" style="width: 10%;">ID. FUNC</th>
+                            <th class="p-2 border border-gray-400" style="width: 8%;">CARGA HOR.</th>
+                            <th class="p-2 border border-gray-400" style="width: 8%;">COD. FREQ <span
+                                    class="font-normal"
+                                    title="Códigos comuns: LSD (Licença Saúde), F (Falta), C (Compensação)">ⓘ</span>
+                            </th>
+                            <th class="day-cell border border-gray-400 text-center">1</th>
+                            <th class="day-cell border border-gray-400 text-center">2</th>
+                            <th class="day-cell border border-gray-400 text-center">3</th>
+                            <th class="day-cell border border-gray-400 text-center">4</th>
+                            <th class="day-cell border border-gray-400 text-center">5</th>
+                            <th class="day-cell border border-gray-400 text-center">6</th>
+                            <th class="day-cell border border-gray-400 text-center">7</th>
+                            <th class="day-cell border border-gray-400 text-center">8</th>
+                            <th class="day-cell border border-gray-400 text-center">9</th>
+                            <th class="day-cell border border-gray-400 text-center">10</th>
+                            <th class="day-cell border border-gray-400 text-center">11</th>
+                            <th class="day-cell border border-gray-400 text-center">12</th>
+                            <th class="day-cell border border-gray-400 text-center">13</th>
+                            <th class="day-cell border border-gray-400 text-center">14</th>
+                            <th class="day-cell border border-gray-400 text-center">15</th>
+                            <th class="day-cell border border-gray-400 text-center">16</th>
+                            <th class="day-cell border border-gray-400 text-center">T</th>
+                        </tr>
+                    </thead>
+                    <tbody id="report-table-body-vigia" class="report-table-body"></tbody>
+                </table>
+                <footer class="mt-16 text-sm">
+                    <div class="text-right mb-12"><span contenteditable="true" data-field="footer_local_data"
+                            placeholder="Cidade, DD de MES de AAAA">IPIXUNA DO PARÁ, 16 DE OUTUBRO DE 2025.</span></div>
+                    <div class="w-72 mx-auto text-center">
+                        <img id="img-assinatura-vigia" src="" alt="Assinatura"
+                            class="mx-auto h-20 w-auto mb-2 loaded-image" style="display: none;"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="image-placeholder mx-auto h-20 w-full mb-2">[Assinatura]</div>
+                        <div class="border-t border-gray-500 pt-2">
+                            <div class="text-xs text-gray-700">(Assinatura Carregada Acima)</div>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
+
+    </div> <!-- Fim do <div class="max-w-7xl mx-auto"> -->
+
+    <script type="module">
+        // Importa as funções necessárias do Firebase (v10.12.2)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, doc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // --- 1. Configuração do Firebase (DO SEU PROJETO 'apigestao') ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyB56Wb9wAkDifB1b0x8n6vHd0kpZzMbnjw",
+            authDomain: "apigestao.firebaseapp.com",
+            projectId: "apigestao",
+            storageBucket: "apigestao.firebasestorage.app",
+            messagingSenderId: "635855926771",
+            appId: "1:635855926771:web:f1940e9fc9dc508d824e86",
+            measurementId: "G-PPGZB1ER92"
+        };
+
+        // --- 2. Inicialização do Firebase ---
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Variáveis globais de estado
+        let currentUserUid = null;
+        let isDomReady = false;
+        let isAuthReady = false;
+        let globalReportData = {};
+        let currentDayRangeStart = 1; // Guarda 1 ou 17
+
+
+        // --- 3. GUARDIÃO DE AUTENTICAÇÃO ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log("Guardião (gestao.html): Usuário logado:", user.uid);
+                currentUserUid = user.uid;
+                isAuthReady = true;
+                tryAppInit();
+                document.body.style.opacity = 1;
+            } else {
+                console.log("Guardião (gestao.html): Nenhum usuário. Redirecionando para login.html");
+                window.location.replace('login.html');
+            }
+        });
+
+        // --- 4. Verificador de App ---
+        function tryAppInit() {
+            if (isDomReady && isAuthReady) {
+                console.log("DOM e Auth prontos. Inicializando lógica de 'gestao.html'.");
+                initializePageLogic();
+            } else {
+                console.log(`Aguardando... DOM: ${isDomReady}, Auth: ${isAuthReady}`);
+            }
+        }
+
+        // --- 5. Gatilho do DOM ---
+        document.addEventListener('DOMContentLoaded', function () {
+            isDomReady = true;
+            tryAppInit();
+        });
+
+
+        // --- 6. FUNÇÃO PRINCIPAL DA APLICAÇÃO ---
+        function initializePageLogic() {
+
+            // --- Variáveis Globais da Página ---
+            const navTabs = document.querySelectorAll('.nav-tab[data-tab]');
+            const pages = document.querySelectorAll('[data-page]');
+            const printButton = document.getElementById('printButton');
+            const saveDataButton = document.getElementById('saveDataButton');
+            const saveSettingsButton = document.getElementById('saveSettingsButton');
+            const brasaoUrlInput = document.getElementById('brasao_url');
+            const assinaturaUrlInput = document.getElementById('assinatura_url');
+            const allLogoBrasaoImg = document.querySelectorAll('[id^="logo-brasao-"]');
+            const allImgAssinaturaImg = document.querySelectorAll('[id^="img-assinatura-"]');
+            const allTableBodies = document.querySelectorAll('.report-table-body');
+            const rowContextMenu = document.getElementById('row-context-menu');
+            const menuAddRow = document.getElementById('menu-add-row');
+            const menuDeleteRow = document.getElementById('menu-delete-row');
+            const deleteModal = document.getElementById('delete-modal');
+            const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+            const hintBox = document.getElementById('hint-box');
+            const hintBody = document.getElementById('hint-body-content');
+            const closeHintBtn = document.getElementById('close-hint-btn');
+            const toggleHintBtn = document.getElementById('toggle-hint-btn');
+            const toggleHintIcon = document.getElementById('toggle-hint-icon');
+            const printModal = document.getElementById('print-modal');
+            const cancelPrintBtn = document.getElementById('cancel-print-btn');
+            const printSelectedBtn = document.getElementById('print-selected-btn');
+            const printAllBtn = document.getElementById('print-all-btn');
+            const printCheckboxes = document.querySelectorAll('.print-page-checkbox');
+            const dayRangeModal = document.getElementById('day-range-modal');
+            const rangeBtn1_16 = document.getElementById('range-btn-1-16');
+            const rangeBtn17_31 = document.getElementById('range-btn-17-31');
+
+            let currentRow = null;
+            let rowToDelete = null;
+            let activePageId = 'gestao';
+
+
+            // --- Lógica da Caixa de Dicas ---
+            const iconUpPath = "M5 15l7-7 7 7";
+            const iconDownPath = "M19 9l-7 7-7-7";
+            function collapseHint() { if (hintBody) { hintBody.style.maxHeight = '0'; hintBody.style.opacity = '0'; } if (toggleHintIcon) { toggleHintIcon.querySelector('path').setAttribute('d', iconDownPath); } }
+            function expandHint() { if (hintBody) { hintBody.style.maxHeight = '200px'; hintBody.style.opacity = '1'; } if (toggleHintIcon) { toggleHintIcon.querySelector('path').setAttribute('d', iconUpPath); } }
+            if (closeHintBtn && hintBox) { closeHintBtn.addEventListener('click', function () { hintBox.style.display = 'none'; }); }
+            if (toggleHintBtn && hintBody) { toggleHintBtn.addEventListener('click', function () { const isCollapsed = !hintBody.style.maxHeight || hintBody.style.maxHeight === '0px'; if (isCollapsed) { expandHint(); } else { collapseHint(); } }); }
+            if (hintBox && hintBody) { setTimeout(() => { if (hintBox.style.display !== 'none') { collapseHint(); } }, 10000); }
+
+            // --- Lógica da Navegação por Abas ---
+            if (navTabs.length > 0 && pages.length > 0) {
+                navTabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        activePageId = tab.getAttribute('data-tab');
+                        pages.forEach(page => page.style.display = 'none');
+                        navTabs.forEach(t => t.classList.remove('active'));
+                        const targetPage = document.getElementById(`page-${activePageId}`);
+                        if (targetPage) targetPage.style.display = 'block';
+                        tab.classList.add('active');
+                    });
+                });
+            }
+
+            // --- Lógica de Configurações (localStorage) ---
+            function loadSettings() {
+                if (!brasaoUrlInput || !assinaturaUrlInput || allLogoBrasaoImg.length === 0 || allImgAssinaturaImg.length === 0) { return; }
+                const brasaoUrl = localStorage.getItem('brasao_url');
+                const assinaturaUrl = localStorage.getItem('assinatura_url');
+                allLogoBrasaoImg.forEach(img => { if (brasaoUrl && brasaoUrl.trim() !== "") { img.src = brasaoUrl; img.style.display = 'block'; if (img.nextElementSibling) img.nextElementSibling.style.display = 'none'; } else { img.style.display = 'none'; if (img.nextElementSibling) img.nextElementSibling.style.display = 'flex'; } });
+                if (brasaoUrl) brasaoUrlInput.value = brasaoUrl;
+                allImgAssinaturaImg.forEach(img => { if (assinaturaUrl && assinaturaUrl.trim() !== "") { img.src = assinaturaUrl; img.style.display = 'block'; if (img.nextElementSibling) img.nextElementSibling.style.display = 'none'; } else { img.style.display = 'none'; if (img.nextElementSibling) img.nextElementSibling.style.display = 'flex'; } });
+                if (assinaturaUrl) assinaturaUrlInput.value = assinaturaUrl;
+            }
+            if (saveSettingsButton) {
+                saveSettingsButton.addEventListener('click', function () {
+                    if (brasaoUrlInput && assinaturaUrlInput) {
+                        localStorage.setItem('brasao_url', brasaoUrlInput.value);
+                        localStorage.setItem('assinatura_url', assinaturaUrlInput.value);
+                        loadSettings();
+                        console.log('Configurações salvas localmente!');
+                    }
+                });
+            }
+            loadSettings();
+
+
+            // --- LÓGICA DE CARREGAMENTO DO FIREBASE (MODIFICADA) ---
+            async function loadAllPagesData(uid) {
+                if (!uid) return;
+                try {
+                    const reportsRef = collection(db, 'users', uid, 'reports');
+                    const querySnapshot = await getDocs(reportsRef);
+
+                    globalReportData = {};
+                    allTableBodies.forEach(tbody => { tbody.innerHTML = ''; });
+
+                    // Verifica se há alguma preferência salva
+                    let loadedRangePreference = 1; // Padrão é 1-16
+
+                    if (querySnapshot.empty) {
+                        console.log("Nenhum relatório salvo encontrado.");
+                    } else {
+                        console.log("Carregando relatórios salvos...");
+                        querySnapshot.forEach((doc) => {
+                            const pageId = doc.id;
+                            const data = doc.data();
+                            globalReportData[pageId] = data;
+
+                            // (NOVO) Verifica se esta página tem a preferência salva
+                            if (data.info?.dayRangePreference) {
+                                loadedRangePreference = data.info.dayRangePreference;
+                                console.log(`Preferência de range ${loadedRangePreference} carregada de ${pageId}.`);
+                            }
+
+                            populatePageWithData(pageId, data);
+                        });
+                    }
+
+                    // Define o range inicial ANTES de checar tabelas vazias
+                    currentDayRangeStart = loadedRangePreference;
+                    setDayRange(currentDayRangeStart); // Aplica o range de dias inicial a todas as tabelas
+
+                    checkEmptyTables(); // Garante que tabelas não fiquem vazias (usará o range correto)
+
+                } catch (error) {
+                    console.error("Erro ao carregar dados de todas as páginas: ", error);
+                }
+            }
+
+
+            function populatePageWithData(pageId, data) {
+                const reportContent = document.getElementById(`report-content-${pageId}`);
+                if (!reportContent || !data) return;
+
+                console.log(`Preenchendo página: ${pageId}`);
+                const setField = (selector, value) => { const el = reportContent.querySelector(selector); if (el) el.textContent = value || ''; };
+                setField('[data-field="header_secretaria"]', data.header?.secretaria);
+                setField('[data-field="header_escola"]', data.header?.escola);
+                setField('[data-field="header_gerencia"]', data.header?.gerencia);
+                setField('[data-field="header_titulo"]', data.header?.titulo);
+                setField('[data-field="info_mes"]', data.info?.mes);
+                setField('[data-field="info_periodo"]', data.info?.periodo);
+                setField('[data-field="footer_local_data"]', data.footer?.local_data);
+
+                const tableBody = reportContent.querySelector(`#report-table-body-${pageId}`);
+                if (tableBody && data.tableRows) {
+                    tableBody.innerHTML = ''; // Limpa antes de preencher
+                    data.tableRows.forEach(rowData => {
+                        // Usa o range já definido globalmente
+                        const filledRow = createFilledRow(rowData, pageId, currentDayRangeStart);
+                        tableBody.appendChild(filledRow);
+                    });
+                }
+            }
+
+            // Garante que tabelas não fiquem vazias
+            function checkEmptyTables() {
+                allTableBodies.forEach(tbody => {
+                    const pageId = tbody.id.replace('report-table-body-', '');
+                    // Verifica se a tabela está REALMENTE vazia no HTML
+                    if (tbody.children.length === 0) {
+                        console.log(`Tabela ${pageId} está vazia. Adicionando linha padrão.`);
+                        tbody.appendChild(createNewRow(pageId, currentDayRangeStart)); // Passa o range
+                    }
+                });
+            }
+
+            // Cria linha preenchida baseada no range
+            function createFilledRow(rowData, pageId, rangeStart) {
+                const newRow = document.createElement('tr');
+                newRow.setAttribute('data-row-id', rowData.row_id || `loaded-${Date.now()}`);
+                let diasHtml = '';
+                for (let i = 0; i < 16; i++) {
+                    const dayNum = i + rangeStart;
+                    let content = rowData.dias?.[`dia_${dayNum}`] || '';
+                    let style = (dayNum > 31) ? 'style="display: none;"' : '';
+                    diasHtml += `<td class="day-cell border border-gray-400" ${style} contenteditable="true" data-field="dia_${dayNum}">${content}</td>`;
+                }
+                diasHtml += `<td class="day-cell border border-gray-400" contenteditable="true" data-field="dia_T">${rowData.dias?.dia_T || ''}</td>`;
+
+                newRow.innerHTML = `
+                    <td class="p-2 border border-gray-400 align-top"><div contenteditable="true" class="font-semibold" data-field="nome" placeholder="Nome Completo">${rowData.nome || ''}</div><small contenteditable="true" class="text-gray-600 block" data-field="cargo" placeholder="(Cargo)">${rowData.cargo || ''}</small></td>
+                    <td class="p-2 border border-gray-400 text-center align-top" contenteditable="true" data-field="id_func" placeholder="0000000-0">${rowData.id_func || ''}</td>
+                    <td class="p-2 border border-gray-400 text-center align-top" contenteditable="true" data-field="carga_hor" placeholder="000">${rowData.carga_hor || ''}</td>
+                    <td class="p-2 border border-gray-400 text-center align-top" contenteditable="true" data-field="cod_freq" placeholder="XXX">${rowData.cod_freq || ''}</td>
+                    ${diasHtml}`;
+                return newRow;
+            }
+
+            // Cria linha vazia baseada no range
+            function createNewRow(pageId, rangeStart) {
+                const newRow = document.createElement('tr');
+                newRow.setAttribute('data-row-id', `new-${Date.now()}`);
+                let placeholderNome = "Nome Completo"; let placeholderCargo = "(Cargo)";
+                if (pageId === 'professores') { placeholderNome = "Nome do Professor"; placeholderCargo = "(Ex: PROF. DE HISTÓRIA)"; } else if (pageId === 'vigia') { placeholderNome = "Nome do Vigia"; placeholderCargo = "(Ex: VIGIA DIURNO)"; }
+                let diasHtml = '';
+                for (let i = 0; i < 16; i++) {
+                    const dayNum = i + rangeStart;
+                    let style = (dayNum > 31) ? 'style="display: none;"' : '';
+                    diasHtml += `<td class="day-cell border border-gray-400" ${style} contenteditable="true" data-field="dia_${dayNum}"></td>`;
+                }
+                diasHtml += `<td class="day-cell border border-gray-400" contenteditable="true" data-field="dia_T"></td>`;
+
+                newRow.innerHTML = `
+                    <td class="p-2 border border-gray-400 align-top"><div contenteditable="true" class="font-semibold" data-field="nome" placeholder="${placeholderNome}"></div><small contenteditable="true" class="text-gray-600 block" data-field="cargo" placeholder="${placeholderCargo}"></small></td>
+                    <td class="p-2 border border-gray-400 text-center align-top" contenteditable="true" data-field="id_func" placeholder="0000000-0"></td>
+                    <td class="p-2 border border-gray-400 text-center align-top" contenteditable="true" data-field="carga_hor" placeholder="000"></td>
+                    <td class="p-2 border border-gray-400 text-center align-top" contenteditable="true" data-field="cod_freq" placeholder="XXX"></td>
+                    ${diasHtml}`;
+                return newRow;
+            }
+
+
+            // --- LÓGICA DE SALVAR DADOS (MODIFICADA) ---
+            async function saveDataForPage(pageId) {
+                if (!currentUserUid) { console.error("Erro: Usuário não está logado."); throw new Error("Usuário não logado."); }
+                const reportContent = document.getElementById(`report-content-${pageId}`);
+                if (!reportContent) { console.error(`Erro: Elemento #report-content-${pageId} não encontrado.`); throw new Error(`Elemento da página ${pageId} não encontrado.`); }
+
+                const pageData = globalReportData[pageId] || { pageName: pageId, header: {}, info: {}, tableRows: [], footer: {} };
+
+                const getField = (selector) => { const el = reportContent.querySelector(selector); return el ? el.textContent : ''; };
+                pageData.header.secretaria = getField('[data-field="header_secretaria"]');
+                pageData.header.escola = getField('[data-field="header_escola"]');
+                pageData.header.gerencia = getField('[data-field="header_gerencia"]');
+                pageData.header.titulo = getField('[data-field="header_titulo"]');
+
+                // Garante que 'info' exista antes de adicionar a preferência
+                pageData.info = pageData.info || {};
+                pageData.info.mes = getField('[data-field="info_mes"]');
+                pageData.info.periodo = getField('[data-field="info_periodo"]');
+                // (NOVO) Salva a preferência de range atual
+                pageData.info.dayRangePreference = currentDayRangeStart;
+
+                pageData.footer.local_data = getField('[data-field="footer_local_data"]');
+
+                const tableRows = reportContent.querySelectorAll(`#report-table-body-${pageId} tr[data-row-id]`);
+                let newTableRowsData = [];
+
+                tableRows.forEach((tr, rowIndex) => {
+                    const getRowField = (selector) => { const el = tr.querySelector(selector); return el ? el.textContent : ''; };
+                    const oldRowData = (pageData.tableRows[rowIndex]) ? pageData.tableRows[rowIndex] : { dias: {} };
+                    const newRowData = {
+                        row_id: tr.getAttribute('data-row-id'),
+                        nome: getRowField('[data-field="nome"]'),
+                        cargo: getRowField('[data-field="cargo"]'),
+                        id_func: getRowField('[data-field="id_func"]'),
+                        carga_hor: getRowField('[data-field="carga_hor"]'),
+                        cod_freq: getRowField('[data-field="cod_freq"]'),
+                        dias: { ...oldRowData.dias } // Copia os dias existentes
+                    };
+                    for (let i = 0; i < 16; i++) {
+                        const dayNum = i + currentDayRangeStart;
+                        if (dayNum <= 31) {
+                            // Atualiza apenas os dias visíveis no objeto 'dias'
+                            newRowData.dias[`dia_${dayNum}`] = getRowField(`[data-field="dia_${dayNum}"]`);
+                        }
+                    }
+                    newRowData.dias['dia_T'] = getRowField(`[data-field="dia_T"]`);
+                    newTableRowsData.push(newRowData);
+                });
+                pageData.tableRows = newTableRowsData;
+
+                const reportRef = doc(db, 'users', currentUserUid, 'reports', pageId);
+                await setDoc(reportRef, pageData);
+                globalReportData[pageId] = pageData; // Atualiza cache global
+                console.log(`--- DADOS SALVOS NO FIRESTORE (Página: ${pageId}) ---`);
+            }
+
+
+            if (saveDataButton) {
+                saveDataButton.addEventListener('click', async function () {
+                    saveDataButton.disabled = true; saveDataButton.classList.add('opacity-50'); saveDataButton.innerHTML = 'Salvando...';
+                    try {
+                        const pageIdsToSave = Array.from(navTabs).map(tab => tab.dataset.tab).filter(id => id !== 'configuracoes');
+                        const savePromises = pageIdsToSave.map(pageId => saveDataForPage(pageId));
+                        await Promise.all(savePromises);
+                        saveDataButton.innerHTML = 'Salvo com Sucesso!'; saveDataButton.classList.remove('bg-green-600', 'hover:bg-green-700'); saveDataButton.classList.add('bg-blue-500');
+                    } catch (error) {
+                        console.error("Erro ao salvar todos os dados: ", error); saveDataButton.innerHTML = 'Erro ao Salvar'; saveDataButton.classList.remove('bg-green-600', 'hover:bg-green-700'); saveDataButton.classList.add('bg-red-500');
+                    }
+                    setTimeout(() => {
+                        saveDataButton.disabled = false; saveDataButton.classList.remove('opacity-50', 'bg-blue-500', 'bg-red-500'); saveDataButton.classList.add('bg-green-600', 'hover:bg-green-700');
+                        saveDataButton.innerHTML = `<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg> Salvar Todos os Dados`;
+                    }, 2000);
+                });
+            }
+
+            // --- LÓGICA DE IMPRESSÃO ---
+            function executePrint(pageIds) {
+                if (!pageIds || pageIds.length === 0) {
+                    const printSelectedBtn = document.getElementById('print-selected-btn');
+                    if (printSelectedBtn) { const originalText = printSelectedBtn.innerText; printSelectedBtn.innerText = "Selecione uma opção!"; printSelectedBtn.classList.add('bg-red-500', 'hover:bg-red-600'); setTimeout(() => { printSelectedBtn.innerText = originalText; printSelectedBtn.classList.remove('bg-red-500', 'hover:bg-red-600'); }, 2000); }
+                    return;
+                }
+                const cleanupAfterPrint = () => { console.log("Limpando classes de impressão..."); pageIds.forEach(id => { const page = document.getElementById(`page-${id}`); if (page) { page.classList.remove('active-print-page'); } }); window.removeEventListener('afterprint', cleanupAfterPrint); };
+                window.addEventListener('afterprint', cleanupAfterPrint);
+                pageIds.forEach(id => { const page = document.getElementById(`page-${id}`); if (page) { page.classList.add('active-print-page'); } });
+                window.print();
+            }
+            if (printButton) {
+                printButton.addEventListener('click', function () { if (printModal) { printCheckboxes.forEach(cb => { cb.checked = (cb.dataset.printPage === activePageId); }); printModal.classList.add('show'); } });
+            }
+            if (cancelPrintBtn && printModal) { cancelPrintBtn.addEventListener('click', () => { printModal.classList.remove('show'); }); }
+            if (printSelectedBtn && printModal) {
+                printSelectedBtn.addEventListener('click', () => { const selectedPages = Array.from(printCheckboxes).filter(cb => cb.checked).map(cb => cb.dataset.printPage); executePrint(selectedPages); if (selectedPages.length > 0) { printModal.classList.remove('show'); } });
+            }
+            if (printAllBtn && printModal) {
+                printAllBtn.addEventListener('click', () => { const allPageIds = Array.from(printCheckboxes).map(cb => cb.dataset.printPage); executePrint(allPageIds); printModal.classList.remove('show'); });
+            }
+
+            // --- LÓGICA DO SELETOR DE DIAS ---
+            function setDayRange(rangeStart) {
+                currentDayRangeStart = rangeStart; // Atualiza o estado global ANTES de qualquer outra coisa
+
+                // Atualiza botões do modal
+                if (rangeStart === 17) { rangeBtn1_16.classList.remove('bg-blue-600', 'text-white'); rangeBtn1_16.classList.add('bg-gray-100', 'text-gray-700'); rangeBtn17_31.classList.add('bg-blue-600', 'text-white'); rangeBtn17_31.classList.remove('bg-gray-100', 'text-gray-700'); }
+                else { rangeBtn1_16.classList.add('bg-blue-600', 'text-white'); rangeBtn1_16.classList.remove('bg-gray-100', 'text-gray-700'); rangeBtn17_31.classList.remove('bg-blue-600', 'text-white'); rangeBtn17_31.classList.add('bg-gray-100', 'text-gray-700'); }
+
+                // Atualiza cabeçalhos
+                const allHeaders = document.querySelectorAll('th.day-cell');
+                allHeaders.forEach(th => {
+                    const dayIndex = Array.from(th.parentNode.children).indexOf(th) - 4; // Índices 0 a 15
+                    if (dayIndex >= 0 && dayIndex < 16) {
+                        const dayNum = dayIndex + rangeStart;
+                        if (dayNum > 31) { th.innerText = '-'; th.style.display = 'none'; } // Esconde dias > 31
+                        else { th.innerText = dayNum; th.style.display = 'table-cell'; } // Mostra e atualiza número
+                    }
+                });
+
+                // Atualiza células de dados
+                allTableBodies.forEach(tbody => {
+                    const pageId = tbody.id.replace('report-table-body-', '');
+                    Array.from(tbody.rows).forEach((tr, rowIndex) => {
+                        const rowData = globalReportData[pageId]?.tableRows[rowIndex];
+                        const cells = tr.querySelectorAll('td.day-cell');
+                        cells.forEach((cell, cellIndex) => {
+                            if (cellIndex < 16) { // Apenas as 16 células de dia
+                                const dayNum = cellIndex + rangeStart;
+                                cell.dataset.field = `dia_${dayNum}`; // Atualiza o data-field
+                                if (dayNum > 31) { cell.style.display = 'none'; cell.innerText = ''; } // Esconde
+                                else { cell.style.display = 'table-cell'; cell.innerText = rowData?.dias?.[`dia_${dayNum}`] || ''; } // Mostra e preenche
+                            }
+                        });
+                    });
+                });
+            }
+            // Listener para abrir o modal de dias
+            document.querySelectorAll('.report-content-wrapper').forEach(wrapper => { wrapper.addEventListener('click', function (event) { if (event.target.matches('th.day-cell')) { if (dayRangeModal) { dayRangeModal.classList.add('show'); } } }); });
+            // Listeners dos botões do modal de dias
+            if (rangeBtn1_16) { rangeBtn1_16.addEventListener('click', () => { setDayRange(1); dayRangeModal.classList.remove('show'); }); }
+            if (rangeBtn17_31) { rangeBtn17_31.addEventListener('click', () => { setDayRange(17); dayRangeModal.classList.remove('show'); }); }
+
+            // --- Lógica de Adicionar/Apagar Linha (Context Menu) ---
+            if (allTableBodies.length > 0 && rowContextMenu && menuAddRow && menuDeleteRow && deleteModal) {
+                allTableBodies.forEach(tableBody => {
+                    tableBody.addEventListener('contextmenu', function (event) { const targetCell = event.target.closest('td'); if (!targetCell) return; event.preventDefault(); const tr = targetCell.closest('tr'); if (!tr) return; currentRow = tr; rowContextMenu.style.top = `${event.clientY}px`; rowContextMenu.style.left = `${event.clientX}px`; rowContextMenu.style.display = 'block'; });
+                });
+                function closeContextMenu() { if (rowContextMenu) rowContextMenu.style.display = 'none'; currentRow = null; }
+                menuAddRow.addEventListener('click', function () { if (currentRow) { const tableBodyId = currentRow.closest('.report-table-body').id; const pageId = tableBodyId.replace('report-table-body-', ''); const newRow = createNewRow(pageId, currentDayRangeStart); currentRow.parentNode.insertBefore(newRow, currentRow.nextSibling); } closeContextMenu(); });
+                menuDeleteRow.addEventListener('click', function () { rowToDelete = currentRow; if (rowToDelete) { deleteModal.classList.add('show'); } closeContextMenu(); });
+                if (cancelDeleteBtn && confirmDeleteBtn) {
+                    cancelDeleteBtn.addEventListener('click', () => { deleteModal.classList.remove('show'); rowToDelete = null; });
+                    confirmDeleteBtn.addEventListener('click', () => {
+                        if (rowToDelete) {
+                            // (NOVO) Remove a linha dos dados globais antes de remover do DOM
+                            const tableBodyId = rowToDelete.closest('.report-table-body').id;
+                            const pageId = tableBodyId.replace('report-table-body-', '');
+                            const rowIndex = Array.from(rowToDelete.parentNode.children).indexOf(rowToDelete);
+                            if (globalReportData[pageId]?.tableRows[rowIndex]) {
+                                globalReportData[pageId].tableRows.splice(rowIndex, 1);
+                                console.log(`Linha ${rowIndex} removida dos dados de ${pageId}`);
+                            }
+                            rowToDelete.remove();
+                            checkEmptyTables(); // Garante que a tabela não fique vazia
+                        } deleteModal.classList.remove('show'); rowToDelete = null;
+                    });
+                }
+                document.addEventListener('click', function (event) { if (rowContextMenu && !rowContextMenu.contains(event.target)) { closeContextMenu(); } });
+            }
+
+            // --- Lógica de HASH da URL e Carregamento Inicial ---
+            function checkUrlHash() {
+                const hash = window.location.hash;
+                if (hash) { const targetTabId = hash.replace('#tab=', ''); const targetTab = document.querySelector(`.nav-tab[data-tab="${targetTabId}"]`); if (targetTab) { console.log(`Abrindo aba pela URL: ${targetTabId}`); targetTab.click(); } }
+            }
+
+            // Ordem de inicialização corrigida:
+            loadAllPagesData(currentUserUid); // Carrega dados (e define currentDayRangeStart se salvo)
+            checkUrlHash();                 // Abre a aba correta se houver hash
+
+        } // --- Fim do initializePageLogic ---
+    </script>
+
+</body>
+
+</html>
