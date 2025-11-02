@@ -12,9 +12,7 @@
     <link rel="apple-touch-icon" href="/assets/img/android-chrome-512x512.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
-
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -24,28 +22,13 @@
             font-family: 'Inter', sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
-
-        /* ... (mesmos estilos de scrollbar do index.html) ... */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background-color: #cbd5e1;
-            border-radius: 20px;
-        }
-
-        .dark ::-webkit-scrollbar-thumb {
-            background-color: #4b5563;
-        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+        .dark ::-webkit-scrollbar-thumb { background-color: #4b5563; }
     </style>
 
     <script>
-        // Mesma configuração do Tailwind do index.html
         tailwind.config = {
             darkMode: 'class',
             theme: {
@@ -66,10 +49,14 @@
 
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
 
-    <div class="flex min-h-screen items-center justify-center p-4">
+    <div id="login-loading-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-black">
+        <i class='bx bx-loader-alt bx-spin text-5xl text-primary-600'></i>
+    </div>
+
+    <div id="login-form-container" class="flex min-h-screen items-center justify-center p-4 hidden">
 
         <div class="w-full max-w-md bg-white dark:bg-gray-950 rounded-2xl shadow-xl p-8 relative">
-
+            
             <div class="text-center mb-8">
                 <div class="flex justify-center items-center text-3xl font-bold text-gray-900 dark:text-white mb-2">
                     <i class='bx bxs-bolt text-3xl mr-2'></i>
@@ -129,7 +116,6 @@
         import { getFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Configuração do Firebase ---
-        // Objeto de configuração colado da sua imagem (Anexo 1)
         const firebaseConfig = {
             apiKey: "AIzaSyBR5r-H0_-YG6SvLUbVxWrAvOSYdY0ji-E",
             authDomain: "academia-2fd8d.firebaseapp.com",
@@ -139,29 +125,35 @@
             appId: "1:565245310857:web:a391992cc5d333f0fdd358",
             measurementId: "G-87RNMCLCFD"
         };
-        // --- Fim da Configuração ---
 
-        // Inicializa o Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-
-        // Habilita logs detalhados do Firestore (opcional, bom para debug)
         setLogLevel('Debug');
 
         // --- Lógica de Autenticação ---
 
+        // ==== MUDANÇA: Pegar os elementos do overlay e do formulário ====
+        const loadingOverlay = document.getElementById('login-loading-overlay');
+        const loginFormContainer = document.getElementById('login-form-container');
+
         // 1. Observador de Estado de Autenticação
         onAuthStateChanged(auth, (user) => {
             if (user) {
+                // Usuário LOGADO. Redireciona imediatamente.
+                // O overlay de loading preto permanece visível, escondendo o formulário.
                 console.log("Usuário já está logado, redirecionando...", user.uid);
-                window.location.href = '/treino/home.html'; // Redireciona para a página principal
+                window.location.href = '/treino/home.html'; 
             } else {
-                console.log("Nenhum usuário logado. Aguardando login.");
+                // Usuário NÃO está logado.
+                // Esconde o loading preto e MOSTRA o formulário de login.
+                console.log("Nenhum usuário logado. Mostrando formulário de login.");
+                loadingOverlay.classList.add('hidden');
+                loginFormContainer.classList.remove('hidden');
             }
         });
 
-        // 2. Elementos do DOM
+        // 2. Elementos do DOM (para o submit do formulário)
         const loginForm = document.getElementById('login-form');
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
@@ -170,7 +162,7 @@
         const buttonSpinner = document.getElementById('button-spinner');
         const errorMessage = document.getElementById('error-message');
 
-        // 3. Função para mostrar/esconder o estado de carregamento
+        // 3. Função para mostrar/esconder o estado de carregamento (do BOTÃO)
         function setLoading(isLoading) {
             if (isLoading) {
                 loginButton.disabled = true;
@@ -199,15 +191,11 @@
             const password = passwordInput.value;
 
             try {
-                // Tenta fazer o login com e-mail e senha
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
-
                 // Sucesso! O onAuthStateChanged vai lidar com o redirecionamento.
                 console.log('Login bem-sucedido:', userCredential.user.uid);
-
             } catch (error) {
                 console.error("Erro no login:", error.code, error.message);
-
                 let friendlyMessage = 'Ocorreu um erro. Tente novamente.';
                 if (error.code === 'auth/user-not-found' ||
                     error.code === 'auth/wrong-password' ||
@@ -216,7 +204,6 @@
                 } else if (error.code === 'auth/invalid-email') {
                     friendlyMessage = 'O formato do e-mail é inválido.';
                 }
-
                 showError(friendlyMessage);
                 setLoading(false);
             }
@@ -227,7 +214,6 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                // Usa o caminho absoluto para registrar o service worker
                 navigator.serviceWorker.register('/treino/service-worker.js')
                     .then((registration) => {
                         console.log('Service Worker registrado com sucesso:', registration.scope);
