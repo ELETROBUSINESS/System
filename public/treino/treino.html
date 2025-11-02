@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/assets/img/android-chrome-512x512.png">
+    <title>Treinos | ELETRO 26</title>
+
+    <link rel="manifest" href="/treino/manifest.json">
+    <meta name="theme-color" content="#2563eb">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+        .dark ::-webkit-scrollbar-thumb { background-color: #4b5563; }
+        /* Esconde os modais por padrão */
+        #exercise-library-modal.hidden, #exercise-gif-modal.hidden { display: none; }
+    </style>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe',
+                            300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6',
+                            600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af',
+                            900: '#1e3a8a', 950: '#172554',
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+    <script>
+        // Lógica de tema movida para uma função para ser chamada após carregar config
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+        // Carrega o tema inicial do localStorage, se existir
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            applyTheme(savedTheme);
+        } else {
+            // Se não tiver salvo, usa a preferência do sistema
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            applyTheme(prefersDark ? 'dark' : 'light');
+        }
+    </script>
+</head>
+
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+    <!-- Tela de Loading -->
+    <div id="loading-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+        <i class='bx bx-loader-alt bx-spin text-5xl text-primary-600'></i>
+    </div>
+
+    <!-- Conteúdo principal (começa oculto) -->
+    <div id="main-content" class="max-w-7xl mx-auto lg:grid lg:grid-cols-12 lg:gap-8 hidden">
+
+        <!-- Coluna 1: Navegação (Esquerda) -->
+        <div class="hidden lg:block lg:col-span-3 lg:sticky lg:top-0 lg:h-screen lg:py-6">
+            <div class="flex flex-col h-full">
+                <!-- Logo -->
+                <div class="px-4 mb-6">
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
+                        <i class='bx bxs-bolt text-3xl mr-2'></i>
+                        ELETRO
+                    </h1>
+                </div>
+                <!-- Nav Desktop -->
+                <nav class="flex-1 px-2 space-y-2">
+                    <a href="/treino/home.html" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Início">
+                        <i class='bx bx-home-smile text-2xl'></i>
+                        <span class="text-lg font-medium">Início</span>
+                    </a>
+                    <a href="/treino/treino.html" class="flex items-center space-x-3 p-3 rounded-lg text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30" aria-label="Treinos">
+                        <i class='bx bx-dumbbell text-2xl'></i>
+                        <span class="text-lg font-semibold">Treinos</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Perfil">
+                        <i class='bx bx-user text-2xl'></i>
+                        <span class="text-lg font-medium">Perfil</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Configurações">
+                        <i class='bx bx-cog text-2xl'></i>
+                        <span class="text-lg font-medium">Configurações</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Ajuda & Suporte">
+                        <i class='bx bx-help-circle text-2xl'></i>
+                        <span class="text-lg font-medium">Ajuda</span>
+                    </a>
+                    <button id="logout-button-desktop" type="button" class="flex items-center space-x-3 p-3 rounded-lg w-full text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors" aria-label="Sair da Conta">
+                        <i class='bx bx-log-out text-2xl'></i>
+                        <span class="text-lg font-medium">Sair</span>
+                    </button>
+                </nav>
+                <!-- Perfil -->
+                <div class="px-2 mt-auto">
+                    <div class="flex items-center space-x-3 p-3">
+                        <img src="https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png" alt="Foto do Perfil" class="w-12 h-12 rounded-full object-cover">
+                        <div>
+                            <h4 class="font-semibold text-gray-800 dark:text-gray-200">Usuário</h4>
+                            <a href="#" class="text-sm text-gray-500 dark:text-gray-400 hover:underline">Ver Perfil</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coluna 2: Conteúdo Principal (Centro) -->
+        <div class="lg:col-span-6 min-h-screen bg-white dark:bg-gray-950 lg:border-x lg:border-gray-200 dark:lg:border-gray-800">
+            <div class="pb-28 lg:pb-6 relative min-h-screen">
+
+                <!-- TELA 1: LISTA DE ROTINAS (VISÍVEL POR PADRÃO) -->
+                <section id="routine-list-screen">
+                    <header class="p-6 flex justify-between items-center lg:sticky lg:top-0 lg:bg-white/80 dark:lg:bg-gray-950/80 lg:backdrop-blur-md lg:z-30 border-b border-gray-100 dark:border-gray-800/50">
+                        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Minhas Rotinas</h1>
+                        <div class="flex items-center space-x-4 lg:hidden">
+                            <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-2xl p-2">
+                                <i class='bx bxs-moon hidden dark:inline-block'></i>
+                                <i class='bx bxs-sun inline-block dark:hidden'></i>
+                            </button>
+                        </div>
+                    </header>
+                    <main class="px-6 space-y-6 mt-6">
+                        <div id="create-routine-btn" class="bg-primary-600 text-white p-6 rounded-2xl shadow-lg shadow-primary-500/30 flex justify-between items-center transform active:scale-[0.98] transition-transform duration-150 cursor-pointer">
+                            <div>
+                                <h2 class="text-xl font-bold">Criar Nova Rotina</h2>
+                                <p class="text-primary-100 text-sm mt-1">Comece a montar seu treino</p>
+                            </div>
+                            <i class='bx bx-plus-circle text-5xl opacity-80'></i>
+                        </div>
+                        <div id="routines-container" class="space-y-4">
+                            <!-- Rotinas do Firestore aparecem aqui -->
+                        </div>
+                    </main>
+                </section>
+
+                <!-- TELA 2: EDITOR DE ROTINA (OCULTA) -->
+                <section id="routine-editor-screen" class="hidden">
+                    <header class="p-6 flex justify-between items-center lg:sticky lg:top-0 lg:bg-white/80 dark:lg:bg-gray-950/80 lg:backdrop-blur-md lg:z-30 border-b border-gray-100 dark:border-gray-800/50">
+                        <div class="flex items-center space-x-2">
+                             <button id="back-to-list-btn" class="text-gray-600 dark:text-gray-300 p-2 -ml-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+                                 <i class='bx bx-chevron-left text-3xl'></i>
+                             </button>
+                             <h1 id="editor-title" class="text-2xl font-bold text-gray-900 dark:text-gray-100">Criar Rotina</h1>
+                        </div>
+                        <button id="save-routine-btn" class="text-primary-600 dark:text-primary-400 font-semibold px-4 py-2 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/30">
+                            Salvar
+                        </button>
+                    </header>
+                    <main class="px-6 space-y-6 mt-6">
+                        <!-- ID da rotina do Firestore (oculto) -->
+                        <input type="hidden" id="routine-id-input">
+                        <div>
+                            <label for="routine-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome da Rotina</label>
+                            <input type="text" id="routine-name" name="routine-name" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg">
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">Exercícios</h3>
+                            <div id="routine-exercises-container" class="space-y-3">
+                                <!-- Exercícios da rotina em edição aparecem aqui -->
+                            </div>
+                            <button id="open-library-btn" class="w-full mt-4 flex justify-center items-center py-3 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700">
+                                <i class='bx bx-plus mr-1'></i>
+                                Adicionar Exercício da Biblioteca
+                            </button>
+                        </div>
+                    </main>
+                </section>
+
+                <!-- TELA 3: TREINO ATIVO (OCULTA) -->
+                <section id="active-workout-screen" class="hidden">
+                    <header class="sticky top-0 z-30 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800/50">
+                        <div class="p-6 flex justify-between items-center">
+                            <div>
+                                <span class="text-sm text-gray-500 dark:text-gray-400">Duração</span>
+                                <p id="workout-duration" class="text-xl font-bold text-gray-900 dark:text-gray-100">00:00:00</p>
+                            </div>
+                            <button id="conclude-workout-btn" class="py-2 px-5 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg shadow-md">
+                                Concluir
+                            </button>
+                        </div>
+                        <div id="rest-timer-bar" class="hidden w-full bg-primary-600 text-white text-center p-3">
+                            <span class="font-semibold">Tempo de Descanso: </span>
+                            <span id="rest-timer-countdown" class="text-lg font-bold">01:30</span>
+                        </div>
+                    </header>
+                    <main id="active-workout-container" class="px-6 space-y-6 mt-6">
+                        <!-- Exercícios do treino aparecem aqui -->
+                        <button id="add-exercise-to-workout-btn" class="w-full flex justify-center items-center py-3 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700">
+                            <i class='bx bx-plus mr-1'></i>
+                            Adicionar Exercício
+                        </button>
+                    </main>
+                </section>
+            </div>
+        </div>
+
+        <!-- Coluna 3: Widgets (Direita) -->
+        <div class="hidden lg:block lg:col-span-3 lg:sticky lg:top-0 lg:h-screen lg:py-6">
+            <!-- Widgets -->
+            <div class="flex justify-end space-x-2 mb-6 px-4">
+                 <button type="button" class="text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-2xl p-2 relative" aria-label="Avisos">
+                    <i class='bx bx-bell'></i>
+                </button>
+                <button id="theme-toggle-desktop" type="button" class="text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-2xl p-2">
+                    <i class='bx bxs-moon hidden dark:inline-block'></i>
+                    <i class='bx bxs-sun inline-block dark:hidden'></i>
+                </button>
+            </div>
+        </div>
+
+    </div> <!-- Fim do grid wrapper -->
+
+
+    <!-- Barra de Navegação Flutuante (SÓ MOBILE) -->
+    <nav id="mobile-nav" class="fixed bottom-4 left-1/2 -translate-x-1/2 w-[90%] max-w-sm mx-auto 
+                bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl shadow-xl 
+                border border-gray-200/50 dark:border-gray-700/50
+                overflow-hidden z-40 lg:hidden hidden">
+        <div class="flex justify-around items-center h-16">
+            <a href="/treino/home.html" class="flex flex-col items-center justify-center text-gray-500 dark:text-gray-400" aria-label="Início">
+                <i class='bx bx-home-smile text-2xl'></i>
+                <span class="text-xs font-medium">Início</span>
+            </a>
+            <a href="/treino/treino.html" class="flex flex-col items-center justify-center text-primary-600 dark:text-primary-400" aria-label="Treinos">
+                <i class='bx bx-dumbbell text-2xl'></i>
+                <span class="text-xs font-medium">Treinos</span>
+            </a>
+            <button id="more-menu-button" type="button" class="flex flex-col items-center justify-center text-gray-500 dark:text-gray-400" aria-label="Mais Opções">
+                <i class='bx bx-menu text-2xl'></i>
+                <span class="text-xs font-medium">Mais</span>
+            </button>
+        </div>
+    </nav>
+    
+    <!-- TELA 4: MODAL DA BIBLIOTECA DE EXERCÍCIOS (OCULTA) -->
+    <div id="exercise-library-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-900 w-full max-w-lg rounded-2xl shadow-xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b dark:border-gray-700">
+                <h3 class="text-xl font-semibold">Biblioteca de Exercícios</h3>
+                <button id="close-library-btn" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
+                    <i class='bx bx-x text-2xl'></i>
+                </button>
+            </div>
+            <div class="p-4 overflow-y-auto">
+                <input type="text" id="library-search" placeholder="Buscar exercício..." class="w-full px-4 py-3 mb-4 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg">
+                <div id="library-list-container" class="space-y-2">
+                    <!-- Exercícios do Firestore aparecem aqui -->
+                </div>
+            </div>
+            <div class="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 rounded-b-2xl">
+                <h4 class="font-semibold mb-2">Não encontrou? Crie um novo:</h4>
+                <div class="flex space-x-2">
+                    <input type="text" id="new-exercise-name" placeholder="Nome do exercício" class="w-full px-3 py-2 bg-white dark:bg-gray-700 border rounded-lg">
+                    <button id="save-new-exercise-btn" class="py-2 px-4 bg-primary-600 text-white font-semibold rounded-lg">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- TELA 5: MODAL DE VISUALIZAÇÃO DO GIF (ATUALIZADO) -->
+    <div id="exercise-gif-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-900 w-full max-w-lg rounded-2xl shadow-xl max-h-[90vh] flex flex-col">
+            <!-- Cabeçalho com Título e Botão de Fechar -->
+            <div class="flex justify-between items-center p-4 border-b dark:border-gray-700">
+                <h3 id="gif-modal-title" class="text-xl font-semibold">Nome do Exercício</h3>
+                <button id="close-gif-modal-btn" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
+                    <i class='bx bx-x text-2xl'></i>
+                </button>
+            </div>
+    
+            <!-- Abas de Navegação -->
+            <div class="border-b dark:border-gray-700">
+                <nav class="flex -mb-px px-4" aria-label="Tabs">
+                    <button class="gif-modal-tab-btn border-primary-600 dark:border-primary-400 text-primary-600 dark:text-primary-400 whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm" data-tab="resumo">
+                        Resumo
+                    </button>
+                    <button class="gif-modal-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-600 whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm" data-tab="historico">
+                        Histórico
+                    </button>
+                    <button class="gif-modal-tab-btn border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-600 whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm" data-tab="instrucoes">
+                        Instruções
+                    </button>
+                </nav>
+            </div>
+    
+            <!-- Conteúdo das Abas -->
+            <div class="p-4 overflow-y-auto">
+                <!-- Painel Resumo (Visível por padrão) -->
+                <div id="gif-modal-tab-resumo" class="gif-modal-tab-panel space-y-4">
+                    <div class="flex justify-center items-center bg-gray-100 dark:bg-gray-800 rounded-lg">
+                        <img id="gif-modal-image" src="" alt="Execução do exercício" class="w-full rounded-lg">
+                    </div>
+                    <div>
+                        <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Músculo Primário</span>
+                        <p id="gif-modal-muscle" class="text-lg font-semibold text-gray-800 dark:text-gray-200">Peito</p>
+                    </div>
+                </div>
+    
+                <!-- Painel Histórico (Oculto) -->
+                <div id="gif-modal-tab-historico" class="gif-modal-tab-panel hidden text-center p-8">
+                    <i class='bx bx-bar-chart-alt-2 text-5xl text-gray-400 dark:text-gray-500 mb-2'></i>
+                    <h4 class="font-semibold text-gray-700 dark:text-gray-300">Ainda sem dados</h4>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">O histórico de performance aparecerá aqui.</p>
+                </div>
+    
+                <!-- Painel Instruções (Oculto) -->
+                <div id="gif-modal-tab-instrucoes" class="gif-modal-tab-panel hidden">
+                    <h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-2">Como executar</h4>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        Instruções detalhadas sobre a execução do exercício aparecerão aqui. (Placeholder)
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- SCRIPT PRINCIPAL DO APP (MÓDULO) -->
+    <script type="module">
+        // --- IMPORTS DO FIREBASE ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signOut, 
+            onAuthStateChanged,
+            signInAnonymously,
+            signInWithCustomToken
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import {
+            getFirestore,
+            setLogLevel,
+            doc,
+            getDoc,
+            addDoc,
+            setDoc,
+            deleteDoc,
+            onSnapshot,
+            collection,
+            query
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- CONFIGURAÇÃO FIREBASE ---
+        // As variáveis __firebase_config e __app_id são injetadas pelo ambiente
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config)
+            : {
+                apiKey: "AIzaSyBR5r-H0_-YG6SvLUbVxWrAvOSYdY0ji-E", // Chave de fallback
+                authDomain: "academia-2fd8d.firebaseapp.com",
+                projectId: "academia-2fd8d",
+                storageBucket: "academia-2fd8d.firebasestorage.app",
+                messagingSenderId: "565245310857",
+                appId: "1:565245310857:web:a391992cc5d333f0fdd358",
+                measurementId: "G-87RNMCLCFD"
+            };
+        
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        setLogLevel('Debug'); // Habilita logs do Firestore no console
+
+        // --- VARIÁVEIS GLOBAIS DO APP ---
+        let userId = null;
+        let currentEditingRoutineId = null; // ID do Doc do Firestore
+        let localRoutineExercises = []; // Array temporário para o editor de rotina
+        let isEditingRoutine = false;
+        let allRoutines = []; // Cache local das rotinas do Firestore
+        let allExercises = []; // Cache local da biblioteca de exercícios
+        let isInitialDataLoaded = false; // Flag para controlar o loading
+
+        // Coleções do Firestore (serão definidas após o login)
+        let routinesCol, libraryCol, workoutHistoryCol, settingsDoc;
+
+        // --- Seletores de Elementos da UI ---
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const mainContent = document.getElementById('main-content');
+        const mobileNav = document.getElementById('mobile-nav');
+        // Telas
+        const routineListScreen = document.getElementById('routine-list-screen');
+        const routineEditorScreen = document.getElementById('routine-editor-screen');
+        const activeWorkoutScreen = document.getElementById('active-workout-screen');
+        // Tela 1 (Lista)
+        const createRoutineBtn = document.getElementById('create-routine-btn');
+        const routinesContainer = document.getElementById('routines-container');
+        // Tela 2 (Editor)
+        const backToListBtn = document.getElementById('back-to-list-btn');
+        const saveRoutineBtn = document.getElementById('save-routine-btn');
+        const editorTitle = document.getElementById('editor-title');
+        const routineIdInput = document.getElementById('routine-id-input');
+        const routineNameInput = document.getElementById('routine-name');
+        const routineExercisesContainer = document.getElementById('routine-exercises-container');
+        const openLibraryBtn = document.getElementById('open-library-btn');
+        // Tela 3 (Treino Ativo)
+        const concludeWorkoutBtn = document.getElementById('conclude-workout-btn');
+        const activeWorkoutContainer = document.getElementById('active-workout-container');
+        const workoutDurationEl = document.getElementById('workout-duration');
+        let currentWorkoutRoutineName = ""; // Salva o nome da rotina ativa
+        const restTimerBar = document.getElementById('rest-timer-bar');
+        const restTimerCountdownEl = document.getElementById('rest-timer-countdown');
+        // Tela 4 (Modal Biblioteca)
+        const libraryModal = document.getElementById('exercise-library-modal');
+        const closeLibraryBtn = document.getElementById('close-library-btn');
+        const librarySearchInput = document.getElementById('library-search');
+        const libraryListContainer = document.getElementById('library-list-container');
+        const newExerciseNameInput = document.getElementById('new-exercise-name');
+        const saveNewExerciseBtn = document.getElementById('save-new-exercise-btn');
+        // Tela 5 (Modal GIF)
+        const gifModal = document.getElementById('exercise-gif-modal');
+        const closeGifModalBtn = document.getElementById('close-gif-modal-btn');
+        const gifModalTitle = document.getElementById('gif-modal-title');
+        const gifModalImage = document.getElementById('gif-modal-image');
+        const gifModalMuscle = document.getElementById('gif-modal-muscle');
+        const gifModalTabButtons = document.querySelectorAll('.gif-modal-tab-btn');
+        const gifModalTabPanels = document.querySelectorAll('.gif-modal-tab-panel');
+        // Tema
+        const themeToggles = document.querySelectorAll('#theme-toggle, #theme-toggle-desktop');
+
+
+        // --- AUTENTICAÇÃO E INICIALIZAÇÃO ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // Usuário está logado
+                userId = user.uid;
+                console.log("Usuário autenticado:", userId);
+
+                // Define os caminhos das coleções do Firestore
+                // Padrão de segurança: /artifacts/{appId}/users/{userId}/{collectionName}
+                routinesCol = collection(db, `artifacts/${appId}/users/${userId}/routines`);
+                libraryCol = collection(db, `artifacts/${appId}/users/${userId}/exerciseLibrary`);
+                workoutHistoryCol = collection(db, `artifacts/${appId}/users/${userId}/workoutHistory`);
+                // Padrão para documento único (configurações)
+                settingsDoc = doc(db, `artifacts/${appId}/users/${userId}/settings/userSettings`);
+
+                // Carrega as configurações do usuário (ex: tema)
+                await loadUserSettings();
+                
+                // Inicia os listeners para carregar dados
+                setupFirestoreListeners();
+
+                // Mostra o conteúdo principal (a flag de loading será tratada no listener)
+                mainContent.classList.remove('hidden');
+                mobileNav.classList.remove('hidden');
+
+            } else {
+                // Usuário não está logado, tenta logar
+                console.log("Nenhum usuário logado. Tentando login...");
+                try {
+                    if (typeof __initial_auth_token !== 'undefined') {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    // O `onAuthStateChanged` será disparado novamente após o login
+                } catch (error) {
+                    console.error("Erro ao fazer login:", error);
+                    loadingOverlay.innerHTML = "Erro ao autenticar.";
+                }
+            }
+        });
+
+        async function loadUserSettings() {
+            try {
+                const docSnap = await getDoc(settingsDoc);
+                if (docSnap.exists()) {
+                    const settings = docSnap.data();
+                    console.log("Configurações carregadas:", settings);
+                    if (settings.theme) {
+                        applyTheme(settings.theme); // Aplica o tema salvo
+                        localStorage.setItem('theme', settings.theme); // Sincroniza localStorage
+                    }
+                } else {
+                    console.log("Nenhum documento de configuração encontrado. Usando padrões.");
+                    // Salva o tema padrão (do localStorage ou do sistema) no Firestore
+                    const currentTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                    await setDoc(settingsDoc, { theme: currentTheme }, { merge: true });
+                }
+            } catch (error) {
+                console.error("Erro ao carregar configurações:", error);
+            }
+        }
+
+        async function saveUserSetting(key, value) {
+            try {
+                await setDoc(settingsDoc, { [key]: value }, { merge: true });
+                console.log("Configuração salva:", key, value);
+            } catch (error) {
+                console.error("Erro ao salvar configuração:", error);
+            }
+        }
+
+        // --- LÓGICA DE DADOS (FIRESTORE) ---
+
+        function setupFirestoreListeners() {
+            // Listener para Rotinas
+            onSnapshot(query(routinesCol), (snapshot) => {
+                allRoutines = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                console.log("Rotinas carregadas:", allRoutines);
+                renderRoutinesUI(allRoutines);
+
+                // Esconde o loading APÓS o primeiro carregamento de dados
+                if (!isInitialDataLoaded) {
+                    loadingOverlay.classList.add('hidden');
+                    isInitialDataLoaded = true;
+                }
+            }, (error) => {
+                console.error("Erro ao carregar rotinas:", error);
+                loadingOverlay.innerHTML = "Erro ao carregar dados.";
+            });
+
+            // Listener para Biblioteca de Exercícios
+            onSnapshot(query(libraryCol), (snapshot) => {
+                allExercises = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                console.log("Biblioteca carregada:", allExercises);
+                // Opcional: Adiciona exercícios padrão se a biblioteca estiver vazia
+                if (allExercises.length === 0) {
+                    addDefaultExercises();
+                }
+                renderExerciseLibraryUI(); // Atualiza a UI do modal
+            }, (error) => console.error("Erro ao carregar biblioteca:", error));
+        }
+
+        // Adiciona exercícios padrão se o usuário não tiver nenhum
+        async function addDefaultExercises() {
+            console.log("Biblioteca vazia. Adicionando exercícios padrão...");
+            const defaultLibrary = [
+                { name: "Supino Reto (Barra)", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2017/09/barbell-bench-press.gif", muscle: "Peito" },
+                { name: "Supino Inclinado (Halteres)", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2023/05/dumbbell-incline-bench-press.gif", muscle: "Peito (Superior)" },
+                { name: "Crucifixo (Máquina)", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2023/09/lever-seated-fly.gif", muscle: "Peito" },
+                { name: "Agachamento Livre", gif: "", muscle: "Quadríceps" },
+                { name: "Leg Press 45", gif: "", muscle: "Quadríceps" },
+                { name: "Puxada Frontal (Pulley)", gif: "", muscle: "Costas (Latíssimo)" },
+                { name: "Remada Curvada", gif: "", muscle: "Costas" }
+            ];
+            // Usa Promise.all para adicionar todos em paralelo
+            try {
+                await Promise.all(defaultLibrary.map(ex => addDoc(libraryCol, ex)));
+                console.log("Exercícios padrão adicionados.");
+            } catch (error) {
+                console.error("Erro ao adicionar exercícios padrão:", error);
+            }
+            // O onSnapshot vai pegar essa mudança e atualizar `allExercises` e a UI.
+        }
+
+
+        // --- Funções de Troca de Tela ---
+        function showScreen(screenToShow) {
+            [routineListScreen, routineEditorScreen, activeWorkoutScreen].forEach(screen => {
+                if(screen) screen.classList.add('hidden');
+            });
+            if(screenToShow) screenToShow.classList.remove('hidden');
+            window.scrollTo(0, 0);
+        }
+
+        // --- TELA 1: LÓGICA DA LISTA DE ROTINAS ---
+        function renderRoutinesUI(routines) {
+            if (!routinesContainer) return;
+            routinesContainer.innerHTML = '';
+            if (routines.length === 0) {
+                routinesContainer.innerHTML = `<p class="text-gray-500 dark:text-gray-400 text-center">Nenhuma rotina criada.</p>`;
+                return;
+            }
+            routines.forEach(routine => {
+                const exerciseCount = routine.exercises ? routine.exercises.length : 0;
+                const card = document.createElement('div');
+                card.className = "bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700";
+                card.innerHTML = `
+                    <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">${routine.name}</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">${exerciseCount} exercícios</p>
+                    <div class="flex items-center space-x-3">
+                        <button class="start-workout-btn flex-1 py-3 px-4 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg shadow-md" data-routine-id="${routine.id}">
+                            Iniciar Treino
+                        </button>
+                        <button class="edit-routine-btn py-3 px-4 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold rounded-lg" data-routine-id="${routine.id}">
+                            <i class='bx bx-edit text-xl'></i>
+                        </button>
+                        <!-- NOVO: Botão de excluir -->
+                        <button class="delete-routine-btn py-3 px-4 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-semibold rounded-lg" data-routine-id="${routine.id}">
+                            <i class='bx bx-trash text-xl'></i>
+                        </button>
+                    </div>
+                `;
+                routinesContainer.appendChild(card);
+            });
+        }
+        
+        // --- TELA 2: LÓGICA DO EDITOR DE ROTINA ---
+        function showEditor(routineId = null) {
+            currentEditingRoutineId = routineId;
+            localRoutineExercises = [];
+            if (routineId) {
+                // Editando rotina existente
+                if(editorTitle) editorTitle.textContent = "Editar Rotina";
+                const routine = allRoutines.find(r => r.id === routineId);
+                if (routine) {
+                    if(routineNameInput) routineNameInput.value = routine.name;
+                    if(routineIdInput) routineIdInput.value = routine.id;
+                    // Deep copy para edição local
+                    localRoutineExercises = JSON.parse(JSON.stringify(routine.exercises || []));
+                }
+            } else {
+                // Criando nova rotina
+                if(editorTitle) editorTitle.textContent = "Criar Rotina";
+                if(routineNameInput) routineNameInput.value = "";
+                if(routineIdInput) routineIdInput.value = ""; // Limpa o ID
+            }
+            renderEditorExercises();
+            showScreen(routineEditorScreen);
+        }
+
+        function renderEditorExercises() {
+            if (!routineExercisesContainer) return;
+            routineExercisesContainer.innerHTML = '';
+            localRoutineExercises.forEach((ex, index) => {
+                const exEl = document.createElement('div');
+                exEl.className = "exercise-editor-card bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border dark:border-gray-700";
+                exEl.dataset.index = index;
+                exEl.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <h4 class="font-semibold">${ex.name}</h4>
+                        <button class="remove-exercise-btn text-red-400 hover:text-red-600" data-index="${index}">
+                            <i class='bx bx-trash text-xl'></i>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3 mt-2">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500">Séries</label>
+                            <input type="text" data-field="sets" value="${ex.sets || ''}" class="w-full p-2 bg-white dark:bg-gray-700 rounded-lg border dark:border-gray-600 routine-exercise-input">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500">Reps</label>
+                            <input type="text" data-field="reps" value="${ex.reps || ''}" class="w-full p-2 bg-white dark:bg-gray-700 rounded-lg border dark:border-gray-600 routine-exercise-input">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500">Desc.</label>
+                            <input type="text" data-field="rest" value="${ex.rest || ''}s" class="w-full p-2 bg-white dark:bg-gray-700 rounded-lg border dark:border-gray-600 routine-exercise-input">
+                        </div>
+                    </div>
+                `;
+                routineExercisesContainer.appendChild(exEl);
+            });
+        }
+
+        async function saveRoutine() {
+            if (!routineNameInput.value) {
+                // Use um modal customizado no futuro
+                console.warn("Por favor, dê um nome à sua rotina.");
+                return;
+            }
+
+            // Atualiza localRoutineExercises com os valores dos inputs
+            if (routineExercisesContainer) {
+                routineExercisesContainer.querySelectorAll('.exercise-editor-card').forEach(card => {
+                    const index = parseInt(card.dataset.index, 10);
+                    if (localRoutineExercises[index]) {
+                        card.querySelectorAll('input[data-field]').forEach(input => {
+                            const field = input.dataset.field;
+                            localRoutineExercises[index][field] = input.value.replace('s', '');
+                        });
+                    }
+                });
+            }
+
+            const routineData = {
+                name: routineNameInput.value,
+                exercises: localRoutineExercises,
+                updatedAt: new Date().toISOString() // Adiciona um timestamp
+            };
+
+            saveRoutineBtn.disabled = true; // Previne cliques duplos
+
+            try {
+                if (currentEditingRoutineId) {
+                    // Atualiza rotina existente
+                    const docRef = doc(routinesCol, currentEditingRoutineId);
+                    await setDoc(docRef, routineData, { merge: true }); // Merge: true para não sobrescrever outros campos
+                    console.log("Rotina atualizada:", currentEditingRoutineId);
+                } else {
+                    // Adiciona nova rotina
+                    routineData.createdAt = new Date().toISOString();
+                    const docRef = await addDoc(routinesCol, routineData);
+                    console.log("Rotina salva com ID:", docRef.id);
+                }
+                // O onSnapshot vai atualizar a UI automaticamente
+                showScreen(routineListScreen); // Volta para a lista
+            } catch (error) {
+                console.error("Erro ao salvar rotina:", error);
+            } finally {
+                saveRoutineBtn.disabled = false;
+            }
+        }
+
+        // --- TELA 3: LÓGICA DO TREINO ATIVO ---
+        function showActiveWorkout(routineId) {
+            const routine = allRoutines.find(r => r.id === routineId);
+            if (!routine) return;
+
+            currentWorkoutRoutineName = routine.name; // Salva o nome para o histórico
+
+            if(activeWorkoutContainer) activeWorkoutContainer.innerHTML = '';
+            routine.exercises.forEach(ex => {
+                // Garante que o exercício tenha os dados mais recentes da biblioteca (como 'muscle')
+                const libEx = allExercises.find(e => e.id === ex.libraryId) || {};
+                const exerciseData = { ...libEx, ...ex }; // Junta dados da rotina (sets, reps) com da lib (gif, muscle)
+                
+                const exCard = createActiveExerciseCard(exerciseData);
+                if(activeWorkoutContainer) activeWorkoutContainer.appendChild(exCard);
+            });
+            
+            // Botão de adicionar exercício
+            const addExerciseBtnHTML = `
+                <button id="add-exercise-to-workout-btn" class="w-full flex justify-center items-center py-3 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700">
+                    <i class='bx bx-plus mr-1'></i>
+                    Adicionar Exercício
+                </button>
+            `;
+            if(activeWorkoutContainer) activeWorkoutContainer.insertAdjacentHTML('beforeend', addExerciseBtnHTML);
+
+            startWorkoutTimer();
+            showScreen(activeWorkoutScreen);
+        }
+
+        function createActiveExerciseCard(exercise) {
+            const exCard = document.createElement('div');
+            exCard.className = "exercise-card bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700";
+            // Adiciona dataset para fácil coleta de dados
+            exCard.dataset.exerciseName = exercise.name;
+            exCard.dataset.libraryId = exercise.libraryId || '';
+
+            const gifUrl = exercise.gif || 'https://placehold.co/40x40/e2e8f0/94a3b8?text=E';
+            const muscle = exercise.muscle || 'N/A';
+            
+            exCard.innerHTML = `
+                <div class="flex justify-between items-center mb-3">
+                    <div class="flex items-center space-x-3">
+                        <button class="gif-thumbnail-btn w-10 h-10 rounded-full overflow-hidden flex-shrink-0" 
+                                data-name="${exercise.name}" 
+                                data-gif-url="${gifUrl}"
+                                data-muscle="${muscle}">
+                            <img src="${gifUrl}" 
+                                 onerror="this.src='https://placehold.co/40x40/e2e8f0/94a3b8?text=E'"
+                                 alt="gif" class="w-full h-full object-cover bg-gray-200 dark:bg-gray-700">
+                        </button>
+                        <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200">${exercise.name}</h4>
+                    </div>
+                    <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><i class='bx bx-dots-vertical-rounded text-xl'></i></button>
+                </div>
+                <input type="text" placeholder="Adicionar notas aqui..." class="exercise-notes w-full bg-transparent p-1 mb-2 placeholder-gray-400 dark:placeholder-gray-500 text-sm">
+                <div class="text-sm text-gray-500 dark:text-gray-400 mb-3" data-rest-time="${exercise.rest || 90}">
+                    <i class='bx bx-time-five text-base mr-1 opacity-70'></i>
+                    <span>Tempo de Descanso: </span>
+                    <button class="rest-time-btn font-medium text-primary-600 dark:text-primary-400 hover:underline">${formatSeconds(exercise.rest || 90)}</button>
+                </div>
+                <div class="space-y-2">
+                    <div class="grid grid-cols-5 gap-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase px-2">
+                        <span>Série</span>
+                        <span>Anterior</span>
+                        <span class="text-center">KG</span>
+                        <span class="text-center">Reps</span>
+                        <span>✓</span>
+                    </div>
+                    <div class="sets-container space-y-3"></div>
+                </div>
+                <button class="add-set-btn w-full mt-4 flex justify-center items-center py-2 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700/50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700/50 transition-all">
+                    <i class='bx bx-plus mr-1'></i>
+                    Adicionar Série
+                </button>
+            `;
+            const setsContainer = exCard.querySelector('.sets-container');
+            const setCount = parseInt(exercise.sets, 10) || 3;
+            for (let i = 0; i < setCount; i++) {
+                addSetRow(setsContainer, i + 1, "---");
+            }
+            return exCard;
+        }
+
+        let workoutTimerInterval = null;
+        let workoutSeconds = 0;
+        let restTimerInterval = null;
+        
+        function startWorkoutTimer() {
+            workoutSeconds = 0;
+            if(workoutTimerInterval) clearInterval(workoutTimerInterval);
+            workoutTimerInterval = setInterval(() => {
+                workoutSeconds++;
+                let h = Math.floor(workoutSeconds / 3600).toString().padStart(2, '0');
+                let m = Math.floor((workoutSeconds % 3600) / 60).toString().padStart(2, '0');
+                let s = (workoutSeconds % 60).toString().padStart(2, '0');
+                if(workoutDurationEl) workoutDurationEl.textContent = `${h}:${m}:${s}`;
+            }, 1000);
+        }
+
+        function formatSeconds(sec) {
+            sec = parseInt(sec, 10);
+            const m = Math.floor(sec / 60);
+            const s = sec % 60;
+            return `${m}min ${s.toString().padStart(2, '0')}s`;
+        }
+
+        function startRestTimer(durationInSeconds) {
+            if (restTimerInterval) clearInterval(restTimerInterval);
+            if(!restTimerBar || !restTimerCountdownEl) return;
+            restTimerBar.classList.remove('hidden');
+            let seconds = durationInSeconds;
+            function updateTimerText() {
+                restTimerCountdownEl.textContent = formatSeconds(seconds);
+            }
+            updateTimerText();
+            restTimerInterval = setInterval(() => {
+                seconds--;
+                updateTimerText();
+                if (seconds <= 0) {
+                    clearInterval(restTimerInterval);
+                    restTimerBar.classList.add('hidden');
+                }
+            }, 1000);
+        }
+        
+        function addSetRow(container, setNumber, previous = "--") {
+            const setRow = document.createElement('div');
+            setRow.className = 'set-row grid grid-cols-5 gap-2 items-center';
+            setRow.innerHTML = `
+                <button class="set-number-btn font-semibold text-gray-500 dark:text-gray-400 text-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="Clique para excluir a série">
+                    ${setNumber}
+                </button>
+                <span class="text-sm text-gray-500 dark:text-gray-400">${previous}</span>
+                <input type="number" placeholder="kg" class="set-kg-input w-full p-3 bg-white dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 text-center">
+                <input type="number" placeholder="reps" class="set-reps-input w-full p-3 bg-white dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 text-center">
+                <button class="set-complete-btn p-3 bg-gray-200 dark:bg-gray-700 text-gray-400 rounded-lg"><i class='bx bx-check text-2xl'></i></button>
+            `;
+            container.appendChild(setRow);
+        }
+
+        function renumberSets(setsContainer) {
+            const setRows = setsContainer.querySelectorAll('.set-row');
+            setRows.forEach((row, index) => {
+                const setNumberBtn = row.querySelector('.set-number-btn');
+                if (setNumberBtn) {
+                    setNumberBtn.textContent = index + 1;
+                }
+            });
+        }
+
+        async function saveWorkoutHistory() {
+            concludeWorkoutBtn.disabled = true;
+            console.log("Salvando histórico do treino...");
+            const performedExercises = [];
+
+            activeWorkoutContainer.querySelectorAll('.exercise-card').forEach(card => {
+                const exerciseData = {
+                    name: card.dataset.exerciseName,
+                    libraryId: card.dataset.libraryId,
+                    notes: card.querySelector('.exercise-notes').value,
+                    sets: []
+                };
+
+                card.querySelectorAll('.set-row').forEach((setRow, index) => {
+                    const kgInput = setRow.querySelector('.set-kg-input');
+                    const repsInput = setRow.querySelector('.set-reps-input');
+                    const isComplete = setRow.querySelector('.set-complete-btn').disabled;
+                    
+                    // Salva apenas séries completas ou que tenham dados
+                    if (isComplete || kgInput.value || repsInput.value) {
+                        exerciseData.sets.push({
+                            setNumber: index + 1,
+                            kg: kgInput.value || 0,
+                            reps: repsInput.value || 0,
+                            isComplete: isComplete
+                        });
+                    }
+                });
+
+                if (exerciseData.sets.length > 0) {
+                    performedExercises.push(exerciseData);
+                }
+            });
+
+            const workoutData = {
+                routineName: currentWorkoutRoutineName,
+                durationInSeconds: workoutSeconds,
+                completedAt: new Date().toISOString(),
+                exercises: performedExercises
+            };
+
+            try {
+                await addDoc(workoutHistoryCol, workoutData);
+                console.log("Histórico do treino salvo!");
+            } catch (error) {
+                console.error("Erro ao salvar histórico do treino:", error);
+            } finally {
+                concludeWorkoutBtn.disabled = false;
+                // Limpa timers e volta para a lista
+                if(workoutTimerInterval) clearInterval(workoutTimerInterval);
+                if(restTimerInterval) clearInterval(restTimerInterval);
+                workoutSeconds = 0;
+                currentWorkoutRoutineName = "";
+                showScreen(routineListScreen);
+            }
+        }
+
+
+        // --- TELA 4: LÓGICA DA BIBLIOTECA DE EXERCÍCIOS ---
+        function openLibraryModal(isEditing) {
+            isEditingRoutine = isEditing; // Define se estamos editando rotina ou treino ativo
+            renderExerciseLibraryUI(); // Renderiza com base no 'allExercises'
+            if(libraryModal) libraryModal.classList.remove('hidden');
+        }
+        function closeLibraryModal() {
+            if(libraryModal) libraryModal.classList.add('hidden');
+        }
+
+        function renderExerciseLibraryUI() {
+            if (!libraryListContainer) return;
+            libraryListContainer.innerHTML = '';
+            const searchTerm = librarySearchInput.value.toLowerCase();
+            
+            // Filtra o cache global 'allExercises'
+            const filteredLibrary = allExercises.filter(ex => ex.name.toLowerCase().includes(searchTerm));
+            
+            filteredLibrary.forEach(ex => {
+                const exEl = document.createElement('div');
+                exEl.className = "flex justify-between items-center p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800";
+                exEl.innerHTML = `
+                    <span class="font-medium">${ex.name}</span>
+                    <button class="add-exercise-from-lib-btn py-1 px-3 bg-primary-600 text-white rounded-lg text-sm" data-exercise-id="${ex.id}">Add</button>
+                `;
+                libraryListContainer.appendChild(exEl);
+            });
+        }
+
+        async function saveNewExerciseToLibrary() {
+            const name = newExerciseNameInput.value;
+            if (!name) return;
+
+            const newExercise = {
+                name: name,
+                gif: "", // Pode adicionar campos para GIF e Músculo no futuro
+                muscle: ""
+            };
+
+            saveNewExerciseBtn.disabled = true;
+            try {
+                await addDoc(libraryCol, newExercise);
+                console.log("Novo exercício salvo na biblioteca.");
+                newExerciseNameInput.value = '';
+                // O onSnapshot vai atualizar a UI do modal
+            } catch (error) {
+                console.error("Erro ao salvar novo exercício:", error);
+            } finally {
+                saveNewExerciseBtn.disabled = false;
+            }
+        }
+
+        // --- TELA 5: LÓGICA DO MODAL DE GIF ---
+        function openGifModal(name, gifUrl, muscle) {
+            if (!gifModal || !gifModalTitle || !gifModalImage || !gifModalMuscle) return;
+            gifModalTitle.textContent = name;
+            gifModalImage.src = gifUrl;
+            gifModalMuscle.textContent = muscle || 'N/A';
+            gifModal.classList.remove('hidden');
+        }
+        
+        function closeGifModal() {
+            if (!gifModal || !gifModalImage) return;
+            gifModalImage.src = ""; // Limpa a imagem
+            gifModal.classList.add('hidden');
+            switchGifModalTab('resumo'); // Reseta para a primeira aba
+        }
+
+        function switchGifModalTab(tabId) {
+            gifModalTabButtons.forEach(btn => {
+                if (btn.dataset.tab === tabId) {
+                    btn.classList.add('border-primary-600', 'dark:border-primary-400', 'text-primary-600', 'dark:text-primary-400');
+                    btn.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'dark:text-gray-400', 'dark:hover:text-gray-200', 'dark:hover:border-gray-600');
+                } else {
+                    btn.classList.remove('border-primary-600', 'dark:border-primary-400', 'text-primary-600', 'dark:text-primary-400');
+                    btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'dark:text-gray-400', 'dark:hover:text-gray-200', 'dark:hover:border-gray-600');
+                }
+            });
+
+            gifModalTabPanels.forEach(panel => {
+                if (panel.id === `gif-modal-tab-${tabId}`) {
+                    panel.classList.remove('hidden');
+                } else {
+                    panel.classList.add('hidden');
+                }
+            });
+        }
+
+        // --- Adicionar Eventos (Event Listeners) ---
+        
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            // --- Eventos de Tema ---
+            themeToggles.forEach(toggle => {
+                toggle.addEventListener('click', () => {
+                    const isDark = document.documentElement.classList.toggle('dark');
+                    const newTheme = isDark ? 'dark' : 'light';
+                    applyTheme(newTheme);
+                    localStorage.setItem('theme', newTheme);
+                    // Salva a configuração no Firestore
+                    if (userId) saveUserSetting('theme', newTheme);
+                });
+            });
+            // Atualiza o ícone do sol/lua no carregamento
+            const updateIcons = (isDark) => {
+                themeToggles.forEach(toggle => {
+                    const moonIcon = toggle.querySelector('.bxs-moon');
+                    const sunIcon = toggle.querySelector('.bxs-sun');
+                    if (moonIcon && sunIcon) {
+                        moonIcon.classList.toggle('hidden', !isDark);
+                        moonIcon.classList.toggle('inline-block', isDark);
+                        sunIcon.classList.toggle('hidden', isDark);
+                        sunIcon.classList.toggle('inline-block', !isDark);
+                    }
+                });
+            };
+            // Observador para mudanças na classe 'dark' do HTML
+            const observer = new MutationObserver(() => {
+                updateIcons(document.documentElement.classList.contains('dark'));
+            });
+            observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+            // Chama uma vez no início
+            updateIcons(document.documentElement.classList.contains('dark'));
+
+
+            // --- Eventos da Tela 1 (Lista) ---
+            if(createRoutineBtn) createRoutineBtn.addEventListener('click', () => showEditor(null));
+            if(routinesContainer) routinesContainer.addEventListener('click', async (e) => {
+                const startBtn = e.target.closest('.start-workout-btn');
+                const editBtn = e.target.closest('.edit-routine-btn');
+                const deleteBtn = e.target.closest('.delete-routine-btn');
+
+                if (startBtn) showActiveWorkout(startBtn.dataset.routineId);
+                if (editBtn) showEditor(editBtn.dataset.routineId);
+                if (deleteBtn) {
+                    const docId = deleteBtn.dataset.routineId;
+                    // O ideal é usar um modal customizado
+                    if (confirm("Tem certeza que deseja excluir esta rotina?")) {
+                        try {
+                            await deleteDoc(doc(routinesCol, docId));
+                            console.log("Rotina excluída:", docId);
+                            // onSnapshot vai atualizar a UI
+                        } catch (error) {
+                            console.error("Erro ao excluir rotina:", error);
+                        }
+                    }
+                }
+            });
+
+            // --- Eventos da Tela 2 (Editor) ---
+            if(backToListBtn) backToListBtn.addEventListener('click', () => showScreen(routineListScreen));
+            if(saveRoutineBtn) saveRoutineBtn.addEventListener('click', saveRoutine);
+            if(openLibraryBtn) openLibraryBtn.addEventListener('click', () => openLibraryModal(true));
+            if(routineExercisesContainer) routineExercisesContainer.addEventListener('click', (e) => {
+                if(e.target.closest('.remove-exercise-btn')) {
+                    const indexToRemove = parseInt(e.target.closest('.remove-exercise-btn').dataset.index, 10);
+                    localRoutineExercises.splice(indexToRemove, 1);
+                    renderEditorExercises(); // Apenas atualiza o array local
+                }
+            });
+
+            // --- Eventos da Tela 3 (Treino Ativo) ---
+            if(concludeWorkoutBtn) concludeWorkoutBtn.addEventListener('click', saveWorkoutHistory);
+            
+            if(activeWorkoutContainer) activeWorkoutContainer.addEventListener('click', (e) => {
+                const addBtn = e.target.closest('.add-set-btn');
+                const completeBtn = e.target.closest('.set-complete-btn');
+                const restBtn = e.target.closest('.rest-time-btn');
+                const addExerciseBtn = e.target.closest('#add-exercise-to-workout-btn');
+                const gifBtn = e.target.closest('.gif-thumbnail-btn');
+                const deleteSetBtn = e.target.closest('.set-number-btn');
+
+                if (addBtn) {
+                    const setsContainer = addBtn.closest('.exercise-card').querySelector('.sets-container');
+                    const newSetNumber = setsContainer.children.length + 1;
+                    addSetRow(setsContainer, newSetNumber);
+                }
+                if (completeBtn && !completeBtn.disabled) {
+                    const setRow = completeBtn.closest('.set-row');
+                    const exerciseCard = completeBtn.closest('.exercise-card');
+                    
+                    setRow.querySelectorAll('input').forEach(input => input.disabled = true);
+                    completeBtn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-400');
+                    completeBtn.classList.add('bg-primary-600', 'text-white');
+                    completeBtn.disabled = true;
+
+                    const restTimeDiv = exerciseCard.querySelector('[data-rest-time]');
+                    const restTimeInSeconds = parseInt(restTimeDiv.dataset.restTime, 10) || 90;
+                    startRestTimer(restTimeInSeconds);
+                }
+                if (restBtn) {
+                    const restTimeDiv = restBtn.closest('[data-rest-time]');
+                    const currentRest = restTimeDiv.dataset.restTime;
+                    const newRest = prompt("Digite o novo tempo de descanso em segundos:", currentRest);
+                    if (newRest && !isNaN(newRest)) {
+                        const newRestSeconds = parseInt(newRest, 10);
+                        restTimeDiv.dataset.restTime = newRestSeconds;
+                        restBtn.textContent = formatSeconds(newRestSeconds);
+                    }
+                }
+                if (addExerciseBtn) {
+                    openLibraryModal(false); // false = não estou editando rotina
+                }
+                if (gifBtn) {
+                    const name = gifBtn.dataset.name;
+                    const gifUrl = gifBtn.dataset.gifUrl;
+                    const muscle = gifBtn.dataset.muscle;
+                    openGifModal(name, gifUrl, muscle);
+                }
+                if (deleteSetBtn) {
+                    if (confirm("Tem certeza que deseja excluir esta série?")) {
+                        const setRow = deleteSetBtn.closest('.set-row');
+                        const setsContainer = setRow.closest('.sets-container');
+                        setRow.remove();
+                        renumberSets(setsContainer);
+                    }
+                }
+            });
+
+            // --- Eventos da Tela 4 (Modal Biblioteca) ---
+            if(closeLibraryBtn) closeLibraryBtn.addEventListener('click', closeLibraryModal);
+            if(saveNewExerciseBtn) saveNewExerciseBtn.addEventListener('click', saveNewExerciseToLibrary);
+            if(librarySearchInput) librarySearchInput.addEventListener('input', renderExerciseLibraryUI); // Renderiza com filtro
+            if(libraryListContainer) libraryListContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('add-exercise-from-lib-btn')) {
+                    const exerciseId = e.target.dataset.exerciseId;
+                    const exerciseData = allExercises.find(ex => ex.id === exerciseId); // Busca do cache global
+                    if (!exerciseData) return;
+                    
+                    const newExercise = {
+                        libraryId: exerciseData.id, // Salva o ID da biblioteca
+                        name: exerciseData.name,
+                        gif: exerciseData.gif,
+                        muscle: exerciseData.muscle,
+                        sets: "3",
+                        reps: "8-12",
+                        rest: "90"
+                    };
+
+                    if (isEditingRoutine) {
+                        // Adiciona ao editor de rotina
+                        localRoutineExercises.push(newExercise);
+                        renderEditorExercises();
+                    } else {
+                        // Adiciona ao treino ativo
+                        const exCard = createActiveExerciseCard(newExercise);
+                        const addBtn = activeWorkoutContainer.querySelector('#add-exercise-to-workout-btn');
+                        if (addBtn) {
+                            activeWorkoutContainer.insertBefore(exCard, addBtn);
+                        } else {
+                            if(activeWorkoutContainer) activeWorkoutContainer.appendChild(exCard);
+                        }
+                    }
+                    closeLibraryModal();
+                }
+            });
+
+            // --- Eventos Tela 5 (Modal GIF) ---
+            if(closeGifModalBtn) closeGifModalBtn.addEventListener('click', closeGifModal);
+            gifModalTabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    switchGifModalTab(button.dataset.tab);
+                });
+            });
+
+            // --- Eventos de Logout ---
+            const logoutButtons = document.querySelectorAll('#logout-button-desktop, #more-menu-button'); // Simplificado
+            logoutButtons.forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    // TODO: O botão 'Mais' deve abrir um menu que tem o logout
+                    if (btn.id === 'logout-button-desktop') {
+                        if (confirm("Sair da conta?")) {
+                            try {
+                                await signOut(auth);
+                                window.location.href = '/treino/login.html';
+                            } catch (error) {
+                                console.error("Erro ao fazer logout:", error);
+                            }
+                        }
+                    }
+                    // Lógica para o menu 'Mais' (id='more-menu-button') pode ser adicionada aqui
+                });
+            });
+
+        });
+    </script>
+
+    <!-- Script do Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/treino/service-worker.js')
+                    .then((registration) => {
+                        console.log('Service Worker registrado com sucesso:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('Falha ao registrar Service Worker:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
+

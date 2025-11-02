@@ -4,19 +4,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="/assets/img/favicon.ico">
-    <title>Projeto Treino 2026</title>
+    <link rel="icon" href="/assets/img/android-chrome-512x512.png">
+    <title>Home | ELETRO 26</title>
 
+    <!-- O manifest.json está no diretório /treino/ -->
     <link rel="manifest" href="/treino/manifest.json">
     <meta name="theme-color" content="#2563eb">
-    <link rel="apple-touch-icon" href="/assets/img/android-chrome-512x512.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
 
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
@@ -41,6 +41,11 @@
         .dark ::-webkit-scrollbar-thumb {
             background-color: #4b5563;
         }
+
+        /* Estilo para o modal de exclusão */
+        #delete-confirm-modal.hidden {
+            display: none;
+        }
     </style>
 
     <script>
@@ -61,13 +66,23 @@
         }
     </script>
     <script>
-            (function () {
-                if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                    document.documentElement.classList.add('dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                }
-            })();
+        // Lógica de tema movida para uma função para ser chamada após carregar config
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+        // Carrega o tema inicial do localStorage, se existir
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            applyTheme(savedTheme);
+        } else {
+            // Se não tiver salvo, usa a preferência do sistema
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            applyTheme(prefersDark ? 'dark' : 'light');
+        }
     </script>
 </head>
 
@@ -79,6 +94,7 @@
 
     <div id="main-content" class="max-w-7xl mx-auto lg:grid lg:grid-cols-12 lg:gap-8 hidden">
 
+        <!-- Coluna 1: Navegação (Esquerda) -->
         <div class="hidden lg:block lg:col-span-3 lg:sticky lg:top-0 lg:h-screen lg:py-6">
             <div class="flex flex-col h-full">
 
@@ -90,13 +106,15 @@
                 </div>
 
                 <nav class="flex-1 px-2 space-y-2">
-                    <a href="#"
+                    <!-- ATUALIZADO: Link para home.html -->
+                    <a href="home.html"
                         class="flex items-center space-x-3 p-3 rounded-lg text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
                         aria-label="Início">
                         <i class='bx bxs-home-smile text-2xl'></i>
                         <span class="text-lg font-semibold">Início</span>
                     </a>
-                    <a href="#"
+                    <!-- ATUALIZADO: Link para treino.html -->
+                    <a href="treino.html"
                         class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                         aria-label="Treinos">
                         <i class='bx bx-dumbbell text-2xl'></i>
@@ -133,7 +151,7 @@
                         <img src="https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png"
                             alt="Foto do Perfil" class="w-12 h-12 rounded-full object-cover">
                         <div>
-                            <h4 class="font-semibold text-gray-800 dark:text-gray-200">Usuário</h4>
+                            <h4 id="user-greeting-desktop" class="font-semibold text-gray-800 dark:text-gray-200">Usuário</h4>
                             <a href="#" class="text-sm text-gray-500 dark:text-gray-400 hover:underline">Ver Perfil</a>
                         </div>
                     </div>
@@ -141,6 +159,7 @@
             </div>
         </div>
 
+        <!-- Coluna 2: Conteúdo Principal (Centro) -->
         <div
             class="lg:col-span-6 min-h-screen bg-white dark:bg-gray-950 lg:border-x lg:border-gray-200 dark:lg:border-gray-800">
             <div class="pb-28 lg:pb-6 relative min-h-screen">
@@ -149,7 +168,7 @@
                     class="p-6 flex justify-between items-center lg:sticky lg:top-0 lg:bg-white/80 dark:lg:bg-gray-950/80 lg:backdrop-blur-md lg:z-30 border-b border-gray-100 dark:border-gray-800/50">
                     <div class="flex-1">
                         <div class="lg:hidden">
-                            <h1 class="text-2xl font-bold">Olá, Usuário!</h1>
+                            <h1 id="user-greeting-mobile" class="text-2xl font-bold">Olá, Usuário!</h1>
                             <p class="text-gray-500 dark:text-gray-400">Pronto para o treino de hoje?</p>
                         </div>
                         <h1 class="hidden lg:block text-2xl font-bold text-gray-900 dark:text-gray-100">Início</h1>
@@ -174,7 +193,8 @@
                 </header>
 
                 <main class="px-6 space-y-6 mt-6">
-                    <div
+                    <!-- ATUALIZADO: Adicionado ID para o botão -->
+                    <div id="start-workout-btn"
                         class="bg-primary-600 text-white p-6 rounded-2xl shadow-lg shadow-primary-500/30 flex justify-between items-center transform active:scale-[0.98] transition-transform duration-150 cursor-pointer">
                         <div>
                             <h2 class="text-xl font-bold">Começar um Treino</h2>
@@ -211,55 +231,17 @@
                             <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Histórico de Treinos</h3>
                             <a href="#" class="text-sm text-gray-500 dark:text-gray-400 lg:hidden">Ver mais</a>
                         </div>
-                        <div
-                            class="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 mb-3 transform active:scale-[0.99] transition-transform duration-100 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/60">
-                            <div class="flex justify-between items-center mb-2">
-                                <h4 class="font-semibold text-gray-800 dark:text-gray-200">Treino A: Peito e Tríceps
-                                </h4>
-                                <span class="text-xs text-gray-400 dark:text-gray-500">Hoje, 14:32</span>
-                            </div>
-                            <div class="flex space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                                <span class="flex items-center"><i
-                                        class='bx bx-time-five text-base mr-1 opacity-70'></i>45 min</span>
-                                <span class="flex items-center"><i
-                                        class='bx bx-dumbbell text-base mr-1 opacity-70'></i>5.400kg</span>
-                                <span class="flex items-center text-amber-500 dark:text-amber-400">
-                                    <i class='bx bxs-medal text-base mr-1'></i>Recorde
-                                </span>
-                            </div>
-                        </div>
-                        <div
-                            class="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 mb-3 transform active:scale-[0.99] transition-transform duration-100 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/60">
-                            <div class="flex justify-between items-center mb-2">
-                                <h4 class="font-semibold text-gray-800 dark:text-gray-200">Treino B: Pernas</h4>
-                                <span class="text-xs text-gray-400 dark:text-gray-500">Ontem, 10:15</span>
-                            </div>
-                            <div class="flex space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                                <span class="flex items-center"><i
-                                        class='bx bx-time-five text-base mr-1 opacity-70'></i>60 min</span>
-                                <span class="flex items-center"><i
-                                        class='bx bx-dumbbell text-base mr-1 opacity-70'></i>8.120kg</span>
-                            </div>
-                        </div>
-                        <div
-                            class="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 mb-3 transform active:scale-[0.99] transition-transform duration-100 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/60">
-                            <div class="flex justify-between items-center mb-2">
-                                <h4 class="font-semibold text-gray-800 dark:text-gray-200">Treino C: Costas e Bíceps
-                                </h4>
-                                <span class="text-xs text-gray-400 dark:text-gray-500">Sexta, 08:22</span>
-                            </div>
-                            <div class="flex space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                                <span class="flex items-center"><i
-                                        class='bx bx-time-five text-base mr-1 opacity-70'></i>50 min</span>
-                                <span class="flex items-center"><i
-                                        class='bx bx-dumbbell text-base mr-1 opacity-70'></i>4.800kg</span>
-                            </div>
+                        <!-- ATUALIZADO: Container dinâmico para o histórico -->
+                        <div id="workout-history-container" class="space-y-3">
+                            <!-- Histórico do Firestore será inserido aqui -->
+                            <p id="history-loading-placeholder" class="text-gray-500 dark:text-gray-400 text-center">Carregando histórico...</p>
                         </div>
                     </div>
                 </main>
             </div>
         </div>
 
+        <!-- Coluna 3: Widgets (Direita) -->
         <div class="hidden lg:block lg:col-span-3 lg:sticky lg:top-0 lg:h-screen lg:py-6">
             <div class="flex justify-end space-x-2 mb-6 px-4">
                 <button type="button"
@@ -309,6 +291,8 @@
         </div>
 
     </div>
+
+    <!-- Barra de Navegação Flutuante (SÓ MOBILE) -->
     <nav id="mobile-nav" class="fixed bottom-4 left-1/2 -translate-x-1/2 w-[90%] max-w-sm mx-auto 
                 bg-white/80 dark:bg-gray-800/80 
                 backdrop-blur-md 
@@ -316,12 +300,14 @@
                 overflow-hidden z-40 lg:hidden hidden">
 
         <div class="flex justify-around items-center h-16">
-            <a href="#" class="flex flex-col items-center justify-center text-primary-600 dark:text-primary-400"
+            <!-- ATUALIZADO: Link para home.html -->
+            <a href="home.html" class="flex flex-col items-center justify-center text-primary-600 dark:text-primary-400"
                 aria-label="Início">
                 <i class='bx bxs-home-smile text-2xl'></i>
                 <span class="text-xs font-medium">Início</span>
             </a>
-            <a href="#"
+            <!-- ATUALIZADO: Link para treino.html -->
+            <a href="treino.html"
                 class="flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                 aria-label="Treinos">
                 <i class='bx bx-dumbbell text-2xl'></i>
@@ -336,6 +322,7 @@
         </div>
     </nav>
 
+    <!-- Menu 'Mais' (Modal Mobile) -->
     <div id="more-menu-overlay" class="fixed inset-0 bg-black/40 dark:bg-black/60 z-40 hidden" aria-hidden="true"></div>
     <div id="more-menu"
         class="fixed bottom-0 left-0 right-0 z-50 w-full max-w-md mx-auto
@@ -383,89 +370,307 @@
             </ul>
         </div>
     </div>
+
+    <!-- NOVO: Modal de Confirmação de Exclusão -->
+    <div id="delete-confirm-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-900 w-full max-w-md rounded-2xl shadow-xl p-6">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Confirmar Exclusão</h3>
+            <p class="text-gray-600 dark:text-gray-400 mt-2 mb-6">
+                Tem certeza que deseja excluir este item do histórico? Esta ação não pode ser desfeita.
+            </p>
+            <div class="flex justify-end space-x-3">
+                <button id="delete-modal-cancel-btn" type="button" class="py-2 px-4 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold">
+                    Cancelar
+                </button>
+                <button id="delete-modal-confirm-btn" type="button" class="py-2 px-4 rounded-lg bg-red-600 text-white font-semibold">
+                    Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- SCRIPT PRINCIPAL DO APP (MÓDULO) -->
     <script type="module">
-        // --- LÓGICA DO FIREBASE ---
+        // --- IMPORTS DO FIREBASE ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import {
             getAuth,
             signOut,
-            onAuthStateChanged
+            onAuthStateChanged,
+            signInAnonymously,
+            signInWithCustomToken
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import {
+            getFirestore,
+            setLogLevel,
+            doc,
+            getDoc,
+            onSnapshot,
+            collection,
+            query,
+            setDoc,
+            deleteDoc
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // ⚠️ Lembre-se de colar sua API Key COMPLETA aqui, igual fez no Login.html
-        const firebaseConfig = {
-            apiKey: "AIzaSyBR5r-H0_-YG6SvLUbVxWrAvOSYdY0ji-E",
-            authDomain: "academia-2fd8d.firebaseapp.com",
-            projectId: "academia-2fd8d",
-            storageBucket: "academia-2fd8d.firebasestorage.app",
-            messagingSenderId: "565245310857",
-            appId: "1:565245310857:web:a391992cc5d333f0fdd358",
-            measurementId: "G-87RNMCLCFD"
-        };
+        // --- CONFIGURAÇÃO FIREBASE ---
+        // Assume que home.html está no ROOT, e os outros arquivos em /treino/
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config)
+            : {
+                apiKey: "AIzaSyBR5r-H0_-YG6SvLUbVxWrAvOSYdY0ji-E", // Chave de fallback
+                authDomain: "academia-2fd8d.firebaseapp.com",
+                projectId: "academia-2fd8d",
+                storageBucket: "academia-2fd8d.firebasestorage.app",
+                messagingSenderId: "565245310857",
+                appId: "1:565245310857:web:a391992cc5d333f0fdd358",
+                measurementId: "G-87RNMCLCFD"
+            };
+        
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
         // Inicializa o Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app);
+        setLogLevel('Debug');
 
-        // --- "Auth Guard" com Tela de Loading ---
+        // --- VARIÁVEIS GLOBAIS ---
+        let userId = null;
+        let workoutHistoryCol, settingsDoc;
+        let docIdToDelete = null; 
 
-        // Pega os elementos da UI
+        // --- Seletores da UI ---
         const loadingOverlay = document.getElementById('loading-overlay');
         const mainContent = document.getElementById('main-content');
         const mobileNav = document.getElementById('mobile-nav');
+        const startWorkoutBtn = document.getElementById('start-workout-btn');
+        const historyContainer = document.getElementById('workout-history-container');
+        const historyLoadingPlaceholder = document.getElementById('history-loading-placeholder');
+        const greetingMobile = document.getElementById('user-greeting-mobile');
+        const greetingDesktop = document.getElementById('user-greeting-desktop');
+        const deleteConfirmModal = document.getElementById('delete-confirm-modal');
+        const deleteModalCancelBtn = document.getElementById('delete-modal-cancel-btn');
+        const deleteModalConfirmBtn = document.getElementById('delete-modal-confirm-btn');
 
-        onAuthStateChanged(auth, (user) => {
-            if (!user) {
-                // NÃO está logado. Redireciona para o login.
-                // Não precisamos mostrar/esconder nada, apenas redirecionar.
-                console.log("Usuário não está logado. Redirecionando para /Login.html");
-                window.location.href = '/treino/login.html';
-            } else {
-                // SIM, está logado. Mostra a página.
-                console.log("Usuário logado:", user.uid);
+
+        // --- "Auth Guard" com Tela de Loading ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // SIM, está logado.
+                userId = user.uid;
+                console.log("Usuário logado:", userId);
+                
+                // Define os caminhos do Firestore
+                workoutHistoryCol = collection(db, `artifacts/${appId}/users/${userId}/workoutHistory`);
+                settingsDoc = doc(db, `artifacts/${appId}/users/${userId}/settings/userSettings`);
+
+                // Carrega as configurações (tema)
+                await loadUserSettings();
+                
+                // Inicia o listener do histórico
+                setupFirestoreListeners();
+
+                // Atualiza saudações
+                const userName = user.displayName || 'Usuário';
+                if(greetingMobile) greetingMobile.textContent = `Olá, ${userName}!`;
+                if(greetingDesktop) greetingDesktop.textContent = userName;
 
                 // Esconde o loading
                 loadingOverlay.classList.add('hidden');
-
                 // Mostra o conteúdo principal e a nav mobile
                 mainContent.classList.remove('hidden');
                 mobileNav.classList.remove('hidden');
 
-                // Você pode usar 'user.email' ou 'user.displayName' para atualizar o "Olá, Usuário!"
-                // Ex: document.getElementById('user-greeting').textContent = `Olá, ${user.displayName || 'Usuário'}!`;
+            } else {
+                // NÃO está logado. Tenta logar.
+                console.log("Usuário não está logado. Tentando login...");
+                try {
+                    if (typeof __initial_auth_token !== 'undefined') {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    // onAuthStateChanged será chamado de novo se o login for bem-sucedido
+                } catch (error) {
+                    // ATUALIZADO: Redireciona se o login falhar
+                    console.error("Erro ao fazer login:", error);
+                    loadingOverlay.innerHTML = "Erro ao autenticar. Redirecionando...";
+                    // Assume que login.html está no mesmo nível que treino.html
+                    window.location.href = 'login.html'; 
+                }
             }
         });
 
-        // Função de Logout
-        async function handleLogout() {
+        // --- CARREGAMENTO DE DADOS ---
+
+        async function loadUserSettings() {
             try {
-                await signOut(auth);
-                // O 'onAuthStateChanged' acima vai detectar o logout e
-                // redirecionar automaticamente para o Login.html
-                console.log("Logout bem-sucedido.");
+                const docSnap = await getDoc(settingsDoc);
+                if (docSnap.exists()) {
+                    const settings = docSnap.data();
+                    if (settings.theme) {
+                        applyTheme(settings.theme);
+                        localStorage.setItem('theme', settings.theme);
+                    }
+                } else {
+                    // Salva o tema padrão (do localStorage ou do sistema) no Firestore
+                    const currentTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                    await setDoc(settingsDoc, { theme: currentTheme }, { merge: true });
+                }
             } catch (error) {
-                console.error("Erro ao fazer logout:", error);
+                console.error("Erro ao carregar configurações:", error);
             }
         }
 
+        function setupFirestoreListeners() {
+            // Listener para Histórico de Treinos
+            onSnapshot(query(workoutHistoryCol), (snapshot) => {
+                const history = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                console.log("Histórico carregado:", history);
+                renderWorkoutHistory(history);
+            }, (error) => {
+                console.error("Erro ao carregar histórico:", error);
+                if(historyContainer) historyContainer.innerHTML = "<p class='text-red-500 text-center'>Erro ao carregar histórico.</p>";
+            });
+        }
+
+        // --- RENDERIZAÇÃO DO HISTÓRICO ---
+        function renderWorkoutHistory(history) {
+            if (!historyContainer) return;
+
+            // Esconde o placeholder de loading
+            if (historyLoadingPlaceholder) historyLoadingPlaceholder.classList.add('hidden');
+            
+            if (history.length === 0) {
+                historyContainer.innerHTML = `<p class="text-gray-500 dark:text-gray-400 text-center">Nenhum treino concluído ainda.</p>`;
+                return;
+            }
+
+            // Ordena do mais recente para o mais antigo
+            history.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+
+            historyContainer.innerHTML = ''; // Limpa o container
+
+            history.forEach(workout => {
+                const card = createHistoryCard(workout);
+                historyContainer.appendChild(card);
+            });
+        }
+
+        function createHistoryCard(workout) {
+            const card = document.createElement('div');
+            card.className = "bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 mb-3";
+
+            let totalVolume = 0;
+            if(workout.exercises) {
+                workout.exercises.forEach(ex => {
+                    if(ex.sets) {
+                        ex.sets.forEach(set => {
+                            totalVolume += (parseFloat(set.kg) || 0) * (parseFloat(set.reps) || 0);
+                        });
+                    }
+                });
+            }
+
+            const workoutDate = new Date(workout.completedAt);
+            const formattedDate = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(workoutDate);
+            
+            const durationMin = Math.floor(workout.durationInSeconds / 60);
+
+            card.innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <h4 class="font-semibold text-gray-800 dark:text-gray-200">${workout.routineName || 'Treino Avulso'}</h4>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs text-gray-400 dark:text-gray-500">${formattedDate}</span>
+                        <button class="delete-history-btn text-gray-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded-full" data-id="${workout.id}" title="Excluir treino">
+                            <i class='bx bx-trash text-lg'></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex space-x-4 text-sm text-gray-600 dark:text-gray-400">
+                    <span class="flex items-center"><i class='bx bx-time-five text-base mr-1 opacity-70'></i>${durationMin} min</span>
+                    <span class="flex items-center"><i class='bx bx-dumbbell text-base mr-1 opacity-70'></i>${totalVolume.toLocaleString('pt-BR')}kg</span>
+                </div>
+            `;
+            return card;
+        }
+
+        // --- Funções do Modal de Exclusão ---
+        function openDeleteConfirmModal(id) {
+            docIdToDelete = id;
+            if (deleteConfirmModal) deleteConfirmModal.classList.remove('hidden');
+        }
+
+        function closeDeleteConfirmModal() {
+            docIdToDelete = null;
+            if (deleteConfirmModal) deleteConfirmModal.classList.add('hidden');
+        }
+
+        async function handleDeleteConfirm() {
+            if (!docIdToDelete || !workoutHistoryCol) return;
+
+            deleteModalConfirmBtn.disabled = true;
+            deleteModalConfirmBtn.textContent = "Excluindo...";
+
+            try {
+                const docRef = doc(workoutHistoryCol, docIdToDelete);
+                await deleteDoc(docRef);
+                console.log("Documento excluído:", docIdToDelete);
+                // O 'onSnapshot' vai atualizar a UI automaticamente.
+            } catch (error) {
+                console.error("Erro ao excluir documento:", error);
+            } finally {
+                deleteModalConfirmBtn.disabled = false;
+                deleteModalConfirmBtn.textContent = "Excluir";
+                closeDeleteConfirmModal();
+            }
+        }
+
+
         // --- LÓGICA DA PÁGINA (Tema, Menu, Logout) ---
-        // (O resto do script permanece o mesmo)
         document.addEventListener('DOMContentLoaded', function () {
 
             const htmlElement = document.documentElement;
 
             // --- Script do Tema ---
             const themeToggleButtons = document.querySelectorAll('#theme-toggle, #theme-toggle-desktop');
-            function toggleTheme() {
-                if (htmlElement.classList.contains('dark')) {
-                    htmlElement.classList.remove('dark');
-                    localStorage.theme = 'light';
-                } else {
-                    htmlElement.classList.add('dark');
-                    localStorage.theme = 'dark';
+            async function saveUserSetting(key, value) {
+                if (!settingsDoc) return;
+                try {
+                    await setDoc(settingsDoc, { [key]: value }, { merge: true });
+                    console.log("Configuração salva:", key, value);
+                } catch (error) {
+                    console.error("Erro ao salvar configuração:", error);
                 }
             }
+            function toggleTheme() {
+                const isDark = htmlElement.classList.toggle('dark');
+                const newTheme = isDark ? 'dark' : 'light';
+                applyTheme(newTheme);
+                localStorage.setItem('theme', newTheme);
+                // Salva a configuração no Firestore
+                if (userId) saveUserSetting('theme', newTheme);
+            }
             themeToggleButtons.forEach(btn => btn.addEventListener('click', toggleTheme));
+            
+            const updateIcons = (isDark) => {
+                themeToggleButtons.forEach(toggle => {
+                    const moonIcon = toggle.querySelector('.bxs-moon');
+                    const sunIcon = toggle.querySelector('.bxs-sun');
+                    if (moonIcon && sunIcon) {
+                        moonIcon.classList.toggle('hidden', !isDark);
+                        moonIcon.classList.toggle('inline-block', isDark);
+                        sunIcon.classList.toggle('hidden', isDark);
+                        sunIcon.classList.toggle('inline-block', !isDark);
+                    }
+                });
+            };
+            const observer = new MutationObserver(() => {
+                updateIcons(htmlElement.classList.contains('dark'));
+            });
+            observer.observe(htmlElement, { attributes: true, attributeFilter: ['class'] });
+            updateIcons(htmlElement.classList.contains('dark'));
+
 
             // --- Script do Menu 'Mais' ---
             const moreMenuButtons = document.querySelectorAll('#more-menu-button');
@@ -477,32 +682,66 @@
                 moreMenuOverlay.classList.remove('hidden');
                 requestAnimationFrame(() => {
                     moreMenu.classList.remove('translate-y-full');
-                    moreMenu.classList.remove('lg:opacity-0', 'lg:scale-95');
                 });
             }
 
             function closeMenu() {
                 moreMenu.classList.add('translate-y-full');
-                moreMenu.classList.add('lg:opacity-0', 'lg:scale-95');
                 moreMenuOverlay.classList.add('hidden');
                 setTimeout(() => moreMenu.classList.add('hidden'), 300);
             }
 
             moreMenuButtons.forEach(btn => btn.addEventListener('click', openMenu));
             moreMenuOverlay.addEventListener('click', closeMenu);
-            moreMenu.classList.add('lg:opacity-0', 'lg:scale-95');
 
             // --- Script de Logout ---
+            // ATUALIZADO: Redireciona para login.html ao sair
+            async function handleLogout() {
+                try {
+                    await signOut(auth);
+                    console.log("Logout bem-sucedido. Redirecionando...");
+                    // Assume que login.html está no mesmo nível que treino.html
+                    window.location.href = 'login.html';
+                } catch (error) {
+                    console.error("Erro ao fazer logout:", error);
+                }
+            }
             const logoutButtons = document.querySelectorAll('#logout-button-desktop, #logout-button-mobile');
             logoutButtons.forEach(btn => btn.addEventListener('click', handleLogout));
+
+            // --- Evento do Botão Iniciar Treino ---
+            // ATUALIZADO: Link para treino.html
+            if (startWorkoutBtn) {
+                startWorkoutBtn.addEventListener('click', () => {
+                    window.location.href = 'treino.html';
+                });
+            }
+
+            // --- Eventos de Exclusão ---
+            if (historyContainer) {
+                historyContainer.addEventListener('click', (e) => {
+                    const deleteBtn = e.target.closest('.delete-history-btn');
+                    if (deleteBtn) {
+                        e.stopPropagation(); 
+                        openDeleteConfirmModal(deleteBtn.dataset.id);
+                    }
+                });
+            }
+            if (deleteModalCancelBtn) {
+                deleteModalCancelBtn.addEventListener('click', closeDeleteConfirmModal);
+            }
+            if (deleteModalConfirmBtn) {
+                deleteModalConfirmBtn.addEventListener('click', handleDeleteConfirm);
+            }
+
         });
     </script>
 
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                // Usa o caminho absoluto para registrar o service worker
-                navigator.serviceWorker.register('/treino/service-worker.js')
+                // ATUALIZADO: caminho relativo para o service worker
+                navigator.serviceWorker.register('service-worker.js')
                     .then((registration) => {
                         console.log('Service Worker registrado com sucesso:', registration.scope);
                     })
@@ -515,3 +754,4 @@
 </body>
 
 </html>
+
