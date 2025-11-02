@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="h-full bg-gray-900">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diário de Treino</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Define a fonte Inter como padrão e aplica anti-aliasing */
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        /* Oculta as views por padrão */
+        .view {
+            display: none;
+            height: 100%;
+            flex-direction: column;
+        }
+        /* Oculta o scrollbar padrão */
+        ::-webkit-scrollbar {
+            width: 0;
+            height: 0;
+            background: transparent;
+        }
+    </style>
+</head>
+<body class="text-gray-100 h-full">
+
+    <div id="app-container" class="max-w-md mx-auto h-full bg-gray-900">
+
+        <div id="loading-view" class="view flex items-center justify-center">
+            <p class="text-lg text-gray-400">Carregando...</p>
+        </div>
+
+        <div id="login-view" class="view justify-center p-6 space-y-6">
+            <h1 class="text-3xl font-bold text-center text-white">Diário de Treino</h1>
+            
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="login-email" class="block text-sm font-medium text-gray-300">Email</label>
+                    <input type="email" id="login-email" required
+                           class="w-full px-4 py-3 mt-1 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label for="login-password" class="block text-sm font-medium text-gray-300">Senha</label>
+                    <input type="password" id="login-password" required
+                           class="w-full px-4 py-3 mt-1 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div class="flex flex-col space-y-3">
+                    <button type="submit" id="login-button"
+                            class="w-full px-4 py-3 font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">
+                        Entrar
+                    </button>
+                    <button type="button" id="register-button"
+                            class="w-full px-4 py-3 font-semibold text-white bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors">
+                        Registrar
+                    </button>
+                </div>
+            </form>
+
+            <div class="relative">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-700"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-2 bg-gray-900 text-gray-400">ou</span>
+                </div>
+            </div>
+
+            <button type="button" id="google-login-button"
+                    class="w-full flex items-center justify-center px-4 py-3 font-medium text-gray-800 bg-white rounded-lg hover:bg-gray-200 transition-colors">
+                <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path><path fill="none" d="M0 0h48v48H0z"></path></svg>
+                Entrar com Google
+            </button>
+        </div>
+
+        <div id="dashboard-view" class="view p-4 space-y-6">
+            <header class="flex items-center justify-between">
+                <h1 class="text-3xl font-bold text-white">Meus Treinos</h1>
+                <button id="logout-button"
+                        class="px-3 py-1.5 text-sm font-medium text-emerald-300 bg-emerald-900/50 rounded-lg hover:bg-emerald-800/50 transition-colors">
+                    Sair
+                </button>
+            </header>
+
+            <div>
+                <button id="start-workout-button"
+                        class="w-full px-4 py-4 font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-lg">
+                    Iniciar Novo Treino
+                </button>
+            </div>
+
+            <div class="flex-1 flex flex-col overflow-hidden">
+                <h2 class="text-xl font-semibold text-white mb-4">Histórico de Treinos</h2>
+                <div id="history-list" class="flex-1 overflow-y-auto space-y-3 pb-20">
+                    </div>
+            </div>
+        </div>
+
+        <div id="workout-view" class="view p-4 space-y-4">
+            <h2 class="text-2xl font-bold text-white">Novo Treino</h2>
+            
+            <form id="workout-form" class="space-y-4 flex-1 flex flex-col overflow-hidden">
+                <div>
+                    <label for="workout-name" class="block text-sm font-medium text-gray-300">Nome do Treino</label>
+                    <input type="text" id="workout-name" placeholder="Ex: Treino de Peito A" required
+                           class="w-full px-4 py-3 mt-1 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+
+                <div class="flex-1 overflow-y-auto space-y-3" id="exercises-list-container">
+                    </div>
+
+                <div class="flex-shrink-0 space-y-3 pt-2">
+                     <button type="button" id="add-exercise-button"
+                            class="w-full px-4 py-3 font-semibold text-emerald-300 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors">
+                        Adicionar Exercício
+                    </button>
+                    <button type="button" id="finish-workout-button"
+                            class="w-full px-4 py-3 font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">
+                        Finalizar Treino
+                    </button>
+                    <button type="button" id="cancel-workout-button"
+                            class="w-full text-center py-2 font-medium text-gray-400 hover:text-white transition-colors">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </div> <script type="module">
+        // 1. Importações do Firebase SDK (v9+ modular)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            GoogleAuthProvider,
+            signInWithPopup,
+            signOut
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { 
+            getFirestore,
+            collection,
+            addDoc,
+            query,
+            onSnapshot,
+            orderBy,
+            serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // 2. Variáveis de Configuração (Fornecidas pelo ambiente)
+        const firebaseConfig = __firebase_config;
+        const appId = __app_id;
+        // const initialAuthToken = __initial_auth_token; // Não usado ativamente, mas disponível
+        
+        // 3. Inicialização do Firebase
+        let app, auth, db;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            console.log("Firebase inicializado com sucesso.");
+            // setLogLevel('debug'); // Nota: setLogLevel é da v8. Em v9+, o debug é gerenciado de forma diferente.
+                                    // Usaremos console.log/error para depuração.
+        } catch (error) {
+            console.error("Erro ao inicializar o Firebase:", error);
+            document.getElementById('loading-view').innerText = "Erro ao carregar. Tente novamente.";
+        }
+
+        // 4. Estado Global da Aplicação
+        let currentUserId = null;
+        let unsubscribeFromHistory = null; // Função para parar de ouvir o snapshot do Firestore
+        let exerciseCounter = 0; // Para dar IDs únicos aos exercícios no formulário
+
+        // 5. Seletores DOM
+        const views = {
+            loading: document.getElementById('loading-view'),
+            login: document.getElementById('login-view'),
+            dashboard: document.getElementById('dashboard-view'),
+            workout: document.getElementById('workout-view')
+        };
+        const allViews = Object.values(views);
+
+        // Formulários e Entradas
+        const loginForm = document.getElementById('login-form');
+        const loginEmail = document.getElementById('login-email');
+        const loginPassword = document.getElementById('login-password');
+        const workoutNameInput = document.getElementById('workout-name');
+        const exercisesListContainer = document.getElementById('exercises-list-container');
+        const historyListContainer = document.getElementById('history-list');
+
+        // Botões
+        const loginButton = document.getElementById('login-button');
+        const registerButton = document.getElementById('register-button');
+        const googleLoginButton = document.getElementById('google-login-button');
+        const logoutButton = document.getElementById('logout-button');
+        const startWorkoutButton = document.getElementById('start-workout-button');
+        const addExerciseButton = document.getElementById('add-exercise-button');
+        const finishWorkoutButton = document.getElementById('finish-workout-button');
+        const cancelWorkoutButton = document.getElementById('cancel-workout-button');
+
+        // 6. Gerenciamento de Views (SPA)
+        function showView(viewId) {
+            console.log(`Navegando para: ${viewId}`);
+            allViews.forEach(view => {
+                view.style.display = 'none';
+            });
+            const viewToShow = document.getElementById(viewId);
+            if (viewToShow) {
+                // Usamos 'flex' pois é o display base das nossas views
+                viewToShow.style.display = 'flex'; 
+            } else {
+                console.error(`View não encontrada: ${viewId}`);
+            }
+        }
+
+        // 7. Lógica de Autenticação
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Usuário está logado
+                console.log("Usuário logado:", user.uid);
+                currentUserId = user.uid;
+                showView('dashboard-view');
+                loadWorkoutHistory(); // Carrega o histórico do usuário
+            } else {
+                // Usuário está deslogado
+                console.log("Nenhum usuário logado.");
+                currentUserId = null;
+                showView('login-view');
+                
+                // Limpa o listener de histórico anterior se existir
+                if (unsubscribeFromHistory) {
+                    unsubscribeFromHistory();
+                    unsubscribeFromHistory = null;
+                    console.log("Listener de histórico removido.");
+                }
+                historyListContainer.innerHTML = ''; // Limpa a lista visualmente
+            }
+        });
+
+        // -- Event Listener: Login com Email/Senha
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                await signInWithEmailAndPassword(auth, loginEmail.value, loginPassword.value);
+                console.log("Login com email bem-sucedido.");
+            } catch (error) {
+                console.error("Erro no login:", error.message);
+                alert(`Erro no login: ${error.message}`);
+            }
+        });
+
+        // -- Event Listener: Registrar com Email/Senha
+        registerButton.addEventListener('click', async () => {
+            try {
+                await createUserWithEmailAndPassword(auth, loginEmail.value, loginPassword.value);
+                console.log("Registro bem-sucedido.");
+            } catch (error) {
+                console.error("Erro no registro:", error.message);
+                alert(`Erro no registro: ${error.message}`);
+            }
+        });
+
+        // -- Event Listener: Login com Google
+        googleLoginButton.addEventListener('click', async () => {
+            const provider = new GoogleAuthProvider();
+            try {
+                await signInWithPopup(auth, provider);
+                console.log("Login com Google bem-sucedido.");
+            } catch (error) {
+                console.error("Erro no login com Google:", error.message);
+                alert(`Erro no login com Google: ${error.message}`);
+            }
+        });
+
+        // -- Event Listener: Logout
+        logoutButton.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                console.log("Logout bem-sucedido.");
+            } catch (error) {
+                console.error("Erro no logout:", error.message);
+            }
+        });
+
+        // 8. Lógica do Firestore (Histórico)
+
+        // -- Função para carregar o histórico
+        function loadWorkoutHistory() {
+            if (!currentUserId) return;
+
+            // Garante que não haja listeners duplicados
+            if (unsubscribeFromHistory) {
+                unsubscribeFromHistory();
+            }
+            
+            const workoutsRef = collection(db, `artifacts/${appId}/users/${currentUserId}/workouts`);
+            const q = query(workoutsRef, orderBy("data", "desc")); // Ordena no Firestore
+
+            console.log("Carregando histórico...");
+            unsubscribeFromHistory = onSnapshot(q, (snapshot) => {
+                console.log(`Histórico recebido: ${snapshot.size} documentos.`);
+                const workouts = [];
+                snapshot.forEach((doc) => {
+                    workouts.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Requisito: "faça a ordenação no JavaScript após buscar os dados"
+                // Embora o 'query' já ordene, vamos re-ordenar no cliente conforme pedido.
+                workouts.sort((a, b) => {
+                    const dateA = a.data?.toDate()?.getTime() || 0;
+                    const dateB = b.data?.toDate()?.getTime() || 0;
+                    return dateB - dateA; // Descendente (mais novo primeiro)
+                });
+                
+                renderHistoryList(workouts);
+
+            }, (error) => {
+                console.error("Erro ao buscar histórico:", error);
+                historyListContainer.innerHTML = `<p class="text-red-400">Erro ao carregar histórico.</p>`;
+            });
+        }
+
+        // -- Função para renderizar o histórico na UI
+        function renderHistoryList(workouts) {
+            historyListContainer.innerHTML = ''; // Limpa a lista
+            if (workouts.length === 0) {
+                historyListContainer.innerHTML = `<p class="text-gray-400 text-center">Nenhum treino encontrado.</p>`;
+                return;
+            }
+
+            workouts.forEach(workout => {
+                const date = workout.data ? formatFirestoreTimestamp(workout.data) : "Data indisponível";
+                const card = document.createElement('div');
+                card.className = "bg-gray-800 p-4 rounded-lg shadow animate-fade-in"; // 'animate-fade-in' é uma classe customizada (se tivéssemos)
+                card.innerHTML = `
+                    <h3 class="font-semibold text-white truncate">${workout.nome || "Treino sem nome"}</h3>
+                    <p class="text-sm text-gray-400">${date}</p>
+                    <p class="text-sm text-gray-500 mt-1">${workout.exercicios?.length || 0} exercícios</p>
+                `;
+                historyListContainer.appendChild(card);
+            });
+        }
+
+        // -- Helper para formatar data
+        function formatFirestoreTimestamp(timestamp) {
+            try {
+                const date = timestamp.toDate();
+                return date.toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                });
+            } catch (e) {
+                console.warn("Timestamp inválido:", timestamp);
+                return "Data inválida";
+            }
+        }
+
+        // 9. Lógica do Treino Ativo
+
+        // -- Event Listener: Iniciar Novo Treino
+        startWorkoutButton.addEventListener('click', () => {
+            resetWorkoutForm();
+            showView('workout-view');
+        });
+
+        // -- Event Listener: Cancelar Treino
+        cancelWorkoutButton.addEventListener('click', () => {
+            if (confirm("Deseja cancelar este treino? O progresso não salvo será perdido.")) {
+                resetWorkoutForm();
+                showView('dashboard-view');
+            }
+        });
+
+        // -- Event Listener: Adicionar Exercício (ao formulário)
+        addExerciseButton.addEventListener('click', () => {
+            exerciseCounter++;
+            const exerciseCard = document.createElement('div');
+            exerciseCard.className = 'exercise-card bg-gray-800 p-4 rounded-lg space-y-3 relative';
+            exerciseCard.id = `exercise-${exerciseCounter}`;
+            
+            exerciseCard.innerHTML = `
+                <button type="button" class="remove-exercise-btn absolute top-2 right-2 text-gray-500 hover:text-red-400" data-target="${exerciseCard.id}">
+                    &times; </button>
+                <input type="text" placeholder="Nome do Exercício"
+                       class="exercise-name w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" required>
+                
+                <div class="grid grid-cols-3 gap-2">
+                    <input type="number" placeholder="Séries"
+                           class="exercise-series w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                    <input type="text" placeholder="Reps"
+                           class="exercise-reps w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                    <input type="number" placeholder="Peso (kg)"
+                           class="exercise-peso w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                </div>
+            `;
+            exercisesListContainer.appendChild(exerciseCard);
+        });
+
+        // -- Delegação de Evento para remover exercícios
+        exercisesListContainer.addEventListener('click', (e) => {
+            if (e.target && (e.target.classList.contains('remove-exercise-btn') || e.target.closest('.remove-exercise-btn'))) {
+                const button = e.target.closest('.remove-exercise-btn');
+                const targetId = button.dataset.target;
+                const cardToRemove = document.getElementById(targetId);
+                if (cardToRemove) {
+                    cardToRemove.remove();
+                }
+            }
+        });
+
+        // -- Event Listener: Finalizar Treino (Salvar no Firestore)
+        finishWorkoutButton.addEventListener('click', async () => {
+            if (!currentUserId) {
+                alert("Erro: Usuário não está logado.");
+                return;
+            }
+
+            const nomeTreino = workoutNameInput.value.trim();
+            if (!nomeTreino) {
+                alert("Por favor, dê um nome ao seu treino.");
+                workoutNameInput.focus();
+                return;
+            }
+
+            // Coleta dados dos exercícios
+            const exercicios = [];
+            const exerciseCards = exercisesListContainer.querySelectorAll('.exercise-card');
+
+            if (exerciseCards.length === 0) {
+                alert("Adicione pelo menos um exercício.");
+                return;
+            }
+
+            let formIsValid = true;
+            exerciseCards.forEach(card => {
+                const nome = card.querySelector('.exercise-name').value.trim();
+                const series = card.querySelector('.exercise-series').value;
+                const reps = card.querySelector('.exercise-reps').value.trim();
+                const peso = card.querySelector('.exercise-peso').value;
+
+                if (!nome) {
+                    formIsValid = false;
+                }
+                
+                exercicios.push({
+                    nome: nome,
+                    series: parseInt(series) || 0,
+                    reps: reps || '0',
+                    peso: parseFloat(peso) || 0
+                });
+            });
+
+            if (!formIsValid) {
+                alert("Por favor, preencha o nome de todos os exercícios.");
+                return;
+            }
+
+            // Objeto de dados para salvar
+            const workoutData = {
+                nome: nomeTreino,
+                data: serverTimestamp(),
+                exercicios: exercicios
+            };
+
+            console.log("Salvando treino:", workoutData);
+            
+            try {
+                const workoutsRef = collection(db, `artifacts/${appId}/users/${currentUserId}/workouts`);
+                await addDoc(workoutsRef, workoutData);
+                
+                console.log("Treino salvo com sucesso!");
+                alert("Treino salvo!");
+                
+                resetWorkoutForm();
+                showView('dashboard-view');
+
+            } catch (error) {
+                console.error("Erro ao salvar o treino:", error);
+                alert(`Erro ao salvar: ${error.message}`);
+            }
+        });
+
+
+        // -- Função para limpar o formulário de treino
+        function resetWorkoutForm() {
+            workoutNameInput.value = '';
+            exercisesListContainer.innerHTML = '';
+            exerciseCounter = 0;
+        }
+
+        // 10. Início da Aplicação
+        // Mostra o loading... onAuthStateChanged fará a transição.
+        showView('loading-view');
+
+    </script>
+
+</body>
+</html>

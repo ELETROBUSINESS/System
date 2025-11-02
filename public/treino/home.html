@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/assets/img/favicon.ico">
+    <title>Projeto Treino 2026</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+        .dark ::-webkit-scrollbar-thumb { background-color: #4b5563; }
+    </style>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class', 
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe',
+                            300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6',
+                            600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af',
+                            900: '#1e3a8a', 950: '#172554',
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+    <script>
+        (function() {
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+    <div id="loading-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+        <i class='bx bx-loader-alt bx-spin text-5xl text-primary-600'></i>
+    </div>
+
+    <div id="main-content" class="max-w-7xl mx-auto lg:grid lg:grid-cols-12 lg:gap-8 hidden">
+
+        <div class="hidden lg:block lg:col-span-3 lg:sticky lg:top-0 lg:h-screen lg:py-6">
+            <div class="flex flex-col h-full">
+                
+                <div class="px-4 mb-6">
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
+                        <i class='bx bxs-bolt text-3xl mr-2'></i>
+                        ELETRO
+                    </h1>
+                </div>
+                
+                <nav class="flex-1 px-2 space-y-2">
+                    <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30" aria-label="Início">
+                        <i class='bx bxs-home-smile text-2xl'></i>
+                        <span class="text-lg font-semibold">Início</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Treinos">
+                        <i class='bx bx-dumbbell text-2xl'></i>
+                        <span class="text-lg font-medium">Treinos</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Perfil">
+                        <i class='bx bx-user text-2xl'></i>
+                        <span class="text-lg font-medium">Perfil</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Configurações">
+                        <i class='bx bx-cog text-2xl'></i>
+                        <span class="text-lg font-medium">Configurações</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Ajuda & Suporte">
+                        <i class='bx bx-help-circle text-2xl'></i>
+                        <span class="text-lg font-medium">Ajuda</span>
+                    </a>
+                    <button id="logout-button-desktop" type="button" class="flex items-center space-x-3 p-3 rounded-lg w-full text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors" aria-label="Sair da Conta">
+                        <i class='bx bx-log-out text-2xl'></i>
+                        <span class="text-lg font-medium">Sair</span>
+                    </button>
+                </nav>
+                
+                <div class="px-2 mt-auto">
+                    <div class="flex items-center space-x-3 p-3">
+                        <img src="https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png" alt="Foto do Perfil" class="w-12 h-12 rounded-full object-cover">
+                        <div>
+                            <h4 class="font-semibold text-gray-800 dark:text-gray-200">Usuário</h4>
+                            <a href="#" class="text-sm text-gray-500 dark:text-gray-400 hover:underline">Ver Perfil</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-6 min-h-screen bg-white dark:bg-gray-950 lg:border-x lg:border-gray-200 dark:lg:border-gray-800">
+            <div class="pb-28 lg:pb-6 relative min-h-screen"> 
+                
+                <header class="p-6 flex justify-between items-center lg:sticky lg:top-0 lg:bg-white/80 dark:lg:bg-gray-950/80 lg:backdrop-blur-md lg:z-30 border-b border-gray-100 dark:border-gray-800/50">
+                    <div class="flex-1">
+                        <div class="lg:hidden">
+                            <h1 class="text-2xl font-bold">Olá, Usuário!</h1>
+                            <p class="text-gray-500 dark:text-gray-400">Pronto para o treino de hoje?</p>
+                        </div>
+                        <h1 class="hidden lg:block text-2xl font-bold text-gray-900 dark:text-gray-100">Início</h1>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4 lg:hidden">
+                        <button type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-2xl p-2 relative" aria-label="Avisos">
+                            <i class='bx bx-bell'></i>
+                        </button>
+                        <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-2xl p-2">
+                            <i class='bx bxs-moon hidden dark:inline-block'></i>
+                            <i class='bx bxs-sun inline-block dark:hidden'></i>
+                        </button>
+                        <div class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+                            <img src="https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png" alt="Foto do Perfil" class="w-full h-full object-cover">
+                        </div>
+                    </div>
+                </header>
+
+                <main class="px-6 space-y-6 mt-6">
+                    <div class="bg-primary-600 text-white p-6 rounded-2xl shadow-lg shadow-primary-500/30 flex justify-between items-center transform active:scale-[0.98] transition-transform duration-150 cursor-pointer">
+                        <div>
+                            <h2 class="text-xl font-bold">Começar um Treino</h2>
+                            <p class="text-primary-100 text-sm mt-1">Clique aqui para registrar</p>
+                        </div>
+                        <i class='bx bx-play-circle text-5xl opacity-80'></i>
+                    </div>
+                    <div class="lg:hidden">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Comunicados</h3>
+                            <a href="#" class="text-sm text-gray-500 dark:text-gray-400">Ver mais</a>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700">
+                           <div class="flex items-start space-x-3">
+                                <div class="bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 p-2 rounded-full">
+                                    <i class='bx bxs-calendar-event text-xl'></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold">Funcionamento Sábado (01/11)</h4>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                        A academia funcionará neste sábado, 1 de novembro, em horário especial no período da tarde (14h às 18h).
+                                    </p>
+                                    <span class="text-xs text-gray-400 dark:text-gray-500 mt-2 block">Postado há 2 dias</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Histórico de Treinos</h3>
+                            <a href="#" class="text-sm text-gray-500 dark:text-gray-400 lg:hidden">Ver mais</a>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 mb-3 transform active:scale-[0.99] transition-transform duration-100 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/60">
+                           <div class="flex justify-between items-center mb-2">
+                                <h4 class="font-semibold text-gray-800 dark:text-gray-200">Treino A: Peito e Tríceps</h4>
+                                <span class="text-xs text-gray-400 dark:text-gray-500">Hoje, 14:32</span>
+                            </div>
+                            <div class="flex space-x-4 text-sm text-gray-600 dark:text-gray-400">
+                                <span class="flex items-center"><i class='bx bx-time-five text-base mr-1 opacity-70'></i>45 min</span>
+                                <span class="flex items-center"><i class='bx bx-dumbbell text-base mr-1 opacity-70'></i>5.400kg</span>
+                                <span class="flex items-center text-amber-500 dark:text-amber-400">
+                                    <i class='bx bxs-medal text-base mr-1'></i>Recorde
+                                </span>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 mb-3 transform active:scale-[0.99] transition-transform duration-100 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/60">
+                             <div class="flex justify-between items-center mb-2">
+                                <h4 class="font-semibold text-gray-800 dark:text-gray-200">Treino B: Pernas</h4>
+                                <span class="text-xs text-gray-400 dark:text-gray-500">Ontem, 10:15</span>
+                            </div>
+                            <div class="flex space-x-4 text-sm text-gray-600 dark:text-gray-400">
+                                <span class="flex items-center"><i class='bx bx-time-five text-base mr-1 opacity-70'></i>60 min</span>
+                                <span class="flex items-center"><i class='bx bx-dumbbell text-base mr-1 opacity-70'></i>8.120kg</span>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 mb-3 transform active:scale-[0.99] transition-transform duration-100 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/60">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="font-semibold text-gray-800 dark:text-gray-200">Treino C: Costas e Bíceps</h4>
+                                <span class="text-xs text-gray-400 dark:text-gray-500">Sexta, 08:22</span>
+                            </div>
+                            <div class="flex space-x-4 text-sm text-gray-600 dark:text-gray-400">
+                                <span class="flex items-center"><i class='bx bx-time-five text-base mr-1 opacity-70'></i>50 min</span>
+                                <span class="flex items-center"><i class='bx bx-dumbbell text-base mr-1 opacity-70'></i>4.800kg</span>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+
+        <div class="hidden lg:block lg:col-span-3 lg:sticky lg:top-0 lg:h-screen lg:py-6">
+            <div class="flex justify-end space-x-2 mb-6 px-4">
+                 <button type="button" class="text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-2xl p-2 relative" aria-label="Avisos">
+                    <i class='bx bx-bell'></i>
+                </button>
+                <button id="theme-toggle-desktop" type="button" class="text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-2xl p-2">
+                    <i class='bx bxs-moon hidden dark:inline-block'></i>
+                    <i class='bx bxs-sun inline-block dark:hidden'></i>
+                </button>
+            </div>
+        
+            <div class="bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Comunicados</h3>
+                <div class="space-y-4">
+                    <div class="flex items-start space-x-3">
+                        <div class="bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 p-2 rounded-full mt-1">
+                            <i class='bx bxs-calendar-event text-xl'></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">Funcionamento Sábado (01/11)</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                A academia funcionará neste sábado, 1 de novembro, em horário especial no período da tarde (14h às 18h).
+                            </p>
+                            <span class="text-xs text-gray-400 dark:text-gray-500 mt-2 block">Postado há 2 dias</span>
+                        </div>
+                    </div>
+                     <div class="flex items-start space-x-3">
+                        <div class="bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 p-2 rounded-full mt-1">
+                            <i class='bx bxs-megaphone text-xl'></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">Manutenção dos Equipamentos</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                A área de pesos livres estará em manutenção na próxima semana.
+                            </p>
+                            <span class="text-xs text-gray-400 dark:text-gray-500 mt-2 block">Postado há 1 hora</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div> <nav id="mobile-nav" class="fixed bottom-4 left-1/2 -translate-x-1/2 w-[90%] max-w-sm mx-auto 
+                bg-white/80 dark:bg-gray-800/80 
+                backdrop-blur-md 
+                rounded-2xl shadow-xl border border-gray-200/50 dark:border-gray-700/50
+                overflow-hidden z-40 lg:hidden hidden">
+        
+        <div class="flex justify-around items-center h-16">
+            <a href="#" class="flex flex-col items-center justify-center text-primary-600 dark:text-primary-400" aria-label="Início">
+                <i class='bx bxs-home-smile text-2xl'></i>
+                <span class="text-xs font-medium">Início</span>
+            </a>
+            <a href="#" class="flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors" aria-label="Treinos">
+                <i class='bx bx-dumbbell text-2xl'></i>
+                <span class="text-xs font-medium">Treinos</span>
+            </a>
+            <button id="more-menu-button" type="button" class="flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors" aria-label="Mais Opções">
+                <i class='bx bx-menu text-2xl'></i>
+                <span class="text-xs font-medium">Mais</span>
+            </button>
+        </div>
+    </nav>
+
+    <div id="more-menu-overlay" class="fixed inset-0 bg-black/40 dark:bg-black/60 z-40 hidden" aria-hidden="true"></div>
+    <div id="more-menu" class="fixed bottom-0 left-0 right-0 z-50 w-full max-w-md mx-auto
+                            bg-white dark:bg-gray-800 
+                            rounded-t-2xl shadow-xl 
+                            transform translate-y-full transition-transform duration-300 ease-in-out hidden
+                            lg:rounded-2xl lg:bottom-auto lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2">
+        <div class="w-full flex justify-center pt-3 pb-2 lg:hidden">
+            <div class="w-10 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+        </div>
+        <div class="p-4 pt-2">
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 px-2 pb-2">Mais Opções</h3>
+            <ul class="space-y-1">
+                <li>
+                    <a href="#" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transform active:scale-[0.98] transition-all">
+                        <i class='bx bx-user text-2xl text-gray-600 dark:text-gray-300'></i>
+                        <span class="font-medium text-gray-700 dark:text-gray-200">Perfil</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transform active:scale-[0.98] transition-all">
+                        <i class='bx bx-cog text-2xl text-gray-600 dark:text-gray-300'></i>
+                        <span class="font-medium text-gray-700 dark:text-gray-200">Configurações</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transform active:scale-[0.98] transition-all">
+                        <i class='bx bx-help-circle text-2xl text-gray-600 dark:text-gray-300'></i>
+                        <span class="font-medium text-gray-700 dark:text-gray-200">Ajuda & Suporte</span>
+                    </a>
+                </li>
+                <li><hr class="border-gray-200 dark:border-gray-700 my-1"></li>
+                <li>
+                    <button id="logout-button-mobile" type="button" class="w-full flex items-center space-x-3 p-3 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transform active:scale-[0.98] transition-all">
+                        <i class='bx bx-log-out text-2xl'></i>
+                        <span class="font-medium">Sair da Conta</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <script type="module">
+        // --- LÓGICA DO FIREBASE ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signOut, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // ⚠️ Lembre-se de colar sua API Key COMPLETA aqui, igual fez no Login.html
+        const firebaseConfig = {
+          apiKey: "AIzaSyBR5r-H0_-YG6SvLUbVxWrAvOSYdY0ji-E", 
+          authDomain: "academia-2fd8d.firebaseapp.com",
+          projectId: "academia-2fd8d",
+          storageBucket: "academia-2fd8d.firebasestorage.app",
+          messagingSenderId: "565245310857",
+          appId: "1:565245310857:web:a391992cc5d333f0fdd358",
+          measurementId: "G-87RNMCLCFD"
+        };
+
+        // Inicializa o Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // --- "Auth Guard" com Tela de Loading ---
+        
+        // Pega os elementos da UI
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const mainContent = document.getElementById('main-content');
+        const mobileNav = document.getElementById('mobile-nav');
+        
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                // NÃO está logado. Redireciona para o login.
+                // Não precisamos mostrar/esconder nada, apenas redirecionar.
+                console.log("Usuário não está logado. Redirecionando para /Login.html");
+                window.location.href = './Login.html';
+            } else {
+                // SIM, está logado. Mostra a página.
+                console.log("Usuário logado:", user.uid);
+                
+                // Esconde o loading
+                loadingOverlay.classList.add('hidden');
+                
+                // Mostra o conteúdo principal e a nav mobile
+                mainContent.classList.remove('hidden');
+                mobileNav.classList.remove('hidden');
+                
+                // Você pode usar 'user.email' ou 'user.displayName' para atualizar o "Olá, Usuário!"
+                // Ex: document.getElementById('user-greeting').textContent = `Olá, ${user.displayName || 'Usuário'}!`;
+            }
+        });
+
+        // Função de Logout
+        async function handleLogout() {
+            try {
+                await signOut(auth);
+                // O 'onAuthStateChanged' acima vai detectar o logout e
+                // redirecionar automaticamente para o Login.html
+                console.log("Logout bem-sucedido.");
+            } catch (error) {
+                console.error("Erro ao fazer logout:", error);
+            }
+        }
+
+        // --- LÓGICA DA PÁGINA (Tema, Menu, Logout) ---
+        // (O resto do script permanece o mesmo)
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            const htmlElement = document.documentElement;
+            
+            // --- Script do Tema ---
+            const themeToggleButtons = document.querySelectorAll('#theme-toggle, #theme-toggle-desktop');
+            function toggleTheme() {
+                if (htmlElement.classList.contains('dark')) {
+                    htmlElement.classList.remove('dark');
+                    localStorage.theme = 'light';
+                } else {
+                    htmlElement.classList.add('dark');
+                    localStorage.theme = 'dark';
+                }
+            }
+            themeToggleButtons.forEach(btn => btn.addEventListener('click', toggleTheme));
+
+            // --- Script do Menu 'Mais' ---
+            const moreMenuButtons = document.querySelectorAll('#more-menu-button');
+            const moreMenu = document.getElementById('more-menu');
+            const moreMenuOverlay = document.getElementById('more-menu-overlay');
+
+            function openMenu() {
+                moreMenu.classList.remove('hidden');
+                moreMenuOverlay.classList.remove('hidden');
+                requestAnimationFrame(() => {
+                    moreMenu.classList.remove('translate-y-full');
+                    moreMenu.classList.remove('lg:opacity-0', 'lg:scale-95');
+                });
+            }
+
+            function closeMenu() {
+                moreMenu.classList.add('translate-y-full');
+                moreMenu.classList.add('lg:opacity-0', 'lg:scale-95');
+                moreMenuOverlay.classList.add('hidden');
+                setTimeout(() => moreMenu.classList.add('hidden'), 300);
+            }
+
+            moreMenuButtons.forEach(btn => btn.addEventListener('click', openMenu));
+            moreMenuOverlay.addEventListener('click', closeMenu);
+            moreMenu.classList.add('lg:opacity-0', 'lg:scale-95');
+
+            // --- Script de Logout ---
+            const logoutButtons = document.querySelectorAll('#logout-button-desktop, #logout-button-mobile');
+            logoutButtons.forEach(btn => btn.addEventListener('click', handleLogout));
+        });
+    </script>
+
+</body>
+</html>
