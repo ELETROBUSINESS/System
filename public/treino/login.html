@@ -1,31 +1,49 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/assets/img/favicon.ico">
     <title>Login | ELETRO</title>
-    
+
+    <link rel="manifest" href="/treino/manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="apple-touch-icon" href="/treino/favicon.ico">
+
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
+
         /* ... (mesmos estilos de scrollbar do index.html) ... */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
-        .dark ::-webkit-scrollbar-thumb { background-color: #4b5563; }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 20px;
+        }
+
+        .dark ::-webkit-scrollbar-thumb {
+            background-color: #4b5563;
+        }
     </style>
-    
+
     <script>
         // Mesma configuração do Tailwind do index.html
         tailwind.config = {
@@ -45,12 +63,13 @@
         }
     </script>
 </head>
+
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
 
     <div class="flex min-h-screen items-center justify-center p-4">
 
         <div class="w-full max-w-md bg-white dark:bg-gray-950 rounded-2xl shadow-xl p-8 relative">
-            
+
             <div class="text-center mb-8">
                 <div class="flex justify-center items-center text-3xl font-bold text-gray-900 dark:text-white mb-2">
                     <i class='bx bxs-bolt text-3xl mr-2'></i>
@@ -62,33 +81,35 @@
 
             <form id="login-form" class="space-y-6">
                 <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">E-mail</label>
+                    <label for="email"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">E-mail</label>
                     <div class="relative">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
                             <i class='bx bx-envelope text-xl'></i>
                         </span>
                         <input type="email" id="email" name="email"
-                                class="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-primary-500 focus:border-primary-500"
-                                placeholder="voce@email.com" required>
+                            class="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                            placeholder="voce@email.com" required>
                     </div>
                 </div>
 
                 <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Senha</label>
+                    <label for="password"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Senha</label>
                     <div class="relative">
-                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
                             <i class='bx bx-lock-alt text-xl'></i>
                         </span>
                         <input type="password" id="password" name="password"
-                                class="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-primary-500 focus:border-primary-500"
-                                placeholder="••••••••" required>
+                            class="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-primary-500 focus:border-primary-500"
+                            placeholder="••••••••" required>
                     </div>
                 </div>
 
                 <p id="error-message" class="text-red-500 text-sm text-center hidden"></p>
 
-                <button type="submit" id="login-button" 
-                        class="w-full flex justify-center items-center py-3 px-4 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-950 transition-all duration-200 transform active:scale-[0.98]">
+                <button type="submit" id="login-button"
+                    class="w-full flex justify-center items-center py-3 px-4 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-950 transition-all duration-200 transform active:scale-[0.98]">
                     <span id="button-text">Entrar</span>
                     <i id="button-spinner" class='bx bx-loader-alt bx-spin text-2xl hidden'></i>
                 </button>
@@ -100,23 +121,23 @@
     <script type="module">
         // Importações do Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { 
-            getAuth, 
-            signInWithEmailAndPassword, 
-            onAuthStateChanged 
+        import {
+            getAuth,
+            signInWithEmailAndPassword,
+            onAuthStateChanged
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Configuração do Firebase ---
         // Objeto de configuração colado da sua imagem (Anexo 1)
         const firebaseConfig = {
-          apiKey: "AIzaSyBR5r-H0_-YG6SvLUbVxWrAvOSYdY0ji-E", 
-          authDomain: "academia-2fd8d.firebaseapp.com",
-          projectId: "academia-2fd8d",
-          storageBucket: "academia-2fd8d.firebasestorage.app",
-          messagingSenderId: "565245310857",
-          appId: "1:565245310857:web:a391992cc5d333f0fdd358",
-          measurementId: "G-87RNMCLCFD"
+            apiKey: "AIzaSyBR5r-H0_-YG6SvLUbVxWrAvOSYdY0ji-E",
+            authDomain: "academia-2fd8d.firebaseapp.com",
+            projectId: "academia-2fd8d",
+            storageBucket: "academia-2fd8d.firebasestorage.app",
+            messagingSenderId: "565245310857",
+            appId: "1:565245310857:web:a391992cc5d333f0fdd358",
+            measurementId: "G-87RNMCLCFD"
         };
         // --- Fim da Configuração ---
 
@@ -124,7 +145,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        
+
         // Habilita logs detalhados do Firestore (opcional, bom para debug)
         setLogLevel('Debug');
 
@@ -170,9 +191,9 @@
 
         // 5. Evento de Submit do Formulário
         loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); 
+            e.preventDefault();
             setLoading(true);
-            errorMessage.classList.add('hidden'); 
+            errorMessage.classList.add('hidden');
 
             const email = emailInput.value;
             const password = passwordInput.value;
@@ -180,28 +201,43 @@
             try {
                 // Tenta fazer o login com e-mail e senha
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                
+
                 // Sucesso! O onAuthStateChanged vai lidar com o redirecionamento.
                 console.log('Login bem-sucedido:', userCredential.user.uid);
-                
+
             } catch (error) {
                 console.error("Erro no login:", error.code, error.message);
-                
+
                 let friendlyMessage = 'Ocorreu um erro. Tente novamente.';
-                if (error.code === 'auth/user-not-found' || 
+                if (error.code === 'auth/user-not-found' ||
                     error.code === 'auth/wrong-password' ||
                     error.code === 'auth/invalid-credential') {
                     friendlyMessage = 'E-mail ou senha inválidos.';
                 } else if (error.code === 'auth/invalid-email') {
                     friendlyMessage = 'O formato do e-mail é inválido.';
                 }
-                
+
                 showError(friendlyMessage);
-                setLoading(false); 
+                setLoading(false);
             }
         });
 
     </script>
 
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // Usa o caminho absoluto para registrar o service worker
+                navigator.serviceWorker.register('/treino/service-worker.js')
+                    .then((registration) => {
+                        console.log('Service Worker registrado com sucesso:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('Falha ao registrar Service Worker:', error);
+                    });
+            });
+        }
+    </script>
 </body>
+
 </html>
