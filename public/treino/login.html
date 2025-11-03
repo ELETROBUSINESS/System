@@ -7,13 +7,14 @@
     <link rel="icon" href="/assets/img/android-chrome-512x512.png">
     <title>Login | ELETRO 26</title>
 
+    <!-- ATUALIZADO: Caminho para o manifest -->
     <link rel="manifest" href="/treino/manifest.json">
     <meta name="theme-color" content="#2563eb">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
@@ -131,8 +132,6 @@
         setLogLevel('Debug');
 
         // --- Lógica de Autenticação ---
-
-        // ==== MUDANÇA: Pegar os elementos do overlay e do formulário ====
         const loadingOverlay = document.getElementById('login-loading-overlay');
         const loginFormContainer = document.getElementById('login-form-container');
 
@@ -140,19 +139,18 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 // Usuário LOGADO. Redireciona imediatamente.
-                // O overlay de loading preto permanece visível, escondendo o formulário.
                 console.log("Usuário já está logado, redirecionando...", user.uid);
+                // ATUALIZADO: Caminho para /treino/home.html
                 window.location.href = '/treino/home.html'; 
             } else {
                 // Usuário NÃO está logado.
-                // Esconde o loading preto e MOSTRA o formulário de login.
                 console.log("Nenhum usuário logado. Mostrando formulário de login.");
                 loadingOverlay.classList.add('hidden');
                 loginFormContainer.classList.remove('hidden');
             }
         });
 
-        // 2. Elementos do DOM (para o submit do formulário)
+        // 2. Elementos do DOM
         const loginForm = document.getElementById('login-form');
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
@@ -161,7 +159,7 @@
         const buttonSpinner = document.getElementById('button-spinner');
         const errorMessage = document.getElementById('error-message');
 
-        // 3. Função para mostrar/esconder o estado de carregamento (do BOTÃO)
+        // 3. Função para loading do BOTÃO
         function setLoading(isLoading) {
             if (isLoading) {
                 loginButton.disabled = true;
@@ -213,6 +211,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
+                // ATUALIZADO: Caminho absoluto
                 navigator.serviceWorker.register('/treino/service-worker.js')
                     .then((registration) => {
                         console.log('Service Worker registrado com sucesso:', registration.scope);
