@@ -1,4 +1,4 @@
-const CACHE_NAME = 'eletro-app-v1';
+const CACHE_NAME = 'eletro-app-v1.0.01';
 
 // Lista os arquivos principais que o app precisa para funcionar offline
 // ATENÇÃO: Usando os caminhos absolutos da URL
