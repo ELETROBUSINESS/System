@@ -1,5 +1,5 @@
 // ATUALIZADO: Mudei o nome do cache de v1 para v2
-const CACHE_NAME = 'eletro-app-v2';
+const CACHE_NAME = 'eletro-app-v1.0.0.40';
 
 // ATUALIZADO: Adicionei todos os arquivos HTML e o manifest
 const URLS_TO_CACHE = [
