@@ -7,6 +7,7 @@
     <link rel="icon" href="/assets/img/android-chrome-512x512.png">
     <title>Treinos | ELETRO 26</title>
 
+    <!-- ATUALIZADO: Caminho para o manifest -->
     <link rel="manifest" href="/treino/manifest.json">
     <meta name="theme-color" content="#2563eb">
 
@@ -86,10 +87,12 @@
                 </div>
                 <!-- Nav Desktop -->
                 <nav class="flex-1 px-2 space-y-2">
+                    <!-- ATUALIZADO: Link para /treino/home.html -->
                     <a href="/treino/home.html" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Início">
                         <i class='bx bx-home-smile text-2xl'></i>
                         <span class="text-lg font-medium">Início</span>
                     </a>
+                    <!-- ATUALIZADO: Link para /treino/treino.html -->
                     <a href="/treino/treino.html" class="flex items-center space-x-3 p-3 rounded-lg text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30" aria-label="Treinos">
                         <i class='bx bx-dumbbell text-2xl'></i>
                         <span class="text-lg font-semibold">Treinos</span>
@@ -116,7 +119,7 @@
                     <div class="flex items-center space-x-3 p-3">
                         <img src="https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png" alt="Foto do Perfil" class="w-12 h-12 rounded-full object-cover">
                         <div>
-                            <h4 class="font-semibold text-gray-800 dark:text-gray-200">Usuário</h4>
+                            <h4 id="user-greeting-desktop" class="font-semibold text-gray-800 dark:text-gray-200">Usuário</h4>
                             <a href="#" class="text-sm text-gray-500 dark:text-gray-400 hover:underline">Ver Perfil</a>
                         </div>
                     </div>
@@ -237,10 +240,12 @@
                 border border-gray-200/50 dark:border-gray-700/50
                 overflow-hidden z-40 lg:hidden hidden">
         <div class="flex justify-around items-center h-16">
+            <!-- ATUALIZADO: Link para /treino/home.html -->
             <a href="/treino/home.html" class="flex flex-col items-center justify-center text-gray-500 dark:text-gray-400" aria-label="Início">
                 <i class='bx bx-home-smile text-2xl'></i>
                 <span class="text-xs font-medium">Início</span>
             </a>
+            <!-- ATUALIZADO: Link para /treino/treino.html -->
             <a href="/treino/treino.html" class="flex flex-col items-center justify-center text-primary-600 dark:text-primary-400" aria-label="Treinos">
                 <i class='bx bx-dumbbell text-2xl'></i>
                 <span class="text-xs font-medium">Treinos</span>
@@ -251,6 +256,55 @@
             </button>
         </div>
     </nav>
+
+    <!-- Menu 'Mais' (Modal Mobile) -->
+    <div id="more-menu-overlay" class="fixed inset-0 bg-black/40 dark:bg-black/60 z-40 hidden" aria-hidden="true"></div>
+    <div id="more-menu"
+        class="fixed bottom-0 left-0 right-0 z-50 w-full max-w-md mx-auto
+                            bg-white dark:bg-gray-800 
+                            rounded-t-2xl shadow-xl 
+                            transform translate-y-full transition-transform duration-300 ease-in-out hidden
+                            lg:rounded-2xl lg:bottom-auto lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2">
+        <div class="w-full flex justify-center pt-3 pb-2 lg:hidden">
+            <div class="w-10 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+        </div>
+        <div class="p-4 pt-2">
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 px-2 pb-2">Mais Opções</h3>
+            <ul class="space-y-1">
+                <li>
+                    <a href="#"
+                        class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transform active:scale-[0.98] transition-all">
+                        <i class='bx bx-user text-2xl text-gray-600 dark:text-gray-300'></i>
+                        <span class="font-medium text-gray-700 dark:text-gray-200">Perfil</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#"
+                        class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transform active:scale-[0.98] transition-all">
+                        <i class='bx bx-cog text-2xl text-gray-600 dark:text-gray-300'></i>
+                        <span class="font-medium text-gray-700 dark:text-gray-200">Configurações</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#"
+                        class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transform active:scale-[0.98] transition-all">
+                        <i class='bx bx-help-circle text-2xl text-gray-600 dark:text-gray-300'></i>
+                        <span class="font-medium text-gray-700 dark:text-gray-200">Ajuda & Suporte</span>
+                    </a>
+                </li>
+                <li>
+                    <hr class="border-gray-200 dark:border-gray-700 my-1">
+                </li>
+                <li>
+                    <button id="logout-button-mobile" type="button"
+                        class="w-full flex items-center space-x-3 p-3 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transform active:scale-[0.98] transition-all">
+                        <i class='bx bx-log-out text-2xl'></i>
+                        <span class="font-medium">Sair da Conta</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
     
     <!-- TELA 4: MODAL DA BIBLIOTECA DE EXERCÍCIOS (OCULTA) -->
     <div id="exercise-library-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
@@ -360,7 +414,6 @@
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIGURAÇÃO FIREBASE ---
-        // As variáveis __firebase_config e __app_id são injetadas pelo ambiente
         const firebaseConfig = typeof __firebase_config !== 'undefined' 
             ? JSON.parse(__firebase_config)
             : {
@@ -378,18 +431,18 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        setLogLevel('Debug'); // Habilita logs do Firestore no console
+        setLogLevel('Debug'); 
 
         // --- VARIÁVEIS GLOBAIS DO APP ---
         let userId = null;
-        let currentEditingRoutineId = null; // ID do Doc do Firestore
-        let localRoutineExercises = []; // Array temporário para o editor de rotina
+        let currentEditingRoutineId = null; 
+        let localRoutineExercises = []; 
         let isEditingRoutine = false;
-        let allRoutines = []; // Cache local das rotinas do Firestore
-        let allExercises = []; // Cache local da biblioteca de exercícios
-        let isInitialDataLoaded = false; // Flag para controlar o loading
+        let allRoutines = []; 
+        let allExercises = []; 
+        let isInitialDataLoaded = false; 
 
-        // Coleções do Firestore (serão definidas após o login)
+        // Coleções do Firestore
         let routinesCol, libraryCol, workoutHistoryCol, settingsDoc;
 
         // --- Seletores de Elementos da UI ---
@@ -415,7 +468,7 @@
         const concludeWorkoutBtn = document.getElementById('conclude-workout-btn');
         const activeWorkoutContainer = document.getElementById('active-workout-container');
         const workoutDurationEl = document.getElementById('workout-duration');
-        let currentWorkoutRoutineName = ""; // Salva o nome da rotina ativa
+        let currentWorkoutRoutineName = ""; 
         const restTimerBar = document.getElementById('rest-timer-bar');
         const restTimerCountdownEl = document.getElementById('rest-timer-countdown');
         // Tela 4 (Modal Biblioteca)
@@ -435,6 +488,10 @@
         const gifModalTabPanels = document.querySelectorAll('.gif-modal-tab-panel');
         // Tema
         const themeToggles = document.querySelectorAll('#theme-toggle, #theme-toggle-desktop');
+        // Menu Mobile 'Mais'
+        const moreMenuButtons = document.querySelectorAll('#more-menu-button'); 
+        const moreMenu = document.getElementById('more-menu');
+        const moreMenuOverlay = document.getElementById('more-menu-overlay');
 
 
         // --- AUTENTICAÇÃO E INICIALIZAÇÃO ---
@@ -443,22 +500,18 @@
                 // Usuário está logado
                 userId = user.uid;
                 console.log("Usuário autenticado:", userId);
+                
+                const userGreetingDesktop = document.getElementById('user-greeting-desktop');
+                if(userGreetingDesktop) userGreetingDesktop.textContent = user.displayName || 'Usuário';
 
-                // Define os caminhos das coleções do Firestore
-                // Padrão de segurança: /artifacts/{appId}/users/{userId}/{collectionName}
                 routinesCol = collection(db, `artifacts/${appId}/users/${userId}/routines`);
                 libraryCol = collection(db, `artifacts/${appId}/users/${userId}/exerciseLibrary`);
                 workoutHistoryCol = collection(db, `artifacts/${appId}/users/${userId}/workoutHistory`);
-                // Padrão para documento único (configurações)
                 settingsDoc = doc(db, `artifacts/${appId}/users/${userId}/settings/userSettings`);
 
-                // Carrega as configurações do usuário (ex: tema)
                 await loadUserSettings();
-                
-                // Inicia os listeners para carregar dados
                 setupFirestoreListeners();
 
-                // Mostra o conteúdo principal (a flag de loading será tratada no listener)
                 mainContent.classList.remove('hidden');
                 mobileNav.classList.remove('hidden');
 
@@ -466,15 +519,15 @@
                 // Usuário não está logado, tenta logar
                 console.log("Nenhum usuário logado. Tentando login...");
                 try {
-                    if (typeof __initial_auth_token !== 'undefined') {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                         await signInWithCustomToken(auth, __initial_auth_token);
                     } else {
                         await signInAnonymously(auth);
                     }
-                    // O `onAuthStateChanged` será disparado novamente após o login
                 } catch (error) {
                     console.error("Erro ao fazer login:", error);
-                    loadingOverlay.innerHTML = "Erro ao autenticar.";
+                    loadingOverlay.innerHTML = "Erro ao autenticar. Redirecionando...";
+                    window.location.href = '/treino/login.html';
                 }
             }
         });
@@ -486,12 +539,11 @@
                     const settings = docSnap.data();
                     console.log("Configurações carregadas:", settings);
                     if (settings.theme) {
-                        applyTheme(settings.theme); // Aplica o tema salvo
-                        localStorage.setItem('theme', settings.theme); // Sincroniza localStorage
+                        applyTheme(settings.theme); 
+                        localStorage.setItem('theme', settings.theme); 
                     }
                 } else {
                     console.log("Nenhum documento de configuração encontrado. Usando padrões.");
-                    // Salva o tema padrão (do localStorage ou do sistema) no Firestore
                     const currentTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
                     await setDoc(settingsDoc, { theme: currentTheme }, { merge: true });
                 }
@@ -518,7 +570,6 @@
                 console.log("Rotinas carregadas:", allRoutines);
                 renderRoutinesUI(allRoutines);
 
-                // Esconde o loading APÓS o primeiro carregamento de dados
                 if (!isInitialDataLoaded) {
                     loadingOverlay.classList.add('hidden');
                     isInitialDataLoaded = true;
@@ -532,34 +583,65 @@
             onSnapshot(query(libraryCol), (snapshot) => {
                 allExercises = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                 console.log("Biblioteca carregada:", allExercises);
-                // Opcional: Adiciona exercícios padrão se a biblioteca estiver vazia
-                if (allExercises.length === 0) {
+                if (allExercises.length === 0 && isInitialDataLoaded) { // Só adiciona se já passou do loading
                     addDefaultExercises();
                 }
-                renderExerciseLibraryUI(); // Atualiza a UI do modal
+                renderExerciseLibraryUI(); 
             }, (error) => console.error("Erro ao carregar biblioteca:", error));
         }
-
-        // Adiciona exercícios padrão se o usuário não tiver nenhum
+        
+        // ATUALIZADO: Nova lista de exercícios padrão
         async function addDefaultExercises() {
-            console.log("Biblioteca vazia. Adicionando exercícios padrão...");
+            console.log("Biblioteca vazia. Adicionando nova lista de exercícios padrão...");
             const defaultLibrary = [
-                { name: "Supino Reto (Barra)", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2017/09/barbell-bench-press.gif", muscle: "Peito" },
-                { name: "Supino Inclinado (Halteres)", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2023/05/dumbbell-incline-bench-press.gif", muscle: "Peito (Superior)" },
-                { name: "Crucifixo (Máquina)", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2023/09/lever-seated-fly.gif", muscle: "Peito" },
-                { name: "Agachamento Livre", gif: "", muscle: "Quadríceps" },
-                { name: "Leg Press 45", gif: "", muscle: "Quadríceps" },
-                { name: "Puxada Frontal (Pulley)", gif: "", muscle: "Costas (Latíssimo)" },
-                { name: "Remada Curvada", gif: "", muscle: "Costas" }
+                // Peito
+                { name: "Supino (Barra)", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2017/09/barbell-bench-press.gif", muscle: "Peito" },
+                { name: "Supino Inclinado (Halter)", gif: "https://www.mundoboaforma.com.br/wp-content/uploads/2020/12/supino-inclinado-com-halteres.gif", muscle: "Peito (Superior)" },
+                { name: "Pec Deck", gif: "https://www.zone-musculation.com/wp-content/uploads/2024/11/peck-deck.gif", muscle: "Peito" },
+                { name: "Supino Sentado (Máquina)", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2024/04/lever-chest-press-.gif", muscle: "Peito" },
+
+                // Costas
+                { name: "Remada (Corda) Sentado", gif: "https://media.tenor.com/vy_b35185M0AAAAM/remada-baixa-triangulo.gif", muscle: "Costas" },
+                { name: "Puxada Alta na Polia (Máquina)", gif: "https://www.mundoboaforma.com.br/wp-content/uploads/2020/12/costas-puxada-aberta-com-barra-no-pulley.gif", muscle: "Costas (Latíssimo)" },
+
+                // Ombros
+                { name: "Elevação Lateral (Halter)", gif: "https://www.mundoboaforma.com.br/wp-content/uploads/2020/12/ombros-elevacao-lateral-de-ombros-com-halteres.gif", muscle: "Ombros (Lateral)" },
+                { name: "Desenvolvimento (Halter)", gif: "https://www.mundoboaforma.com.br/wp-content/uploads/2020/12/desenvolvimento-para-ombros-com-halteres.gif", muscle: "Ombros" },
+
+                // Tríceps
+                { name: "Triceps na Polia", gif: "https://i0.wp.com/meutreinador.com/wp-content/uploads/2023/12/05_Extensao-de-Triceps-na-Polia.gif?fit=1080%2C1080&ssl=1", muscle: "Tríceps" },
+                { name: "Triceps Testa (Halter)", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2023/10/dumbbell-lying-triceps-extension.gif", muscle: "Tríceps" },
+
+                // Bíceps
+                { name: "Rosca Scott (Máquina)", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2024/10/lever-hammer-grip-preacher-curl.gif", muscle: "Bíceps" },
+                { name: "Rosca Direta na Barra W", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2024/12/rosca-direta-com-barra-w.gif", muscle: "Bíceps" },
+
+                // Pernas
+                { name: "Agachamento Livre", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2023/11/dumbbell-goblet-squat.gif", muscle: "Quadríceps" },
+                { name: "Agachamento Livre (Barra)", gif: "https://media.tenor.com/pdMmsiutWkcAAAAM/gym.gif", muscle: "Quadríceps" },
+                { name: "Cadeira Abdutora (Máquina)", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2024/09/lever-seated-hip-abduction.gif", muscle: "Glúteos (Abdutores)" },
+                { name: "Leg Press 45° (Máquina)", gif: "https://media.tenor.com/yBaS_oBgidsAAAAM/gym.gif", muscle: "Quadríceps" },
+                { name: "Cadeira Extensora (Máquina)", gif: "https://media.tenor.com/bqKtsSuqilQAAAAM/gym.gif", muscle: "Quadríceps" },
+                { name: "Mesa Flexora (Máquina)", gif: "https://media.tenor.com/fj_cZPprAyMAAAAM/gym.gif", muscle: "Posterior de Coxa" },
+
+                // Panturrilha
+                { name: "Elevação de Panturrilha em Pé", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2023/07/standing-calf-raise-on-a-staircase.gif", muscle: "Panturrilha" },
+                { name: "Elevação de Panturrilha Sentado (Máquina)", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2018/10/lever-seated-calf-raise-.gif", muscle: "Panturrilha (Sóleo)" },
+
+                // Abdômen (Sem GIF)
+                { name: "Abdominal", gif: "", muscle: "Abdômen" },
+                { name: "Prancha Abdominal", gif: "", muscle: "Abdômen (Core)" }
             ];
-            // Usa Promise.all para adicionar todos em paralelo
+            
             try {
-                await Promise.all(defaultLibrary.map(ex => addDoc(libraryCol, ex)));
-                console.log("Exercícios padrão adicionados.");
+                // Adiciona um por um para não sobrecarregar
+                for (const ex of defaultLibrary) {
+                    await addDoc(libraryCol, ex);
+                }
+                console.log("Novos exercícios padrão adicionados.");
             } catch (error) {
                 console.error("Erro ao adicionar exercícios padrão:", error);
             }
-            // O onSnapshot vai pegar essa mudança e atualizar `allExercises` e a UI.
         }
 
 
@@ -594,7 +676,6 @@
                         <button class="edit-routine-btn py-3 px-4 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold rounded-lg" data-routine-id="${routine.id}">
                             <i class='bx bx-edit text-xl'></i>
                         </button>
-                        <!-- NOVO: Botão de excluir -->
                         <button class="delete-routine-btn py-3 px-4 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-semibold rounded-lg" data-routine-id="${routine.id}">
                             <i class='bx bx-trash text-xl'></i>
                         </button>
@@ -609,20 +690,17 @@
             currentEditingRoutineId = routineId;
             localRoutineExercises = [];
             if (routineId) {
-                // Editando rotina existente
                 if(editorTitle) editorTitle.textContent = "Editar Rotina";
                 const routine = allRoutines.find(r => r.id === routineId);
                 if (routine) {
                     if(routineNameInput) routineNameInput.value = routine.name;
                     if(routineIdInput) routineIdInput.value = routine.id;
-                    // Deep copy para edição local
                     localRoutineExercises = JSON.parse(JSON.stringify(routine.exercises || []));
                 }
             } else {
-                // Criando nova rotina
                 if(editorTitle) editorTitle.textContent = "Criar Rotina";
                 if(routineNameInput) routineNameInput.value = "";
-                if(routineIdInput) routineIdInput.value = ""; // Limpa o ID
+                if(routineIdInput) routineIdInput.value = ""; 
             }
             renderEditorExercises();
             showScreen(routineEditorScreen);
@@ -663,12 +741,10 @@
 
         async function saveRoutine() {
             if (!routineNameInput.value) {
-                // Use um modal customizado no futuro
                 console.warn("Por favor, dê um nome à sua rotina.");
                 return;
             }
 
-            // Atualiza localRoutineExercises com os valores dos inputs
             if (routineExercisesContainer) {
                 routineExercisesContainer.querySelectorAll('.exercise-editor-card').forEach(card => {
                     const index = parseInt(card.dataset.index, 10);
@@ -684,25 +760,22 @@
             const routineData = {
                 name: routineNameInput.value,
                 exercises: localRoutineExercises,
-                updatedAt: new Date().toISOString() // Adiciona um timestamp
+                updatedAt: new Date().toISOString()
             };
 
-            saveRoutineBtn.disabled = true; // Previne cliques duplos
+            saveRoutineBtn.disabled = true; 
 
             try {
                 if (currentEditingRoutineId) {
-                    // Atualiza rotina existente
                     const docRef = doc(routinesCol, currentEditingRoutineId);
-                    await setDoc(docRef, routineData, { merge: true }); // Merge: true para não sobrescrever outros campos
+                    await setDoc(docRef, routineData, { merge: true }); 
                     console.log("Rotina atualizada:", currentEditingRoutineId);
                 } else {
-                    // Adiciona nova rotina
                     routineData.createdAt = new Date().toISOString();
                     const docRef = await addDoc(routinesCol, routineData);
                     console.log("Rotina salva com ID:", docRef.id);
                 }
-                // O onSnapshot vai atualizar a UI automaticamente
-                showScreen(routineListScreen); // Volta para a lista
+                showScreen(routineListScreen); 
             } catch (error) {
                 console.error("Erro ao salvar rotina:", error);
             } finally {
@@ -715,19 +788,17 @@
             const routine = allRoutines.find(r => r.id === routineId);
             if (!routine) return;
 
-            currentWorkoutRoutineName = routine.name; // Salva o nome para o histórico
+            currentWorkoutRoutineName = routine.name; 
 
             if(activeWorkoutContainer) activeWorkoutContainer.innerHTML = '';
             routine.exercises.forEach(ex => {
-                // Garante que o exercício tenha os dados mais recentes da biblioteca (como 'muscle')
                 const libEx = allExercises.find(e => e.id === ex.libraryId) || {};
-                const exerciseData = { ...libEx, ...ex }; // Junta dados da rotina (sets, reps) com da lib (gif, muscle)
+                const exerciseData = { ...libEx, ...ex }; 
                 
                 const exCard = createActiveExerciseCard(exerciseData);
                 if(activeWorkoutContainer) activeWorkoutContainer.appendChild(exCard);
             });
             
-            // Botão de adicionar exercício
             const addExerciseBtnHTML = `
                 <button id="add-exercise-to-workout-btn" class="w-full flex justify-center items-center py-3 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700">
                     <i class='bx bx-plus mr-1'></i>
@@ -743,7 +814,6 @@
         function createActiveExerciseCard(exercise) {
             const exCard = document.createElement('div');
             exCard.className = "exercise-card bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700";
-            // Adiciona dataset para fácil coleta de dados
             exCard.dataset.exerciseName = exercise.name;
             exCard.dataset.libraryId = exercise.libraryId || '';
 
@@ -879,7 +949,6 @@
                     const repsInput = setRow.querySelector('.set-reps-input');
                     const isComplete = setRow.querySelector('.set-complete-btn').disabled;
                     
-                    // Salva apenas séries completas ou que tenham dados
                     if (isComplete || kgInput.value || repsInput.value) {
                         exerciseData.sets.push({
                             setNumber: index + 1,
@@ -909,7 +978,6 @@
                 console.error("Erro ao salvar histórico do treino:", error);
             } finally {
                 concludeWorkoutBtn.disabled = false;
-                // Limpa timers e volta para a lista
                 if(workoutTimerInterval) clearInterval(workoutTimerInterval);
                 if(restTimerInterval) clearInterval(restTimerInterval);
                 workoutSeconds = 0;
@@ -921,8 +989,8 @@
 
         // --- TELA 4: LÓGICA DA BIBLIOTECA DE EXERCÍCIOS ---
         function openLibraryModal(isEditing) {
-            isEditingRoutine = isEditing; // Define se estamos editando rotina ou treino ativo
-            renderExerciseLibraryUI(); // Renderiza com base no 'allExercises'
+            isEditingRoutine = isEditing; 
+            renderExerciseLibraryUI(); 
             if(libraryModal) libraryModal.classList.remove('hidden');
         }
         function closeLibraryModal() {
@@ -934,7 +1002,6 @@
             libraryListContainer.innerHTML = '';
             const searchTerm = librarySearchInput.value.toLowerCase();
             
-            // Filtra o cache global 'allExercises'
             const filteredLibrary = allExercises.filter(ex => ex.name.toLowerCase().includes(searchTerm));
             
             filteredLibrary.forEach(ex => {
@@ -954,7 +1021,7 @@
 
             const newExercise = {
                 name: name,
-                gif: "", // Pode adicionar campos para GIF e Músculo no futuro
+                gif: "", 
                 muscle: ""
             };
 
@@ -963,7 +1030,6 @@
                 await addDoc(libraryCol, newExercise);
                 console.log("Novo exercício salvo na biblioteca.");
                 newExerciseNameInput.value = '';
-                // O onSnapshot vai atualizar a UI do modal
             } catch (error) {
                 console.error("Erro ao salvar novo exercício:", error);
             } finally {
@@ -982,9 +1048,9 @@
         
         function closeGifModal() {
             if (!gifModal || !gifModalImage) return;
-            gifModalImage.src = ""; // Limpa a imagem
+            gifModalImage.src = ""; 
             gifModal.classList.add('hidden');
-            switchGifModalTab('resumo'); // Reseta para a primeira aba
+            switchGifModalTab('resumo'); 
         }
 
         function switchGifModalTab(tabId) {
@@ -1006,6 +1072,34 @@
                 }
             });
         }
+        
+        // --- Menu 'Mais' (Modal Mobile) ---
+        function openMenu() {
+            if (!moreMenu || !moreMenuOverlay) return;
+            moreMenu.classList.remove('hidden');
+            moreMenuOverlay.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                moreMenu.classList.remove('translate-y-full');
+            });
+        }
+
+        function closeMenu() {
+            if (!moreMenu || !moreMenuOverlay) return;
+            moreMenu.classList.add('translate-y-full');
+            moreMenuOverlay.classList.add('hidden');
+            setTimeout(() => moreMenu.classList.add('hidden'), 300);
+        }
+        
+        // --- Logout ---
+        async function handleLogout() {
+            try {
+                await signOut(auth);
+                console.log("Logout bem-sucedido. Redirecionando...");
+                window.location.href = '/treino/login.html';
+            } catch (error) {
+                console.error("Erro ao fazer logout:", error);
+            }
+        }
 
         // --- Adicionar Eventos (Event Listeners) ---
         
@@ -1018,11 +1112,9 @@
                     const newTheme = isDark ? 'dark' : 'light';
                     applyTheme(newTheme);
                     localStorage.setItem('theme', newTheme);
-                    // Salva a configuração no Firestore
                     if (userId) saveUserSetting('theme', newTheme);
                 });
             });
-            // Atualiza o ícone do sol/lua no carregamento
             const updateIcons = (isDark) => {
                 themeToggles.forEach(toggle => {
                     const moonIcon = toggle.querySelector('.bxs-moon');
@@ -1035,13 +1127,18 @@
                     }
                 });
             };
-            // Observador para mudanças na classe 'dark' do HTML
             const observer = new MutationObserver(() => {
                 updateIcons(document.documentElement.classList.contains('dark'));
             });
             observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-            // Chama uma vez no início
             updateIcons(document.documentElement.classList.contains('dark'));
+            
+            // --- Eventos do Menu 'Mais' ---
+            if(moreMenuButtons) moreMenuButtons.forEach(btn => btn.addEventListener('click', openMenu));
+            if(moreMenuOverlay) moreMenuOverlay.addEventListener('click', closeMenu);
+            // Evento de logout dentro do menu 'Mais'
+            const logoutButtonMobile = document.getElementById('logout-button-mobile');
+            if(logoutButtonMobile) logoutButtonMobile.addEventListener('click', handleLogout);
 
 
             // --- Eventos da Tela 1 (Lista) ---
@@ -1055,12 +1152,10 @@
                 if (editBtn) showEditor(editBtn.dataset.routineId);
                 if (deleteBtn) {
                     const docId = deleteBtn.dataset.routineId;
-                    // O ideal é usar um modal customizado
                     if (confirm("Tem certeza que deseja excluir esta rotina?")) {
                         try {
                             await deleteDoc(doc(routinesCol, docId));
                             console.log("Rotina excluída:", docId);
-                            // onSnapshot vai atualizar a UI
                         } catch (error) {
                             console.error("Erro ao excluir rotina:", error);
                         }
@@ -1076,7 +1171,7 @@
                 if(e.target.closest('.remove-exercise-btn')) {
                     const indexToRemove = parseInt(e.target.closest('.remove-exercise-btn').dataset.index, 10);
                     localRoutineExercises.splice(indexToRemove, 1);
-                    renderEditorExercises(); // Apenas atualiza o array local
+                    renderEditorExercises(); 
                 }
             });
 
@@ -1120,7 +1215,7 @@
                     }
                 }
                 if (addExerciseBtn) {
-                    openLibraryModal(false); // false = não estou editando rotina
+                    openLibraryModal(false); 
                 }
                 if (gifBtn) {
                     const name = gifBtn.dataset.name;
@@ -1141,15 +1236,15 @@
             // --- Eventos da Tela 4 (Modal Biblioteca) ---
             if(closeLibraryBtn) closeLibraryBtn.addEventListener('click', closeLibraryModal);
             if(saveNewExerciseBtn) saveNewExerciseBtn.addEventListener('click', saveNewExerciseToLibrary);
-            if(librarySearchInput) librarySearchInput.addEventListener('input', renderExerciseLibraryUI); // Renderiza com filtro
+            if(librarySearchInput) librarySearchInput.addEventListener('input', renderExerciseLibraryUI); 
             if(libraryListContainer) libraryListContainer.addEventListener('click', (e) => {
                 if (e.target.classList.contains('add-exercise-from-lib-btn')) {
                     const exerciseId = e.target.dataset.exerciseId;
-                    const exerciseData = allExercises.find(ex => ex.id === exerciseId); // Busca do cache global
+                    const exerciseData = allExercises.find(ex => ex.id === exerciseId); 
                     if (!exerciseData) return;
                     
                     const newExercise = {
-                        libraryId: exerciseData.id, // Salva o ID da biblioteca
+                        libraryId: exerciseData.id, 
                         name: exerciseData.name,
                         gif: exerciseData.gif,
                         muscle: exerciseData.muscle,
@@ -1159,11 +1254,9 @@
                     };
 
                     if (isEditingRoutine) {
-                        // Adiciona ao editor de rotina
                         localRoutineExercises.push(newExercise);
                         renderEditorExercises();
                     } else {
-                        // Adiciona ao treino ativo
                         const exCard = createActiveExerciseCard(newExercise);
                         const addBtn = activeWorkoutContainer.querySelector('#add-exercise-to-workout-btn');
                         if (addBtn) {
@@ -1184,24 +1277,9 @@
                 });
             });
 
-            // --- Eventos de Logout ---
-            const logoutButtons = document.querySelectorAll('#logout-button-desktop, #more-menu-button'); // Simplificado
-            logoutButtons.forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    // TODO: O botão 'Mais' deve abrir um menu que tem o logout
-                    if (btn.id === 'logout-button-desktop') {
-                        if (confirm("Sair da conta?")) {
-                            try {
-                                await signOut(auth);
-                                window.location.href = '/treino/login.html';
-                            } catch (error) {
-                                console.error("Erro ao fazer logout:", error);
-                            }
-                        }
-                    }
-                    // Lógica para o menu 'Mais' (id='more-menu-button') pode ser adicionada aqui
-                });
-            });
+            // --- Eventos de Logout (Desktop) ---
+            const logoutButtonDesktop = document.getElementById('logout-button-desktop');
+            if(logoutButtonDesktop) logoutButtonDesktop.addEventListener('click', handleLogout);
 
         });
     </script>
@@ -1210,6 +1288,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
+                // ATUALIZADO: Caminho absoluto
                 navigator.serviceWorker.register('/treino/service-worker.js')
                     .then((registration) => {
                         console.log('Service Worker registrado com sucesso:', registration.scope);
