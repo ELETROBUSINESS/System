@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/assets/img/iconWeb.png">
+    <title>Minha Academia | Tarcisio</title>
+
+     <link rel="stylesheet" href="/assets/css/main.css">
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+</head>
+
+<body class="painel-adm1" onload="AnimationLoading()">
+
+    <script>
+        (function() {
+            const tokenString = localStorage.getItem('session_token');
+            const LOGIN_URL = '/users/e-finance.html';
+            if (!tokenString) {
+                console.log("Acesso negado: Nenhum token de sessão encontrado.");
+                window.location.href = LOGIN_URL;
+                return;
+            }
+            try {
+                const token = JSON.parse(tokenString);
+                if (new Date().getTime() > token.expires) {
+                    console.log("Acesso negado: O token de sessão expirou.");
+                    localStorage.removeItem('session_token');
+                    window.location.href = LOGIN_URL;
+                } else {
+                    console.log('Acesso permitido. Bem-vindo, ' + token.username);
+                }
+            } catch (error) {
+                console.error('Erro ao processar o token de sessão:', error);
+                localStorage.removeItem('session_token');
+                window.location.href = LOGIN_URL;
+            }
+        })();
+    </script>
+
+    <div class="mensagerLocal">
+        <div class="mensager">
+            <img src="/assets/img/eFriend.png">
+            <div>
+                <h1>Bem vindo, <span>Tarcisio</span>,</h1>
+                <p>Ao trabalho!</p>
+            </div>
+            <div class="progress-bar"></div>
+        </div>
+    </div>
+    <script>
+        const MENSAGEM_KEY = 'ultimaMensagemEletro';
+        const INTERVALO_HORAS = 20;
+        const INTERVALO_MS = INTERVALO_HORAS * 60 * 60 * 1000;
+        const agora = new Date().getTime();
+        const ultimaVisualizacao = localStorage.getItem(MENSAGEM_KEY);
+        const mensagemEl = document.querySelector('.mensagerLocal');
+
+        if (!ultimaVisualizacao || (agora - parseInt(ultimaVisualizacao)) > INTERVALO_MS) {
+            mensagemEl.style.display = 'flex';
+            setTimeout(() => {
+                mensagemEl.style.transition = "opacity 0.5s ease";
+                mensagemEl.style.opacity = 0;
+                setTimeout(() => {
+                    mensagemEl.style.display = "none";
+                }, 500);
+            }, 6200);
+            localStorage.setItem(MENSAGEM_KEY, agora);
+        } else {
+            mensagemEl.style.display = 'none';
+        }
+    </script>
+    <header>
+        <div class="loading">
+            <div class="efect-loading"></div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="info">
+            <div class="photo-profile">
+                <img src="/users/tarcisio/adm/img/profile_photo.jpg">
+                <div class="detals">
+                    <h1>Olá, Tarcisio!</h1>
+                    <p>CEO: ACADEMIA</p>
+                </div>
+                <i class="fi fi-rr-shield-trust"></i>
+            </div>
+            <div class="balance">
+                <p>Saldo</p>
+                <div class="saldo">
+                    <span id="" class="">R$0,00</span>
+                    <i class='bx bx-eye' id="toggle-balance-icon"></i>
+                </div>
+                <div class="pending">
+                    <p>Valores à receber: </p>
+                    <span>R$0,00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="new_nav">
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    const url = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=22`;
+                    const valor1Element = document.getElementById('valor1');
+                    const valor2Element = document.getElementById('valor2');
+                    const toggleIcon = document.getElementById('toggle-balance-icon');
+
+                    let valor1Original = '';
+                    let valor2Original = '';
+                    let isBalanceVisible = localStorage.getItem('balanceVisible') === 'true';
+
+                    function toggleBalanceDisplay() {
+                        if (isBalanceVisible) {
+                            valor1Element.textContent = valor1Original;
+                            valor2Element.textContent = valor2Original;
+                        } else {
+                            valor1Element.textContent = 'R$ *******';
+                            valor2Element.textContent = 'R$ ********';
+                        }
+                        toggleIcon.classList.toggle('bx-eye', isBalanceVisible);
+                        toggleIcon.classList.toggle('bx-eye-closed', !isBalanceVisible);
+                    }
+
+                    fetch(url)
+                        .then(response => response.json())
+                        .then(data => {
+                            valor1Original = data.valor1;
+                            valor2Original = data.valor2;
+                            valor1Element.classList.remove('skeleton', 'shimmer');
+                            valor2Element.classList.remove('skeleton', 'shimmer');
+                            toggleBalanceDisplay();
+                        }).catch(error => {
+                            valor1Element.textContent = 'Erro';
+                            valor2Element.textContent = 'Erro';
+                        });
+
+                    if (toggleIcon) {
+                        toggleIcon.addEventListener('click', () => {
+                            isBalanceVisible = !isBalanceVisible;
+                            localStorage.setItem('balanceVisible', isBalanceVisible);
+                            toggleBalanceDisplay();
+                        });
+                    }
+                });
+            </script>
+
+            <div class="conta-info">
+                <p>Prestes a vencer</p>
+                <div class="containerCard">
+                    <div class="card-optionSizeMain">
+                        <div class="card-optionSize">
+                            <i class='bx bx-receipt'></i>
+                            <div class="boleto-content-row">
+                                <div class="boleto-details">
+                                    <h1 id="boletoEmpresa">Carregando...</h1>
+                                    <span id="boletoValor"></span>
+                                </div>
+                                <div class="boleto-due-date">
+                                    <span class="lpan" id="boletoVencimento"></span>
+                                    <a href="#" class="add-btn-plus">
+                                        <i class='bx bx-plus'></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="paginationIndicators" class="pagination-indicators-container"></div>
+                    </div>
+                </div>
+
+                <div class="faturamento-section">
+                    <div class="faturamento-container">
+                        <div class="loja-selector">
+                            <button class="loja-btn active" data-loja="dtudo">
+                                <i class='bx bxs-store-alt'></i> Academia
+                            </button>
+                            <button class="loja-btn" data-loja="dupao">
+                                <i class='bx bxs-store-alt'></i> Outros negócios
+                            </button>
+                        </div>
+                        <div class="faturamento-display">
+                            <div class="valor-principal">
+                                <h1 id="faturamento-valor" class="skeleton shimmer"></h1>
+                                <a href="#" class="metricas-link">Métricas <i class='bx bx-chevron-right'></i></a>
+                            </div>
+                            <p id="faturamento-hoje">Faturamento de hoje</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- BOTÕES DE OPÇÕES PARA MOBILE -->
+                <div class="option">
+                    <div class="card-option">
+                        <a href="">
+                            <i class='bx bx-plus-circle'></i>
+                            <h3>Registrar</h3>
+                        </a>
+                    </div>
+                    <div class="card-option">
+                        <a href="">
+                            <i class='bx bx-scan'></i>
+                            <h3>Despesas</h3>
+                        </a>
+                    </div>
+                    <div class="card-option">
+                        <a href="">
+                            <i class='bx bx-copy-alt'></i>
+                            <h3>Extrato</h3>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- NOVA SEÇÃO DE OPÇÕES APENAS PARA DESKTOP -->
+                <div class="desktop-options">
+                    <div class="card-option">
+                        <a href="#">
+                            <i class='bx bx-file-blank'></i>
+                            <h3>DAS Imposto</h3>
+                        </a>
+                    </div>
+                    <div class="card-option">
+                        <a href="#">
+                            <i class='bx bx-group'></i>
+                            <h3>Alunos</h3>
+                        </a>
+                    </div>
+                    <div class="card-option">
+                        <a href="#">
+                            <i class='bx bx-group'></i>
+                            <h3>Funcionários</h3>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <div class="navigation" id="main-navigation">
+        <button class="sidebar-toggle" id="sidebarToggle">
+            <i class='bx bx-menu'></i>
+        </button>
+        <ul>
+            <li class="list active">
+                <a href="#">
+                    <span class="icon"><i class='bx  bx-dumbbell'    ></i> </span>
+                    <span class="text">Academia</span>
+                </a>
+            </li>
+
+            <li class="list">
+                <a href="#">
+                    <span class="icon"><i class='bx bx-bar-chart-alt-2'></i></span>
+                    <span class="text">Métrica</span>
+                </a>
+            </li>
+            <li class="list">
+                <a href="#">
+                    <span class="icon"><i class='bx bx-plus-circle'></i></span>
+                    <span class="text">Nova Ficha</span>
+                </a>
+            </li>
+            <li class="list">
+                <a href="#">
+                    <span class="icon"><i class='bx bx-copy-alt'></i></span>
+                    <span class="text">Extrato</span>
+                </a>
+            </li>
+            <li class="list">
+                <a href="#" id="logout-btn">
+                    <span class="icon"><i class='bx bx-log-out'></i></span>
+                    <span class="text">Sair</span>
+                </a>
+            </li>
+            <div class="indicator color11"></div>
+        </ul>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navigation = document.getElementById('main-navigation');
+            const toggleButton = document.getElementById('sidebarToggle');
+            const body = document.querySelector('body');
+            const logoutButton = document.getElementById('logout-btn');
+
+            if (sessionStorage.getItem('sidebarAnimated') !== 'true') {
+                if(window.innerWidth >= 992) {
+                    navigation.classList.add('run-animation');
+                    sessionStorage.setItem('sidebarAnimated', 'true');
+                }
+            }
+
+            if (toggleButton) {
+                toggleButton.addEventListener('click', () => {
+                    body.classList.toggle('sidebar-collapsed');
+                });
+            }
+
+            if (logoutButton) {
+                logoutButton.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    localStorage.removeItem('session_token');
+                    window.location.href = '/users/e-finance.html';
+                });
+            }
+        });
+    </script>
+
+    <script src="/assets/js/loading.js"></script>
+
+</body>
+</html>
