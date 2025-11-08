@@ -1,4 +1,4 @@
-const CACHE_NAME = 'eletro-app-v8';
+const CACHE_NAME = 'eletro-app-v9';
 
 const URLS_TO_CACHE = [
   '/treino/login.html',

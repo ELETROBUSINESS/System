@@ -7,14 +7,13 @@
     <link rel="icon" href="/assets/img/android-chrome-512x512.png">
     <title>Treinos | ELETRO 26</title>
 
-    <!-- ATUALIZADO: Caminho para o manifest -->
     <link rel="manifest" href="/treino/manifest.json">
     <meta name="theme-color" content="#2563eb">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
@@ -67,32 +66,25 @@
 
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
 
-    <!-- Tela de Loading -->
     <div id="loading-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-100 dark:bg-gray-900">
         <i class='bx bx-loader-alt bx-spin text-5xl text-primary-600'></i>
     </div>
 
-    <!-- Conteúdo principal (começa oculto) -->
     <div id="main-content" class="max-w-7xl mx-auto lg:grid lg:grid-cols-12 lg:gap-8 hidden">
 
-        <!-- Coluna 1: Navegação (Esquerda) -->
         <div class="hidden lg:block lg:col-span-3 lg:sticky lg:top-0 lg:h-screen lg:py-6">
             <div class="flex flex-col h-full">
-                <!-- Logo -->
                 <div class="px-4 mb-6">
                     <h1 class="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
                         <i class='bx bxs-bolt text-3xl mr-2'></i>
                         ELETRO
                     </h1>
                 </div>
-                <!-- Nav Desktop -->
                 <nav class="flex-1 px-2 space-y-2">
-                    <!-- ATUALIZADO: Link para /treino/home.html -->
                     <a href="/treino/home.html" class="flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Início">
                         <i class='bx bx-home-smile text-2xl'></i>
                         <span class="text-lg font-medium">Início</span>
                     </a>
-                    <!-- ATUALIZADO: Link para /treino/treino.html -->
                     <a href="/treino/treino.html" class="flex items-center space-x-3 p-3 rounded-lg text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30" aria-label="Treinos">
                         <i class='bx bx-dumbbell text-2xl'></i>
                         <span class="text-lg font-semibold">Treinos</span>
@@ -114,7 +106,6 @@
                         <span class="text-lg font-medium">Sair</span>
                     </button>
                 </nav>
-                <!-- Perfil -->
                 <div class="px-2 mt-auto">
                     <div class="flex items-center space-x-3 p-3">
                         <img src="https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png" alt="Foto do Perfil" class="w-12 h-12 rounded-full object-cover">
@@ -127,11 +118,9 @@
             </div>
         </div>
 
-        <!-- Coluna 2: Conteúdo Principal (Centro) -->
         <div class="lg:col-span-6 min-h-screen bg-white dark:bg-gray-950 lg:border-x lg:border-gray-200 dark:lg:border-gray-800">
             <div class="pb-28 lg:pb-6 relative min-h-screen">
 
-                <!-- TELA 1: LISTA DE ROTINAS (VISÍVEL POR PADRÃO) -->
                 <section id="routine-list-screen">
                     <header class="p-6 flex justify-between items-center lg:sticky lg:top-0 lg:bg-white/80 dark:lg:bg-gray-950/80 lg:backdrop-blur-md lg:z-30 border-b border-gray-100 dark:border-gray-800/50">
                         <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Minhas Rotinas</h1>
@@ -151,12 +140,10 @@
                             <i class='bx bx-plus-circle text-5xl opacity-80'></i>
                         </div>
                         <div id="routines-container" class="space-y-4">
-                            <!-- Rotinas do Firestore aparecem aqui -->
-                        </div>
+                            </div>
                     </main>
                 </section>
 
-                <!-- TELA 2: EDITOR DE ROTINA (OCULTA) -->
                 <section id="routine-editor-screen" class="hidden">
                     <header class="p-6 flex justify-between items-center lg:sticky lg:top-0 lg:bg-white/80 dark:lg:bg-gray-950/80 lg:backdrop-blur-md lg:z-30 border-b border-gray-100 dark:border-gray-800/50">
                         <div class="flex items-center space-x-2">
@@ -170,7 +157,6 @@
                         </button>
                     </header>
                     <main class="px-6 space-y-6 mt-6">
-                        <!-- ID da rotina do Firestore (oculto) -->
                         <input type="hidden" id="routine-id-input">
                         <div>
                             <label for="routine-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome da Rotina</label>
@@ -179,8 +165,7 @@
                         <div>
                             <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">Exercícios</h3>
                             <div id="routine-exercises-container" class="space-y-3">
-                                <!-- Exercícios da rotina em edição aparecem aqui -->
-                            </div>
+                                </div>
                             <button id="open-library-btn" class="w-full mt-4 flex justify-center items-center py-3 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700">
                                 <i class='bx bx-plus mr-1'></i>
                                 Adicionar Exercício da Biblioteca
@@ -189,7 +174,6 @@
                     </main>
                 </section>
 
-                <!-- TELA 3: TREINO ATIVO (OCULTA) -->
                 <section id="active-workout-screen" class="hidden">
                     <header class="sticky top-0 z-30 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800/50">
                         <div class="p-6 flex justify-between items-center">
@@ -207,7 +191,6 @@
                         </div>
                     </header>
                     <main id="active-workout-container" class="px-6 space-y-6 mt-6">
-                        <!-- Exercícios do treino aparecem aqui -->
                         <button id="add-exercise-to-workout-btn" class="w-full flex justify-center items-center py-3 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700">
                             <i class='bx bx-plus mr-1'></i>
                             Adicionar Exercício
@@ -217,9 +200,7 @@
             </div>
         </div>
 
-        <!-- Coluna 3: Widgets (Direita) -->
         <div class="hidden lg:block lg:col-span-3 lg:sticky lg:top-0 lg:h-screen lg:py-6">
-            <!-- Widgets -->
             <div class="flex justify-end space-x-2 mb-6 px-4">
                  <button type="button" class="text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-2xl p-2 relative" aria-label="Avisos">
                     <i class='bx bx-bell'></i>
@@ -231,21 +212,15 @@
             </div>
         </div>
 
-    </div> <!-- Fim do grid wrapper -->
-
-
-    <!-- Barra de Navegação Flutuante (SÓ MOBILE) -->
-    <nav id="mobile-nav" class="fixed bottom-4 left-1/2 -translate-x-1/2 w-[90%] max-w-sm mx-auto 
+    </div> <nav id="mobile-nav" class="fixed bottom-4 left-1/2 -translate-x-1/2 w-[90%] max-w-sm mx-auto 
                 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl shadow-xl 
                 border border-gray-200/50 dark:border-gray-700/50
                 overflow-hidden z-40 lg:hidden hidden">
         <div class="flex justify-around items-center h-16">
-            <!-- ATUALIZADO: Link para /treino/home.html -->
             <a href="/treino/home.html" class="flex flex-col items-center justify-center text-gray-500 dark:text-gray-400" aria-label="Início">
                 <i class='bx bx-home-smile text-2xl'></i>
                 <span class="text-xs font-medium">Início</span>
             </a>
-            <!-- ATUALIZADO: Link para /treino/treino.html -->
             <a href="/treino/treino.html" class="flex flex-col items-center justify-center text-primary-600 dark:text-primary-400" aria-label="Treinos">
                 <i class='bx bx-dumbbell text-2xl'></i>
                 <span class="text-xs font-medium">Treinos</span>
@@ -257,7 +232,6 @@
         </div>
     </nav>
 
-    <!-- Menu 'Mais' (Modal Mobile) -->
     <div id="more-menu-overlay" class="fixed inset-0 bg-black/40 dark:bg-black/60 z-40 hidden" aria-hidden="true"></div>
     <div id="more-menu"
         class="fixed bottom-0 left-0 right-0 z-50 w-full max-w-md mx-auto
@@ -306,7 +280,6 @@
         </div>
     </div>
     
-    <!-- TELA 4: MODAL DA BIBLIOTECA DE EXERCÍCIOS (OCULTA) -->
     <div id="exercise-library-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
         <div class="bg-white dark:bg-gray-900 w-full max-w-lg rounded-2xl shadow-xl max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center p-4 border-b dark:border-gray-700">
@@ -318,23 +291,13 @@
             <div class="p-4 overflow-y-auto">
                 <input type="text" id="library-search" placeholder="Buscar exercício..." class="w-full px-4 py-3 mb-4 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg">
                 <div id="library-list-container" class="space-y-2">
-                    <!-- Exercícios do Firestore aparecem aqui -->
-                </div>
+                    </div>
             </div>
-            <div class="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 rounded-b-2xl">
-                <h4 class="font-semibold mb-2">Não encontrou? Crie um novo:</h4>
-                <div class="flex space-x-2">
-                    <input type="text" id="new-exercise-name" placeholder="Nome do exercício" class="w-full px-3 py-2 bg-white dark:bg-gray-700 border rounded-lg">
-                    <button id="save-new-exercise-btn" class="py-2 px-4 bg-primary-600 text-white font-semibold rounded-lg">Salvar</button>
-                </div>
             </div>
-        </div>
     </div>
     
-    <!-- TELA 5: MODAL DE VISUALIZAÇÃO DO GIF (ATUALIZADO) -->
     <div id="exercise-gif-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
         <div class="bg-white dark:bg-gray-900 w-full max-w-lg rounded-2xl shadow-xl max-h-[90vh] flex flex-col">
-            <!-- Cabeçalho com Título e Botão de Fechar -->
             <div class="flex justify-between items-center p-4 border-b dark:border-gray-700">
                 <h3 id="gif-modal-title" class="text-xl font-semibold">Nome do Exercício</h3>
                 <button id="close-gif-modal-btn" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
@@ -342,7 +305,6 @@
                 </button>
             </div>
     
-            <!-- Abas de Navegação -->
             <div class="border-b dark:border-gray-700">
                 <nav class="flex -mb-px px-4" aria-label="Tabs">
                     <button class="gif-modal-tab-btn border-primary-600 dark:border-primary-400 text-primary-600 dark:text-primary-400 whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm" data-tab="resumo">
@@ -357,9 +319,7 @@
                 </nav>
             </div>
     
-            <!-- Conteúdo das Abas -->
             <div class="p-4 overflow-y-auto">
-                <!-- Painel Resumo (Visível por padrão) -->
                 <div id="gif-modal-tab-resumo" class="gif-modal-tab-panel space-y-4">
                     <div class="flex justify-center items-center bg-gray-100 dark:bg-gray-800 rounded-lg">
                         <img id="gif-modal-image" src="" alt="Execução do exercício" class="w-full rounded-lg">
@@ -370,14 +330,12 @@
                     </div>
                 </div>
     
-                <!-- Painel Histórico (Oculto) -->
                 <div id="gif-modal-tab-historico" class="gif-modal-tab-panel hidden text-center p-8">
                     <i class='bx bx-bar-chart-alt-2 text-5xl text-gray-400 dark:text-gray-500 mb-2'></i>
                     <h4 class="font-semibold text-gray-700 dark:text-gray-300">Ainda sem dados</h4>
                     <p class="text-sm text-gray-500 dark:text-gray-400">O histórico de performance aparecerá aqui.</p>
                 </div>
     
-                <!-- Painel Instruções (Oculto) -->
                 <div id="gif-modal-tab-instrucoes" class="gif-modal-tab-panel hidden">
                     <h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-2">Como executar</h4>
                     <p class="text-sm text-gray-500 dark:text-gray-400">
@@ -389,7 +347,6 @@
     </div>
 
 
-    <!-- SCRIPT PRINCIPAL DO APP (MÓDULO) -->
     <script type="module">
         // --- IMPORTS DO FIREBASE ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -438,12 +395,15 @@
         let currentEditingRoutineId = null; 
         let localRoutineExercises = []; 
         let isEditingRoutine = false;
+        
         let allRoutines = []; 
-        let allExercises = []; 
+        let allGlobalExercises = []; // Lista da biblioteca global
+        let allUserExercises = [];   // Lista da biblioteca pessoal do usuário
+        let allExercises = [];       // Lista mesclada
+        
         let isInitialDataLoaded = false; 
 
-        // Coleções do Firestore
-        let routinesCol, libraryCol, workoutHistoryCol, settingsDoc;
+        let routinesCol, globalLibraryCol, userLibraryCol, workoutHistoryCol, settingsDoc;
 
         // --- Seletores de Elementos da UI ---
         const loadingOverlay = document.getElementById('loading-overlay');
@@ -476,8 +436,11 @@
         const closeLibraryBtn = document.getElementById('close-library-btn');
         const librarySearchInput = document.getElementById('library-search');
         const libraryListContainer = document.getElementById('library-list-container');
-        const newExerciseNameInput = document.getElementById('new-exercise-name');
-        const saveNewExerciseBtn = document.getElementById('save-new-exercise-btn');
+        
+        // --- REMOVIDO: Seletores do formulário de novo exercício ---
+        // const newExerciseNameInput = document.getElementById('new-exercise-name');
+        // const saveNewExerciseBtn = document.getElementById('save-new-exercise-btn');
+        
         // Tela 5 (Modal GIF)
         const gifModal = document.getElementById('exercise-gif-modal');
         const closeGifModalBtn = document.getElementById('close-gif-modal-btn');
@@ -505,9 +468,11 @@
                 if(userGreetingDesktop) userGreetingDesktop.textContent = user.displayName || 'Usuário';
 
                 routinesCol = collection(db, `artifacts/${appId}/users/${userId}/routines`);
-                libraryCol = collection(db, `artifacts/${appId}/users/${userId}/exerciseLibrary`);
                 workoutHistoryCol = collection(db, `artifacts/${appId}/users/${userId}/workoutHistory`);
                 settingsDoc = doc(db, `artifacts/${appId}/users/${userId}/settings/userSettings`);
+                
+                globalLibraryCol = collection(db, `artifacts/${appId}/globalExerciseLibrary`);
+                userLibraryCol = collection(db, `artifacts/${appId}/users/${userId}/exerciseLibrary`);
 
                 await loadUserSettings();
                 setupFirestoreListeners();
@@ -579,20 +544,36 @@
                 loadingOverlay.innerHTML = "Erro ao carregar dados.";
             });
 
-            // Listener para Biblioteca de Exercícios
-            onSnapshot(query(libraryCol), (snapshot) => {
-                allExercises = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-                console.log("Biblioteca carregada:", allExercises);
-                if (allExercises.length === 0 && isInitialDataLoaded) { // Só adiciona se já passou do loading
-                    addDefaultExercises();
+            // Listener para a Biblioteca GLOBAL
+            onSnapshot(query(globalLibraryCol), (snapshot) => {
+                allGlobalExercises = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                console.log("Biblioteca Global carregada:", allGlobalExercises.length);
+                
+                if (allGlobalExercises.length === 0 && isInitialDataLoaded) {
+                    addDefaultExercisesToGlobal(); 
                 }
-                renderExerciseLibraryUI(); 
-            }, (error) => console.error("Erro ao carregar biblioteca:", error));
+                
+                mergeAndRenderExercises();
+            }, (error) => console.error("Erro ao carregar biblioteca global:", error));
+
+            // Listener para a Biblioteca PESSOAL do Usuário
+            onSnapshot(query(userLibraryCol), (snapshot) => {
+                allUserExercises = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                console.log("Biblioteca do Usuário carregada:", allUserExercises.length);
+                mergeAndRenderExercises();
+            }, (error) => console.error("Erro ao carregar biblioteca do usuário:", error));
         }
+
+        function mergeAndRenderExercises() {
+            allExercises = [...allGlobalExercises, ...allUserExercises];
+            allExercises.sort((a, b) => a.name.localeCompare(b.name));
+            console.log("Bibliotecas mescladas. Total de exercícios:", allExercises.length);
+            renderExerciseLibraryUI(); 
+        }
+
         
-        // ATUALIZADO: Nova lista de exercícios padrão
-        async function addDefaultExercises() {
-            console.log("Biblioteca vazia. Adicionando nova lista de exercícios padrão...");
+        async function addDefaultExercisesToGlobal() {
+            console.log("Biblioteca GLOBAL vazia. Adicionando lista de exercícios padrão...");
             const defaultLibrary = [
                 // Peito
                 { name: "Supino (Barra)", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2017/09/barbell-bench-press.gif", muscle: "Peito" },
@@ -634,13 +615,13 @@
             ];
             
             try {
-                // Adiciona um por um para não sobrecarregar
                 for (const ex of defaultLibrary) {
-                    await addDoc(libraryCol, ex);
+                    await addDoc(globalLibraryCol, ex);
                 }
-                console.log("Novos exercícios padrão adicionados.");
-            } catch (error) {
-                console.error("Erro ao adicionar exercícios padrão:", error);
+                console.log("Novos exercícios padrão adicionados à biblioteca GLOBAL.");
+            } catch (error)
+             {
+                console.error("Erro ao adicionar exercícios padrão à biblioteca GLOBAL:", error);
             }
         }
 
@@ -1004,6 +985,10 @@
             
             const filteredLibrary = allExercises.filter(ex => ex.name.toLowerCase().includes(searchTerm));
             
+            if (filteredLibrary.length === 0) {
+                libraryListContainer.innerHTML = `<p class="text-gray-500 dark:text-gray-400 text-center p-4">Nenhum exercício encontrado.</p>`;
+            }
+
             filteredLibrary.forEach(ex => {
                 const exEl = document.createElement('div');
                 exEl.className = "flex justify-between items-center p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800";
@@ -1015,28 +1000,8 @@
             });
         }
 
-        async function saveNewExerciseToLibrary() {
-            const name = newExerciseNameInput.value;
-            if (!name) return;
-
-            const newExercise = {
-                name: name,
-                gif: "", 
-                muscle: ""
-            };
-
-            saveNewExerciseBtn.disabled = true;
-            try {
-                await addDoc(libraryCol, newExercise);
-                console.log("Novo exercício salvo na biblioteca.");
-                newExerciseNameInput.value = '';
-            } catch (error) {
-                console.error("Erro ao salvar novo exercício:", error);
-            } finally {
-                saveNewExerciseBtn.disabled = false;
-            }
-        }
-
+        // --- REMOVIDO: Função saveNewExerciseToLibrary ---
+        
         // --- TELA 5: LÓGICA DO MODAL DE GIF ---
         function openGifModal(name, gifUrl, muscle) {
             if (!gifModal || !gifModalTitle || !gifModalImage || !gifModalMuscle) return;
@@ -1235,11 +1200,14 @@
 
             // --- Eventos da Tela 4 (Modal Biblioteca) ---
             if(closeLibraryBtn) closeLibraryBtn.addEventListener('click', closeLibraryModal);
-            if(saveNewExerciseBtn) saveNewExerciseBtn.addEventListener('click', saveNewExerciseToLibrary);
+            
+            // --- REMOVIDO: Event listener de 'saveNewExerciseBtn' ---
+            
             if(librarySearchInput) librarySearchInput.addEventListener('input', renderExerciseLibraryUI); 
             if(libraryListContainer) libraryListContainer.addEventListener('click', (e) => {
                 if (e.target.classList.contains('add-exercise-from-lib-btn')) {
                     const exerciseId = e.target.dataset.exerciseId;
+                    
                     const exerciseData = allExercises.find(ex => ex.id === exerciseId); 
                     if (!exerciseData) return;
                     
@@ -1284,7 +1252,6 @@
         });
     </script>
 
-    <!-- Script do Service Worker -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -1301,4 +1268,3 @@
     </script>
 </body>
 </html>
-
