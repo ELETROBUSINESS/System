@@ -1,4 +1,4 @@
-const CACHE_NAME = 'eletro-app-v10';
+const CACHE_NAME = 'eletro-app-v11';
 
 const URLS_TO_CACHE = [
   '/treino/login.html',
@@ -12,8 +12,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        // ATUALIZADO: Mensagem do console corrigida para v5
-        console.log('Cache v10 aberto. Adicionando arquivos principais.');
+        console.log('Cache v11 aberto. Adicionando arquivos principais.');
         // force-reload para garantir que estamos pegando os arquivos do servidor
         const requests = URLS_TO_CACHE.map(url => new Request(url, { cache: 'reload' }));
         return cache.addAll(requests);

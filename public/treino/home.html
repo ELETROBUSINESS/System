@@ -389,13 +389,12 @@
         </div>
     </div>
     
-    <!-- SCRIPT PRINCIPAL DO APP (MÓDULO) -->
     <script type="module">
         // --- IMPORTS DO FIREBASE ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import {
-            getAuth,
-            signOut,
+        import { 
+            getAuth, 
+            signOut, 
             onAuthStateChanged,
             signInAnonymously,
             signInWithCustomToken
@@ -405,15 +404,15 @@
             setLogLevel,
             doc,
             getDoc,
+            addDoc,
+            setDoc,
+            deleteDoc,
             onSnapshot,
             collection,
-            query,
-            setDoc,
-            deleteDoc
+            query
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIGURAÇÃO FIREBASE ---
-        // Assume que home.html está no ROOT, e os outros arquivos em /treino/
         const firebaseConfig = typeof __firebase_config !== 'undefined' 
             ? JSON.parse(__firebase_config)
             : {
@@ -428,92 +427,128 @@
         
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-        // Inicializa o Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        setLogLevel('Debug');
+        setLogLevel('Debug'); 
 
-        // --- VARIÁVEIS GLOBAIS ---
+        // --- VARIÁVEIS GLOBAIS DO APP ---
         let userId = null;
-        let workoutHistoryCol, settingsDoc;
-        let docIdToDelete = null; 
+        let currentEditingRoutineId = null; 
+        let localRoutineExercises = []; 
+        let isEditingRoutine = false;
+        
+        let allRoutines = []; 
+        let allGlobalExercises = []; // Lista da biblioteca global
+        let allUserExercises = [];   // Lista da biblioteca pessoal do usuário
+        let allExercises = [];       // Lista mesclada
+        
+        let isInitialDataLoaded = false; 
 
-        // --- Seletores da UI ---
+        // Trava de migração foi REMOVIDA
+        
+        let routinesCol, globalLibraryCol, userLibraryCol, workoutHistoryCol, settingsDoc;
+
+        // --- Seletores de Elementos da UI ---
         const loadingOverlay = document.getElementById('loading-overlay');
         const mainContent = document.getElementById('main-content');
         const mobileNav = document.getElementById('mobile-nav');
-        const startWorkoutBtn = document.getElementById('start-workout-btn');
-        const historyContainer = document.getElementById('workout-history-container');
-        const historyLoadingPlaceholder = document.getElementById('history-loading-placeholder');
-        const greetingMobile = document.getElementById('user-greeting-mobile');
-        const greetingDesktop = document.getElementById('user-greeting-desktop');
-        const deleteConfirmModal = document.getElementById('delete-confirm-modal');
-        const deleteModalCancelBtn = document.getElementById('delete-modal-cancel-btn');
-        const deleteModalConfirmBtn = document.getElementById('delete-modal-confirm-btn');
+        // Telas
+        const routineListScreen = document.getElementById('routine-list-screen');
+        const routineEditorScreen = document.getElementById('routine-editor-screen');
+        const activeWorkoutScreen = document.getElementById('active-workout-screen');
+        // Tela 1 (Lista)
+        const createRoutineBtn = document.getElementById('create-routine-btn');
+        const routinesContainer = document.getElementById('routines-container');
+        // Tela 2 (Editor)
+        const backToListBtn = document.getElementById('back-to-list-btn');
+        const saveRoutineBtn = document.getElementById('save-routine-btn');
+        const editorTitle = document.getElementById('editor-title');
+        const routineIdInput = document.getElementById('routine-id-input');
+        const routineNameInput = document.getElementById('routine-name');
+        const routineExercisesContainer = document.getElementById('routine-exercises-container');
+        const openLibraryBtn = document.getElementById('open-library-btn');
+        // Tela 3 (Treino Ativo)
+        const concludeWorkoutBtn = document.getElementById('conclude-workout-btn');
+        const activeWorkoutContainer = document.getElementById('active-workout-container');
+        const workoutDurationEl = document.getElementById('workout-duration');
+        let currentWorkoutRoutineName = ""; 
+        const restTimerBar = document.getElementById('rest-timer-bar');
+        const restTimerCountdownEl = document.getElementById('rest-timer-countdown');
+        // Tela 4 (Modal Biblioteca)
+        const libraryModal = document.getElementById('exercise-library-modal');
+        const closeLibraryBtn = document.getElementById('close-library-btn');
+        const librarySearchInput = document.getElementById('library-search');
+        const libraryListContainer = document.getElementById('library-list-container');
+        
+        // Tela 5 (Modal GIF)
+        const gifModal = document.getElementById('exercise-gif-modal');
+        const closeGifModalBtn = document.getElementById('close-gif-modal-btn');
+        const gifModalTitle = document.getElementById('gif-modal-title');
+        const gifModalImage = document.getElementById('gif-modal-image');
+        const gifModalMuscle = document.getElementById('gif-modal-muscle');
+        const gifModalTabButtons = document.querySelectorAll('.gif-modal-tab-btn');
+        const gifModalTabPanels = document.querySelectorAll('.gif-modal-tab-panel');
+        // Tema
+        const themeToggles = document.querySelectorAll('#theme-toggle, #theme-toggle-desktop');
+        // Menu Mobile 'Mais'
+        const moreMenuButtons = document.querySelectorAll('#more-menu-button'); 
+        const moreMenu = document.getElementById('more-menu');
+        const moreMenuOverlay = document.getElementById('more-menu-overlay');
 
 
-        // --- "Auth Guard" com Tela de Loading ---
+        // --- AUTENTICAÇÃO E INICIALIZAÇÃO ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // SIM, está logado.
+                // Usuário está logado
                 userId = user.uid;
-                console.log("Usuário logado:", userId);
+                console.log("Usuário autenticado:", userId);
                 
-                // Define os caminhos do Firestore
+                const userGreetingDesktop = document.getElementById('user-greeting-desktop');
+                if(userGreetingDesktop) userGreetingDesktop.textContent = user.displayName || 'Usuário';
+
+                routinesCol = collection(db, `artifacts/${appId}/users/${userId}/routines`);
                 workoutHistoryCol = collection(db, `artifacts/${appId}/users/${userId}/workoutHistory`);
                 settingsDoc = doc(db, `artifacts/${appId}/users/${userId}/settings/userSettings`);
-
-                // Carrega as configurações (tema)
-                await loadUserSettings();
                 
-                // Inicia o listener do histórico
+                globalLibraryCol = collection(db, `artifacts/${appId}/globalExerciseLibrary`);
+                userLibraryCol = collection(db, `artifacts/${appId}/users/${userId}/exerciseLibrary`);
+
+                await loadUserSettings();
                 setupFirestoreListeners();
 
-                // Atualiza saudações
-                const userName = user.displayName || 'Usuário';
-                if(greetingMobile) greetingMobile.textContent = `Olá, ${userName}!`;
-                if(greetingDesktop) greetingDesktop.textContent = userName;
-
-                // Esconde o loading
-                loadingOverlay.classList.add('hidden');
-                // Mostra o conteúdo principal e a nav mobile
                 mainContent.classList.remove('hidden');
                 mobileNav.classList.remove('hidden');
 
             } else {
-                // NÃO está logado. Tenta logar.
-                console.log("Usuário não está logado. Tentando login...");
+                // Usuário não está logado, tenta logar
+                console.log("Nenhum usuário logado. Tentando login...");
                 try {
-                    if (typeof __initial_auth_token !== 'undefined') {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                         await signInWithCustomToken(auth, __initial_auth_token);
                     } else {
                         await signInAnonymously(auth);
                     }
-                    // onAuthStateChanged será chamado de novo se o login for bem-sucedido
                 } catch (error) {
-                    // ATUALIZADO: Redireciona se o login falhar
                     console.error("Erro ao fazer login:", error);
                     loadingOverlay.innerHTML = "Erro ao autenticar. Redirecionando...";
-                    // Assume que login.html está no mesmo nível que treino.html
-                    window.location.href = 'login.html'; 
+                    window.location.href = '/treino/login.html';
                 }
             }
         });
-
-        // --- CARREGAMENTO DE DADOS ---
 
         async function loadUserSettings() {
             try {
                 const docSnap = await getDoc(settingsDoc);
                 if (docSnap.exists()) {
                     const settings = docSnap.data();
+                    console.log("Configurações carregadas:", settings);
                     if (settings.theme) {
-                        applyTheme(settings.theme);
-                        localStorage.setItem('theme', settings.theme);
+                        applyTheme(settings.theme); 
+                        localStorage.setItem('theme', settings.theme); 
                     }
                 } else {
-                    // Salva o tema padrão (do localStorage ou do sistema) no Firestore
+                    console.log("Nenhum documento de configuração encontrado. Usando padrões.");
                     const currentTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
                     await setDoc(settingsDoc, { theme: currentTheme }, { merge: true });
                 }
@@ -522,139 +557,521 @@
             }
         }
 
+        async function saveUserSetting(key, value) {
+            try {
+                await setDoc(settingsDoc, { [key]: value }, { merge: true });
+                console.log("Configuração salva:", key, value);
+            } catch (error) {
+                console.error("Erro ao salvar configuração:", error);
+            }
+        }
+
+        // --- LÓGICA DE DADOS (FIRESTORE) ---
+
         function setupFirestoreListeners() {
-            // Listener para Histórico de Treinos
-            onSnapshot(query(workoutHistoryCol), (snapshot) => {
-                const history = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-                console.log("Histórico carregado:", history);
-                renderWorkoutHistory(history);
+            // Listener para Rotinas
+            onSnapshot(query(routinesCol), (snapshot) => {
+                allRoutines = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                console.log("Rotinas carregadas:", allRoutines);
+                renderRoutinesUI(allRoutines);
+
+                if (!isInitialDataLoaded) {
+                    loadingOverlay.classList.add('hidden');
+                    isInitialDataLoaded = true;
+                }
             }, (error) => {
-                console.error("Erro ao carregar histórico:", error);
-                if(historyContainer) historyContainer.innerHTML = "<p class='text-red-500 text-center'>Erro ao carregar histórico.</p>";
+                console.error("Erro ao carregar rotinas:", error);
+                loadingOverlay.innerHTML = "Erro ao carregar dados.";
+            });
+
+            // --- ATUALIZAÇÃO: Lógica de migração REMOVIDA ---
+            // Listener para a Biblioteca GLOBAL (Versão Limpa)
+            // Apenas lê o que está no banco de dados.
+            onSnapshot(query(globalLibraryCol), (snapshot) => {
+                allGlobalExercises = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                console.log("Biblioteca Global carregada:", allGlobalExercises.length);
+                mergeAndRenderExercises();
+            }, (error) => console.error("Erro ao carregar biblioteca global:", error));
+
+            // Listener para a Biblioteca PESSOAL do Usuário
+            onSnapshot(query(userLibraryCol), (snapshot) => {
+                allUserExercises = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                console.log("Biblioteca do Usuário carregada:", allUserExercises.length);
+                mergeAndRenderExercises();
+            }, (error) => console.error("Erro ao carregar biblioteca do usuário:", error));
+        }
+
+        function mergeAndRenderExercises() {
+            allExercises = [...allGlobalExercises, ...allUserExercises];
+            allExercises.sort((a, b) => a.name.localeCompare(b.name));
+            console.log("Bibliotecas mescladas. Total de exercícios:", allExercises.length);
+            renderExerciseLibraryUI(); 
+        }
+
+        
+        // --- ATUALIZAÇÃO: Função 'addDefaultExercisesToGlobal' REMOVIDA ---
+        // O script 'seed.js' agora é responsável por isso. O app não precisa mais dessa função.
+
+
+        // --- Funções de Troca de Tela ---
+        function showScreen(screenToShow) {
+            [routineListScreen, routineEditorScreen, activeWorkoutScreen].forEach(screen => {
+                if(screen) screen.classList.add('hidden');
+            });
+            if(screenToShow) screenToShow.classList.remove('hidden');
+            window.scrollTo(0, 0);
+        }
+
+        // --- TELA 1: LÓGICA DA LISTA DE ROTINAS ---
+        function renderRoutinesUI(routines) {
+            if (!routinesContainer) return;
+            routinesContainer.innerHTML = '';
+            if (routines.length === 0) {
+                routinesContainer.innerHTML = `<p class="text-gray-500 dark:text-gray-400 text-center">Nenhuma rotina criada.</p>`;
+                return;
+            }
+            routines.forEach(routine => {
+                const exerciseCount = routine.exercises ? routine.exercises.length : 0;
+                const card = document.createElement('div');
+                card.className = "bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700";
+                card.innerHTML = `
+                    <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">${routine.name}</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">${exerciseCount} exercícios</p>
+                    <div class="flex items-center space-x-3">
+                        <button class="start-workout-btn flex-1 py-3 px-4 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg shadow-md" data-routine-id="${routine.id}">
+                            Iniciar Treino
+                        </button>
+                        <button class="edit-routine-btn py-3 px-4 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold rounded-lg" data-routine-id="${routine.id}">
+                            <i class='bx bx-edit text-xl'></i>
+                        </button>
+                        <button class="delete-routine-btn py-3 px-4 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-semibold rounded-lg" data-routine-id="${routine.id}">
+                            <i class='bx bx-trash text-xl'></i>
+                        </button>
+                    </div>
+                `;
+                routinesContainer.appendChild(card);
+            });
+        }
+        
+        // --- TELA 2: LÓGICA DO EDITOR DE ROTINA ---
+        function showEditor(routineId = null) {
+            currentEditingRoutineId = routineId;
+            localRoutineExercises = [];
+            if (routineId) {
+                if(editorTitle) editorTitle.textContent = "Editar Rotina";
+                const routine = allRoutines.find(r => r.id === routineId);
+                if (routine) {
+                    if(routineNameInput) routineNameInput.value = routine.name;
+                    if(routineIdInput) routineIdInput.value = routine.id;
+                    localRoutineExercises = JSON.parse(JSON.stringify(routine.exercises || []));
+                }
+            } else {
+                if(editorTitle) editorTitle.textContent = "Criar Rotina";
+                if(routineNameInput) routineNameInput.value = "";
+                if(routineIdInput) routineIdInput.value = ""; 
+            }
+            renderEditorExercises();
+            showScreen(routineEditorScreen);
+        }
+
+        function renderEditorExercises() {
+            if (!routineExercisesContainer) return;
+            routineExercisesContainer.innerHTML = '';
+            localRoutineExercises.forEach((ex, index) => {
+                const exEl = document.createElement('div');
+                exEl.className = "exercise-editor-card bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border dark:border-gray-700";
+                exEl.dataset.index = index;
+                exEl.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <h4 class="font-semibold">${ex.name}</h4>
+                        <button class="remove-exercise-btn text-red-400 hover:text-red-600" data-index="${index}">
+                            <i class='bx bx-trash text-xl'></i>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3 mt-2">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500">Séries</label>
+                            <input type="text" data-field="sets" value="${ex.sets || ''}" class="w-full p-2 bg-white dark:bg-gray-700 rounded-lg border dark:border-gray-600 routine-exercise-input">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500">Reps</label>
+                            <input type="text" data-field="reps" value="${ex.reps || ''}" class="w-full p-2 bg-white dark:bg-gray-700 rounded-lg border dark:border-gray-600 routine-exercise-input">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500">Desc.</label>
+                            <input type="text" data-field="rest" value="${ex.rest || ''}s" class="w-full p-2 bg-white dark:bg-gray-700 rounded-lg border dark:border-gray-600 routine-exercise-input">
+                        </div>
+                    </div>
+                `;
+                routineExercisesContainer.appendChild(exEl);
             });
         }
 
-        // --- RENDERIZAÇÃO DO HISTÓRICO ---
-        function renderWorkoutHistory(history) {
-            if (!historyContainer) return;
-
-            // Esconde o placeholder de loading
-            if (historyLoadingPlaceholder) historyLoadingPlaceholder.classList.add('hidden');
-            
-            if (history.length === 0) {
-                historyContainer.innerHTML = `<p class="text-gray-500 dark:text-gray-400 text-center">Nenhum treino concluído ainda.</p>`;
+        async function saveRoutine() {
+            if (!routineNameInput.value) {
+                console.warn("Por favor, dê um nome à sua rotina.");
                 return;
             }
 
-            // Ordena do mais recente para o mais antigo
-            history.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
-
-            historyContainer.innerHTML = ''; // Limpa o container
-
-            history.forEach(workout => {
-                const card = createHistoryCard(workout);
-                historyContainer.appendChild(card);
-            });
-        }
-
-        function createHistoryCard(workout) {
-            const card = document.createElement('div');
-            card.className = "bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 mb-3";
-
-            let totalVolume = 0;
-            if(workout.exercises) {
-                workout.exercises.forEach(ex => {
-                    if(ex.sets) {
-                        ex.sets.forEach(set => {
-                            totalVolume += (parseFloat(set.kg) || 0) * (parseFloat(set.reps) || 0);
+            if (routineExercisesContainer) {
+                routineExercisesContainer.querySelectorAll('.exercise-editor-card').forEach(card => {
+                    const index = parseInt(card.dataset.index, 10);
+                    if (localRoutineExercises[index]) {
+                        card.querySelectorAll('input[data-field]').forEach(input => {
+                            const field = input.dataset.field;
+                            localRoutineExercises[index][field] = input.value.replace('s', '');
                         });
                     }
                 });
             }
 
-            const workoutDate = new Date(workout.completedAt);
-            const formattedDate = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(workoutDate);
-            
-            const durationMin = Math.floor(workout.durationInSeconds / 60);
+            const routineData = {
+                name: routineNameInput.value,
+                exercises: localRoutineExercises,
+                updatedAt: new Date().toISOString()
+            };
 
-            card.innerHTML = `
-                <div class="flex justify-between items-center mb-2">
-                    <h4 class="font-semibold text-gray-800 dark:text-gray-200">${workout.routineName || 'Treino Avulso'}</h4>
-                    <div class="flex items-center space-x-2">
-                        <span class="text-xs text-gray-400 dark:text-gray-500">${formattedDate}</span>
-                        <button class="delete-history-btn text-gray-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded-full" data-id="${workout.id}" title="Excluir treino">
-                            <i class='bx bx-trash text-lg'></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="flex space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                    <span class="flex items-center"><i class='bx bx-time-five text-base mr-1 opacity-70'></i>${durationMin} min</span>
-                    <span class="flex items-center"><i class='bx bx-dumbbell text-base mr-1 opacity-70'></i>${totalVolume.toLocaleString('pt-BR')}kg</span>
-                </div>
-            `;
-            return card;
-        }
-
-        // --- Funções do Modal de Exclusão ---
-        function openDeleteConfirmModal(id) {
-            docIdToDelete = id;
-            if (deleteConfirmModal) deleteConfirmModal.classList.remove('hidden');
-        }
-
-        function closeDeleteConfirmModal() {
-            docIdToDelete = null;
-            if (deleteConfirmModal) deleteConfirmModal.classList.add('hidden');
-        }
-
-        async function handleDeleteConfirm() {
-            if (!docIdToDelete || !workoutHistoryCol) return;
-
-            deleteModalConfirmBtn.disabled = true;
-            deleteModalConfirmBtn.textContent = "Excluindo...";
+            saveRoutineBtn.disabled = true; 
 
             try {
-                const docRef = doc(workoutHistoryCol, docIdToDelete);
-                await deleteDoc(docRef);
-                console.log("Documento excluído:", docIdToDelete);
-                // O 'onSnapshot' vai atualizar a UI automaticamente.
+                if (currentEditingRoutineId) {
+                    const docRef = doc(routinesCol, currentEditingRoutineId);
+                    await setDoc(docRef, routineData, { merge: true }); 
+                    console.log("Rotina atualizada:", currentEditingRoutineId);
+                } else {
+                    routineData.createdAt = new Date().toISOString();
+                    const docRef = await addDoc(routinesCol, routineData);
+                    console.log("Rotina salva com ID:", docRef.id);
+                }
+                showScreen(routineListScreen); 
             } catch (error) {
-                console.error("Erro ao excluir documento:", error);
+                console.error("Erro ao salvar rotina:", error);
             } finally {
-                deleteModalConfirmBtn.disabled = false;
-                deleteModalConfirmBtn.textContent = "Excluir";
-                closeDeleteConfirmModal();
+                saveRoutineBtn.disabled = false;
+            }
+        }
+
+        // --- TELA 3: LÓGICA DO TREINO ATIVO ---
+        function showActiveWorkout(routineId) {
+            const routine = allRoutines.find(r => r.id === routineId);
+            if (!routine) return;
+
+            currentWorkoutRoutineName = routine.name; 
+
+            if(activeWorkoutContainer) activeWorkoutContainer.innerHTML = '';
+            routine.exercises.forEach(ex => {
+                const libEx = allExercises.find(e => e.id === ex.libraryId) || {};
+                const exerciseData = { ...libEx, ...ex }; 
+                
+                const exCard = createActiveExerciseCard(exerciseData);
+                if(activeWorkoutContainer) activeWorkoutContainer.appendChild(exCard);
+            });
+            
+            const addExerciseBtnHTML = `
+                <button id="add-exercise-to-workout-btn" class="w-full flex justify-center items-center py-3 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700">
+                    <i class='bx bx-plus mr-1'></i>
+                    Adicionar Exercício
+                </button>
+            `;
+            if(activeWorkoutContainer) activeWorkoutContainer.insertAdjacentHTML('beforeend', addExerciseBtnHTML);
+
+            startWorkoutTimer();
+            showScreen(activeWorkoutScreen);
+        }
+
+        function createActiveExerciseCard(exercise) {
+            const exCard = document.createElement('div');
+            exCard.className = "exercise-card bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700";
+            exCard.dataset.exerciseName = exercise.name;
+            exCard.dataset.libraryId = exercise.libraryId || '';
+
+            const gifUrl = exercise.gif || 'https://placehold.co/40x40/e2e8f0/94a3b8?text=E';
+            const muscle = exercise.muscle || 'N/A';
+            
+            exCard.innerHTML = `
+                <div class="flex justify-between items-center mb-3">
+                    <div class="flex items-center space-x-3">
+                        <button class="gif-thumbnail-btn w-10 h-10 rounded-full overflow-hidden flex-shrink-0" 
+                                data-name="${exercise.name}" 
+                                data-gif-url="${gifUrl}"
+                                data-muscle="${muscle}">
+                            <img src="${gifUrl}" 
+                                 onerror="this.src='https://placehold.co/40x40/e2e8f0/94a3b8?text=E'"
+                                 alt="gif" class="w-full h-full object-cover bg-gray-200 dark:bg-gray-700">
+                        </button>
+                        <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200">${exercise.name}</h4>
+                    </div>
+                    <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><i class='bx bx-dots-vertical-rounded text-xl'></i></button>
+                </div>
+                <input type="text" placeholder="Adicionar notas aqui..." class="exercise-notes w-full bg-transparent p-1 mb-2 placeholder-gray-400 dark:placeholder-gray-500 text-sm">
+                <div class="text-sm text-gray-500 dark:text-gray-400 mb-3" data-rest-time="${exercise.rest || 90}">
+                    <i class='bx bx-time-five text-base mr-1 opacity-70'></i>
+                    <span>Tempo de Descanso: </span>
+                    <button class="rest-time-btn font-medium text-primary-600 dark:text-primary-400 hover:underline">${formatSeconds(exercise.rest || 90)}</button>
+                </div>
+                <div class="space-y-2">
+                    <div class="grid grid-cols-5 gap-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase px-2">
+                        <span>Série</span>
+                        <span>Anterior</span>
+                        <span class="text-center">KG</span>
+                        <span class="text-center">Reps</span>
+                        <span>✓</span>
+                    </div>
+                    <div class="sets-container space-y-3"></div>
+                </div>
+                <button class="add-set-btn w-full mt-4 flex justify-center items-center py-2 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700/50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700/50 transition-all">
+                    <i class='bx bx-plus mr-1'></i>
+                    Adicionar Série
+                </button>
+            `;
+            const setsContainer = exCard.querySelector('.sets-container');
+            const setCount = parseInt(exercise.sets, 10) || 3;
+            for (let i = 0; i < setCount; i++) {
+                addSetRow(setsContainer, i + 1, "---");
+            }
+            return exCard;
+        }
+
+        let workoutTimerInterval = null;
+        let workoutSeconds = 0;
+        let restTimerInterval = null;
+        
+        function startWorkoutTimer() {
+            workoutSeconds = 0;
+            if(workoutTimerInterval) clearInterval(workoutTimerInterval);
+            workoutTimerInterval = setInterval(() => {
+                workoutSeconds++;
+                let h = Math.floor(workoutSeconds / 3600).toString().padStart(2, '0');
+                let m = Math.floor((workoutSeconds % 3600) / 60).toString().padStart(2, '0');
+                let s = (workoutSeconds % 60).toString().padStart(2, '0');
+                if(workoutDurationEl) workoutDurationEl.textContent = `${h}:${m}:${s}`;
+            }, 1000);
+        }
+
+        function formatSeconds(sec) {
+            sec = parseInt(sec, 10);
+            const m = Math.floor(sec / 60);
+            const s = sec % 60;
+            return `${m}min ${s.toString().padStart(2, '0')}s`;
+        }
+
+        function startRestTimer(durationInSeconds) {
+            if (restTimerInterval) clearInterval(restTimerInterval);
+            if(!restTimerBar || !restTimerCountdownEl) return;
+            restTimerBar.classList.remove('hidden');
+            let seconds = durationInSeconds;
+            function updateTimerText() {
+                restTimerCountdownEl.textContent = formatSeconds(seconds);
+            }
+            updateTimerText();
+            restTimerInterval = setInterval(() => {
+                seconds--;
+                updateTimerText();
+                if (seconds <= 0) {
+                    clearInterval(restTimerInterval);
+                    restTimerBar.classList.add('hidden');
+                }
+            }, 1000);
+        }
+        
+        function addSetRow(container, setNumber, previous = "--") {
+            const setRow = document.createElement('div');
+            setRow.className = 'set-row grid grid-cols-5 gap-2 items-center';
+            setRow.innerHTML = `
+                <button class="set-number-btn font-semibold text-gray-500 dark:text-gray-400 text-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="Clique para excluir a série">
+                    ${setNumber}
+                </button>
+                <span class="text-sm text-gray-500 dark:text-gray-400">${previous}</span>
+                <input type="number" placeholder="kg" class="set-kg-input w-full p-3 bg-white dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 text-center">
+                <input type="number" placeholder="reps" class="set-reps-input w-full p-3 bg-white dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 text-center">
+                <button class="set-complete-btn p-3 bg-gray-200 dark:bg-gray-700 text-gray-400 rounded-lg"><i class='bx bx-check text-2xl'></i></button>
+            `;
+            container.appendChild(setRow);
+        }
+
+        function renumberSets(setsContainer) {
+            const setRows = setsContainer.querySelectorAll('.set-row');
+            setRows.forEach((row, index) => {
+                const setNumberBtn = row.querySelector('.set-number-btn');
+                if (setNumberBtn) {
+                    setNumberBtn.textContent = index + 1;
+                }
+            });
+        }
+
+        async function saveWorkoutHistory() {
+            concludeWorkoutBtn.disabled = true;
+            console.log("Salvando histórico do treino...");
+            const performedExercises = [];
+
+            activeWorkoutContainer.querySelectorAll('.exercise-card').forEach(card => {
+                const exerciseData = {
+                    name: card.dataset.exerciseName,
+                    libraryId: card.dataset.libraryId,
+                    notes: card.querySelector('.exercise-notes').value,
+                    sets: []
+                };
+
+                card.querySelectorAll('.set-row').forEach((setRow, index) => {
+                    const kgInput = setRow.querySelector('.set-kg-input');
+                    const repsInput = setRow.querySelector('.set-reps-input');
+                    const isComplete = setRow.querySelector('.set-complete-btn').disabled;
+                    
+                    if (isComplete || kgInput.value || repsInput.value) {
+                        exerciseData.sets.push({
+                            setNumber: index + 1,
+                            kg: kgInput.value || 0,
+                            reps: repsInput.value || 0,
+                            isComplete: isComplete
+                        });
+                    }
+                });
+
+                if (exerciseData.sets.length > 0) {
+                    performedExercises.push(exerciseData);
+                }
+            });
+
+            const workoutData = {
+                routineName: currentWorkoutRoutineName,
+                durationInSeconds: workoutSeconds,
+                completedAt: new Date().toISOString(),
+                exercises: performedExercises
+            };
+
+            try {
+                await addDoc(workoutHistoryCol, workoutData);
+                console.log("Histórico do treino salvo!");
+            } catch (error) {
+                console.error("Erro ao salvar histórico do treino:", error);
+            } finally {
+                concludeWorkoutBtn.disabled = false;
+                if(workoutTimerInterval) clearInterval(workoutTimerInterval);
+                if(restTimerInterval) clearInterval(restTimerInterval);
+                workoutSeconds = 0;
+                currentWorkoutRoutineName = "";
+                showScreen(routineListScreen);
             }
         }
 
 
-        // --- LÓGICA DA PÁGINA (Tema, Menu, Logout) ---
-        document.addEventListener('DOMContentLoaded', function () {
+        // --- TELA 4: LÓGICA DA BIBLIOTECA DE EXERCÍCIOS ---
+        function openLibraryModal(isEditing) {
+            isEditingRoutine = isEditing; 
+            renderExerciseLibraryUI(); 
+            if(libraryModal) libraryModal.classList.remove('hidden');
+        }
+        function closeLibraryModal() {
+            if(libraryModal) libraryModal.classList.add('hidden');
+        }
 
-            const htmlElement = document.documentElement;
-
-            // --- Script do Tema ---
-            const themeToggleButtons = document.querySelectorAll('#theme-toggle, #theme-toggle-desktop');
-            async function saveUserSetting(key, value) {
-                if (!settingsDoc) return;
-                try {
-                    await setDoc(settingsDoc, { [key]: value }, { merge: true });
-                    console.log("Configuração salva:", key, value);
-                } catch (error) {
-                    console.error("Erro ao salvar configuração:", error);
-                }
-            }
-            function toggleTheme() {
-                const isDark = htmlElement.classList.toggle('dark');
-                const newTheme = isDark ? 'dark' : 'light';
-                applyTheme(newTheme);
-                localStorage.setItem('theme', newTheme);
-                // Salva a configuração no Firestore
-                if (userId) saveUserSetting('theme', newTheme);
-            }
-            themeToggleButtons.forEach(btn => btn.addEventListener('click', toggleTheme));
+        function renderExerciseLibraryUI() {
+            if (!libraryListContainer) return;
+            libraryListContainer.innerHTML = '';
             
+            const searchTerm = librarySearchInput ? librarySearchInput.value.toLowerCase() : "";
+            
+            const filteredLibrary = allExercises.filter(ex => ex.name.toLowerCase().includes(searchTerm));
+            
+            if (filteredLibrary.length === 0) {
+                if(searchTerm) {
+                    libraryListContainer.innerHTML = `<p class="text-gray-500 dark:text-gray-400 text-center p-4">Nenhum exercício encontrado para "${searchTerm}".</p>`;
+                } else {
+                    libraryListContainer.innerHTML = `<p class="text-gray-500 dark:text-gray-400 text-center p-4">Nenhum exercício encontrado.</p>`;
+                }
+            } else {
+                filteredLibrary.forEach(ex => {
+                    const exEl = document.createElement('div');
+                    exEl.className = "flex justify-between items-center p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800";
+                    exEl.innerHTML = `
+                        <span class="font-medium">${ex.name}</span>
+                        <button class="add-exercise-from-lib-btn py-1 px-3 bg-primary-600 text-white rounded-lg text-sm" data-exercise-id="${ex.id}">Add</button>
+                    `;
+                    libraryListContainer.appendChild(exEl);
+                });
+            }
+        }
+        
+        // --- TELA 5: LÓGICA DO MODAL DE GIF ---
+        function openGifModal(name, gifUrl, muscle) {
+            if (!gifModal || !gifModalTitle || !gifModalImage || !gifModalMuscle) return;
+            gifModalTitle.textContent = name;
+            gifModalImage.src = gifUrl;
+            gifModalMuscle.textContent = muscle || 'N/A';
+            gifModal.classList.remove('hidden');
+        }
+        
+        function closeGifModal() {
+            if (!gifModal || !gifModalImage) return;
+            gifModalImage.src = ""; 
+            gifModal.classList.add('hidden');
+            switchGifModalTab('resumo'); 
+        }
+
+        function switchGifModalTab(tabId) {
+            gifModalTabButtons.forEach(btn => {
+                if (btn.dataset.tab === tabId) {
+                    btn.classList.add('border-primary-600', 'dark:border-primary-400', 'text-primary-600', 'dark:text-primary-400');
+                    btn.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'dark:text-gray-400', 'dark:hover:text-gray-200', 'dark:hover:border-gray-600');
+                } else {
+                    btn.classList.remove('border-primary-600', 'dark:border-primary-400', 'text-primary-600', 'dark:text-primary-400');
+                    btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'dark:text-gray-400', 'dark:hover:text-gray-200', 'dark:hover:border-gray-600');
+                }
+            });
+
+            gifModalTabPanels.forEach(panel => {
+                if (panel.id === `gif-modal-tab-${tabId}`) {
+                    panel.classList.remove('hidden');
+                } else {
+                    panel.classList.add('hidden');
+                }
+            });
+        }
+        
+        // --- Menu 'Mais' (Modal Mobile) ---
+        function openMenu() {
+            if (!moreMenu || !moreMenuOverlay) return;
+            moreMenu.classList.remove('hidden');
+            moreMenuOverlay.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                moreMenu.classList.remove('translate-y-full');
+            });
+        }
+
+        function closeMenu() {
+            if (!moreMenu || !moreMenuOverlay) return;
+            moreMenu.classList.add('translate-y-full');
+            moreMenuOverlay.classList.add('hidden');
+            setTimeout(() => moreMenu.classList.add('hidden'), 300);
+        }
+        
+        // --- Logout ---
+        async function handleLogout() {
+            try {
+                await signOut(auth);
+                console.log("Logout bem-sucedido. Redirecionando...");
+                window.location.href = '/treino/login.html';
+            } catch (error) {
+                console.error("Erro ao fazer logout:", error);
+            }
+        }
+
+        // --- Adicionar Eventos (Event Listeners) ---
+        
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            // --- Eventos de Tema ---
+            themeToggles.forEach(toggle => {
+                toggle.addEventListener('click', () => {
+                    const isDark = document.documentElement.classList.toggle('dark');
+                    const newTheme = isDark ? 'dark' : 'light';
+                    applyTheme(newTheme);
+                    localStorage.setItem('theme', newTheme);
+                    if (userId) saveUserSetting('theme', newTheme);
+                });
+            });
             const updateIcons = (isDark) => {
-                themeToggleButtons.forEach(toggle => {
+                themeToggles.forEach(toggle => {
                     const moonIcon = toggle.querySelector('.bxs-moon');
                     const sunIcon = toggle.querySelector('.bxs-sun');
                     if (moonIcon && sunIcon) {
@@ -666,90 +1083,161 @@
                 });
             };
             const observer = new MutationObserver(() => {
-                updateIcons(htmlElement.classList.contains('dark'));
+                updateIcons(document.documentElement.classList.contains('dark'));
             });
-            observer.observe(htmlElement, { attributes: true, attributeFilter: ['class'] });
-            updateIcons(htmlElement.classList.contains('dark'));
+            observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+            updateIcons(document.documentElement.classList.contains('dark'));
+            
+            // --- Eventos do Menu 'Mais' ---
+            if(moreMenuButtons) moreMenuButtons.forEach(btn => btn.addEventListener('click', openMenu));
+            if(moreMenuOverlay) moreMenuOverlay.addEventListener('click', closeMenu);
+            // Evento de logout dentro do menu 'Mais'
+            const logoutButtonMobile = document.getElementById('logout-button-mobile');
+            if(logoutButtonMobile) logoutButtonMobile.addEventListener('click', handleLogout);
 
 
-            // --- Script do Menu 'Mais' ---
-            const moreMenuButtons = document.querySelectorAll('#more-menu-button');
-            const moreMenu = document.getElementById('more-menu');
-            const moreMenuOverlay = document.getElementById('more-menu-overlay');
+            // --- Eventos da Tela 1 (Lista) ---
+            if(createRoutineBtn) createRoutineBtn.addEventListener('click', () => showEditor(null));
+            if(routinesContainer) routinesContainer.addEventListener('click', async (e) => {
+                const startBtn = e.target.closest('.start-workout-btn');
+                const editBtn = e.target.closest('.edit-routine-btn');
+                const deleteBtn = e.target.closest('.delete-routine-btn');
 
-            function openMenu() {
-                moreMenu.classList.remove('hidden');
-                moreMenuOverlay.classList.remove('hidden');
-                requestAnimationFrame(() => {
-                    moreMenu.classList.remove('translate-y-full');
-                });
-            }
-
-            function closeMenu() {
-                moreMenu.classList.add('translate-y-full');
-                moreMenuOverlay.classList.add('hidden');
-                setTimeout(() => moreMenu.classList.add('hidden'), 300);
-            }
-
-            moreMenuButtons.forEach(btn => btn.addEventListener('click', openMenu));
-            moreMenuOverlay.addEventListener('click', closeMenu);
-
-            // --- Script de Logout ---
-            // ATUALIZADO: Redireciona para login.html ao sair
-            async function handleLogout() {
-                try {
-                    await signOut(auth);
-                    console.log("Logout bem-sucedido. Redirecionando...");
-                    // Assume que login.html está no mesmo nível que treino.html
-                    window.location.href = 'login.html';
-                } catch (error) {
-                    console.error("Erro ao fazer logout:", error);
-                }
-            }
-            const logoutButtons = document.querySelectorAll('#logout-button-desktop, #logout-button-mobile');
-            logoutButtons.forEach(btn => btn.addEventListener('click', handleLogout));
-
-            // --- Evento do Botão Iniciar Treino ---
-            // ATUALIZADO: Link para treino.html
-            if (startWorkoutBtn) {
-                startWorkoutBtn.addEventListener('click', () => {
-                    window.location.href = 'treino.html';
-                });
-            }
-
-            // --- Eventos de Exclusão ---
-            if (historyContainer) {
-                historyContainer.addEventListener('click', (e) => {
-                    const deleteBtn = e.target.closest('.delete-history-btn');
-                    if (deleteBtn) {
-                        e.stopPropagation(); 
-                        openDeleteConfirmModal(deleteBtn.dataset.id);
+                if (startBtn) showActiveWorkout(startBtn.dataset.routineId);
+                if (editBtn) showEditor(editBtn.dataset.routineId);
+                if (deleteBtn) {
+                    const docId = deleteBtn.dataset.routineId;
+                    if (confirm("Tem certeza que deseja excluir esta rotina?")) {
+                        try {
+                            await deleteDoc(doc(routinesCol, docId));
+                            console.log("Rotina excluída:", docId);
+                        } catch (error) {
+                            console.error("Erro ao excluir rotina:", error);
+                        }
                     }
+                }
+            });
+
+            // --- Eventos da Tela 2 (Editor) ---
+            if(backToListBtn) backToListBtn.addEventListener('click', () => showScreen(routineListScreen));
+            if(saveRoutineBtn) saveRoutineBtn.addEventListener('click', saveRoutine);
+            if(openLibraryBtn) openLibraryBtn.addEventListener('click', () => openLibraryModal(true));
+            if(routineExercisesContainer) routineExercisesContainer.addEventListener('click', (e) => {
+                if(e.target.closest('.remove-exercise-btn')) {
+                    const indexToRemove = parseInt(e.target.closest('.remove-exercise-btn').dataset.index, 10);
+                    localRoutineExercises.splice(indexToRemove, 1);
+                    renderEditorExercises(); 
+                }
+            });
+
+            // --- Eventos da Tela 3 (Treino Ativo) ---
+            if(concludeWorkoutBtn) concludeWorkoutBtn.addEventListener('click', saveWorkoutHistory);
+            
+            if(activeWorkoutContainer) activeWorkoutContainer.addEventListener('click', (e) => {
+                const addBtn = e.target.closest('.add-set-btn');
+                const completeBtn = e.target.closest('.set-complete-btn');
+                const restBtn = e.target.closest('.rest-time-btn');
+                const addExerciseBtn = e.target.closest('#add-exercise-to-workout-btn');
+                const gifBtn = e.target.closest('.gif-thumbnail-btn');
+                const deleteSetBtn = e.target.closest('.set-number-btn');
+
+                if (addBtn) {
+                    const setsContainer = addBtn.closest('.exercise-card').querySelector('.sets-container');
+                    const newSetNumber = setsContainer.children.length + 1;
+                    addSetRow(setsContainer, newSetNumber);
+                }
+                if (completeBtn && !completeBtn.disabled) {
+                    const setRow = completeBtn.closest('.set-row');
+                    const exerciseCard = completeBtn.closest('.exercise-card');
+                    
+                    setRow.querySelectorAll('input').forEach(input => input.disabled = true);
+                    completeBtn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-400');
+                    completeBtn.classList.add('bg-primary-600', 'text-white');
+                    completeBtn.disabled = true;
+
+                    const restTimeDiv = exerciseCard.querySelector('[data-rest-time]');
+                    const restTimeInSeconds = parseInt(restTimeDiv.dataset.restTime, 10) || 90;
+                    startRestTimer(restTimeInSeconds);
+                }
+                if (restBtn) {
+                    const restTimeDiv = restBtn.closest('[data-rest-time]');
+                    const currentRest = restTimeDiv.dataset.restTime;
+                    const newRest = prompt("Digite o novo tempo de descanso em segundos:", currentRest);
+                    if (newRest && !isNaN(newRest)) {
+                        const newRestSeconds = parseInt(newRest, 10);
+                        restTimeDiv.dataset.restTime = newRestSeconds;
+                        restBtn.textContent = formatSeconds(newRestSeconds);
+                    }
+                }
+                if (addExerciseBtn) {
+                    openLibraryModal(false); 
+                }
+                if (gifBtn) {
+                    const name = gifBtn.dataset.name;
+                    const gifUrl = gifBtn.dataset.gifUrl;
+                    const muscle = gifBtn.dataset.muscle;
+                    openGifModal(name, gifUrl, muscle);
+                }
+                if (deleteSetBtn) {
+                    if (confirm("Tem certeza que deseja excluir esta série?")) {
+                        const setRow = deleteSetBtn.closest('.set-row');
+                        const setsContainer = setRow.closest('.sets-container');
+                        setRow.remove();
+                        renumberSets(setsContainer);
+                    }
+                }
+            });
+
+            // --- Eventos da Tela 4 (Modal Biblioteca) ---
+            if(closeLibraryBtn) closeLibraryBtn.addEventListener('click', closeLibraryModal);
+            
+            if(librarySearchInput) librarySearchInput.addEventListener('input', renderExerciseLibraryUI); 
+            if(libraryListContainer) libraryListContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('add-exercise-from-lib-btn')) {
+                    const exerciseId = e.target.dataset.exerciseId;
+                    
+                    const exerciseData = allExercises.find(ex => ex.id === exerciseId); 
+                    if (!exerciseData) return;
+                    
+                    const newExercise = {
+                        libraryId: exerciseData.id, 
+                        name: exerciseData.name,
+                        gif: exerciseData.gif,
+                        muscle: exerciseData.muscle,
+                        sets: "3",
+                        reps: "8-12",
+                        rest: "90"
+                    };
+
+                    if (isEditingRoutine) {
+                        localRoutineExercises.push(newExercise);
+                        renderEditorExercises();
+                    } else {
+                        const exCard = createActiveExerciseCard(newExercise);
+                        const addBtn = activeWorkoutContainer.querySelector('#add-exercise-to-workout-btn');
+                        if (addBtn) {
+                            activeWorkoutContainer.insertBefore(exCard, addBtn);
+                        } else {
+                            if(activeWorkoutContainer) activeWorkoutContainer.appendChild(exCard);
+                        }
+                    }
+                    closeLibraryModal();
+                }
+            });
+
+            // --- Eventos Tela 5 (Modal GIF) ---
+            if(closeGifModalBtn) closeGifModalBtn.addEventListener('click', closeGifModal);
+            gifModalTabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    switchGifModalTab(button.dataset.tab);
                 });
-            }
-            if (deleteModalCancelBtn) {
-                deleteModalCancelBtn.addEventListener('click', closeDeleteConfirmModal);
-            }
-            if (deleteModalConfirmBtn) {
-                deleteModalConfirmBtn.addEventListener('click', handleDeleteConfirm);
-            }
+            });
+
+            // --- Eventos de Logout (Desktop) ---
+            const logoutButtonDesktop = document.getElementById('logout-button-desktop');
+            if(logoutButtonDesktop) logoutButtonDesktop.addEventListener('click', handleLogout);
 
         });
-    </script>
-
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                // ATUALIZADO: caminho relativo para o service worker
-                navigator.serviceWorker.register('service-worker.js')
-                    .then((registration) => {
-                        console.log('Service Worker registrado com sucesso:', registration.scope);
-                    })
-                    .catch((error) => {
-                        console.log('Falha ao registrar Service Worker:', error);
-                    });
-            });
-        }
     </script>
 </body>
 
