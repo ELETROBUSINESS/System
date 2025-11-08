@@ -1,5 +1,4 @@
-// ATUALIZADO: Mudei o nome do cache de v4 para v5
-const CACHE_NAME = 'eletro-app-v5';
+const CACHE_NAME = 'eletro-app-v8';
 
 const URLS_TO_CACHE = [
   '/treino/login.html',
@@ -14,7 +13,7 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         // ATUALIZADO: Mensagem do console corrigida para v5
-        console.log('Cache v5 aberto. Adicionando arquivos principais.');
+        console.log('Cache v8 aberto. Adicionando arquivos principais.');
         // force-reload para garantir que estamos pegando os arquivos do servidor
         const requests = URLS_TO_CACHE.map(url => new Request(url, { cache: 'reload' }));
         return cache.addAll(requests);
@@ -29,7 +28,6 @@ self.addEventListener('install', (event) => {
 // Evento de "activate"
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    // Deleta todos os caches antigos (ex: v1, v2, v3, v4)
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.filter((cacheName) => {
