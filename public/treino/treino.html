@@ -402,6 +402,7 @@
         let allExercises = [];       // Lista mesclada
         
         let isInitialDataLoaded = false; 
+        let isMigratingLibrary = false; // <-- ADICIONADO: Trava de migração
 
         let routinesCol, globalLibraryCol, userLibraryCol, workoutHistoryCol, settingsDoc;
 
@@ -438,8 +439,6 @@
         const libraryListContainer = document.getElementById('library-list-container');
         
         // --- REMOVIDO: Seletores do formulário de novo exercício ---
-        // const newExerciseNameInput = document.getElementById('new-exercise-name');
-        // const saveNewExerciseBtn = document.getElementById('save-new-exercise-btn');
         
         // Tela 5 (Modal GIF)
         const gifModal = document.getElementById('exercise-gif-modal');
@@ -544,17 +543,64 @@
                 loadingOverlay.innerHTML = "Erro ao carregar dados.";
             });
 
-            // Listener para a Biblioteca GLOBAL
-            onSnapshot(query(globalLibraryCol), (snapshot) => {
+            // --- INÍCIO DA ATUALIZAÇÃO (LÓGICA DE MIGRAÇÃO) ---
+            // Listener para a Biblioteca GLOBAL (COM LÓGICA DE MIGRAÇÃO V10)
+            onSnapshot(query(globalLibraryCol), async (snapshot) => { // Tornar a função async
                 allGlobalExercises = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                 console.log("Biblioteca Global carregada:", allGlobalExercises.length);
                 
-                if (allGlobalExercises.length === 0 && isInitialDataLoaded) {
-                    addDefaultExercisesToGlobal(); 
+                const targetExerciseCount = 22; // A nova lista tem 22 exercícios
+
+                // Se a migração já estiver rodando, não faça nada e aguarde.
+                if (isMigratingLibrary) {
+                    console.log("Migração da biblioteca em progresso... aguardando.");
+                    return;
                 }
-                
-                mergeAndRenderExercises();
+
+                // GATILHO: Se o app já carregou E o número de exercícios na nuvem
+                // NÃO É exatamente 22, então precisamos migrar.
+                if (isInitialDataLoaded && allGlobalExercises.length !== targetExerciseCount) {
+                    
+                    // 1. Ativa a trava para evitar loops
+                    isMigratingLibrary = true; 
+                    console.warn(`MIGRAÇÃO INICIADA: Contagem de exercícios global está incorreta. (Encontrados: ${allGlobalExercises.length}, Esperado: ${targetExerciseCount})`);
+                    
+                    try {
+                        // 2. Deleta TODOS os exercícios antigos (os 7)
+                        const deletePromises = [];
+                        snapshot.docs.forEach(docRef => {
+                            deletePromises.push(deleteDoc(docRef.ref));
+                        });
+                        
+                        if (deletePromises.length > 0) {
+                            await Promise.all(deletePromises);
+                            console.log(`Biblioteca antiga (${deletePromises.length} docs) deletada.`);
+                        } else {
+                            console.log("Nenhum exercício antigo para deletar (biblioteca vazia).");
+                        }
+
+                        // 3. Adiciona os 22 exercícios novos
+                        // (A função addDefaultExercisesToGlobal já existe no seu código)
+                        await addDefaultExercisesToGlobal();
+                        
+                        console.log("MIGRAÇÃO CONCLUÍDA: Biblioteca global atualizada com 22 exercícios.");
+
+                    } catch (error) {
+                        console.error("ERRO CRÍTICO DURANTE A MIGRAÇÃO DA BIBLIOTECA:", error);
+                    
+                    } finally {
+                        // 4. Desativa a trava
+                        isMigratingLibrary = false; 
+                    }
+                    
+                } else if (!isMigratingLibrary) {
+                    // Se a contagem estiver correta (22) ou a migração não estiver ativa,
+                    // apenas mescle e renderize os exercícios.
+                    mergeAndRenderExercises();
+                }
+
             }, (error) => console.error("Erro ao carregar biblioteca global:", error));
+            // --- FIM DA ATUALIZAÇÃO ---
 
             // Listener para a Biblioteca PESSOAL do Usuário
             onSnapshot(query(userLibraryCol), (snapshot) => {
@@ -618,7 +664,7 @@
                 for (const ex of defaultLibrary) {
                     await addDoc(globalLibraryCol, ex);
                 }
-                console.log("Novos exercícios padrão adicionados à biblioteca GLOBAL.");
+                console.log("Novos exercícios padrão (22) adicionados à biblioteca GLOBAL.");
             } catch (error)
              {
                 console.error("Erro ao adicionar exercícios padrão à biblioteca GLOBAL:", error);
@@ -981,23 +1027,29 @@
         function renderExerciseLibraryUI() {
             if (!libraryListContainer) return;
             libraryListContainer.innerHTML = '';
-            const searchTerm = librarySearchInput.value.toLowerCase();
+            
+            // Verifica se o input existe antes de pegar o valor
+            const searchTerm = librarySearchInput ? librarySearchInput.value.toLowerCase() : "";
             
             const filteredLibrary = allExercises.filter(ex => ex.name.toLowerCase().includes(searchTerm));
             
             if (filteredLibrary.length === 0) {
-                libraryListContainer.innerHTML = `<p class="text-gray-500 dark:text-gray-400 text-center p-4">Nenhum exercício encontrado.</p>`;
+                if(searchTerm) {
+                    libraryListContainer.innerHTML = `<p class="text-gray-500 dark:text-gray-400 text-center p-4">Nenhum exercício encontrado para "${searchTerm}".</p>`;
+                } else {
+                    libraryListContainer.innerHTML = `<p class="text-gray-500 dark:text-gray-400 text-center p-4">Nenhum exercício encontrado.</p>`;
+                }
+            } else {
+                filteredLibrary.forEach(ex => {
+                    const exEl = document.createElement('div');
+                    exEl.className = "flex justify-between items-center p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800";
+                    exEl.innerHTML = `
+                        <span class="font-medium">${ex.name}</span>
+                        <button class="add-exercise-from-lib-btn py-1 px-3 bg-primary-600 text-white rounded-lg text-sm" data-exercise-id="${ex.id}">Add</button>
+                    `;
+                    libraryListContainer.appendChild(exEl);
+                });
             }
-
-            filteredLibrary.forEach(ex => {
-                const exEl = document.createElement('div');
-                exEl.className = "flex justify-between items-center p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800";
-                exEl.innerHTML = `
-                    <span class="font-medium">${ex.name}</span>
-                    <button class="add-exercise-from-lib-btn py-1 px-3 bg-primary-600 text-white rounded-lg text-sm" data-exercise-id="${ex.id}">Add</button>
-                `;
-                libraryListContainer.appendChild(exEl);
-            });
         }
 
         // --- REMOVIDO: Função saveNewExerciseToLibrary ---
@@ -1250,21 +1302,6 @@
             if(logoutButtonDesktop) logoutButtonDesktop.addEventListener('click', handleLogout);
 
         });
-    </script>
-
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                // ATUALIZADO: Caminho absoluto
-                navigator.serviceWorker.register('/treino/service-worker.js')
-                    .then((registration) => {
-                        console.log('Service Worker registrado com sucesso:', registration.scope);
-                    })
-                    .catch((error) => {
-                        console.log('Falha ao registrar Service Worker:', error);
-                    });
-            });
-        }
     </script>
 </body>
 </html>
