@@ -15,6 +15,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -22,8 +24,41 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
         .dark ::-webkit-scrollbar-thumb { background-color: #4b5563; }
-        /* Esconde os modais por padrão */
-        #exercise-library-modal.hidden, #exercise-gif-modal.hidden { display: none; }
+        
+        /* Esconde os modais e telas por padrão */
+        #exercise-library-modal.hidden, 
+        #exercise-gif-modal.hidden,
+        #set-options-modal.hidden,
+        #summary-screen.hidden { 
+            display: none; 
+        }
+
+        /* NOVO: Estilo para série completada (inspirado no Hevy) */
+        .set-row.set-complete {
+            background-color: #2563eb1a; /* Azul (primary-600) com 10% de opacidade */
+        }
+        .set-row.set-complete .set-kg-input,
+        .set-row.set-complete .set-reps-input {
+            background-color: #2563eb10; /* Azul com 5% de opacidade */
+            color: #9ca3af; /* Texto cinza */
+            border-color: #2563eb30;
+        }
+        .set-row.set-complete .set-number-btn,
+        .set-row.set-complete .set-previous-span {
+            color: #9ca3af; /* Texto cinza */
+        }
+
+        /* NOVO: Estilo para série falhada */
+        .set-row.set-failed .set-number-btn {
+            color: #f87171; /* red-400 */
+            border: 1px solid #f87171;
+            font-weight: 700;
+        }
+        .set-row.set-failed .set-number-btn::after {
+            content: "F";
+            font-size: 0.75rem;
+            margin-left: 2px;
+        }
     </style>
 
     <script>
@@ -44,7 +79,6 @@
         }
     </script>
     <script>
-        // Lógica de tema movida para uma função para ser chamada após carregar config
         function applyTheme(theme) {
             if (theme === 'dark') {
                 document.documentElement.classList.add('dark');
@@ -52,12 +86,10 @@
                 document.documentElement.classList.remove('dark');
             }
         }
-        // Carrega o tema inicial do localStorage, se existir
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme) {
             applyTheme(savedTheme);
         } else {
-            // Se não tiver salvo, usa a preferência do sistema
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             applyTheme(prefersDark ? 'dark' : 'light');
         }
@@ -65,6 +97,8 @@
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+
+    <audio id="rest-timer-audio" src="check.mp3" preload="auto"></audio>
 
     <div id="loading-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-100 dark:bg-gray-900">
         <i class='bx bx-loader-alt bx-spin text-5xl text-primary-600'></i>
@@ -176,14 +210,20 @@
 
                 <section id="active-workout-screen" class="hidden">
                     <header class="sticky top-0 z-30 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800/50">
-                        <div class="p-6 flex justify-between items-center">
+                        <div class="p-6 grid grid-cols-3 text-center items-center">
                             <div>
                                 <span class="text-sm text-gray-500 dark:text-gray-400">Duração</span>
                                 <p id="workout-duration" class="text-xl font-bold text-gray-900 dark:text-gray-100">00:00:00</p>
                             </div>
-                            <button id="conclude-workout-btn" class="py-2 px-5 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg shadow-md">
-                                Concluir
-                            </button>
+                            <div>
+                                <span class="text-sm text-gray-500 dark:text-gray-400">Volume</span>
+                                <p id="workout-volume" class="text-xl font-bold text-gray-900 dark:text-gray-100">0 kg</p>
+                            </div>
+                            <div class="flex justify-center items-center">
+                                <button id="conclude-workout-btn" class="py-2 px-5 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg shadow-md">
+                                    Concluir
+                                </button>
+                            </div>
                         </div>
                         <div id="rest-timer-bar" class="hidden w-full bg-primary-600 text-white text-center p-3">
                             <span class="font-semibold">Tempo de Descanso: </span>
@@ -196,6 +236,66 @@
                             Adicionar Exercício
                         </button>
                     </main>
+                </section>
+                
+                <section id="summary-screen" class="hidden bg-gray-900 dark:bg-black min-h-screen">
+                    <header class="p-6 text-center">
+                        <h1 class="text-3xl font-bold text-white">Bom trabalho!</h1>
+                        <p id="summary-workout-number" class="text-lg text-gray-400">Esse é o seu treinamento 67</p>
+                    </header>
+                    <main class="px-4 space-y-6">
+                        <div id="summary-card" class="bg-gray-800 dark:bg-gray-950 p-6 rounded-2xl text-white">
+                            <h2 id="summary-routine-name" class="text-2xl font-bold mb-4">Treino A</h2>
+                            <div class="flex justify-between mb-4">
+                                <div>
+                                    <span class="text-sm text-gray-400">Duração</span>
+                                    <p id="summary-duration" class="text-xl font-semibold">0min</p>
+                                </div>
+                                <div>
+                                    <span class="text-sm text-gray-400">Volume</span>
+                                    <p id="summary-volume" class="text-xl font-semibold">0 kg</p>
+                                </div>
+                                <div>
+                                    <span class="text-sm text-gray-400">Séries</span>
+                                    <p id="summary-sets" class="text-xl font-semibold">0</p>
+                                </div>
+                            </div>
+                            <hr class="border-gray-700 my-4">
+                            <div id="summary-exercises-list" class="space-y-2">
+                                </div>
+                        </div>
+
+                        <div>
+                            <p class="text-center text-gray-400 text-sm mb-4">Compartilhe o treinamento</p>
+                            <div class="grid grid-cols-5 gap-2 text-center text-gray-300">
+                                <button class="flex flex-col items-center p-2 rounded-lg hover:bg-gray-800">
+                                    <div class="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center"><i class='bx bx-image-alt text-2xl'></i></div>
+                                    <span class="text-xs mt-1">Fundo</span>
+                                </button>
+                                <button class="flex flex-col items-center p-2 rounded-lg hover:bg-gray-800">
+                                    <div class="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center"><i class='bx bxl-instagram text-2xl'></i></div>
+                                    <span class="text-xs mt-1">Stories</span>
+                                </button>
+                                <button class="flex flex-col items-center p-2 rounded-lg hover:bg-gray-800">
+                                    <div class="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center"><i class='bx bx-upload text-2xl'></i></div>
+                                    <span class="text-xs mt-1">Mais</span>
+                                </button>
+                                <button class="flex flex-col items-center p-2 rounded-lg hover:bg-gray-800">
+                                    <div class="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center"><i class='bx bx-link text-2xl'></i></div>
+                                    <span class="text-xs mt-1">Link</span>
+                                </button>
+                                <button class="flex flex-col items-center p-2 rounded-lg hover:bg-gray-800">
+                                    <div class="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center"><i class='bx bx-copy text-2xl'></i></div>
+                                    <span class="text-xs mt-1">Copiar</span>
+                                </button>
+                            </div>
+                        </div>
+                    </main>
+                    <footer class="fixed bottom-0 left-0 right-0 p-4 bg-gray-900 dark:bg-black border-t border-gray-800">
+                        <button id="summary-conclude-btn" class="w-full py-3 px-4 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg shadow-md">
+                            Concluído
+                        </button>
+                    </footer>
                 </section>
             </div>
         </div>
@@ -212,7 +312,9 @@
             </div>
         </div>
 
-    </div> <nav id="mobile-nav" class="fixed bottom-4 left-1/2 -translate-x-1/2 w-[90%] max-w-sm mx-auto 
+    </div> 
+
+    <nav id="mobile-nav" class="fixed bottom-4 left-1/2 -translate-x-1/2 w-[90%] max-w-sm mx-auto 
                 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl shadow-xl 
                 border border-gray-200/50 dark:border-gray-700/50
                 overflow-hidden z-40 lg:hidden hidden">
@@ -293,7 +395,7 @@
                 <div id="library-list-container" class="space-y-2">
                     </div>
             </div>
-            </div>
+        </div>
     </div>
     
     <div id="exercise-gif-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
@@ -329,13 +431,11 @@
                         <p id="gif-modal-muscle" class="text-lg font-semibold text-gray-800 dark:text-gray-200">Peito</p>
                     </div>
                 </div>
-    
                 <div id="gif-modal-tab-historico" class="gif-modal-tab-panel hidden text-center p-8">
                     <i class='bx bx-bar-chart-alt-2 text-5xl text-gray-400 dark:text-gray-500 mb-2'></i>
                     <h4 class="font-semibold text-gray-700 dark:text-gray-300">Ainda sem dados</h4>
                     <p class="text-sm text-gray-500 dark:text-gray-400">O histórico de performance aparecerá aqui.</p>
                 </div>
-    
                 <div id="gif-modal-tab-instrucoes" class="gif-modal-tab-panel hidden">
                     <h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-2">Como executar</h4>
                     <p class="text-sm text-gray-500 dark:text-gray-400">
@@ -343,6 +443,30 @@
                     </p>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div id="set-options-modal" class="fixed inset-0 z-50 flex items-end justify-center p-4 hidden">
+        <div id="set-options-overlay" class="fixed inset-0 bg-black/40 dark:bg-black/60 transition-opacity" aria-hidden="true"></div>
+        
+        <div id="set-options-content" class="relative bg-white dark:bg-gray-800 w-full max-w-md rounded-2xl shadow-xl transition-transform transform translate-y-full">
+            <div class="w-full flex justify-center pt-3 pb-2">
+                <div class="w-10 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+            </div>
+            <ul class="py-2">
+                <li>
+                    <button id="set-option-fail" class="w-full text-left flex items-center space-x-3 p-4 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <i class='bx bx-x-circle text-2xl'></i>
+                        <span class="font-medium">Marcar como Falha</span>
+                    </button>
+                </li>
+                <li>
+                    <button id="set-option-delete" class="w-full text-left flex items-center space-x-3 p-4 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30">
+                        <i class='bx bx-trash text-2xl'></i>
+                        <span class="font-medium">Remover Série</span>
+                    </button>
+                </li>
+            </ul>
         </div>
     </div>
 
@@ -367,7 +491,8 @@
             deleteDoc,
             onSnapshot,
             collection,
-            query
+            query,
+            orderBy // NOVO: Import para ordenar o histórico
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIGURAÇÃO FIREBASE ---
@@ -397,16 +522,26 @@
         let isEditingRoutine = false;
         
         let allRoutines = []; 
-        let allGlobalExercises = []; // Lista da biblioteca global
-        let allUserExercises = [];   // Lista da biblioteca pessoal do usuário
-        let allExercises = [];       // Lista mesclada
+        let allGlobalExercises = []; 
+        let allUserExercises = [];   
+        let allExercises = [];       
+        let allWorkoutHistory = []; // NOVO: Para guardar o histórico de performance
         
         let isInitialDataLoaded = false; 
-
-        // Trava de migração foi REMOVIDA
         
         let routinesCol, globalLibraryCol, userLibraryCol, workoutHistoryCol, settingsDoc;
 
+        // NOVO: Variáveis do Treino Ativo
+        let currentWorkoutVolume = 0;
+        let currentWorkoutTotalSets = 0;
+        let currentWorkoutRoutineName = ""; 
+        let workoutTimerInterval = null;
+        let workoutSeconds = 0;
+        let restTimerInterval = null;
+
+        // NOVO: Variáveis do Modal de Séries
+        let currentSetRowEl = null; 
+        
         // --- Seletores de Elementos da UI ---
         const loadingOverlay = document.getElementById('loading-overlay');
         const mainContent = document.getElementById('main-content');
@@ -415,6 +550,7 @@
         const routineListScreen = document.getElementById('routine-list-screen');
         const routineEditorScreen = document.getElementById('routine-editor-screen');
         const activeWorkoutScreen = document.getElementById('active-workout-screen');
+        const summaryScreen = document.getElementById('summary-screen'); // NOVO: Tela de Resumo
         // Tela 1 (Lista)
         const createRoutineBtn = document.getElementById('create-routine-btn');
         const routinesContainer = document.getElementById('routines-container');
@@ -430,15 +566,15 @@
         const concludeWorkoutBtn = document.getElementById('conclude-workout-btn');
         const activeWorkoutContainer = document.getElementById('active-workout-container');
         const workoutDurationEl = document.getElementById('workout-duration');
-        let currentWorkoutRoutineName = ""; 
+        const workoutVolumeEl = document.getElementById('workout-volume'); // NOVO: Volume
         const restTimerBar = document.getElementById('rest-timer-bar');
         const restTimerCountdownEl = document.getElementById('rest-timer-countdown');
+        const restTimerAudio = document.getElementById('rest-timer-audio'); // NOVO: Áudio
         // Tela 4 (Modal Biblioteca)
         const libraryModal = document.getElementById('exercise-library-modal');
         const closeLibraryBtn = document.getElementById('close-library-btn');
         const librarySearchInput = document.getElementById('library-search');
         const libraryListContainer = document.getElementById('library-list-container');
-        
         // Tela 5 (Modal GIF)
         const gifModal = document.getElementById('exercise-gif-modal');
         const closeGifModalBtn = document.getElementById('close-gif-modal-btn');
@@ -447,6 +583,20 @@
         const gifModalMuscle = document.getElementById('gif-modal-muscle');
         const gifModalTabButtons = document.querySelectorAll('.gif-modal-tab-btn');
         const gifModalTabPanels = document.querySelectorAll('.gif-modal-tab-panel');
+        // Tela 6 (Resumo)
+        const summaryWorkoutNumberEl = document.getElementById('summary-workout-number');
+        const summaryRoutineNameEl = document.getElementById('summary-routine-name');
+        const summaryDurationEl = document.getElementById('summary-duration');
+        const summaryVolumeEl = document.getElementById('summary-volume');
+        const summarySetsEl = document.getElementById('summary-sets');
+        const summaryExercisesListEl = document.getElementById('summary-exercises-list');
+        const summaryConcludeBtn = document.getElementById('summary-conclude-btn');
+        // Tela 7 (Modal Opções de Série)
+        const setOptionsModal = document.getElementById('set-options-modal');
+        const setOptionsOverlay = document.getElementById('set-options-overlay');
+        const setOptionsContent = document.getElementById('set-options-content');
+        const setOptionFailBtn = document.getElementById('set-option-fail');
+        const setOptionDeleteBtn = document.getElementById('set-option-delete');
         // Tema
         const themeToggles = document.querySelectorAll('#theme-toggle, #theme-toggle-desktop');
         // Menu Mobile 'Mais'
@@ -458,7 +608,6 @@
         // --- AUTENTICAÇÃO E INICIALIZAÇÃO ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // Usuário está logado
                 userId = user.uid;
                 console.log("Usuário autenticado:", userId);
                 
@@ -479,7 +628,6 @@
                 mobileNav.classList.remove('hidden');
 
             } else {
-                // Usuário não está logado, tenta logar
                 console.log("Nenhum usuário logado. Tentando login...");
                 try {
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -500,13 +648,11 @@
                 const docSnap = await getDoc(settingsDoc);
                 if (docSnap.exists()) {
                     const settings = docSnap.data();
-                    console.log("Configurações carregadas:", settings);
                     if (settings.theme) {
                         applyTheme(settings.theme); 
                         localStorage.setItem('theme', settings.theme); 
                     }
                 } else {
-                    console.log("Nenhum documento de configuração encontrado. Usando padrões.");
                     const currentTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
                     await setDoc(settingsDoc, { theme: currentTheme }, { merge: true });
                 }
@@ -518,7 +664,6 @@
         async function saveUserSetting(key, value) {
             try {
                 await setDoc(settingsDoc, { [key]: value }, { merge: true });
-                console.log("Configuração salva:", key, value);
             } catch (error) {
                 console.error("Erro ao salvar configuração:", error);
             }
@@ -530,7 +675,7 @@
             // Listener para Rotinas
             onSnapshot(query(routinesCol), (snapshot) => {
                 allRoutines = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-                console.log("Rotinas carregadas:", allRoutines);
+                console.log("Rotinas carregadas:", allRoutines.length);
                 renderRoutinesUI(allRoutines);
 
                 if (!isInitialDataLoaded) {
@@ -542,9 +687,7 @@
                 loadingOverlay.innerHTML = "Erro ao carregar dados.";
             });
 
-            // --- ATUALIZAÇÃO: Lógica de migração REMOVIDA ---
-            // Listener para a Biblioteca GLOBAL (Versão Limpa)
-            // Apenas lê o que está no banco de dados.
+            // Listener para a Biblioteca GLOBAL
             onSnapshot(query(globalLibraryCol), (snapshot) => {
                 allGlobalExercises = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                 console.log("Biblioteca Global carregada:", allGlobalExercises.length);
@@ -557,6 +700,13 @@
                 console.log("Biblioteca do Usuário carregada:", allUserExercises.length);
                 mergeAndRenderExercises();
             }, (error) => console.error("Erro ao carregar biblioteca do usuário:", error));
+
+            // NOVO: Listener para o Histórico de Treinos (para preencher dados)
+            const historyQuery = query(workoutHistoryCol, orderBy("completedAt", "desc"));
+            onSnapshot(historyQuery, (snapshot) => {
+                allWorkoutHistory = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                console.log("Histórico de treinos carregado:", allWorkoutHistory.length);
+            }, (error) => console.error("Erro ao carregar histórico de treinos:", error));
         }
 
         function mergeAndRenderExercises() {
@@ -566,18 +716,20 @@
             renderExerciseLibraryUI(); 
         }
 
-        
-        // --- ATUALIZAÇÃO: Função 'addDefaultExercisesToGlobal' REMOVIDA ---
-        // O script 'seed.js' agora é responsável por isso. O app não precisa mais dessa função.
-
-
         // --- Funções de Troca de Tela ---
         function showScreen(screenToShow) {
-            [routineListScreen, routineEditorScreen, activeWorkoutScreen].forEach(screen => {
+            [routineListScreen, routineEditorScreen, activeWorkoutScreen, summaryScreen].forEach(screen => {
                 if(screen) screen.classList.add('hidden');
             });
             if(screenToShow) screenToShow.classList.remove('hidden');
             window.scrollTo(0, 0);
+            
+            // NOVO: Controla a visibilidade da nav mobile
+            if (screenToShow === summaryScreen || screenToShow === activeWorkoutScreen) {
+                if(mobileNav) mobileNav.classList.add('hidden');
+            } else {
+                if(mobileNav) mobileNav.classList.remove('hidden');
+            }
         }
 
         // --- TELA 1: LÓGICA DA LISTA DE ROTINAS ---
@@ -695,11 +847,9 @@
                 if (currentEditingRoutineId) {
                     const docRef = doc(routinesCol, currentEditingRoutineId);
                     await setDoc(docRef, routineData, { merge: true }); 
-                    console.log("Rotina atualizada:", currentEditingRoutineId);
                 } else {
                     routineData.createdAt = new Date().toISOString();
                     const docRef = await addDoc(routinesCol, routineData);
-                    console.log("Rotina salva com ID:", docRef.id);
                 }
                 showScreen(routineListScreen); 
             } catch (error) {
@@ -710,6 +860,23 @@
         }
 
         // --- TELA 3: LÓGICA DO TREINO ATIVO ---
+
+        // NOVO: Função para buscar o último desempenho
+        function findLastPerformance(exerciseName) {
+            if (allWorkoutHistory.length === 0) return null;
+
+            // Histórico já está ordenado do mais novo para o mais antigo
+            for (const workout of allWorkoutHistory) {
+                const foundExercise = workout.exercises.find(ex => ex.name === exerciseName);
+                if (foundExercise && foundExercise.sets.length > 0) {
+                    // Retorna a última série completa desse exercício
+                    const lastSet = foundExercise.sets[foundExercise.sets.length - 1];
+                    return { kg: lastSet.kg, reps: lastSet.reps };
+                }
+            }
+            return null; // Nenhum desempenho anterior encontrado
+        }
+
         function showActiveWorkout(routineId) {
             const routine = allRoutines.find(r => r.id === routineId);
             if (!routine) return;
@@ -782,21 +949,38 @@
                     Adicionar Série
                 </button>
             `;
+            
+            // NOVO: Busca último desempenho e preenche as séries
+            const lastPerf = findLastPerformance(exercise.name);
             const setsContainer = exCard.querySelector('.sets-container');
             const setCount = parseInt(exercise.sets, 10) || 3;
             for (let i = 0; i < setCount; i++) {
-                addSetRow(setsContainer, i + 1, "---");
+                addSetRow(setsContainer, i + 1, lastPerf);
             }
             return exCard;
         }
 
-        let workoutTimerInterval = null;
-        let workoutSeconds = 0;
-        let restTimerInterval = null;
+        // NOVO: Função de volume
+        function updateWorkoutVolume() {
+            let totalVolume = 0;
+            if(activeWorkoutContainer) {
+                activeWorkoutContainer.querySelectorAll('.set-row.set-complete').forEach(setRow => {
+                    const kg = parseFloat(setRow.querySelector('.set-kg-input').value) || 0;
+                    const reps = parseFloat(setRow.querySelector('.set-reps-input').value) || 0;
+                    totalVolume += kg * reps;
+                });
+            }
+            currentWorkoutVolume = totalVolume;
+            if (workoutVolumeEl) workoutVolumeEl.textContent = `${currentWorkoutVolume.toLocaleString('pt-BR')} kg`;
+        }
         
         function startWorkoutTimer() {
             workoutSeconds = 0;
+            currentWorkoutVolume = 0; // Reseta volume
+            currentWorkoutTotalSets = 0; // Reseta séries
+            if(workoutVolumeEl) workoutVolumeEl.textContent = "0 kg"; // Reseta UI
             if(workoutTimerInterval) clearInterval(workoutTimerInterval);
+            
             workoutTimerInterval = setInterval(() => {
                 workoutSeconds++;
                 let h = Math.floor(workoutSeconds / 3600).toString().padStart(2, '0');
@@ -816,33 +1000,48 @@
         function startRestTimer(durationInSeconds) {
             if (restTimerInterval) clearInterval(restTimerInterval);
             if(!restTimerBar || !restTimerCountdownEl) return;
+            
             restTimerBar.classList.remove('hidden');
             let seconds = durationInSeconds;
+            
             function updateTimerText() {
                 restTimerCountdownEl.textContent = formatSeconds(seconds);
             }
+            
             updateTimerText();
+            
             restTimerInterval = setInterval(() => {
                 seconds--;
                 updateTimerText();
                 if (seconds <= 0) {
                     clearInterval(restTimerInterval);
                     restTimerBar.classList.add('hidden');
+                    
+                    // NOVO: Toca o som
+                    if(restTimerAudio) {
+                        restTimerAudio.play().catch(e => console.warn("Não foi possível tocar o áudio:", e.message));
+                    }
                 }
             }, 1000);
         }
         
-        function addSetRow(container, setNumber, previous = "--") {
+        // NOVO: 'addSetRow' agora aceita 'previousData'
+        function addSetRow(container, setNumber, previousData = null) {
             const setRow = document.createElement('div');
-            setRow.className = 'set-row grid grid-cols-5 gap-2 items-center';
+            setRow.className = 'set-row grid grid-cols-5 gap-2 items-center rounded-lg transition-colors'; // Adicionado rounded-lg
+            
+            const prevText = previousData ? `${previousData.kg}kg x ${previousData.reps}` : '---';
+            const prevKg = previousData ? previousData.kg : '';
+            const prevReps = previousData ? previousData.reps : '';
+            
             setRow.innerHTML = `
-                <button class="set-number-btn font-semibold text-gray-500 dark:text-gray-400 text-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="Clique para excluir a série">
+                <button class="set-number-btn font-semibold text-gray-500 dark:text-gray-400 text-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="Opções da Série">
                     ${setNumber}
                 </button>
-                <span class="text-sm text-gray-500 dark:text-gray-400">${previous}</span>
-                <input type="number" placeholder="kg" class="set-kg-input w-full p-3 bg-white dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 text-center">
-                <input type="number" placeholder="reps" class="set-reps-input w-full p-3 bg-white dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 text-center">
-                <button class="set-complete-btn p-3 bg-gray-200 dark:bg-gray-700 text-gray-400 rounded-lg"><i class='bx bx-check text-2xl'></i></button>
+                <span class="set-previous-span text-sm text-gray-500 dark:text-gray-400">${prevText}</span>
+                <input type="number" placeholder="kg" value="${prevKg}" class="set-kg-input w-full p-3 bg-white dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 text-center transition-colors">
+                <input type="number" placeholder="reps" value="${prevReps}" class="set-reps-input w-full p-3 bg-white dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 text-center transition-colors">
+                <button class="set-complete-btn p-3 bg-gray-200 dark:bg-gray-700 text-gray-400 rounded-lg transition-colors"><i class='bx bx-check text-2xl'></i></button>
             `;
             container.appendChild(setRow);
         }
@@ -861,6 +1060,7 @@
             concludeWorkoutBtn.disabled = true;
             console.log("Salvando histórico do treino...");
             const performedExercises = [];
+            currentWorkoutTotalSets = 0; // Reseta contagem de séries
 
             activeWorkoutContainer.querySelectorAll('.exercise-card').forEach(card => {
                 const exerciseData = {
@@ -873,15 +1073,20 @@
                 card.querySelectorAll('.set-row').forEach((setRow, index) => {
                     const kgInput = setRow.querySelector('.set-kg-input');
                     const repsInput = setRow.querySelector('.set-reps-input');
-                    const isComplete = setRow.querySelector('.set-complete-btn').disabled;
+                    const isComplete = setRow.classList.contains('set-complete'); // NOVO: Checa pela classe
                     
                     if (isComplete || kgInput.value || repsInput.value) {
                         exerciseData.sets.push({
                             setNumber: index + 1,
                             kg: kgInput.value || 0,
                             reps: repsInput.value || 0,
-                            isComplete: isComplete
+                            isComplete: isComplete,
+                            isFailed: setRow.classList.contains('set-failed') // NOVO: Salva estado de falha
                         });
+                        
+                        if (isComplete) {
+                            currentWorkoutTotalSets++; // NOVO: Conta séries completas
+                        }
                     }
                 });
 
@@ -889,10 +1094,15 @@
                     performedExercises.push(exerciseData);
                 }
             });
+            
+            // NOVO: Calcula volume final antes de salvar
+            updateWorkoutVolume();
 
             const workoutData = {
                 routineName: currentWorkoutRoutineName,
                 durationInSeconds: workoutSeconds,
+                totalVolume: currentWorkoutVolume, // NOVO: Salva volume
+                totalSets: currentWorkoutTotalSets, // NOVO: Salva séries
                 completedAt: new Date().toISOString(),
                 exercises: performedExercises
             };
@@ -900,15 +1110,21 @@
             try {
                 await addDoc(workoutHistoryCol, workoutData);
                 console.log("Histórico do treino salvo!");
+                
+                // NOVO: Mostra a tela de resumo
+                renderWorkoutSummary(workoutData);
+                showScreen(summaryScreen);
+                triggerConfetti();
+                
             } catch (error) {
                 console.error("Erro ao salvar histórico do treino:", error);
+                // Se falhar, volta para a tela de treino
+                showScreen(activeWorkoutScreen);
             } finally {
                 concludeWorkoutBtn.disabled = false;
                 if(workoutTimerInterval) clearInterval(workoutTimerInterval);
                 if(restTimerInterval) clearInterval(restTimerInterval);
                 workoutSeconds = 0;
-                currentWorkoutRoutineName = "";
-                showScreen(routineListScreen);
             }
         }
 
@@ -986,6 +1202,75 @@
             });
         }
         
+        // --- NOVO: TELA 6: LÓGICA DO RESUMO DO TREINO ---
+        
+        function triggerConfetti() {
+            if (typeof confetti !== 'function') return;
+            
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+            function randomInRange(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) return clearInterval(interval);
+                var particleCount = 50 * (timeLeft / duration);
+                
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
+        }
+
+        function renderWorkoutSummary(workoutData) {
+            if(summaryWorkoutNumberEl) summaryWorkoutNumberEl.textContent = `Esse é o seu treinamento ${allWorkoutHistory.length}`;
+            if(summaryRoutineNameEl) summaryRoutineNameEl.textContent = workoutData.routineName;
+            if(summaryDurationEl) summaryDurationEl.textContent = `${Math.floor(workoutData.durationInSeconds / 60)}min`;
+            if(summaryVolumeEl) summaryVolumeEl.textContent = `${workoutData.totalVolume.toLocaleString('pt-BR')} kg`;
+            if(summarySetsEl) summarySetsEl.textContent = workoutData.totalSets;
+            
+            if(summaryExercisesListEl) {
+                summaryExercisesListEl.innerHTML = ''; // Limpa lista
+                workoutData.exercises.forEach(ex => {
+                    const setsCount = ex.sets.filter(s => s.isComplete).length;
+                    if (setsCount > 0) {
+                        const exEl = document.createElement('p');
+                        exEl.className = "text-lg text-gray-300";
+                        exEl.innerHTML = `<span class="font-semibold text-primary-400">${setsCount}x</span> ${ex.name}`;
+                        summaryExercisesListEl.appendChild(exEl);
+                    }
+                });
+            }
+        }
+        
+
+        // --- NOVO: TELA 7: LÓGICA DO MODAL DE OPÇÕES DA SÉRIE ---
+        function openSetOptionsModal(setRow) {
+            currentSetRowEl = setRow;
+            if (setOptionsModal) setOptionsModal.classList.remove('hidden');
+            
+            // Atualiza texto do botão de falha
+            if (currentSetRowEl.classList.contains('set-failed')) {
+                setOptionFailBtn.querySelector('span').textContent = "Desmarcar Falha";
+            } else {
+                setOptionFailBtn.querySelector('span').textContent = "Marcar como Falha";
+            }
+            
+            requestAnimationFrame(() => {
+                if(setOptionsContent) setOptionsContent.classList.remove('translate-y-full');
+            });
+        }
+        
+        function closeSetOptionsModal() {
+            if(setOptionsContent) setOptionsContent.classList.add('translate-y-full');
+            if(setOptionsModal) setTimeout(() => setOptionsModal.classList.add('hidden'), 300);
+            currentSetRowEl = null;
+        }
+
+
         // --- Menu 'Mais' (Modal Mobile) ---
         function openMenu() {
             if (!moreMenu || !moreMenuOverlay) return;
@@ -1049,7 +1334,6 @@
             // --- Eventos do Menu 'Mais' ---
             if(moreMenuButtons) moreMenuButtons.forEach(btn => btn.addEventListener('click', openMenu));
             if(moreMenuOverlay) moreMenuOverlay.addEventListener('click', closeMenu);
-            // Evento de logout dentro do menu 'Mais'
             const logoutButtonMobile = document.getElementById('logout-button-mobile');
             if(logoutButtonMobile) logoutButtonMobile.addEventListener('click', handleLogout);
 
@@ -1068,7 +1352,6 @@
                     if (confirm("Tem certeza que deseja excluir esta rotina?")) {
                         try {
                             await deleteDoc(doc(routinesCol, docId));
-                            console.log("Rotina excluída:", docId);
                         } catch (error) {
                             console.error("Erro ao excluir rotina:", error);
                         }
@@ -1097,18 +1380,26 @@
                 const restBtn = e.target.closest('.rest-time-btn');
                 const addExerciseBtn = e.target.closest('#add-exercise-to-workout-btn');
                 const gifBtn = e.target.closest('.gif-thumbnail-btn');
-                const deleteSetBtn = e.target.closest('.set-number-btn');
+                const setNumberBtn = e.target.closest('.set-number-btn'); // NOVO: Botão de número
 
                 if (addBtn) {
                     const setsContainer = addBtn.closest('.exercise-card').querySelector('.sets-container');
                     const newSetNumber = setsContainer.children.length + 1;
-                    addSetRow(setsContainer, newSetNumber);
+                    // NOVO: Adiciona nova série, mas busca o desempenho anterior
+                    const exerciseName = addBtn.closest('.exercise-card').dataset.exerciseName;
+                    const lastPerf = findLastPerformance(exerciseName);
+                    addSetRow(setsContainer, newSetNumber, lastPerf);
                 }
                 if (completeBtn && !completeBtn.disabled) {
                     const setRow = completeBtn.closest('.set-row');
                     const exerciseCard = completeBtn.closest('.exercise-card');
                     
                     setRow.querySelectorAll('input').forEach(input => input.disabled = true);
+                    
+                    // NOVO: Adiciona classe de UI e atualiza volume
+                    setRow.classList.add('set-complete');
+                    updateWorkoutVolume();
+                    
                     completeBtn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-400');
                     completeBtn.classList.add('bg-primary-600', 'text-white');
                     completeBtn.disabled = true;
@@ -1116,6 +1407,11 @@
                     const restTimeDiv = exerciseCard.querySelector('[data-rest-time]');
                     const restTimeInSeconds = parseInt(restTimeDiv.dataset.restTime, 10) || 90;
                     startRestTimer(restTimeInSeconds);
+                    
+                    // NOVO: Prepara o áudio no primeiro clique
+                    if(restTimerAudio.paused) {
+                        restTimerAudio.play().then(() => restTimerAudio.pause()).catch(e => {});
+                    }
                 }
                 if (restBtn) {
                     const restTimeDiv = restBtn.closest('[data-rest-time]');
@@ -1136,13 +1432,9 @@
                     const muscle = gifBtn.dataset.muscle;
                     openGifModal(name, gifUrl, muscle);
                 }
-                if (deleteSetBtn) {
-                    if (confirm("Tem certeza que deseja excluir esta série?")) {
-                        const setRow = deleteSetBtn.closest('.set-row');
-                        const setsContainer = setRow.closest('.sets-container');
-                        setRow.remove();
-                        renumberSets(setsContainer);
-                    }
+                // NOVO: Abre o modal de opções de série
+                if (setNumberBtn) {
+                    openSetOptionsModal(setNumberBtn.closest('.set-row'));
                 }
             });
 
@@ -1190,6 +1482,33 @@
                     switchGifModalTab(button.dataset.tab);
                 });
             });
+
+            // --- NOVO: Eventos Tela 6 (Resumo) ---
+            if (summaryConcludeBtn) {
+                summaryConcludeBtn.addEventListener('click', () => {
+                    currentWorkoutRoutineName = ""; // Limpa o nome da rotina
+                    showScreen(routineListScreen);
+                });
+            }
+
+            // --- NOVO: Eventos Tela 7 (Modal Opções de Série) ---
+            if(setOptionsOverlay) setOptionsOverlay.addEventListener('click', closeSetOptionsModal);
+            if(setOptionDeleteBtn) setOptionDeleteBtn.addEventListener('click', () => {
+                if (currentSetRowEl) {
+                    const setsContainer = currentSetRowEl.closest('.sets-container');
+                    currentSetRowEl.remove();
+                    renumberSets(setsContainer);
+                    updateWorkoutVolume(); // Atualiza volume caso a série removida estivesse completa
+                }
+                closeSetOptionsModal();
+            });
+            if(setOptionFailBtn) setOptionFailBtn.addEventListener('click', () => {
+                if (currentSetRowEl) {
+                    currentSetRowEl.classList.toggle('set-failed');
+                }
+                closeSetOptionsModal();
+            });
+            
 
             // --- Eventos de Logout (Desktop) ---
             const logoutButtonDesktop = document.getElementById('logout-button-desktop');
