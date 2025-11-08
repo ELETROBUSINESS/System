@@ -402,8 +402,9 @@
         let allExercises = [];       // Lista mesclada
         
         let isInitialDataLoaded = false; 
-        let isMigratingLibrary = false; // <-- ADICIONADO: Trava de migração
 
+        // Trava de migração foi REMOVIDA
+        
         let routinesCol, globalLibraryCol, userLibraryCol, workoutHistoryCol, settingsDoc;
 
         // --- Seletores de Elementos da UI ---
@@ -437,8 +438,6 @@
         const closeLibraryBtn = document.getElementById('close-library-btn');
         const librarySearchInput = document.getElementById('library-search');
         const libraryListContainer = document.getElementById('library-list-container');
-        
-        // --- REMOVIDO: Seletores do formulário de novo exercício ---
         
         // Tela 5 (Modal GIF)
         const gifModal = document.getElementById('exercise-gif-modal');
@@ -543,64 +542,14 @@
                 loadingOverlay.innerHTML = "Erro ao carregar dados.";
             });
 
-            // --- INÍCIO DA ATUALIZAÇÃO (LÓGICA DE MIGRAÇÃO) ---
-            // Listener para a Biblioteca GLOBAL (COM LÓGICA DE MIGRAÇÃO V10)
-            onSnapshot(query(globalLibraryCol), async (snapshot) => { // Tornar a função async
+            // --- ATUALIZAÇÃO: Lógica de migração REMOVIDA ---
+            // Listener para a Biblioteca GLOBAL (Versão Limpa)
+            // Apenas lê o que está no banco de dados.
+            onSnapshot(query(globalLibraryCol), (snapshot) => {
                 allGlobalExercises = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                 console.log("Biblioteca Global carregada:", allGlobalExercises.length);
-                
-                const targetExerciseCount = 22; // A nova lista tem 22 exercícios
-
-                // Se a migração já estiver rodando, não faça nada e aguarde.
-                if (isMigratingLibrary) {
-                    console.log("Migração da biblioteca em progresso... aguardando.");
-                    return;
-                }
-
-                // GATILHO: Se o app já carregou E o número de exercícios na nuvem
-                // NÃO É exatamente 22, então precisamos migrar.
-                if (isInitialDataLoaded && allGlobalExercises.length !== targetExerciseCount) {
-                    
-                    // 1. Ativa a trava para evitar loops
-                    isMigratingLibrary = true; 
-                    console.warn(`MIGRAÇÃO INICIADA: Contagem de exercícios global está incorreta. (Encontrados: ${allGlobalExercises.length}, Esperado: ${targetExerciseCount})`);
-                    
-                    try {
-                        // 2. Deleta TODOS os exercícios antigos (os 7)
-                        const deletePromises = [];
-                        snapshot.docs.forEach(docRef => {
-                            deletePromises.push(deleteDoc(docRef.ref));
-                        });
-                        
-                        if (deletePromises.length > 0) {
-                            await Promise.all(deletePromises);
-                            console.log(`Biblioteca antiga (${deletePromises.length} docs) deletada.`);
-                        } else {
-                            console.log("Nenhum exercício antigo para deletar (biblioteca vazia).");
-                        }
-
-                        // 3. Adiciona os 22 exercícios novos
-                        // (A função addDefaultExercisesToGlobal já existe no seu código)
-                        await addDefaultExercisesToGlobal();
-                        
-                        console.log("MIGRAÇÃO CONCLUÍDA: Biblioteca global atualizada com 22 exercícios.");
-
-                    } catch (error) {
-                        console.error("ERRO CRÍTICO DURANTE A MIGRAÇÃO DA BIBLIOTECA:", error);
-                    
-                    } finally {
-                        // 4. Desativa a trava
-                        isMigratingLibrary = false; 
-                    }
-                    
-                } else if (!isMigratingLibrary) {
-                    // Se a contagem estiver correta (22) ou a migração não estiver ativa,
-                    // apenas mescle e renderize os exercícios.
-                    mergeAndRenderExercises();
-                }
-
+                mergeAndRenderExercises();
             }, (error) => console.error("Erro ao carregar biblioteca global:", error));
-            // --- FIM DA ATUALIZAÇÃO ---
 
             // Listener para a Biblioteca PESSOAL do Usuário
             onSnapshot(query(userLibraryCol), (snapshot) => {
@@ -618,58 +567,8 @@
         }
 
         
-        async function addDefaultExercisesToGlobal() {
-            console.log("Biblioteca GLOBAL vazia. Adicionando lista de exercícios padrão...");
-            const defaultLibrary = [
-                // Peito
-                { name: "Supino (Barra)", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2017/09/barbell-bench-press.gif", muscle: "Peito" },
-                { name: "Supino Inclinado (Halter)", gif: "https://www.mundoboaforma.com.br/wp-content/uploads/2020/12/supino-inclinado-com-halteres.gif", muscle: "Peito (Superior)" },
-                { name: "Pec Deck", gif: "https://www.zone-musculation.com/wp-content/uploads/2024/11/peck-deck.gif", muscle: "Peito" },
-                { name: "Supino Sentado (Máquina)", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2024/04/lever-chest-press-.gif", muscle: "Peito" },
-
-                // Costas
-                { name: "Remada (Corda) Sentado", gif: "https://media.tenor.com/vy_b35185M0AAAAM/remada-baixa-triangulo.gif", muscle: "Costas" },
-                { name: "Puxada Alta na Polia (Máquina)", gif: "https://www.mundoboaforma.com.br/wp-content/uploads/2020/12/costas-puxada-aberta-com-barra-no-pulley.gif", muscle: "Costas (Latíssimo)" },
-
-                // Ombros
-                { name: "Elevação Lateral (Halter)", gif: "https://www.mundoboaforma.com.br/wp-content/uploads/2020/12/ombros-elevacao-lateral-de-ombros-com-halteres.gif", muscle: "Ombros (Lateral)" },
-                { name: "Desenvolvimento (Halter)", gif: "https://www.mundoboaforma.com.br/wp-content/uploads/2020/12/desenvolvimento-para-ombros-com-halteres.gif", muscle: "Ombros" },
-
-                // Tríceps
-                { name: "Triceps na Polia", gif: "https://i0.wp.com/meutreinador.com/wp-content/uploads/2023/12/05_Extensao-de-Triceps-na-Polia.gif?fit=1080%2C1080&ssl=1", muscle: "Tríceps" },
-                { name: "Triceps Testa (Halter)", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2023/10/dumbbell-lying-triceps-extension.gif", muscle: "Tríceps" },
-
-                // Bíceps
-                { name: "Rosca Scott (Máquina)", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2024/10/lever-hammer-grip-preacher-curl.gif", muscle: "Bíceps" },
-                { name: "Rosca Direta na Barra W", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2024/12/rosca-direta-com-barra-w.gif", muscle: "Bíceps" },
-
-                // Pernas
-                { name: "Agachamento Livre", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2023/11/dumbbell-goblet-squat.gif", muscle: "Quadríceps" },
-                { name: "Agachamento Livre (Barra)", gif: "https://media.tenor.com/pdMmsiutWkcAAAAM/gym.gif", muscle: "Quadríceps" },
-                { name: "Cadeira Abdutora (Máquina)", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2024/09/lever-seated-hip-abduction.gif", muscle: "Glúteos (Abdutores)" },
-                { name: "Leg Press 45° (Máquina)", gif: "https://media.tenor.com/yBaS_oBgidsAAAAM/gym.gif", muscle: "Quadríceps" },
-                { name: "Cadeira Extensora (Máquina)", gif: "https://media.tenor.com/bqKtsSuqilQAAAAM/gym.gif", muscle: "Quadríceps" },
-                { name: "Mesa Flexora (Máquina)", gif: "https://media.tenor.com/fj_cZPprAyMAAAAM/gym.gif", muscle: "Posterior de Coxa" },
-
-                // Panturrilha
-                { name: "Elevação de Panturrilha em Pé", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2023/07/standing-calf-raise-on-a-staircase.gif", muscle: "Panturrilha" },
-                { name: "Elevação de Panturrilha Sentado (Máquina)", gif: "https://www.hipertrofia.org/blog/wp-content/uploads/2018/10/lever-seated-calf-raise-.gif", muscle: "Panturrilha (Sóleo)" },
-
-                // Abdômen (Sem GIF)
-                { name: "Abdominal", gif: "", muscle: "Abdômen" },
-                { name: "Prancha Abdominal", gif: "", muscle: "Abdômen (Core)" }
-            ];
-            
-            try {
-                for (const ex of defaultLibrary) {
-                    await addDoc(globalLibraryCol, ex);
-                }
-                console.log("Novos exercícios padrão (22) adicionados à biblioteca GLOBAL.");
-            } catch (error)
-             {
-                console.error("Erro ao adicionar exercícios padrão à biblioteca GLOBAL:", error);
-            }
-        }
+        // --- ATUALIZAÇÃO: Função 'addDefaultExercisesToGlobal' REMOVIDA ---
+        // O script 'seed.js' agora é responsável por isso. O app não precisa mais dessa função.
 
 
         // --- Funções de Troca de Tela ---
@@ -1028,7 +927,6 @@
             if (!libraryListContainer) return;
             libraryListContainer.innerHTML = '';
             
-            // Verifica se o input existe antes de pegar o valor
             const searchTerm = librarySearchInput ? librarySearchInput.value.toLowerCase() : "";
             
             const filteredLibrary = allExercises.filter(ex => ex.name.toLowerCase().includes(searchTerm));
@@ -1051,8 +949,6 @@
                 });
             }
         }
-
-        // --- REMOVIDO: Função saveNewExerciseToLibrary ---
         
         // --- TELA 5: LÓGICA DO MODAL DE GIF ---
         function openGifModal(name, gifUrl, muscle) {
@@ -1252,8 +1148,6 @@
 
             // --- Eventos da Tela 4 (Modal Biblioteca) ---
             if(closeLibraryBtn) closeLibraryBtn.addEventListener('click', closeLibraryModal);
-            
-            // --- REMOVIDO: Event listener de 'saveNewExerciseBtn' ---
             
             if(librarySearchInput) librarySearchInput.addEventListener('input', renderExerciseLibraryUI); 
             if(libraryListContainer) libraryListContainer.addEventListener('click', (e) => {
