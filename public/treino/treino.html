@@ -33,7 +33,7 @@
             display: none; 
         }
 
-        /* NOVO: Estilo para série completada (inspirado no Hevy) */
+        /* Estilo para série completada (inspirado no Hevy) */
         .set-row.set-complete {
             background-color: #2563eb1a; /* Azul (primary-600) com 10% de opacidade */
         }
@@ -48,17 +48,13 @@
             color: #9ca3af; /* Texto cinza */
         }
 
-        /* NOVO: Estilo para série falhada */
+        /* Estilo para série falhada */
         .set-row.set-failed .set-number-btn {
             color: #f87171; /* red-400 */
             border: 1px solid #f87171;
             font-weight: 700;
         }
-        .set-row.set-failed .set-number-btn::after {
-            content: "F";
-            font-size: 0.75rem;
-            margin-left: 2px;
-        }
+        /* Remove o 'F' para um visual mais limpo, a borda é suficiente */
     </style>
 
     <script>
@@ -219,7 +215,10 @@
                                 <span class="text-sm text-gray-500 dark:text-gray-400">Volume</span>
                                 <p id="workout-volume" class="text-xl font-bold text-gray-900 dark:text-gray-100">0 kg</p>
                             </div>
-                            <div class="flex justify-center items-center">
+                            <div class="flex justify-center items-center space-x-2">
+                                <button id="cancel-workout-btn" class="py-2 px-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold rounded-lg" title="Cancelar Treino">
+                                    <i class='bx bx-x text-2xl'></i>
+                                </button>
                                 <button id="conclude-workout-btn" class="py-2 px-5 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg shadow-md">
                                     Concluir
                                 </button>
@@ -317,7 +316,7 @@
     <nav id="mobile-nav" class="fixed bottom-4 left-1/2 -translate-x-1/2 w-[90%] max-w-sm mx-auto 
                 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl shadow-xl 
                 border border-gray-200/50 dark:border-gray-700/50
-                overflow-hidden z-40 lg:hidden hidden">
+                overflow-hidden z-40 lg:hidden hidden transition-transform duration-300">
         <div class="flex justify-around items-center h-16">
             <a href="/treino/home.html" class="flex flex-col items-center justify-center text-gray-500 dark:text-gray-400" aria-label="Início">
                 <i class='bx bx-home-smile text-2xl'></i>
@@ -430,6 +429,12 @@
                         <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Músculo Primário</span>
                         <p id="gif-modal-muscle" class="text-lg font-semibold text-gray-800 dark:text-gray-200">Peito</p>
                     </div>
+                    <div class="mt-4">
+                        <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">Recordes Pessoais</h4>
+                        <div id="gif-modal-pr-container" class="space-y-2 text-sm">
+                            <p class="text-gray-500 dark:text-gray-400">Calculando...</p>
+                        </div>
+                    </div>
                 </div>
                 <div id="gif-modal-tab-historico" class="gif-modal-tab-panel hidden text-center p-8">
                     <i class='bx bx-bar-chart-alt-2 text-5xl text-gray-400 dark:text-gray-500 mb-2'></i>
@@ -492,7 +497,7 @@
             onSnapshot,
             collection,
             query,
-            orderBy // NOVO: Import para ordenar o histórico
+            orderBy 
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIGURAÇÃO FIREBASE ---
@@ -525,21 +530,21 @@
         let allGlobalExercises = []; 
         let allUserExercises = [];   
         let allExercises = [];       
-        let allWorkoutHistory = []; // NOVO: Para guardar o histórico de performance
+        let allWorkoutHistory = []; 
         
         let isInitialDataLoaded = false; 
+        let hasNotificationPermission = false; // ATUALIZADO
         
         let routinesCol, globalLibraryCol, userLibraryCol, workoutHistoryCol, settingsDoc;
 
-        // NOVO: Variáveis do Treino Ativo
         let currentWorkoutVolume = 0;
         let currentWorkoutTotalSets = 0;
         let currentWorkoutRoutineName = ""; 
         let workoutTimerInterval = null;
         let workoutSeconds = 0;
         let restTimerInterval = null;
+        let restTimerTimeout = null; // ATUALIZADO: Para notificações
 
-        // NOVO: Variáveis do Modal de Séries
         let currentSetRowEl = null; 
         
         // --- Seletores de Elementos da UI ---
@@ -550,7 +555,7 @@
         const routineListScreen = document.getElementById('routine-list-screen');
         const routineEditorScreen = document.getElementById('routine-editor-screen');
         const activeWorkoutScreen = document.getElementById('active-workout-screen');
-        const summaryScreen = document.getElementById('summary-screen'); // NOVO: Tela de Resumo
+        const summaryScreen = document.getElementById('summary-screen');
         // Tela 1 (Lista)
         const createRoutineBtn = document.getElementById('create-routine-btn');
         const routinesContainer = document.getElementById('routines-container');
@@ -563,13 +568,14 @@
         const routineExercisesContainer = document.getElementById('routine-exercises-container');
         const openLibraryBtn = document.getElementById('open-library-btn');
         // Tela 3 (Treino Ativo)
+        const cancelWorkoutBtn = document.getElementById('cancel-workout-btn'); // ATUALIZADO
         const concludeWorkoutBtn = document.getElementById('conclude-workout-btn');
         const activeWorkoutContainer = document.getElementById('active-workout-container');
         const workoutDurationEl = document.getElementById('workout-duration');
-        const workoutVolumeEl = document.getElementById('workout-volume'); // NOVO: Volume
+        const workoutVolumeEl = document.getElementById('workout-volume'); 
         const restTimerBar = document.getElementById('rest-timer-bar');
         const restTimerCountdownEl = document.getElementById('rest-timer-countdown');
-        const restTimerAudio = document.getElementById('rest-timer-audio'); // NOVO: Áudio
+        const restTimerAudio = document.getElementById('rest-timer-audio'); 
         // Tela 4 (Modal Biblioteca)
         const libraryModal = document.getElementById('exercise-library-modal');
         const closeLibraryBtn = document.getElementById('close-library-btn');
@@ -581,6 +587,7 @@
         const gifModalTitle = document.getElementById('gif-modal-title');
         const gifModalImage = document.getElementById('gif-modal-image');
         const gifModalMuscle = document.getElementById('gif-modal-muscle');
+        const gifModalPrContainer = document.getElementById('gif-modal-pr-container'); // ATUALIZADO
         const gifModalTabButtons = document.querySelectorAll('.gif-modal-tab-btn');
         const gifModalTabPanels = document.querySelectorAll('.gif-modal-tab-panel');
         // Tela 6 (Resumo)
@@ -625,7 +632,7 @@
                 setupFirestoreListeners();
 
                 mainContent.classList.remove('hidden');
-                mobileNav.classList.remove('hidden');
+                mobileNav.classList.remove('hidden'); // ATUALIZADO: Mostra a nav por padrão
 
             } else {
                 console.log("Nenhum usuário logado. Tentando login...");
@@ -701,7 +708,7 @@
                 mergeAndRenderExercises();
             }, (error) => console.error("Erro ao carregar biblioteca do usuário:", error));
 
-            // NOVO: Listener para o Histórico de Treinos (para preencher dados)
+            // Listener para o Histórico de Treinos
             const historyQuery = query(workoutHistoryCol, orderBy("completedAt", "desc"));
             onSnapshot(historyQuery, (snapshot) => {
                 allWorkoutHistory = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
@@ -718,17 +725,30 @@
 
         // --- Funções de Troca de Tela ---
         function showScreen(screenToShow) {
-            [routineListScreen, routineEditorScreen, activeWorkoutScreen, summaryScreen].forEach(screen => {
+            const allScreens = [routineListScreen, routineEditorScreen, activeWorkoutScreen, summaryScreen];
+            allScreens.forEach(screen => {
                 if(screen) screen.classList.add('hidden');
             });
             if(screenToShow) screenToShow.classList.remove('hidden');
             window.scrollTo(0, 0);
             
-            // NOVO: Controla a visibilidade da nav mobile
-            if (screenToShow === summaryScreen || screenToShow === activeWorkoutScreen) {
-                if(mobileNav) mobileNav.classList.add('hidden');
+            // ATUALIZADO: Lógica de exibição da Navbar
+            const screensWithoutNav = [routineEditorScreen, activeWorkoutScreen, summaryScreen];
+            if (screensWithoutNav.includes(screenToShow)) {
+                if(mobileNav) mobileNav.classList.add('translate-y-20');
             } else {
-                if(mobileNav) mobileNav.classList.remove('hidden');
+                if(mobileNav) mobileNav.classList.remove('translate-y-20');
+            }
+        }
+        
+        // --- ATUALIZADO: Lógica da Navbar para Modais ---
+        function showMobileNav(show) {
+            if (!mobileNav) return;
+            const currentScreen = [routineEditorScreen, activeWorkoutScreen, summaryScreen].find(s => !s.classList.contains('hidden'));
+            if (show && !currentScreen) {
+                mobileNav.classList.remove('translate-y-20');
+            } else {
+                mobileNav.classList.add('translate-y-20');
             }
         }
 
@@ -861,20 +881,16 @@
 
         // --- TELA 3: LÓGICA DO TREINO ATIVO ---
 
-        // NOVO: Função para buscar o último desempenho
         function findLastPerformance(exerciseName) {
             if (allWorkoutHistory.length === 0) return null;
-
-            // Histórico já está ordenado do mais novo para o mais antigo
             for (const workout of allWorkoutHistory) {
                 const foundExercise = workout.exercises.find(ex => ex.name === exerciseName);
                 if (foundExercise && foundExercise.sets.length > 0) {
-                    // Retorna a última série completa desse exercício
                     const lastSet = foundExercise.sets[foundExercise.sets.length - 1];
                     return { kg: lastSet.kg, reps: lastSet.reps };
                 }
             }
-            return null; // Nenhum desempenho anterior encontrado
+            return null; 
         }
 
         function showActiveWorkout(routineId) {
@@ -882,6 +898,9 @@
             if (!routine) return;
 
             currentWorkoutRoutineName = routine.name; 
+            
+            // ATUALIZADO: Pede permissão de notificação
+            requestNotificationPermission();
 
             if(activeWorkoutContainer) activeWorkoutContainer.innerHTML = '';
             routine.exercises.forEach(ex => {
@@ -913,6 +932,7 @@
             const gifUrl = exercise.gif || 'https://placehold.co/40x40/e2e8f0/94a3b8?text=E';
             const muscle = exercise.muscle || 'N/A';
             
+            // ATUALIZADO: Removido botão de 3 pontos
             exCard.innerHTML = `
                 <div class="flex justify-between items-center mb-3">
                     <div class="flex items-center space-x-3">
@@ -926,7 +946,6 @@
                         </button>
                         <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200">${exercise.name}</h4>
                     </div>
-                    <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><i class='bx bx-dots-vertical-rounded text-xl'></i></button>
                 </div>
                 <input type="text" placeholder="Adicionar notas aqui..." class="exercise-notes w-full bg-transparent p-1 mb-2 placeholder-gray-400 dark:placeholder-gray-500 text-sm">
                 <div class="text-sm text-gray-500 dark:text-gray-400 mb-3" data-rest-time="${exercise.rest || 90}">
@@ -950,7 +969,6 @@
                 </button>
             `;
             
-            // NOVO: Busca último desempenho e preenche as séries
             const lastPerf = findLastPerformance(exercise.name);
             const setsContainer = exCard.querySelector('.sets-container');
             const setCount = parseInt(exercise.sets, 10) || 3;
@@ -960,7 +978,6 @@
             return exCard;
         }
 
-        // NOVO: Função de volume
         function updateWorkoutVolume() {
             let totalVolume = 0;
             if(activeWorkoutContainer) {
@@ -976,9 +993,9 @@
         
         function startWorkoutTimer() {
             workoutSeconds = 0;
-            currentWorkoutVolume = 0; // Reseta volume
-            currentWorkoutTotalSets = 0; // Reseta séries
-            if(workoutVolumeEl) workoutVolumeEl.textContent = "0 kg"; // Reseta UI
+            currentWorkoutVolume = 0; 
+            currentWorkoutTotalSets = 0; 
+            if(workoutVolumeEl) workoutVolumeEl.textContent = "0 kg"; 
             if(workoutTimerInterval) clearInterval(workoutTimerInterval);
             
             workoutTimerInterval = setInterval(() => {
@@ -999,6 +1016,7 @@
 
         function startRestTimer(durationInSeconds) {
             if (restTimerInterval) clearInterval(restTimerInterval);
+            if (restTimerTimeout) clearTimeout(restTimerTimeout); // ATUALIZADO
             if(!restTimerBar || !restTimerCountdownEl) return;
             
             restTimerBar.classList.remove('hidden');
@@ -1016,19 +1034,21 @@
                 if (seconds <= 0) {
                     clearInterval(restTimerInterval);
                     restTimerBar.classList.add('hidden');
-                    
-                    // NOVO: Toca o som
                     if(restTimerAudio) {
                         restTimerAudio.play().catch(e => console.warn("Não foi possível tocar o áudio:", e.message));
                     }
                 }
             }, 1000);
+            
+            // ATUALIZADO: Seta o timeout para a notificação
+            restTimerTimeout = setTimeout(() => {
+                sendRestNotification("Seu descanso acabou!");
+            }, durationInSeconds * 1000);
         }
         
-        // NOVO: 'addSetRow' agora aceita 'previousData'
         function addSetRow(container, setNumber, previousData = null) {
             const setRow = document.createElement('div');
-            setRow.className = 'set-row grid grid-cols-5 gap-2 items-center rounded-lg transition-colors'; // Adicionado rounded-lg
+            setRow.className = 'set-row grid grid-cols-5 gap-2 items-center rounded-lg transition-colors'; 
             
             const prevText = previousData ? `${previousData.kg}kg x ${previousData.reps}` : '---';
             const prevKg = previousData ? previousData.kg : '';
@@ -1060,20 +1080,20 @@
             concludeWorkoutBtn.disabled = true;
             console.log("Salvando histórico do treino...");
             const performedExercises = [];
-            currentWorkoutTotalSets = 0; // Reseta contagem de séries
+            currentWorkoutTotalSets = 0; 
 
             activeWorkoutContainer.querySelectorAll('.exercise-card').forEach(card => {
                 const exerciseData = {
                     name: card.dataset.exerciseName,
                     libraryId: card.dataset.libraryId,
-                    notes: card.querySelector('.exercise-notes').value,
+                    notes: card.querySelector('.exercise-notes').value, // ATUALIZADO: Nota salva
                     sets: []
                 };
 
                 card.querySelectorAll('.set-row').forEach((setRow, index) => {
                     const kgInput = setRow.querySelector('.set-kg-input');
                     const repsInput = setRow.querySelector('.set-reps-input');
-                    const isComplete = setRow.classList.contains('set-complete'); // NOVO: Checa pela classe
+                    const isComplete = setRow.classList.contains('set-complete'); 
                     
                     if (isComplete || kgInput.value || repsInput.value) {
                         exerciseData.sets.push({
@@ -1081,11 +1101,11 @@
                             kg: kgInput.value || 0,
                             reps: repsInput.value || 0,
                             isComplete: isComplete,
-                            isFailed: setRow.classList.contains('set-failed') // NOVO: Salva estado de falha
+                            isFailed: setRow.classList.contains('set-failed') 
                         });
                         
                         if (isComplete) {
-                            currentWorkoutTotalSets++; // NOVO: Conta séries completas
+                            currentWorkoutTotalSets++; 
                         }
                     }
                 });
@@ -1095,14 +1115,13 @@
                 }
             });
             
-            // NOVO: Calcula volume final antes de salvar
             updateWorkoutVolume();
 
             const workoutData = {
                 routineName: currentWorkoutRoutineName,
                 durationInSeconds: workoutSeconds,
-                totalVolume: currentWorkoutVolume, // NOVO: Salva volume
-                totalSets: currentWorkoutTotalSets, // NOVO: Salva séries
+                totalVolume: currentWorkoutVolume, 
+                totalSets: currentWorkoutTotalSets, 
                 completedAt: new Date().toISOString(),
                 exercises: performedExercises
             };
@@ -1111,19 +1130,18 @@
                 await addDoc(workoutHistoryCol, workoutData);
                 console.log("Histórico do treino salvo!");
                 
-                // NOVO: Mostra a tela de resumo
                 renderWorkoutSummary(workoutData);
                 showScreen(summaryScreen);
                 triggerConfetti();
                 
             } catch (error) {
                 console.error("Erro ao salvar histórico do treino:", error);
-                // Se falhar, volta para a tela de treino
                 showScreen(activeWorkoutScreen);
             } finally {
                 concludeWorkoutBtn.disabled = false;
                 if(workoutTimerInterval) clearInterval(workoutTimerInterval);
                 if(restTimerInterval) clearInterval(restTimerInterval);
+                if(restTimerTimeout) clearTimeout(restTimerTimeout); // ATUALIZADO
                 workoutSeconds = 0;
             }
         }
@@ -1134,9 +1152,11 @@
             isEditingRoutine = isEditing; 
             renderExerciseLibraryUI(); 
             if(libraryModal) libraryModal.classList.remove('hidden');
+            showMobileNav(false); // ATUALIZADO
         }
         function closeLibraryModal() {
             if(libraryModal) libraryModal.classList.add('hidden');
+            showMobileNav(true); // ATUALIZADO
         }
 
         function renderExerciseLibraryUI() {
@@ -1167,19 +1187,83 @@
         }
         
         // --- TELA 5: LÓGICA DO MODAL DE GIF ---
+        
+        // ATUALIZADO: Função de cálculo de PRs
+        function calculateAndDisplayPRs(exerciseName) {
+            if (!gifModalPrContainer) return;
+            
+            let maxWeight = 0;
+            let bestRepsAtMaxWeight = 0;
+            let best1RM = 0;
+            let bestSetVolume = 0;
+
+            const exerciseHistory = allWorkoutHistory
+                .flatMap(workout => workout.exercises)
+                .filter(ex => ex.name === exerciseName)
+                .flatMap(ex => ex.sets)
+                .filter(set => set.isComplete);
+
+            if (exerciseHistory.length === 0) {
+                gifModalPrContainer.innerHTML = '<p class="text-gray-500 dark:text-gray-400">Nenhum recorde encontrado. Faça este exercício para registrar seus PRs!</p>';
+                return;
+            }
+
+            exerciseHistory.forEach(set => {
+                const kg = parseFloat(set.kg) || 0;
+                const reps = parseFloat(set.reps) || 0;
+                if (kg === 0 || reps === 0) return;
+
+                const setVolume = kg * reps;
+                const set1RM = kg * (1 + (reps / 30)); // Fórmula Epley
+
+                if (kg > maxWeight) {
+                    maxWeight = kg;
+                    bestRepsAtMaxWeight = reps;
+                }
+                if (set1RM > best1RM) {
+                    best1RM = set1RM;
+                }
+                if (setVolume > bestSetVolume) {
+                    bestSetVolume = setVolume;
+                }
+            });
+
+            gifModalPrContainer.innerHTML = `
+                <div class="flex justify-between">
+                    <span class="text-gray-600 dark:text-gray-400">Maior Peso</span>
+                    <span class="font-semibold">${maxWeight.toLocaleString('pt-BR')} kg x ${bestRepsAtMaxWeight}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600 dark:text-gray-400">Melhor 1RM (Estimado)</span>
+                    <span class="font-semibold">${best1RM.toFixed(1)} kg</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600 dark:text-gray-400">Melhor Volume de Série</span>
+                    <span class="font-semibold">${bestSetVolume.toLocaleString('pt-BR')} kg</span>
+                </div>
+            `;
+        }
+        
         function openGifModal(name, gifUrl, muscle) {
             if (!gifModal || !gifModalTitle || !gifModalImage || !gifModalMuscle) return;
             gifModalTitle.textContent = name;
-            gifModalImage.src = gifUrl;
+            gifModalImage.src = gifUrl; // O GIF animará automaticamente aqui
             gifModalMuscle.textContent = muscle || 'N/A';
+            
+            // ATUALIZADO: Calcula e exibe PRs
+            if(gifModalPrContainer) gifModalPrContainer.innerHTML = '<p class="text-gray-500 dark:text-gray-400">Calculando...</p>';
+            calculateAndDisplayPRs(name);
+            
             gifModal.classList.remove('hidden');
+            showMobileNav(false); // ATUALIZADO
         }
         
         function closeGifModal() {
             if (!gifModal || !gifModalImage) return;
-            gifModalImage.src = ""; 
+            gifModalImage.src = ""; // Para a animação parando o download
             gifModal.classList.add('hidden');
             switchGifModalTab('resumo'); 
+            showMobileNav(true); // ATUALIZADO
         }
 
         function switchGifModalTab(tabId) {
@@ -1202,7 +1286,7 @@
             });
         }
         
-        // --- NOVO: TELA 6: LÓGICA DO RESUMO DO TREINO ---
+        // --- TELA 6: LÓGICA DO RESUMO DO TREINO ---
         
         function triggerConfetti() {
             if (typeof confetti !== 'function') return;
@@ -1247,12 +1331,12 @@
         }
         
 
-        // --- NOVO: TELA 7: LÓGICA DO MODAL DE OPÇÕES DA SÉRIE ---
+        // --- TELA 7: LÓGICA DO MODAL DE OPÇÕES DA SÉRIE ---
         function openSetOptionsModal(setRow) {
             currentSetRowEl = setRow;
             if (setOptionsModal) setOptionsModal.classList.remove('hidden');
+            showMobileNav(false); // ATUALIZADO
             
-            // Atualiza texto do botão de falha
             if (currentSetRowEl.classList.contains('set-failed')) {
                 setOptionFailBtn.querySelector('span').textContent = "Desmarcar Falha";
             } else {
@@ -1267,15 +1351,54 @@
         function closeSetOptionsModal() {
             if(setOptionsContent) setOptionsContent.classList.add('translate-y-full');
             if(setOptionsModal) setTimeout(() => setOptionsModal.classList.add('hidden'), 300);
+            showMobileNav(true); // ATUALIZADO
             currentSetRowEl = null;
         }
 
+        // --- ATUALIZADO: LÓGICA DE NOTIFICAÇÃO ---
+        async function requestNotificationPermission() {
+            if (!('Notification' in window)) {
+                console.log("Este navegador não suporta notificações.");
+                return;
+            }
+            if (Notification.permission === 'granted') {
+                hasNotificationPermission = true;
+                return;
+            }
+            if (Notification.permission !== 'denied') {
+                const permission = await Notification.requestPermission();
+                hasNotificationPermission = (permission === 'granted');
+            }
+        }
+
+        function sendRestNotification(body) {
+            if (!hasNotificationPermission) return;
+            
+            const options = {
+                body: body,
+                icon: '/assets/img/android-chrome-512x512.png',
+                silent: true // ATUALIZADO: Notificação silenciosa
+            };
+            
+            // Tenta enviar a notificação pelo Service Worker (se ativo)
+            // Se não, envia pelo 'new Notification'
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                 navigator.serviceWorker.controller.postMessage({
+                    type: 'show-notification',
+                    title: 'ELETRO Treino',
+                    options: options
+                });
+            } else {
+                new Notification('ELETRO Treino', options);
+            }
+        }
 
         // --- Menu 'Mais' (Modal Mobile) ---
         function openMenu() {
             if (!moreMenu || !moreMenuOverlay) return;
             moreMenu.classList.remove('hidden');
             moreMenuOverlay.classList.remove('hidden');
+            showMobileNav(false); // ATUALIZADO
             requestAnimationFrame(() => {
                 moreMenu.classList.remove('translate-y-full');
             });
@@ -1285,6 +1408,7 @@
             if (!moreMenu || !moreMenuOverlay) return;
             moreMenu.classList.add('translate-y-full');
             moreMenuOverlay.classList.add('hidden');
+            showMobileNav(true); // ATUALIZADO
             setTimeout(() => moreMenu.classList.add('hidden'), 300);
         }
         
@@ -1372,6 +1496,18 @@
             });
 
             // --- Eventos da Tela 3 (Treino Ativo) ---
+            // ATUALIZADO: Adicionado listener para 'cancelWorkoutBtn'
+            if(cancelWorkoutBtn) cancelWorkoutBtn.addEventListener('click', () => {
+                if (confirm("Tem certeza que deseja cancelar e excluir este treino? Todo o progresso será perdido.")) {
+                    if(workoutTimerInterval) clearInterval(workoutTimerInterval);
+                    if(restTimerInterval) clearInterval(restTimerInterval);
+                    if(restTimerTimeout) clearTimeout(restTimerTimeout);
+                    workoutSeconds = 0;
+                    currentWorkoutRoutineName = "";
+                    showScreen(routineListScreen);
+                }
+            });
+            
             if(concludeWorkoutBtn) concludeWorkoutBtn.addEventListener('click', saveWorkoutHistory);
             
             if(activeWorkoutContainer) activeWorkoutContainer.addEventListener('click', (e) => {
@@ -1380,39 +1516,55 @@
                 const restBtn = e.target.closest('.rest-time-btn');
                 const addExerciseBtn = e.target.closest('#add-exercise-to-workout-btn');
                 const gifBtn = e.target.closest('.gif-thumbnail-btn');
-                const setNumberBtn = e.target.closest('.set-number-btn'); // NOVO: Botão de número
+                const setNumberBtn = e.target.closest('.set-number-btn'); 
 
                 if (addBtn) {
                     const setsContainer = addBtn.closest('.exercise-card').querySelector('.sets-container');
                     const newSetNumber = setsContainer.children.length + 1;
-                    // NOVO: Adiciona nova série, mas busca o desempenho anterior
                     const exerciseName = addBtn.closest('.exercise-card').dataset.exerciseName;
                     const lastPerf = findLastPerformance(exerciseName);
                     addSetRow(setsContainer, newSetNumber, lastPerf);
                 }
-                if (completeBtn && !completeBtn.disabled) {
+                
+                // ATUALIZADO: Lógica de clique do botão de completar (toggle)
+                if (completeBtn) {
                     const setRow = completeBtn.closest('.set-row');
                     const exerciseCard = completeBtn.closest('.exercise-card');
                     
-                    setRow.querySelectorAll('input').forEach(input => input.disabled = true);
+                    const isCompleting = setRow.classList.toggle('set-complete');
                     
-                    // NOVO: Adiciona classe de UI e atualiza volume
-                    setRow.classList.add('set-complete');
-                    updateWorkoutVolume();
-                    
-                    completeBtn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-400');
-                    completeBtn.classList.add('bg-primary-600', 'text-white');
-                    completeBtn.disabled = true;
-
-                    const restTimeDiv = exerciseCard.querySelector('[data-rest-time]');
-                    const restTimeInSeconds = parseInt(restTimeDiv.dataset.restTime, 10) || 90;
-                    startRestTimer(restTimeInSeconds);
-                    
-                    // NOVO: Prepara o áudio no primeiro clique
-                    if(restTimerAudio.paused) {
-                        restTimerAudio.play().then(() => restTimerAudio.pause()).catch(e => {});
+                    if (isCompleting) {
+                        // --- COMPLETANDO A SÉRIE ---
+                        setRow.querySelectorAll('input').forEach(input => input.disabled = true);
+                        
+                        completeBtn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-400');
+                        completeBtn.classList.add('bg-primary-600', 'text-white');
+                        
+                        updateWorkoutVolume(); 
+                        
+                        const restTimeDiv = exerciseCard.querySelector('[data-rest-time]');
+                        const restTimeInSeconds = parseInt(restTimeDiv.dataset.restTime, 10) || 90;
+                        startRestTimer(restTimeInSeconds);
+                        
+                        if(restTimerAudio.paused) {
+                            restTimerAudio.play().then(() => restTimerAudio.pause()).catch(e => {});
+                        }
+                    } else {
+                        // --- DESMARCANDO A SÉRIE ---
+                        setRow.querySelectorAll('input').forEach(input => input.disabled = false);
+                        
+                        completeBtn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-400');
+                        completeBtn.classList.remove('bg-primary-600', 'text-white');
+                        
+                        updateWorkoutVolume();
+                        
+                        // Para o timer se estiver ativo
+                        if (restTimerInterval) clearInterval(restTimerInterval);
+                        if (restTimerTimeout) clearTimeout(restTimerTimeout);
+                        restTimerBar.classList.add('hidden');
                     }
                 }
+                
                 if (restBtn) {
                     const restTimeDiv = restBtn.closest('[data-rest-time]');
                     const currentRest = restTimeDiv.dataset.restTime;
@@ -1432,7 +1584,6 @@
                     const muscle = gifBtn.dataset.muscle;
                     openGifModal(name, gifUrl, muscle);
                 }
-                // NOVO: Abre o modal de opções de série
                 if (setNumberBtn) {
                     openSetOptionsModal(setNumberBtn.closest('.set-row'));
                 }
@@ -1483,22 +1634,22 @@
                 });
             });
 
-            // --- NOVO: Eventos Tela 6 (Resumo) ---
+            // --- Eventos Tela 6 (Resumo) ---
             if (summaryConcludeBtn) {
                 summaryConcludeBtn.addEventListener('click', () => {
-                    currentWorkoutRoutineName = ""; // Limpa o nome da rotina
+                    currentWorkoutRoutineName = ""; 
                     showScreen(routineListScreen);
                 });
             }
 
-            // --- NOVO: Eventos Tela 7 (Modal Opções de Série) ---
+            // --- Eventos Tela 7 (Modal Opções de Série) ---
             if(setOptionsOverlay) setOptionsOverlay.addEventListener('click', closeSetOptionsModal);
             if(setOptionDeleteBtn) setOptionDeleteBtn.addEventListener('click', () => {
                 if (currentSetRowEl) {
                     const setsContainer = currentSetRowEl.closest('.sets-container');
                     currentSetRowEl.remove();
                     renumberSets(setsContainer);
-                    updateWorkoutVolume(); // Atualiza volume caso a série removida estivesse completa
+                    updateWorkoutVolume(); 
                 }
                 closeSetOptionsModal();
             });
@@ -1509,7 +1660,6 @@
                 closeSetOptionsModal();
             });
             
-
             // --- Eventos de Logout (Desktop) ---
             const logoutButtonDesktop = document.getElementById('logout-button-desktop');
             if(logoutButtonDesktop) logoutButtonDesktop.addEventListener('click', handleLogout);
