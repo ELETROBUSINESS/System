@@ -318,6 +318,8 @@
                     <h3>Quase lá! Escaneie o QR Code</h3>
                     <p>Para finalizar, escaneie o código abaixo com o app do seu banco.</p>
                     
+                    <div class="pix-timer" id="pix-timer">Expira em 30:00</div>
+                    
                     <div id="pix-qr-code" class="pix-qr-code">
                         <div class="loading-spinner-pix"></div>
                     </div>
@@ -331,6 +333,24 @@
                     
                     <button class="cta-button" id="pix-paid-button">Já paguei, finalizar</button>
                 </div>
+            </div>
+        </section>
+
+        <section id="page-orders" class="page">
+            <div class="container">
+                <div class="page-header">
+                    <button class="back-button" data-target="page-home"><i class='bx bx-chevron-left'></i></button>
+                    <h2 class="section-title">Meus Pedidos</h2>
+                </div>
+                
+                <div id="orders-empty-message" class="cart-empty" style="display: none;">
+                    <i class='bx bx-receipt'></i>
+                    <h3>Você ainda não tem pedidos</h3>
+                    <p>Quando fizer uma compra, ela aparecerá aqui.</p>
+                </div>
+
+                <div id="orders-list-container" class="orders-list">
+                    </div>
             </div>
         </section>
 
@@ -349,6 +369,10 @@
             <i class='bx bx-cart'></i>
             <span id="cart-badge" class="cart-badge" style="display: none;">0</span>
             <span>Carrinho</span>
+        </button>
+        <button class="nav-item" id="more-menu-button">
+            <i class='bx bx-menu'></i>
+            <span>Mais</span>
         </button>
     </nav>
 
@@ -385,6 +409,19 @@
                 
                 <button id="add-to-cart-button" class="cta-button">Adicionar ao Carrinho</button>
             </div>
+        </div>
+    </div>
+
+    <div id="more-menu-modal" class="modal-overlay">
+        <div class="modal-content more-menu-content">
+            <button class="modal-close" data-target="more-menu-modal">&times;</button>
+            <h3>Mais Opções</h3>
+            <div class="menu-list">
+                <button class="menu-list-item" id="nav-to-orders-button">
+                    <i class='bx bx-receipt'></i>
+                    <span>Meus Pedidos</span>
+                </button>
+                </div>
         </div>
     </div>
     

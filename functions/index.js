@@ -132,4 +132,3 @@ exports.processPayment = functions.https.onRequest(async (req, res) => {
         }
     }); 
 });
-// (A CHAVE '}' EXTRA FOI REMOVIDA DAQUI)

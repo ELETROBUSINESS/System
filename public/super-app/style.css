@@ -870,3 +870,164 @@ button {
     object-fit: initial;
     display: inline-block;
 }
+
+/* ==================== MODAL 2: MENU "MAIS" (NOVO) ==================== */
+.more-menu-content {
+    max-width: 400px;
+    /* Faz o modal aparecer de baixo no mobile, como uma "action sheet" */
+    position: fixed;
+    bottom: -100%;
+    left: 0;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    padding-top: 2rem;
+    transition: bottom 0.3s ease-out;
+}
+.modal-overlay.show .more-menu-content {
+    bottom: 0;
+    transform: none; /* Sobrescreve o scale(1) */
+}
+/* No desktop, centraliza normalmente */
+@media (min-width: 500px) {
+    .more-menu-content {
+        position: relative;
+        bottom: auto;
+        left: auto;
+        border-radius: 8px;
+        max-width: 400px;
+    }
+    .modal-overlay.show .more-menu-content {
+        transform: scale(1); /* Volta ao normal */
+    }
+}
+
+.menu-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.menu-list-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0.5rem;
+    font-size: 1.1rem;
+    color: var(--color-text-dark);
+    font-weight: 500;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+}
+.menu-list-item:hover {
+    background-color: var(--color-bg-main);
+}
+.menu-list-item i {
+    font-size: 1.5rem;
+    color: var(--color-accent-blue);
+}
+
+
+/* ==================== PÁGINA 6: MEUS PEDIDOS (NOVO) ==================== */
+.orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-bottom: 2rem;
+}
+.order-card {
+    background: var(--color-bg-light);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+.order-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--color-bg-main);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.order-date {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+.order-status {
+    font-size: 0.9rem;
+    font-weight: 700;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    color: var(--color-text-light);
+}
+/* Cores dos Status */
+.status-approved { background-color: var(--color-accent-green); }
+.status-processing { background-color: var(--color-accent-blue); }
+.status-pending_payment { background-color: #f5a623; } /* Laranja */
+.status-failed { background-color: var(--color-error); }
+/* (Outros status: 'preparing', 'shipped', 'delivered') */
+.status-preparing { background-color: #5d3d8f; } /* Roxo */
+.status-shipped { background-color: #055160; } /* Azul Escuro */
+.status-delivered { background-color: var(--color-text-muted); }
+
+.order-body {
+    padding: 1rem;
+}
+.order-item-preview {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+.order-item-preview img {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    border: 1px solid var(--color-bg-main);
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+.order-item-info h4 {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+.order-item-info p {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+}
+.order-footer {
+    padding: 1rem;
+    background: #f9f9f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.order-total {
+    font-size: 1rem;
+    font-weight: 700;
+}
+.order-actions .cta-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+.cta-button.retry-payment-button {
+    background-color: var(--color-accent-blue);
+}
+
+
+/* ==================== PÁGINA 5: CRONÔMETRO PIX (NOVO) ==================== */
+.pix-timer {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-error);
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background: #fff0f0;
+    border-radius: 6px;
+}
+
+/* ==================== NAVBAR (AJUSTE 4 ITENS) ==================== */
+.bottom-navbar {
+    justify-content: space-around; /* Mantém space-around */
+}
+.nav-item {
+    flex-grow: 1; /* Faz os 4 itens ocuparem espaço igual */
+}
