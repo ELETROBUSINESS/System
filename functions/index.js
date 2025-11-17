@@ -31,7 +31,7 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
             // 1. CRIAR O PEDIDO NO FIRESTORE
             const orderRef = await db.collection("orders").add({
                 userId: userId,
-                items: items,
+                items: items, // Salva os itens do carrinho aqui
                 total: price,
                 status: "pending_payment", 
                 statusText: "Aguardando Pagamento",
@@ -55,10 +55,9 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
             
             const response = await preferenceClient.create(preferenceData);
             
-            // 3. RETORNA OS IDs PARA O FRONTEND
             return res.status(200).send({ 
-                preferenceId: response.id, // ID do Mercado Pago
-                orderId: orderRef.id       // ID do nosso Firestore
+                preferenceId: response.id,
+                orderId: orderRef.id
             });
 
         } catch (error) {
@@ -83,17 +82,38 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
             const client = new MercadoPagoConfig({ accessToken });
             const payment = new Payment(client);
 
-            const paymentData = brickObject.formData;
+            // ⬇️ ⬇️ ⬇️ INÍCIO DA CORREÇÃO ⬇️ ⬇️ ⬇️
 
-            // 3. Adicionamos a referência E A DESCRIÇÃO DA FATURA
+            // 1. BUSCAR OS ITENS DO PEDIDO NO FIRESTORE
+            const orderRef = db.collection("orders").doc(orderId);
+            const orderDoc = await orderRef.get();
+            if (!orderDoc.exists) {
+                return res.status(404).send({ error: "Pedido não encontrado" });
+            }
+            const cartItems = orderDoc.data().items;
+
+            // 2. FORMATAR OS ITENS PARA A API DE PAGAMENTO
+            // (Isso resolve os 6 erros de "Aprovação dos pagamentos")
+            const formattedItems = cartItems.map(item => ({
+                id: item.id,
+                title: item.name,
+                description: item.description,
+                quantity: item.quantity,
+                unit_price: item.priceNew,
+                category_id: "MLB1000" // Categoria genérica para "Eletrônicos"
+            }));
+
+            // 3. PREPARAR O OBJETO DE PAGAMENTO
+            const paymentData = brickObject.formData;
             paymentData.external_reference = orderId;
+            paymentData.statement_descriptor = "ELETROBUSINESS"; // Resolve "Fatura do cartão"
             
-            // ⬇️ ⬇️ ⬇️ CORREÇÃO DE QUALIDADE APLICADA AQUI ⬇️ ⬇️ ⬇️
-            // Este é o nome que aparecerá na fatura do cartão
-            paymentData.statement_descriptor = "ELETROBUSINESS";
+            // 4. ADICIONAR OS ITENS AO PAGAMENTO
+            paymentData.items = formattedItems; 
+
             // ⬆️ ⬆️ ⬆️ FIM DA CORREÇÃO ⬆️ ⬆️ ⬆️
 
-            // 4. Enviamos apenas os 'paymentData' para o Mercado Pago
+            // 5. Enviamos os dados completos para o Mercado Pago
             const paymentResponse = await payment.create({ body: paymentData });
             
             // Prepara os dados para salvar no Firestore
@@ -112,7 +132,6 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
             }
             
             // Atualiza o pedido no Firestore
-            const orderRef = db.collection("orders").doc(orderId);
             await orderRef.update(updateData);
             
             // Retorna a resposta completa do pagamento para o frontend
@@ -131,6 +150,7 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
 // FUNÇÃO 3: WEBHOOK (Confirma o pagamento)
 // ==========================================================
 exports.processWebhook = functions.https.onRequest(async (req, res) => {
+    // ... (Esta função permanece INALTERADA) ...
     const topic = req.query.topic || req.query.type;
     console.log("Webhook recebido:", topic, req.body);
 
@@ -150,7 +170,6 @@ exports.processWebhook = functions.https.onRequest(async (req, res) => {
                 return res.status(200).send("OK, mas sem external_reference");
             }
             
-            // Formata o status
             const mpStatus = paymentDetails.status;
             let newStatus = "processing";
             let newStatusText = "Processando";
@@ -163,7 +182,6 @@ exports.processWebhook = functions.https.onRequest(async (req, res) => {
                 newStatusText = "Pagamento Falhado";
             }
 
-            // Atualiza o pedido no Firestore
             const orderRef = db.collection("orders").doc(orderId);
             await orderRef.update({
                 status: newStatus,
