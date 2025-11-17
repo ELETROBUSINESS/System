@@ -31,7 +31,7 @@ const state = {
 // 4. LÓGICA PRINCIPAL DA APLICAÇÃO
 // ==========================================================
 
-// AGORA TUDO COMEÇA DEPOIS QUE O DOM ESTÁ PRONTO
+// TUDO COMEÇA DEPOIS QUE O DOM ESTÁ PRONTO
 document.addEventListener("DOMContentLoaded", () => {
   
     // Variáveis de escopo para o Firebase
@@ -44,12 +44,12 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
         const firebaseConfig = {
           // SUAS CHAVES DO FIREBASE DEVEM ESTAR AQUI
-          apiKey: "...",
-          authDomain: "...",
-          projectId: "...",
-          storageBucket: "...",
-          messagingSenderId: "...",
-          appId: "..."
+          apiKey: "SEU_API_KEY",
+          authDomain: "SEU_AUTH_DOMAIN",
+          projectId: "SEU_PROJECT_ID",
+          storageBucket: "SEU_STORAGE_BUCKET",
+          messagingSenderId: "SEU_SENDER_ID",
+          appId: "SEU_APP_ID"
         };
 
         firebase.initializeApp(firebaseConfig);
@@ -77,7 +77,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // --- Seletores do DOM ---
-    // (Tudo aqui como estava)
     const pages = document.querySelectorAll(".page");
     const navItems = document.querySelectorAll(".nav-item[data-target]");
     const cartBadge = document.getElementById("cart-badge");
