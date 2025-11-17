@@ -10,7 +10,7 @@ const db = admin.firestore();
 const mercadoPagoToken = defineString('MERCADOPAGO_ACCESS_TOKEN');
 
 // ==========================================================
-// FUNÇÃO 1: CRIAR PREFERÊNCIA (Inalterada)
+// FUNÇÃO 1: CRIAR PREFERÊNCIA (Cria o pedido no Firestore)
 // ==========================================================
 exports.createPreference = functions.https.onRequest(async (req, res) => {
     cors(req, res, async () => {
@@ -33,7 +33,7 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
                 userId: userId,
                 items: items,
                 total: price,
-                status: "pending_payment", // Status inicial
+                status: "pending_payment", 
                 statusText: "Aguardando Pagamento",
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
                 paymentType: null,
@@ -69,14 +69,60 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
 });
 
 // ==========================================================
-// FUNÇÃO 2: PROCESSAR PAGAMENTO (Inalterada)
+// FUNÇÃO 2: CRIAR PAGAMENTO (NOVA E ESSENCIAL)
+// Chamada pelo Brick 'onSubmit'
 // ==========================================================
-exports.processPayment = functions.https.onRequest(async (req, res) => {
-    // ... (manter o código da sua processPayment anterior)
+exports.createPayment = functions.https.onRequest(async (req, res) => {
+    cors(req, res, async () => {
+        try {
+            const { formData, orderId } = req.body;
+            if (!formData || !orderId) {
+                return res.status(400).send({ error: "Dados incompletos" });
+            }
+            
+            const accessToken = mercadoPagoToken.value();
+            const client = new MercadoPagoConfig({ accessToken });
+            const payment = new Payment(client);
+
+            // O external_reference deve ser o ID do Firestore
+            formData.external_reference = orderId;
+
+            // Cria o pagamento
+            const paymentResponse = await payment.create({ body: formData });
+            
+            // Prepara os dados para salvar no Firestore
+            const updateData = {
+                status: paymentResponse.status,
+                statusText: paymentResponse.status_detail,
+                paymentId: paymentResponse.id,
+                paymentType: paymentResponse.payment_type_id,
+            };
+
+            // Se for PIX, salva os dados do QR Code
+            if (paymentResponse.status === "pending" && paymentResponse.point_of_interaction) {
+                updateData.paymentData = paymentResponse.point_of_interaction.transaction_data;
+                updateData.expiresAt = paymentResponse.date_of_expiration;
+                updateData.statusText = "Aguardando Pagamento";
+            }
+            
+            // Atualiza o pedido no Firestore
+            const orderRef = db.collection("orders").doc(orderId);
+            await orderRef.update(updateData);
+            
+            // Retorna a resposta completa do pagamento para o frontend
+            return res.status(200).send(paymentResponse);
+
+        } catch (error) {
+            console.error("Erro ao criar pagamento:", error);
+            const errorMessage = error.response ? error.response.data : { message: "Erro interno" };
+            return res.status(500).send(errorMessage);
+        }
+    });
 });
 
+
 // ==========================================================
-// FUNÇÃO 3: WEBHOOK DO MERCADO PAGO (CORRIGIDA)
+// FUNÇÃO 3: WEBHOOK (Confirma o pagamento)
 // ==========================================================
 exports.processWebhook = functions.https.onRequest(async (req, res) => {
     const topic = req.query.topic || req.query.type;
@@ -91,7 +137,6 @@ exports.processWebhook = functions.https.onRequest(async (req, res) => {
             const payment = new Payment(client);
             
             const paymentDetails = await payment.get({ id: paymentId });
-            
             const orderId = paymentDetails.external_reference;
             
             if (!orderId) {
@@ -99,8 +144,8 @@ exports.processWebhook = functions.https.onRequest(async (req, res) => {
                 return res.status(200).send("OK, mas sem external_reference");
             }
             
-            // 3. Formatar o novo status
-            const mpStatus = paymentDetails.status; // ex: 'approved', 'rejected', 'pending'
+            // Formata o status
+            const mpStatus = paymentDetails.status;
             let newStatus = "processing";
             let newStatusText = "Processando";
 
@@ -110,32 +155,15 @@ exports.processWebhook = functions.https.onRequest(async (req, res) => {
             } else if (mpStatus === "rejected") {
                 newStatus = "failed";
                 newStatusText = "Pagamento Falhado";
-            } else if (mpStatus === "pending" || mpStatus === "in_process") {
-                // 'pending' é o status do PIX recém-criado
-                newStatus = "pending_payment";
-                newStatusText = "Aguardando Pagamento";
             }
-            
-            // ⬇️ ⬇️ ⬇️ CORREÇÃO IMPORTANTE ⬇️ ⬇️ ⬇️
-            // Objeto para atualizar o Firestore
-            const updateData = {
+            // (Não precisamos mais do 'pending' aqui, pois ele é tratado no createPayment)
+
+            // Atualiza o pedido no Firestore
+            const orderRef = db.collection("orders").doc(orderId);
+            await orderRef.update({
                 status: newStatus,
                 statusText: newStatusText,
-                paymentId: paymentId,
-                paymentType: paymentDetails.payment_type_id,
-            };
-
-            // Se for PIX (pending), salvamos os dados do QR Code
-            if (newStatus === "pending_payment" && paymentDetails.point_of_interaction) {
-                updateData.paymentData = paymentDetails.point_of_interaction.transaction_data;
-                // Salvamos a data de expiração que o MP nos envia
-                updateData.expiresAt = paymentDetails.date_of_expiration;
-            }
-            // ⬆️ ⬆️ ⬆️ FIM DA CORREÇÃO ⬆️ ⬆️ ⬆️
-
-            // 4. Atualizar o pedido no Firestore
-            const orderRef = db.collection("orders").doc(orderId);
-            await orderRef.update(updateData); // Agora envia o objeto 'updateData'
+            });
 
             console.log(`Pedido ${orderId} atualizado para ${newStatus}`);
             return res.status(200).send("Webhook processado com sucesso");

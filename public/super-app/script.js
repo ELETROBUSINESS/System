@@ -5,6 +5,8 @@
 // 1. CONFIGURAÇÃO (Global)
 // ==========================================================
 const YOUR_CREATE_PREFERENCE_URL = "https://createpreference-xsy57wqb6q-uc.a.run.app";
+// NOVO: URL da nova função
+const YOUR_CREATE_PAYMENT_URL = "https://createpayment-xsy57wqb6q-uc.a.run.app"; 
 const YOUR_PUBLIC_KEY = "APP_USR-519e5c93-44f8-42b1-a139-1b40aeb06310";
 
 // ==========================================================
@@ -13,8 +15,7 @@ const YOUR_PUBLIC_KEY = "APP_USR-519e5c93-44f8-42b1-a139-1b40aeb06310";
 const mp = new MercadoPago(YOUR_PUBLIC_KEY);
 let paymentBrickController;
 let pixTimerInterval = null;
-let stopOrderListener = null; // NOVO: Para parar o listener de pedidos
-let stopPixListener = null; // NOVO: Para parar o listener do PIX
+let stopOrderListener = null; // Listener de pedidos
 
 // ==========================================================
 // 3. ESTADO DA APLICAÇÃO (Global)
@@ -223,26 +224,55 @@ document.addEventListener("DOMContentLoaded", () => {
                         brickLoadingMessage.style.display = 'none';
                     },
                     
-                    // ⬇️ ⬇️ ⬇️ LÓGICA DO SUBMIT ATUALIZADA ⬇️ ⬇️ ⬇️
-                    onSubmit: async ({ formData }) => {
-                        console.log("Formulário enviado, aguardando webhook...");
+                    // ⬇️ ⬇️ ⬇️ LÓGICA DO SUBMIT TOTALMENTE ATUALIZADA ⬇️ ⬇️ ⬇️
+                    onSubmit: (formData) => {
+                        console.log("Formulário enviado, criando pagamento...");
                         state.currentOrderId = preferenceData.orderId; 
                         
-                        if (formData.payment_method_id === 'pix' || formData.paymentType === 'bank_transfer') {
-                            // 1. Vai para a página PIX imediatamente
-                            navigateTo('page-pix-result');
-                            
-                            // 2. Mostra o spinner de loading
-                            pixQrCodeDiv.innerHTML = '<div class="loading-spinner-pix"></div>';
-                            pixTimerDisplay.textContent = "Gerando QR Code...";
+                        // Desabilita o botão de pagar
+                        const submitButton = document.querySelector("#payment-brick-container .mp-brick-submit-button");
+                        if(submitButton) submitButton.disabled = true;
 
-                            // 3. Começa a "ouvir" o documento em tempo real
-                            waitForPixData(preferenceData.orderId);
-                        } else {
-                            // Se for cartão, apenas vamos para a tela de pedidos
-                            // e esperamos o status mudar
-                            navigateTo('page-orders');
-                        }
+                        return new Promise((resolve, reject) => {
+                            fetch(YOUR_CREATE_PAYMENT_URL, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    formData: formData,
+                                    orderId: preferenceData.orderId
+                                }),
+                            })
+                            .then(response => {
+                                if (!response.ok) {
+                                    return response.json().then(err => { 
+                                        throw new Error(err.message || "Erro do servidor"); 
+                                    });
+                                }
+                                return response.json();
+                            })
+                            .then(result => {
+                                // 'result' é a resposta completa do pagamento
+                                if (submitButton) submitButton.disabled = false;
+                                
+                                // Se for PIX, 'result.status' será 'pending'
+                                if (result.status === 'pending') {
+                                    populatePixScreen(result); // Envia a resposta inteira
+                                    navigateTo('page-pix-result');
+                                } else {
+                                    // Se for cartão, o status será 'approved' ou 'rejected'
+                                    // O webhook cuidará de atualizar o status no Firestore
+                                    navigateTo('page-orders');
+                                }
+                                resolve();
+                            })
+                            .catch(error => {
+                                console.error("Erro ao criar pagamento:", error);
+                                if (submitButton) submitButton.disabled = false;
+                                paymentError.textContent = `Erro: ${error.message}`;
+                                paymentError.style.display = 'block';
+                                reject();
+                            });
+                        });
                     },
                     // ⬆️ ⬆️ ⬆️ FIM DA ATUALIZAÇÃO ⬆️ ⬆️ ⬆️
 
@@ -266,7 +296,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================================
     // 8. LÓGICA DE NAVEGAÇÃO E UI (Modais, Banner, etc.)
     // ==========================================================
-
+    
+    // (Todas as funções de UI, Navegação, Carrinho, etc. permanecem INALTERADAS)
+    
+    // --- Lógica de Navegação (Router) ---
     function navigateTo(pageId) {
         pages.forEach(page => page.classList.remove("active"));
         document.getElementById(pageId).classList.add("active");
@@ -301,6 +334,7 @@ document.addEventListener("DOMContentLoaded", () => {
         button.addEventListener("click", () => navigateTo(button.dataset.target));
     });
 
+    // --- Lógica do Menu "Mais" ---
     function showModal(modalElement) {
         modalElement.classList.add("show");
     }
@@ -323,6 +357,7 @@ document.addEventListener("DOMContentLoaded", () => {
         navigateTo('page-orders');
     });
 
+    // --- Lógica do Banner (Slider) ---
     let slideIndex = 0;
     const slides = document.querySelector(".slider-wrapper");
     const dots = document.querySelectorAll(".nav-dot");
@@ -336,6 +371,8 @@ document.addEventListener("DOMContentLoaded", () => {
     window.currentSlide = (n) => showSlide(slideIndex = n);
     setInterval(() => showSlide(slideIndex + 1), 5000);
 
+    
+    // --- Lógica do Modal de Produto ---
     productGrid.addEventListener("click", (e) => {
         if (e.target.classList.contains("cta-button")) {
             const productCard = e.target.closest(".product-card");
@@ -359,6 +396,7 @@ document.addEventListener("DOMContentLoaded", () => {
     productModal.addEventListener("click", (e) => {
         if (e.target === productModal) closeProductModal();
     });
+
 
     // --- Lógica do Carrinho ---
     document.getElementById("add-to-cart-button").addEventListener("click", () => {
@@ -524,19 +562,25 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // --- Lógica da Página PIX ---
-    function populatePixScreen(orderData) {
-        if (!orderData.paymentData) {
-            console.error("populatePixScreen chamado sem paymentData");
+    
+    // ⬇️ ⬇️ ⬇️ FUNÇÃO ATUALIZADA ⬇️ ⬇️ ⬇️
+    // Agora lê a resposta do 'createPayment'
+    function populatePixScreen(paymentResponse) {
+        if (!paymentResponse.point_of_interaction) {
+            console.error("populatePixScreen chamado sem point_of_interaction");
             return;
         }
-        const qrBase64 = orderData.paymentData.qr_code_base64;
-        const qrCopyCode = orderData.paymentData.qr_code; 
+        const qrBase64 = paymentResponse.point_of_interaction.transaction_data.qr_code_base64;
+        const qrCopyCode = paymentResponse.point_of_interaction.transaction_data.qr_code; 
+        const expiresAt = paymentResponse.date_of_expiration;
 
         pixQrCodeDiv.innerHTML = `<img src="data:image/png;base64, ${qrBase64}" alt="PIX QR Code">`;
         pixCopyCodeInput.value = qrCopyCode;
         
-        startPixTimer(orderData.expiresAt);
+        startPixTimer(expiresAt);
     }
+    // ⬆️ ⬆️ ⬆️ FIM DA ATUALIZAÇÃO ⬆️ ⬆️ ⬆️
+    
     function startPixTimer(expiresAt) {
         if (pixTimerInterval) {
             clearInterval(pixTimerInterval);
@@ -581,46 +625,16 @@ document.addEventListener("DOMContentLoaded", () => {
     // 9. LÓGICA DE PEDIDOS (FIRESTORE)
     // ==========================================================
     
-    // ⬇️ ⬇️ ⬇️ FUNÇÃO NOVA ⬇️ ⬇️ ⬇️
-    // "Ouve" o documento de PIX em tempo real
-    function waitForPixData(orderId) {
-        if (stopPixListener) stopPixListener(); // Para qualquer listener anterior
-
-        // Define um timeout (ex: 2 minutos)
-        const timeout = setTimeout(() => {
-            if (stopPixListener) stopPixListener();
-            console.error("Timeout: Dados do PIX não chegaram.");
-            showToast("Erro ao gerar QR Code. Tente novamente.", "error");
-            navigateTo('page-orders');
-        }, 120000); // 2 minutos
-
-        // Ouve o documento em tempo real
-        stopPixListener = db.collection("orders").doc(orderId).onSnapshot(doc => {
-            if (doc.exists && doc.data().paymentData) {
-                // SUCESSO! Os dados do PIX chegaram
-                if (stopPixListener) stopPixListener(); // Para de ouvir
-                clearTimeout(timeout); // Cancela o timeout
-                
-                console.log("Dados do PIX recebidos, renderizando...");
-                populatePixScreen(doc.data());
-            }
-        }, error => {
-            console.error("Erro ao ouvir doc do PIX:", error);
-            if (stopPixListener) stopPixListener();
-            clearTimeout(timeout);
-            navigateTo('page-orders');
-        });
-    }
-
-    // ⬇️ ⬇️ ⬇️ FUNÇÃO ATUALIZADA ⬇️ ⬇️ ⬇️
+    // (Esta seção permanece INALTERADA, ela já lê do Firestore)
+    
     function setupOrderListener(userId) {
-        if (stopOrderListener) stopOrderListener(); // Para o listener antigo
+        if (stopOrderListener) stopOrderListener(); 
 
         if (!db) { 
             console.error("Firestore (db) não está inicializado.");
             return;
         }
-        stopOrderListener = db.collection("orders") // Salva a função de parar
+        stopOrderListener = db.collection("orders")
           .where("userId", "==", userId)
           .orderBy("createdAt", "desc")
           .onSnapshot(snapshot => {
@@ -736,13 +750,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (!orderDoc.exists) return;
                 const order = orderDoc.data();
 
+                // Se for um PIX PENDENTE, busca os dados do PIX e vai para a tela
                 if (order.status === 'pending_payment') {
                     state.currentOrderId = orderId;
-                    populatePixScreen(order);
-                    navigateTo('page-pix-result');
+                    if (order.paymentData) { // Se os dados do QR Code já existem
+                        populatePixScreen(order); // Reusa os dados
+                        navigateTo('page-pix-result');
+                    } else {
+                        // Isso não deve acontecer, mas por segurança
+                        showToast("Erro ao recarregar QR Code.", "error");
+                    }
                     return;
                 }
 
+                // Se FALHOU, recria o checkout
                 if (order.status === 'failed') {
                     state.cart = order.items; 
                     state.totalAmount = order.total;
