@@ -637,7 +637,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 order.statusText = statusText;
                 saveOrdersToLocalStorage(); // Salva a atualização
             }
-            
+
+            // ⬇️ ⬇️ ⬇️ INÍCIO DA CORREÇÃO ⬇️ ⬇️ ⬇️
+            // Pula a renderização deste pedido se ele não tiver itens
+            if (!order.items || order.items.length === 0) {
+                console.error("Pedido " + order.id + " foi ignorado por não ter itens.");
+                return; // 'continue' do forEach
+            }
+            // ⬆️ ⬆️ ⬆️ FIM DA CORREÇÃO ⬆️ ⬆️ ⬆️
+
             const firstItem = order.items[0];
             const otherItemsCount = order.items.length - 1;
             
@@ -649,6 +657,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 actionButton = `<button class="cta-button retry-payment-button" data-order-id="${order.id}">Ver QR Code</button>`;
             }
 
+            // Este código agora é seguro
             const orderCardHtml = `
                 <div class="order-card">
                     <div class="order-header">
