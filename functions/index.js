@@ -74,7 +74,6 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
 exports.createPayment = functions.https.onRequest(async (req, res) => {
     cors(req, res, async () => {
         try {
-            // 1. 'formData' do body é o objeto inteiro do Brick
             const { formData: brickObject, orderId } = req.body;
             if (!brickObject || !orderId) {
                 return res.status(400).send({ error: "Dados incompletos" });
@@ -84,13 +83,15 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
             const client = new MercadoPagoConfig({ accessToken });
             const payment = new Payment(client);
 
-            // 2. ⬇️ ⬇️ ⬇️ A CORREÇÃO ESTÁ AQUI ⬇️ ⬇️ ⬇️
-            //    Extraímos apenas os dados de pagamento de dentro do objeto do Brick
             const paymentData = brickObject.formData;
-            // ⬆️ ⬆️ ⬆️ FIM DA CORREÇÃO ⬆️ ⬆️ ⬆️
 
-            // 3. Adicionamos a referência ao objeto de dados correto
+            // 3. Adicionamos a referência E A DESCRIÇÃO DA FATURA
             paymentData.external_reference = orderId;
+            
+            // ⬇️ ⬇️ ⬇️ CORREÇÃO DE QUALIDADE APLICADA AQUI ⬇️ ⬇️ ⬇️
+            // Este é o nome que aparecerá na fatura do cartão
+            paymentData.statement_descriptor = "ELETROBUSINESS";
+            // ⬆️ ⬆️ ⬆️ FIM DA CORREÇÃO ⬆️ ⬆️ ⬆️
 
             // 4. Enviamos apenas os 'paymentData' para o Mercado Pago
             const paymentResponse = await payment.create({ body: paymentData });
@@ -118,7 +119,6 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
             return res.status(200).send(paymentResponse);
 
         } catch (error) {
-            // Log de erro melhorado
             const errorData = error.response ? error.response.data : { message: error.message };
             console.error("Erro ao criar pagamento:", JSON.stringify(errorData));
             return res.status(500).send(errorData);

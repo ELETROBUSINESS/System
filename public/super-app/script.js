@@ -5,7 +5,6 @@
 // 1. CONFIGURAÇÃO (Global)
 // ==========================================================
 const YOUR_CREATE_PREFERENCE_URL = "https://createpreference-xsy57wqb6q-uc.a.run.app";
-// NOVO: URL da nova função
 const YOUR_CREATE_PAYMENT_URL = "https://createpayment-xsy57wqb6q-uc.a.run.app"; 
 const YOUR_PUBLIC_KEY = "APP_USR-519e5c93-44f8-42b1-a139-1b40aeb06310";
 
@@ -224,12 +223,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         brickLoadingMessage.style.display = 'none';
                     },
                     
-                    // ⬇️ ⬇️ ⬇️ LÓGICA DO SUBMIT TOTALMENTE ATUALIZADA ⬇️ ⬇️ ⬇️
                     onSubmit: (formData) => {
                         console.log("Formulário enviado, criando pagamento...");
                         state.currentOrderId = preferenceData.orderId; 
                         
-                        // Desabilita o botão de pagar
                         const submitButton = document.querySelector("#payment-brick-container .mp-brick-submit-button");
                         if(submitButton) submitButton.disabled = true;
 
@@ -251,20 +248,14 @@ document.addEventListener("DOMContentLoaded", () => {
                                 return response.json();
                             })
                             .then(result => {
-                                // 'result' é a resposta completa do pagamento
                                 if (submitButton) submitButton.disabled = false;
                                 
-                                // ⬇️ ⬇️ ⬇️ LINHA ADICIONADA PARA O TESTE ⬇️ ⬇️ ⬇️
                                 console.log("Resposta do Pagamento (Payment ID):", result.id);
-                                // ⬆️ ⬆️ ⬆️ FIM DA ADIÇÃO ⬆️ ⬆️ ⬆️
                                 
-                                // Se for PIX, 'result.status' será 'pending'
                                 if (result.status === 'pending') {
-                                    populatePixScreen(result); // Envia a resposta inteira
+                                    populatePixScreen(result); 
                                     navigateTo('page-pix-result');
                                 } else {
-                                    // Se for cartão, o status será 'approved' ou 'rejected'
-                                    // O webhook cuidará de atualizar o status no Firestore
                                     navigateTo('page-orders');
                                 }
                                 resolve();
@@ -278,7 +269,6 @@ document.addEventListener("DOMContentLoaded", () => {
                             });
                         });
                     },
-                    // ⬆️ ⬆️ ⬆️ FIM DA ATUALIZAÇÃO ⬆️ ⬆️ ⬆️
 
                     onError: (error) => {
                         console.error("Erro no brick de pagamento:", error);
@@ -300,8 +290,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================================
     // 8. LÓGICA DE NAVEGAÇÃO E UI (Modais, Banner, etc.)
     // ==========================================================
-    
-    // (Todas as funções de UI, Navegação, Carrinho, etc. permanecem INALTERADAS)
     
     // --- Lógica de Navegação (Router) ---
     function navigateTo(pageId) {
@@ -410,6 +398,8 @@ document.addEventListener("DOMContentLoaded", () => {
             showToast("Item adicionado ao carrinho!", "success");
         }
     });
+    
+    // ⬇️ ⬇️ ⬇️ FUNÇÃO ATUALIZADA ⬇️ ⬇️ ⬇️
     function addToCart(productData) {
         const existingItem = state.cart.find(item => item.id === productData.id);
         if (existingItem) {
@@ -422,10 +412,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 priceOld: parseFloat(productData.priceOld),
                 priceNew: parseFloat(productData.priceNew),
                 quantity: 1,
+                description: productData.description // <--- CORREÇÃO APLICADA AQUI
             });
         }
         updateCartBadge();
     }
+    // ⬆️ ⬆️ ⬆️ FIM DA ATUALIZAÇÃO ⬆️ ⬆️ ⬆️
+    
     function updateCartBadge() {
         const totalItems = state.cart.reduce((sum, item) => sum + item.quantity, 0);
         if (totalItems > 0) {
@@ -567,8 +560,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- Lógica da Página PIX ---
     
-    // ⬇️ ⬇️ ⬇️ FUNÇÃO ATUALIZADA ⬇️ ⬇️ ⬇️
-    // Agora lê a resposta do 'createPayment'
     function populatePixScreen(paymentResponse) {
         if (!paymentResponse.point_of_interaction) {
             console.error("populatePixScreen chamado sem point_of_interaction");
@@ -583,7 +574,6 @@ document.addEventListener("DOMContentLoaded", () => {
         
         startPixTimer(expiresAt);
     }
-    // ⬆️ ⬆️ ⬆️ FIM DA ATUALIZAÇÃO ⬆️ ⬆️ ⬆️
     
     function startPixTimer(expiresAt) {
         if (pixTimerInterval) {
@@ -628,8 +618,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================================
     // 9. LÓGICA DE PEDIDOS (FIRESTORE)
     // ==========================================================
-    
-    // (Esta seção permanece INALTERADA, ela já lê do Firestore)
     
     function setupOrderListener(userId) {
         if (stopOrderListener) stopOrderListener(); 
