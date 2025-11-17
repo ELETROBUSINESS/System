@@ -15,159 +15,7 @@ const YOUR_PUBLIC_KEY = "APP_USR-519e5c93-44f8-42b1-a139-1b40aeb06310";
 const mp = new MercadoPago(YOUR_PUBLIC_KEY);
 let paymentBrickController;
 
-/**
- * Função para criar e renderizar o Payment Brick
- * @param {number} amount - Valor total do carrinho
- */
-async function initializePaymentBrick(amount) {
-  const brickLoadingMessage = document.getElementById("brick-loading-message");
-  const paymentError = document.getElementById("payment-error");
-  const paymentContainer = document.getElementById("payment-brick-container");
-
-  // Limpa o estado anterior
-  paymentContainer.innerHTML = '';
-  paymentError.style.display = 'none';
-  brickLoadingMessage.style.display = 'block';
-
-  try {
-    console.log("Chamando o backend para criar a preferência...");
-    
-    const response = await fetch(YOUR_CREATE_PREFERENCE_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: "Compra em EletroBusiness", price: amount }),
-    });
-
-    if (!response.ok) {
-        throw new Error("Falha ao criar a preferência. Status: " + response.status);
-    }
-
-    const data = await response.json();
-    const preferenceId = data.id;
-    console.log("Preferência criada com ID:", preferenceId);
-
-    if (paymentBrickController) {
-      paymentBrickController.unmount();
-    }
-
-    const bricksBuilder = mp.bricks();
-    const settings = {
-      initialization: {
-        amount: Number(amount),
-        preferenceId: preferenceId,
-        // ⬇️ ⬇️ ⬇️ CORREÇÃO DO CACHE / FRONTEND ⬇️ ⬇️ ⬇️
-        // Pré-preenche todos os dados do Payer para pular a tela de e-mail
-        payer: {
-            email: "comprador.teste@gmail.com",
-            firstName: "Comprador",
-            lastName: "Teste",
-            identification: {
-                type: "CPF",
-                number: "19119119100" // Mesmo CPF de teste do backend
-            },
-            entity_type: "individual" // Esta linha previne o aviso "entityType..."
-        },
-        // ⬆️ ⬆️ ⬆️ FIM DA CORREÇÃO ⬆️ ⬆️ ⬆️
-      },
-      customization: {
-        paymentMethods: {
-          bankTransfer: "all", 
-          creditCard: "all",
-          mercadoPago: ["wallet_purchase"],
-        },
-        visual: { 
-            style: { 
-                theme: 'light'
-            } 
-        }
-      },
-      callbacks: {
-        onReady: () => {
-          console.log("Brick de pagamento está pronto!");
-          brickLoadingMessage.style.display = 'none';
-        },
-        onSubmit: (formData) => { // 'formData' aqui é o objeto { formData: {...}, ... }
-          console.log("Formulário enviado:", formData);
-          
-          const submitButton = document.querySelector("#payment-brick-container .mp-brick-submit-button");
-          if(submitButton) submitButton.disabled = true;
-
-          return new Promise((resolve, reject) => {
-            fetch(YOUR_PROCESS_PAYMENT_URL, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(formData), // Envia o objeto inteiro
-            })
-            // ⬇️ ⬇️ ⬇️ INÍCIO DA MELHORIA ⬇️ ⬇️ ⬇️
-            .then(response => {
-                // Verifica se a resposta do servidor foi OK (status 200-299)
-                if (!response.ok) {
-                    // Se for um erro 500 ou 400, joga um erro para o .catch()
-                    throw new Error(`Erro do servidor: ${response.status}`);
-                }
-                // Se foi OK, continua para processar o JSON
-                return response.json();
-            })
-            // ⬆️ ⬆️ ⬆️ FIM DA MELHORIA ⬆️ ⬆️ ⬆️
-            .then(result => {
-              
-              if(submitButton) submitButton.disabled = false;
-              console.log("Resposta do pagamento:", result);
-
-              // FLUXO DE PIX
-              if (result.status === 'pending' && (result.payment_method_id === 'pix' || formData.paymentType === 'bank_transfer')) {
-                populatePixScreen(result);
-                navigateTo('page-pix-result');
-                resolve(); 
-
-              } else if (result.status === 'approved') {
-                // Pagamento aprovado
-                showToast("Pagamento aprovado! Obrigado!", "success");
-                state.cart = []; 
-                updateCartBadge();
-                navigateTo('page-home');
-                resolve();
-
-              } else {
-                // Pagamento rejeitado ou outro erro
-                const message = result.message || result.status_detail || "Pagamento rejeitado";
-                console.error("Pagamento rejeitado:", message);
-                paymentError.textContent = `Pagamento rejeitado: ${message}`;
-                paymentError.style.display = 'block';
-                reject(); 
-              }
-            })
-            .catch(error => {
-              if(submitButton) submitButton.disabled = false;
-              console.error("Erro grave ao processar pagamento:", error);
-              paymentError.textContent = 'Erro de comunicação. Tente novamente.';
-              paymentError.style.display = 'block';
-              reject();
-            });
-          });
-        },
-        onError: (error) => {
-          console.error("Erro no brick de pagamento:", error);
-          brickLoadingMessage.style.display = 'none';
-          paymentError.textContent = 'Houve um erro no formulário. Verifique os dados.';
-          paymentError.style.display = 'block';
-        },
-      },
-    };
-
-    paymentBrickController = await bricksBuilder.create(
-      "payment",
-      "payment-brick-container",
-      settings
-    );
-
-  } catch (error) {
-    console.error("Erro ao chamar o backend (fetch):", error);
-    brickLoadingMessage.style.display = 'none';
-    paymentError.textContent = 'Não foi possível carregar as opções de pagamento.';
-    paymentError.style.display = 'block';
-  }
-}
+// A FUNÇÃO initializePaymentBrick FOI MOVIDA DAQUI...
 
 // ==========================================================
 // 3. LÓGICA DA LOJA (NÃO PRECISA MUDAR)
@@ -208,6 +56,167 @@ document.addEventListener("DOMContentLoaded", () => {
     const pixCopyCodeInput = document.getElementById("pix-copy-code");
     const pixCopyButton = document.getElementById("pix-copy-button");
     const pixPaidButton = document.getElementById("pix-paid-button");
+
+
+    // ==========================================================
+    // 2. INICIALIZAÇÃO DO MERCADO PAGO (MOVIDA PARA CÁ)
+    // ==========================================================
+    /**
+     * Função para criar e renderizar o Payment Brick
+     * @param {number} amount - Valor total do carrinho
+     */
+    async function initializePaymentBrick(amount) {
+      const brickLoadingMessage = document.getElementById("brick-loading-message");
+      const paymentError = document.getElementById("payment-error");
+      const paymentContainer = document.getElementById("payment-brick-container");
+
+      // Limpa o estado anterior
+      paymentContainer.innerHTML = '';
+      paymentError.style.display = 'none';
+      brickLoadingMessage.style.display = 'block';
+
+      try {
+        console.log("Chamando o backend para criar a preferência...");
+        
+        const response = await fetch(YOUR_CREATE_PREFERENCE_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: "Compra em EletroBusiness", price: amount }),
+        });
+
+        if (!response.ok) {
+            throw new Error("Falha ao criar a preferência. Status: " + response.status);
+        }
+
+        const data = await response.json();
+        const preferenceId = data.id;
+        console.log("Preferência criada com ID:", preferenceId);
+
+        if (paymentBrickController) {
+          paymentBrickController.unmount();
+        }
+
+        const bricksBuilder = mp.bricks();
+        const settings = {
+          initialization: {
+            amount: Number(amount),
+            preferenceId: preferenceId,
+            // ⬇️ ⬇️ ⬇️ CORREÇÃO DO CACHE / FRONTEND ⬇️ ⬇️ ⬇️
+            // Pré-preenche todos os dados do Payer para pular a tela de e-mail
+            payer: {
+                email: "comprador.teste@gmail.com",
+                firstName: "Comprador",
+                lastName: "Teste",
+                identification: {
+                    type: "CPF",
+                    number: "19119119100" // Mesmo CPF de teste do backend
+                },
+                entity_type: "individual" // Esta linha previne o aviso "entityType..."
+            },
+            // ⬆️ ⬆️ ⬆️ FIM DA CORREÇÃO ⬆️ ⬆️ ⬆️
+          },
+          customization: {
+            paymentMethods: {
+              bankTransfer: "all", 
+              creditCard: "all",
+              mercadoPago: ["wallet_purchase"],
+            },
+            visual: { 
+                style: { 
+                    theme: 'light'
+                } 
+            }
+          },
+          callbacks: {
+            onReady: () => {
+              console.log("Brick de pagamento está pronto!");
+              brickLoadingMessage.style.display = 'none';
+            },
+            onSubmit: (formData) => { // 'formData' aqui é o objeto { formData: {...}, ... }
+              console.log("Formulário enviado:", formData);
+              
+              const submitButton = document.querySelector("#payment-brick-container .mp-brick-submit-button");
+              if(submitButton) submitButton.disabled = true;
+
+              return new Promise((resolve, reject) => {
+                fetch(YOUR_PROCESS_PAYMENT_URL, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(formData), // Envia o objeto inteiro
+                })
+                .then(response => {
+                  // Verifica se a resposta do servidor foi OK (status 200-299)
+                  if (!response.ok) {
+                      // Se for um erro 500 ou 400, joga um erro para o .catch()
+                      throw new Error(`Erro do servidor: ${response.status}`);
+                  }
+                  // Se foi OK, continua para processar o JSON
+                  return response.json();
+                })
+                .then(result => {
+                  
+                  if(submitButton) submitButton.disabled = false;
+                  console.log("Resposta do pagamento:", result);
+
+                  // FLUXO DE PIX
+                  if (result.status === 'pending' && (result.payment_method_id === 'pix' || formData.paymentType === 'bank_transfer')) {
+                    // ESTA FUNÇÃO AGORA ESTÁ ACESSÍVEL POIS ESTÁ NO MESMO ESCOPO
+                    populatePixScreen(result);
+                    navigateTo('page-pix-result');
+                    resolve(); 
+
+                  } else if (result.status === 'approved') {
+                    // Pagamento aprovado
+                    showToast("Pagamento aprovado! Obrigado!", "success");
+                    state.cart = []; 
+                    updateCartBadge();
+                    navigateTo('page-home');
+                    resolve();
+
+                  } else {
+                    // Pagamento rejeitado ou outro erro
+                    const message = result.message || result.status_detail || "Pagamento rejeitado";
+                    console.error("Pagamento rejeitado:", message);
+                    paymentError.textContent = `Pagamento rejeitado: ${message}`;
+                    paymentError.style.display = 'block';
+                    reject(); 
+                  }
+                })
+                .catch(error => {
+                  if(submitButton) submitButton.disabled = false;
+                  console.error("Erro grave ao processar pagamento:", error);
+                  paymentError.textContent = 'Erro de comunicação. Tente novamente.';
+                  paymentError.style.display = 'block';
+                  reject();
+                });
+              });
+            },
+            onError: (error) => {
+              console.error("Erro no brick de pagamento:", error);
+              brickLoadingMessage.style.display = 'none';
+              paymentError.textContent = 'Houve um erro no formulário. Verifique os dados.';
+              paymentError.style.display = 'block';
+            },
+          },
+        };
+
+        paymentBrickController = await bricksBuilder.create(
+          "payment",
+          "payment-brick-container",
+          settings
+        );
+
+      } catch (error) {
+        console.error("Erro ao chamar o backend (fetch):", error);
+        brickLoadingMessage.style.display = 'none';
+        paymentError.textContent = 'Não foi possível carregar as opções de pagamento.';
+        paymentError.style.display = 'block';
+      }
+    }
+    // ==========================================================
+    // FIM DA FUNÇÃO MOVIDA
+    // ==========================================================
+
 
     // --- Lógica de Navegação (Router) ---
     function navigateTo(pageId) {
@@ -406,9 +415,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     continueToPaymentButton.addEventListener("click", () => {
-        showCheckoutStep(2);
-        paymentTotalDisplay.textContent = `R$ ${state.totalAmount.toFixed(2).replace('.', ',')}`;
-        initializePaymentBrick(state.totalAmount);
+        const total = state.cart.reduce((sum, item) => sum + item.priceNew * item.quantity, 0);
+        
+        if (total > 0) {
+            state.totalAmount = total; 
+            showCheckoutStep(2);
+            paymentTotalDisplay.textContent = `R$ ${state.totalAmount.toFixed(2).replace('.', ',')}`;
+            // Esta chamada agora funciona corretamente
+            initializePaymentBrick(state.totalAmount);
+        } else {
+            alert("Seu carrinho está vazio!");
+        }
     });
 
     goToCheckoutButton.addEventListener("click", () => {
