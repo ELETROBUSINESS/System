@@ -13,6 +13,8 @@ const YOUR_PUBLIC_KEY = "APP_USR-519e5c93-44f8-42b1-a139-1b40aeb06310";
 const mp = new MercadoPago(YOUR_PUBLIC_KEY);
 let paymentBrickController;
 let pixTimerInterval = null;
+let stopOrderListener = null; // NOVO: Para parar o listener de pedidos
+let stopPixListener = null; // NOVO: Para parar o listener do PIX
 
 // ==========================================================
 // 3. ESTADO DA APLICAÇÃO (Global)
@@ -35,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Variáveis de escopo para o Firebase
     let auth;
     let db;
-    let googleProvider; // NOVO Provedor
+    let googleProvider; 
 
     // ==========================================================
     // 5. INICIALIZAÇÃO DO FIREBASE (Agora com Provedor Google)
@@ -54,19 +56,15 @@ document.addEventListener("DOMContentLoaded", () => {
         auth = firebase.auth();
         db = firebase.firestore();
         
-        // NOVO: Define o provedor do Google
         googleProvider = new firebase.auth.GoogleAuthProvider();
 
-        // Listener de Autenticação (MODIFICADO)
         auth.onAuthStateChanged(user => {
             if (user) {
-                // Usuário está logado (seja Google ou Anônimo)
                 console.log("Usuário logado:", user.uid, user.isAnonymous);
                 state.currentUser = user;
-                updateUserUI(user); // Atualiza o modal de perfil
-                setupOrderListener(user.uid); // Inicia o listener de pedidos
+                updateUserUI(user); 
+                setupOrderListener(user.uid); 
             } else {
-                // Ninguém logado, faz o login anônimo
                 console.log("Ninguém logado, iniciando login anônimo...");
                 auth.signInAnonymously().catch(error => {
                     console.error("Erro no login anônimo:", error);
@@ -98,11 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const checkoutStep2 = document.getElementById("checkout-step-2");
     const stepLabel1 = document.getElementById("step-label-1");
     const stepLabel2 = document.getElementById("step-label-2");
-    
-    // ⬇️ ⬇️ ⬇️ CORREÇÃO APLICADA AQUI ⬇️ ⬇️ ⬇️
     const continueToPaymentButton = document.getElementById("continue-to-payment-button");
-    // ⬆️ ⬆️ ⬆️ CORREÇÃO APLICADA AQUI ⬆️ ⬆️ ⬆️
-    
     const paymentTotalDisplay = document.getElementById("payment-total-display");
     const pixQrCodeDiv = document.getElementById("pix-qr-code");
     const pixCopyCodeInput = document.getElementById("pix-copy-code");
@@ -115,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const ordersListContainer = document.getElementById("orders-list-container");
     const ordersEmptyMessage = document.getElementById("orders-empty-message");
 
-    // --- Seletores (NOVOS - Login/Perfil) ---
+    // --- Seletores (Login/Perfil) ---
     const profileButton = document.getElementById("profile-button");
     const userProfileModal = document.getElementById("user-profile-modal");
     const userLoggedInView = document.getElementById("user-logged-in-view");
@@ -137,7 +131,6 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(result => {
                 showToast(`Bem-vindo, ${result.user.displayName}!`, "success");
                 closeModal(userProfileModal);
-                // O listener 'onAuthStateChanged' cuidará de atualizar a UI
             })
             .catch(error => {
                 console.error("Erro no login com Google:", error);
@@ -150,25 +143,20 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(() => {
                 showToast("Você saiu.", "success");
                 closeModal(userProfileModal);
-                // O listener 'onAuthStateChanged' vai pegar o 'null'
-                // e logar o usuário anonimamente de novo.
             })
             .catch(error => {
                 console.error("Erro ao sair:", error);
             });
     }
 
-    // Atualiza o Modal de Perfil com base no status do usuário
     function updateUserUI(user) {
         if (user && !user.isAnonymous) {
-            // Usuário real (Google)
             userProfilePic.src = user.photoURL || "https://placehold.co/100";
             userProfileName.textContent = user.displayName;
             userProfileEmail.textContent = user.email;
             userLoggedInView.style.display = 'block';
             userLoggedOutView.style.display = 'none';
         } else {
-            // Usuário anônimo ou deslogado
             userLoggedInView.style.display = 'none';
             userLoggedOutView.style.display = 'block';
         }
@@ -205,64 +193,65 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log("Preferência criada com ID:", preferenceData.preferenceId);
 
             if (paymentBrickController) {
-            paymentBrickController.unmount();
+                paymentBrickController.unmount();
             }
 
             const bricksBuilder = mp.bricks();
             const settings = {
-            initialization: {
-                amount: Number(amount),
-                preferenceId: preferenceData.preferenceId, // ID da preferência do MP
-                payer: {
-                    email: "comprador.teste@gmail.com",
-                    firstName: "Comprador",
-                    lastName: "Teste",
-                    identification: { type: "CPF", number: "19119119100" },
-                    entity_type: "individual" 
+                initialization: {
+                    amount: Number(amount),
+                    preferenceId: preferenceData.preferenceId,
+                    payer: {
+                        email: "comprador.teste@gmail.com",
+                        firstName: "Comprador",
+                        lastName: "Teste",
+                        identification: { type: "CPF", number: "19119119100" },
+                        entity_type: "individual" 
+                    },
                 },
-            },
-            customization: {
-                paymentMethods: {
-                bankTransfer: "all", 
-                creditCard: "all",
-                mercadoPago: ["wallet_purchase"],
+                customization: {
+                    paymentMethods: {
+                        bankTransfer: "all", 
+                        creditCard: "all",
+                        mercadoPago: ["wallet_purchase"],
+                    },
+                    visual: { style: { theme: 'light' } }
                 },
-                visual: { style: { theme: 'light' } }
-            },
-            callbacks: {
-                onReady: () => {
-                    console.log("Brick de pagamento está pronto!");
-                    brickLoadingMessage.style.display = 'none';
-                },
-                onSubmit: async ({ formData }) => {
-                    console.log("Formulário enviado, aguardando webhook...");
+                callbacks: {
+                    onReady: () => {
+                        console.log("Brick de pagamento está pronto!");
+                        brickLoadingMessage.style.display = 'none';
+                    },
                     
-                    state.currentOrderId = preferenceData.orderId; 
-                    
-                    if (formData.payment_method_id === 'pix' || formData.paymentType === 'bank_transfer') {
-                        showToast("Gerando seu QR Code PIX...", "success");
+                    // ⬇️ ⬇️ ⬇️ LÓGICA DO SUBMIT ATUALIZADA ⬇️ ⬇️ ⬇️
+                    onSubmit: async ({ formData }) => {
+                        console.log("Formulário enviado, aguardando webhook...");
+                        state.currentOrderId = preferenceData.orderId; 
                         
-                        await new Promise(resolve => setTimeout(resolve, 3000));
-                        
-                        const orderDoc = await db.collection("orders").doc(state.currentOrderId).get();
-                        const orderData = orderDoc.data();
-                        
-                        if (orderData.paymentData) {
-                            populatePixScreen(orderData);
+                        if (formData.payment_method_id === 'pix' || formData.paymentType === 'bank_transfer') {
+                            // 1. Vai para a página PIX imediatamente
                             navigateTo('page-pix-result');
+                            
+                            // 2. Mostra o spinner de loading
+                            pixQrCodeDiv.innerHTML = '<div class="loading-spinner-pix"></div>';
+                            pixTimerDisplay.textContent = "Gerando QR Code...";
+
+                            // 3. Começa a "ouvir" o documento em tempo real
+                            waitForPixData(preferenceData.orderId);
                         } else {
+                            // Se for cartão, apenas vamos para a tela de pedidos
+                            // e esperamos o status mudar
                             navigateTo('page-orders');
                         }
-                    } else {
-                        navigateTo('page-orders');
-                    }
+                    },
+                    // ⬆️ ⬆️ ⬆️ FIM DA ATUALIZAÇÃO ⬆️ ⬆️ ⬆️
+
+                    onError: (error) => {
+                        console.error("Erro no brick de pagamento:", error);
+                        paymentError.textContent = 'Houve um erro no formulário. Verifique os dados.';
+                        paymentError.style.display = 'block';
+                    },
                 },
-                onError: (error) => {
-                    console.error("Erro no brick de pagamento:", error);
-                    paymentError.textContent = 'Houve um erro no formulário. Verifique os dados.';
-                    paymentError.style.display = 'block';
-                },
-            },
             };
 
             paymentBrickController = await bricksBuilder.create("payment", "payment-brick-container", settings);
@@ -278,7 +267,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // 8. LÓGICA DE NAVEGAÇÃO E UI (Modais, Banner, etc.)
     // ==========================================================
 
-    // --- Lógica de Navegação (Router) ---
     function navigateTo(pageId) {
         pages.forEach(page => page.classList.remove("active"));
         document.getElementById(pageId).classList.add("active");
@@ -313,7 +301,6 @@ document.addEventListener("DOMContentLoaded", () => {
         button.addEventListener("click", () => navigateTo(button.dataset.target));
     });
 
-    // --- Lógica do Menu "Mais" ---
     function showModal(modalElement) {
         modalElement.classList.add("show");
     }
@@ -336,7 +323,6 @@ document.addEventListener("DOMContentLoaded", () => {
         navigateTo('page-orders');
     });
 
-    // --- Lógica do Banner (Slider) ---
     let slideIndex = 0;
     const slides = document.querySelector(".slider-wrapper");
     const dots = document.querySelectorAll(".nav-dot");
@@ -350,8 +336,6 @@ document.addEventListener("DOMContentLoaded", () => {
     window.currentSlide = (n) => showSlide(slideIndex = n);
     setInterval(() => showSlide(slideIndex + 1), 5000);
 
-    
-    // --- Lógica do Modal de Produto ---
     productGrid.addEventListener("click", (e) => {
         if (e.target.classList.contains("cta-button")) {
             const productCard = e.target.closest(".product-card");
@@ -375,7 +359,6 @@ document.addEventListener("DOMContentLoaded", () => {
     productModal.addEventListener("click", (e) => {
         if (e.target === productModal) closeProductModal();
     });
-
 
     // --- Lógica do Carrinho ---
     document.getElementById("add-to-cart-button").addEventListener("click", () => {
@@ -598,13 +581,46 @@ document.addEventListener("DOMContentLoaded", () => {
     // 9. LÓGICA DE PEDIDOS (FIRESTORE)
     // ==========================================================
     
-    // Esta função é chamada pelo 'onAuthStateChanged'
+    // ⬇️ ⬇️ ⬇️ FUNÇÃO NOVA ⬇️ ⬇️ ⬇️
+    // "Ouve" o documento de PIX em tempo real
+    function waitForPixData(orderId) {
+        if (stopPixListener) stopPixListener(); // Para qualquer listener anterior
+
+        // Define um timeout (ex: 2 minutos)
+        const timeout = setTimeout(() => {
+            if (stopPixListener) stopPixListener();
+            console.error("Timeout: Dados do PIX não chegaram.");
+            showToast("Erro ao gerar QR Code. Tente novamente.", "error");
+            navigateTo('page-orders');
+        }, 120000); // 2 minutos
+
+        // Ouve o documento em tempo real
+        stopPixListener = db.collection("orders").doc(orderId).onSnapshot(doc => {
+            if (doc.exists && doc.data().paymentData) {
+                // SUCESSO! Os dados do PIX chegaram
+                if (stopPixListener) stopPixListener(); // Para de ouvir
+                clearTimeout(timeout); // Cancela o timeout
+                
+                console.log("Dados do PIX recebidos, renderizando...");
+                populatePixScreen(doc.data());
+            }
+        }, error => {
+            console.error("Erro ao ouvir doc do PIX:", error);
+            if (stopPixListener) stopPixListener();
+            clearTimeout(timeout);
+            navigateTo('page-orders');
+        });
+    }
+
+    // ⬇️ ⬇️ ⬇️ FUNÇÃO ATUALIZADA ⬇️ ⬇️ ⬇️
     function setupOrderListener(userId) {
-        if (!db) { // Guarda de segurança caso o Firestore não inicialize
+        if (stopOrderListener) stopOrderListener(); // Para o listener antigo
+
+        if (!db) { 
             console.error("Firestore (db) não está inicializado.");
             return;
         }
-        db.collection("orders")
+        stopOrderListener = db.collection("orders") // Salva a função de parar
           .where("userId", "==", userId)
           .orderBy("createdAt", "desc")
           .onSnapshot(snapshot => {
@@ -620,7 +636,6 @@ document.addEventListener("DOMContentLoaded", () => {
           });
     }
 
-    // Esta função agora apenas DESENHA os pedidos
     function renderOrdersPage(orders) {
         if (!orders || orders.length === 0) {
             ordersEmptyMessage.style.display = 'block';

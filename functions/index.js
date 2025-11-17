@@ -3,7 +3,6 @@ const { MercadoPagoConfig, Preference, Payment } = require("mercadopago");
 const cors = require("cors")({ origin: true });
 const { defineString } = require('firebase-functions/params');
 
-// NOVO: Importar o Firebase Admin
 const admin = require("firebase-admin");
 admin.initializeApp();
 const db = admin.firestore();
@@ -11,7 +10,7 @@ const db = admin.firestore();
 const mercadoPagoToken = defineString('MERCADOPAGO_ACCESS_TOKEN');
 
 // ==========================================================
-// FUNÇÃO 1: CRIAR PREFERÊNCIA (TOTALMENTE MODIFICADA)
+// FUNÇÃO 1: CRIAR PREFERÊNCIA (Inalterada)
 // ==========================================================
 exports.createPreference = functions.https.onRequest(async (req, res) => {
     cors(req, res, async () => {
@@ -29,7 +28,7 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
             const client = new MercadoPagoConfig({ accessToken });
             const preferenceClient = new Preference(client);
 
-            // 1. CRIAR O PEDIDO NO FIRESTORE PRIMEIRO
+            // 1. CRIAR O PEDIDO NO FIRESTORE
             const orderRef = await db.collection("orders").add({
                 userId: userId,
                 items: items,
@@ -46,12 +45,11 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
                 body: {
                     items: [ { title: name, unit_price: Number(price), quantity: 1, } ],
                     back_urls: {
-                        success: "https://eletrobusiness.com.br/", // Apenas fallback
+                        success: "https://eletrobusiness.com.br/", 
                         failure: "https://eletrobusiness.com.br/",
                     },
                     auto_return: "approved",
-                    // NOVO: VINCULA O PEDIDO DO FIRESTORE AO PAGAMENTO
-                    external_reference: orderRef.id, // Este é o ID do documento no Firestore
+                    external_reference: orderRef.id, 
                 }
             };
             
@@ -71,20 +69,16 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
 });
 
 // ==========================================================
-// FUNÇÃO 2: PROCESSAR PAGAMENTO (NÃO USADA DIRETAMENTE, MANTIDA)
-// (Não vamos mais chamar esta função do frontend, mas o backend
-// do Mercado Pago pode precisar dela em alguns fluxos. Manter por segurança.)
+// FUNÇÃO 2: PROCESSAR PAGAMENTO (Inalterada)
 // ==========================================================
 exports.processPayment = functions.https.onRequest(async (req, res) => {
     // ... (manter o código da sua processPayment anterior)
-    // ... (ela não será usada no fluxo principal do PIX/Cartão)
 });
 
 // ==========================================================
-// FUNÇÃO 3: WEBHOOK DO MERCADO PAGO (NOVA E ESSENCIAL)
+// FUNÇÃO 3: WEBHOOK DO MERCADO PAGO (CORRIGIDA)
 // ==========================================================
 exports.processWebhook = functions.https.onRequest(async (req, res) => {
-    // O Webhook envia uma query ?topic=payment ou ?type=payment
     const topic = req.query.topic || req.query.type;
     console.log("Webhook recebido:", topic, req.body);
 
@@ -92,14 +86,12 @@ exports.processWebhook = functions.https.onRequest(async (req, res) => {
         try {
             const paymentId = req.body.data.id;
             
-            // 1. Buscar o pagamento no Mercado Pago
             const accessToken = mercadoPagoToken.value();
             const client = new MercadoPagoConfig({ accessToken });
             const payment = new Payment(client);
             
             const paymentDetails = await payment.get({ id: paymentId });
             
-            // 2. Pegar a referência do nosso banco de dados
             const orderId = paymentDetails.external_reference;
             
             if (!orderId) {
@@ -119,18 +111,31 @@ exports.processWebhook = functions.https.onRequest(async (req, res) => {
                 newStatus = "failed";
                 newStatusText = "Pagamento Falhado";
             } else if (mpStatus === "pending" || mpStatus === "in_process") {
-                newStatus = "processing";
-                newStatusText = "Processando Pagamento";
+                // 'pending' é o status do PIX recém-criado
+                newStatus = "pending_payment";
+                newStatusText = "Aguardando Pagamento";
             }
             
-            // 4. Atualizar o pedido no Firestore
-            const orderRef = db.collection("orders").doc(orderId);
-            await orderRef.update({
+            // ⬇️ ⬇️ ⬇️ CORREÇÃO IMPORTANTE ⬇️ ⬇️ ⬇️
+            // Objeto para atualizar o Firestore
+            const updateData = {
                 status: newStatus,
                 statusText: newStatusText,
                 paymentId: paymentId,
                 paymentType: paymentDetails.payment_type_id,
-            });
+            };
+
+            // Se for PIX (pending), salvamos os dados do QR Code
+            if (newStatus === "pending_payment" && paymentDetails.point_of_interaction) {
+                updateData.paymentData = paymentDetails.point_of_interaction.transaction_data;
+                // Salvamos a data de expiração que o MP nos envia
+                updateData.expiresAt = paymentDetails.date_of_expiration;
+            }
+            // ⬆️ ⬆️ ⬆️ FIM DA CORREÇÃO ⬆️ ⬆️ ⬆️
+
+            // 4. Atualizar o pedido no Firestore
+            const orderRef = db.collection("orders").doc(orderId);
+            await orderRef.update(updateData); // Agora envia o objeto 'updateData'
 
             console.log(`Pedido ${orderId} atualizado para ${newStatus}`);
             return res.status(200).send("Webhook processado com sucesso");
@@ -141,6 +146,5 @@ exports.processWebhook = functions.https.onRequest(async (req, res) => {
         }
     }
     
-    // Responde 200 para qualquer outro tipo de webhook para o MP não ficar reenviando
     return res.status(200).send("OK");
 });
