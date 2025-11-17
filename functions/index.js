@@ -10,7 +10,7 @@ const db = admin.firestore();
 const mercadoPagoToken = defineString('MERCADOPAGO_ACCESS_TOKEN');
 
 // ==========================================================
-// FUNÇÃO 1: CRIAR PREFERÊNCIA (Cria o pedido no Firestore)
+// FUNÇÃO 1: CRIAR PREFERÊNCIA (Inalterada)
 // ==========================================================
 exports.createPreference = functions.https.onRequest(async (req, res) => {
     cors(req, res, async () => {
@@ -69,14 +69,14 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
 });
 
 // ==========================================================
-// FUNÇÃO 2: CRIAR PAGAMENTO (NOVA E ESSENCIAL)
-// Chamada pelo Brick 'onSubmit'
+// FUNÇÃO 2: CRIAR PAGAMENTO (CORRIGIDA)
 // ==========================================================
 exports.createPayment = functions.https.onRequest(async (req, res) => {
     cors(req, res, async () => {
         try {
-            const { formData, orderId } = req.body;
-            if (!formData || !orderId) {
+            // 1. 'formData' do body é o objeto inteiro do Brick
+            const { formData: brickObject, orderId } = req.body;
+            if (!brickObject || !orderId) {
                 return res.status(400).send({ error: "Dados incompletos" });
             }
             
@@ -84,11 +84,16 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
             const client = new MercadoPagoConfig({ accessToken });
             const payment = new Payment(client);
 
-            // O external_reference deve ser o ID do Firestore
-            formData.external_reference = orderId;
+            // 2. ⬇️ ⬇️ ⬇️ A CORREÇÃO ESTÁ AQUI ⬇️ ⬇️ ⬇️
+            //    Extraímos apenas os dados de pagamento de dentro do objeto do Brick
+            const paymentData = brickObject.formData;
+            // ⬆️ ⬆️ ⬆️ FIM DA CORREÇÃO ⬆️ ⬆️ ⬆️
 
-            // Cria o pagamento
-            const paymentResponse = await payment.create({ body: formData });
+            // 3. Adicionamos a referência ao objeto de dados correto
+            paymentData.external_reference = orderId;
+
+            // 4. Enviamos apenas os 'paymentData' para o Mercado Pago
+            const paymentResponse = await payment.create({ body: paymentData });
             
             // Prepara os dados para salvar no Firestore
             const updateData = {
@@ -113,9 +118,10 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
             return res.status(200).send(paymentResponse);
 
         } catch (error) {
-            console.error("Erro ao criar pagamento:", error);
-            const errorMessage = error.response ? error.response.data : { message: "Erro interno" };
-            return res.status(500).send(errorMessage);
+            // Log de erro melhorado
+            const errorData = error.response ? error.response.data : { message: error.message };
+            console.error("Erro ao criar pagamento:", JSON.stringify(errorData));
+            return res.status(500).send(errorData);
         }
     });
 });
@@ -156,7 +162,6 @@ exports.processWebhook = functions.https.onRequest(async (req, res) => {
                 newStatus = "failed";
                 newStatusText = "Pagamento Falhado";
             }
-            // (Não precisamos mais do 'pending' aqui, pois ele é tratado no createPayment)
 
             // Atualiza o pedido no Firestore
             const orderRef = db.collection("orders").doc(orderId);
