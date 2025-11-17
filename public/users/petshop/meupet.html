@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Petshop</title>
+    <!-- Carrega o Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carrega a biblioteca de ícones Lucide (URL CORRIGIDA) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Define a fonte Inter como padrão */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Efeito de sombra mais suave para os cartões */
+        .custom-shadow {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        /* Efeito de sombra para a barra de navegação inferior */
+        .nav-shadow {
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- 
+        O bloco <svg> ... <defs> ... </svg> que estava aqui foi removido.
+        O padrão agora está embutido diretamente no style do <header>.
+    -->
+
+    <!-- Container Principal (Simulando a tela do app) -->
+    <!-- Limitado a `max-w-lg` e centrado para melhor visualização em desktop -->
+    <div class="max-w-lg mx-auto min-h-screen bg-white shadow-2xl pb-24"> 
+        
+        <!-- 1. Header/Banner Verde -->
+        <header class="bg-green-700 text-white p-6 pb-8 rounded-b-3xl relative overflow-hidden">
+            <!-- Camada do Padrão (REMOVIDA) -->
+            
+            <!-- Conteúdo do Header (fica acima do padrão) -->
+            <div class="relative z-10">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <img src="https://placehold.co/44x44/ffffff/166534?text=G" alt="Avatar do Admin" class="rounded-full border-2 border-white/50">
+                        <div>
+                            <h1 class="text-xl font-bold">Olá, Geovana!</h1>
+                            <p class="text-sm text-green-200">CEO: PetShop da Agro Aurora</p>
+                        </div>
+                    </div>
+                    <i data-lucide="check-shield" class="w-6 h-6 text-green-200"></i>
+                </div>
+                
+                <div class="mt-6">
+                    <div class="flex items-center gap-2 text-green-200">
+                        <span>Saldo</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <p class="text-3xl font-bold text-white mt-1">R$ 8.451,20</p>
+                        <i data-lucide="eye" class="w-5 h-5 text-green-200 mt-1"></i>
+                    </div>
+                    <p class="text-sm text-green-200 mt-1">Agendamentos pendentes: <strong>12</strong></p>
+                </div>
+            </div>
+        </header>
+
+        <!-- 2. Próximos Agendamentos -->
+        <section class="p-6">
+            <h2 class="text-sm font-medium text-gray-500 mb-3">Próximos Agendamentos</h2>
+            
+            <!-- Cartão de Agendamento (Inspirado no anexo) -->
+            <div class="bg-white p-4 rounded-xl custom-shadow flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="p-3 bg-green-100 rounded-lg">
+                        <i data-lucide="dog" class="w-6 h-6 text-green-700"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-800">Tosa e Banho - Bob</p>
+                        <p class="text-sm text-gray-500">Cliente: Joana Silva</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                     <p class="font-semibold text-sm text-gray-800">14:00</p>
+                     <p class="text-xs text-gray-400">15/11/2025</p>
+                </div>
+            </div>
+            
+            <!-- Indicador de slide (opcional, como no anexo) -->
+            <div class="flex justify-center gap-1.5 mt-4">
+                <span class="w-2 h-2 bg-green-600 rounded-full"></span>
+                <span class="w-2 h-2 bg-gray-300 rounded-full"></span>
+                <span class="w-2 h-2 bg-gray-300 rounded-full"></span>
+                <span class="w-2 h-2 bg-gray-300 rounded-full"></span>
+            </div>
+        </section>
+
+        <!-- 3. Resumo e Atalhos -->
+        <section class="px-6">
+             <!-- Seção de Faturamento e Métricas removida -->
+
+            <!-- 4. Botões de Atalho (Ícones do Petshop) -->
+            <div class="grid grid-cols-3 gap-4 text-center">
+                <!-- Atalho 1: Clientes -->
+                <a href="#" class="flex flex-col items-center p-3 bg-green-50 hover:bg-green-100 rounded-xl transition-all">
+                    <i data-lucide="users" class="w-7 h-7 text-green-700"></i>
+                    <span class="text-sm font-medium text-gray-700 mt-2">Clientes</span>
+                </a>
+                
+                <!-- Atalho 2: Pets -->
+                <a href="#" class="flex flex-col items-center p-3 bg-green-50 hover:bg-green-100 rounded-xl transition-all">
+                    <i data-lucide="paw-print" class="w-7 h-7 text-green-700"></i>
+                    <span class="text-sm font-medium text-gray-700 mt-2">Pets</span>
+                </a>
+
+                <!-- Atalho 3: Agenda -->
+                <a href="#" class="flex flex-col items-center p-3 bg-green-50 hover:bg-green-100 rounded-xl transition-all">
+                    <i data-lucide="calendar" class="w-7 h-7 text-green-700"></i>
+                    <span class="text-sm font-medium text-gray-700 mt-2">Agenda</span>
+                </a>
+
+                <!-- Atalho 4: Produtos -->
+                <a href="#" class="flex flex-col items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all">
+                    <i data-lucide="shopping-basket" class="w-7 h-7 text-gray-600"></i>
+                    <span class="text-sm font-medium text-gray-700 mt-2">Produtos</span>
+                </a>
+
+                <!-- Atalho 5: Vendas -->
+                <a href="#" class="flex flex-col items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all">
+                    <i data-lucide="dollar-sign" class="w-7 h-7 text-gray-600"></i>
+                    <span class="text-sm font-medium text-gray-700 mt-2">Vendas</span>
+                </a>
+
+                <!-- Atalho 6: Relatórios -->
+                <a href="#" class="flex flex-col items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all">
+                    <i data-lucide="bar-chart-3" class="w-7 h-7 text-gray-600"></i>
+                    <span class="text-sm font-medium text-gray-700 mt-2">Relatórios</span>
+                </a>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- 5. Barra de Navegação Inferior Fixa (Estilo App) -->
+    <nav class="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white rounded-t-2xl nav-shadow p-3">
+        <div class="flex justify-around items-center">
+            <!-- Item Ativo -->
+            <a href="#" class="flex flex-col items-center text-green-600">
+                <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
+                <span class="text-xs font-medium">Início</span>
+            </a>
+            
+            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-gray-600">
+                <i data-lucide="calendar" class="w-6 h-6"></i>
+                <span class="text-xs font-medium">Agenda</span>
+            </a>
+            
+            <!-- Botão Central de Ação -->
+            <a href="#" class="p-4 bg-green-600 text-white rounded-full -mt-8 shadow-lg shadow-green-500/50">
+                <i data-lucide="plus" class="w-7 h-7"></i>
+            </a>
+            
+            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-gray-600">
+                <i data-lucide="shopping-cart" class="w-6 h-6"></i>
+                <span class="text-xs font-medium">Vender</span>
+            </a>
+
+            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-gray-600">
+                <i data-lucide="settings" class="w-6 h-6"></i>
+                <span class="text-xs font-medium">Ajustes</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Script para inicializar os ícones Lucide -->
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
