@@ -1031,3 +1031,28 @@ button {
 .nav-item {
     flex-grow: 1; /* Faz os 4 itens ocuparem espaço igual */
 }
+
+/* ==================== PÁGINA 6: MEUS PEDIDOS (AJUSTES) ==================== */
+
+.order-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem; /* Espaço entre os botões */
+}
+
+/* Estilo para o novo botão de deletar */
+.order-action-delete {
+    background: none;
+    border: none;
+    color: var(--color-error); /* Vermelho */
+    font-size: 1.5rem; /* Tamanho do ícone */
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+.order-action-delete:hover {
+    color: #a00028; /* Vermelho mais escuro */
+}

@@ -607,6 +607,16 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem("eletro_orders", JSON.stringify(state.orders));
     }
 
+    function deleteOrder(orderId) {
+        // Filtra o array, removendo o pedido com o ID correspondente
+        state.orders = state.orders.filter(order => order.id.toString() !== orderId.toString());
+        // Salva o novo array no localStorage
+        saveOrdersToLocalStorage();
+        // Renderiza a página de pedidos novamente
+        renderOrdersPage();
+        showToast("Pedido cancelado com sucesso.", "success");
+    }
+
     function addOrUpdateOrder(order) {
         // Remove se já existir (para evitar duplicatas)
         state.orders = state.orders.filter(o => o.id !== order.id);
@@ -633,31 +643,36 @@ document.addEventListener("DOMContentLoaded", () => {
             if (status === 'pending_payment' && new Date(order.expiresAt) < new Date()) {
                 status = 'failed';
                 statusText = 'Pagamento expirado';
-                order.status = status; // Atualiza o estado
+                order.status = status;
                 order.statusText = statusText;
-                saveOrdersToLocalStorage(); // Salva a atualização
+                saveOrdersToLocalStorage();
             }
 
-            // ⬇️ ⬇️ ⬇️ INÍCIO DA CORREÇÃO ⬇️ ⬇️ ⬇️
-            // Pula a renderização deste pedido se ele não tiver itens
+            // Correção: Pula a renderização se não houver itens
             if (!order.items || order.items.length === 0) {
                 console.error("Pedido " + order.id + " foi ignorado por não ter itens.");
-                return; // 'continue' do forEach
+                return; 
             }
-            // ⬆️ ⬆️ ⬆️ FIM DA CORREÇÃO ⬆️ ⬆️ ⬆️
 
             const firstItem = order.items[0];
             const otherItemsCount = order.items.length - 1;
             
-            // Define o botão de ação
-            let actionButton = '';
+            // ⬇️ ⬇️ ⬇️ LÓGICA DE BOTÕES ATUALIZADA ⬇️ ⬇️ ⬇️
+            let actionButtons = ''; // Mudei para plural
             if (status === 'failed') {
-                actionButton = `<button class="cta-button retry-payment-button" data-order-id="${order.id}">Tentar Pagar Novamente</button>`;
+                actionButtons = `<button class="cta-button retry-payment-button" data-order-id="${order.id}">Tentar Pagar Novamente</button>`;
+            
             } else if (status === 'pending_payment') {
-                actionButton = `<button class="cta-button retry-payment-button" data-order-id="${order.id}">Ver QR Code</button>`;
+                // Adiciona os dois botões: Lixeira e Ver QR Code
+                actionButtons = `
+                    <button class="order-action-delete" data-order-id="${order.id}" title="Cancelar Pedido">
+                        <i class='bx bx-trash'></i>
+                    </button>
+                    <button class="cta-button retry-payment-button" data-order-id="${order.id}">Ver QR Code</button>
+                `;
             }
+            // ⬆️ ⬆️ ⬆️ FIM DA ATUALIZAÇÃO ⬆️ ⬆️ ⬆️
 
-            // Este código agora é seguro
             const orderCardHtml = `
                 <div class="order-card">
                     <div class="order-header">
@@ -676,7 +691,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="order-footer">
                         <span class="order-total">Total: R$ ${order.total.toFixed(2).replace('.', ',')}</span>
                         <div class="order-actions">
-                            ${actionButton}
+                            ${actionButtons}
                         </div>
                     </div>
                 </div>
@@ -685,10 +700,25 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Lógica para "Tentar Pagar Novamente"
+    // Lógica para "Tentar Pagar Novamente" E "Deletar"
     ordersListContainer.addEventListener("click", (e) => {
-        if (e.target.classList.contains("retry-payment-button")) {
-            const orderId = e.target.dataset.orderId;
+        
+        // ⬇️ ⬇️ ⬇️ NOVO BLOCO PARA DELETAR ⬇️ ⬇️ ⬇️
+        const deleteButton = e.target.closest(".order-action-delete");
+        if (deleteButton) {
+            const orderId = deleteButton.dataset.orderId;
+            // Pede confirmação ao usuário
+            if (confirm("Tem certeza que deseja cancelar este pedido? Esta ação não pode ser desfeita.")) {
+                deleteOrder(orderId);
+            }
+            return; // Encerra a função aqui
+        }
+        // ⬆️ ⬆️ ⬆️ FIM DO NOVO BLOCO ⬆️ ⬆️ ⬆️
+
+        // Bloco antigo (mantido) para "Tentar Pagar Novamente" / "Ver QR Code"
+        const retryButton = e.target.closest(".retry-payment-button");
+        if (retryButton) {
+            const orderId = retryButton.dataset.orderId;
             const order = state.orders.find(o => o.id == orderId || o.id === orderId);
             
             if (!order) return;
