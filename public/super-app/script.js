@@ -26,6 +26,7 @@ const state = {
     totalAmount: 0, 
 };
 
+
 // ==========================================================
 // 4. LÓGICA PRINCIPAL DA APLICAÇÃO
 // ==========================================================
@@ -60,11 +61,13 @@ document.addEventListener("DOMContentLoaded", () => {
         auth.onAuthStateChanged(user => {
             if (user) {
                 // Usuário está logado (seja Google ou Anônimo)
+                console.log("Usuário logado:", user.uid, user.isAnonymous);
                 state.currentUser = user;
                 updateUserUI(user); // Atualiza o modal de perfil
                 setupOrderListener(user.uid); // Inicia o listener de pedidos
             } else {
                 // Ninguém logado, faz o login anônimo
+                console.log("Ninguém logado, iniciando login anônimo...");
                 auth.signInAnonymously().catch(error => {
                     console.error("Erro no login anônimo:", error);
                 });
@@ -77,7 +80,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // --- Seletores do DOM ---
-    // (Seletores antigos)
     const pages = document.querySelectorAll(".page");
     const navItems = document.querySelectorAll(".nav-item[data-target]");
     const cartBadge = document.getElementById("cart-badge");
@@ -85,7 +87,26 @@ document.addEventListener("DOMContentLoaded", () => {
     const toast = document.getElementById("toast-notification");
     const productModal = document.getElementById("product-modal");
     const productModalClose = document.getElementById("product-modal-close");
-    // ... (etc.)
+    const cartItemsContainer = document.getElementById("cart-items-container");
+    const cartEmptyMessage = document.getElementById("cart-empty-message");
+    const cartFullContent = document.getElementById("cart-content");
+    const summarySubtotal = document.getElementById("summary-subtotal");
+    const summarySavings = document.getElementById("summary-savings");
+    const summaryTotal = document.getElementById("summary-total");
+    const goToCheckoutButton = document.getElementById("go-to-checkout-button");
+    const checkoutStep1 = document.getElementById("checkout-step-1");
+    const checkoutStep2 = document.getElementById("checkout-step-2");
+    const stepLabel1 = document.getElementById("step-label-1");
+    const stepLabel2 = document.getElementById("step-label-2");
+    
+    // ⬇️ ⬇️ ⬇️ CORREÇÃO APLICADA AQUI ⬇️ ⬇️ ⬇️
+    const continueToPaymentButton = document.getElementById("continue-to-payment-button");
+    // ⬆️ ⬆️ ⬆️ CORREÇÃO APLICADA AQUI ⬆️ ⬆️ ⬆️
+    
+    const paymentTotalDisplay = document.getElementById("payment-total-display");
+    const pixQrCodeDiv = document.getElementById("pix-qr-code");
+    const pixCopyCodeInput = document.getElementById("pix-copy-code");
+    const pixCopyButton = document.getElementById("pix-copy-button");
     const pixPaidButton = document.getElementById("pix-paid-button");
     const pixTimerDisplay = document.getElementById("pix-timer");
     const moreMenuButton = document.getElementById("more-menu-button");
@@ -172,7 +193,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // 7. LÓGICA DE PAGAMENTO (Brick)
     // ==========================================================
     async function initializePaymentBrick(amount, preferenceData) {
-        // ... (Função INALTERADA) ...
         const brickLoadingMessage = document.getElementById("brick-loading-message");
         const paymentError = document.getElementById("payment-error");
         const paymentContainer = document.getElementById("payment-brick-container");
@@ -211,8 +231,8 @@ document.addEventListener("DOMContentLoaded", () => {
             },
             callbacks: {
                 onReady: () => {
-                console.log("Brick de pagamento está pronto!");
-                brickLoadingMessage.style.display = 'none';
+                    console.log("Brick de pagamento está pronto!");
+                    brickLoadingMessage.style.display = 'none';
                 },
                 onSubmit: async ({ formData }) => {
                     console.log("Formulário enviado, aguardando webhook...");
@@ -238,9 +258,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 },
                 onError: (error) => {
-                console.error("Erro no brick de pagamento:", error);
-                paymentError.textContent = 'Houve um erro no formulário. Verifique os dados.';
-                paymentError.style.display = 'block';
+                    console.error("Erro no brick de pagamento:", error);
+                    paymentError.textContent = 'Houve um erro no formulário. Verifique os dados.';
+                    paymentError.style.display = 'block';
                 },
             },
             };
@@ -260,7 +280,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- Lógica de Navegação (Router) ---
     function navigateTo(pageId) {
-        // ... (Função INALTERADA) ...
         pages.forEach(page => page.classList.remove("active"));
         document.getElementById(pageId).classList.add("active");
         
@@ -318,7 +337,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // --- Lógica do Banner (Slider) ---
-    // ... (Função INALTERADA) ...
     let slideIndex = 0;
     const slides = document.querySelector(".slider-wrapper");
     const dots = document.querySelectorAll(".nav-dot");
@@ -334,7 +352,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     
     // --- Lógica do Modal de Produto ---
-    // ... (Funções INALTERADAS) ...
     productGrid.addEventListener("click", (e) => {
         if (e.target.classList.contains("cta-button")) {
             const productCard = e.target.closest(".product-card");
@@ -361,7 +378,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // --- Lógica do Carrinho ---
-    // ... (Funções INALTERADAS) ...
     document.getElementById("add-to-cart-button").addEventListener("click", () => {
         if (state.currentProduct) {
             addToCart(state.currentProduct);
@@ -449,7 +465,6 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // --- Lógica da Página de Checkout ---
     function showCheckoutStep(stepNumber) {
-        // ... (Função INALTERADA) ...
         if (stepNumber === 1) {
             checkoutStep1.classList.add("active");
             checkoutStep2.classList.remove("active");
@@ -464,8 +479,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     continueToPaymentButton.addEventListener("click", async () => {
-        // ... (Função INALTERADA) ...
-        // (Já usa state.currentUser.uid, o que é perfeito)
         if (!state.currentUser) {
             showToast("Aguardando autenticação...", "error");
             return;
@@ -518,7 +531,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     goToCheckoutButton.addEventListener("click", () => {
-        // ... (Função INALTERADA) ...
         const total = state.cart.reduce((sum, item) => sum + item.priceNew * item.quantity, 0);
         if (total > 0) {
             state.totalAmount = total; 
@@ -529,7 +541,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // --- Lógica da Página PIX ---
-    // ... (Funções INALTERADAS) ...
     function populatePixScreen(orderData) {
         if (!orderData.paymentData) {
             console.error("populatePixScreen chamado sem paymentData");
@@ -587,9 +598,12 @@ document.addEventListener("DOMContentLoaded", () => {
     // 9. LÓGICA DE PEDIDOS (FIRESTORE)
     // ==========================================================
     
-    // ESTA FUNÇÃO É A MESMA DE ANTES
+    // Esta função é chamada pelo 'onAuthStateChanged'
     function setupOrderListener(userId) {
-        // ... (Função INALTERADA) ...
+        if (!db) { // Guarda de segurança caso o Firestore não inicialize
+            console.error("Firestore (db) não está inicializado.");
+            return;
+        }
         db.collection("orders")
           .where("userId", "==", userId)
           .orderBy("createdAt", "desc")
@@ -606,9 +620,8 @@ document.addEventListener("DOMContentLoaded", () => {
           });
     }
 
-    // ESTA FUNÇÃO É A MESMA DE ANTES
+    // Esta função agora apenas DESENHA os pedidos
     function renderOrdersPage(orders) {
-        // ... (Função INALTERADA) ...
         if (!orders || orders.length === 0) {
             ordersEmptyMessage.style.display = 'block';
             ordersListContainer.innerHTML = '';
@@ -679,9 +692,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // ESTA FUNÇÃO É A MESMA DE ANTES
+    // Ações de clique nos pedidos
     ordersListContainer.addEventListener("click", async (e) => {
-        // ... (Função INALTERADA) ...
+        
+        // DELETAR PEDIDO
         const deleteButton = e.target.closest(".order-action-delete");
         if (deleteButton) {
             const orderId = deleteButton.dataset.orderId;
@@ -697,6 +711,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        // TENTAR PAGAR NOVAMENTE / VER QR CODE
         const retryButton = e.target.closest(".retry-payment-button");
         if (retryButton) {
             const orderId = retryButton.dataset.orderId;
