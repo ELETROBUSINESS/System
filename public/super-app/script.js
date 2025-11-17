@@ -659,8 +659,20 @@ document.addEventListener("DOMContentLoaded", () => {
             
             // ⬇️ ⬇️ ⬇️ LÓGICA DE BOTÕES ATUALIZADA ⬇️ ⬇️ ⬇️
             let actionButtons = ''; // Mudei para plural
+            
             if (status === 'failed') {
+                // Se falhou, permite "Tentar Pagar Novamente"
                 actionButtons = `<button class="cta-button retry-payment-button" data-order-id="${order.id}">Tentar Pagar Novamente</button>`;
+                
+                // ADICIONAL: Se falhou por expiração, também permite deletar
+                if (statusText === 'Pagamento expirado') {
+                    actionButtons = `
+                        <button class="order-action-delete" data-order-id="${order.id}" title="Excluir Pedido">
+                            <i class='bx bx-trash'></i>
+                        </button>
+                        ${actionButtons} 
+                    `; // Adiciona a lixeira ANTES do botão de tentar novamente
+                }
             
             } else if (status === 'pending_payment') {
                 // Adiciona os dois botões: Lixeira e Ver QR Code
