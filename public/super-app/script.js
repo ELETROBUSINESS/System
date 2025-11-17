@@ -18,28 +18,26 @@ let pixTimerInterval = null;
 // 3. ESTADO DA APLICAÇÃO (Global)
 // ==========================================================
 const state = {
-    cart: [],
+    cart: [], 
     currentPage: 'page-home',
-    currentProduct: null,
-    currentOrderId: null,
-    currentUser: null,
-    totalAmount: 0,
+    currentProduct: null, 
+    currentOrderId: null, 
+    currentUser: null,  
+    totalAmount: 0, 
 };
-
 
 // ==========================================================
 // 4. LÓGICA PRINCIPAL DA APLICAÇÃO
 // ==========================================================
-
-// TUDO COMEÇA DEPOIS QUE O DOM ESTÁ PRONTO
 document.addEventListener("DOMContentLoaded", () => {
-
+  
     // Variáveis de escopo para o Firebase
     let auth;
     let db;
+    let googleProvider; // NOVO Provedor
 
     // ==========================================================
-    // 5. INICIALIZAÇÃO DO FIREBASE (Agora dentro do DOMContentLoaded)
+    // 5. INICIALIZAÇÃO DO FIREBASE (Agora com Provedor Google)
     // ==========================================================
     try {
         const firebaseConfig = {
@@ -54,16 +52,19 @@ document.addEventListener("DOMContentLoaded", () => {
         firebase.initializeApp(firebaseConfig);
         auth = firebase.auth();
         db = firebase.firestore();
+        
+        // NOVO: Define o provedor do Google
+        googleProvider = new firebase.auth.GoogleAuthProvider();
 
-        // Este listener agora está seguro
+        // Listener de Autenticação (MODIFICADO)
         auth.onAuthStateChanged(user => {
             if (user) {
-                console.log("Usuário anônimo logado:", user.uid);
+                // Usuário está logado (seja Google ou Anônimo)
                 state.currentUser = user;
-                // Esta função agora existe
-                setupOrderListener(user.uid);
+                updateUserUI(user); // Atualiza o modal de perfil
+                setupOrderListener(user.uid); // Inicia o listener de pedidos
             } else {
-                console.log("Logando usuário anonimamente...");
+                // Ninguém logado, faz o login anônimo
                 auth.signInAnonymously().catch(error => {
                     console.error("Erro no login anônimo:", error);
                 });
@@ -76,6 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // --- Seletores do DOM ---
+    // (Seletores antigos)
     const pages = document.querySelectorAll(".page");
     const navItems = document.querySelectorAll(".nav-item[data-target]");
     const cartBadge = document.getElementById("cart-badge");
@@ -83,22 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const toast = document.getElementById("toast-notification");
     const productModal = document.getElementById("product-modal");
     const productModalClose = document.getElementById("product-modal-close");
-    const cartItemsContainer = document.getElementById("cart-items-container");
-    const cartEmptyMessage = document.getElementById("cart-empty-message");
-    const cartFullContent = document.getElementById("cart-content");
-    const summarySubtotal = document.getElementById("summary-subtotal");
-    const summarySavings = document.getElementById("summary-savings");
-    const summaryTotal = document.getElementById("summary-total");
-    const goToCheckoutButton = document.getElementById("go-to-checkout-button");
-    const checkoutStep1 = document.getElementById("checkout-step-1");
-    const checkoutStep2 = document.getElementById("checkout-step-2");
-    const stepLabel1 = document.getElementById("step-label-1");
-    const stepLabel2 = document.getElementById("step-label-2");
-    const continueToPaymentButton = document.getElementById("continue-to-payment-button");
-    const paymentTotalDisplay = document.getElementById("payment-total-display");
-    const pixQrCodeDiv = document.getElementById("pix-qr-code");
-    const pixCopyCodeInput = document.getElementById("pix-copy-code");
-    const pixCopyButton = document.getElementById("pix-copy-button");
+    // ... (etc.)
     const pixPaidButton = document.getElementById("pix-paid-button");
     const pixTimerDisplay = document.getElementById("pix-timer");
     const moreMenuButton = document.getElementById("more-menu-button");
@@ -107,11 +94,85 @@ document.addEventListener("DOMContentLoaded", () => {
     const ordersListContainer = document.getElementById("orders-list-container");
     const ordersEmptyMessage = document.getElementById("orders-empty-message");
 
+    // --- Seletores (NOVOS - Login/Perfil) ---
+    const profileButton = document.getElementById("profile-button");
+    const userProfileModal = document.getElementById("user-profile-modal");
+    const userLoggedInView = document.getElementById("user-logged-in-view");
+    const userLoggedOutView = document.getElementById("user-logged-out-view");
+    const userProfilePic = document.getElementById("user-profile-pic");
+    const userProfileName = document.getElementById("user-profile-name");
+    const userProfileEmail = document.getElementById("user-profile-email");
+    const profileNavOrders = document.getElementById("profile-nav-orders");
+    const logoutButton = document.getElementById("logout-button");
+    const googleLoginButton = document.getElementById("google-login-button");
+
 
     // ==========================================================
-    // 6. LÓGICA DE PAGAMENTO (Brick)
+    // 6. NOVAS FUNÇÕES DE AUTENTICAÇÃO
+    // ==========================================================
+
+    function signInWithGoogle() {
+        auth.signInWithPopup(googleProvider)
+            .then(result => {
+                showToast(`Bem-vindo, ${result.user.displayName}!`, "success");
+                closeModal(userProfileModal);
+                // O listener 'onAuthStateChanged' cuidará de atualizar a UI
+            })
+            .catch(error => {
+                console.error("Erro no login com Google:", error);
+                showToast("Falha no login com Google.", "error");
+            });
+    }
+
+    function signOut() {
+        auth.signOut()
+            .then(() => {
+                showToast("Você saiu.", "success");
+                closeModal(userProfileModal);
+                // O listener 'onAuthStateChanged' vai pegar o 'null'
+                // e logar o usuário anonimamente de novo.
+            })
+            .catch(error => {
+                console.error("Erro ao sair:", error);
+            });
+    }
+
+    // Atualiza o Modal de Perfil com base no status do usuário
+    function updateUserUI(user) {
+        if (user && !user.isAnonymous) {
+            // Usuário real (Google)
+            userProfilePic.src = user.photoURL || "https://placehold.co/100";
+            userProfileName.textContent = user.displayName;
+            userProfileEmail.textContent = user.email;
+            userLoggedInView.style.display = 'block';
+            userLoggedOutView.style.display = 'none';
+        } else {
+            // Usuário anônimo ou deslogado
+            userLoggedInView.style.display = 'none';
+            userLoggedOutView.style.display = 'block';
+        }
+    }
+
+    // Listeners dos novos botões
+    profileButton.addEventListener("click", () => {
+        showModal(userProfileModal);
+    });
+    userProfileModal.querySelector('.modal-close').addEventListener("click", () => {
+        closeModal(userProfileModal);
+    });
+    googleLoginButton.addEventListener("click", signInWithGoogle);
+    logoutButton.addEventListener("click", signOut);
+    profileNavOrders.addEventListener("click", () => {
+        closeModal(userProfileModal);
+        navigateTo('page-orders');
+    });
+
+
+    // ==========================================================
+    // 7. LÓGICA DE PAGAMENTO (Brick)
     // ==========================================================
     async function initializePaymentBrick(amount, preferenceData) {
+        // ... (Função INALTERADA) ...
         const brickLoadingMessage = document.getElementById("brick-loading-message");
         const paymentError = document.getElementById("payment-error");
         const paymentContainer = document.getElementById("payment-brick-container");
@@ -124,71 +185,64 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log("Preferência criada com ID:", preferenceData.preferenceId);
 
             if (paymentBrickController) {
-                paymentBrickController.unmount();
+            paymentBrickController.unmount();
             }
 
             const bricksBuilder = mp.bricks();
             const settings = {
-                initialization: {
-                    amount: Number(amount),
-                    preferenceId: preferenceData.preferenceId, // ID da preferência do MP
-                    payer: {
-                        email: "comprador.teste@gmail.com",
-                        firstName: "Comprador",
-                        lastName: "Teste",
-                        identification: { type: "CPF", number: "19119119100" },
-                        entity_type: "individual"
-                    },
+            initialization: {
+                amount: Number(amount),
+                preferenceId: preferenceData.preferenceId, // ID da preferência do MP
+                payer: {
+                    email: "comprador.teste@gmail.com",
+                    firstName: "Comprador",
+                    lastName: "Teste",
+                    identification: { type: "CPF", number: "19119119100" },
+                    entity_type: "individual" 
                 },
-                customization: {
-                    paymentMethods: {
-                        bankTransfer: "all",
-                        creditCard: "all",
-                        mercadoPago: ["wallet_purchase"],
-                    },
-                    visual: { style: { theme: 'light' } }
+            },
+            customization: {
+                paymentMethods: {
+                bankTransfer: "all", 
+                creditCard: "all",
+                mercadoPago: ["wallet_purchase"],
                 },
-                callbacks: {
-                    onReady: () => {
-                        console.log("Brick de pagamento está pronto!");
-                        brickLoadingMessage.style.display = 'none';
-                    },
-                    // O onSubmit agora é assíncrono e apenas redireciona
-                    onSubmit: async ({ formData }) => {
-                        console.log("Formulário enviado, aguardando webhook...");
-
-                        // Salva o ID do pedido do Firestore
-                        state.currentOrderId = preferenceData.orderId;
-
-                        // Se for PIX, já podemos ir para a tela do PIX
-                        if (formData.payment_method_id === 'pix' || formData.paymentType === 'bank_transfer') {
-                            showToast("Gerando seu QR Code PIX...", "success");
-
-                            // Damos um tempo para o webhook criar os dados do PIX
-                            await new Promise(resolve => setTimeout(resolve, 3000)); // Espera 3s
-
-                            const orderDoc = await db.collection("orders").doc(state.currentOrderId).get();
-                            const orderData = orderDoc.data();
-
-                            if (orderData.paymentData) { // paymentData foi adicionado pelo webhook?
-                                populatePixScreen(orderData);
-                                navigateTo('page-pix-result');
-                            } else {
-                                // Se o webhook ainda não chegou, mostramos o status 'Processando'
-                                navigateTo('page-orders');
-                            }
+                visual: { style: { theme: 'light' } }
+            },
+            callbacks: {
+                onReady: () => {
+                console.log("Brick de pagamento está pronto!");
+                brickLoadingMessage.style.display = 'none';
+                },
+                onSubmit: async ({ formData }) => {
+                    console.log("Formulário enviado, aguardando webhook...");
+                    
+                    state.currentOrderId = preferenceData.orderId; 
+                    
+                    if (formData.payment_method_id === 'pix' || formData.paymentType === 'bank_transfer') {
+                        showToast("Gerando seu QR Code PIX...", "success");
+                        
+                        await new Promise(resolve => setTimeout(resolve, 3000));
+                        
+                        const orderDoc = await db.collection("orders").doc(state.currentOrderId).get();
+                        const orderData = orderDoc.data();
+                        
+                        if (orderData.paymentData) {
+                            populatePixScreen(orderData);
+                            navigateTo('page-pix-result');
                         } else {
-                            // Se for cartão, apenas vamos para a tela de pedidos
-                            // e esperamos o status mudar
                             navigateTo('page-orders');
                         }
-                    },
-                    onError: (error) => {
-                        console.error("Erro no brick de pagamento:", error);
-                        paymentError.textContent = 'Houve um erro no formulário. Verifique os dados.';
-                        paymentError.style.display = 'block';
-                    },
+                    } else {
+                        navigateTo('page-orders');
+                    }
                 },
+                onError: (error) => {
+                console.error("Erro no brick de pagamento:", error);
+                paymentError.textContent = 'Houve um erro no formulário. Verifique os dados.';
+                paymentError.style.display = 'block';
+                },
+            },
             };
 
             paymentBrickController = await bricksBuilder.create("payment", "payment-brick-container", settings);
@@ -201,23 +255,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================================
-    // 7. LÓGICA DE NAVEGAÇÃO E UI (Modais, Banner, etc.)
+    // 8. LÓGICA DE NAVEGAÇÃO E UI (Modais, Banner, etc.)
     // ==========================================================
 
     // --- Lógica de Navegação (Router) ---
     function navigateTo(pageId) {
+        // ... (Função INALTERADA) ...
         pages.forEach(page => page.classList.remove("active"));
         document.getElementById(pageId).classList.add("active");
-
+        
         navItems.forEach(item => {
             const target = item.dataset.target;
             item.classList.toggle("active", target === pageId);
         });
         moreMenuButton.classList.remove("active");
-
+        
         state.currentPage = pageId;
         window.scrollTo(0, 0);
-
+        
         if (pageId === 'page-cart') {
             renderCartPage();
         }
@@ -225,7 +280,7 @@ document.addEventListener("DOMContentLoaded", () => {
             moreMenuButton.classList.add("active");
         }
         if (pageId === 'page-checkout') {
-            showCheckoutStep(1);
+            showCheckoutStep(1); 
             if (paymentBrickController) {
                 paymentBrickController.unmount();
                 paymentBrickController = null;
@@ -263,6 +318,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // --- Lógica do Banner (Slider) ---
+    // ... (Função INALTERADA) ...
     let slideIndex = 0;
     const slides = document.querySelector(".slider-wrapper");
     const dots = document.querySelectorAll(".nav-dot");
@@ -276,7 +332,9 @@ document.addEventListener("DOMContentLoaded", () => {
     window.currentSlide = (n) => showSlide(slideIndex = n);
     setInterval(() => showSlide(slideIndex + 1), 5000);
 
+    
     // --- Lógica do Modal de Produto ---
+    // ... (Funções INALTERADAS) ...
     productGrid.addEventListener("click", (e) => {
         if (e.target.classList.contains("cta-button")) {
             const productCard = e.target.closest(".product-card");
@@ -301,7 +359,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.target === productModal) closeProductModal();
     });
 
+
     // --- Lógica do Carrinho ---
+    // ... (Funções INALTERADAS) ...
     document.getElementById("add-to-cart-button").addEventListener("click", () => {
         if (state.currentProduct) {
             addToCart(state.currentProduct);
@@ -348,13 +408,13 @@ document.addEventListener("DOMContentLoaded", () => {
             cartFullContent.style.display = 'none';
             return;
         }
-
+        
         cartEmptyMessage.style.display = 'none';
         cartFullContent.style.display = 'block';
         cartItemsContainer.innerHTML = '';
         let subtotal = 0;
         let totalSavings = 0;
-
+        
         state.cart.forEach(item => {
             subtotal += item.priceNew * item.quantity;
             totalSavings += (item.priceOld - item.priceNew) * item.quantity;
@@ -369,11 +429,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
             `;
         });
-
+        
         summarySubtotal.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
         summarySavings.textContent = `- R$ ${totalSavings.toFixed(2).replace('.', ',')}`;
         summaryTotal.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
-
+        
         document.querySelectorAll(".cart-item-remove").forEach(button => {
             button.addEventListener("click", (e) => {
                 const itemId = e.target.closest(".cart-item").dataset.id;
@@ -386,9 +446,10 @@ document.addEventListener("DOMContentLoaded", () => {
         state.cart = state.cart.filter(item => item.id !== itemId);
         updateCartBadge();
     }
-
+    
     // --- Lógica da Página de Checkout ---
     function showCheckoutStep(stepNumber) {
+        // ... (Função INALTERADA) ...
         if (stepNumber === 1) {
             checkoutStep1.classList.add("active");
             checkoutStep2.classList.remove("active");
@@ -403,6 +464,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     continueToPaymentButton.addEventListener("click", async () => {
+        // ... (Função INALTERADA) ...
+        // (Já usa state.currentUser.uid, o que é perfeito)
         if (!state.currentUser) {
             showToast("Aguardando autenticação...", "error");
             return;
@@ -411,40 +474,39 @@ document.addEventListener("DOMContentLoaded", () => {
             showToast("Preencha o CEP.", "error");
             return;
         }
-
+        
         const total = state.cart.reduce((sum, item) => sum + item.priceNew * item.quantity, 0);
         if (total <= 0) {
             showToast("Seu carrinho está vazio.", "error");
             return;
         }
-
-        state.totalAmount = total;
-
+        
+        state.totalAmount = total; 
+        
         showCheckoutStep(2);
         paymentTotalDisplay.textContent = `R$ ${state.totalAmount.toFixed(2).replace('.', ',')}`;
         document.getElementById("brick-loading-message").style.display = 'block';
 
         try {
             const response = await fetch(YOUR_CREATE_PREFERENCE_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    name: "Compra em EletroBusiness",
-                    price: total,
-                    items: state.cart,
-                    userId: state.currentUser.uid
-                }),
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ 
+                  name: "Compra em EletroBusiness", 
+                  price: total,
+                  items: state.cart, 
+                  userId: state.currentUser.uid 
+              }),
             });
-
+            
             if (!response.ok) {
                 throw new Error("Falha ao criar ordem no backend");
             }
 
             const preferenceData = await response.json(); // { preferenceId, orderId }
-
-            // Limpa o carrinho *depois* que a ordem foi criada com sucesso
+            
             clearCart();
-
+            
             initializePaymentBrick(state.totalAmount, preferenceData);
 
         } catch (error) {
@@ -456,9 +518,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     goToCheckoutButton.addEventListener("click", () => {
+        // ... (Função INALTERADA) ...
         const total = state.cart.reduce((sum, item) => sum + item.priceNew * item.quantity, 0);
         if (total > 0) {
-            state.totalAmount = total;
+            state.totalAmount = total; 
             navigateTo('page-checkout');
         } else {
             showToast("Seu carrinho está vazio!", "error");
@@ -466,25 +529,25 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // --- Lógica da Página PIX ---
+    // ... (Funções INALTERADAS) ...
     function populatePixScreen(orderData) {
         if (!orderData.paymentData) {
             console.error("populatePixScreen chamado sem paymentData");
             return;
         }
         const qrBase64 = orderData.paymentData.qr_code_base64;
-        const qrCopyCode = orderData.paymentData.qr_code;
+        const qrCopyCode = orderData.paymentData.qr_code; 
 
         pixQrCodeDiv.innerHTML = `<img src="data:image/png;base64, ${qrBase64}" alt="PIX QR Code">`;
         pixCopyCodeInput.value = qrCopyCode;
-
+        
         startPixTimer(orderData.expiresAt);
     }
-
     function startPixTimer(expiresAt) {
         if (pixTimerInterval) {
             clearInterval(pixTimerInterval);
         }
-
+        
         const endTime = (expiresAt.toDate ? expiresAt.toDate() : new Date(expiresAt)).getTime();
 
         pixTimerInterval = setInterval(() => {
@@ -499,11 +562,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
+            
             pixTimerDisplay.textContent = `Expira em ${minutes}:${seconds.toString().padStart(2, '0')}`;
         }, 1000);
     }
-
     pixCopyButton.addEventListener("click", () => {
         pixCopyCodeInput.select();
         try {
@@ -514,67 +576,67 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         window.getSelection().removeAllRanges();
     });
-
-    pixPaidButton.textContent = "Voltar para Meus Pedidos"; // Muda o texto
+    pixPaidButton.textContent = "Voltar para Meus Pedidos";
     pixPaidButton.addEventListener("click", () => {
-        clearInterval(pixTimerInterval);
-        navigateTo('page-orders');
+        clearInterval(pixTimerInterval); 
+        navigateTo('page-orders'); 
     });
 
 
     // ==========================================================
-    // 8. LÓGICA DE PEDIDOS (FIRESTORE)
+    // 9. LÓGICA DE PEDIDOS (FIRESTORE)
     // ==========================================================
-
-    // Esta função é chamada pelo 'onAuthStateChanged'
+    
+    // ESTA FUNÇÃO É A MESMA DE ANTES
     function setupOrderListener(userId) {
+        // ... (Função INALTERADA) ...
         db.collection("orders")
-            .where("userId", "==", userId)
-            .orderBy("createdAt", "desc")
-            .onSnapshot(snapshot => {
-                const orders = [];
-                snapshot.forEach(doc => {
-                    orders.push({ id: doc.id, ...doc.data() });
-                });
-
-                renderOrdersPage(orders);
-
-            }, error => {
-                console.error("Erro ao ouvir pedidos:", error);
-            });
+          .where("userId", "==", userId)
+          .orderBy("createdAt", "desc")
+          .onSnapshot(snapshot => {
+              const orders = [];
+              snapshot.forEach(doc => {
+                  orders.push({ id: doc.id, ...doc.data() });
+              });
+              
+              renderOrdersPage(orders);
+              
+          }, error => {
+              console.error("Erro ao ouvir pedidos:", error);
+          });
     }
 
-    // Esta função agora apenas DESENHA os pedidos
+    // ESTA FUNÇÃO É A MESMA DE ANTES
     function renderOrdersPage(orders) {
+        // ... (Função INALTERADA) ...
         if (!orders || orders.length === 0) {
             ordersEmptyMessage.style.display = 'block';
             ordersListContainer.innerHTML = '';
             return;
         }
-
+        
         ordersEmptyMessage.style.display = 'none';
         ordersListContainer.innerHTML = '';
-
+        
         orders.forEach(order => {
             let status = order.status;
             let statusText = order.statusText;
-
-            // Verifica expiração
+            
             if (status === 'pending_payment' && order.expiresAt && (order.expiresAt.toDate ? order.expiresAt.toDate() : new Date(order.expiresAt)) < new Date()) {
                 status = 'failed';
                 statusText = 'Pagamento expirado';
             }
-
+            
             if (!order.items || order.items.length === 0) {
                 console.error("Pedido " + order.id + " ignorado (sem itens).");
-                return;
+                return; 
             }
 
             const firstItem = order.items[0];
             const otherItemsCount = order.items.length - 1;
-
+            
             let actionButtons = '';
-
+            
             if (status === 'failed') {
                 actionButtons = `<button class="cta-button retry-payment-button" data-order-id="${order.id}">Tentar Pagar Novamente</button>`;
                 if (statusText === 'Pagamento expirado') {
@@ -593,7 +655,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const orderCardHtml = `
                 <div class="order-card">
                     <div class="order-header">
-                        <span class="order-date">${order.createdAt ? order.createdAt.toDate().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}</span>
+                        <span class="order-date">${order.createdAt ? order.createdAt.toDate().toLocaleDateString('pt-BR', {day: '2-digit', month: 'short', year: 'numeric'}) : ''}</span>
                         <span class="order-status status-${status}">${statusText}</span>
                     </div>
                     <div class="order-body">
@@ -617,10 +679,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Ações de clique nos pedidos
+    // ESTA FUNÇÃO É A MESMA DE ANTES
     ordersListContainer.addEventListener("click", async (e) => {
-
-        // DELETAR PEDIDO
+        // ... (Função INALTERADA) ...
         const deleteButton = e.target.closest(".order-action-delete");
         if (deleteButton) {
             const orderId = deleteButton.dataset.orderId;
@@ -636,11 +697,10 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // TENTAR PAGAR NOVAMENTE / VER QR CODE
         const retryButton = e.target.closest(".retry-payment-button");
         if (retryButton) {
             const orderId = retryButton.dataset.orderId;
-
+            
             try {
                 const orderDoc = await db.collection("orders").doc(orderId).get();
                 if (!orderDoc.exists) return;
@@ -654,11 +714,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 if (order.status === 'failed') {
-                    state.cart = order.items;
+                    state.cart = order.items; 
                     state.totalAmount = order.total;
                     updateCartBadge();
                     navigateTo('page-checkout');
-                    showCheckoutStep(1);
+                    showCheckoutStep(1); 
                 }
             } catch (error) {
                 console.error("Erro ao tentar pagar novamente:", error);
@@ -666,7 +726,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-
+    
     // --- Inicializa a aplicação ---
     navigateTo('page-home');
     showSlide(0);

@@ -24,9 +24,9 @@
                 <input type="text" placeholder="Buscar produtos...">
                 <i class='bx bx-search'></i>
             </div>
-            <div class="header-icons">
+            <button class="header-icons" id="profile-button">
                 <i class='bx bx-user'></i>
-            </div>
+            </button>
         </div>
     </header>
 
@@ -148,7 +148,7 @@
                              data-id="p4"
                              data-name="Cabo USB-C Rápido" 
                              data-price-old="5.00"
-                             data-price-new="3.53" 
+                             data-price-new="1.22" 
                              data-image="https://placehold.co/400x400/EBEBEB/333?text=Cabo+USB-C"
                              data-description="Cabo trançado de 1.5m com carregamento rápido. Essencial para seus dispositivos.">
                             
@@ -331,7 +331,7 @@
                         <button id="pix-copy-button"><i class='bx bx-copy'></i></button>
                     </div>
                     
-                    <button class="cta-button" id="pix-paid-button">Já paguei, finalizar</button>
+                    <button class="cta-button" id="pix-paid-button">Voltar para Meus Pedidos</button>
                 </div>
             </div>
         </section>
@@ -422,6 +422,40 @@
                     <span>Meus Pedidos</span>
                 </button>
                 </div>
+        </div>
+    </div>
+
+    <div id="user-profile-modal" class="modal-overlay">
+        <div class="modal-content profile-modal-content">
+            <button class="modal-close" data-target="user-profile-modal">&times;</button>
+            
+            <div id="user-logged-in-view" style="display: none;">
+                <h3>Minha Conta</h3>
+                <div class="profile-details">
+                    <img id="user-profile-pic" src="httpsa://placehold.co/100" alt="Foto de Perfil">
+                    <strong id="user-profile-name">Nome do Usuário</strong>
+                    <span id="user-profile-email">email@usuario.com</span>
+                </div>
+                <div class="menu-list">
+                    <button class="menu-list-item" id="profile-nav-orders">
+                        <i class='bx bx-receipt'></i>
+                        <span>Meus Pedidos</span>
+                    </button>
+                    <button class="menu-list-item" id="logout-button">
+                        <i class='bx bx-log-out'></i>
+                        <span>Sair</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="user-logged-out-view">
+                <h3>Login</h3>
+                <p>Entre com sua conta Google para ver seus pedidos em qualquer dispositivo.</p>
+                <button class="google-login-button" id="google-login-button">
+                    <i class='bx bxl-google'></i>
+                    <span>Entrar com Google</span>
+                </button>
+            </div>
         </div>
     </div>
     
