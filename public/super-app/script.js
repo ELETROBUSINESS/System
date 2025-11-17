@@ -18,12 +18,12 @@ let pixTimerInterval = null;
 // 3. ESTADO DA APLICAÇÃO (Global)
 // ==========================================================
 const state = {
-    cart: [], 
+    cart: [],
     currentPage: 'page-home',
-    currentProduct: null, 
-    currentOrderId: null, 
-    currentUser: null,  
-    totalAmount: 0, 
+    currentProduct: null,
+    currentOrderId: null,
+    currentUser: null,
+    totalAmount: 0,
 };
 
 
@@ -33,7 +33,7 @@ const state = {
 
 // TUDO COMEÇA DEPOIS QUE O DOM ESTÁ PRONTO
 document.addEventListener("DOMContentLoaded", () => {
-  
+
     // Variáveis de escopo para o Firebase
     let auth;
     let db;
@@ -43,13 +43,12 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================================
     try {
         const firebaseConfig = {
-          // SUAS CHAVES DO FIREBASE DEVEM ESTAR AQUI
-          apiKey: "SEU_API_KEY",
-          authDomain: "SEU_AUTH_DOMAIN",
-          projectId: "SEU_PROJECT_ID",
-          storageBucket: "SEU_STORAGE_BUCKET",
-          messagingSenderId: "SEU_SENDER_ID",
-          appId: "SEU_APP_ID"
+            apiKey: "AIzaSyAVQ3tf6Qu4_9PajpJclZAJjVvRgB4ZE2I",
+            authDomain: "super-app25.firebaseapp.com",
+            projectId: "super-app25",
+            storageBucket: "super-app25.firebasestorage.app",
+            messagingSenderId: "810900166273",
+            appId: "1:810900166273:web:24b8f055a68c9f0a6b5f80"
         };
 
         firebase.initializeApp(firebaseConfig);
@@ -113,92 +112,92 @@ document.addEventListener("DOMContentLoaded", () => {
     // 6. LÓGICA DE PAGAMENTO (Brick)
     // ==========================================================
     async function initializePaymentBrick(amount, preferenceData) {
-      const brickLoadingMessage = document.getElementById("brick-loading-message");
-      const paymentError = document.getElementById("payment-error");
-      const paymentContainer = document.getElementById("payment-brick-container");
+        const brickLoadingMessage = document.getElementById("brick-loading-message");
+        const paymentError = document.getElementById("payment-error");
+        const paymentContainer = document.getElementById("payment-brick-container");
 
-      paymentContainer.innerHTML = '';
-      paymentError.style.display = 'none';
-      brickLoadingMessage.style.display = 'block';
+        paymentContainer.innerHTML = '';
+        paymentError.style.display = 'none';
+        brickLoadingMessage.style.display = 'block';
 
-      try {
-        console.log("Preferência criada com ID:", preferenceData.preferenceId);
+        try {
+            console.log("Preferência criada com ID:", preferenceData.preferenceId);
 
-        if (paymentBrickController) {
-          paymentBrickController.unmount();
+            if (paymentBrickController) {
+                paymentBrickController.unmount();
+            }
+
+            const bricksBuilder = mp.bricks();
+            const settings = {
+                initialization: {
+                    amount: Number(amount),
+                    preferenceId: preferenceData.preferenceId, // ID da preferência do MP
+                    payer: {
+                        email: "comprador.teste@gmail.com",
+                        firstName: "Comprador",
+                        lastName: "Teste",
+                        identification: { type: "CPF", number: "19119119100" },
+                        entity_type: "individual"
+                    },
+                },
+                customization: {
+                    paymentMethods: {
+                        bankTransfer: "all",
+                        creditCard: "all",
+                        mercadoPago: ["wallet_purchase"],
+                    },
+                    visual: { style: { theme: 'light' } }
+                },
+                callbacks: {
+                    onReady: () => {
+                        console.log("Brick de pagamento está pronto!");
+                        brickLoadingMessage.style.display = 'none';
+                    },
+                    // O onSubmit agora é assíncrono e apenas redireciona
+                    onSubmit: async ({ formData }) => {
+                        console.log("Formulário enviado, aguardando webhook...");
+
+                        // Salva o ID do pedido do Firestore
+                        state.currentOrderId = preferenceData.orderId;
+
+                        // Se for PIX, já podemos ir para a tela do PIX
+                        if (formData.payment_method_id === 'pix' || formData.paymentType === 'bank_transfer') {
+                            showToast("Gerando seu QR Code PIX...", "success");
+
+                            // Damos um tempo para o webhook criar os dados do PIX
+                            await new Promise(resolve => setTimeout(resolve, 3000)); // Espera 3s
+
+                            const orderDoc = await db.collection("orders").doc(state.currentOrderId).get();
+                            const orderData = orderDoc.data();
+
+                            if (orderData.paymentData) { // paymentData foi adicionado pelo webhook?
+                                populatePixScreen(orderData);
+                                navigateTo('page-pix-result');
+                            } else {
+                                // Se o webhook ainda não chegou, mostramos o status 'Processando'
+                                navigateTo('page-orders');
+                            }
+                        } else {
+                            // Se for cartão, apenas vamos para a tela de pedidos
+                            // e esperamos o status mudar
+                            navigateTo('page-orders');
+                        }
+                    },
+                    onError: (error) => {
+                        console.error("Erro no brick de pagamento:", error);
+                        paymentError.textContent = 'Houve um erro no formulário. Verifique os dados.';
+                        paymentError.style.display = 'block';
+                    },
+                },
+            };
+
+            paymentBrickController = await bricksBuilder.create("payment", "payment-brick-container", settings);
+
+        } catch (error) {
+            console.error("Erro ao inicializar Brick:", error);
+            paymentError.textContent = 'Não foi possível carregar as opções de pagamento.';
+            paymentError.style.display = 'block';
         }
-
-        const bricksBuilder = mp.bricks();
-        const settings = {
-          initialization: {
-            amount: Number(amount),
-            preferenceId: preferenceData.preferenceId, // ID da preferência do MP
-            payer: {
-                email: "comprador.teste@gmail.com",
-                firstName: "Comprador",
-                lastName: "Teste",
-                identification: { type: "CPF", number: "19119119100" },
-                entity_type: "individual" 
-            },
-          },
-          customization: {
-            paymentMethods: {
-              bankTransfer: "all", 
-              creditCard: "all",
-              mercadoPago: ["wallet_purchase"],
-            },
-            visual: { style: { theme: 'light' } }
-          },
-          callbacks: {
-            onReady: () => {
-              console.log("Brick de pagamento está pronto!");
-              brickLoadingMessage.style.display = 'none';
-            },
-            // O onSubmit agora é assíncrono e apenas redireciona
-            onSubmit: async ({ formData }) => {
-                console.log("Formulário enviado, aguardando webhook...");
-                
-                // Salva o ID do pedido do Firestore
-                state.currentOrderId = preferenceData.orderId; 
-                
-                // Se for PIX, já podemos ir para a tela do PIX
-                if (formData.payment_method_id === 'pix' || formData.paymentType === 'bank_transfer') {
-                    showToast("Gerando seu QR Code PIX...", "success");
-                    
-                    // Damos um tempo para o webhook criar os dados do PIX
-                    await new Promise(resolve => setTimeout(resolve, 3000)); // Espera 3s
-                    
-                    const orderDoc = await db.collection("orders").doc(state.currentOrderId).get();
-                    const orderData = orderDoc.data();
-                    
-                    if (orderData.paymentData) { // paymentData foi adicionado pelo webhook?
-                        populatePixScreen(orderData);
-                        navigateTo('page-pix-result');
-                    } else {
-                        // Se o webhook ainda não chegou, mostramos o status 'Processando'
-                        navigateTo('page-orders');
-                    }
-                } else {
-                    // Se for cartão, apenas vamos para a tela de pedidos
-                    // e esperamos o status mudar
-                    navigateTo('page-orders');
-                }
-            },
-            onError: (error) => {
-              console.error("Erro no brick de pagamento:", error);
-              paymentError.textContent = 'Houve um erro no formulário. Verifique os dados.';
-              paymentError.style.display = 'block';
-            },
-          },
-        };
-
-        paymentBrickController = await bricksBuilder.create("payment", "payment-brick-container", settings);
-
-      } catch (error) {
-        console.error("Erro ao inicializar Brick:", error);
-        paymentError.textContent = 'Não foi possível carregar as opções de pagamento.';
-        paymentError.style.display = 'block';
-      }
     }
 
     // ==========================================================
@@ -209,16 +208,16 @@ document.addEventListener("DOMContentLoaded", () => {
     function navigateTo(pageId) {
         pages.forEach(page => page.classList.remove("active"));
         document.getElementById(pageId).classList.add("active");
-        
+
         navItems.forEach(item => {
             const target = item.dataset.target;
             item.classList.toggle("active", target === pageId);
         });
         moreMenuButton.classList.remove("active");
-        
+
         state.currentPage = pageId;
         window.scrollTo(0, 0);
-        
+
         if (pageId === 'page-cart') {
             renderCartPage();
         }
@@ -226,7 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
             moreMenuButton.classList.add("active");
         }
         if (pageId === 'page-checkout') {
-            showCheckoutStep(1); 
+            showCheckoutStep(1);
             if (paymentBrickController) {
                 paymentBrickController.unmount();
                 paymentBrickController = null;
@@ -276,7 +275,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     window.currentSlide = (n) => showSlide(slideIndex = n);
     setInterval(() => showSlide(slideIndex + 1), 5000);
-    
+
     // --- Lógica do Modal de Produto ---
     productGrid.addEventListener("click", (e) => {
         if (e.target.classList.contains("cta-button")) {
@@ -349,13 +348,13 @@ document.addEventListener("DOMContentLoaded", () => {
             cartFullContent.style.display = 'none';
             return;
         }
-        
+
         cartEmptyMessage.style.display = 'none';
         cartFullContent.style.display = 'block';
         cartItemsContainer.innerHTML = '';
         let subtotal = 0;
         let totalSavings = 0;
-        
+
         state.cart.forEach(item => {
             subtotal += item.priceNew * item.quantity;
             totalSavings += (item.priceOld - item.priceNew) * item.quantity;
@@ -370,11 +369,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
             `;
         });
-        
+
         summarySubtotal.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
         summarySavings.textContent = `- R$ ${totalSavings.toFixed(2).replace('.', ',')}`;
         summaryTotal.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
-        
+
         document.querySelectorAll(".cart-item-remove").forEach(button => {
             button.addEventListener("click", (e) => {
                 const itemId = e.target.closest(".cart-item").dataset.id;
@@ -387,7 +386,7 @@ document.addEventListener("DOMContentLoaded", () => {
         state.cart = state.cart.filter(item => item.id !== itemId);
         updateCartBadge();
     }
-    
+
     // --- Lógica da Página de Checkout ---
     function showCheckoutStep(stepNumber) {
         if (stepNumber === 1) {
@@ -412,40 +411,40 @@ document.addEventListener("DOMContentLoaded", () => {
             showToast("Preencha o CEP.", "error");
             return;
         }
-        
+
         const total = state.cart.reduce((sum, item) => sum + item.priceNew * item.quantity, 0);
         if (total <= 0) {
             showToast("Seu carrinho está vazio.", "error");
             return;
         }
-        
-        state.totalAmount = total; 
-        
+
+        state.totalAmount = total;
+
         showCheckoutStep(2);
         paymentTotalDisplay.textContent = `R$ ${state.totalAmount.toFixed(2).replace('.', ',')}`;
         document.getElementById("brick-loading-message").style.display = 'block';
 
         try {
             const response = await fetch(YOUR_CREATE_PREFERENCE_URL, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ 
-                  name: "Compra em EletroBusiness", 
-                  price: total,
-                  items: state.cart, 
-                  userId: state.currentUser.uid 
-              }),
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: "Compra em EletroBusiness",
+                    price: total,
+                    items: state.cart,
+                    userId: state.currentUser.uid
+                }),
             });
-            
+
             if (!response.ok) {
                 throw new Error("Falha ao criar ordem no backend");
             }
 
             const preferenceData = await response.json(); // { preferenceId, orderId }
-            
+
             // Limpa o carrinho *depois* que a ordem foi criada com sucesso
             clearCart();
-            
+
             initializePaymentBrick(state.totalAmount, preferenceData);
 
         } catch (error) {
@@ -459,7 +458,7 @@ document.addEventListener("DOMContentLoaded", () => {
     goToCheckoutButton.addEventListener("click", () => {
         const total = state.cart.reduce((sum, item) => sum + item.priceNew * item.quantity, 0);
         if (total > 0) {
-            state.totalAmount = total; 
+            state.totalAmount = total;
             navigateTo('page-checkout');
         } else {
             showToast("Seu carrinho está vazio!", "error");
@@ -473,11 +472,11 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
         const qrBase64 = orderData.paymentData.qr_code_base64;
-        const qrCopyCode = orderData.paymentData.qr_code; 
+        const qrCopyCode = orderData.paymentData.qr_code;
 
         pixQrCodeDiv.innerHTML = `<img src="data:image/png;base64, ${qrBase64}" alt="PIX QR Code">`;
         pixCopyCodeInput.value = qrCopyCode;
-        
+
         startPixTimer(orderData.expiresAt);
     }
 
@@ -485,7 +484,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (pixTimerInterval) {
             clearInterval(pixTimerInterval);
         }
-        
+
         const endTime = (expiresAt.toDate ? expiresAt.toDate() : new Date(expiresAt)).getTime();
 
         pixTimerInterval = setInterval(() => {
@@ -500,7 +499,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-            
+
             pixTimerDisplay.textContent = `Expira em ${minutes}:${seconds.toString().padStart(2, '0')}`;
         }, 1000);
     }
@@ -515,34 +514,34 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         window.getSelection().removeAllRanges();
     });
-    
+
     pixPaidButton.textContent = "Voltar para Meus Pedidos"; // Muda o texto
     pixPaidButton.addEventListener("click", () => {
-        clearInterval(pixTimerInterval); 
-        navigateTo('page-orders'); 
+        clearInterval(pixTimerInterval);
+        navigateTo('page-orders');
     });
 
 
     // ==========================================================
     // 8. LÓGICA DE PEDIDOS (FIRESTORE)
     // ==========================================================
-    
+
     // Esta função é chamada pelo 'onAuthStateChanged'
     function setupOrderListener(userId) {
         db.collection("orders")
-          .where("userId", "==", userId)
-          .orderBy("createdAt", "desc")
-          .onSnapshot(snapshot => {
-              const orders = [];
-              snapshot.forEach(doc => {
-                  orders.push({ id: doc.id, ...doc.data() });
-              });
-              
-              renderOrdersPage(orders);
-              
-          }, error => {
-              console.error("Erro ao ouvir pedidos:", error);
-          });
+            .where("userId", "==", userId)
+            .orderBy("createdAt", "desc")
+            .onSnapshot(snapshot => {
+                const orders = [];
+                snapshot.forEach(doc => {
+                    orders.push({ id: doc.id, ...doc.data() });
+                });
+
+                renderOrdersPage(orders);
+
+            }, error => {
+                console.error("Erro ao ouvir pedidos:", error);
+            });
     }
 
     // Esta função agora apenas DESENHA os pedidos
@@ -552,30 +551,30 @@ document.addEventListener("DOMContentLoaded", () => {
             ordersListContainer.innerHTML = '';
             return;
         }
-        
+
         ordersEmptyMessage.style.display = 'none';
         ordersListContainer.innerHTML = '';
-        
+
         orders.forEach(order => {
             let status = order.status;
             let statusText = order.statusText;
-            
+
             // Verifica expiração
             if (status === 'pending_payment' && order.expiresAt && (order.expiresAt.toDate ? order.expiresAt.toDate() : new Date(order.expiresAt)) < new Date()) {
                 status = 'failed';
                 statusText = 'Pagamento expirado';
             }
-            
+
             if (!order.items || order.items.length === 0) {
                 console.error("Pedido " + order.id + " ignorado (sem itens).");
-                return; 
+                return;
             }
 
             const firstItem = order.items[0];
             const otherItemsCount = order.items.length - 1;
-            
+
             let actionButtons = '';
-            
+
             if (status === 'failed') {
                 actionButtons = `<button class="cta-button retry-payment-button" data-order-id="${order.id}">Tentar Pagar Novamente</button>`;
                 if (statusText === 'Pagamento expirado') {
@@ -594,7 +593,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const orderCardHtml = `
                 <div class="order-card">
                     <div class="order-header">
-                        <span class="order-date">${order.createdAt ? order.createdAt.toDate().toLocaleDateString('pt-BR', {day: '2-digit', month: 'short', year: 'numeric'}) : ''}</span>
+                        <span class="order-date">${order.createdAt ? order.createdAt.toDate().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}</span>
                         <span class="order-status status-${status}">${statusText}</span>
                     </div>
                     <div class="order-body">
@@ -620,7 +619,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Ações de clique nos pedidos
     ordersListContainer.addEventListener("click", async (e) => {
-        
+
         // DELETAR PEDIDO
         const deleteButton = e.target.closest(".order-action-delete");
         if (deleteButton) {
@@ -641,7 +640,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const retryButton = e.target.closest(".retry-payment-button");
         if (retryButton) {
             const orderId = retryButton.dataset.orderId;
-            
+
             try {
                 const orderDoc = await db.collection("orders").doc(orderId).get();
                 if (!orderDoc.exists) return;
@@ -655,11 +654,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 if (order.status === 'failed') {
-                    state.cart = order.items; 
+                    state.cart = order.items;
                     state.totalAmount = order.total;
                     updateCartBadge();
                     navigateTo('page-checkout');
-                    showCheckoutStep(1); 
+                    showCheckoutStep(1);
                 }
             } catch (error) {
                 console.error("Erro ao tentar pagar novamente:", error);
@@ -667,7 +666,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    
+
     // --- Inicializa a aplicação ---
     navigateTo('page-home');
     showSlide(0);
