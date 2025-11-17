@@ -22,28 +22,26 @@ let pixTimerInterval = null;
 
 // Estado global da aplicação (AGORA SIMPLIFICADO)
 const state = {
-    cart: [], 
+    cart: [],
     // 'orders' agora é carregado direto do Firebase
     currentPage: 'page-home',
-    currentProduct: null, 
+    currentProduct: null,
     currentOrderId: null, // ID do Firestore
     currentUser: null,  // Objeto do usuário anônimo
-    totalAmount: 0, 
+    totalAmount: 0,
 };
 
 // ==========================================================
 // 4. NOVO: INICIALIZAÇÃO DO FIREBASE
 // ==========================================================
 try {
-    // Cole as credenciais do seu projeto Firebase aqui
-    // (Vá em Configurações do Projeto -> Seus apps -> App da Web -> Configuração)
     const firebaseConfig = {
-      apiKey: "SEU_API_KEY",
-      authDomain: "SEU_AUTH_DOMAIN",
-      projectId: "SEU_PROJECT_ID",
-      storageBucket: "SEU_STORAGE_BUCKET",
-      messagingSenderId: "SEU_SENDER_ID",
-      appId: "SEU_APP_ID"
+        apiKey: "AIzaSyAVQ3tf6Qu4_9PajpJclZAJjVvRgB4ZE2I",
+        authDomain: "super-app25.firebaseapp.com",
+        projectId: "super-app25",
+        storageBucket: "super-app25.firebasestorage.app",
+        messagingSenderId: "810900166273",
+        appId: "1:810900166273:web:24b8f055a68c9f0a6b5f80"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -75,7 +73,7 @@ try {
 
 // O código principal agora espera o 'DOMContentLoaded'
 document.addEventListener("DOMContentLoaded", () => {
-  
+
     // --- Seletores do DOM ---
     const pages = document.querySelectorAll(".page");
     const navItems = document.querySelectorAll(".nav-item[data-target]");
@@ -113,94 +111,94 @@ document.addEventListener("DOMContentLoaded", () => {
     // 5. LÓGICA DE PAGAMENTO (MODIFICADA)
     // ==========================================================
     async function initializePaymentBrick(amount, preferenceData) {
-      const brickLoadingMessage = document.getElementById("brick-loading-message");
-      const paymentError = document.getElementById("payment-error");
-      const paymentContainer = document.getElementById("payment-brick-container");
+        const brickLoadingMessage = document.getElementById("brick-loading-message");
+        const paymentError = document.getElementById("payment-error");
+        const paymentContainer = document.getElementById("payment-brick-container");
 
-      paymentContainer.innerHTML = '';
-      paymentError.style.display = 'none';
-      brickLoadingMessage.style.display = 'block';
+        paymentContainer.innerHTML = '';
+        paymentError.style.display = 'none';
+        brickLoadingMessage.style.display = 'block';
 
-      try {
-        console.log("Preferência criada com ID:", preferenceData.preferenceId);
+        try {
+            console.log("Preferência criada com ID:", preferenceData.preferenceId);
 
-        if (paymentBrickController) {
-          paymentBrickController.unmount();
+            if (paymentBrickController) {
+                paymentBrickController.unmount();
+            }
+
+            const bricksBuilder = mp.bricks();
+            const settings = {
+                initialization: {
+                    amount: Number(amount),
+                    preferenceId: preferenceData.preferenceId, // ID da preferência do MP
+                    payer: {
+                        email: "comprador.teste@gmail.com",
+                        firstName: "Comprador",
+                        lastName: "Teste",
+                        identification: { type: "CPF", number: "19119119100" },
+                        entity_type: "individual"
+                    },
+                },
+                customization: {
+                    paymentMethods: {
+                        bankTransfer: "all",
+                        creditCard: "all",
+                        mercadoPago: ["wallet_purchase"],
+                    },
+                    visual: { style: { theme: 'light' } }
+                },
+                callbacks: {
+                    onReady: () => {
+                        console.log("Brick de pagamento está pronto!");
+                        brickLoadingMessage.style.display = 'none';
+                    },
+                    // O onSubmit agora é assíncrono e apenas redireciona
+                    onSubmit: async ({ formData }) => {
+                        console.log("Formulário enviado, aguardando webhook...");
+
+                        // Salva o ID do pedido do Firestore
+                        state.currentOrderId = preferenceData.orderId;
+
+                        // Se for PIX, já podemos ir para a tela do PIX
+                        if (formData.payment_method_id === 'pix' || formData.paymentType === 'bank_transfer') {
+                            // Precisamos buscar os dados do PIX no pedido do Firestore
+                            // (O Webhook pode demorar alguns segundos)
+                            showToast("Gerando seu QR Code PIX...", "success");
+
+                            // Damos um tempo para o webhook criar os dados do PIX
+                            await new Promise(resolve => setTimeout(resolve, 3000)); // Espera 3s
+
+                            const orderDoc = await db.collection("orders").doc(state.currentOrderId).get();
+                            const orderData = orderDoc.data();
+
+                            if (orderData.paymentData) { // paymentData foi adicionado pelo webhook?
+                                populatePixScreen(orderData);
+                                navigateTo('page-pix-result');
+                            } else {
+                                // Se o webhook ainda não chegou, mostramos o status 'Processando'
+                                navigateTo('page-orders');
+                            }
+                        } else {
+                            // Se for cartão, apenas vamos para a tela de pedidos
+                            // e esperamos o status mudar
+                            navigateTo('page-orders');
+                        }
+                    },
+                    onError: (error) => {
+                        console.error("Erro no brick de pagamento:", error);
+                        paymentError.textContent = 'Houve um erro no formulário. Verifique os dados.';
+                        paymentError.style.display = 'block';
+                    },
+                },
+            };
+
+            paymentBrickController = await bricksBuilder.create("payment", "payment-brick-container", settings);
+
+        } catch (error) {
+            console.error("Erro ao inicializar Brick:", error);
+            paymentError.textContent = 'Não foi possível carregar as opções de pagamento.';
+            paymentError.style.display = 'block';
         }
-
-        const bricksBuilder = mp.bricks();
-        const settings = {
-          initialization: {
-            amount: Number(amount),
-            preferenceId: preferenceData.preferenceId, // ID da preferência do MP
-            payer: {
-                email: "comprador.teste@gmail.com",
-                firstName: "Comprador",
-                lastName: "Teste",
-                identification: { type: "CPF", number: "19119119100" },
-                entity_type: "individual" 
-            },
-          },
-          customization: {
-            paymentMethods: {
-              bankTransfer: "all", 
-              creditCard: "all",
-              mercadoPago: ["wallet_purchase"],
-            },
-            visual: { style: { theme: 'light' } }
-          },
-          callbacks: {
-            onReady: () => {
-              console.log("Brick de pagamento está pronto!");
-              brickLoadingMessage.style.display = 'none';
-            },
-            // O onSubmit agora é assíncrono e apenas redireciona
-            onSubmit: async ({ formData }) => {
-                console.log("Formulário enviado, aguardando webhook...");
-                
-                // Salva o ID do pedido do Firestore
-                state.currentOrderId = preferenceData.orderId; 
-                
-                // Se for PIX, já podemos ir para a tela do PIX
-                if (formData.payment_method_id === 'pix' || formData.paymentType === 'bank_transfer') {
-                    // Precisamos buscar os dados do PIX no pedido do Firestore
-                    // (O Webhook pode demorar alguns segundos)
-                    showToast("Gerando seu QR Code PIX...", "success");
-                    
-                    // Damos um tempo para o webhook criar os dados do PIX
-                    await new Promise(resolve => setTimeout(resolve, 3000)); // Espera 3s
-                    
-                    const orderDoc = await db.collection("orders").doc(state.currentOrderId).get();
-                    const orderData = orderDoc.data();
-                    
-                    if (orderData.paymentData) { // paymentData foi adicionado pelo webhook?
-                        populatePixScreen(orderData);
-                        navigateTo('page-pix-result');
-                    } else {
-                        // Se o webhook ainda não chegou, mostramos o status 'Processando'
-                        navigateTo('page-orders');
-                    }
-                } else {
-                    // Se for cartão, apenas vamos para a tela de pedidos
-                    // e esperamos o status mudar
-                    navigateTo('page-orders');
-                }
-            },
-            onError: (error) => {
-              console.error("Erro no brick de pagamento:", error);
-              paymentError.textContent = 'Houve um erro no formulário. Verifique os dados.';
-              paymentError.style.display = 'block';
-            },
-          },
-        };
-
-        paymentBrickController = await bricksBuilder.create("payment", "payment-brick-container", settings);
-
-      } catch (error) {
-        console.error("Erro ao inicializar Brick:", error);
-        paymentError.textContent = 'Não foi possível carregar as opções de pagamento.';
-        paymentError.style.display = 'block';
-      }
     }
 
     // --- Lógica de Navegação (Router) ---
@@ -208,16 +206,16 @@ document.addEventListener("DOMContentLoaded", () => {
         // ... (função navigateTo INALTERADA) ...
         pages.forEach(page => page.classList.remove("active"));
         document.getElementById(pageId).classList.add("active");
-        
+
         navItems.forEach(item => {
             const target = item.dataset.target;
             item.classList.toggle("active", target === pageId);
         });
         moreMenuButton.classList.remove("active");
-        
+
         state.currentPage = pageId;
         window.scrollTo(0, 0);
-        
+
         if (pageId === 'page-cart') {
             renderCartPage();
         }
@@ -227,7 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // renderOrdersPage(); 
         }
         if (pageId === 'page-checkout') {
-            showCheckoutStep(1); 
+            showCheckoutStep(1);
             if (paymentBrickController) {
                 paymentBrickController.unmount();
                 paymentBrickController = null;
@@ -238,7 +236,7 @@ document.addEventListener("DOMContentLoaded", () => {
     navItems.forEach(item => {
         item.addEventListener("click", () => navigateTo(item.dataset.target));
     });
-    
+
     document.querySelectorAll(".back-button").forEach(button => {
         button.addEventListener("click", () => navigateTo(button.dataset.target));
     });
@@ -284,8 +282,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     window.currentSlide = (n) => showSlide(slideIndex = n);
     setInterval(() => showSlide(slideIndex + 1), 5000);
-    
-    
+
+
     // --- Lógica do Modal de Produto (INALTERADA) ---
     // ... (toda a lógica do openProductModal, closeProductModal, etc. permanece a mesma)
     productGrid.addEventListener("click", (e) => {
@@ -367,13 +365,13 @@ document.addEventListener("DOMContentLoaded", () => {
             cartFullContent.style.display = 'none';
             return;
         }
-        
+
         cartEmptyMessage.style.display = 'none';
         cartFullContent.style.display = 'block';
         cartItemsContainer.innerHTML = '';
         let subtotal = 0;
         let totalSavings = 0;
-        
+
         state.cart.forEach(item => {
             subtotal += item.priceNew * item.quantity;
             totalSavings += (item.priceOld - item.priceNew) * item.quantity;
@@ -388,11 +386,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
             `;
         });
-        
+
         summarySubtotal.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
         summarySavings.textContent = `- R$ ${totalSavings.toFixed(2).replace('.', ',')}`;
         summaryTotal.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
-        
+
         document.querySelectorAll(".cart-item-remove").forEach(button => {
             button.addEventListener("click", (e) => {
                 const itemId = e.target.closest(".cart-item").dataset.id;
@@ -405,7 +403,7 @@ document.addEventListener("DOMContentLoaded", () => {
         state.cart = state.cart.filter(item => item.id !== itemId);
         updateCartBadge();
     }
-    
+
     // --- Lógica da Página de Checkout (MODIFICADA) ---
     function showCheckoutStep(stepNumber) { /* ... */ }
     // ... (função showCheckoutStep INALTERADA) ...
@@ -433,15 +431,15 @@ document.addEventListener("DOMContentLoaded", () => {
             showToast("Preencha o CEP.", "error");
             return;
         }
-        
+
         const total = state.cart.reduce((sum, item) => sum + item.priceNew * item.quantity, 0);
         if (total <= 0) {
             showToast("Seu carrinho está vazio.", "error");
             return;
         }
-        
-        state.totalAmount = total; 
-        
+
+        state.totalAmount = total;
+
         // MOSTRA PASSO 2 E O LOADING
         showCheckoutStep(2);
         paymentTotalDisplay.textContent = `R$ ${state.totalAmount.toFixed(2).replace('.', ',')}`;
@@ -450,22 +448,22 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             // CHAMA A NOVA FUNÇÃO DE BACKEND
             const response = await fetch(YOUR_CREATE_PREFERENCE_URL, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ 
-                  name: "Compra em EletroBusiness", 
-                  price: total,
-                  items: state.cart, // Envia o carrinho
-                  userId: state.currentUser.uid // Envia o ID do usuário
-              }),
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: "Compra em EletroBusiness",
+                    price: total,
+                    items: state.cart, // Envia o carrinho
+                    userId: state.currentUser.uid // Envia o ID do usuário
+                }),
             });
-            
+
             if (!response.ok) {
                 throw new Error("Falha ao criar ordem no backend");
             }
 
             const preferenceData = await response.json(); // { preferenceId, orderId }
-            
+
             // Agora inicializa o Brick com os dados recebidos
             initializePaymentBrick(state.totalAmount, preferenceData);
 
@@ -482,7 +480,7 @@ document.addEventListener("DOMContentLoaded", () => {
     goToCheckoutButton.addEventListener("click", () => {
         const total = state.cart.reduce((sum, item) => sum + item.priceNew * item.quantity, 0);
         if (total > 0) {
-            state.totalAmount = total; 
+            state.totalAmount = total;
             navigateTo('page-checkout');
         } else {
             showToast("Seu carrinho está vazio!", "error");
@@ -491,7 +489,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // --- Lógica da Página PIX (MODIFICADA) ---
-    
+
     // Agora lê 'orderData' do Firestore
     function populatePixScreen(orderData) {
         if (!orderData.paymentData) {
@@ -499,11 +497,11 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
         const qrBase64 = orderData.paymentData.qr_code_base64;
-        const qrCopyCode = orderData.paymentData.qr_code; 
+        const qrCopyCode = orderData.paymentData.qr_code;
 
         pixQrCodeDiv.innerHTML = `<img src="data:image/png;base64, ${qrBase64}" alt="PIX QR Code">`;
         pixCopyCodeInput.value = qrCopyCode;
-        
+
         // A expiração vem do Firestore
         startPixTimer(orderData.expiresAt);
     }
@@ -514,7 +512,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (pixTimerInterval) {
             clearInterval(pixTimerInterval);
         }
-        
+
         // 'expiresAt' do Firestore pode ser um Timestamp, converte para JS Date
         const endTime = (expiresAt.toDate ? expiresAt.toDate() : new Date(expiresAt)).getTime();
 
@@ -531,7 +529,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-            
+
             pixTimerDisplay.textContent = `Expira em ${minutes}:${seconds.toString().padStart(2, '0')}`;
         }, 1000);
     }
@@ -548,7 +546,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         window.getSelection().removeAllRanges();
     });
-    
+
     // BOTÃO "JÁ PAGUEI" FOI REMOVIDO, AGORA É "VOLTAR"
     pixPaidButton.textContent = "Voltar para Meus Pedidos"; // Muda o texto
     pixPaidButton.addEventListener("click", () => {
@@ -558,24 +556,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // --- LÓGICA DE PEDIDOS (TOTALMENTE NOVA) ---
-    
+
     // Esta função é chamada pelo 'onAuthStateChanged'
     function setupOrderListener(userId) {
         db.collection("orders")
-          .where("userId", "==", userId)
-          .orderBy("createdAt", "desc")
-          .onSnapshot(snapshot => {
-              const orders = [];
-              snapshot.forEach(doc => {
-                  orders.push({ id: doc.id, ...doc.data() });
-              });
-              
-              // Renderiza os pedidos recebidos do Firebase
-              renderOrdersPage(orders);
-              
-          }, error => {
-              console.error("Erro ao ouvir pedidos:", error);
-          });
+            .where("userId", "==", userId)
+            .orderBy("createdAt", "desc")
+            .onSnapshot(snapshot => {
+                const orders = [];
+                snapshot.forEach(doc => {
+                    orders.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Renderiza os pedidos recebidos do Firebase
+                renderOrdersPage(orders);
+
+            }, error => {
+                console.error("Erro ao ouvir pedidos:", error);
+            });
     }
 
     // Esta função agora apenas DESENHA os pedidos
@@ -585,31 +583,31 @@ document.addEventListener("DOMContentLoaded", () => {
             ordersListContainer.innerHTML = '';
             return;
         }
-        
+
         ordersEmptyMessage.style.display = 'none';
         ordersListContainer.innerHTML = '';
-        
+
         orders.forEach(order => {
             let status = order.status;
             let statusText = order.statusText;
-            
+
             // Verifica expiração (se o webhook não pegou)
             if (status === 'pending_payment' && order.expiresAt && (order.expiresAt.toDate ? order.expiresAt.toDate() : new Date(order.expiresAt)) < new Date()) {
                 status = 'failed';
                 statusText = 'Pagamento expirado';
                 // (Não precisa salvar, o listener vai pegar a mudança)
             }
-            
+
             if (!order.items || order.items.length === 0) {
                 console.error("Pedido " + order.id + " ignorado (sem itens).");
-                return; 
+                return;
             }
 
             const firstItem = order.items[0];
             const otherItemsCount = order.items.length - 1;
-            
+
             let actionButtons = '';
-            
+
             if (status === 'failed') {
                 actionButtons = `<button class="cta-button retry-payment-button" data-order-id="${order.id}">Tentar Pagar Novamente</button>`;
                 if (statusText === 'Pagamento expirado') {
@@ -629,7 +627,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const orderCardHtml = `
                 <div class="order-card">
                     <div class="order-header">
-                        <span class="order-date">${order.createdAt ? order.createdAt.toDate().toLocaleDateString('pt-BR', {day: '2-digit', month: 'short', year: 'numeric'}) : ''}</span>
+                        <span class="order-date">${order.createdAt ? order.createdAt.toDate().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}</span>
                         <span class="order-status status-${status}">${statusText}</span>
                     </div>
                     <div class="order-body">
@@ -655,7 +653,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Ações de clique nos pedidos (agora interage com o Firestore)
     ordersListContainer.addEventListener("click", async (e) => {
-        
+
         // DELETAR PEDIDO
         const deleteButton = e.target.closest(".order-action-delete");
         if (deleteButton) {
@@ -676,7 +674,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const retryButton = e.target.closest(".retry-payment-button");
         if (retryButton) {
             const orderId = retryButton.dataset.orderId;
-            
+
             try {
                 const orderDoc = await db.collection("orders").doc(orderId).get();
                 if (!orderDoc.exists) return;
@@ -690,15 +688,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 if (order.status === 'failed') {
-                    state.cart = order.items; 
+                    state.cart = order.items;
                     state.totalAmount = order.total;
                     updateCartBadge();
                     navigateTo('page-checkout');
-                    
+
                     // Simula o clique no botão "Continuar"
                     // (O usuário ainda precisa preencher o endereço,
                     // seria melhor levá-lo ao passo 1)
-                    showCheckoutStep(1); 
+                    showCheckoutStep(1);
                 }
             } catch (error) {
                 console.error("Erro ao tentar pagar novamente:", error);
@@ -706,7 +704,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    
+
     // --- Inicializa a aplicação ---
     // (A inicialização agora é feita pelo listener do Firebase Auth)
     navigateTo('page-home');
