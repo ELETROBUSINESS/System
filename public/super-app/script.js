@@ -254,6 +254,10 @@ document.addEventListener("DOMContentLoaded", () => {
                                 // 'result' é a resposta completa do pagamento
                                 if (submitButton) submitButton.disabled = false;
                                 
+                                // ⬇️ ⬇️ ⬇️ LINHA ADICIONADA PARA O TESTE ⬇️ ⬇️ ⬇️
+                                console.log("Resposta do Pagamento (Payment ID):", result.id);
+                                // ⬆️ ⬆️ ⬆️ FIM DA ADIÇÃO ⬆️ ⬆️ ⬆️
+                                
                                 // Se for PIX, 'result.status' será 'pending'
                                 if (result.status === 'pending') {
                                     populatePixScreen(result); // Envia a resposta inteira
