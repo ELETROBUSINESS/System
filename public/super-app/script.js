@@ -34,7 +34,12 @@ document.addEventListener("DOMContentLoaded", () => {
   
     // --- Seletores do DOM ---
     const pages = document.querySelectorAll(".page");
-    const navItems = document.querySelectorAll(".nav-item");
+    
+    // ⬇️ ⬇️ ⬇️ CORREÇÃO 1 APLICADA AQUI ⬇️ ⬇️ ⬇️
+    // Seleciona apenas os nav-items que têm o atributo 'data-target'
+    const navItems = document.querySelectorAll(".nav-item[data-target]"); 
+    // ⬆️ ⬆️ ⬆️ FIM DA CORREÇÃO 1 ⬆️ ⬆️ ⬆️
+
     const cartBadge = document.getElementById("cart-badge");
     const productGrid = document.querySelector(".product-grid");
     const toast = document.getElementById("toast-notification");
@@ -172,7 +177,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     
                     clearCart(); // Limpa o carrinho
                     
-                    populatePixScreen(result, expiresAt);
+                    // ⬇️ ⬇️ ⬇️ CORREÇÃO 2 APLICADA AQUI ⬇️ ⬇️ ⬇️
+                    // Passa o objeto 'order' em vez do 'result'
+                    populatePixScreen(order, expiresAt);
+                    // ⬆️ ⬆️ ⬆️ FIM DA CORREÇÃO 2 ⬆️ ⬆️ ⬆️
+
                     navigateTo('page-pix-result');
                     resolve(); 
 
@@ -291,6 +300,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // --- Navegação da Navbar ---
+    // (A CORREÇÃO 1 JÁ FOI FEITA NA DECLARAÇÃO DE 'navItems')
     navItems.forEach(item => {
         item.addEventListener("click", () => navigateTo(item.dataset.target));
     });
@@ -512,10 +522,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- Lógica da Página PIX ---
     
-    // Atualizada para receber 'expiresAt'
-    function populatePixScreen(pixData, expiresAt) {
-        const qrBase64 = pixData.paymentData.qr_code_base64;
-        const qrCopyCode = pixData.paymentData.qr_code; 
+    // Esta função agora espera o objeto 'order'
+    function populatePixScreen(order, expiresAt) {
+        const qrBase64 = order.paymentData.qr_code_base64;
+        const qrCopyCode = order.paymentData.qr_code; 
 
         pixQrCodeDiv.innerHTML = `<img src="data:image/png;base64, ${qrBase64}" alt="PIX QR Code">`;
         pixCopyCodeInput.value = qrCopyCode;
