@@ -10,7 +10,7 @@ const db = admin.firestore();
 const mercadoPagoToken = defineString('MERCADOPAGO_ACCESS_TOKEN');
 
 // ==========================================================
-// FUNÇÃO 1: CRIAR PREFERÊNCIA (CORRIGIDA)
+// FUNÇÃO 1: CRIAR PREFERÊNCIA (Corrigida para enviar itens)
 // ==========================================================
 exports.createPreference = functions.https.onRequest(async (req, res) => {
     cors(req, res, async () => {
@@ -19,7 +19,6 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
         }
 
         try {
-            // Agora usamos 'items' e 'price' (total)
             const { price, items, userId } = req.body;
             if (!price || !items || !userId || items.length === 0) {
                 return res.status(400).send({ error: "Dados da solicitação incompletos" });
@@ -29,7 +28,6 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
             const client = new MercadoPagoConfig({ accessToken });
             const preferenceClient = new Preference(client);
 
-            // ⬇️ ⬇️ ⬇️ INÍCIO DA CORREÇÃO ⬇️ ⬇️ ⬇️
             // 1. FORMATAR OS ITENS PARA A PREFERÊNCIA
             // (Resolve os 6 erros de "Aprovação dos pagamentos")
             const formattedItems = items.map(item => ({
@@ -40,9 +38,8 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
                 unit_price: item.priceNew,
                 category_id: "MLB1000" // Categoria genérica para "Eletrônicos"
             }));
-            // ⬆️ ⬆️ ⬆️ FIM DA CORREÇÃO ⬆️ ⬆️ ⬆️
 
-            // 2. CRIAR O PEDIDO NO FIRESTORE (Isto estava correto)
+            // 2. CRIAR O PEDIDO NO FIRESTORE
             const orderRef = await db.collection("orders").add({
                 userId: userId,
                 items: items, // Salva os itens originais do carrinho
@@ -82,13 +79,14 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
 });
 
 // ==========================================================
-// FUNÇÃO 2: CRIAR PAGAMENTO (Inalterada, mas correta)
+// FUNÇÃO 2: CRIAR PAGAMENTO (Corrigida para usar preference_id)
 // ==========================================================
 exports.createPayment = functions.https.onRequest(async (req, res) => {
     cors(req, res, async () => {
         try {
-            const { formData: brickObject, orderId } = req.body;
-            if (!brickObject || !orderId) {
+            // Agora recebemos 'preferenceId' do script.js
+            const { formData: brickObject, orderId, preferenceId } = req.body; 
+            if (!brickObject || !orderId || !preferenceId) { // Verifica os 3
                 return res.status(400).send({ error: "Dados incompletos" });
             }
             
@@ -96,34 +94,24 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
             const client = new MercadoPagoConfig({ accessToken });
             const payment = new Payment(client);
 
-            // 1. BUSCAR OS ITENS DO PEDIDO NO FIRESTORE
-            const orderRef = db.collection("orders").doc(orderId);
-            const orderDoc = await orderRef.get();
-            if (!orderDoc.exists) {
-                return res.status(404).send({ error: "Pedido não encontrado" });
-            }
-            const cartItems = orderDoc.data().items;
-
-            // 2. FORMATAR OS ITENS PARA A API DE PAGAMENTO
-            const formattedItems = cartItems.map(item => ({
-                id: item.id,
-                title: item.name,
-                description: item.description,
-                quantity: item.quantity,
-                unit_price: item.priceNew,
-                category_id: "MLB1000" // Categoria genérica
-            }));
-
-            // 3. PREPARAR O OBJETO DE PAGAMENTO
+            // 1. Extrai os dados de pagamento (token, payer, etc.)
             const paymentData = brickObject.formData;
+
+            // 2. ⬇️ ⬇️ ⬇️ A VERDADEIRA CORREÇÃO ⬇️ ⬇️ ⬇️
+            // Removemos os 'items' que estávamos enviando
+            // Em vez disso, "amarramos" este pagamento à preferência
+            paymentData.preference_id = preferenceId;
+            // (Não precisamos mais enviar 'paymentData.items' aqui)
+            // ⬆️ ⬆️ ⬆️ FIM DA CORREÇÃO ⬆️ ⬆️ ⬆️
+            
+            // 3. Adicionamos os outros campos que o MP gosta
             paymentData.external_reference = orderId;
             paymentData.statement_descriptor = "ELETROBUSINESS";
-            paymentData.items = formattedItems; // Envia os itens (correto)
 
-            // 4. Enviamos os dados completos para o Mercado Pago
+            // 4. Enviamos os dados para o Mercado Pago
             const paymentResponse = await payment.create({ body: paymentData });
             
-            // Prepara os dados para salvar no Firestore
+            // O resto da lógica para salvar no Firestore está correta
             const updateData = {
                 status: paymentResponse.status,
                 statusText: paymentResponse.status_detail,
@@ -131,17 +119,15 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
                 paymentType: paymentResponse.payment_type_id,
             };
 
-            // Se for PIX, salva os dados do QR Code
             if (paymentResponse.status === "pending" && paymentResponse.point_of_interaction) {
                 updateData.paymentData = paymentResponse.point_of_interaction.transaction_data;
                 updateData.expiresAt = paymentResponse.date_of_expiration;
                 updateData.statusText = "Aguardando Pagamento";
             }
             
-            // Atualiza o pedido no Firestore
+            const orderRef = db.collection("orders").doc(orderId);
             await orderRef.update(updateData);
             
-            // Retorna a resposta completa do pagamento para o frontend
             return res.status(200).send(paymentResponse);
 
         } catch (error) {
@@ -157,7 +143,6 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
 // FUNÇÃO 3: WEBHOOK (Confirma o pagamento)
 // ==========================================================
 exports.processWebhook = functions.https.onRequest(async (req, res) => {
-    // ... (Esta função permanece INALTERADA) ...
     const topic = req.query.topic || req.query.type;
     console.log("Webhook recebido:", topic, req.body);
 
@@ -186,7 +171,7 @@ exports.processWebhook = functions.https.onRequest(async (req, res) => {
                 newStatusText = "Pagamento Aprovado";
             } else if (mpStatus === "rejected") {
                 newStatus = "failed";
-                newS_text = "Pagamento Falhado";
+                newStatusText = "Pagamento Falhado";
             }
 
             const orderRef = db.collection("orders").doc(orderId);

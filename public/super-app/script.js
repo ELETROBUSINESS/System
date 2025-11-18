@@ -223,7 +223,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         brickLoadingMessage.style.display = 'none';
                     },
                     
-                    onSubmit: (formData) => {
+                    // ⬇️ ⬇️ ⬇️ LÓGICA DO SUBMIT ATUALIZADA ⬇️ ⬇️ ⬇️
+                    onSubmit: (formData) => { // formData aqui é o objeto { formData: {...}, ... }
                         console.log("Formulário enviado, criando pagamento...");
                         state.currentOrderId = preferenceData.orderId; 
                         
@@ -235,8 +236,9 @@ document.addEventListener("DOMContentLoaded", () => {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({
-                                    formData: formData,
-                                    orderId: preferenceData.orderId
+                                    formData: formData, // Objeto do Brick
+                                    orderId: preferenceData.orderId,
+                                    preferenceId: preferenceData.preferenceId // <-- CORREÇÃO AQUI
                                 }),
                             })
                             .then(response => {
@@ -269,6 +271,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             });
                         });
                     },
+                    // ⬆️ ⬆️ ⬆️ FIM DA ATUALIZAÇÃO ⬆️ ⬆️ ⬆️
 
                     onError: (error) => {
                         console.error("Erro no brick de pagamento:", error);
@@ -523,9 +526,9 @@ document.addEventListener("DOMContentLoaded", () => {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ 
-                  name: "Compra em EletroBusiness", 
+                  // name: "Compra em EletroBusiness", // <-- Não precisamos mais disso
                   price: total,
-                  items: state.cart, 
+                  items: state.cart, // Enviamos o carrinho detalhado
                   userId: state.currentUser.uid 
               }),
             });
