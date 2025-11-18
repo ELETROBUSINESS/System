@@ -206,7 +206,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         firstName: "Comprador",
                         lastName: "Teste",
                         identification: { type: "CPF", number: "19119119100" },
-                        // entity_type: "individual" 
+                        entity_type: "individual" 
                     },
                 },
                 customization: {
