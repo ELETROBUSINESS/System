@@ -10,7 +10,7 @@ const db = admin.firestore();
 const mercadoPagoToken = defineString('MERCADOPAGO_ACCESS_TOKEN');
 
 // ==========================================================
-// FUNÇÃO 1: CRIAR PREFERÊNCIA (Inalterada)
+// FUNÇÃO 1: CRIAR PREFERÊNCIA (CORRIGIDA)
 // ==========================================================
 exports.createPreference = functions.https.onRequest(async (req, res) => {
     cors(req, res, async () => {
@@ -19,8 +19,9 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
         }
 
         try {
-            const { name, price, items, userId } = req.body;
-            if (!name || !price || !items || !userId) {
+            // Agora usamos 'items' e 'price' (total)
+            const { price, items, userId } = req.body;
+            if (!price || !items || !userId || items.length === 0) {
                 return res.status(400).send({ error: "Dados da solicitação incompletos" });
             }
 
@@ -28,11 +29,24 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
             const client = new MercadoPagoConfig({ accessToken });
             const preferenceClient = new Preference(client);
 
-            // 1. CRIAR O PEDIDO NO FIRESTORE
+            // ⬇️ ⬇️ ⬇️ INÍCIO DA CORREÇÃO ⬇️ ⬇️ ⬇️
+            // 1. FORMATAR OS ITENS PARA A PREFERÊNCIA
+            // (Resolve os 6 erros de "Aprovação dos pagamentos")
+            const formattedItems = items.map(item => ({
+                id: item.id,
+                title: item.name,
+                description: item.description,
+                quantity: item.quantity,
+                unit_price: item.priceNew,
+                category_id: "MLB1000" // Categoria genérica para "Eletrônicos"
+            }));
+            // ⬆️ ⬆️ ⬆️ FIM DA CORREÇÃO ⬆️ ⬆️ ⬆️
+
+            // 2. CRIAR O PEDIDO NO FIRESTORE (Isto estava correto)
             const orderRef = await db.collection("orders").add({
                 userId: userId,
-                items: items, // Salva os itens do carrinho aqui
-                total: price,
+                items: items, // Salva os itens originais do carrinho
+                total: price, // Salva o total
                 status: "pending_payment", 
                 statusText: "Aguardando Pagamento",
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -40,10 +54,10 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
                 paymentId: null,
             });
 
-            // 2. CRIAR A PREFERÊNCIA NO MERCADO PAGO
+            // 3. CRIAR A PREFERÊNCIA NO MP (Agora com os itens corretos)
             const preferenceData = {
                 body: {
-                    items: [ { title: name, unit_price: Number(price), quantity: 1, } ],
+                    items: formattedItems, // <--- USA OS ITENS FORMATADOS
                     back_urls: {
                         success: "https://eletrobusiness.com.br/", 
                         failure: "https://eletrobusiness.com.br/",
@@ -68,7 +82,7 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
 });
 
 // ==========================================================
-// FUNÇÃO 2: CRIAR PAGAMENTO (CORRIGIDA)
+// FUNÇÃO 2: CRIAR PAGAMENTO (Inalterada, mas correta)
 // ==========================================================
 exports.createPayment = functions.https.onRequest(async (req, res) => {
     cors(req, res, async () => {
@@ -82,8 +96,6 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
             const client = new MercadoPagoConfig({ accessToken });
             const payment = new Payment(client);
 
-            // ⬇️ ⬇️ ⬇️ INÍCIO DA CORREÇÃO ⬇️ ⬇️ ⬇️
-
             // 1. BUSCAR OS ITENS DO PEDIDO NO FIRESTORE
             const orderRef = db.collection("orders").doc(orderId);
             const orderDoc = await orderRef.get();
@@ -93,27 +105,22 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
             const cartItems = orderDoc.data().items;
 
             // 2. FORMATAR OS ITENS PARA A API DE PAGAMENTO
-            // (Isso resolve os 6 erros de "Aprovação dos pagamentos")
             const formattedItems = cartItems.map(item => ({
                 id: item.id,
                 title: item.name,
                 description: item.description,
                 quantity: item.quantity,
                 unit_price: item.priceNew,
-                category_id: "MLB1000" // Categoria genérica para "Eletrônicos"
+                category_id: "MLB1000" // Categoria genérica
             }));
 
             // 3. PREPARAR O OBJETO DE PAGAMENTO
             const paymentData = brickObject.formData;
             paymentData.external_reference = orderId;
-            paymentData.statement_descriptor = "ELETROBUSINESS"; // Resolve "Fatura do cartão"
-            
-            // 4. ADICIONAR OS ITENS AO PAGAMENTO
-            paymentData.items = formattedItems; 
+            paymentData.statement_descriptor = "ELETROBUSINESS";
+            paymentData.items = formattedItems; // Envia os itens (correto)
 
-            // ⬆️ ⬆️ ⬆️ FIM DA CORREÇÃO ⬆️ ⬆️ ⬆️
-
-            // 5. Enviamos os dados completos para o Mercado Pago
+            // 4. Enviamos os dados completos para o Mercado Pago
             const paymentResponse = await payment.create({ body: paymentData });
             
             // Prepara os dados para salvar no Firestore
@@ -179,7 +186,7 @@ exports.processWebhook = functions.https.onRequest(async (req, res) => {
                 newStatusText = "Pagamento Aprovado";
             } else if (mpStatus === "rejected") {
                 newStatus = "failed";
-                newStatusText = "Pagamento Falhado";
+                newS_text = "Pagamento Falhado";
             }
 
             const orderRef = db.collection("orders").doc(orderId);
