@@ -64,6 +64,10 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
                 }
             };
             
+            // ⬇️ ⬇️ ⬇️ LOG ADICIONADO ⬇️ ⬇️ ⬇️
+            console.log(`[LOG] Criando PREFERÊNCIA para Ordem ${orderRef.id}:`, JSON.stringify(preferenceData.body, null, 2));
+            // ⬆️ ⬆️ ⬆️ FIM DO LOG ⬆️ ⬆️ ⬆️
+            
             const response = await preferenceClient.create(preferenceData);
             
             return res.status(200).send({ 
@@ -107,6 +111,10 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
             // 3. Adicionamos os outros campos que o MP gosta
             paymentData.external_reference = orderId;
             paymentData.statement_descriptor = "ELETROBUSINESS";
+
+            // ⬇️ ⬇️ ⬇️ LOG ADICIONADO ⬇️ ⬇️ ⬇️
+            console.log(`[LOG] Criando PAGAMENTO para Ordem ${orderId}:`, JSON.stringify(paymentData, null, 2));
+            // ⬆️ ⬆️ ⬆️ FIM DO LOG ⬆️ ⬆️ ⬆️
 
             // 4. Enviamos os dados para o Mercado Pago
             const paymentResponse = await payment.create({ body: paymentData });
