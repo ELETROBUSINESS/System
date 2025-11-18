@@ -88,9 +88,8 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
 exports.createPayment = functions.https.onRequest(async (req, res) => {
     cors(req, res, async () => {
         try {
-            // Agora recebemos 'preferenceId' do script.js
             const { formData: brickObject, orderId, preferenceId } = req.body; 
-            if (!brickObject || !orderId || !preferenceId) { // Verifica os 3
+            if (!brickObject || !orderId || !preferenceId) {
                 return res.status(400).send({ error: "Dados incompletos" });
             }
             
@@ -101,20 +100,22 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
             // 1. Extrai os dados de pagamento (token, payer, etc.)
             const paymentData = brickObject.formData;
 
-            // 2. ⬇️ ⬇️ ⬇️ A VERDADEIRA CORREÇÃO ⬇️ ⬇️ ⬇️
-            // Removemos os 'items' que estávamos enviando
-            // Em vez disso, "amarramos" este pagamento à preferência
-            paymentData.preference_id = preferenceId;
-            // (Não precisamos mais enviar 'paymentData.items' aqui)
+            // 2. ⬇️ ⬇️ ⬇️ CORREÇÃO CRÍTICA AQUI ⬇️ ⬇️ ⬇️
+            // O Brick envia 'transaction_amount', mas ele conflita
+            // com 'preference_id'. Devemos removê-lo.
+            delete paymentData.transaction_amount;
             // ⬆️ ⬆️ ⬆️ FIM DA CORREÇÃO ⬆️ ⬆️ ⬆️
+
+            // Agora, a 'preference_id' se torna a fonte da verdade
+            // (Substituindo a 'transaction_amount' que removemos)
+            paymentData.preference_id = preferenceId;
             
             // 3. Adicionamos os outros campos que o MP gosta
             paymentData.external_reference = orderId;
             paymentData.statement_descriptor = "ELETROBUSINESS";
 
-            // ⬇️ ⬇️ ⬇️ LOG ADICIONADO ⬇️ ⬇️ ⬇️
+            // (Os console.logs podem ficar aqui para depuração)
             console.log(`[LOG] Criando PAGAMENTO para Ordem ${orderId}:`, JSON.stringify(paymentData, null, 2));
-            // ⬆️ ⬆️ ⬆️ FIM DO LOG ⬆️ ⬆️ ⬆️
 
             // 4. Enviamos os dados para o Mercado Pago
             const paymentResponse = await payment.create({ body: paymentData });
@@ -139,9 +140,13 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
             return res.status(200).send(paymentResponse);
 
         } catch (error) {
+            // O erro [preference_id] vinha daqui, da API do MP
             const errorData = error.response ? error.response.data : { message: error.message };
             console.error("Erro ao criar pagamento:", JSON.stringify(errorData));
-            return res.status(500).send(errorData);
+            
+            // Envia o erro real da API do MP de volta para o cliente
+            const clientError = errorData.message || "Erro desconhecido";
+            return res.status(500).send({ message: clientError, details: errorData });
         }
     });
 });
