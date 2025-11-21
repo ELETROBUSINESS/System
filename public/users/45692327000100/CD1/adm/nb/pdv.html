@@ -1,19 +1,22 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Frente de Caixa (PDV) - Seu Sistema</title>
-    <!-- Importação da Fonte (Inter) --><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Importação da biblioteca Boxicons --><link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <!-- Importação da Fonte (Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Importação da biblioteca Boxicons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 
     <style>
         /* ======================================== */
         /* == ESTILOS GLOBAIS E VARIÁVEIS        == */
         /* ======================================== */
-        
+
         :root {
-            --primary-red: #db0038; 
+            --primary-red: #db0038;
             --primary-red-dark: #c00030;
             --bg-light: #FAFAFA;
             --card-white: #FFFFFF;
@@ -22,7 +25,8 @@
             --border-color: #F0F0F0;
             --success-green: #28a745;
             --warning-red: #E53935;
-            --info-blue: #1976D2; 
+            --info-blue: #d21919;
+            --black-friday: #000000;
         }
 
         * {
@@ -36,383 +40,1515 @@
             background-color: var(--bg-light);
             color: var(--text-dark);
             display: block;
-            min-height: 100vh; 
-            padding-bottom: 60px; 
-            position: relative; 
+            min-height: 100vh;
+            padding-bottom: 60px;
+            position: relative;
         }
-        
+
         /* Overlay de Carregamento Inicial / Bloqueio */
         #loading-overlay {
             position: fixed;
             inset: 0;
-            background-color: rgba(255, 255, 255, 0.9); 
-            display: flex; /* Começa visível */
+            background-color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            /* Começa visível */
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 2000; 
+            z-index: 2000;
             text-align: center;
             color: var(--text-dark);
-            transition: opacity 0.3s ease; 
+            transition: opacity 0.3s ease;
         }
-         #loading-overlay i {
-             font-size: 48px;
-             color: var(--primary-red);
-             margin-bottom: 16px;
-         }
-         #loading-overlay p {
-             font-size: 1.2rem;
-             font-weight: 600;
-         }
-         #loading-overlay.hidden {
+
+        #loading-overlay i {
+            font-size: 48px;
+            color: var(--primary-red);
+            margin-bottom: 16px;
+        }
+
+        #loading-overlay p {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        #loading-overlay.hidden {
             opacity: 0;
             visibility: hidden;
-            pointer-events: none; /* Garante que não interfira com cliques */
-         }
+            pointer-events: none;
+            /* Garante que não interfira com cliques */
+        }
 
 
         /* ======================================== */
         /* == ANIMAÇÕES                          == */
         /* ======================================== */
-        
-        @keyframes slideInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes flash { 0% { background-color: rgba(219, 0, 56, 0.1); } 100% { background-color: transparent; } }
-        .new-item-flash { animation: flash 0.5s ease-out; }
-        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-        .pop-animation { animation: pop 0.3s ease-out; }
-        @keyframes bx-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .bx-spin { animation: bx-spin 1s linear infinite; }
-        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes flash {
+            0% {
+                background-color: rgba(219, 0, 56, 0.1);
+            }
+
+            100% {
+                background-color: transparent;
+            }
+        }
+
+        .new-item-flash {
+            animation: flash 0.5s ease-out;
+        }
+
+        @keyframes pop {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .pop-animation {
+            animation: pop 0.3s ease-out;
+        }
+
+        @keyframes bx-spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .bx-spin {
+            animation: bx-spin 1s linear infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.5);
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
 
         /* ======================================== */
         /* == ESTILOS DE ATALHO / ACESSIBILIDADE == */
         /* ======================================== */
-        
-        .shortcut-hint { font-size: 0.85rem; color: var(--text-light); margin-top: 8px; padding-left: 4px; transition: opacity 0.2s ease; }
-        .nav-focus { outline: 2px solid var(--info-blue) !important; box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.3) !important; border-radius: 8px; }
-        .discount-nav-hint { display: none; font-size: 0.85rem; color: var(--info-blue); font-weight: 500; margin-top: 8px; text-align: center; }
+
+        .shortcut-hint {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 8px;
+            padding-left: 4px;
+            transition: opacity 0.2s ease;
+        }
+
+        .nav-focus {
+            outline: 2px solid var(--info-blue) !important;
+            box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.3) !important;
+            border-radius: 8px;
+        }
+
+        .discount-nav-hint {
+            display: none;
+            font-size: 0.85rem;
+            color: var(--info-blue);
+            font-weight: 500;
+            margin-top: 8px;
+            text-align: center;
+        }
 
         /* ======================================== */
         /* == ESTILOS DE DESCONTO E PAGAMENTO    == */
         /* ======================================== */
-        .summary-row-interactive { cursor: pointer; transition: background-color 0.2s ease; border-radius: 8px; padding: 8px 0; margin: -8px 0; }
-        .summary-row-interactive:hover { background-color: var(--bg-light); }
-        .summary-row .value.editable { color: var(--primary-red); font-weight: 600; text-decoration: underline dashed 1px; text-underline-offset: 4px; }
-        .discount-popover { max-height: 0; overflow: hidden; transition: all 0.3s ease-out; background-color: var(--bg-light); padding: 0 16px; margin: 8px 0; border-radius: 8px; border: 1px solid var(--border-color); }
-        .discount-popover.active { max-height: 300px; padding: 16px 16px; }
-        .discount-popover label { display: block; font-weight: 500; margin-bottom: 8px; font-size: 0.9rem; }
-        .discount-popover-label { display: block; font-weight: 500; margin-bottom: 8px; font-size: 0.9rem; }
-        .discount-perc-buttons { display: flex; gap: 8px; margin-top: 8px; }
-        .perc-btn { flex-grow: 1; padding: 8px; font-size: 0.9rem; font-weight: 600; border-radius: 8px; border: 1px solid #ddd; background-color: var(--card-white); color: var(--text-dark); cursor: pointer; transition: all 0.2s ease; }
-        .perc-btn:hover { background-color: var(--primary-red); border-color: var(--primary-red); color: white; }
-        .btn-remove-discount { background: none; border: none; color: var(--warning-red); font-size: 0.9rem; font-weight: 600; cursor: pointer; margin-top: 16px; display: flex; align-items: center; gap: 4px; padding: 8px; width: 100%; justify-content: center; border: 1px dashed transparent; }
-        .btn-remove-discount:hover { text-decoration: underline; }
-        .btn-remove-discount.nav-focus { border: 1px dashed var(--info-blue); background-color: var(--card-white); }
-        .effective-discount-display { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-light); font-weight: 500; margin-top: 12px; min-height: 1.2em; }
-        .effective-discount-display i { color: var(--text-light); }
+        .summary-row-interactive {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            border-radius: 8px;
+            padding: 8px 0;
+            margin: -8px 0;
+        }
+
+        .summary-row-interactive:hover {
+            background-color: var(--bg-light);
+        }
+
+        .summary-row .value.editable {
+            color: var(--primary-red);
+            font-weight: 600;
+            text-decoration: underline dashed 1px;
+            text-underline-offset: 4px;
+        }
+
+        .discount-popover {
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease-out;
+            background-color: var(--bg-light);
+            padding: 0 16px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .discount-popover.active {
+            max-height: 300px;
+            padding: 16px 16px;
+        }
+
+        .discount-popover label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .discount-popover-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .discount-perc-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .perc-btn {
+            flex-grow: 1;
+            padding: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background-color: var(--card-white);
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .perc-btn:hover {
+            background-color: var(--primary-red);
+            border-color: var(--primary-red);
+            color: white;
+        }
+
+        .btn-remove-discount {
+            background: none;
+            border: none;
+            color: var(--warning-red);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px;
+            width: 100%;
+            justify-content: center;
+            border: 1px dashed transparent;
+        }
+
+        .btn-remove-discount:hover {
+            text-decoration: underline;
+        }
+
+        .btn-remove-discount.nav-focus {
+            border: 1px dashed var(--info-blue);
+            background-color: var(--card-white);
+        }
+
+        .effective-discount-display {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: var(--text-light);
+            font-weight: 500;
+            margin-top: 12px;
+            min-height: 1.2em;
+        }
+
+        .effective-discount-display i {
+            color: var(--text-light);
+        }
 
         /* ======================================== */
         /* == TOOLTIPS                           == */
         /* ======================================== */
-        
-        .tooltip { position: relative; display: block; }
-        .tooltip .tooltip-text { visibility: hidden; width: max-content; max-width: 220px; background-color: #333; color: #fff; text-align: center; border-radius: 6px; padding: 8px 12px; position: absolute; z-index: 10; bottom: 110%; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.2s, visibility 0.2s; font-size: 0.85rem; font-weight: 500; }
-        .tooltip .tooltip-text::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #333 transparent transparent transparent; }
-        .tooltip:hover .tooltip-text { visibility: visible; opacity: 1; }
+
+        .tooltip {
+            position: relative;
+            display: block;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: max-content;
+            max-width: 220px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 10;
+            bottom: 110%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.2s, visibility 0.2s;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .tooltip .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
 
         /* ======================================== */
         /* == HEADER E NAVBAR                    == */
         /* ======================================== */
-        
-        .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-         .app-header h1 { margin-bottom: 0; }
-         #header-close-caixa-btn { width: auto; padding: 10px 16px; font-size: 0.9rem; margin-top: 0; }
 
-        .navbar { display: flex; gap: 16px; flex-wrap: wrap; border-bottom: 1px solid var(--border-color); margin-bottom: 24px; position: relative; }
-        .navbar-item { padding: 12px 0; text-decoration: none; color: var(--text-light); font-weight: 600; position: relative; transition: color 0.2s ease; cursor: pointer; white-space: nowrap; }
-        .navbar-item:hover { color: var(--text-dark); }
-        .navbar-item.active { color: var(--primary-red); }
-        .navbar-highlight { position: absolute; bottom: -1px; height: 3px; background-color: var(--primary-red); transition: left 0.3s ease, width 0.3s ease; border-radius: 2px; }
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .app-header h1 {
+            margin-bottom: 0;
+        }
+
+        #header-close-caixa-btn {
+            width: auto;
+            padding: 10px 16px;
+            font-size: 0.9rem;
+            margin-top: 0;
+        }
+
+        .navbar {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .navbar-item {
+            padding: 12px 0;
+            text-decoration: none;
+            color: var(--text-light);
+            font-weight: 600;
+            position: relative;
+            transition: color 0.2s ease;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .navbar-item:hover {
+            color: var(--text-dark);
+        }
+
+        .navbar-item.active {
+            color: var(--primary-red);
+        }
+
+        .navbar-highlight {
+            position: absolute;
+            bottom: -1px;
+            height: 3px;
+            background-color: var(--primary-red);
+            transition: left 0.3s ease, width 0.3s ease;
+            border-radius: 2px;
+        }
 
         /* ======================================== */
         /* == CONTEÚDO PRINCIPAL (PDV)           == */
         /* ======================================== */
-        
-        .main-content {
-            width: 100%; height: 100%; 
-            padding: 32px; overflow-y: auto;
-            display: none; /* Começa oculto */
-        }
-        
-        .page-content { animation: slideInUp 0.5s ease-out; }
-        .page-content h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 16px; }
 
-        .pdv-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; min-height: calc(100vh - 200px - 60px); }
-        .pdv-main { display: flex; flex-direction: column; gap: 16px; }
-        .card { background-color: var(--card-white); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03); padding: 24px; }
-        .barcode-scanner { position: relative; }
-        .barcode-scanner i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
-        .barcode-scanner input { width: 100%; padding: 18px 18px 18px 50px; font-size: 1rem; border-radius: 12px; border: 1px solid #ddd; transition: all 0.2s ease; }
-        .barcode-scanner input:disabled { background-color: #f9f9f9; cursor: wait; }
-        .barcode-scanner input:focus { outline: none; border-color: var(--primary-red); box-shadow: 0 0 0 3px rgba(219, 0, 56, 0.2); }
-        .item-list-container { flex-grow: 1; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 16px; background-color: var(--card-white); padding: 0; }
-        .item-list-container.empty { display: flex; align-items: center; justify-content: center; flex-direction: column; color: var(--text-light); min-height: 300px; }
-        .item-list-container.empty span { font-size: 1.1rem; font-weight: 500; }
-        .item-list-table { width: 100%; border-collapse: collapse; }
-        .item-list-table th, .item-list-table td { padding: 16px; text-align: left; }
-        .item-list-table thead { border-bottom: 1px solid var(--border-color); background-color: #fdfdfd; }
-        .item-list-table th { font-size: 0.8rem; text-transform: uppercase; color: var(--text-light); font-weight: 600; }
-        .item-list-table tbody tr { border-bottom: 1px solid var(--border-color); }
-        .item-list-table tbody tr:last-child { border-bottom: none; }
-        .product-info { display: flex; align-items: center; gap: 12px; }
-        .product-image { width: 48px; height: 48px; border-radius: 8px; background-color: var(--bg-light); display: flex; align-items: center; justify-content: center; color: var(--text-light); flex-shrink: 0; }
-        .product-details .name { font-weight: 600; color: var(--text-dark); }
-        .product-details .barcode { font-size: 0.85rem; color: var(--text-light); }
-        .quantity-control { display: flex; align-items: center; gap: 8px; }
-        .qty-btn { background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-dark); transition: all 0.2s ease; }
-        .qty-btn:hover { background-color: #eee; }
-        .qty-display { font-weight: 600; min-width: 20px; text-align: center; }
-        .item-price { font-weight: 500; }
-        .item-total { font-weight: 600; }
-        .remove-btn { background: none; border: none; color: var(--text-light); cursor: pointer; padding: 4px; border-radius: 4px; transition: all 0.2s ease; }
-        .remove-btn:hover { color: var(--warning-red); background-color: #FFEBEE; }
-        .pdv-summary .card { padding: 24px; display: flex; flex-direction: column; height: 100%; }
-        .pdv-summary h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 24px; border-bottom: 1px solid var(--border-color); padding-bottom: 16px; }
-        .summary-row { display: flex; justify-content: space-between; font-size: 1rem; margin-bottom: 16px; }
-        .summary-row .label { color: var(--text-light); display: flex; align-items: center; gap: 8px; }
-        .summary-row .value { font-weight: 500; }
-        .summary-total { border-top: 1px dashed var(--border-color); padding-top: 24px; margin-top: auto; }
-        .summary-total .label { font-size: 1.2rem; font-weight: 600; }
-        .summary-total .value { font-size: 2.2rem; font-weight: 700; color: var(--primary-red); transition: transform 0.2s ease; }
-        
-        .btn { font-family: 'Inter', sans-serif; width: 100%; padding: 16px; font-size: 1rem; font-weight: 600; border: none; border-radius: 12px; cursor: pointer; transition: all 0.2s ease; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn:active { transform: scale(0.98); }
-        .btn:disabled { background-color: #ccc; color: #888; cursor: not-allowed; }
-        .btn-primary:disabled { background-color: #f0a0b8; color: #fff; }
-        .btn-secondary:disabled { background-color: #eee; color: #aaa; border-color: #ddd; }
-        .btn-primary { background-color: var(--primary-red); color: white; }
-        .btn-primary:hover { background-color: var(--primary-red-dark); }
-        .btn-secondary { background-color: var(--card-white); color: var(--text-dark); border: 1px solid #ddd; }
-        .btn-secondary:hover { background-color: var(--bg-light); }
-        .btn-danger { background-color: var(--warning-red); color: white; }
-        .btn-danger:hover { background-color: #D32F2F; }
-        .btn-success { background-color: var(--success-green); color: white; } 
-        .btn-success:hover { background-color: #1e7e34; }
+        .main-content {
+            width: 100%;
+            height: 100%;
+            padding: 32px;
+            overflow-y: auto;
+            display: none;
+            /* Começa oculto */
+        }
+
+        .page-content {
+            animation: slideInUp 0.5s ease-out;
+        }
+
+        .page-content h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .pdv-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            min-height: calc(100vh - 200px - 60px);
+        }
+
+        .pdv-main {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card {
+            background-color: var(--card-white);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            padding: 24px;
+        }
+
+        .barcode-scanner {
+            position: relative;
+        }
+
+        .barcode-scanner i {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+
+        .barcode-scanner input {
+            width: 100%;
+            padding: 18px 18px 18px 50px;
+            font-size: 1rem;
+            border-radius: 12px;
+            border: 1px solid #ddd;
+            transition: all 0.2s ease;
+        }
+
+        .barcode-scanner input:disabled {
+            background-color: #f9f9f9;
+            cursor: wait;
+        }
+
+        .barcode-scanner input:focus {
+            outline: none;
+            border-color: var(--primary-red);
+            box-shadow: 0 0 0 3px rgba(219, 0, 56, 0.2);
+        }
+
+        .item-list-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            background-color: var(--card-white);
+            padding: 0;
+        }
+
+        .item-list-container.empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: var(--text-light);
+            min-height: 300px;
+        }
+
+        .item-list-container.empty span {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .item-list-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .item-list-table th,
+        .item-list-table td {
+            padding: 16px;
+            text-align: left;
+        }
+
+        .item-list-table thead {
+            border-bottom: 1px solid var(--border-color);
+            background-color: #fdfdfd;
+        }
+
+        .item-list-table th {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        .item-list-table tbody tr {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .item-list-table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .product-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .product-image {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            background-color: var(--bg-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-light);
+            flex-shrink: 0;
+        }
+
+        .product-details .name {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .product-details .barcode {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .qty-btn {
+            background-color: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-dark);
+            transition: all 0.2s ease;
+        }
+
+        .qty-btn:hover {
+            background-color: #eee;
+        }
+
+        .qty-display {
+            font-weight: 600;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .item-price {
+            font-weight: 500;
+        }
+
+        .item-total {
+            font-weight: 600;
+        }
+
+        .remove-btn {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .remove-btn:hover {
+            color: var(--warning-red);
+            background-color: #FFEBEE;
+        }
+
+        .pdv-summary .card {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .pdv-summary h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 16px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1rem;
+            margin-bottom: 16px;
+        }
+
+        .summary-row .label {
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .summary-row .value {
+            font-weight: 500;
+        }
+
+        .summary-total {
+            border-top: 1px dashed var(--border-color);
+            padding-top: 24px;
+            margin-top: auto;
+        }
+
+        .summary-total .label {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .summary-total .value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--primary-red);
+            transition: transform 0.2s ease;
+        }
+
+        .btn {
+            font-family: 'Inter', sans-serif;
+            width: 100%;
+            padding: 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn:disabled {
+            background-color: #ccc;
+            color: #888;
+            cursor: not-allowed;
+        }
+
+        .btn-primary:disabled {
+            background-color: #f0a0b8;
+            color: #fff;
+        }
+
+        .btn-secondary:disabled {
+            background-color: #eee;
+            color: #aaa;
+            border-color: #ddd;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-red);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-red-dark);
+        }
+
+        .btn-secondary {
+            background-color: var(--card-white);
+            color: var(--text-dark);
+            border: 1px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--bg-light);
+        }
+
+        .btn-danger {
+            background-color: var(--primary-red);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c90000;
+        }
+
+        .btn-success {
+            background-color: var(--success-green);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #1e7e34;
+        }
 
 
         /* ======================================== */
         /* == MODAIS                             == */
         /* ======================================== */
-        
-        .modal-overlay { position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.6); display: grid; place-items: center; opacity: 0; visibility: hidden; transition: all 0.3s ease; z-index: 1000; overflow-y: auto; padding: 20px; }
-        .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-content { background-color: var(--card-white); border-radius: 16px; padding: 0; width: 100%; max-width: 550px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); transform: scale(0.95) translateY(10px); transition: all 0.3s ease; overflow: hidden; }
-        .modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--border-color); }
-        .modal-header h3 { font-size: 1.5rem; font-weight: 600; margin: 0; }
-        .close-modal-btn { background: none; border: none; cursor: pointer; color: var(--text-light); padding: 4px; line-height: 1; }
-        .modal-body { padding: 24px; }
-        .modal-body p { color: var(--text-light); margin-bottom: 24px; line-height: 1.6; }
-        .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; font-weight: 500; margin-bottom: 8px; }
-        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px 14px; font-size: 1rem; font-family: 'Inter', sans-serif; border-radius: 8px; border: 1px solid #ddd; resize: vertical; }
-        .form-group input[type="number"]::-webkit-inner-spin-button, .form-group input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        .form-group input[type="number"] { -moz-appearance: textfield; }
-        .form-group input:disabled, .form-group textarea:disabled, .form-group select:disabled { background-color: #f5f5f5; color: #aaa; cursor: not-allowed; }
-        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--primary-red); box-shadow: 0 0 0 3px rgba(219, 0, 56, 0.2); }
-        .modal-footer { padding: 20px 24px; display: flex; gap: 12px; justify-content: flex-end; border-top: 1px solid var(--border-color); background-color: #f9f9f9; }
-        
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: grid;
+            place-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: var(--card-white);
+            border-radius: 16px;
+            padding: 0;
+            width: 100%;
+            max-width: 550px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transform: scale(0.95) translateY(10px);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-header h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .close-modal-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-light);
+            padding: 4px;
+            line-height: 1;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-body p {
+            color: var(--text-light);
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            resize: vertical;
+        }
+
+        .form-group input[type="number"]::-webkit-inner-spin-button,
+        .form-group input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .form-group input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        .form-group input:disabled,
+        .form-group textarea:disabled,
+        .form-group select:disabled {
+            background-color: #f5f5f5;
+            color: #aaa;
+            cursor: not-allowed;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-red);
+            box-shadow: 0 0 0 3px rgba(219, 0, 56, 0.2);
+        }
+
+        .modal-footer {
+            padding: 20px 24px;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            border-top: 1px solid var(--border-color);
+            background-color: #f9f9f9;
+        }
+
         /* Modal de Pagamento */
-        .payment-options { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-        .payment-option { border: 1px solid var(--border-color); border-radius: 12px; padding: 24px 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; cursor: pointer; transition: all 0.2s ease; }
-        .payment-option:hover, .payment-option.selected, .payment-option.nav-focus { border-color: var(--primary-red); background-color: rgba(219, 0, 56, 0.05); color: var(--primary-red); }
-        .payment-option span { font-weight: 600; }
+        .payment-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .payment-option {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .payment-option:hover,
+        .payment-option.selected,
+        .payment-option.nav-focus {
+            border-color: var(--primary-red);
+            background-color: rgba(219, 0, 56, 0.05);
+            color: var(--primary-red);
+        }
+
+        .payment-option span {
+            font-weight: 600;
+        }
+
         /* Pagamento Dividido */
-        .split-payment-area { margin-top: 24px; border-top: 1px dashed var(--border-color); padding-top: 24px; }
-        .split-payment-area h4 { font-weight: 600; margin-bottom: 16px; }
-        .split-payment-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px; align-items: end; }
-        .split-payment-remaining { text-align: right; font-weight: 600; color: var(--primary-red); margin-top: 8px; }
-        
+        .split-payment-area {
+            margin-top: 24px;
+            border-top: 1px dashed var(--border-color);
+            padding-top: 24px;
+        }
+
+        .split-payment-area h4 {
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .split-payment-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 12px;
+            align-items: end;
+        }
+
+        .split-payment-remaining {
+            text-align: right;
+            font-weight: 600;
+            color: var(--primary-red);
+            margin-top: 8px;
+        }
+
         /* Modal Recibo / Confirmação / Alerta */
-        .modal-icon { width: 80px; height: 80px; border-radius: 50%; display: grid; place-items: center; margin: 0 auto 24px auto; }
-        .modal-icon.success { background-color: rgba(40, 167, 69, 0.1); color: var(--success-green); }
-        .modal-icon.danger { background-color: rgba(229, 57, 53, 0.1); color: var(--warning-red); }
-        .modal-icon.info { background-color: rgba(25, 118, 210, 0.1); color: var(--info-blue); }
-        .modal-body.centered { text-align: center; }
+        .modal-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            margin: 0 auto 24px auto;
+        }
+
+        .modal-icon.success {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success-green);
+        }
+
+        .modal-icon.danger {
+            background-color: rgba(229, 57, 53, 0.1);
+            color: var(--warning-red);
+        }
+
+        .modal-icon.info {
+            background-color: rgba(25, 118, 210, 0.1);
+            color: var(--info-blue);
+        }
+
+        .modal-body.centered {
+            text-align: center;
+        }
 
         /* Modal Adicionar Cliente / Fechar Caixa (Multi-Step) */
-        .multi-step-form .form-step { display: none; } 
-        .multi-step-form .form-step.active { display: block; animation: slideInUp 0.3s ease-out; } 
-        .modal-progress-bar { width: 100%; height: 8px; background-color: var(--border-color); border-radius: 4px; margin-bottom: 24px; overflow: hidden; }
-        .progress { height: 100%; background-color: var(--primary-red); transition: width 0.3s ease; }
-        .modal-footer-multi-step { justify-content: space-between; } 
-        .input-error { border-color: var(--warning-red) !important; box-shadow: 0 0 0 3px rgba(229, 57, 53, 0.2) !important; }
-        
+        .multi-step-form .form-step {
+            display: none;
+        }
+
+        .multi-step-form .form-step.active {
+            display: block;
+            animation: slideInUp 0.3s ease-out;
+        }
+
+        .modal-progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background-color: var(--primary-red);
+            transition: width 0.3s ease;
+        }
+
+        .modal-footer-multi-step {
+            justify-content: space-between;
+        }
+
+        .input-error {
+            border-color: var(--warning-red) !important;
+            box-shadow: 0 0 0 3px rgba(229, 57, 53, 0.2) !important;
+        }
+
         /* Modais de Caixa */
-        .caixa-options { display: flex; flex-direction: column; gap: 16px; }
-        .caixa-options .btn { margin-top: 0; } 
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-         /* Toggle Switch UI */
-         .toggle-switch-group { display: flex; align-items: center; gap: 12px; margin-top: 16px; cursor: pointer; }
-         .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
-        .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--primary-red); }
-        input:focus + .slider { box-shadow: 0 0 1px var(--primary-red); }
-        input:checked + .slider:before { transform: translateX(20px); }
-         .toggle-switch-group label { margin-bottom: 0; font-weight: normal; color: var(--text-light); cursor: pointer; }
+        .caixa-options {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .caixa-options .btn {
+            margin-top: 0;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* Toggle Switch UI */
+        .toggle-switch-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 16px;
+            cursor: pointer;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: var(--primary-red);
+        }
+
+        input:focus+.slider {
+            box-shadow: 0 0 1px var(--primary-red);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(20px);
+        }
+
+        .toggle-switch-group label {
+            margin-bottom: 0;
+            font-weight: normal;
+            color: var(--text-light);
+            cursor: pointer;
+        }
 
         /* ======================================== */
         /* == PÁGINAS ADICIONAIS                 == */
         /* ======================================== */
-        
-        .data-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-        .data-table th, .data-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-color); }
-        .data-table th { background-color: var(--bg-light); font-size: 0.9rem; color: var(--text-light); }
-        .data-table td { font-weight: 500; vertical-align: middle; }
-        .data-table td:first-child { font-weight: 600; color: var(--text-dark); }
-        .data-table .currency { text-align: right; } 
-        .data-table .actions { text-align: center; } 
-        .data-table .actions button { background: none; border: none; cursor: pointer; color: var(--text-light); padding: 4px; }
-        .data-table .actions button:hover { color: var(--primary-red); }
-        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--border-color); }
-        .setting-info { max-width: 70%; }
-        .setting-info h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 4px; }
-        .setting-info p { font-size: 0.9rem; color: var(--text-light); line-height: 1.5; }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background-color: var(--bg-light);
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .data-table td {
+            font-weight: 500;
+            vertical-align: middle;
+        }
+
+        .data-table td:first-child {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .data-table .currency {
+            text-align: right;
+        }
+
+        .data-table .actions {
+            text-align: center;
+        }
+
+        .data-table .actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-light);
+            padding: 4px;
+        }
+
+        .data-table .actions button:hover {
+            color: var(--primary-red);
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .setting-info {
+            max-width: 70%;
+        }
+
+        .setting-info h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .setting-info p {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+
         /* Reutilizando a classe toggle-switch para configurações */
 
         /* ======================================== */
         /* == ESTILOS DO RELÓGIO                 == */
         /* ======================================== */
-        .pn { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--card-white); border-top: 1px solid var(--border-color); padding: 10px 20px; display: flex; justify-content: flex-end; align-items: center; z-index: 500; }
-        .pn-hr { display: flex; align-items: center; gap: 10px; }
-        .loading1 { width: 10px; height: 10px; border-radius: 50%; background-color: var(--success-green); animation: pulse 1.5s infinite ease-in-out; }
-        .horario { font-weight: 600; color: var(--text-dark); font-size: 1rem; }
+        .pn {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--card-white);
+            border-top: 1px solid var(--border-color);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            z-index: 500;
+        }
+
+        .pn-hr {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .loading1 {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--success-green);
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        .horario {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 1rem;
+        }
 
         /* ======================================== */
         /* == RESPONSIVIDADE                     == */
         /* ======================================== */
-        
+
         @media (max-width: 1024px) {
-            .pdv-layout { grid-template-columns: 1fr; height: auto; }
-            .pdv-summary .card { height: auto; }
-            .main-content { padding: 24px; }
-            body { padding-bottom: 50px; } 
-            .pn { padding: 8px 16px; }
-            .horario { font-size: 0.9rem; }
-            .modal-content { max-width: 90%; } 
-        }
-        
-        @media (max-width: 768px) {
-            body { display: block; padding-bottom: 40px; } 
-            .sidebar { display: none; }
-            .main-content { padding: 16px; height: auto; min-height: 100vh; width: 100%; }
-            .app-header { flex-direction: column; align-items: flex-start; gap: 10px; } 
-            .app-header h1 { font-size: 1.5rem; }
-            #header-close-caixa-btn { width: 100%; } 
-            .pdv-layout { min-height: auto; gap: 16px; }
-            .modal-content { max-width: 95%; padding: 0; } 
-            .modal-header, .modal-body, .modal-footer { padding: 16px; } 
-            .payment-options { grid-template-columns: 1fr; }
-            .navbar { gap: 16px; margin-bottom: 16px; overflow-x: auto; }
-            .navbar-item { font-size: 0.9rem; white-space: nowrap; }
-            .pn { justify-content: center; } 
-            .page-header { flex-direction: column; align-items: flex-start; gap: 10px; } 
-            .page-header .btn { width: 100%; } 
-            .data-table { font-size: 0.9rem; } 
-            .data-table th, .data-table td { padding: 8px 10px; } 
-            .form-grid { grid-template-columns: 1fr; } 
-            .split-payment-row { grid-template-columns: 1fr; gap: 10px; } 
-            .toggle-switch-group { flex-direction: row-reverse; justify-content: flex-end; } 
+            .pdv-layout {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+
+            .pdv-summary .card {
+                height: auto;
+            }
+
+            .main-content {
+                padding: 24px;
+            }
+
+            body {
+                padding-bottom: 50px;
+            }
+
+            .pn {
+                padding: 8px 16px;
+            }
+
+            .horario {
+                font-size: 0.9rem;
+            }
+
+            .modal-content {
+                max-width: 90%;
+            }
         }
 
+        @media (max-width: 768px) {
+            body {
+                display: block;
+                padding-bottom: 40px;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                padding: 16px;
+                height: auto;
+                min-height: 100vh;
+                width: 100%;
+            }
+
+            .app-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .app-header h1 {
+                font-size: 1.5rem;
+            }
+
+            #header-close-caixa-btn {
+                width: 100%;
+            }
+
+            .pdv-layout {
+                min-height: auto;
+                gap: 16px;
+            }
+
+            .modal-content {
+                max-width: 95%;
+                padding: 0;
+            }
+
+            .modal-header,
+            .modal-body,
+            .modal-footer {
+                padding: 16px;
+            }
+
+            .payment-options {
+                grid-template-columns: 1fr;
+            }
+
+            .navbar {
+                gap: 16px;
+                margin-bottom: 16px;
+                overflow-x: auto;
+            }
+
+            .navbar-item {
+                font-size: 0.9rem;
+                white-space: nowrap;
+            }
+
+            .pn {
+                justify-content: center;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .page-header .btn {
+                width: 100%;
+            }
+
+            .data-table {
+                font-size: 0.9rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 8px 10px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .split-payment-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .toggle-switch-group {
+                flex-direction: row-reverse;
+                justify-content: flex-end;
+            }
+        }
+
+        /* ======================================== */
+        /* == ESTILOS BLACK FRIDAY (FAIXA TOPO)  == */
+        /* ======================================== */
+
+        /* Ajuste para o conteúdo não ficar escondido atrás da faixa */
+        body {
+            padding-top: 40px;
+            /* Mesma altura da faixa */
+        }
+
+        .bf-top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            background-color: #000000;
+            /* Fundo Preto */
+            color: #ffffff;
+            /* Texto Branco (ou mude para #FFD700 para Dourado) */
+            z-index: 1500;
+            /* Acima do cabeçalho, abaixo do overlay de loading */
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            border-bottom: 2px solid #db0038;
+            /* Uma linha fina vermelha para combinar com seu sistema */
+        }
+
+        .bf-track {
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .bf-content {
+            display: inline-block;
+            padding-left: 100%;
+            /* Começa fora da tela */
+            font-weight: 700;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            animation: marquee-top 20s linear infinite;
+        }
+
+        /* Animação do texto correndo da direita para esquerda */
+        @keyframes marquee-top {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            100% {
+                transform: translate(-100%, 0);
+            }
+        }
+
+        /* Ajuste Responsivo: garante que a faixa não quebre em celular */
+        @media (max-width: 768px) {
+            .bf-top-bar {
+                height: 35px;
+            }
+
+            body {
+                padding-top: 35px;
+            }
+
+            .bf-content {
+                font-size: 0.85rem;
+            }
+        }
     </style>
 </head>
+
 <body>
-    
+
+    <div class="bf-top-bar">
+        <div class="bf-track">
+            <span class="bf-content">
+                BLACK FRIDAY • OFERTAS IMPERDÍVEIS • DESCONTOS REAIS • BLACK FRIDAY • 22/11 DIVULGAÇÃO •
+                BLACK FRIDAY • OFERTAS IMPERDÍVEIS • DESCONTOS REAIS • BLACK FRIDAY • 22/11 DIVULGAÇÃO •
+                BLACK FRIDAY • OFERTAS IMPERDÍVEIS • DESCONTOS REAIS • BLACK FRIDAY • 22/11 DIVULGAÇÃO •
+            </span>
+        </div>
+    </div>
+
     <!-- Overlay de Carregamento / Bloqueio -->
     <div id="loading-overlay">
         <i class='bx bx-loader-alt bx-spin'></i>
         <p id="loading-message">Verificando status do caixa...</p>
     </div>
 
-    <div class="main-content" id="main-content"> 
-        
+    <div class="main-content" id="main-content">
+
         <!-- Header com Botão Fechar Caixa -->
         <div class="app-header">
-             <h1>Frente de Caixa (PDV)</h1>
-             <button class="btn btn-danger" id="header-close-caixa-btn" style="display: none;"> 
-                 <i class='bx bx-stop-circle'></i> Fechar Caixa (F8)
-             </button>
+            <h1>Frente de Caixa (PDV)</h1>
+            <button class="btn btn-danger" id="header-close-caixa-btn" style="display: none;">
+                <i class='bx bx-stop-circle'></i> Fechar Caixa (F8)
+            </button>
         </div>
 
-        <!-- Navbar Estilizada --><nav class="navbar" id="main-navbar">
-            <span class="navbar-item active" data-page="pdv">PDV</span> 
+        <!-- Navbar Estilizada -->
+        <nav class="navbar" id="main-navbar">
+            <span class="navbar-item active" data-page="pdv">PDV</span>
             <span class="navbar-item" data-page="produtos">Produtos</span>
-            <span class="navbar-item" data-page="clientes">Clientes</span> 
+            <span class="navbar-item" data-page="clientes">Clientes</span>
             <span class="navbar-item" data-page="configuracoes">Configurações</span>
             <div class="navbar-highlight" id="navbar-highlight"></div>
         </nav>
 
-        <!-- PÁGINA 1: PDV --><div id="pdv-page" class="page-content"> 
+        <!-- PÁGINA 1: PDV -->
+        <div id="pdv-page" class="page-content">
             <div class="pdv-layout">
-                <!-- Coluna da Esquerda: Itens --><div class="pdv-main">
+                <!-- Coluna da Esquerda: Itens -->
+                <div class="pdv-main">
                     <div class="tooltip">
                         <div class="barcode-scanner">
-                            <i class='bx bx-barcode-reader'></i> 
+                            <i class='bx bx-barcode-reader'></i>
                             <input type="text" id="barcode-input" placeholder="Carregando produtos..." disabled>
                         </div>
-                        <span class="tooltip-text">Digite o código ou nome para adicionar</span> 
+                        <span class="tooltip-text">Digite o código ou nome para adicionar</span>
                     </div>
                     <p class="shortcut-hint" id="barcode-hint">Carregando produtos...</p>
-                    
+
                     <div class="item-list-container" id="item-list-container">
                         <div class="empty-state" id="empty-state">
                             <span>Nenhum item na venda</span>
                         </div>
                         <table class="item-list-table" id="item-list-table" style="display: none;">
-                            <thead> <tr> <th>Produto</th> <th>Qtd.</th> <th>Preço Unit.</th> <th>Total</th> <th></th> </tr> </thead>
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th>Qtd.</th>
+                                    <th>Preço Unit.</th>
+                                    <th>Total</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
                             <tbody id="cart-items-body"></tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Coluna da Direita: Resumo --><aside class="pdv-summary">
+                <!-- Coluna da Direita: Resumo -->
+                <aside class="pdv-summary">
                     <div class="card">
                         <h2>Resumo da Venda</h2>
-                        <div class="summary-row"> <span class="label">Subtotal (<span id="item-count">0</span> itens)</span> <span class="value" id="summary-subtotal">R$ 0,00</span> </div>
-                        <div class="summary-row summary-row-interactive" id="discount-toggle-row" title="Adicionar desconto"> <span class="label"> <i class='bx bx-purchase-tag' ></i> Descontos (F3) </span> <span class="value editable" id="summary-discount">- R$ 0,00</span> </div>
-                        <div class="discount-popover" id="discount-popover"> <div class="form-group"> <label for="discount-input-r">Valor do Desconto (R$)</label> <input type="number" id="discount-input-r" placeholder="0,00" step="0.01"> </div> <span class="discount-popover-label">Desconto Rápido (%)</span> <div class="discount-perc-buttons" id="perc-btn-container"> <button class="perc-btn" data-perc="1">1%</button> <button class="perc-btn" data-perc="3">3%</button> <button class="perc-btn" data-perc="5">5%</button> <button class="perc-btn" data-perc="8">8%</button> </div> <div class="effective-discount-display" id="effective-discount-display"> <i class='bx bx-badge-percent'></i><span id="discount-percentage-text"></span> </div> <button class="btn-remove-discount" id="remove-discount-btn"> <i class='bx bx-x' ></i> Remover Desconto </button> <span class="discount-nav-hint" id="remove-discount-hint">Pressione 'Enter' para remover</span> </div>
-                        <div class="summary-row summary-row-interactive" id="payment-toggle-row" title="Selecionar forma de pagamento"> <span class="label"> <i class='bx bx-credit-card' ></i> Pagamento (F4) </span> <span class="value editable" id="summary-payment-method">Não selecionado</span> </div>
-                        <div class="summary-total"> <div class="summary-row"> <span class="label">Total</span> <span class="value" id="summary-total">R$ 0,00</span> </div> </div>
-                        <div class="tooltip"> <button class="btn btn-primary" id="finish-sale-btn"> <i class='bx bx-check-circle'></i> Finalizar Venda (F9) </button> <span class="tooltip-text">Registra a venda e abre opções de recibo</span> </div> 
-                        <div class="tooltip"> <button class="btn btn-secondary" id="cancel-sale-btn"> <i class='bx bx-x-circle'></i> Cancelar Venda (F10) </button> <span class="tooltip-text">Limpa todos os itens da venda atual</span> </div>
+                        <div class="summary-row"> <span class="label">Subtotal (<span id="item-count">0</span>
+                                itens)</span> <span class="value" id="summary-subtotal">R$ 0,00</span> </div>
+                        <div class="summary-row summary-row-interactive" id="discount-toggle-row"
+                            title="Adicionar desconto"> <span class="label"> <i class='bx bx-purchase-tag'></i>
+                                Descontos (F3) </span> <span class="value editable" id="summary-discount">- R$
+                                0,00</span> </div>
+                        <div class="discount-popover" id="discount-popover">
+                            <div class="form-group"> <label for="discount-input-r">Valor do Desconto (R$)</label> <input
+                                    type="number" id="discount-input-r" placeholder="0,00" step="0.01"> </div> <span
+                                class="discount-popover-label">Desconto Rápido (%)</span>
+                            <div class="discount-perc-buttons" id="perc-btn-container"> <button class="perc-btn"
+                                    data-perc="1">1%</button> <button class="perc-btn" data-perc="3">3%</button> <button
+                                    class="perc-btn" data-perc="5">5%</button> <button class="perc-btn"
+                                    data-perc="8">8%</button> </div>
+                            <div class="effective-discount-display" id="effective-discount-display"> <i
+                                    class='bx bx-badge-percent'></i><span id="discount-percentage-text"></span> </div>
+                            <button class="btn-remove-discount" id="remove-discount-btn"> <i class='bx bx-x'></i>
+                                Remover Desconto </button> <span class="discount-nav-hint"
+                                id="remove-discount-hint">Pressione 'Enter' para remover</span>
+                        </div>
+                        <div class="summary-row summary-row-interactive" id="payment-toggle-row"
+                            title="Selecionar forma de pagamento"> <span class="label"> <i
+                                    class='bx bx-credit-card'></i> Pagamento (F4) </span> <span class="value editable"
+                                id="summary-payment-method">Não selecionado</span> </div>
+                        <div class="summary-total">
+                            <div class="summary-row"> <span class="label">Total</span> <span class="value"
+                                    id="summary-total">R$ 0,00</span> </div>
+                        </div>
+                        <div class="tooltip"> <button class="btn btn-primary" id="finish-sale-btn"> <i
+                                    class='bx bx-check-circle'></i> Finalizar Venda (F9) </button> <span
+                                class="tooltip-text">Registra a venda e abre opções de recibo</span> </div>
+                        <div class="tooltip"> <button class="btn btn-secondary" id="cancel-sale-btn"> <i
+                                    class='bx bx-x-circle'></i> Cancelar Venda (F10) </button> <span
+                                class="tooltip-text">Limpa todos os itens da venda atual</span> </div>
                     </div>
                 </aside>
             </div>
         </div>
-        
-        <!-- PÁGINA 2: PRODUTOS --><div id="produtos-page" class="page-content" style="display: none;">
+
+        <!-- PÁGINA 2: PRODUTOS -->
+        <div id="produtos-page" class="page-content" style="display: none;">
             <div class="card" style="max-width: 800px; margin: 0 auto;">
-                 <div class="page-header">
-                     <h2>Produtos Cadastrados</h2>
-                 </div>
-                <p style="color: var(--text-light); margin-top: -16px; margin-bottom: 16px;"> Novos produtos adicionados pelo "Cadastro Rápido" do PDV aparecerão aqui. </p>
+                <div class="page-header">
+                    <h2>Produtos Cadastrados</h2>
+                </div>
+                <p style="color: var(--text-light); margin-top: -16px; margin-bottom: 16px;"> Novos produtos adicionados
+                    pelo "Cadastro Rápido" do PDV aparecerão aqui. </p>
                 <div id="produtos-table-container"></div>
             </div>
         </div>
 
-        <!-- PÁGINA 3: CLIENTES --><div id="clientes-page" class="page-content" style="display: none;"> 
+        <!-- PÁGINA 3: CLIENTES -->
+        <div id="clientes-page" class="page-content" style="display: none;">
             <div class="card">
-                 <div class="page-header">
+                <div class="page-header">
                     <h2>Clientes (Crediário)</h2>
                     <button class="btn btn-primary" id="add-cliente-btn" style="width: auto; padding: 10px 16px;">
                         <i class='bx bx-user-plus'></i> Adicionar Cliente +
                     </button>
-                 </div>
-                <p style="color: var(--text-light); margin-top: -16px; margin-bottom: 16px;"> Gerencie os clientes com pagamentos pendentes. </p>
+                </div>
+                <p style="color: var(--text-light); margin-top: -16px; margin-bottom: 16px;"> Gerencie os clientes com
+                    pagamentos pendentes. </p>
                 <div id="clientes-list-container">
                     <p style="text-align: center; color: var(--text-light); padding: 20px 0;">
                         <i class='bx bx-loader-alt bx-spin'></i> Carregando clientes...
@@ -421,28 +1557,59 @@
             </div>
         </div>
 
-         <!-- PÁGINA 5: CAIXA (Agora vazia, apenas como placeholder se necessário) --><div id="caixa-page" class="page-content" style="display: none;"></div>
-        
-        <!-- PÁGINA 6: CONFIGURAÇÕES --><div id="configuracoes-page" class="page-content" style="display: none;">
+        <!-- PÁGINA 5: CAIXA (Agora vazia, apenas como placeholder se necessário) -->
+        <div id="caixa-page" class="page-content" style="display: none;"></div>
+
+        <!-- PÁGINA 6: CONFIGURAÇÕES -->
+        <div id="configuracoes-page" class="page-content" style="display: none;">
             <div class="card" style="max-width: 800px; margin: 0 auto;">
-                 <div class="page-header">
+                <div class="page-header">
                     <h2>Configurações</h2>
-                 </div>
-                <div class="setting-row"> <div class="setting-info"> <h3>Arredondamento Inteligente de Troco</h3> <p> Quando ativado, os descontos por porcentagem arredondam o valor total da compra para o R$ 0,50 mais próximo, facilitando o troco. </p> </div> <label class="toggle-switch"> <input type="checkbox" id="smart-rounding-toggle" checked> <span class="slider"></span> </label> </div>
-                <div class="setting-row"> 
-                    <div class="setting-info"> 
-                        <h3>Cache de Produtos</h3> 
-                        <p> Recarrega a lista de produtos do banco de dados. Útil se você fez alterações externas. </p> 
-                    </div> 
-                    <button class="btn btn-secondary" id="reload-cache-btn" style="width: auto; padding: 10px 16px;"> <i class='bx bx-sync'></i> Recarregar </button> 
+                </div>
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <h3>Arredondamento Inteligente de Troco</h3>
+                        <p> Quando ativado, os descontos por porcentagem arredondam o valor total da compra para o R$
+                            0,50 mais próximo, facilitando o troco. </p>
+                    </div> <label class="toggle-switch"> <input type="checkbox" id="smart-rounding-toggle" checked>
+                        <span class="slider"></span> </label>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <h3>Cache de Produtos</h3>
+                        <p> Recarrega a lista de produtos do banco de dados. Útil se você fez alterações externas. </p>
+                    </div>
+                    <button class="btn btn-secondary" id="reload-cache-btn" style="width: auto; padding: 10px 16px;"> <i
+                            class='bx bx-sync'></i> Recarregar </button>
                 </div>
             </div>
         </div>
     </div> <!-- Fim do main-content -->
 
     <!-- MODAIS -->
-    <!-- Modal 1: Cadastro Rápido --><div class="modal-overlay" id="quick-add-modal"> <div class="modal-content"> <div class="modal-header"> <h3>Produto não encontrado</h3> <button class="close-modal-btn" data-target="quick-add-modal"><i class='bx bx-x'></i></button> </div> <div class="modal-body"> <p>O código <strong id="scanned-barcode"></strong> não está cadastrado. Adicione um item rápido para esta venda.</p> <form id="quick-add-form"> <div class="form-group"> <label for="quick-product-name">Nome do Produto</label> <input type="text" id="quick-product-name" required data-primary-focus="true"> </div> <div class="form-group"> <label for="quick-product-price">Preço (R$)</label> <input type="number" id="quick-product-price" step="0.01" min="0.01" placeholder="0,00" required> </div> </form> </div> <div class="modal-footer"> <button class="btn btn-secondary close-modal-btn" data-target="quick-add-modal">Cancelar</button> <button class="btn btn-primary" id="quick-add-submit-btn">Adicionar à Venda</button> </div> </div> </div>
-    
+    <!-- Modal 1: Cadastro Rápido -->
+    <div class="modal-overlay" id="quick-add-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Produto não encontrado</h3> <button class="close-modal-btn" data-target="quick-add-modal"><i
+                        class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <p>O código <strong id="scanned-barcode"></strong> não está cadastrado. Adicione um item rápido para
+                    esta venda.</p>
+                <form id="quick-add-form">
+                    <div class="form-group"> <label for="quick-product-name">Nome do Produto</label> <input type="text"
+                            id="quick-product-name" required data-primary-focus="true"> </div>
+                    <div class="form-group"> <label for="quick-product-price">Preço (R$)</label> <input type="number"
+                            id="quick-product-price" step="0.01" min="0.01" placeholder="0,00" required> </div>
+                </form>
+            </div>
+            <div class="modal-footer"> <button class="btn btn-secondary close-modal-btn"
+                    data-target="quick-add-modal">Cancelar</button> <button class="btn btn-primary"
+                    id="quick-add-submit-btn">Adicionar à Venda</button> </div>
+        </div>
+    </div>
+
     <!-- Modal 2: Seleção de Pagamento (Com Split) -->
     <div class="modal-overlay" id="payment-modal">
         <div class="modal-content">
@@ -453,35 +1620,136 @@
             <div class="modal-body">
                 <p>Valor total: <strong id="payment-total">R$ 0,00</strong>. Como o cliente irá pagar?</p>
                 <div class="payment-options" id="single-payment-options">
-                     <div class="payment-option" data-method="Dinheiro" data-primary-focus="true"> <i class='bx bx-dollar-circle' style="font-size: 32px;"></i> <span>Dinheiro (F6)</span> </div> 
-                     <div class="payment-option" data-method="PIX"> <i class='bx bx-scan' style="font-size: 32px;"></i> <span>PIX (F7)</span> </div> 
-                     <div class="payment-option" data-method="Cartão"> <i class='bx bx-credit-card' style="font-size: 32px;"></i> <span>Cartão (F8)</span> </div>
+                    <div class="payment-option" data-method="Dinheiro" data-primary-focus="true"> <i
+                            class='bx bx-dollar-circle' style="font-size: 32px;"></i> <span>Dinheiro (F6)</span> </div>
+                    <div class="payment-option" data-method="PIX"> <i class='bx bx-scan' style="font-size: 32px;"></i>
+                        <span>PIX (F7)</span>
+                    </div>
+                    <div class="payment-option" data-method="Cartão"> <i class='bx bx-credit-card'
+                            style="font-size: 32px;"></i> <span>Cartão (F8)</span> </div>
                 </div>
-                 <button class="btn btn-secondary" id="split-payment-toggle-btn" style="margin-top: 20px;"> <i class='bx bx-columns'></i> Dividir Pagamento </button>
-                 <div class="split-payment-area" id="split-payment-area" style="display: none;">
+                <button class="btn btn-secondary" id="split-payment-toggle-btn" style="margin-top: 20px;"> <i
+                        class='bx bx-columns'></i> Dividir Pagamento </button>
+                <div class="split-payment-area" id="split-payment-area" style="display: none;">
                     <h4>Dividir Pagamento</h4>
                     <div class="split-payment-row">
-                        <div class="form-group"> <label for="split-method-1">Forma 1</label> <select id="split-method-1"> <option value="" disabled selected>Selecione...</option> <option value="Dinheiro">Dinheiro</option> <option value="PIX">PIX</option> <option value="Cartão">Cartão</option> </select> </div>
-                        <div class="form-group"> <label for="split-value-1">Valor 1 (R$)</label> <input type="number" id="split-value-1" step="0.01" min="0.01" placeholder="0,00"> </div>
+                        <div class="form-group"> <label for="split-method-1">Forma 1</label> <select
+                                id="split-method-1">
+                                <option value="" disabled selected>Selecione...</option>
+                                <option value="Dinheiro">Dinheiro</option>
+                                <option value="PIX">PIX</option>
+                                <option value="Cartão">Cartão</option>
+                            </select> </div>
+                        <div class="form-group"> <label for="split-value-1">Valor 1 (R$)</label> <input type="number"
+                                id="split-value-1" step="0.01" min="0.01" placeholder="0,00"> </div>
                     </div>
-                     <div class="split-payment-row">
-                        <div class="form-group"> <label for="split-method-2">Forma 2</label> <select id="split-method-2"> <option value="" disabled selected>Selecione...</option> <option value="Dinheiro">Dinheiro</option> <option value="PIX">PIX</option> <option value="Cartão">Cartão</option> </select> </div>
-                        <div class="form-group"> <label for="split-value-2">Valor 2 (R$)</label> <input type="number" id="split-value-2" step="0.01" min="0.01" placeholder="0,00"> </div>
+                    <div class="split-payment-row">
+                        <div class="form-group"> <label for="split-method-2">Forma 2</label> <select
+                                id="split-method-2">
+                                <option value="" disabled selected>Selecione...</option>
+                                <option value="Dinheiro">Dinheiro</option>
+                                <option value="PIX">PIX</option>
+                                <option value="Cartão">Cartão</option>
+                            </select> </div>
+                        <div class="form-group"> <label for="split-value-2">Valor 2 (R$)</label> <input type="number"
+                                id="split-value-2" step="0.01" min="0.01" placeholder="0,00"> </div>
                     </div>
                     <div class="split-payment-remaining" id="split-payment-remaining"> Restante: R$ 0,00 </div>
-                    <button class="btn btn-primary" id="confirm-split-payment-btn" style="margin-top: 16px;" disabled> Confirmar Divisão </button>
-                 </div>
+                    <button class="btn btn-primary" id="confirm-split-payment-btn" style="margin-top: 16px;" disabled>
+                        Confirmar Divisão </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal 3: Recibo --><div class="modal-overlay" id="receipt-modal"> <div class="modal-content"> <div class="modal-body centered"> <div class="modal-icon success"><i class='bx bx-check' style="font-size: 40px;"></i></div> <h3 style="font-size: 1.5rem; margin-bottom: 8px;">Venda Finalizada!</h3> <p>Venda no valor de <strong id="receipt-total">R$ 0,00</strong> registrada com sucesso.</p> <div class="modal-footer" style="flex-direction: column;"> <button class="btn btn-primary" id="print-receipt-btn"> <i class='bx bx-printer'></i> Imprimir Recibo (Não Fiscal) </button> <button class="btn btn-secondary" id="new-sale-btn" data-primary-focus="true"> <i class='bx bx-rotate-left'></i> Nova Venda </button> </div> </div> </div> </div>
-    <!-- Modal 4: Confirmação --><div class="modal-overlay" id="confirm-modal"> <div class="modal-content"> <div class="modal-body centered"> <div class="modal-icon danger"><i class='bx bx-error-alt' style="font-size: 40px;"></i></div> <h3 style="font-size: 1.5rem; margin-bottom: 8px;" id="confirm-title">Tem certeza?</h3> <p id="confirm-message">Esta ação não pode ser desfeita.</p> <div class="modal-footer" style="justify-content: center;"> <button class="btn btn-secondary close-modal-btn" data-target="confirm-modal">Cancelar</button> <button class="btn btn-danger" id="confirm-action-btn" data-primary-focus="true">Confirmar</button> </div> </div> </div> </div>
-    <!-- Modal 5: Alerta --><div class="modal-overlay" id="alert-modal"> <div class="modal-content"> <div class="modal-body centered"> <div class="modal-icon info"><i class='bx bx-info-circle' style="font-size: 40px;"></i></div> <h3 style="font-size: 1.5rem; margin-bottom: 8px;" id="alert-title">Atenção</h3> <p id="alert-message">Ocorreu um erro.</p> <div class="modal-footer" style="justify-content: center;"> <button class="btn btn-primary close-modal-btn" data-target="alert-modal" data-primary-focus="true">Entendi</button> </div> </div> </div> </div>
-    <!-- Modal 6: Adicionar Cliente (Multi-Step) --><div class="modal-overlay" id="add-cliente-modal"> <div class="modal-content"> <div class="modal-header"> <h3>Adicionar Novo Cliente</h3> <button class="close-modal-btn" data-target="add-cliente-modal"><i class='bx bx-x'></i></button> </div> <div class="modal-body"> <div class="modal-progress-bar"> <div class="progress" id="add-cliente-progress"></div> </div> <form id="add-cliente-form"> <div id="cliente-step-1" class="add-cliente-step active"> <h4>Parte 1: Dados Pessoais</h4> <br> <div class="form-group"> <label for="cliente-apelido">Apelido *</label> <input type="text" id="cliente-apelido" required data-primary-focus="true"> <small class="shortcut-hint">Identificação rápida.</small> </div> <div class="form-group"> <label for="cliente-nome">Nome Completo</label> <input type="text" id="cliente-nome"> </div> <div class="form-group"> <label for="cliente-telefone">Telefone</label> <input type="tel" id="cliente-telefone" placeholder="(XX) XXXXX-XXXX"> </div> <div class="form-group"> <label for="cliente-endereco">Endereço</label> <textarea id="cliente-endereco" rows="2"></textarea> </div> </div> <div id="cliente-step-2" class="add-cliente-step"> <h4>Parte 2: Compra Inicial</h4> <br> <div class="form-group"> <label for="compra-valor">Valor (R$) *</label> <input type="number" id="compra-valor" step="0.01" min="0.01" placeholder="0,00" required> </div> <div class="form-group"> <label for="compra-parcelas">Nº Parcelas *</label> <input type="number" id="compra-parcelas" min="1" step="1" placeholder="1" required> </div> <div class="form-group"> <label for="compra-vencimento">1º Vencimento *</label> <input type="date" id="compra-vencimento" required> </div> </div> </form> </div> <div class="modal-footer modal-footer-multi-step"> <button class="btn btn-secondary" id="cliente-prev-btn" style="display: none;"> <i class='bx bx-chevron-left'></i> Anterior </button> <button class="btn btn-primary" id="cliente-next-btn"> Próximo <i class='bx bx-chevron-right'></i> </button> <button class="btn btn-primary" id="cliente-save-btn" style="display: none;"> <i class='bx bx-save'></i> Salvar Cliente </button> </div> </div> </div> 
+    <!-- Modal 3: Recibo -->
+    <div class="modal-overlay" id="receipt-modal">
+        <div class="modal-content">
+            <div class="modal-body centered">
+                <div class="modal-icon success"><i class='bx bx-check' style="font-size: 40px;"></i></div>
+                <h3 style="font-size: 1.5rem; margin-bottom: 8px;">Venda Finalizada!</h3>
+                <p>Venda no valor de <strong id="receipt-total">R$ 0,00</strong> registrada com sucesso.</p>
+                <div class="modal-footer" style="flex-direction: column;"> <button class="btn btn-primary"
+                        id="print-receipt-btn"> <i class='bx bx-printer'></i> Imprimir Recibo (Não Fiscal) </button>
+                    <button class="btn btn-secondary" id="new-sale-btn" data-primary-focus="true"> <i
+                            class='bx bx-rotate-left'></i> Nova Venda </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal 4: Confirmação -->
+    <div class="modal-overlay" id="confirm-modal">
+        <div class="modal-content">
+            <div class="modal-body centered">
+                <div class="modal-icon danger"><i class='bx bx-error-alt' style="font-size: 40px;"></i></div>
+                <h3 style="font-size: 1.5rem; margin-bottom: 8px;" id="confirm-title">Tem certeza?</h3>
+                <p id="confirm-message">Esta ação não pode ser desfeita.</p>
+                <div class="modal-footer" style="justify-content: center;"> <button
+                        class="btn btn-secondary close-modal-btn" data-target="confirm-modal">Cancelar</button> <button
+                        class="btn btn-danger" id="confirm-action-btn" data-primary-focus="true">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal 5: Alerta -->
+    <div class="modal-overlay" id="alert-modal">
+        <div class="modal-content">
+            <div class="modal-body centered">
+                <div class="modal-icon info"><i class='bx bx-info-circle' style="font-size: 40px;"></i></div>
+                <h3 style="font-size: 1.5rem; margin-bottom: 8px;" id="alert-title">Atenção</h3>
+                <p id="alert-message">Ocorreu um erro.</p>
+                <div class="modal-footer" style="justify-content: center;"> <button
+                        class="btn btn-primary close-modal-btn" data-target="alert-modal"
+                        data-primary-focus="true">Entendi</button> </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal 6: Adicionar Cliente (Multi-Step) -->
+    <div class="modal-overlay" id="add-cliente-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Adicionar Novo Cliente</h3> <button class="close-modal-btn" data-target="add-cliente-modal"><i
+                        class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-progress-bar">
+                    <div class="progress" id="add-cliente-progress"></div>
+                </div>
+                <form id="add-cliente-form">
+                    <div id="cliente-step-1" class="add-cliente-step active">
+                        <h4>Parte 1: Dados Pessoais</h4> <br>
+                        <div class="form-group"> <label for="cliente-apelido">Apelido *</label> <input type="text"
+                                id="cliente-apelido" required data-primary-focus="true"> <small
+                                class="shortcut-hint">Identificação rápida.</small> </div>
+                        <div class="form-group"> <label for="cliente-nome">Nome Completo</label> <input type="text"
+                                id="cliente-nome"> </div>
+                        <div class="form-group"> <label for="cliente-telefone">Telefone</label> <input type="tel"
+                                id="cliente-telefone" placeholder="(XX) XXXXX-XXXX"> </div>
+                        <div class="form-group"> <label for="cliente-endereco">Endereço</label> <textarea
+                                id="cliente-endereco" rows="2"></textarea> </div>
+                    </div>
+                    <div id="cliente-step-2" class="add-cliente-step">
+                        <h4>Parte 2: Compra Inicial</h4> <br>
+                        <div class="form-group"> <label for="compra-valor">Valor (R$) *</label> <input type="number"
+                                id="compra-valor" step="0.01" min="0.01" placeholder="0,00" required> </div>
+                        <div class="form-group"> <label for="compra-parcelas">Nº Parcelas *</label> <input type="number"
+                                id="compra-parcelas" min="1" step="1" placeholder="1" required> </div>
+                        <div class="form-group"> <label for="compra-vencimento">1º Vencimento *</label> <input
+                                type="date" id="compra-vencimento" required> </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer modal-footer-multi-step"> <button class="btn btn-secondary" id="cliente-prev-btn"
+                    style="display: none;"> <i class='bx bx-chevron-left'></i> Anterior </button> <button
+                    class="btn btn-primary" id="cliente-next-btn"> Próximo <i class='bx bx-chevron-right'></i> </button>
+                <button class="btn btn-primary" id="cliente-save-btn" style="display: none;"> <i class='bx bx-save'></i>
+                    Salvar Cliente </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal 7: Gerenciamento de Caixa (REMOVIDO) -->
-    
+
     <!-- Modal 8: Abrir Caixa (Formulário) -->
     <div class="modal-overlay" id="open-caixa-modal">
         <div class="modal-content" style="max-width: 450px;">
@@ -493,25 +1761,26 @@
                     <p>Informe o valor inicial para troco ou abra sem valor.</p>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="open-caixa-notas">Valor em Notas (R$) </label> 
-                            <input type="number" id="open-caixa-notas" step="0.01" min="0" placeholder="0,00" data-primary-focus="true">
+                            <label for="open-caixa-notas">Valor em Notas (R$) </label>
+                            <input type="number" id="open-caixa-notas" step="0.01" min="0" placeholder="0,00"
+                                data-primary-focus="true">
                         </div>
                         <div class="form-group">
-                            <label for="open-caixa-moedas">Valor em Moedas (R$) </label> 
+                            <label for="open-caixa-moedas">Valor em Moedas (R$) </label>
                             <input type="number" id="open-caixa-moedas" step="0.01" min="0" placeholder="0,00">
                         </div>
                     </div>
-                     <!-- (MODIFICADO) Toggle Switch UI -->
-                     <div class="toggle-switch-group">
-                         <label class="toggle-switch">
+                    <!-- (MODIFICADO) Toggle Switch UI -->
+                    <div class="toggle-switch-group">
+                        <label class="toggle-switch">
                             <input type="checkbox" id="open-caixa-sem-valor">
                             <span class="slider"></span>
-                         </label>
-                         <label for="open-caixa-sem-valor">Abrir caixa sem valor inicial</label>
+                        </label>
+                        <label for="open-caixa-sem-valor">Abrir caixa sem valor inicial</label>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary" id="open-caixa-save-btn"> 
+                    <button type="submit" class="btn btn-primary" id="open-caixa-save-btn">
                         <i class='bx bx-check'></i> Confirmar Abertura
                     </button>
                 </div>
@@ -521,71 +1790,96 @@
 
     <!-- (MODIFICADO) Modal 9: Fechar Caixa (Multi-Step) -->
     <div class="modal-overlay" id="close-caixa-modal">
-        <div class="modal-content" style="max-width: 550px;"> 
-             <div class="modal-header">
+        <div class="modal-content" style="max-width: 550px;">
+            <div class="modal-header">
                 <h3>Fechar Caixa</h3>
                 <button class="close-modal-btn" data-target="close-caixa-modal"><i class='bx bx-x'></i></button>
             </div>
-             <div class="modal-body">
-                 <!-- Barra de Progresso -->
+            <div class="modal-body">
+                <!-- Barra de Progresso -->
                 <div class="modal-progress-bar">
-                    <div class="progress" id="close-caixa-progress" style="width: 25%;"></div> 
+                    <div class="progress" id="close-caixa-progress" style="width: 25%;"></div>
                 </div>
-                <form id="close-caixa-form" class="multi-step-form"> 
-                    
+                <form id="close-caixa-form" class="multi-step-form">
+
                     <!-- Etapa 1: Valores Contados -->
                     <div id="close-caixa-step-1" class="form-step active">
                         <h4>Etapa 1: Valores Contados</h4> <br>
-                         <div class="form-grid"> 
-                            <div class="form-group"> <label for="close-caixa-notas">Notas (R$) *</label> <input type="number" id="close-caixa-notas" step="0.01" min="0" placeholder="0,00" required data-primary-focus="true"> </div> 
-                            <div class="form-group"> <label for="close-caixa-moedas">Moedas (R$) *</label> <input type="number" id="close-caixa-moedas" step="0.01" min="0" placeholder="0,00" required> </div> 
+                        <div class="form-grid">
+                            <div class="form-group"> <label for="close-caixa-notas">Notas (R$) *</label> <input
+                                    type="number" id="close-caixa-notas" step="0.01" min="0" placeholder="0,00" required
+                                    data-primary-focus="true"> </div>
+                            <div class="form-group"> <label for="close-caixa-moedas">Moedas (R$) *</label> <input
+                                    type="number" id="close-caixa-moedas" step="0.01" min="0" placeholder="0,00"
+                                    required> </div>
                         </div>
                     </div>
 
-                     <!-- Etapa 2: Outras Entradas -->
-                     <div id="close-caixa-step-2" class="form-step">
+                    <!-- Etapa 2: Outras Entradas -->
+                    <div id="close-caixa-step-2" class="form-step">
                         <h4>Etapa 2: Outras Entradas</h4> <br>
-                        <div class="form-grid"> 
-                            <div class="form-group"> <label for="close-caixa-cartao">Maquininha Cartão (R$) *</label> <input type="number" id="close-caixa-cartao" step="0.01" min="0" placeholder="0,00" required> </div> 
-                            <div class="form-group"> <label for="close-caixa-pix">Pix Fixo QR Code (R$) </label> <input type="number" id="close-caixa-pix" step="0.01" min="0" placeholder="0,00"> <small class="shortcut-hint">Opcional.</small> </div> 
+                        <div class="form-grid">
+                            <div class="form-group"> <label for="close-caixa-cartao">Maquininha Cartão (R$) *</label>
+                                <input type="number" id="close-caixa-cartao" step="0.01" min="0" placeholder="0,00"
+                                    required>
+                            </div>
+                            <div class="form-group"> <label for="close-caixa-pix">Pix Fixo QR Code (R$) </label> <input
+                                    type="number" id="close-caixa-pix" step="0.01" min="0" placeholder="0,00"> <small
+                                    class="shortcut-hint">Opcional.</small> </div>
                         </div>
                     </div>
 
-                     <!-- Etapa 3: Destino do Dinheiro -->
-                     <div id="close-caixa-step-3" class="form-step">
+                    <!-- Etapa 3: Destino do Dinheiro -->
+                    <div id="close-caixa-step-3" class="form-step">
                         <h4>Etapa 3: Destino do Dinheiro Contado</h4> <br>
-                        <div class="form-grid"> 
-                            <div class="form-group"> <label for="close-caixa-deposito">Valor p/ Depósito (R$) *</label> <input type="number" id="close-caixa-deposito" step="0.01" min="0" placeholder="0,00" required> </div> 
-                            <div class="form-group"> <label for="close-caixa-fica">Valor Fica Caixa (R$) *</label> <input type="number" id="close-caixa-fica" step="0.01" min="0" placeholder="0,00" required> </div> 
+                        <div class="form-grid">
+                            <div class="form-group"> <label for="close-caixa-deposito">Valor p/ Depósito (R$) *</label>
+                                <input type="number" id="close-caixa-deposito" step="0.01" min="0" placeholder="0,00"
+                                    required>
+                            </div>
+                            <div class="form-group"> <label for="close-caixa-fica">Valor Fica Caixa (R$) *</label>
+                                <input type="number" id="close-caixa-fica" step="0.01" min="0" placeholder="0,00"
+                                    required>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Etapa 4: Assinatura -->
                     <div id="close-caixa-step-4" class="form-step">
-                         <h4>Etapa 4: Responsável</h4> <br>
-                        <div class="form-group"> <label for="close-caixa-assinatura">Assinatura (Nome do Responsável) *</label> <input type="text" id="close-caixa-assinatura" required> </div>
+                        <h4>Etapa 4: Responsável</h4> <br>
+                        <div class="form-group"> <label for="close-caixa-assinatura">Assinatura (Nome do Responsável)
+                                *</label> <input type="text" id="close-caixa-assinatura" required> </div>
                     </div>
                 </form>
             </div>
-             <div class="modal-footer modal-footer-multi-step"> 
-                 <button class="btn btn-secondary" id="close-caixa-prev-btn" style="display: none;"> <i class='bx bx-chevron-left'></i> Anterior </button> 
-                 <button class="btn btn-primary" id="close-caixa-next-btn"> Próximo <i class='bx bx-chevron-right'></i> </button> 
-                 <button type="submit" form="close-caixa-form" class="btn btn-danger" id="close-caixa-save-btn" style="display: none;"> <i class='bx bx-lock-alt'></i> Confirmar Fechamento </button> 
-             </div>
+            <div class="modal-footer modal-footer-multi-step">
+                <button class="btn btn-secondary" id="close-caixa-prev-btn" style="display: none;"> <i
+                        class='bx bx-chevron-left'></i> Anterior </button>
+                <button class="btn btn-primary" id="close-caixa-next-btn"> Próximo <i class='bx bx-chevron-right'></i>
+                </button>
+                <button type="submit" form="close-caixa-form" class="btn btn-danger" id="close-caixa-save-btn"
+                    style="display: none;"> <i class='bx bx-lock-alt'></i> Confirmar Fechamento </button>
+            </div>
         </div>
     </div>
 
 
     <!-- Relógio no rodapé -->
-    <div class="pn"> <div class="pn-hr"> <div class="loading1"></div> <p class="horario" id="horario">00:00:00</p> </div> </div>
+    <div class="pn">
+        <div class="pn-hr">
+            <div class="loading1"></div>
+            <p class="horario" id="horario">00:00:00</p>
+        </div>
+    </div>
 
 
-    <!-- SCRIPT --><script>
+    <!-- SCRIPT -->
+    <script>
         document.addEventListener('DOMContentLoaded', () => {
 
             // --- URLs DAS APIs (Google Apps Script) ---
-            const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzvd0BBLEEQlu-ksnIbsmnYcjQNQuZcTrsCmXMKHGM5g7DPEk3Nj95X47LKbj7rRSAT/exec"; 
-            const REGISTRO_VENDA_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCCaxdYdC6J_QKsaoWTDquH915MHUnM9BykD39ZUujR2LB3lx9d9n5vAsHdJZJByaa7w/exec"; 
+            const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzvd0BBLEEQlu-ksnIbsmnYcjQNQuZcTrsCmXMKHGM5g7DPEk3Nj95X47LKbj7rRSAT/exec";
+            const REGISTRO_VENDA_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCCaxdYdC6J_QKsaoWTDquH915MHUnM9BykD39ZUujR2LB3lx9d9n5vAsHdJZJByaa7w/exec";
 
             // --- Constantes ---
             const TOKEN_KEY = 'caixaToken';
@@ -593,28 +1887,28 @@
             const TOKEN_DURATION_HOURS = 20;
 
             // --- Estado da Aplicação ---
-            let localProductCache = null; 
-            let localClientCache = null; 
-            let cart = []; 
+            let localProductCache = null;
+            let localClientCache = null;
+            let cart = [];
             let lastScannedBarcode = null;
-            let confirmCallback = null; 
-            let discount = 0; 
-            let selectedPaymentMethod = null; 
-            let elementToRestoreFocus = null; 
-            let isSmartRoundingEnabled = true; 
-            let lastSaleData = null; 
-            let barcodeScanTimeout = null; 
-            let currentClienteStep = 1; 
-            let currentFecharCaixaStep = 1; 
+            let confirmCallback = null;
+            let discount = 0;
+            let selectedPaymentMethod = null;
+            let elementToRestoreFocus = null;
+            let isSmartRoundingEnabled = true;
+            let lastSaleData = null;
+            let barcodeScanTimeout = null;
+            let currentClienteStep = 1;
+            let currentFecharCaixaStep = 1;
             let currentSplitPayments = { method1: null, value1: 0, method2: null, value2: 0, remaining: 0, totalSaleValue: 0 };
 
             // --- Seletores do DOM ---
-            const loadingOverlay = document.getElementById('loading-overlay'); 
-            const loadingMessage = document.getElementById('loading-message'); 
-            const mainContent = document.getElementById('main-content'); 
-            const headerCloseCaixaBtn = document.getElementById('header-close-caixa-btn'); 
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const loadingMessage = document.getElementById('loading-message');
+            const mainContent = document.getElementById('main-content');
+            const headerCloseCaixaBtn = document.getElementById('header-close-caixa-btn');
             const barcodeInput = document.getElementById('barcode-input');
-            const barcodeHint = document.getElementById('barcode-hint'); 
+            const barcodeHint = document.getElementById('barcode-hint');
             const cartItemsBody = document.getElementById('cart-items-body');
             const itemListContainer = document.getElementById('item-list-container');
             const emptyState = document.getElementById('empty-state');
@@ -623,13 +1917,13 @@
             const summaryTotal = document.getElementById('summary-total');
             const itemCount = document.getElementById('item-count');
             const summaryDiscount = document.getElementById('summary-discount');
-            const discountToggleRow = document.getElementById('discount-toggle-row'); 
+            const discountToggleRow = document.getElementById('discount-toggle-row');
             const discountPopover = document.getElementById('discount-popover');
             const discountInputR = document.getElementById('discount-input-r');
             const percBtnContainer = document.getElementById('perc-btn-container');
             const removeDiscountBtn = document.getElementById('remove-discount-btn');
-            const effectiveDiscountDisplay = document.getElementById('effective-discount-display'); 
-            const discountPercentageText = document.getElementById('discount-percentage-text'); 
+            const effectiveDiscountDisplay = document.getElementById('effective-discount-display');
+            const discountPercentageText = document.getElementById('discount-percentage-text');
             const paymentToggleRow = document.getElementById('payment-toggle-row');
             const summaryPaymentMethod = document.getElementById('summary-payment-method');
             const finishSaleBtn = document.getElementById('finish-sale-btn');
@@ -637,20 +1931,20 @@
             const quickAddModal = document.getElementById('quick-add-modal');
             const paymentModal = document.getElementById('payment-modal');
             const paymentTotalEl = document.getElementById('payment-total');
-            const singlePaymentOptions = document.getElementById('single-payment-options'); 
-            const paymentOptions = paymentModal.querySelectorAll('.payment-option'); 
-            const splitPaymentToggleBtn = document.getElementById('split-payment-toggle-btn'); 
-            const splitPaymentArea = document.getElementById('split-payment-area'); 
-            const splitMethod1 = document.getElementById('split-method-1'); 
-            const splitValue1 = document.getElementById('split-value-1'); 
-            const splitMethod2 = document.getElementById('split-method-2'); 
-            const splitValue2 = document.getElementById('split-value-2'); 
-            const splitPaymentRemaining = document.getElementById('split-payment-remaining'); 
-            const confirmSplitPaymentBtn = document.getElementById('confirm-split-payment-btn'); 
+            const singlePaymentOptions = document.getElementById('single-payment-options');
+            const paymentOptions = paymentModal.querySelectorAll('.payment-option');
+            const splitPaymentToggleBtn = document.getElementById('split-payment-toggle-btn');
+            const splitPaymentArea = document.getElementById('split-payment-area');
+            const splitMethod1 = document.getElementById('split-method-1');
+            const splitValue1 = document.getElementById('split-value-1');
+            const splitMethod2 = document.getElementById('split-method-2');
+            const splitValue2 = document.getElementById('split-value-2');
+            const splitPaymentRemaining = document.getElementById('split-payment-remaining');
+            const confirmSplitPaymentBtn = document.getElementById('confirm-split-payment-btn');
             const receiptModal = document.getElementById('receipt-modal');
             const receiptTotalEl = document.getElementById('receipt-total');
-            const newSaleBtn = document.getElementById('new-sale-btn'); 
-            const printReceiptBtn = document.getElementById('print-receipt-btn'); 
+            const newSaleBtn = document.getElementById('new-sale-btn');
+            const printReceiptBtn = document.getElementById('print-receipt-btn');
             const confirmModal = document.getElementById('confirm-modal');
             const alertModal = document.getElementById('alert-modal');
             const scannedBarcodeEl = document.getElementById('scanned-barcode');
@@ -668,16 +1962,16 @@
             const navbarHighlight = document.getElementById('navbar-highlight');
             const allPages = document.querySelectorAll('.page-content');
             const produtosTableContainer = document.getElementById('produtos-table-container');
-            const clientesListContainer = document.getElementById('clientes-list-container'); 
+            const clientesListContainer = document.getElementById('clientes-list-container');
             const smartRoundingToggle = document.getElementById('smart-rounding-toggle');
-            const reloadCacheBtn = document.getElementById('reload-cache-btn'); 
-            const discountNavElements = [ discountInputR, ...document.querySelectorAll('.perc-btn'), removeDiscountBtn ];
+            const reloadCacheBtn = document.getElementById('reload-cache-btn');
+            const discountNavElements = [discountInputR, ...document.querySelectorAll('.perc-btn'), removeDiscountBtn];
             let discountNavIndex = 0;
             const removeDiscountHint = document.getElementById('remove-discount-hint');
-            const horarioElement = document.getElementById('horario'); 
-            const addClienteBtn = document.getElementById('add-cliente-btn'); 
-            const addClienteModal = document.getElementById('add-cliente-modal'); 
-            const addClienteForm = document.getElementById('add-cliente-form'); 
+            const horarioElement = document.getElementById('horario');
+            const addClienteBtn = document.getElementById('add-cliente-btn');
+            const addClienteModal = document.getElementById('add-cliente-modal');
+            const addClienteForm = document.getElementById('add-cliente-form');
             const clienteStep1 = document.getElementById('cliente-step-1');
             const clienteStep2 = document.getElementById('cliente-step-2');
             const addClienteProgress = document.getElementById('add-cliente-progress');
@@ -695,13 +1989,13 @@
             const openCaixaForm = document.getElementById('open-caixa-form');
             const openCaixaNotasInput = document.getElementById('open-caixa-notas');
             const openCaixaMoedasInput = document.getElementById('open-caixa-moedas');
-            const openCaixaSemValorCheckbox = document.getElementById('open-caixa-sem-valor'); 
+            const openCaixaSemValorCheckbox = document.getElementById('open-caixa-sem-valor');
             const openCaixaSaveBtn = document.getElementById('open-caixa-save-btn');
             const closeCaixaModal = document.getElementById('close-caixa-modal');
             const closeCaixaForm = document.getElementById('close-caixa-form');
-            const closeCaixaProgress = document.getElementById('close-caixa-progress'); 
-            const closeCaixaPrevBtn = document.getElementById('close-caixa-prev-btn'); 
-            const closeCaixaNextBtn = document.getElementById('close-caixa-next-btn'); 
+            const closeCaixaProgress = document.getElementById('close-caixa-progress');
+            const closeCaixaPrevBtn = document.getElementById('close-caixa-prev-btn');
+            const closeCaixaNextBtn = document.getElementById('close-caixa-next-btn');
             const closeCaixaNotasInput = document.getElementById('close-caixa-notas');
             const closeCaixaMoedasInput = document.getElementById('close-caixa-moedas');
             const closeCaixaCartaoInput = document.getElementById('close-caixa-cartao');
@@ -712,10 +2006,10 @@
             const closeCaixaSaveBtn = document.getElementById('close-caixa-save-btn');
 
 
-             // --- Funções de Token ---
-             const verificarToken = () => { /* ... (sem alterações) ... */ const token = localStorage.getItem(TOKEN_KEY); const expiration = localStorage.getItem(TOKEN_EXPIRATION_KEY); const now = Date.now(); if (token && expiration && now < parseInt(expiration)) { console.log("Token válido."); return true; } else { console.log("Token inválido/expirado."); localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(TOKEN_EXPIRATION_KEY); return false; } };
-             const salvarToken = () => { /* ... (sem alterações) ... */ const now = Date.now(); const expirationTime = now + TOKEN_DURATION_HOURS * 60 * 60 * 1000; const tokenValue = `caixaAberto_${now}`; localStorage.setItem(TOKEN_KEY, tokenValue); localStorage.setItem(TOKEN_EXPIRATION_KEY, expirationTime.toString()); console.log("Token salvo, expira:", new Date(expirationTime)); };
-             const limparToken = () => { /* ... (sem alterações) ... */ localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(TOKEN_EXPIRATION_KEY); console.log("Token limpo."); };
+            // --- Funções de Token ---
+            const verificarToken = () => { /* ... (sem alterações) ... */ const token = localStorage.getItem(TOKEN_KEY); const expiration = localStorage.getItem(TOKEN_EXPIRATION_KEY); const now = Date.now(); if (token && expiration && now < parseInt(expiration)) { console.log("Token válido."); return true; } else { console.log("Token inválido/expirado."); localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(TOKEN_EXPIRATION_KEY); return false; } };
+            const salvarToken = () => { /* ... (sem alterações) ... */ const now = Date.now(); const expirationTime = now + TOKEN_DURATION_HOURS * 60 * 60 * 1000; const tokenValue = `caixaAberto_${now}`; localStorage.setItem(TOKEN_KEY, tokenValue); localStorage.setItem(TOKEN_EXPIRATION_KEY, expirationTime.toString()); console.log("Token salvo, expira:", new Date(expirationTime)); };
+            const limparToken = () => { /* ... (sem alterações) ... */ localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(TOKEN_EXPIRATION_KEY); console.log("Token limpo."); };
 
             // --- Funções de Formatação ---
             const formatCurrency = (value) => { const numericValue = Number(value); if (isNaN(numericValue)) return 'R$ 0,00'; return numericValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); };
@@ -733,10 +2027,10 @@
             const updateQuantity = (id, action) => { const item = cart.find(item => item.id === id); if (!item) return; if (action === 'increase') { item.quantity += 1; } else if (action === 'decrease') { item.quantity -= 1; if (item.quantity === 0) { removeFromCart(id); return; } } renderCart(); };
             const removeFromCart = (id) => { cart = cart.filter(item => item.id !== id); renderCart(); };
             const clearCart = () => { cart = []; removeDiscount(); resetPaymentMethod(); lastSaleData = null; renderCart(); };
- 
+
             // Funções de Modal com Acessibilidade
             const openModal = (modalEl) => { elementToRestoreFocus = document.activeElement; modalEl.classList.add('active'); const primaryFocus = modalEl.querySelector('[data-primary-focus="true"]'); if (primaryFocus) { setTimeout(() => primaryFocus.focus(), 100); } };
-            const closeModal = (modalEl) => { modalEl.classList.remove('active'); if (elementToRestoreFocus && elementToRestoreFocus.focus) { try { elementToRestoreFocus.focus(); } catch(e) { console.warn("Não foi possível restaurar o foco:", e); } } elementToRestoreFocus = null; };
+            const closeModal = (modalEl) => { modalEl.classList.remove('active'); if (elementToRestoreFocus && elementToRestoreFocus.focus) { try { elementToRestoreFocus.focus(); } catch (e) { console.warn("Não foi possível restaurar o foco:", e); } } elementToRestoreFocus = null; };
             const showCustomAlert = (title, message) => { alertTitle.textContent = title; alertMessage.textContent = message; openModal(alertModal); };
             const showCustomConfirm = (title, message, onConfirm) => { confirmTitle.textContent = title; confirmMessage.textContent = message; confirmCallback = onConfirm; openModal(confirmModal); };
             const resetPaymentMethod = () => { selectedPaymentMethod = null; summaryPaymentMethod.textContent = "Não selecionado"; summaryPaymentMethod.style.fontWeight = '500'; summaryPaymentMethod.style.color = 'var(--text-light)'; updateSummary(); };
@@ -747,40 +2041,48 @@
             const removeDiscount = () => { discount = 0; discountInputR.value = ''; updateSummary(); };
 
             // --- Funções de API ---
-            async function carregarCacheDeProdutos() { barcodeInput.disabled = true; barcodeInput.placeholder = "Carregando..."; barcodeHint.textContent = "Carregando..."; localProductCache = null; try { const response = await fetch(SCRIPT_URL + "?action=listarProdutos"); if (!response.ok) throw new Error("Erro rede."); const result = await response.json(); if (result.status === 'success') { localProductCache = result.data; console.log(`Cache prod: ${localProductCache.length}`); barcodeHint.textContent = "F2 para focar"; } else { throw new Error(result.message || "Erro API."); } } catch (error) { console.error("Erro cache prod:", error); showCustomAlert("Erro Cache Prod", error.message); localProductCache = []; barcodeHint.textContent = "Erro. F5."; } finally { barcodeInput.disabled = false; barcodeInput.placeholder = "Ler código..."; if (verificarToken()) barcodeInput.focus(); } } 
+            async function carregarCacheDeProdutos() { barcodeInput.disabled = true; barcodeInput.placeholder = "Carregando..."; barcodeHint.textContent = "Carregando..."; localProductCache = null; try { const response = await fetch(SCRIPT_URL + "?action=listarProdutos"); if (!response.ok) throw new Error("Erro rede."); const result = await response.json(); if (result.status === 'success') { localProductCache = result.data; console.log(`Cache prod: ${localProductCache.length}`); barcodeHint.textContent = "F2 para focar"; } else { throw new Error(result.message || "Erro API."); } } catch (error) { console.error("Erro cache prod:", error); showCustomAlert("Erro Cache Prod", error.message); localProductCache = []; barcodeHint.textContent = "Erro. F5."; } finally { barcodeInput.disabled = false; barcodeInput.placeholder = "Ler código..."; if (verificarToken()) barcodeInput.focus(); } }
             function buscarProdutoLocalmente(barcode) { if (localProductCache === null) { showCustomAlert("Aguarde", "Cache carregando."); return null; } return localProductCache.find(p => p.id === barcode) || null; }
             async function cadastrarProdutoNaAPI(product) { quickAddSubmitBtn.disabled = true; quickAddSubmitBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Cadastrando..."; try { const params = new URLSearchParams({ action: 'cadastrarProduto', codigo: product.id, nome: product.name, preco: product.price }); const response = await fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET' }); if (!response.ok) throw new Error("Erro rede."); const result = await response.json(); if (result.status === 'success') { if (localProductCache) { localProductCache.push(result.data); } return result.data; } else { throw new Error(result.message || "Erro API."); } } catch (error) { console.error("Erro cadastro prod:", error); showCustomAlert("Erro Cadastro Prod", error.message); return null; } finally { quickAddSubmitBtn.disabled = false; quickAddSubmitBtn.innerHTML = "Adicionar"; } }
-            async function registrarVendaAtual(payments) { if (!lastSaleData) { throw new Error("Sem dados venda."); } if (!REGISTRO_VENDA_SCRIPT_URL || REGISTRO_VENDA_SCRIPT_URL.includes("COLE_A_URL")) { throw new Error("URL registro não config."); } const now = new Date(); const timestamp = formatTimestamp(now); const baseData = { formType: 'venda', seller: 'nubia', type: 'entrada', value: lastSaleData.subtotal.toFixed(2), desconto: lastSaleData.discount.toFixed(2), Timestamp: timestamp }; const fetchPromises = payments.map(payment => { const paymentData = { ...baseData, payment: payment.method || 'N/A', total: payment.value.toFixed(2) }; const formData = new URLSearchParams(paymentData); console.log("Enviando parte registro:", formData.toString()); return fetch(REGISTRO_VENDA_SCRIPT_URL, { redirect: "follow", method: "POST", body: formData.toString(), headers: { "Content-Type": "application/x-www-form-urlencoded" }, }); }); const responses = await Promise.all(fetchPromises); const allOk = responses.every(response => response.ok); if (allOk) { console.log("Registro OK!"); } else { const firstErrorResponse = responses.find(response => !response.ok); let errorText = `Falha registro. Status: ${firstErrorResponse?.status || '?'}`; try { if (firstErrorResponse) errorText = await firstErrorResponse.text(); } catch(readError) {} throw new Error(errorText); } }
+            async function registrarVendaAtual(payments) { if (!lastSaleData) { throw new Error("Sem dados venda."); } if (!REGISTRO_VENDA_SCRIPT_URL || REGISTRO_VENDA_SCRIPT_URL.includes("COLE_A_URL")) { throw new Error("URL registro não config."); } const now = new Date(); const timestamp = formatTimestamp(now); const baseData = { formType: 'venda', seller: 'nubia', type: 'entrada', value: lastSaleData.subtotal.toFixed(2), desconto: lastSaleData.discount.toFixed(2), Timestamp: timestamp }; const fetchPromises = payments.map(payment => { const paymentData = { ...baseData, payment: payment.method || 'N/A', total: payment.value.toFixed(2) }; const formData = new URLSearchParams(paymentData); console.log("Enviando parte registro:", formData.toString()); return fetch(REGISTRO_VENDA_SCRIPT_URL, { redirect: "follow", method: "POST", body: formData.toString(), headers: { "Content-Type": "application/x-www-form-urlencoded" }, }); }); const responses = await Promise.all(fetchPromises); const allOk = responses.every(response => response.ok); if (allOk) { console.log("Registro OK!"); } else { const firstErrorResponse = responses.find(response => !response.ok); let errorText = `Falha registro. Status: ${firstErrorResponse?.status || '?'}`; try { if (firstErrorResponse) errorText = await firstErrorResponse.text(); } catch (readError) { } throw new Error(errorText); } }
             async function carregarClientesDaAPI() { clientesListContainer.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px 0;"><i class="bx bx-loader-alt bx-spin"></i> Carregando...</p>'; localClientCache = null; try { const response = await fetch(SCRIPT_URL + "?action=listarClientes"); if (!response.ok) throw new Error("Erro rede."); const result = await response.json(); if (result.status === 'success') { localClientCache = result.data; console.log(`Cache cli: ${localClientCache.length}`); renderClientesPage(); } else { throw new Error(result.message || "Erro API."); } } catch (error) { console.error("Erro carregar cli:", error); clientesListContainer.innerHTML = `<p style="text-align: center; color: var(--warning-red); padding: 20px 0;">${error.message}</p>`; localClientCache = []; } }
             async function salvarClienteNaAPI(clienteData) { clienteSaveBtn.disabled = true; clienteSaveBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Salvando..."; try { const params = new URLSearchParams({ action: 'cadastrarCliente', ...clienteData }); const response = await fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET' }); if (!response.ok) throw new Error("Erro rede."); const result = await response.json(); if (result.status === 'success') { showCustomAlert("Sucesso!", result.message || "Cliente cadastrado!"); closeModal(addClienteModal); if (localClientCache !== null) { localClientCache.push(result.data); localClientCache.sort((a, b) => (a.apelido || a.nomeExibicao).localeCompare(b.apelido || b.nomeExibicao)); } renderClientesPage(); } else { throw new Error(result.message || "Erro API."); } } catch (error) { console.error("Erro salvar cli:", error); showCustomAlert("Erro Salvar", error.message); } finally { clienteSaveBtn.disabled = false; clienteSaveBtn.innerHTML = "<i class='bx bx-save'></i> Salvar"; } }
-            async function abrirCaixaAPI(data) { openCaixaSaveBtn.disabled = true; openCaixaSaveBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Abrindo..."; try { const params = new URLSearchParams({ action: 'abrirCaixa', ...data }); const response = await fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET' }); if (!response.ok) throw new Error("Erro rede."); const result = await response.json(); if (result.status === 'success') { 
-                salvarToken(); liberarSistema(); showCustomAlert("Sucesso!", result.message || "Caixa aberto!"); closeModal(openCaixaModal); 
-            } else { throw new Error(result.message || "Erro API."); } } catch (error) { console.error("Erro abrir caixa:", error); showCustomAlert("Erro Abrir Caixa", error.message); } finally { openCaixaSaveBtn.disabled = false; openCaixaSaveBtn.innerHTML = "<i class='bx bx-check'></i> Confirmar"; } }
-            async function fecharCaixaAPI(data) { closeCaixaSaveBtn.disabled = true; closeCaixaSaveBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Fechando..."; try { const params = new URLSearchParams({ action: 'fecharCaixa', ...data }); const response = await fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET' }); if (!response.ok) throw new Error("Erro rede."); const result = await response.json(); if (result.status === 'success') { 
-                limparToken(); bloquearSistema("Caixa fechado! Recarregue a página (F5) para reabrir."); // Mensagem atualizada
-                showCustomAlert("Sucesso!", result.message || "Caixa fechado!"); closeModal(closeCaixaModal); 
-            } else { throw new Error(result.message || "Erro API."); } } catch (error) { console.error("Erro fechar caixa:", error); showCustomAlert("Erro Fechar Caixa", error.message); } finally { closeCaixaSaveBtn.disabled = false; closeCaixaSaveBtn.innerHTML = "<i class='bx bx-lock-alt'></i> Confirmar"; } }
+            async function abrirCaixaAPI(data) {
+                openCaixaSaveBtn.disabled = true; openCaixaSaveBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Abrindo..."; try {
+                    const params = new URLSearchParams({ action: 'abrirCaixa', ...data }); const response = await fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET' }); if (!response.ok) throw new Error("Erro rede."); const result = await response.json(); if (result.status === 'success') {
+                        salvarToken(); liberarSistema(); showCustomAlert("Sucesso!", result.message || "Caixa aberto!"); closeModal(openCaixaModal);
+                    } else { throw new Error(result.message || "Erro API."); }
+                } catch (error) { console.error("Erro abrir caixa:", error); showCustomAlert("Erro Abrir Caixa", error.message); } finally { openCaixaSaveBtn.disabled = false; openCaixaSaveBtn.innerHTML = "<i class='bx bx-check'></i> Confirmar"; }
+            }
+            async function fecharCaixaAPI(data) {
+                closeCaixaSaveBtn.disabled = true; closeCaixaSaveBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Fechando..."; try {
+                    const params = new URLSearchParams({ action: 'fecharCaixa', ...data }); const response = await fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET' }); if (!response.ok) throw new Error("Erro rede."); const result = await response.json(); if (result.status === 'success') {
+                        limparToken(); bloquearSistema("Caixa fechado! Recarregue a página (F5) para reabrir."); // Mensagem atualizada
+                        showCustomAlert("Sucesso!", result.message || "Caixa fechado!"); closeModal(closeCaixaModal);
+                    } else { throw new Error(result.message || "Erro API."); }
+                } catch (error) { console.error("Erro fechar caixa:", error); showCustomAlert("Erro Fechar Caixa", error.message); } finally { closeCaixaSaveBtn.disabled = false; closeCaixaSaveBtn.innerHTML = "<i class='bx bx-lock-alt'></i> Confirmar"; }
+            }
 
-             // --- Funções para controlar UI (baseado no token) ---
-             const bloquearSistema = (message = "Abertura de caixa necessária.") => {
-                 mainContent.style.display = 'none';
-                 loadingOverlay.classList.remove('hidden'); 
-                 loadingMessage.textContent = message;
-                 headerCloseCaixaBtn.style.display = 'none'; 
-             };
+            // --- Funções para controlar UI (baseado no token) ---
+            const bloquearSistema = (message = "Abertura de caixa necessária.") => {
+                mainContent.style.display = 'none';
+                loadingOverlay.classList.remove('hidden');
+                loadingMessage.textContent = message;
+                headerCloseCaixaBtn.style.display = 'none';
+            };
 
-             const liberarSistema = () => {
-                 loadingOverlay.classList.add('hidden'); 
-                 mainContent.style.display = 'block'; 
-                 headerCloseCaixaBtn.style.display = 'inline-flex'; 
+            const liberarSistema = () => {
+                loadingOverlay.classList.add('hidden');
+                mainContent.style.display = 'block';
+                headerCloseCaixaBtn.style.display = 'inline-flex';
 
-                 if (localProductCache === null) carregarCacheDeProdutos();
-                 const activePage = document.querySelector('.navbar-item.active')?.dataset.page;
-                 if (activePage === 'clientes' && localClientCache === null) carregarClientesDaAPI();
+                if (localProductCache === null) carregarCacheDeProdutos();
+                const activePage = document.querySelector('.navbar-item.active')?.dataset.page;
+                if (activePage === 'clientes' && localClientCache === null) carregarClientesDaAPI();
 
-                 const activeItem = document.querySelector('.navbar-item.active');
-                 if (activeItem) updateNavbarHighlight(activeItem);
-             };
+                const activeItem = document.querySelector('.navbar-item.active');
+                if (activeItem) updateNavbarHighlight(activeItem);
+            };
 
             // --- Handlers de Ação ---
             const handleScan = () => { const barcode = barcodeInput.value.trim(); if (!barcode) return; const product = buscarProdutoLocalmente(barcode); if (product) { addToCart(product); } else if (localProductCache !== null) { lastScannedBarcode = barcode; scannedBarcodeEl.textContent = barcode; quickAddForm.reset(); openModal(quickAddModal); } barcodeInput.value = ''; };
@@ -791,17 +2093,17 @@
             const updateDiscountNavFocus = (focusEl = true) => { discountNavElements.forEach(el => el.classList.remove('nav-focus')); const currentEl = discountNavElements[discountNavIndex]; if (currentEl) { currentEl.classList.add('nav-focus'); if (focusEl) { currentEl.focus(); if (currentEl.tagName === 'INPUT') { currentEl.select(); } } removeDiscountHint.style.display = (currentEl.id === 'remove-discount-btn') ? 'block' : 'none'; } };
             const navigateClienteSteps = (direction) => { const nextStep = currentClienteStep + direction; if (direction === 1 && currentClienteStep === 1) { if (!validateStep1()) return; } if (nextStep >= 1 && nextStep <= 2) { document.getElementById(`cliente-step-${currentClienteStep}`).classList.remove('active'); document.getElementById(`cliente-step-${nextStep}`).classList.add('active'); currentClienteStep = nextStep; updateClienteModalUI(); } };
             const updateClienteModalUI = () => { addClienteProgress.style.width = currentClienteStep === 1 ? "50%" : "100%"; clientePrevBtn.style.display = currentClienteStep === 1 ? "none" : "inline-flex"; clienteNextBtn.style.display = currentClienteStep === 2 ? "none" : "inline-flex"; clienteSaveBtn.style.display = currentClienteStep === 2 ? "inline-flex" : "none"; const firstInput = document.querySelector(`#cliente-step-${currentClienteStep} [data-primary-focus="true"], #cliente-step-${currentClienteStep} input, #cliente-step-${currentClienteStep} textarea`); if (firstInput) { setTimeout(() => firstInput.focus(), 150); } };
-            const validateStep1 = () => { let isValid = true; [clienteApelidoInput].forEach(input => { if (!input.value.trim()) { input.classList.add('input-error'); isValid = false; } else { input.classList.remove('input-error'); } }); if (!isValid) showCustomAlert("Obrigatório", "Preencha Apelido."); return isValid; };
-            const validateStep2 = () => { let isValid = true; [compraValorInput, compraParcelasInput, compraVencimentoInput].forEach(input => { input.classList.remove('input-error'); let value = input.value.trim(); let numValue = input.type === 'number' ? parseFloat(value) : value; if (!value || (input.type === 'number' && (isNaN(numValue) || numValue <= 0)) || (input.type === 'date' && isNaN(new Date(value).getTime()))) { input.classList.add('input-error'); isValid = false; } }); if (!isValid) showCustomAlert("Obrigatório", "Preencha dados da compra."); return isValid; };
-            const resetClienteModal = () => { addClienteForm.reset(); [clienteApelidoInput, clienteNomeInput, clienteTelefoneInput, clienteEnderecoInput, compraValorInput, compraParcelasInput, compraVencimentoInput].forEach(input => input.classList.remove('input-error')); currentClienteStep = 1; document.getElementById(`cliente-step-2`).classList.remove('active'); document.getElementById(`cliente-step-1`).classList.add('active'); updateClienteModalUI(); };
-            const updateSplitRemaining = () => { const total = lastSaleData?.total || 0; const val1 = parseFloat(splitValue1.value) || 0; const val2 = parseFloat(splitValue2.value) || 0; const sum = val1 + val2; const remaining = total - sum; currentSplitPayments.remaining = remaining; currentSplitPayments.totalSaleValue = total; splitPaymentRemaining.textContent = `Restante: ${formatCurrency(remaining)}`; confirmSplitPaymentBtn.disabled = !( Math.abs(remaining) < 0.01 && splitMethod1.value && val1 > 0 && splitMethod2.value && val2 > 0 && splitMethod1.value !== splitMethod2.value ); splitPaymentRemaining.style.color = remaining < -0.01 ? 'var(--warning-red)' : 'var(--primary-red)'; };
+            const validateStep1 = () => { let isValid = true;[clienteApelidoInput].forEach(input => { if (!input.value.trim()) { input.classList.add('input-error'); isValid = false; } else { input.classList.remove('input-error'); } }); if (!isValid) showCustomAlert("Obrigatório", "Preencha Apelido."); return isValid; };
+            const validateStep2 = () => { let isValid = true;[compraValorInput, compraParcelasInput, compraVencimentoInput].forEach(input => { input.classList.remove('input-error'); let value = input.value.trim(); let numValue = input.type === 'number' ? parseFloat(value) : value; if (!value || (input.type === 'number' && (isNaN(numValue) || numValue <= 0)) || (input.type === 'date' && isNaN(new Date(value).getTime()))) { input.classList.add('input-error'); isValid = false; } }); if (!isValid) showCustomAlert("Obrigatório", "Preencha dados da compra."); return isValid; };
+            const resetClienteModal = () => { addClienteForm.reset();[clienteApelidoInput, clienteNomeInput, clienteTelefoneInput, clienteEnderecoInput, compraValorInput, compraParcelasInput, compraVencimentoInput].forEach(input => input.classList.remove('input-error')); currentClienteStep = 1; document.getElementById(`cliente-step-2`).classList.remove('active'); document.getElementById(`cliente-step-1`).classList.add('active'); updateClienteModalUI(); };
+            const updateSplitRemaining = () => { const total = lastSaleData?.total || 0; const val1 = parseFloat(splitValue1.value) || 0; const val2 = parseFloat(splitValue2.value) || 0; const sum = val1 + val2; const remaining = total - sum; currentSplitPayments.remaining = remaining; currentSplitPayments.totalSaleValue = total; splitPaymentRemaining.textContent = `Restante: ${formatCurrency(remaining)}`; confirmSplitPaymentBtn.disabled = !(Math.abs(remaining) < 0.01 && splitMethod1.value && val1 > 0 && splitMethod2.value && val2 > 0 && splitMethod1.value !== splitMethod2.value); splitPaymentRemaining.style.color = remaining < -0.01 ? 'var(--warning-red)' : 'var(--primary-red)'; };
             const navigateFecharCaixaSteps = (direction) => { const nextStep = currentFecharCaixaStep + direction; if (direction === 1) { if (currentFecharCaixaStep === 1 && !validateFecharCaixaStep1()) return; if (currentFecharCaixaStep === 2 && !validateFecharCaixaStep2()) return; if (currentFecharCaixaStep === 3 && !validateFecharCaixaStep3()) return; } if (nextStep >= 1 && nextStep <= 4) { document.querySelectorAll('#close-caixa-form .form-step').forEach(el => el.classList.remove('active')); document.getElementById(`close-caixa-step-${nextStep}`).classList.add('active'); currentFecharCaixaStep = nextStep; updateFecharCaixaModalUI(); } };
             const updateFecharCaixaModalUI = () => { const progress = currentFecharCaixaStep * 25; closeCaixaProgress.style.width = `${progress}%`; closeCaixaPrevBtn.style.display = currentFecharCaixaStep === 1 ? "none" : "inline-flex"; closeCaixaNextBtn.style.display = currentFecharCaixaStep === 4 ? "none" : "inline-flex"; closeCaixaSaveBtn.style.display = currentFecharCaixaStep === 4 ? "inline-flex" : "none"; const firstInput = document.querySelector(`#close-caixa-step-${currentFecharCaixaStep} [data-primary-focus="true"], #close-caixa-step-${currentFecharCaixaStep} input`); if (firstInput) setTimeout(() => firstInput.focus(), 150); };
-             const validateFecharCaixaStep1 = () => { let isValid = true; [closeCaixaNotasInput, closeCaixaMoedasInput].forEach(input => { const val = parseFloat(input.value); if (input.value.trim() === '' || isNaN(val) || val < 0) { input.classList.add('input-error'); isValid = false; } else { input.classList.remove('input-error'); } }); if(!isValid) showCustomAlert("Inválido", "Notas e Moedas devem ser >= 0."); return isValid; }; // Exige preenchimento
-             const validateFecharCaixaStep2 = () => { let isValid = true; [closeCaixaCartaoInput].forEach(input => { const val = parseFloat(input.value); if (input.value.trim() === '' || isNaN(val) || val < 0) { input.classList.add('input-error'); isValid = false; } else { input.classList.remove('input-error'); } }); const pixVal = parseFloat(closeCaixaPixInput.value); if(closeCaixaPixInput.value && (isNaN(pixVal) || pixVal < 0)){ closeCaixaPixInput.classList.add('input-error'); isValid = false; } else { closeCaixaPixInput.classList.remove('input-error'); } if(!isValid) showCustomAlert("Inválido", "Cartão e Pix (se preenchido) >= 0."); return isValid; }; // Exige preenchimento cartão
-             const validateFecharCaixaStep3 = () => { let isValid = true; const finalNotas = parseFloat(closeCaixaNotasInput.value) || 0; const finalMoedas = parseFloat(closeCaixaMoedasInput.value) || 0; const deposito = parseFloat(closeCaixaDepositoInput.value); const fica = parseFloat(closeCaixaFicaInput.value); const totalContado = finalNotas + finalMoedas; const totalDestinado = deposito + fica; [closeCaixaDepositoInput, closeCaixaFicaInput].forEach(input => { const val = parseFloat(input.value); if (input.value.trim() === '' || isNaN(val) || val < 0) { input.classList.add('input-error'); isValid = false; } else { input.classList.remove('input-error'); } }); if (isValid && Math.abs(totalContado - totalDestinado) > 0.01) { closeCaixaDepositoInput.classList.add('input-error'); closeCaixaFicaInput.classList.add('input-error'); isValid = false; showCustomAlert("Incompatível", `Soma Depósito+Fica (${formatCurrency(totalDestinado)}) != Total Contado (${formatCurrency(totalContado)}).`); } if(!isValid && Math.abs(totalContado - totalDestinado) <= 0.01) showCustomAlert("Inválido", "Depósito e Fica Caixa >= 0."); return isValid; }; // Exige preenchimento
-             const validateFecharCaixaStep4 = () => { let isValid = true; if(!closeCaixaAssinaturaInput.value.trim()) { closeCaixaAssinaturaInput.classList.add('input-error'); isValid = false; } else { closeCaixaAssinaturaInput.classList.remove('input-error'); } if(!isValid) showCustomAlert("Obrigatório", "Informe responsável."); return isValid; };
-             const resetFecharCaixaModal = () => { closeCaixaForm.reset(); document.querySelectorAll('#close-caixa-form .input-error').forEach(el => el.classList.remove('input-error')); currentFecharCaixaStep = 1; document.querySelectorAll('#close-caixa-form .form-step').forEach(el => el.classList.remove('active')); document.getElementById('close-caixa-step-1').classList.add('active'); updateFecharCaixaModalUI(); };
+            const validateFecharCaixaStep1 = () => { let isValid = true;[closeCaixaNotasInput, closeCaixaMoedasInput].forEach(input => { const val = parseFloat(input.value); if (input.value.trim() === '' || isNaN(val) || val < 0) { input.classList.add('input-error'); isValid = false; } else { input.classList.remove('input-error'); } }); if (!isValid) showCustomAlert("Inválido", "Notas e Moedas devem ser >= 0."); return isValid; }; // Exige preenchimento
+            const validateFecharCaixaStep2 = () => { let isValid = true;[closeCaixaCartaoInput].forEach(input => { const val = parseFloat(input.value); if (input.value.trim() === '' || isNaN(val) || val < 0) { input.classList.add('input-error'); isValid = false; } else { input.classList.remove('input-error'); } }); const pixVal = parseFloat(closeCaixaPixInput.value); if (closeCaixaPixInput.value && (isNaN(pixVal) || pixVal < 0)) { closeCaixaPixInput.classList.add('input-error'); isValid = false; } else { closeCaixaPixInput.classList.remove('input-error'); } if (!isValid) showCustomAlert("Inválido", "Cartão e Pix (se preenchido) >= 0."); return isValid; }; // Exige preenchimento cartão
+            const validateFecharCaixaStep3 = () => { let isValid = true; const finalNotas = parseFloat(closeCaixaNotasInput.value) || 0; const finalMoedas = parseFloat(closeCaixaMoedasInput.value) || 0; const deposito = parseFloat(closeCaixaDepositoInput.value); const fica = parseFloat(closeCaixaFicaInput.value); const totalContado = finalNotas + finalMoedas; const totalDestinado = deposito + fica;[closeCaixaDepositoInput, closeCaixaFicaInput].forEach(input => { const val = parseFloat(input.value); if (input.value.trim() === '' || isNaN(val) || val < 0) { input.classList.add('input-error'); isValid = false; } else { input.classList.remove('input-error'); } }); if (isValid && Math.abs(totalContado - totalDestinado) > 0.01) { closeCaixaDepositoInput.classList.add('input-error'); closeCaixaFicaInput.classList.add('input-error'); isValid = false; showCustomAlert("Incompatível", `Soma Depósito+Fica (${formatCurrency(totalDestinado)}) != Total Contado (${formatCurrency(totalContado)}).`); } if (!isValid && Math.abs(totalContado - totalDestinado) <= 0.01) showCustomAlert("Inválido", "Depósito e Fica Caixa >= 0."); return isValid; }; // Exige preenchimento
+            const validateFecharCaixaStep4 = () => { let isValid = true; if (!closeCaixaAssinaturaInput.value.trim()) { closeCaixaAssinaturaInput.classList.add('input-error'); isValid = false; } else { closeCaixaAssinaturaInput.classList.remove('input-error'); } if (!isValid) showCustomAlert("Obrigatório", "Informe responsável."); return isValid; };
+            const resetFecharCaixaModal = () => { closeCaixaForm.reset(); document.querySelectorAll('#close-caixa-form .input-error').forEach(el => el.classList.remove('input-error')); currentFecharCaixaStep = 1; document.querySelectorAll('#close-caixa-form .form-step').forEach(el => el.classList.remove('active')); document.getElementById('close-caixa-step-1').classList.add('active'); updateFecharCaixaModalUI(); };
 
 
             // --- Event Listeners ---
@@ -816,11 +2118,11 @@
             paymentToggleRow.addEventListener('click', () => { if (cart.length > 0) { splitPaymentArea.style.display = 'none'; singlePaymentOptions.style.display = 'grid'; splitPaymentToggleBtn.innerHTML = "<i class='bx bx-columns'></i> Dividir Pagamento"; splitPaymentToggleBtn.classList.remove('active'); splitValue1.value = ''; splitValue2.value = ''; splitMethod1.value = ''; splitMethod2.value = ''; confirmSplitPaymentBtn.disabled = true; updateSplitRemaining(); openModal(paymentModal); } else { showCustomAlert("Vazio", "Adicione itens."); } });
             splitPaymentToggleBtn.addEventListener('click', () => { const isActive = splitPaymentArea.style.display !== 'none'; splitPaymentArea.style.display = isActive ? 'none' : 'block'; singlePaymentOptions.style.display = isActive ? 'grid' : 'none'; splitPaymentToggleBtn.innerHTML = isActive ? "<i class='bx bx-columns'></i> Dividir Pagamento" : "<i class='bx bx-x'></i> Cancelar Divisão"; splitPaymentToggleBtn.classList.toggle('active'); if (!isActive) { currentSplitPayments.totalSaleValue = lastSaleData?.total || 0; updateSplitRemaining(); splitMethod1.focus(); } else { confirmSplitPaymentBtn.disabled = true; } });
             [splitValue1, splitValue2, splitMethod1, splitMethod2].forEach(el => { el.addEventListener('input', updateSplitRemaining); el.addEventListener('change', updateSplitRemaining); });
-             confirmSplitPaymentBtn.addEventListener('click', () => { if (Math.abs(currentSplitPayments.remaining) >= 0.01) { showCustomAlert("Erro", "Soma não bate."); return; } if (!splitMethod1.value || !splitMethod2.value || splitMethod1.value === splitMethod2.value) { showCustomAlert("Erro", "Selecione 2 formas diferentes."); return; } currentSplitPayments.method1 = splitMethod1.value; currentSplitPayments.value1 = parseFloat(splitValue1.value) || 0; currentSplitPayments.method2 = splitMethod2.value; currentSplitPayments.value2 = parseFloat(splitValue2.value) || 0; selectedPaymentMethod = `Dividido (${currentSplitPayments.method1} + ${currentSplitPayments.method2})`; summaryPaymentMethod.textContent = selectedPaymentMethod; summaryPaymentMethod.style.fontWeight = '600'; summaryPaymentMethod.style.color = 'var(--text-dark)'; updateSummary(); closeModal(paymentModal); });
+            confirmSplitPaymentBtn.addEventListener('click', () => { if (Math.abs(currentSplitPayments.remaining) >= 0.01) { showCustomAlert("Erro", "Soma não bate."); return; } if (!splitMethod1.value || !splitMethod2.value || splitMethod1.value === splitMethod2.value) { showCustomAlert("Erro", "Selecione 2 formas diferentes."); return; } currentSplitPayments.method1 = splitMethod1.value; currentSplitPayments.value1 = parseFloat(splitValue1.value) || 0; currentSplitPayments.method2 = splitMethod2.value; currentSplitPayments.value2 = parseFloat(splitValue2.value) || 0; selectedPaymentMethod = `Dividido (${currentSplitPayments.method1} + ${currentSplitPayments.method2})`; summaryPaymentMethod.textContent = selectedPaymentMethod; summaryPaymentMethod.style.fontWeight = '600'; summaryPaymentMethod.style.color = 'var(--text-dark)'; updateSummary(); closeModal(paymentModal); });
             finishSaleBtn.addEventListener('click', async () => { if (cart.length === 0) { showCustomAlert("Vazio", "Adicione itens."); return; } if (!selectedPaymentMethod) { showCustomAlert("Pagamento", "Selecione forma."); openModal(paymentModal); return; } finishSaleBtn.disabled = true; finishSaleBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Registrando..."; let paymentsToSend = []; if (selectedPaymentMethod.startsWith("Dividido")) { paymentsToSend.push({ method: currentSplitPayments.method1, value: currentSplitPayments.value1 }); paymentsToSend.push({ method: currentSplitPayments.method2, value: currentSplitPayments.value2 }); } else { paymentsToSend.push({ method: selectedPaymentMethod, value: lastSaleData.total }); } try { await registrarVendaAtual(paymentsToSend); openModal(receiptModal); } catch (error) { console.error("Erro registro antes recibo:", error); showCustomAlert("Erro Registro", `Não foi possível registrar: ${error.message}. Tente de novo.`); } finally { finishSaleBtn.disabled = false; finishSaleBtn.innerHTML = "<i class='bx bx-check-circle'></i> Finalizar (F9)"; } });
             cancelSaleBtn.addEventListener('click', () => { if (cart.length === 0) return; showCustomConfirm("Cancelar Venda", "Tem certeza?", () => { clearCart(); closeModal(confirmModal); }); });
             confirmActionBtn.addEventListener('click', () => { if (confirmCallback) { confirmCallback(); confirmCallback = null; } });
-            document.querySelectorAll('.close-modal-btn').forEach(btn => { btn.addEventListener('click', (e) => { const modal = e.target.closest('.modal-overlay'); if (modal && modal.id !== 'receipt-modal' && modal.id !== 'open-caixa-modal') { closeModal(modal); if (modal.id === 'add-cliente-modal') { resetClienteModal(); } else if (modal.id === 'close-caixa-modal') { resetFecharCaixaModal(); } } }); }); 
+            document.querySelectorAll('.close-modal-btn').forEach(btn => { btn.addEventListener('click', (e) => { const modal = e.target.closest('.modal-overlay'); if (modal && modal.id !== 'receipt-modal' && modal.id !== 'open-caixa-modal') { closeModal(modal); if (modal.id === 'add-cliente-modal') { resetClienteModal(); } else if (modal.id === 'close-caixa-modal') { resetFecharCaixaModal(); } } }); });
             printReceiptBtn.addEventListener('click', handlePrintReceipt);
             newSaleBtn.addEventListener('click', () => { closeModal(receiptModal); clearCart(); barcodeInput.focus(); });
             quickAddName.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); quickAddPrice.focus(); } });
@@ -833,194 +2135,199 @@
 
             // Lógica da Navbar SPA
             const updateNavbarHighlight = (activeItem) => { if (!activeItem) return; const itemRect = activeItem.getBoundingClientRect(); const navbarRect = mainNavbar.getBoundingClientRect(); navbarHighlight.style.width = `${itemRect.width}px`; navbarHighlight.style.left = `${itemRect.left - navbarRect.left}px`; };
-            navbarItems.forEach(item => { item.addEventListener('click', (e) => { e.preventDefault(); const previouslyActive = document.querySelector('.navbar-item.active'); if (previouslyActive === item) { return; } navbarItems.forEach(navItem => navItem.classList.remove('active')); item.classList.add('active'); updateNavbarHighlight(item); allPages.forEach(page => page.style.display = 'none'); const pageId = item.dataset.page + '-page'; const targetPage = document.getElementById(pageId); 
-            if (targetPage) { targetPage.style.display = 'block'; } 
-            if (pageId === 'produtos-page') { renderProdutosPage(); } else if (pageId === 'clientes-page') { if(localClientCache === null) { carregarClientesDaAPI(); } else { renderClientesPage(); } } }); });
+            navbarItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault(); const previouslyActive = document.querySelector('.navbar-item.active'); if (previouslyActive === item) { return; } navbarItems.forEach(navItem => navItem.classList.remove('active')); item.classList.add('active'); updateNavbarHighlight(item); allPages.forEach(page => page.style.display = 'none'); const pageId = item.dataset.page + '-page'; const targetPage = document.getElementById(pageId);
+                    if (targetPage) { targetPage.style.display = 'block'; }
+                    if (pageId === 'produtos-page') { renderProdutosPage(); } else if (pageId === 'clientes-page') { if (localClientCache === null) { carregarClientesDaAPI(); } else { renderClientesPage(); } }
+                });
+            });
             window.addEventListener('resize', () => { updateNavbarHighlight(document.querySelector('.navbar-item.active')); });
-            
+
             // Listeners do Modal Adicionar Cliente
             addClienteBtn.addEventListener('click', () => { resetClienteModal(); openModal(addClienteModal); });
             clienteNextBtn.addEventListener('click', () => navigateClienteSteps(1));
             clientePrevBtn.addEventListener('click', () => navigateClienteSteps(-1));
             clienteSaveBtn.addEventListener('click', () => { if (!validateStep2()) return; const clienteData = { nomeCompleto: clienteNomeInput.value.trim(), apelido: clienteApelidoInput.value.trim(), telefone: clienteTelefoneInput.value.trim(), endereco: clienteEnderecoInput.value.trim(), valorCompra: compraValorInput.value, numParcelas: compraParcelasInput.value, primeiroVencimento: compraVencimentoInput.value }; salvarClienteNaAPI(clienteData); });
             addClienteForm.addEventListener('keydown', (e) => { if (e.key === 'Enter' && currentClienteStep === 2 && document.activeElement !== clienteEnderecoInput) { e.preventDefault(); clienteSaveBtn.click(); } });
-           
-           // Listeners dos Modais de Caixa
-             headerCloseCaixaBtn.addEventListener('click', () => { 
-                 resetFecharCaixaModal(); 
-                 openModal(closeCaixaModal);
-             });
-             
-            // Submit Abrir Caixa
-            openCaixaForm.addEventListener('submit', (e) => { 
-                e.preventDefault(); 
-                 const abrirSemValor = openCaixaSemValorCheckbox.checked;
-                 const notasInput = openCaixaNotasInput.value.trim();
-                 const moedasInput = openCaixaMoedasInput.value.trim();
-                 const notas = parseFloat(notasInput) || 0;
-                 const moedas = parseFloat(moedasInput) || 0;
 
-                  if (!abrirSemValor && !notasInput && !moedasInput) {
-                       showCustomAlert("Valor Inválido", "Informe Notas ou Moedas, ou marque 'Abrir sem valor'.");
-                       if (!notasInput) openCaixaNotasInput.classList.add('input-error'); else openCaixaNotasInput.classList.remove('input-error');
-                       if (!moedasInput) openCaixaMoedasInput.classList.add('input-error'); else openCaixaMoedasInput.classList.remove('input-error');
-                       return;
-                   } 
-                   if ((notasInput && notas < 0) || (moedasInput && moedas < 0)) {
-                       showCustomAlert("Valor Inválido", "Valores não podem ser negativos.");
-                       if (notasInput && notas < 0) openCaixaNotasInput.classList.add('input-error'); else openCaixaNotasInput.classList.remove('input-error');
-                       if (moedasInput && moedas < 0) openCaixaMoedasInput.classList.add('input-error'); else openCaixaMoedasInput.classList.remove('input-error');
-                       return;
-                   } 
-                   
-                   openCaixaNotasInput.classList.remove('input-error');
-                   openCaixaMoedasInput.classList.remove('input-error');
-                 
-                 const data = { 
-                     valorNotas: abrirSemValor ? '0.00' : notas.toFixed(2), 
-                     valorMoedas: abrirSemValor ? '0.00' : moedas.toFixed(2)
-                 };
-                 abrirCaixaAPI(data); 
+            // Listeners dos Modais de Caixa
+            headerCloseCaixaBtn.addEventListener('click', () => {
+                resetFecharCaixaModal();
+                openModal(closeCaixaModal);
             });
 
-             // Listener para Checkbox Abrir sem Valor
-             openCaixaSemValorCheckbox.addEventListener('change', (e) => {
-                 const isChecked = e.target.checked;
-                 openCaixaNotasInput.disabled = isChecked;
-                 openCaixaMoedasInput.disabled = isChecked;
-                 openCaixaNotasInput.classList.remove('input-error'); 
-                 openCaixaMoedasInput.classList.remove('input-error');
-                 if (isChecked) {
-                     openCaixaNotasInput.value = '0.00';
-                     openCaixaMoedasInput.value = '0.00';
-                 } else {
-                     openCaixaNotasInput.value = ''; 
-                     openCaixaMoedasInput.value = '';
-                 }
-             });
-            
+            // Submit Abrir Caixa
+            openCaixaForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const abrirSemValor = openCaixaSemValorCheckbox.checked;
+                const notasInput = openCaixaNotasInput.value.trim();
+                const moedasInput = openCaixaMoedasInput.value.trim();
+                const notas = parseFloat(notasInput) || 0;
+                const moedas = parseFloat(moedasInput) || 0;
+
+                if (!abrirSemValor && !notasInput && !moedasInput) {
+                    showCustomAlert("Valor Inválido", "Informe Notas ou Moedas, ou marque 'Abrir sem valor'.");
+                    if (!notasInput) openCaixaNotasInput.classList.add('input-error'); else openCaixaNotasInput.classList.remove('input-error');
+                    if (!moedasInput) openCaixaMoedasInput.classList.add('input-error'); else openCaixaMoedasInput.classList.remove('input-error');
+                    return;
+                }
+                if ((notasInput && notas < 0) || (moedasInput && moedas < 0)) {
+                    showCustomAlert("Valor Inválido", "Valores não podem ser negativos.");
+                    if (notasInput && notas < 0) openCaixaNotasInput.classList.add('input-error'); else openCaixaNotasInput.classList.remove('input-error');
+                    if (moedasInput && moedas < 0) openCaixaMoedasInput.classList.add('input-error'); else openCaixaMoedasInput.classList.remove('input-error');
+                    return;
+                }
+
+                openCaixaNotasInput.classList.remove('input-error');
+                openCaixaMoedasInput.classList.remove('input-error');
+
+                const data = {
+                    valorNotas: abrirSemValor ? '0.00' : notas.toFixed(2),
+                    valorMoedas: abrirSemValor ? '0.00' : moedas.toFixed(2)
+                };
+                abrirCaixaAPI(data);
+            });
+
+            // Listener para Checkbox Abrir sem Valor
+            openCaixaSemValorCheckbox.addEventListener('change', (e) => {
+                const isChecked = e.target.checked;
+                openCaixaNotasInput.disabled = isChecked;
+                openCaixaMoedasInput.disabled = isChecked;
+                openCaixaNotasInput.classList.remove('input-error');
+                openCaixaMoedasInput.classList.remove('input-error');
+                if (isChecked) {
+                    openCaixaNotasInput.value = '0.00';
+                    openCaixaMoedasInput.value = '0.00';
+                } else {
+                    openCaixaNotasInput.value = '';
+                    openCaixaMoedasInput.value = '';
+                }
+            });
+
             // Listeners para Navegação Fechar Caixa
             closeCaixaNextBtn.addEventListener('click', () => navigateFecharCaixaSteps(1));
             closeCaixaPrevBtn.addEventListener('click', () => navigateFecharCaixaSteps(-1));
-            
-            // Submit Fechar Caixa (agora no botão Salvar)
-            closeCaixaForm.addEventListener('submit', (e) => { 
-                e.preventDefault(); 
-                 if (!validateFecharCaixaStep4()) return; 
-                 if (!validateFecharCaixaStep3()) { // Revalida passo anterior
-                    navigateFecharCaixaSteps(-1); // Volta se inválido
-                    return; 
-                 }; 
 
-                 const data = { 
-                     valorFinalNotas: (parseFloat(closeCaixaNotasInput.value) || 0).toFixed(2), 
-                     valorFinalMoedas: (parseFloat(closeCaixaMoedasInput.value) || 0).toFixed(2), 
-                     vendaCartao: (parseFloat(closeCaixaCartaoInput.value) || 0).toFixed(2), 
-                     vendaPixFixo: (parseFloat(closeCaixaPixInput.value) || 0).toFixed(2), 
-                     valorDeposito: (parseFloat(closeCaixaDepositoInput.value) || 0).toFixed(2), 
-                     valorFicaCaixa: (parseFloat(closeCaixaFicaInput.value) || 0).toFixed(2), 
-                     assinatura: closeCaixaAssinaturaInput.value.trim() 
-                 }; 
-                 fecharCaixaAPI(data); 
+            // Submit Fechar Caixa (agora no botão Salvar)
+            closeCaixaForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                if (!validateFecharCaixaStep4()) return;
+                if (!validateFecharCaixaStep3()) { // Revalida passo anterior
+                    navigateFecharCaixaSteps(-1); // Volta se inválido
+                    return;
+                };
+
+                const data = {
+                    valorFinalNotas: (parseFloat(closeCaixaNotasInput.value) || 0).toFixed(2),
+                    valorFinalMoedas: (parseFloat(closeCaixaMoedasInput.value) || 0).toFixed(2),
+                    vendaCartao: (parseFloat(closeCaixaCartaoInput.value) || 0).toFixed(2),
+                    vendaPixFixo: (parseFloat(closeCaixaPixInput.value) || 0).toFixed(2),
+                    valorDeposito: (parseFloat(closeCaixaDepositoInput.value) || 0).toFixed(2),
+                    valorFicaCaixa: (parseFloat(closeCaixaFicaInput.value) || 0).toFixed(2),
+                    assinatura: closeCaixaAssinaturaInput.value.trim()
+                };
+                fecharCaixaAPI(data);
             });
 
             function updateClock() { if (horarioElement) { horarioElement.textContent = formatTime(new Date()); } }
 
             // Listener Global de Teclas de Atalho
             document.addEventListener('keydown', (e) => {
-                 const openModals = document.querySelectorAll('.modal-overlay.active');
-                 
-                 // Se Abrir Caixa está aberto, só permite Enter e Tab (e teclas de digitação)
-                 if (openCaixaModal.classList.contains('active')) {
-                     if (e.key === 'Escape') { 
-                         e.preventDefault(); // Bloqueia Escape
-                     } else if (e.key !== 'Enter' && e.key !== 'Tab' && !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key) && e.target.tagName !== 'INPUT') {
-                         // Permite Enter (para submit), Tab e Setas (navegação), e digitação nos inputs
-                     } else if (e.key === 'Enter' && document.activeElement.closest('form') === openCaixaForm){
-                         // Deixa o Enter submeter
-                     } else if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
-                         // Bloqueia outros atalhos se o foco não estiver num campo editável
-                         // e.preventDefault(); // Comentado para testar se causa o bug de digitação
-                     }
-                     return; 
-                 }
+                const openModals = document.querySelectorAll('.modal-overlay.active');
+
+                // Se Abrir Caixa está aberto, só permite Enter e Tab (e teclas de digitação)
+                if (openCaixaModal.classList.contains('active')) {
+                    if (e.key === 'Escape') {
+                        e.preventDefault(); // Bloqueia Escape
+                    } else if (e.key !== 'Enter' && e.key !== 'Tab' && !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key) && e.target.tagName !== 'INPUT') {
+                        // Permite Enter (para submit), Tab e Setas (navegação), e digitação nos inputs
+                    } else if (e.key === 'Enter' && document.activeElement.closest('form') === openCaixaForm) {
+                        // Deixa o Enter submeter
+                    } else if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+                        // Bloqueia outros atalhos se o foco não estiver num campo editável
+                        // e.preventDefault(); // Comentado para testar se causa o bug de digitação
+                    }
+                    return;
+                }
 
 
-                 if (openModals.length > 0) {
-                     const topModal = openModals[openModals.length - 1]; 
+                if (openModals.length > 0) {
+                    const topModal = openModals[openModals.length - 1];
                     if (topModal.id === 'discount-popover' && ['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft', 'Enter'].includes(e.key)) { /* ... Lógica setas desconto ... */ if (['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'].includes(e.key)) { e.preventDefault(); } if (e.key === 'Enter' && document.activeElement === discountInputR) { e.preventDefault(); discountInputR.blur(); barcodeInput.focus(); return; } switch (e.key) { case 'ArrowDown': discountNavIndex = (discountNavIndex < 5) ? 5 : 0; break; case 'ArrowRight': discountNavIndex = (discountNavIndex < 4) ? discountNavIndex + 1 : (discountNavIndex === 4 ? 0 : 0); break; case 'ArrowUp': discountNavIndex = (discountNavIndex === 5) ? 0 : (discountNavIndex > 0 ? discountNavIndex - 1 : 5); break; case 'ArrowLeft': discountNavIndex = (discountNavIndex > 0 && discountNavIndex < 5) ? discountNavIndex - 1 : (discountNavIndex === 0 ? 4 : 4); break; case 'Enter': e.preventDefault(); const currentEl = discountNavElements[discountNavIndex]; if (currentEl && currentEl.tagName === 'BUTTON') currentEl.click(); break; } updateDiscountNavFocus(); return; }
                     else if (topModal.id === 'payment-modal') { switch (e.key) { case 'F6': e.preventDefault(); handlePaymentSelection('Dinheiro'); break; case 'F7': e.preventDefault(); handlePaymentSelection('PIX'); break; case 'F8': e.preventDefault(); handlePaymentSelection('Cartão'); break; case 'Escape': e.preventDefault(); closeModal(paymentModal); break; } return; }
                     else if (topModal.id === 'confirm-modal') { if (e.key === 'Enter') { e.preventDefault(); confirmActionBtn.click(); } if (e.key === 'Escape') { e.preventDefault(); closeModal(confirmModal); } return; }
-                    else if (topModal.id === 'receipt-modal') { if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); newSaleBtn.click(); } return; } 
+                    else if (topModal.id === 'receipt-modal') { if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); newSaleBtn.click(); } return; }
                     else if (topModal.id === 'alert-modal') { if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); closeModal(alertModal); } return; }
-                    else if (topModal.id === 'quick-add-modal') { if (e.key === 'Escape') { e.preventDefault(); closeModal(quickAddModal); } return; } 
-                    else if (topModal.id === 'add-cliente-modal') { if (e.key === 'Escape') { e.preventDefault(); closeModal(addClienteModal); resetClienteModal(); } return; } 
-                    else if (topModal.id === 'close-caixa-modal') { 
-                        if (e.key === 'Escape') { e.preventDefault(); closeModal(closeCaixaModal); resetFecharCaixaModal();}
+                    else if (topModal.id === 'quick-add-modal') { if (e.key === 'Escape') { e.preventDefault(); closeModal(quickAddModal); } return; }
+                    else if (topModal.id === 'add-cliente-modal') { if (e.key === 'Escape') { e.preventDefault(); closeModal(addClienteModal); resetClienteModal(); } return; }
+                    else if (topModal.id === 'close-caixa-modal') {
+                        if (e.key === 'Escape') { e.preventDefault(); closeModal(closeCaixaModal); resetFecharCaixaModal(); }
                         else if (e.key === 'Enter') {
-                             if (closeCaixaNextBtn.style.display !== 'none') {
-                                 e.preventDefault(); closeCaixaNextBtn.click();
-                             } else if (closeCaixaSaveBtn.style.display !== 'none' && document.activeElement !== closeCaixaAssinaturaInput) { 
-                                 e.preventDefault(); // Submete o form via JS para garantir validação
-                                 closeCaixaForm.dispatchEvent(new Event('submit', { cancelable: true }));
-                             }
+                            if (closeCaixaNextBtn.style.display !== 'none') {
+                                e.preventDefault(); closeCaixaNextBtn.click();
+                            } else if (closeCaixaSaveBtn.style.display !== 'none' && document.activeElement !== closeCaixaAssinaturaInput) {
+                                e.preventDefault(); // Submete o form via JS para garantir validação
+                                closeCaixaForm.dispatchEvent(new Event('submit', { cancelable: true }));
+                            }
                         }
-                        return; 
-                    } 
-                 } else if (openModals.length === 0) { 
-                    switch (e.key) { 
-                        case 'F2': e.preventDefault(); barcodeInput.focus(); barcodeInput.select(); break; 
-                        case 'F3': e.preventDefault(); discountToggleRow.click(); discountNavIndex = 0; updateDiscountNavFocus(); break; 
-                        case 'F4': e.preventDefault(); paymentToggleRow.click(); break; 
-                        case 'F8': 
+                        return;
+                    }
+                } else if (openModals.length === 0) {
+                    switch (e.key) {
+                        case 'F2': e.preventDefault(); barcodeInput.focus(); barcodeInput.select(); break;
+                        case 'F3': e.preventDefault(); discountToggleRow.click(); discountNavIndex = 0; updateDiscountNavFocus(); break;
+                        case 'F4': e.preventDefault(); paymentToggleRow.click(); break;
+                        case 'F8':
                             e.preventDefault();
-                            if(verificarToken()) { 
-                               resetFecharCaixaModal(); 
-                               openModal(closeCaixaModal); 
+                            if (verificarToken()) {
+                                resetFecharCaixaModal();
+                                openModal(closeCaixaModal);
                             } else {
                                 showCustomAlert("Atenção", "Caixa precisa estar aberto.");
                             }
                             break;
-                        case 'F9': e.preventDefault(); finishSaleBtn.click(); break; 
-                        case 'F10': e.preventDefault(); cancelSaleBtn.click(); break; 
+                        case 'F9': e.preventDefault(); finishSaleBtn.click(); break;
+                        case 'F10': e.preventDefault(); cancelSaleBtn.click(); break;
                     }
-                 }
-             });
+                }
+            });
 
             // --- Inicialização ---
-            renderCart(); resetPaymentMethod(); 
-            updateClock(); setInterval(updateClock, 1000); 
+            renderCart(); resetPaymentMethod();
+            updateClock(); setInterval(updateClock, 1000);
 
             // Lógica de Inicialização com Token
             if (verificarToken()) {
-                 console.log("Iniciando com token válido.");
-                 liberarSistema(); 
+                console.log("Iniciando com token válido.");
+                liberarSistema();
             } else {
-                 console.log("Iniciando sem token. Abrindo caixa...");
-                 loadingOverlay.classList.add('hidden'); 
-                 openCaixaForm.reset();
-                 openCaixaSemValorCheckbox.checked = false; 
-                 openCaixaNotasInput.disabled = false;
-                 openCaixaMoedasInput.disabled = false;
-                 openModal(openCaixaModal); 
+                console.log("Iniciando sem token. Abrindo caixa...");
+                loadingOverlay.classList.add('hidden');
+                openCaixaForm.reset();
+                openCaixaSemValorCheckbox.checked = false;
+                openCaixaNotasInput.disabled = false;
+                openCaixaMoedasInput.disabled = false;
+                openModal(openCaixaModal);
             }
-            
-             // Define a aba ativa inicial e ajusta o highlight 
-             const initialActivePage = 'pdv'; 
-             const initialActiveNavbarItem = document.querySelector(`.navbar-item[data-page="${initialActivePage}"]`);
-             if (initialActiveNavbarItem) { 
-                 navbarItems.forEach(item => item.classList.remove('active'));
-                 initialActiveNavbarItem.classList.add('active');
-                 setTimeout(() => { 
-                     updateNavbarHighlight(initialActiveNavbarItem); 
-                     if (verificarToken()) {
-                         allPages.forEach(page => page.style.display = 'none'); 
-                         document.getElementById(initialActivePage + '-page').style.display = 'block'; 
-                     }
-                 }, 50); 
-             }
+
+            // Define a aba ativa inicial e ajusta o highlight 
+            const initialActivePage = 'pdv';
+            const initialActiveNavbarItem = document.querySelector(`.navbar-item[data-page="${initialActivePage}"]`);
+            if (initialActiveNavbarItem) {
+                navbarItems.forEach(item => item.classList.remove('active'));
+                initialActiveNavbarItem.classList.add('active');
+                setTimeout(() => {
+                    updateNavbarHighlight(initialActiveNavbarItem);
+                    if (verificarToken()) {
+                        allPages.forEach(page => page.style.display = 'none');
+                        document.getElementById(initialActivePage + '-page').style.display = 'block';
+                    }
+                }, 50);
+            }
 
         });
     </script>
 </body>
+
 </html>
