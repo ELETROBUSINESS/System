@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/assets/img/iconWeb.png">
     <title>Frente de Caixa (PDV) - Seu Sistema</title>
     <!-- Importação da Fonte (Inter) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1410,6 +1411,133 @@
                 font-size: 0.85rem;
             }
         }
+
+        /* Estilos Detalhes do Cliente */
+        .client-profile-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .client-avatar {
+            width: 80px;
+            height: 80px;
+            background-color: #eee;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font-size: 40px;
+            color: var(--text-light);
+            margin-bottom: 12px;
+            border: 2px solid var(--border-color);
+        }
+
+        .client-stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-box {
+            background-color: var(--bg-light);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .stat-value.danger {
+            color: var(--warning-red);
+        }
+
+        .info-box {
+            background-color: var(--bg-light);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .info-box p {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-dark);
+        }
+
+        .info-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Estilos da Barra de Limite */
+        .limit-container {
+            background-color: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .limit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+
+        .btn-edit-limit {
+            background: none;
+            border: none;
+            color: var(--info-blue);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 4px;
+            transition: color 0.2s;
+        }
+        .btn-edit-limit:hover { color: var(--primary-red); }
+
+        .progress-track {
+            width: 100%;
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--success-green);
+            width: 0%;
+            transition: width 0.5s ease, background-color 0.3s ease;
+        }
+
+        /* Se estiver perto do limite ou estourado */
+        .progress-fill.warning { background-color: #ff9800; }
+        .progress-fill.danger { background-color: var(--warning-red); }
+
+        .limit-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
     </style>
 </head>
 
@@ -1429,6 +1557,101 @@
     <div id="loading-overlay">
         <i class='bx bx-loader-alt bx-spin'></i>
         <p id="loading-message">Verificando status do caixa...</p>
+    </div>
+
+    <div class="modal-overlay" id="cliente-details-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Ficha do Cliente</h3>
+                <button class="close-modal-btn" data-target="cliente-details-modal"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="client-profile-header">
+                    <div class="client-avatar">
+                        <i class='bx bx-user'></i>
+                    </div>
+                    <h4 id="detail-cliente-nome">Carregando...</h4>
+                    <p id="detail-cliente-apelido" style="color: var(--text-light);">...</p>
+                </div>
+
+                <div class="client-stats-grid">
+                    <div class="stat-box">
+                        <span class="stat-label">Saldo Devedor</span>
+                        <span class="stat-value danger" id="detail-cliente-saldo">R$ 0,00</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Próximo Venc.</span>
+                        <span class="stat-value" id="detail-cliente-vencimento">--/--/----</span>
+                    </div>
+                </div>
+
+                <div class="limit-container">
+                    <div class="limit-header">
+                        <span>Limite de Crédito: <strong id="detail-cliente-limite-total">R$ 0,00</strong></span>
+                        <button class="btn-edit-limit" id="btn-alterar-limite" title="Alterar Limite">
+                            <i class='bx bx-edit-alt'></i>
+                        </button>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" id="detail-cliente-progress"></div>
+                    </div>
+                    <div class="limit-stats">
+                        <span id="detail-cliente-disponivel" style="color: var(--success-green);">Disponível: R$ 0,00</span>
+                        <span id="detail-cliente-percentual">0% usado</span>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top: 16px;">
+                    <label>Contato & Endereço</label>
+                    <div class="info-box">
+                        <p><i class='bx bx-phone'></i> <span id="detail-cliente-telefone">--</span></p>
+                        <p><i class='bx bx-map'></i> <span id="detail-cliente-endereco">--</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary close-modal-btn" data-target="cliente-details-modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="cliente-pay-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Receber de Cliente</h3>
+                <button class="close-modal-btn" data-target="cliente-pay-modal"><i class='bx bx-x'></i></button>
+            </div>
+            <form id="cliente-pay-form">
+                <div class="modal-body">
+                    <p>Registrar pagamento para: <strong id="pay-cliente-nome">...</strong></p>
+                    <p style="font-size: 0.9rem; color: var(--text-light); margin-bottom: 16px;">
+                        Saldo Atual: <span id="pay-cliente-saldo-atual"
+                            style="color: var(--warning-red); font-weight: 600;">R$ 0,00</span>
+                    </p>
+
+                    <div class="form-group">
+                        <label for="pay-valor">Valor do Pagamento (R$) *</label>
+                        <input type="number" id="pay-valor" step="0.01" min="0.01" placeholder="0,00" required
+                            data-primary-focus="true">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pay-metodo">Forma de Pagamento *</label>
+                        <select id="pay-metodo" required>
+                            <option value="Dinheiro">Dinheiro</option>
+                            <option value="PIX">PIX</option>
+                            <option value="Cartão">Cartão</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary close-modal-btn"
+                        data-target="cliente-pay-modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class='bx bx-dollar-circle'></i> Confirmar Pagamento
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <div class="main-content" id="main-content">
@@ -2020,7 +2243,71 @@
             const renderCart = () => { /* ... (sem alterações) ... */ cartItemsBody.innerHTML = ''; if (cart.length === 0) { emptyState.style.display = 'flex'; itemListTable.style.display = 'none'; itemListContainer.classList.add('empty'); } else { emptyState.style.display = 'none'; itemListTable.style.display = 'table'; itemListContainer.classList.remove('empty'); cart.forEach(item => { const tr = document.createElement('tr'); tr.dataset.id = item.id; if (item.isNew) { tr.classList.add('new-item-flash'); delete item.isNew; setTimeout(() => { tr.classList.remove('new-item-flash'); }, 500); } tr.innerHTML = `<td><div class="product-info"><div class="product-image"><i class='bx bx-package'></i></div><div class="product-details"><span class="name">${item.name}</span><span class="barcode">#${item.id}</span></div></div></td><td><div class="quantity-control"><button class="qty-btn" data-action="decrease" data-id="${item.id}"><i class='bx bx-minus'></i></button><span class="qty-display">${item.quantity}</span><button class="qty-btn" data-action="increase" data-id="${item.id}"><i class='bx bx-plus'></i></button></div></td><td class="item-price">${formatCurrency(item.price)}</td> <td class="item-total">${formatCurrency(item.price * item.quantity)}</td><td><button class="remove-btn" data-id="${item.id}" title="Remover item"><i class='bx bx-trash'></i></button></td>`; cartItemsBody.appendChild(tr); }); } updateSummary(); };
             const updateSummary = () => { /* ... (sem alterações) ... */ const subtotal = getSubtotal(); const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0); const total = subtotal - discount; summarySubtotal.textContent = formatCurrency(subtotal); summaryDiscount.textContent = formatCurrency(discount > 0 ? discount * -1 : 0); if (discount > 0 && subtotal > 0) { const percentage = (discount / subtotal) * 100; discountPercentageText.textContent = `(${percentage.toFixed(2)}% efetivo)`; effectiveDiscountDisplay.style.display = 'flex'; } else { discountPercentageText.textContent = ''; effectiveDiscountDisplay.style.display = 'none'; } summaryTotal.textContent = formatCurrency(total); itemCount.textContent = totalItems; paymentTotalEl.textContent = formatCurrency(total); receiptTotalEl.textContent = formatCurrency(total); if (totalItems > 0 || cart.length > 0) { summaryTotal.classList.add('pop-animation'); setTimeout(() => { summaryTotal.classList.remove('pop-animation'); }, 300); } lastSaleData = { subtotal: subtotal, discount: discount, total: total, paymentMethod: selectedPaymentMethod }; }; // Atualiza lastSaleData aqui
             const renderProdutosPage = () => { /* ... (sem alterações, usa cache) ... */ produtosTableContainer.innerHTML = ''; if (!localProductCache) { produtosTableContainer.innerHTML = '<p style="text-align: center; color: var(--text-light);"><i class="bx bx-loader-alt bx-spin"></i> Carregando...</p>'; if (localProductCache === null) carregarCacheDeProdutos(); return; } if (localProductCache.length === 0) { produtosTableContainer.innerHTML = '<p style="text-align: center; color: var(--text-light);">Nenhum produto.</p>'; return; } const table = document.createElement('table'); table.className = 'data-table products-table'; table.innerHTML = `<thead><tr><th>Nome</th><th>Código</th><th>Preço</th></tr></thead><tbody></tbody>`; const tbody = table.querySelector('tbody'); localProductCache.forEach(product => { const tr = document.createElement('tr'); tr.innerHTML = `<td>${product.name}</td><td>${product.id}</td><td class="currency">${formatCurrency(product.price)}</td>`; tbody.appendChild(tr); }); produtosTableContainer.appendChild(table); };
-            const renderClientesPage = () => { /* ... (sem alterações, usa cache) ... */ clientesListContainer.innerHTML = ''; if (localClientCache === null) { clientesListContainer.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px 0;"><i class="bx bx-loader-alt bx-spin"></i> Carregando...</p>'; return; } if (localClientCache.length === 0) { clientesListContainer.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px 0;">Nenhum cliente.</p>'; return; } const table = document.createElement('table'); table.className = 'data-table clients-table'; table.innerHTML = `<thead><tr><th>Nome / Apelido</th><th>Saldo Devedor</th><th>Próximo Venc.</th><th>Ações</th></tr></thead><tbody></tbody>`; const tbody = table.querySelector('tbody'); localClientCache.forEach(cliente => { const tr = document.createElement('tr'); tr.dataset.clientId = cliente.idCliente; tr.innerHTML = `<td>${cliente.nomeExibicao} ${cliente.apelido && cliente.nomeExibicao !== cliente.apelido ? '(' + cliente.apelido + ')' : ''}</td><td class="currency">${formatCurrency(cliente.saldoDevedor)}</td><td>${cliente.proximoVencimento}</td><td class="actions"><button title="Detalhes/Pagar"><i class='bx bx-show'></i></button> <button title="Add Compra"><i class='bx bx-cart-add'></i></button></td>`; tbody.appendChild(tr); }); clientesListContainer.appendChild(table); };
+
+            const renderClientesPage = () => {
+                clientesListContainer.innerHTML = '';
+                if (localClientCache === null) {
+                    clientesListContainer.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px 0;"><i class="bx bx-loader-alt bx-spin"></i> Carregando...</p>';
+                    return;
+                }
+                if (localClientCache.length === 0) {
+                    clientesListContainer.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px 0;">Nenhum cliente.</p>';
+                    return;
+                }
+
+                const table = document.createElement('table');
+                table.className = 'data-table clients-table';
+                table.innerHTML = `
+        <thead>
+            <tr>
+                <th>Nome / Apelido</th>
+                <th>Saldo Devedor</th>
+                <th>Próximo Venc.</th>
+                <th style="text-align: center;">Ações</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    `;
+
+                const tbody = table.querySelector('tbody');
+
+                localClientCache.forEach(cliente => {
+                    const tr = document.createElement('tr');
+                    // Botões atualizados: Olho (Detalhes) e Dinheiro (Pagar)
+                    tr.innerHTML = `
+            <td>
+                ${cliente.nomeExibicao} 
+                <span style="font-size: 0.85rem; color: var(--text-light);">
+                    ${cliente.apelido && cliente.nomeExibicao !== cliente.apelido ? '(' + cliente.apelido + ')' : ''}
+                </span>
+            </td>
+            <td class="currency" style="color: ${cliente.saldoDevedor > 0 ? 'var(--warning-red)' : 'var(--success-green)'}">
+                ${formatCurrency(cliente.saldoDevedor)}
+            </td>
+            <td>${cliente.proximoVencimento || '-'}</td>
+            <td class="actions">
+                <button class="btn-view-client" data-id="${cliente.idCliente}" title="Ver Detalhes">
+                    <i class='bx bx-show'></i>
+                </button> 
+                <button class="btn-pay-client" data-id="${cliente.idCliente}" title="Registrar Pagamento">
+                    <i class='bx bx-money'></i>
+                </button>
+            </td>
+        `;
+                    tbody.appendChild(tr);
+                });
+
+                clientesListContainer.appendChild(table);
+
+                // Adiciona os eventos aos novos botões dinamicamente
+                document.querySelectorAll('.btn-view-client').forEach(btn => {
+                    btn.addEventListener('click', () => openClienteDetails(btn.dataset.id));
+                });
+
+                document.querySelectorAll('.btn-pay-client').forEach(btn => {
+                    btn.addEventListener('click', () => openClientePayment(btn.dataset.id));
+                });
+            };
 
             // --- Funções de Lógica do Carrinho ---
             const addToCart = (product) => { const existingItem = cart.find(item => item.id === product.id); if (existingItem) { existingItem.quantity += 1; } else { cart.push({ ...product, quantity: 1, isNew: true }); } renderCart(); };
@@ -2326,6 +2613,233 @@
                 }, 50);
             }
 
+            // --- Novas Variáveis Globais ---
+            let currentSelectedClientId = null;
+
+            // --- Seletores dos Novos Modais ---
+            const clienteDetailsModal = document.getElementById('cliente-details-modal');
+            const clientePayModal = document.getElementById('cliente-pay-modal');
+            const clientePayForm = document.getElementById('cliente-pay-form');
+
+            // --- Seletores da Barra de Limite ---
+            const detailLimitTotal = document.getElementById('detail-cliente-limite-total');
+            const detailProgressBar = document.getElementById('detail-cliente-progress');
+            const detailLimitAvailable = document.getElementById('detail-cliente-disponivel');
+            const detailLimitPercent = document.getElementById('detail-cliente-percentual');
+            const btnAlterarLimite = document.getElementById('btn-alterar-limite');
+
+            // --- Lógica de Abrir Modal de Detalhes (ATUALIZADA) ---
+            const openClienteDetails = (id) => {
+                const cliente = localClientCache.find(c => c.idCliente == id);
+                if (!cliente) return;
+
+                // Preenche dados básicos
+                document.getElementById('detail-cliente-nome').textContent = cliente.nomeCompleto || cliente.nomeExibicao;
+                document.getElementById('detail-cliente-apelido').textContent = cliente.apelido || 'Sem apelido';
+                document.getElementById('detail-cliente-saldo').textContent = formatCurrency(cliente.saldoDevedor);
+                document.getElementById('detail-cliente-vencimento').textContent = cliente.proximoVencimento || '--/--/----';
+                document.getElementById('detail-cliente-telefone').textContent = cliente.telefone || 'Não informado';
+                document.getElementById('detail-cliente-endereco').textContent = cliente.endereco || 'Não informado';
+
+                // --- Lógica da Barra de Limite ---
+                const limite = parseFloat(cliente.limite) || 0; 
+                const saldo = parseFloat(cliente.saldoDevedor) || 0;
+                
+                // Define o limite no texto
+                detailLimitTotal.textContent = formatCurrency(limite);
+
+                if (limite > 0) {
+                    const disponivel = limite - saldo;
+                    const porcentagemUso = (saldo / limite) * 100;
+                    
+                    // Atualiza textos
+                    detailLimitAvailable.textContent = `Disponível: ${formatCurrency(disponivel)}`;
+                    detailLimitPercent.textContent = `${porcentagemUso.toFixed(1)}% usado`;
+
+                    // Atualiza a barra
+                    let width = porcentagemUso;
+                    if (width > 100) width = 100; // Trava em 100% visualmente
+                    if (width < 0) width = 0;
+
+                    detailProgressBar.style.width = `${width}%`;
+
+                    // Cores dinâmicas da barra
+                    detailProgressBar.className = 'progress-fill'; // Reseta classes
+                    if (disponivel < 0) {
+                        detailProgressBar.classList.add('danger'); // Estourou o limite
+                        detailLimitAvailable.style.color = 'var(--warning-red)';
+                        detailLimitAvailable.textContent = `Estourado: ${formatCurrency(Math.abs(disponivel))}`;
+                    } else if (porcentagemUso > 80) {
+                        detailProgressBar.classList.add('warning'); // Alerta
+                        detailLimitAvailable.style.color = '#ff9800'; // Laranja
+                    } else {
+                        detailLimitAvailable.style.color = 'var(--success-green)';
+                    }
+                } else {
+                    // Caso não tenha limite definido (Limite = 0)
+                    detailProgressBar.style.width = '0%';
+                    detailLimitAvailable.textContent = "Limite não definido";
+                    detailLimitAvailable.style.color = 'var(--text-light)';
+                    detailLimitPercent.textContent = "-";
+                }
+
+                openModal(clienteDetailsModal);
+            };
+
+            // --- Listener para o Botão Alterar Limite ---
+            if (btnAlterarLimite) {
+                btnAlterarLimite.addEventListener('click', () => {
+                    showCustomAlert(
+                        "Acesso Restrito", 
+                        "Somente um administrador pode alterar o limite de crédito de forma segura no momento."
+                    );
+                });
+            }
+
+            // --- Lógica de Abrir Modal de Pagamento ---
+            const openClientePayment = (id) => {
+                const cliente = localClientCache.find(c => c.idCliente == id);
+                if (!cliente) return;
+
+                currentSelectedClientId = id;
+
+                // Preenche info básica
+                document.getElementById('pay-cliente-nome').textContent = cliente.nomeExibicao;
+                document.getElementById('pay-cliente-saldo-atual').textContent = formatCurrency(cliente.saldoDevedor);
+
+                // Reseta form e foca no valor
+                clientePayForm.reset();
+                openModal(clientePayModal);
+            };
+
+            // --- Função Atualizada: Fluxo de Caixa + Abatimento de Dívida ---
+            async function registrarPagamentoClienteAPI(cliente, valor, metodo) {
+                // Validação das URLs
+                if (!REGISTRO_VENDA_SCRIPT_URL || REGISTRO_VENDA_SCRIPT_URL.includes("COLE_A_URL")) {
+                    throw new Error("URL de registro de vendas não configurada.");
+                }
+                if (!SCRIPT_URL || SCRIPT_URL.includes("COLE_A_URL")) {
+                    throw new Error("URL de script de clientes não configurada.");
+                }
+
+                const now = new Date();
+                const timestamp = formatTimestamp(now);
+                const descricaoAutomatica = `Crediário ${cliente.nomeExibicao}`;
+
+                // --- PREPARAÇÃO REQUISIÇÃO 1: FLUXO DE CAIXA (Vendas) ---
+                const vendaData = {
+                    formType: 'venda',
+                    seller: 'nubia',
+                    type: 'entrada',
+                    value: valor.toFixed(2), // Valor Positivo (Entrou dinheiro)
+                    desconto: '0.00',
+                    Timestamp: timestamp,
+                    payment: metodo,
+                    total: valor.toFixed(2),
+                    description: descricaoAutomatica,
+                    obs: `Recebimento ID: ${cliente.idCliente}`
+                };
+                const formVenda = new URLSearchParams(vendaData);
+
+                // --- PREPARAÇÃO REQUISIÇÃO 2: ABATIMENTO DÍVIDA (Clientes) ---
+                // Envia valor negativo para reduzir o saldo devedor na planilha
+                const valorAbatimento = (valor * -1).toFixed(2); 
+                
+                const paramsCliente = new URLSearchParams({
+                    action: 'registrarTransacao', // Nome da ação que seu Google Script deve esperar
+                    idCliente: cliente.idCliente,
+                    tipo: 'Pagamento',
+                    valor: valorAbatimento,       // Ex: -50.00
+                    timestamp: timestamp
+                });
+
+                console.log("Processando Pagamento Duplo...");
+
+                // --- DISPARO SIMULTÂNEO (Promise.all) ---
+                // Dispara as duas requisições ao mesmo tempo para ser mais rápido
+                const [resVenda, resCliente] = await Promise.all([
+                    // 1. Post no Fluxo de Caixa
+                    fetch(REGISTRO_VENDA_SCRIPT_URL, {
+                        redirect: "follow",
+                        method: "POST",
+                        body: formVenda.toString(),
+                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    }),
+                    // 2. Get no Script de Clientes (seguindo o padrão de salvarCliente)
+                    fetch(`${SCRIPT_URL}?${paramsCliente.toString()}`, {
+                        method: 'GET'
+                    })
+                ]);
+
+                // Verificação de Erros
+                if (!resVenda.ok) {
+                    throw new Error(`Erro no Registro de Venda: ${resVenda.status}`);
+                }
+                if (!resCliente.ok) {
+                    // Tentamos ler o erro se possível
+                    throw new Error(`Erro no Abatimento da Dívida: ${resCliente.status}`);
+                }
+
+                // Opcional: Ler a resposta do cliente para garantir que o script processou "success"
+                const resultCliente = await resCliente.json();
+                if (resultCliente.status !== 'success') {
+                     console.warn("Aviso do Script Cliente:", resultCliente.message);
+                     // Não vamos jogar erro aqui se a venda passou, apenas logar o aviso
+                }
+                
+                return true;
+            }
+
+            // --- Listener Otimizado do Submit de Pagamento ---
+            clientePayForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const valorInput = document.getElementById('pay-valor');
+                const valorPago = parseFloat(valorInput.value);
+                const metodo = document.getElementById('pay-metodo').value;
+                const submitBtn = clientePayForm.querySelector('button[type="submit"]');
+                const originalBtnText = submitBtn.innerHTML;
+
+                if (!currentSelectedClientId) return;
+                if (isNaN(valorPago) || valorPago <= 0) {
+                    showCustomAlert("Valor Inválido", "Insira um valor maior que zero.");
+                    return;
+                }
+
+                // Encontrar o cliente no cache local
+                const cliente = localClientCache.find(c => c.idCliente == currentSelectedClientId);
+                if (!cliente) {
+                    showCustomAlert("Erro", "Cliente não encontrado no cache.");
+                    return;
+                }
+
+                // 1. Estado de Carregamento (Bloqueia botão)
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Processando...";
+
+                try {
+                    // 2. Envia para o Google Sheets
+                    await registrarPagamentoClienteAPI(cliente, valorPago, metodo);
+
+                    // 3. Atualiza o Cache Local (Otimismo)
+                    // Subtrai o valor pago do saldo devedor visualmente
+                    let novoSaldo = parseFloat(cliente.saldoDevedor) - valorPago;
+                    cliente.saldoDevedor = novoSaldo < 0 ? 0 : novoSaldo; // Evita negativo se pagar a mais
+
+                    // 4. Atualiza a Tabela e Fecha Modal
+                    renderClientesPage(); // Re-renderiza a lista com o novo saldo
+                    closeModal(clientePayModal);
+                    showCustomAlert("Sucesso", `Pagamento de ${formatCurrency(valorPago)} registrado para ${cliente.nomeExibicao}!`);
+
+                } catch (error) {
+                    console.error("Erro ao registrar pagamento:", error);
+                    showCustomAlert("Erro", "Falha ao registrar o pagamento. Tente novamente.");
+                } finally {
+                    // 5. Restaura o botão
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+                }
+            });
         });
     </script>
 </body>
