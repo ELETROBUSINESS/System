@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/assets/img/iconWeb.png">
-    <title>Frente de Caixa (PDV) - Seu Sistema</title>
+    <title>Ponto de Venda | ELETRO</title>
     <!-- Importação da Fonte (Inter) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Importação da biblioteca Boxicons -->
@@ -1510,7 +1510,10 @@
             padding: 4px;
             transition: color 0.2s;
         }
-        .btn-edit-limit:hover { color: var(--primary-red); }
+
+        .btn-edit-limit:hover {
+            color: var(--primary-red);
+        }
 
         .progress-track {
             width: 100%;
@@ -1529,14 +1532,143 @@
         }
 
         /* Se estiver perto do limite ou estourado */
-        .progress-fill.warning { background-color: #ff9800; }
-        .progress-fill.danger { background-color: var(--warning-red); }
+        .progress-fill.warning {
+            background-color: #ff9800;
+        }
+
+        .progress-fill.danger {
+            background-color: var(--warning-red);
+        }
 
         .limit-stats {
             display: flex;
             justify-content: space-between;
             font-size: 0.85rem;
             font-weight: 600;
+        }
+
+        /* --- Modal de Seleção de Cliente --- */
+        .search-box-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .search-icon-input {
+            position: relative;
+            flex-grow: 1;
+        }
+
+        .search-icon-input i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+            font-size: 1.2rem;
+        }
+
+        .search-icon-input input {
+            padding-left: 40px;
+            /* Espaço para o ícone */
+            width: 100%;
+        }
+
+        .client-results-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            display: none;
+            /* Oculto inicialmente */
+        }
+
+        .client-result-item {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .client-result-item:hover {
+            background-color: var(--bg-light);
+        }
+
+        .client-result-item:last-child {
+            border-bottom: none;
+        }
+
+        /* --- Cartão do Cliente no Resumo (Sidebar) --- */
+        .summary-client-card {
+            background-color: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 16px;
+            display: none;
+            /* Oculto por padrão */
+            animation: slideInUp 0.3s ease;
+        }
+
+        .summary-client-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .summary-client-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-change-client {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            color: var(--info-blue);
+        }
+
+        .btn-change-client:hover {
+            border-color: var(--info-blue);
+        }
+
+        .summary-limit-bar {
+            height: 6px;
+            background-color: #ddd;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 4px;
+        }
+
+        .summary-limit-fill {
+            height: 100%;
+            background-color: var(--success-green);
+            width: 0%;
+            transition: width 0.5s;
+        }
+
+        .summary-limit-fill.danger {
+            background-color: var(--warning-red);
+        }
+
+        .summary-limit-text {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            display: flex;
+            justify-content: space-between;
         }
     </style>
 </head>
@@ -1557,6 +1689,33 @@
     <div id="loading-overlay">
         <i class='bx bx-loader-alt bx-spin'></i>
         <p id="loading-message">Verificando status do caixa...</p>
+    </div>
+
+    <div class="modal-overlay" id="client-selection-modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>Selecionar Cliente</h3>
+                <button class="close-modal-btn" data-target="client-selection-modal"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="search-box-wrapper">
+                    <div class="search-icon-input">
+                        <i class='bx bx-search'></i>
+                        <input type="text" id="client-selection-input" placeholder="Busque por nome ou apelido..." autocomplete="off" data-primary-focus="true">
+                    </div>
+                    <button class="btn btn-primary" id="btn-new-client-modal" style="width: auto; padding: 10px 14px;" title="Novo Cliente">
+                        <i class='bx bx-plus'></i>
+                    </button>
+                </div>
+                
+                <div class="client-results-list" id="client-selection-results">
+                    </div>
+                
+                <p style="text-align: center; color: var(--text-light); margin-top: 20px; font-size: 0.9rem;" id="client-search-hint">
+                    Digite para buscar...
+                </p>
+            </div>
+        </div>
     </div>
 
     <div class="modal-overlay" id="cliente-details-modal">
@@ -1596,7 +1755,8 @@
                         <div class="progress-fill" id="detail-cliente-progress"></div>
                     </div>
                     <div class="limit-stats">
-                        <span id="detail-cliente-disponivel" style="color: var(--success-green);">Disponível: R$ 0,00</span>
+                        <span id="detail-cliente-disponivel" style="color: var(--success-green);">Disponível: R$
+                            0,00</span>
                         <span id="detail-cliente-percentual">0% usado</span>
                     </div>
                 </div>
@@ -1658,7 +1818,7 @@
 
         <!-- Header com Botão Fechar Caixa -->
         <div class="app-header">
-            <h1>Frente de Caixa (PDV)</h1>
+            <h1>Ponto de Venda</h1>
             <button class="btn btn-danger" id="header-close-caixa-btn" style="display: none;">
                 <i class='bx bx-stop-circle'></i> Fechar Caixa (F8)
             </button>
@@ -1709,6 +1869,22 @@
                 <!-- Coluna da Direita: Resumo -->
                 <aside class="pdv-summary">
                     <div class="card">
+                        <div class="summary-client-card" id="summary-client-card">
+                            <div class="summary-client-header">
+                                <span class="summary-client-name">
+                                    <i class='bx bx-user'></i> <span id="summary-client-name-text">Nome do
+                                        Cliente</span>
+                                </span>
+                                <button class="btn-change-client" id="btn-change-summary-client">Alterar</button>
+                            </div>
+                            <div class="summary-limit-bar">
+                                <div class="summary-limit-fill" id="summary-limit-fill"></div>
+                            </div>
+                            <div class="summary-limit-text">
+                                <span id="summary-limit-label">Limite Disp.</span>
+                                <span id="summary-limit-value">R$ 0,00</span>
+                            </div>
+                        </div>
                         <h2>Resumo da Venda</h2>
                         <div class="summary-row"> <span class="label">Subtotal (<span id="item-count">0</span>
                                 itens)</span> <span class="value" id="summary-subtotal">R$ 0,00</span> </div>
@@ -1842,47 +2018,115 @@
             </div>
             <div class="modal-body">
                 <p>Valor total: <strong id="payment-total">R$ 0,00</strong>. Como o cliente irá pagar?</p>
+
                 <div class="payment-options" id="single-payment-options">
-                    <div class="payment-option" data-method="Dinheiro" data-primary-focus="true"> <i
-                            class='bx bx-dollar-circle' style="font-size: 32px;"></i> <span>Dinheiro (F6)</span> </div>
+                    <div class="payment-option" data-method="Dinheiro"> <i class='bx bx-dollar-circle'
+                            style="font-size: 32px;"></i> <span>Dinheiro (F6)</span> </div>
                     <div class="payment-option" data-method="PIX"> <i class='bx bx-scan' style="font-size: 32px;"></i>
                         <span>PIX (F7)</span>
                     </div>
                     <div class="payment-option" data-method="Cartão"> <i class='bx bx-credit-card'
                             style="font-size: 32px;"></i> <span>Cartão (F8)</span> </div>
+                    <div class="payment-option" data-method="Crediário" id="opt-crediario"> <i class='bx bx-user-check'
+                            style="font-size: 32px;"></i> <span>Crediário</span> </div>
                 </div>
+
+                <div class="crediario-section" id="crediario-section" style="visibility: false;">
+                    <label style="font-weight: 600; display:block; margin-bottom:8px;">Selecione o Cliente:</label>
+                    <div class="client-search-wrapper">
+                        <div style="position: relative; width: 100%;">
+                            <input type="text" id="crediario-search-input" placeholder="Digite o nome do cliente..."
+                                autocomplete="off">
+                            <div class="client-search-results" id="crediario-search-results"></div>
+                        </div>
+                        <button class="btn btn-primary" id="btn-quick-add-client" style="width: auto; padding: 0 16px;"
+                            title="Novo Cliente">
+                            <i class='bx bx-plus'></i>
+                        </button>
+                    </div>
+
+                    <div id="crediario-limit-feedback" style="display: none;">
+                        <div class="mini-limit-bar">
+                            <div class="mini-limit-fill" id="crediario-limit-fill"></div>
+                        </div>
+                        <div class="mini-limit-info">
+                            <span id="crediario-limit-text">Limite disponível: R$ 0,00</span>
+                            <span id="crediario-status-text"></span>
+                        </div>
+                    </div>
+                </div>
+
                 <button class="btn btn-secondary" id="split-payment-toggle-btn" style="margin-top: 20px;"> <i
                         class='bx bx-columns'></i> Dividir Pagamento </button>
+
                 <div class="split-payment-area" id="split-payment-area" style="display: none;">
                     <h4>Dividir Pagamento</h4>
                     <div class="split-payment-row">
                         <div class="form-group"> <label for="split-method-1">Forma 1</label> <select
                                 id="split-method-1">
-                                <option value="" disabled selected>Selecione...</option>
                                 <option value="Dinheiro">Dinheiro</option>
                                 <option value="PIX">PIX</option>
                                 <option value="Cartão">Cartão</option>
                             </select> </div>
                         <div class="form-group"> <label for="split-value-1">Valor 1 (R$)</label> <input type="number"
-                                id="split-value-1" step="0.01" min="0.01" placeholder="0,00"> </div>
+                                id="split-value-1" step="0.01"> </div>
                     </div>
                     <div class="split-payment-row">
                         <div class="form-group"> <label for="split-method-2">Forma 2</label> <select
                                 id="split-method-2">
-                                <option value="" disabled selected>Selecione...</option>
                                 <option value="Dinheiro">Dinheiro</option>
                                 <option value="PIX">PIX</option>
                                 <option value="Cartão">Cartão</option>
                             </select> </div>
                         <div class="form-group"> <label for="split-value-2">Valor 2 (R$)</label> <input type="number"
-                                id="split-value-2" step="0.01" min="0.01" placeholder="0,00"> </div>
+                                id="split-value-2" step="0.01"> </div>
                     </div>
                     <div class="split-payment-remaining" id="split-payment-remaining"> Restante: R$ 0,00 </div>
                     <button class="btn btn-primary" id="confirm-split-payment-btn" style="margin-top: 16px;" disabled>
                         Confirmar Divisão </button>
                 </div>
             </div>
+            <div class="modal-overlay" id="crediario-flow-modal">
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h3>Finalizar Crediário</h3>
+                        <button class="close-modal-btn" data-target="crediario-flow-modal"><i
+                                class='bx bx-x'></i></button>
+                    </div>
+                    <div class="modal-body">
+
+                        <div id="cred-step-1" class="qr-step-container">
+                            <div class="modal-icon info"><i class='bx bx-printer' style="font-size: 40px;"></i></div>
+                            <p class="step-instruction">Imprima o comprovante para assinatura do cliente.</p>
+                            <p class="step-subtext">Cliente: <strong id="cred-flow-client-name">...</strong></p>
+                            <button class="btn btn-primary" id="btn-force-print">
+                                <i class='bx bx-printer'></i> Imprimir Comprovante
+                            </button>
+                        </div>
+
+                        <div id="cred-step-2" class="qr-step-container locked-step"
+                            style="display:none; opacity: 0; transition: opacity 0.5s;">
+                            <p class="step-instruction">Anexar Comprovante Assinado</p>
+                            <p class="step-subtext" style="margin-bottom: 10px;">Escaneie para enviar a foto:</p>
+
+                            <div class="qr-img-wrapper">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://eletrobusiness.com.br/comprovante/buy/valid55102.html"
+                                    alt="QR Code Comprovante">
+                            </div>
+                            <p style="font-size: 0.8rem; color: #777;">Link: eletrobusiness.com.br/comprovante...</p>
+
+                            <div style="margin-top: 24px;">
+                                <button class="btn btn-success" id="btn-finish-crediario-final">
+                                    <i class='bx bx-check-double'></i> Concluir Conta e Salvar
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
         </div>
+    </div>
     </div>
 
     <!-- Modal 3: Recibo -->
@@ -2109,6 +2353,9 @@
             const TOKEN_EXPIRATION_KEY = 'caixaTokenExpiration';
             const TOKEN_DURATION_HOURS = 20;
 
+
+            let selectedCrediarioClient = null; // Para armazenar o cliente selecionado no pagamento
+
             // --- Estado da Aplicação ---
             let localProductCache = null;
             let localClientCache = null;
@@ -2229,6 +2476,296 @@
             const closeCaixaSaveBtn = document.getElementById('close-caixa-save-btn');
 
 
+            // Novos Seletores para Fluxo de Cliente
+            const clientSelectionModal = document.getElementById('client-selection-modal');
+            const clientSelectionInput = document.getElementById('client-selection-input');
+            const clientSelectionResults = document.getElementById('client-selection-results');
+            const clientSearchHint = document.getElementById('client-search-hint');
+            const btnNewClientModal = document.getElementById('btn-new-client-modal');
+            
+            // Seletores do Resumo (Sidebar)
+            const summaryClientCard = document.getElementById('summary-client-card');
+            const summaryClientNameText = document.getElementById('summary-client-name-text');
+            const btnChangeSummaryClient = document.getElementById('btn-change-summary-client');
+            const summaryLimitFill = document.getElementById('summary-limit-fill');
+            const summaryLimitValue = document.getElementById('summary-limit-value');
+
+
+            // --- Seletores Crediário ---
+            const crediarioSection = document.getElementById('crediario-section');
+            const crediarioSearchInput = document.getElementById('crediario-search-input');
+            const crediarioSearchResults = document.getElementById('crediario-search-results');
+            const btnQuickAddClient = document.getElementById('btn-quick-add-client');
+            const crediarioLimitFeedback = document.getElementById('crediario-limit-feedback');
+            const crediarioLimitFill = document.getElementById('crediario-limit-fill');
+            const crediarioLimitText = document.getElementById('crediario-limit-text');
+            const crediarioStatusText = document.getElementById('crediario-status-text');
+
+            // Modais e Botões do Fluxo Novo
+            const crediarioFlowModal = document.getElementById('crediario-flow-modal');
+            const btnForcePrint = document.getElementById('btn-force-print');
+            const btnFinishCrediarioFinal = document.getElementById('btn-finish-crediario-final');
+            const credStep1 = document.getElementById('cred-step-1');
+            const credStep2 = document.getElementById('cred-step-2');
+            const credFlowClientName = document.getElementById('cred-flow-client-name');
+
+
+            // --- Função: Atualizar UI do Modal Pagamento ---
+            // Modifique a função handlePaymentSelection existente ou a lógica de clique das opções
+            // para lidar com a seleção visual do 'Crediário' sem fechar o modal imediatamente.
+
+            
+
+            // Handler para Opções de Pagamento
+            paymentOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    const method = option.dataset.method;
+                    
+                    if (method === 'Crediário') {
+                        // 1. Fecha modal de pagamento
+                        closeModal(paymentModal);
+                        
+                        // 2. Abre modal de seleção de cliente
+                        // (Reseta a busca antes)
+                        clientSelectionInput.value = '';
+                        clientSelectionResults.innerHTML = '';
+                        clientSelectionResults.style.display = 'none';
+                        clientSearchHint.style.display = 'block';
+                        
+                        openModal(clientSelectionModal);
+                        setTimeout(() => clientSelectionInput.focus(), 100);
+                    } else {
+                        // Fluxo normal (Dinheiro, Pix, Cartão)
+                        // Se tinha um cliente selecionado antes, limpamos? 
+                        // Depende da regra de negócio. Aqui vamos limpar para evitar confusão.
+                        selectedCrediarioClient = null; 
+                        updateSummaryClientCard(); // Esconde o card
+                        
+                        handlePaymentSelection(method);
+                    }
+                });
+            });
+
+
+            // --- Busca de Cliente (Novo Modal) ---
+            clientSelectionInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                clientSelectionResults.innerHTML = '';
+                
+                if (term.length < 2) {
+                    clientSelectionResults.style.display = 'none';
+                    clientSearchHint.style.display = 'block';
+                    return;
+                }
+
+                clientSearchHint.style.display = 'none';
+
+                if (!localClientCache) { carregarClientesDaAPI(); return; }
+
+                const filtered = localClientCache.filter(c => 
+                    (c.nomeExibicao && c.nomeExibicao.toLowerCase().includes(term)) || 
+                    (c.apelido && c.apelido.toLowerCase().includes(term))
+                );
+
+                if (filtered.length > 0) {
+                    clientSelectionResults.style.display = 'block';
+                    filtered.forEach(client => {
+                        const div = document.createElement('div');
+                        div.className = 'client-result-item';
+                        // Mostra Nome + Saldo atual na busca
+                        div.innerHTML = `
+                            <div>
+                                <strong>${client.nomeExibicao}</strong> 
+                                <small style="color:#777">(${client.apelido || '-'})</small>
+                            </div>
+                            <div style="font-size:0.85rem; font-weight:600; color:${client.saldoDevedor > 0 ? 'var(--warning-red)' : 'var(--success-green)'}">
+                                Dívida: ${formatCurrency(client.saldoDevedor)}
+                            </div>
+                        `;
+                        div.addEventListener('click', () => confirmClientSelection(client));
+                        clientSelectionResults.appendChild(div);
+                    });
+                } else {
+                    clientSelectionResults.style.display = 'none';
+                    clientSearchHint.textContent = "Nenhum cliente encontrado.";
+                    clientSearchHint.style.display = 'block';
+                }
+            });
+
+            // Botão "+" no modal de busca
+            btnNewClientModal.addEventListener('click', () => {
+                closeModal(clientSelectionModal);
+                resetClienteModal();
+                openModal(addClienteModal);
+            });
+
+            // Ação ao Clicar num Cliente
+            const confirmClientSelection = (client) => {
+                selectedCrediarioClient = client;
+                selectedPaymentMethod = 'Crediário'; // Define o método
+                
+                // Atualiza UI
+                updateSummary(); // Para atualizar o texto "Pagamento: Crediário"
+                summaryPaymentMethod.textContent = "Crediário";
+                summaryPaymentMethod.style.fontWeight = '600';
+                
+                // Mostra o Card no Resumo
+                updateSummaryClientCard();
+                
+                // Fecha modal
+                closeModal(clientSelectionModal);
+            };
+
+            // Botão "Alterar" no Sidebar
+            btnChangeSummaryClient.addEventListener('click', () => {
+                clientSelectionInput.value = '';
+                clientSelectionResults.style.display = 'none';
+                clientSearchHint.style.display = 'block';
+                openModal(clientSelectionModal);
+                setTimeout(() => clientSelectionInput.focus(), 100);
+            });
+
+            const updateSummaryClientCard = () => {
+                if (selectedCrediarioClient && selectedPaymentMethod === 'Crediário') {
+                    summaryClientCard.style.display = 'block';
+                    summaryClientNameText.textContent = selectedCrediarioClient.nomeExibicao;
+                    
+                    // Cálculo do Limite em Tempo Real
+                    const limite = parseFloat(selectedCrediarioClient.limite) || 0;
+                    const dividaAntiga = parseFloat(selectedCrediarioClient.saldoDevedor) || 0;
+                    const compraAtual = lastSaleData ? lastSaleData.total : 0;
+                    
+                    // Disponível AGORA (antes de consolidar a compra atual)
+                    const disponivelReal = limite - dividaAntiga;
+                    
+                    // Como ficará APÓS a compra
+                    const saldoFinalPrevisto = disponivelReal - compraAtual;
+
+                    if (limite > 0) {
+                        summaryLimitValue.textContent = formatCurrency(saldoFinalPrevisto);
+                        
+                        // Barra de progresso baseada no uso total (Dívida + Compra)
+                        const usoTotal = dividaAntiga + compraAtual;
+                        let percentual = (usoTotal / limite) * 100;
+                        if (percentual > 100) percentual = 100;
+                        
+                        summaryLimitFill.style.width = `${percentual}%`;
+                        
+                        if (saldoFinalPrevisto < 0) {
+                            summaryLimitFill.classList.add('danger');
+                            summaryLimitValue.style.color = 'var(--warning-red)';
+                            summaryLimitValue.textContent = `Estourado: ${formatCurrency(saldoFinalPrevisto)}`;
+                        } else {
+                            summaryLimitFill.classList.remove('danger');
+                            summaryLimitValue.style.color = 'var(--text-dark)';
+                        }
+                    } else {
+                        // Sem limite definido
+                        summaryLimitFill.style.width = '0%';
+                        summaryLimitValue.textContent = "Ilimitado / Não def.";
+                    }
+
+                } else {
+                    summaryClientCard.style.display = 'none';
+                }
+            };
+
+            // IMPORTANTE: Chame updateSummaryClientCard() dentro de updateSummary()
+            // para que a barra de limite atualize se você adicionar mais itens no carrinho!
+            // --- Lógica de Busca de Cliente (Autocomplete) ---
+            crediarioSearchInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                crediarioSearchResults.innerHTML = '';
+
+                if (term.length < 2) {
+                    crediarioSearchResults.style.display = 'none';
+                    return;
+                }
+
+                if (!localClientCache) {
+                    // Se o cache estiver vazio, tenta carregar
+                    carregarClientesDaAPI();
+                    return;
+                }
+
+                const filtered = localClientCache.filter(c =>
+                    (c.nomeExibicao && c.nomeExibicao.toLowerCase().includes(term)) ||
+                    (c.apelido && c.apelido.toLowerCase().includes(term))
+                );
+
+                if (filtered.length > 0) {
+                    crediarioSearchResults.style.display = 'block';
+                    filtered.forEach(client => {
+                        const div = document.createElement('div');
+                        div.className = 'client-search-item';
+                        div.innerHTML = `<strong>${client.nomeExibicao}</strong> <small>(${client.apelido || ''})</small>`;
+                        div.addEventListener('click', () => selectCrediarioClient(client));
+                        crediarioSearchResults.appendChild(div);
+                    });
+                } else {
+                    crediarioSearchResults.style.display = 'none';
+                }
+            });
+
+            // Fecha resultados se clicar fora
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.client-search-wrapper')) {
+                    crediarioSearchResults.style.display = 'none';
+                }
+            });
+
+            // Botão + (Adicionar Cliente Rápido)
+            btnQuickAddClient.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Abre o modal existente de adicionar cliente
+                // Importante: Quando salvar lá, ele recarrega o cache, então a busca funcionará
+                resetClienteModal();
+                openModal(addClienteModal);
+            });
+
+            // --- Função: Selecionar Cliente e Validar Limite ---
+            const selectCrediarioClient = (client) => {
+                selectedCrediarioClient = client;
+                crediarioSearchInput.value = client.nomeExibicao;
+                crediarioSearchResults.style.display = 'none';
+
+                // Atualiza UI de Limite
+                updateLimitBar(client);
+            };
+
+            const updateLimitBar = (client) => {
+                crediarioLimitFeedback.style.display = 'block';
+
+                const limite = parseFloat(client.limite) || 0;
+                const dividaAtual = parseFloat(client.saldoDevedor) || 0;
+                const compraAtual = lastSaleData ? lastSaleData.total : 0;
+
+                const disponivel = limite - dividaAtual;
+                const disponivelPosCompra = disponivel - compraAtual;
+
+                crediarioLimitText.textContent = `Limite Disp.: ${formatCurrency(disponivel)}`;
+
+                let percentualUso = 0;
+                if (limite > 0) {
+                    // Calcula quanto a barra deve encher com a Dívida + Compra Atual
+                    percentualUso = ((dividaAtual + compraAtual) / limite) * 100;
+                }
+
+                if (percentualUso > 100) percentualUso = 100;
+                crediarioLimitFill.style.width = `${percentualUso}%`;
+
+                if (disponivelPosCompra < 0) {
+                    crediarioLimitFill.classList.add('danger');
+                    crediarioStatusText.textContent = "Estourará o limite!";
+                    crediarioStatusText.style.color = "var(--warning-red)";
+                } else {
+                    crediarioLimitFill.classList.remove('danger');
+                    crediarioStatusText.textContent = "Compra aprovada";
+                    crediarioStatusText.style.color = "var(--success-green)";
+                }
+            };
+
+
             // --- Funções de Token ---
             const verificarToken = () => { /* ... (sem alterações) ... */ const token = localStorage.getItem(TOKEN_KEY); const expiration = localStorage.getItem(TOKEN_EXPIRATION_KEY); const now = Date.now(); if (token && expiration && now < parseInt(expiration)) { console.log("Token válido."); return true; } else { console.log("Token inválido/expirado."); localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(TOKEN_EXPIRATION_KEY); return false; } };
             const salvarToken = () => { /* ... (sem alterações) ... */ const now = Date.now(); const expirationTime = now + TOKEN_DURATION_HOURS * 60 * 60 * 1000; const tokenValue = `caixaAberto_${now}`; localStorage.setItem(TOKEN_KEY, tokenValue); localStorage.setItem(TOKEN_EXPIRATION_KEY, expirationTime.toString()); console.log("Token salvo, expira:", new Date(expirationTime)); };
@@ -2241,7 +2778,7 @@
 
             // --- Funções de Renderização ---
             const renderCart = () => { /* ... (sem alterações) ... */ cartItemsBody.innerHTML = ''; if (cart.length === 0) { emptyState.style.display = 'flex'; itemListTable.style.display = 'none'; itemListContainer.classList.add('empty'); } else { emptyState.style.display = 'none'; itemListTable.style.display = 'table'; itemListContainer.classList.remove('empty'); cart.forEach(item => { const tr = document.createElement('tr'); tr.dataset.id = item.id; if (item.isNew) { tr.classList.add('new-item-flash'); delete item.isNew; setTimeout(() => { tr.classList.remove('new-item-flash'); }, 500); } tr.innerHTML = `<td><div class="product-info"><div class="product-image"><i class='bx bx-package'></i></div><div class="product-details"><span class="name">${item.name}</span><span class="barcode">#${item.id}</span></div></div></td><td><div class="quantity-control"><button class="qty-btn" data-action="decrease" data-id="${item.id}"><i class='bx bx-minus'></i></button><span class="qty-display">${item.quantity}</span><button class="qty-btn" data-action="increase" data-id="${item.id}"><i class='bx bx-plus'></i></button></div></td><td class="item-price">${formatCurrency(item.price)}</td> <td class="item-total">${formatCurrency(item.price * item.quantity)}</td><td><button class="remove-btn" data-id="${item.id}" title="Remover item"><i class='bx bx-trash'></i></button></td>`; cartItemsBody.appendChild(tr); }); } updateSummary(); };
-            const updateSummary = () => { /* ... (sem alterações) ... */ const subtotal = getSubtotal(); const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0); const total = subtotal - discount; summarySubtotal.textContent = formatCurrency(subtotal); summaryDiscount.textContent = formatCurrency(discount > 0 ? discount * -1 : 0); if (discount > 0 && subtotal > 0) { const percentage = (discount / subtotal) * 100; discountPercentageText.textContent = `(${percentage.toFixed(2)}% efetivo)`; effectiveDiscountDisplay.style.display = 'flex'; } else { discountPercentageText.textContent = ''; effectiveDiscountDisplay.style.display = 'none'; } summaryTotal.textContent = formatCurrency(total); itemCount.textContent = totalItems; paymentTotalEl.textContent = formatCurrency(total); receiptTotalEl.textContent = formatCurrency(total); if (totalItems > 0 || cart.length > 0) { summaryTotal.classList.add('pop-animation'); setTimeout(() => { summaryTotal.classList.remove('pop-animation'); }, 300); } lastSaleData = { subtotal: subtotal, discount: discount, total: total, paymentMethod: selectedPaymentMethod }; }; // Atualiza lastSaleData aqui
+            const updateSummary = () => { /* ... (sem alterações) ... */ const subtotal = getSubtotal(); const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0); const total = subtotal - discount; summarySubtotal.textContent = formatCurrency(subtotal); summaryDiscount.textContent = formatCurrency(discount > 0 ? discount * -1 : 0); if (discount > 0 && subtotal > 0) { const percentage = (discount / subtotal) * 100; discountPercentageText.textContent = `(${percentage.toFixed(2)}% efetivo)`; effectiveDiscountDisplay.style.display = 'flex'; } else { discountPercentageText.textContent = ''; effectiveDiscountDisplay.style.display = 'none'; } summaryTotal.textContent = formatCurrency(total); itemCount.textContent = totalItems; paymentTotalEl.textContent = formatCurrency(total); receiptTotalEl.textContent = formatCurrency(total); if (totalItems > 0 || cart.length > 0) { summaryTotal.classList.add('pop-animation'); setTimeout(() => { summaryTotal.classList.remove('pop-animation'); }, 300); } lastSaleData = { subtotal: subtotal, discount: discount, total: total, paymentMethod: selectedPaymentMethod }; updateSummaryClientCard(); }; // Atualiza lastSaleData aqui
             const renderProdutosPage = () => { /* ... (sem alterações, usa cache) ... */ produtosTableContainer.innerHTML = ''; if (!localProductCache) { produtosTableContainer.innerHTML = '<p style="text-align: center; color: var(--text-light);"><i class="bx bx-loader-alt bx-spin"></i> Carregando...</p>'; if (localProductCache === null) carregarCacheDeProdutos(); return; } if (localProductCache.length === 0) { produtosTableContainer.innerHTML = '<p style="text-align: center; color: var(--text-light);">Nenhum produto.</p>'; return; } const table = document.createElement('table'); table.className = 'data-table products-table'; table.innerHTML = `<thead><tr><th>Nome</th><th>Código</th><th>Preço</th></tr></thead><tbody></tbody>`; const tbody = table.querySelector('tbody'); localProductCache.forEach(product => { const tr = document.createElement('tr'); tr.innerHTML = `<td>${product.name}</td><td>${product.id}</td><td class="currency">${formatCurrency(product.price)}</td>`; tbody.appendChild(tr); }); produtosTableContainer.appendChild(table); };
 
             const renderClientesPage = () => {
@@ -2376,7 +2913,56 @@
             const debounce = (func, delay) => { clearTimeout(barcodeScanTimeout); barcodeScanTimeout = setTimeout(func, delay); };
             const handleQuickAddSubmit = async () => { const name = quickAddName.value; const price = parseFloat(quickAddPrice.value); if (!name || isNaN(price) || price <= 0) { showCustomAlert("Inválido", "Nome e preço."); return; } const newProduct = { id: lastScannedBarcode, name: name, price: price }; const produtoCadastrado = await cadastrarProdutoNaAPI(newProduct); if (produtoCadastrado) { addToCart(produtoCadastrado); closeModal(quickAddModal); } };
             const handlePaymentSelection = (method) => { if (splitPaymentArea.style.display === 'none') { selectedPaymentMethod = method; summaryPaymentMethod.textContent = method; summaryPaymentMethod.style.fontWeight = '600'; summaryPaymentMethod.style.color = 'var(--text-dark)'; updateSummary(); closeModal(paymentModal); } else { showCustomAlert("Atenção", "Confirme/cancele divisão."); } };
-            const handlePrintReceipt = () => { if (!lastSaleData || cart.length === 0) { showCustomAlert("Erro", "Sem dados venda."); return; } const now = new Date(); const cnpj = "45.692.327/0001-00"; const nomeFantasia = "Dtudo Variedades e Utilidades"; const endereco = "Rua Jarbas Passarinho, SN"; let itemLinesHtml = ''; cart.forEach(item => { itemLinesHtml += `<div class="receipt-item"><div class="item-name">${item.name}</div><div class="item-details">${item.quantity} x ${formatCurrency(item.price)}<span>${formatCurrency(item.quantity * item.price)}</span></div></div>`; }); const receiptHtml = `<html><head><title>Recibo</title><style>@media print{body{margin:0;padding:0;background:#fff;}.print-iframe{display:none;}}@page{margin:5mm;}body{font-family:'Courier New','monospace';font-size:10pt;color:#000;max-width:300px;margin:0 auto;padding:10px;}.receipt-header{text-align:center;padding-bottom:10px;border-bottom:1px dashed #000;}.receipt-header h3{margin:0 0 5px 0;font-size:1.2rem;}.receipt-header p{margin:2px 0;font-size:0.9rem;}.receipt-title{text-align:center;font-weight:bold;margin:10px 0;font-size:0.9rem;}.receipt-items{border-bottom:1px dashed #000;padding-bottom:10px;}.receipt-item{margin-bottom:8px;font-size:0.9rem;}.item-name{font-weight:bold;}.item-details{display:flex;justify-content:space-between;padding-left:10px;}.receipt-summary{padding-top:10px;}.summary-line{display:flex;justify-content:space-between;margin-bottom:5px;font-size:0.9rem;}.summary-line.total{font-size:1.1rem;font-weight:bold;margin-top:8px;}.receipt-footer{text-align:center;margin-top:20px;font-size:0.8rem;}</style></head><body><div class="receipt-header"><h3>${nomeFantasia}</h3><p>${endereco}</p><p>CNPJ: ${cnpj}</p><p>${formatTimestamp(now)}</p></div><p class="receipt-title">COMPROVANTE (NÃO É DOCUMENTO FISCAL)</p><div class="receipt-items">${itemLinesHtml}</div><div class="receipt-summary"><div class="summary-line"><span>Subtotal:</span><span>${formatCurrency(lastSaleData.subtotal)}</span></div><div class="summary-line"><span>Desconto:</span><span>${formatCurrency(lastSaleData.discount > 0 ? lastSaleData.discount * -1 : 0)}</span></div><div class="summary-line total"><span>TOTAL:</span><span>${formatCurrency(lastSaleData.total)}</span></div><div class="summary-line"><span>Pagamento:</span><span>${selectedPaymentMethod || 'N/A'}</span></div></div><div class="receipt-footer"><p>Obrigado!</p></div></body></html>`; const iframe = document.createElement('iframe'); iframe.style.display = 'none'; iframe.className = 'print-iframe'; document.body.appendChild(iframe); iframe.contentDocument.open(); iframe.contentDocument.write(receiptHtml); iframe.contentDocument.close(); iframe.onload = () => { try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch (error) { console.error("Erro imprimir:", error); showCustomAlert("Erro Impressão", "Não foi possível abrir."); } setTimeout(() => { document.body.removeChild(iframe); }, 1000); }; };
+            const handlePrintReceipt = (clientNameForSignature = null) => {
+                if (!lastSaleData || cart.length === 0) {
+                    showCustomAlert("Erro", "Sem dados venda."); return;
+                }
+                const now = new Date();
+                const cnpj = "45.692.327/0001-00";
+                const nomeFantasia = "Dtudo Variedades e Utilidades";
+                const endereco = "Rua Jarbas Passarinho, SN";
+
+                let itemLinesHtml = '';
+                cart.forEach(item => {
+                    itemLinesHtml += `<div class="receipt-item"><div class="item-name">${item.name}</div><div class="item-details">${item.quantity} x ${formatCurrency(item.price)}<span>${formatCurrency(item.quantity * item.price)}</span></div></div>`;
+                });
+
+                // LÓGICA DE ASSINATURA
+                let signatureHtml = '';
+                if (clientNameForSignature) {
+                    signatureHtml = `
+                        <div style="margin-top: 30px; text-align: center; border-top: 1px solid #000; padding-top: 5px;">
+                            Assinatura do Cliente
+                        </div>
+                        <div style="text-align: center; font-weight: bold; margin-bottom: 20px;">
+                            ${clientNameForSignature}
+                        </div>
+                        <div style="text-align: center; font-size: 0.8rem;">
+                            Reconheço a dívida deste comprovante.
+                        </div>
+                    `;
+                }
+
+                const receiptHtml = `<html><head><title>Recibo</title><style>@media print{body{margin:0;padding:0;background:#fff;}.print-iframe{display:none;}}@page{margin:5mm;}body{font-family:'Courier New','monospace';font-size:10pt;color:#000;max-width:300px;margin:0 auto;padding:10px;}.receipt-header{text-align:center;padding-bottom:10px;border-bottom:1px dashed #000;}.receipt-header h3{margin:0 0 5px 0;font-size:1.2rem;}.receipt-header p{margin:2px 0;font-size:0.9rem;}.receipt-title{text-align:center;font-weight:bold;margin:10px 0;font-size:0.9rem;}.receipt-items{border-bottom:1px dashed #000;padding-bottom:10px;}.receipt-item{margin-bottom:8px;font-size:0.9rem;}.item-name{font-weight:bold;}.item-details{display:flex;justify-content:space-between;padding-left:10px;}.receipt-summary{padding-top:10px;}.summary-line{display:flex;justify-content:space-between;margin-bottom:5px;font-size:0.9rem;}.summary-line.total{font-size:1.1rem;font-weight:bold;margin-top:8px;}.receipt-footer{text-align:center;margin-top:20px;font-size:0.8rem;}</style></head><body><div class="receipt-header"><h3>${nomeFantasia}</h3><p>${endereco}</p><p>CNPJ: ${cnpj}</p><p>${formatTimestamp(now)}</p></div><p class="receipt-title">COMPROVANTE (NÃO É DOCUMENTO FISCAL)</p><div class="receipt-items">${itemLinesHtml}</div><div class="receipt-summary"><div class="summary-line"><span>Subtotal:</span><span>${formatCurrency(lastSaleData.subtotal)}</span></div><div class="summary-line"><span>Desconto:</span><span>${formatCurrency(lastSaleData.discount > 0 ? lastSaleData.discount * -1 : 0)}</span></div><div class="summary-line total"><span>TOTAL:</span><span>${formatCurrency(lastSaleData.total)}</span></div><div class="summary-line"><span>Pagamento:</span><span>${selectedPaymentMethod || 'N/A'}</span></div></div> ${signatureHtml} <div class="receipt-footer"><p>Obrigado!</p></div></body></html>`;
+
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.className = 'print-iframe';
+                document.body.appendChild(iframe);
+                iframe.contentDocument.open();
+                iframe.contentDocument.write(receiptHtml);
+                iframe.contentDocument.close();
+                iframe.onload = () => {
+                    try {
+                        iframe.contentWindow.focus();
+                        iframe.contentWindow.print();
+                    } catch (error) {
+                        console.error("Erro imprimir:", error);
+                        showCustomAlert("Erro Impressão", "Não foi possível abrir.");
+                    }
+                    setTimeout(() => { document.body.removeChild(iframe); }, 1000);
+                };
+            };
             const updateDiscountNavFocus = (focusEl = true) => { discountNavElements.forEach(el => el.classList.remove('nav-focus')); const currentEl = discountNavElements[discountNavIndex]; if (currentEl) { currentEl.classList.add('nav-focus'); if (focusEl) { currentEl.focus(); if (currentEl.tagName === 'INPUT') { currentEl.select(); } } removeDiscountHint.style.display = (currentEl.id === 'remove-discount-btn') ? 'block' : 'none'; } };
             const navigateClienteSteps = (direction) => { const nextStep = currentClienteStep + direction; if (direction === 1 && currentClienteStep === 1) { if (!validateStep1()) return; } if (nextStep >= 1 && nextStep <= 2) { document.getElementById(`cliente-step-${currentClienteStep}`).classList.remove('active'); document.getElementById(`cliente-step-${nextStep}`).classList.add('active'); currentClienteStep = nextStep; updateClienteModalUI(); } };
             const updateClienteModalUI = () => { addClienteProgress.style.width = currentClienteStep === 1 ? "50%" : "100%"; clientePrevBtn.style.display = currentClienteStep === 1 ? "none" : "inline-flex"; clienteNextBtn.style.display = currentClienteStep === 2 ? "none" : "inline-flex"; clienteSaveBtn.style.display = currentClienteStep === 2 ? "inline-flex" : "none"; const firstInput = document.querySelector(`#cliente-step-${currentClienteStep} [data-primary-focus="true"], #cliente-step-${currentClienteStep} input, #cliente-step-${currentClienteStep} textarea`); if (firstInput) { setTimeout(() => firstInput.focus(), 150); } };
@@ -2406,7 +2992,119 @@
             splitPaymentToggleBtn.addEventListener('click', () => { const isActive = splitPaymentArea.style.display !== 'none'; splitPaymentArea.style.display = isActive ? 'none' : 'block'; singlePaymentOptions.style.display = isActive ? 'grid' : 'none'; splitPaymentToggleBtn.innerHTML = isActive ? "<i class='bx bx-columns'></i> Dividir Pagamento" : "<i class='bx bx-x'></i> Cancelar Divisão"; splitPaymentToggleBtn.classList.toggle('active'); if (!isActive) { currentSplitPayments.totalSaleValue = lastSaleData?.total || 0; updateSplitRemaining(); splitMethod1.focus(); } else { confirmSplitPaymentBtn.disabled = true; } });
             [splitValue1, splitValue2, splitMethod1, splitMethod2].forEach(el => { el.addEventListener('input', updateSplitRemaining); el.addEventListener('change', updateSplitRemaining); });
             confirmSplitPaymentBtn.addEventListener('click', () => { if (Math.abs(currentSplitPayments.remaining) >= 0.01) { showCustomAlert("Erro", "Soma não bate."); return; } if (!splitMethod1.value || !splitMethod2.value || splitMethod1.value === splitMethod2.value) { showCustomAlert("Erro", "Selecione 2 formas diferentes."); return; } currentSplitPayments.method1 = splitMethod1.value; currentSplitPayments.value1 = parseFloat(splitValue1.value) || 0; currentSplitPayments.method2 = splitMethod2.value; currentSplitPayments.value2 = parseFloat(splitValue2.value) || 0; selectedPaymentMethod = `Dividido (${currentSplitPayments.method1} + ${currentSplitPayments.method2})`; summaryPaymentMethod.textContent = selectedPaymentMethod; summaryPaymentMethod.style.fontWeight = '600'; summaryPaymentMethod.style.color = 'var(--text-dark)'; updateSummary(); closeModal(paymentModal); });
-            finishSaleBtn.addEventListener('click', async () => { if (cart.length === 0) { showCustomAlert("Vazio", "Adicione itens."); return; } if (!selectedPaymentMethod) { showCustomAlert("Pagamento", "Selecione forma."); openModal(paymentModal); return; } finishSaleBtn.disabled = true; finishSaleBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Registrando..."; let paymentsToSend = []; if (selectedPaymentMethod.startsWith("Dividido")) { paymentsToSend.push({ method: currentSplitPayments.method1, value: currentSplitPayments.value1 }); paymentsToSend.push({ method: currentSplitPayments.method2, value: currentSplitPayments.value2 }); } else { paymentsToSend.push({ method: selectedPaymentMethod, value: lastSaleData.total }); } try { await registrarVendaAtual(paymentsToSend); openModal(receiptModal); } catch (error) { console.error("Erro registro antes recibo:", error); showCustomAlert("Erro Registro", `Não foi possível registrar: ${error.message}. Tente de novo.`); } finally { finishSaleBtn.disabled = false; finishSaleBtn.innerHTML = "<i class='bx bx-check-circle'></i> Finalizar (F9)"; } });
+
+            finishSaleBtn.addEventListener('click', async () => {
+                if (cart.length === 0) { showCustomAlert("Vazio", "Adicione itens."); return; }
+                
+                if (!selectedPaymentMethod) { 
+                    showCustomAlert("Pagamento", "Selecione forma."); 
+                    openModal(paymentModal); 
+                    return; 
+                }
+
+                // Verifica Crediário
+                if (selectedPaymentMethod === 'Crediário') {
+                    if (!selectedCrediarioClient) {
+                        // Se por algum motivo o método é crediário mas não tem cliente (bug de estado), abre seleção
+                        openModal(clientSelectionModal);
+                        return;
+                    }
+
+                    // Abre Fluxo de Impressão/QR (Código que criamos no passo anterior)
+                    credFlowClientName.textContent = selectedCrediarioClient.nomeExibicao;
+                    credStep1.style.display = 'block';
+                    credStep2.style.display = 'none';
+                    credStep2.classList.add('locked-step');
+                    openModal(crediarioFlowModal);
+                    return;
+                }
+
+                // --- FLUXO NORMAL (Dinheiro, Pix, Cartão) ---
+                finishSaleBtn.disabled = true;
+                finishSaleBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Registrando...";
+
+                let paymentsToSend = [];
+                if (selectedPaymentMethod && selectedPaymentMethod.startsWith("Dividido")) {
+                    paymentsToSend.push({ method: currentSplitPayments.method1, value: currentSplitPayments.value1 });
+                    paymentsToSend.push({ method: currentSplitPayments.method2, value: currentSplitPayments.value2 });
+                } else {
+                    paymentsToSend.push({ method: selectedPaymentMethod, value: lastSaleData.total });
+                }
+
+                try {
+                    await registrarVendaAtual(paymentsToSend);
+                    openModal(receiptModal);
+                } catch (error) {
+                    console.error("Erro registro:", error);
+                    showCustomAlert("Erro Registro", `Não foi possível registrar: ${error.message}.`);
+                } finally {
+                    finishSaleBtn.disabled = false;
+                    finishSaleBtn.innerHTML = "<i class='bx bx-check-circle'></i> Finalizar (F9)";
+                }
+            });
+
+            // 1. Botão Imprimir (Obrigatório)
+            btnForcePrint.addEventListener('click', () => {
+                // Chama a impressão passando o nome do cliente para adicionar a assinatura
+                handlePrintReceipt(selectedCrediarioClient.nomeExibicao);
+
+                // Libera o próximo passo após um pequeno delay (simulando tempo de impressão)
+                setTimeout(() => {
+                    credStep1.style.display = 'none';
+                    credStep2.style.display = 'block';
+
+                    // Animação de entrada
+                    setTimeout(() => {
+                        credStep2.style.opacity = '1';
+                        credStep2.classList.remove('locked-step');
+                    }, 100);
+                }, 2000);
+            });
+
+            // 2. Botão Concluir Final (Salvar no Backend)
+            btnFinishCrediarioFinal.addEventListener('click', async () => {
+                btnFinishCrediarioFinal.disabled = true;
+                btnFinishCrediarioFinal.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Processando...";
+
+                try {
+                    const timestamp = formatTimestamp(new Date());
+
+                    // 1. Registra na aba Vendas (Fluxo de Caixa)
+                    // Usamos a mesma função de sempre, enviando como 'Crediário'
+                    const paymentsToSend = [{ method: 'Crediário', value: lastSaleData.total }];
+                    await registrarVendaAtual(paymentsToSend);
+
+                    // 2. Registra na aba Logs/Clientes (Aumentar Dívida)
+                    // Usamos a função registrarTransacao (que agora só loga, como pedido)
+                    // IMPORTANTE: Valor POSITIVO aqui, pois é uma NOVA DÍVIDA (compra)
+                    const paramsCliente = new URLSearchParams({
+                        action: 'registrarTransacao',
+                        idCliente: selectedCrediarioClient.idCliente,
+                        tipo: 'Compra', // Tipo Log
+                        valor: lastSaleData.total.toFixed(2), // Valor positivo (compra)
+                        timestamp: timestamp
+                    });
+
+                    await fetch(`${SCRIPT_URL}?${paramsCliente.toString()}`, { method: 'GET' });
+
+                    // Sucesso Total
+                    closeModal(crediarioFlowModal);
+                    showCustomAlert("Sucesso", "Venda no Crediário registrada!");
+
+                    // Limpa tudo
+                    clearCart();
+                    selectedCrediarioClient = null;
+                    crediarioSection.style.display = 'none';
+                    barcodeInput.focus();
+
+                } catch (error) {
+                    console.error("Erro no fluxo crediário:", error);
+                    showCustomAlert("Erro", "Falha ao salvar venda. Tente novamente.");
+                    btnFinishCrediarioFinal.disabled = false;
+                    btnFinishCrediarioFinal.innerHTML = "<i class='bx bx-check-double'></i> Concluir Conta e Salvar";
+                }
+            });
+
             cancelSaleBtn.addEventListener('click', () => { if (cart.length === 0) return; showCustomConfirm("Cancelar Venda", "Tem certeza?", () => { clearCart(); closeModal(confirmModal); }); });
             confirmActionBtn.addEventListener('click', () => { if (confirmCallback) { confirmCallback(); confirmCallback = null; } });
             document.querySelectorAll('.close-modal-btn').forEach(btn => { btn.addEventListener('click', (e) => { const modal = e.target.closest('.modal-overlay'); if (modal && modal.id !== 'receipt-modal' && modal.id !== 'open-caixa-modal') { closeModal(modal); if (modal.id === 'add-cliente-modal') { resetClienteModal(); } else if (modal.id === 'close-caixa-modal') { resetFecharCaixaModal(); } } }); });
@@ -2642,16 +3340,16 @@
                 document.getElementById('detail-cliente-endereco').textContent = cliente.endereco || 'Não informado';
 
                 // --- Lógica da Barra de Limite ---
-                const limite = parseFloat(cliente.limite) || 0; 
+                const limite = parseFloat(cliente.limite) || 0;
                 const saldo = parseFloat(cliente.saldoDevedor) || 0;
-                
+
                 // Define o limite no texto
                 detailLimitTotal.textContent = formatCurrency(limite);
 
                 if (limite > 0) {
                     const disponivel = limite - saldo;
                     const porcentagemUso = (saldo / limite) * 100;
-                    
+
                     // Atualiza textos
                     detailLimitAvailable.textContent = `Disponível: ${formatCurrency(disponivel)}`;
                     detailLimitPercent.textContent = `${porcentagemUso.toFixed(1)}% usado`;
@@ -2690,7 +3388,7 @@
             if (btnAlterarLimite) {
                 btnAlterarLimite.addEventListener('click', () => {
                     showCustomAlert(
-                        "Acesso Restrito", 
+                        "Acesso Restrito",
                         "Somente um administrador pode alterar o limite de crédito de forma segura no momento."
                     );
                 });
@@ -2743,8 +3441,8 @@
 
                 // --- PREPARAÇÃO REQUISIÇÃO 2: ABATIMENTO DÍVIDA (Clientes) ---
                 // Envia valor negativo para reduzir o saldo devedor na planilha
-                const valorAbatimento = (valor * -1).toFixed(2); 
-                
+                const valorAbatimento = (valor * -1).toFixed(2);
+
                 const paramsCliente = new URLSearchParams({
                     action: 'registrarTransacao', // Nome da ação que seu Google Script deve esperar
                     idCliente: cliente.idCliente,
@@ -2783,10 +3481,10 @@
                 // Opcional: Ler a resposta do cliente para garantir que o script processou "success"
                 const resultCliente = await resCliente.json();
                 if (resultCliente.status !== 'success') {
-                     console.warn("Aviso do Script Cliente:", resultCliente.message);
-                     // Não vamos jogar erro aqui se a venda passou, apenas logar o aviso
+                    console.warn("Aviso do Script Cliente:", resultCliente.message);
+                    // Não vamos jogar erro aqui se a venda passou, apenas logar o aviso
                 }
-                
+
                 return true;
             }
 
