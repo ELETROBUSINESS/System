@@ -2009,6 +2009,47 @@
         </div>
     </div>
 
+    <!-- Modal crediario select-->
+     <div class="modal-overlay" id="crediario-flow-modal">
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h3>Finalizar Crediário</h3>
+                        <button class="close-modal-btn" data-target="crediario-flow-modal"><i
+                                class='bx bx-x'></i></button>
+                    </div>
+                    <div class="modal-body">
+
+                        <div id="cred-step-1" class="qr-step-container">
+                            <div class="modal-icon info"><i class='bx bx-printer' style="font-size: 40px;"></i></div>
+                            <p class="step-instruction">Imprima o comprovante para assinatura do cliente.</p>
+                            <p class="step-subtext">Cliente: <strong id="cred-flow-client-name">...</strong></p>
+                            <button class="btn btn-primary" id="btn-force-print">
+                                <i class='bx bx-printer'></i> Imprimir Comprovante
+                            </button>
+                        </div>
+
+                        <div id="cred-step-2" class="qr-step-container locked-step"
+                            style="display:none; opacity: 0; transition: opacity 0.5s;">
+                            <p class="step-instruction">Anexar Comprovante Assinado</p>
+                            <p class="step-subtext" style="margin-bottom: 10px;">Escaneie para enviar a foto:</p>
+
+                            <div class="qr-img-wrapper">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://eletrobusiness.com.br/comprovante/buy/valid55102.html"
+                                    alt="QR Code Comprovante">
+                            </div>
+                            <p style="font-size: 0.8rem; color: #777;">Link: eletrobusiness.com.br/comprovante...</p>
+
+                            <div style="margin-top: 24px;">
+                                <button class="btn btn-success" id="btn-finish-crediario-final">
+                                    <i class='bx bx-check-double'></i> Concluir Conta e Salvar
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
     <!-- Modal 2: Seleção de Pagamento (Com Split) -->
     <div class="modal-overlay" id="payment-modal">
         <div class="modal-content">
@@ -2030,20 +2071,6 @@
                     <div class="payment-option" data-method="Crediário" id="opt-crediario"> <i class='bx bx-user-check'
                             style="font-size: 32px;"></i> <span>Crediário</span> </div>
                 </div>
-
-                <div class="crediario-section" id="crediario-section" style="visibility: false;">
-                    <label style="font-weight: 600; display:block; margin-bottom:8px;">Selecione o Cliente:</label>
-                    <div class="client-search-wrapper">
-                        <div style="position: relative; width: 100%;">
-                            <input type="text" id="crediario-search-input" placeholder="Digite o nome do cliente..."
-                                autocomplete="off">
-                            <div class="client-search-results" id="crediario-search-results"></div>
-                        </div>
-                        <button class="btn btn-primary" id="btn-quick-add-client" style="width: auto; padding: 0 16px;"
-                            title="Novo Cliente">
-                            <i class='bx bx-plus'></i>
-                        </button>
-                    </div>
 
                     <div id="crediario-limit-feedback" style="display: none;">
                         <div class="mini-limit-bar">
@@ -2084,45 +2111,6 @@
                     <div class="split-payment-remaining" id="split-payment-remaining"> Restante: R$ 0,00 </div>
                     <button class="btn btn-primary" id="confirm-split-payment-btn" style="margin-top: 16px;" disabled>
                         Confirmar Divisão </button>
-                </div>
-            </div>
-            <div class="modal-overlay" id="crediario-flow-modal">
-                <div class="modal-content" style="max-width: 500px;">
-                    <div class="modal-header">
-                        <h3>Finalizar Crediário</h3>
-                        <button class="close-modal-btn" data-target="crediario-flow-modal"><i
-                                class='bx bx-x'></i></button>
-                    </div>
-                    <div class="modal-body">
-
-                        <div id="cred-step-1" class="qr-step-container">
-                            <div class="modal-icon info"><i class='bx bx-printer' style="font-size: 40px;"></i></div>
-                            <p class="step-instruction">Imprima o comprovante para assinatura do cliente.</p>
-                            <p class="step-subtext">Cliente: <strong id="cred-flow-client-name">...</strong></p>
-                            <button class="btn btn-primary" id="btn-force-print">
-                                <i class='bx bx-printer'></i> Imprimir Comprovante
-                            </button>
-                        </div>
-
-                        <div id="cred-step-2" class="qr-step-container locked-step"
-                            style="display:none; opacity: 0; transition: opacity 0.5s;">
-                            <p class="step-instruction">Anexar Comprovante Assinado</p>
-                            <p class="step-subtext" style="margin-bottom: 10px;">Escaneie para enviar a foto:</p>
-
-                            <div class="qr-img-wrapper">
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://eletrobusiness.com.br/comprovante/buy/valid55102.html"
-                                    alt="QR Code Comprovante">
-                            </div>
-                            <p style="font-size: 0.8rem; color: #777;">Link: eletrobusiness.com.br/comprovante...</p>
-
-                            <div style="margin-top: 24px;">
-                                <button class="btn btn-success" id="btn-finish-crediario-final">
-                                    <i class='bx bx-check-double'></i> Concluir Conta e Salvar
-                                </button>
-                            </div>
-                        </div>
-
-                    </div>
                 </div>
             </div>
         </div>
@@ -2490,17 +2478,6 @@
             const summaryLimitFill = document.getElementById('summary-limit-fill');
             const summaryLimitValue = document.getElementById('summary-limit-value');
 
-
-            // --- Seletores Crediário ---
-            const crediarioSection = document.getElementById('crediario-section');
-            const crediarioSearchInput = document.getElementById('crediario-search-input');
-            const crediarioSearchResults = document.getElementById('crediario-search-results');
-            const btnQuickAddClient = document.getElementById('btn-quick-add-client');
-            const crediarioLimitFeedback = document.getElementById('crediario-limit-feedback');
-            const crediarioLimitFill = document.getElementById('crediario-limit-fill');
-            const crediarioLimitText = document.getElementById('crediario-limit-text');
-            const crediarioStatusText = document.getElementById('crediario-status-text');
-
             // Modais e Botões do Fluxo Novo
             const crediarioFlowModal = document.getElementById('crediario-flow-modal');
             const btnForcePrint = document.getElementById('btn-force-print');
@@ -2667,101 +2644,6 @@
 
                 } else {
                     summaryClientCard.style.display = 'none';
-                }
-            };
-
-            // IMPORTANTE: Chame updateSummaryClientCard() dentro de updateSummary()
-            // para que a barra de limite atualize se você adicionar mais itens no carrinho!
-            // --- Lógica de Busca de Cliente (Autocomplete) ---
-            crediarioSearchInput.addEventListener('input', (e) => {
-                const term = e.target.value.toLowerCase();
-                crediarioSearchResults.innerHTML = '';
-
-                if (term.length < 2) {
-                    crediarioSearchResults.style.display = 'none';
-                    return;
-                }
-
-                if (!localClientCache) {
-                    // Se o cache estiver vazio, tenta carregar
-                    carregarClientesDaAPI();
-                    return;
-                }
-
-                const filtered = localClientCache.filter(c =>
-                    (c.nomeExibicao && c.nomeExibicao.toLowerCase().includes(term)) ||
-                    (c.apelido && c.apelido.toLowerCase().includes(term))
-                );
-
-                if (filtered.length > 0) {
-                    crediarioSearchResults.style.display = 'block';
-                    filtered.forEach(client => {
-                        const div = document.createElement('div');
-                        div.className = 'client-search-item';
-                        div.innerHTML = `<strong>${client.nomeExibicao}</strong> <small>(${client.apelido || ''})</small>`;
-                        div.addEventListener('click', () => selectCrediarioClient(client));
-                        crediarioSearchResults.appendChild(div);
-                    });
-                } else {
-                    crediarioSearchResults.style.display = 'none';
-                }
-            });
-
-            // Fecha resultados se clicar fora
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.client-search-wrapper')) {
-                    crediarioSearchResults.style.display = 'none';
-                }
-            });
-
-            // Botão + (Adicionar Cliente Rápido)
-            btnQuickAddClient.addEventListener('click', (e) => {
-                e.preventDefault();
-                // Abre o modal existente de adicionar cliente
-                // Importante: Quando salvar lá, ele recarrega o cache, então a busca funcionará
-                resetClienteModal();
-                openModal(addClienteModal);
-            });
-
-            // --- Função: Selecionar Cliente e Validar Limite ---
-            const selectCrediarioClient = (client) => {
-                selectedCrediarioClient = client;
-                crediarioSearchInput.value = client.nomeExibicao;
-                crediarioSearchResults.style.display = 'none';
-
-                // Atualiza UI de Limite
-                updateLimitBar(client);
-            };
-
-            const updateLimitBar = (client) => {
-                crediarioLimitFeedback.style.display = 'block';
-
-                const limite = parseFloat(client.limite) || 0;
-                const dividaAtual = parseFloat(client.saldoDevedor) || 0;
-                const compraAtual = lastSaleData ? lastSaleData.total : 0;
-
-                const disponivel = limite - dividaAtual;
-                const disponivelPosCompra = disponivel - compraAtual;
-
-                crediarioLimitText.textContent = `Limite Disp.: ${formatCurrency(disponivel)}`;
-
-                let percentualUso = 0;
-                if (limite > 0) {
-                    // Calcula quanto a barra deve encher com a Dívida + Compra Atual
-                    percentualUso = ((dividaAtual + compraAtual) / limite) * 100;
-                }
-
-                if (percentualUso > 100) percentualUso = 100;
-                crediarioLimitFill.style.width = `${percentualUso}%`;
-
-                if (disponivelPosCompra < 0) {
-                    crediarioLimitFill.classList.add('danger');
-                    crediarioStatusText.textContent = "Estourará o limite!";
-                    crediarioStatusText.style.color = "var(--warning-red)";
-                } else {
-                    crediarioLimitFill.classList.remove('danger');
-                    crediarioStatusText.textContent = "Compra aprovada";
-                    crediarioStatusText.style.color = "var(--success-green)";
                 }
             };
 
@@ -3043,66 +2925,81 @@
                 }
             });
 
-            // 1. Botão Imprimir (Obrigatório)
-            btnForcePrint.addEventListener('click', () => {
-                // Chama a impressão passando o nome do cliente para adicionar a assinatura
-                handlePrintReceipt(selectedCrediarioClient.nomeExibicao);
+            // 1. Botão Imprimir (AGORA SALVA A VENDA E GERA O LOG AQUI)
+            btnForcePrint.addEventListener('click', async () => {
+                if (!selectedCrediarioClient) return;
 
-                // Libera o próximo passo após um pequeno delay (simulando tempo de impressão)
-                setTimeout(() => {
-                    credStep1.style.display = 'none';
-                    credStep2.style.display = 'block';
-
-                    // Animação de entrada
-                    setTimeout(() => {
-                        credStep2.style.opacity = '1';
-                        credStep2.classList.remove('locked-step');
-                    }, 100);
-                }, 2000);
-            });
-
-            // 2. Botão Concluir Final (Salvar no Backend)
-            btnFinishCrediarioFinal.addEventListener('click', async () => {
-                btnFinishCrediarioFinal.disabled = true;
-                btnFinishCrediarioFinal.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Processando...";
+                // Bloqueia botão para evitar duplicação
+                btnForcePrint.disabled = true;
+                btnForcePrint.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Registrando e Imprimindo...";
 
                 try {
+                    // --- PASSO A: SALVAR NO SISTEMA (Antecipado) ---
                     const timestamp = formatTimestamp(new Date());
 
-                    // 1. Registra na aba Vendas (Fluxo de Caixa)
-                    // Usamos a mesma função de sempre, enviando como 'Crediário'
+                    // 1. Registra no Fluxo de Caixa (Aba Vendas)
                     const paymentsToSend = [{ method: 'Crediário', value: lastSaleData.total }];
                     await registrarVendaAtual(paymentsToSend);
 
-                    // 2. Registra na aba Logs/Clientes (Aumentar Dívida)
-                    // Usamos a função registrarTransacao (que agora só loga, como pedido)
-                    // IMPORTANTE: Valor POSITIVO aqui, pois é uma NOVA DÍVIDA (compra)
+                    // 2. Registra na Conta do Cliente (Aba Logs/Clientes)
                     const paramsCliente = new URLSearchParams({
                         action: 'registrarTransacao',
                         idCliente: selectedCrediarioClient.idCliente,
-                        tipo: 'Compra', // Tipo Log
-                        valor: lastSaleData.total.toFixed(2), // Valor positivo (compra)
+                        tipo: 'Compra',
+                        valor: lastSaleData.total.toFixed(2),
                         timestamp: timestamp
                     });
-
+                    
+                    // Aguarda a criação do log para que o anexo possa ser vinculado depois
                     await fetch(`${SCRIPT_URL}?${paramsCliente.toString()}`, { method: 'GET' });
 
-                    // Sucesso Total
-                    closeModal(crediarioFlowModal);
-                    showCustomAlert("Sucesso", "Venda no Crediário registrada!");
+                    // --- PASSO B: ATUALIZAR QR CODE COM ID DO CLIENTE ---
+                    const qrImg = document.querySelector('#cred-step-2 .qr-img-wrapper img');
+                    const baseUrl = "http://eletrobusiness.com.br/comprovante/buy/valid55102.html";
+                    // Adiciona o ID na URL
+                    const finalUrl = `${baseUrl}?id=${selectedCrediarioClient.idCliente}`;
+                    // Atualiza a imagem do QR Code
+                    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(finalUrl)}`;
+                    
+                    // --- PASSO C: IMPRIMIR ---
+                    handlePrintReceipt(selectedCrediarioClient.nomeExibicao);
 
-                    // Limpa tudo
-                    clearCart();
-                    selectedCrediarioClient = null;
-                    crediarioSection.style.display = 'none';
-                    barcodeInput.focus();
+                    // --- PASSO D: AVANÇAR UI ---
+                    // Libera para a próxima etapa (Anexar)
+                    setTimeout(() => {
+                        credStep1.style.display = 'none';
+                        credStep2.style.display = 'block';
+                        
+                        // Animação de entrada
+                        setTimeout(() => {
+                            credStep2.style.opacity = '1';
+                            credStep2.classList.remove('locked-step');
+                        }, 100);
+                    }, 1000);
 
                 } catch (error) {
-                    console.error("Erro no fluxo crediário:", error);
-                    showCustomAlert("Erro", "Falha ao salvar venda. Tente novamente.");
-                    btnFinishCrediarioFinal.disabled = false;
-                    btnFinishCrediarioFinal.innerHTML = "<i class='bx bx-check-double'></i> Concluir Conta e Salvar";
+                    console.error("Erro ao registrar venda no crediário:", error);
+                    showCustomAlert("Erro", "Falha ao registrar venda. Verifique a conexão e tente novamente.");
+                    btnForcePrint.disabled = false;
+                    btnForcePrint.innerHTML = "<i class='bx bx-printer'></i> Tentar Novamente";
                 }
+            });
+
+            // 2. Botão Concluir Final (AGORA SÓ LIMPA A TELA)
+            // Como já salvamos no passo anterior, este botão serve apenas para fechar o ciclo.
+            btnFinishCrediarioFinal.addEventListener('click', () => {
+                showCustomAlert("Sucesso", "Processo de crediário finalizado!");
+                
+                closeModal(crediarioFlowModal);
+                
+                // Limpa tudo e prepara para nova venda
+                clearCart(); 
+                selectedCrediarioClient = null;
+                // Reseta botão de imprimir para a próxima vez
+                btnForcePrint.disabled = false;
+                btnForcePrint.innerHTML = "<i class='bx bx-printer'></i> Imprimir Comprovante";
+                
+                barcodeInput.focus();
             });
 
             cancelSaleBtn.addEventListener('click', () => { if (cart.length === 0) return; showCustomConfirm("Cancelar Venda", "Tem certeza?", () => { clearCart(); closeModal(confirmModal); }); });
