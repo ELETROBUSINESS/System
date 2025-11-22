@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anexar Comprovante - Eletro Business</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        :root {
+            --primary: #db0038;
+            --bg: #f4f4f9;
+            --card: #ffffff;
+            --text: #333;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            background: var(--card);
+            width: 100%;
+            max-width: 400px;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .logo {
+            color: var(--primary);
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        h2 { margin-bottom: 8px; font-size: 1.2rem; }
+        p { color: #666; font-size: 0.9rem; margin-bottom: 24px; line-height: 1.5; }
+        
+        /* Loading */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Steps */
+        .step-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        .instruction-box {
+            background: #fff0f3;
+            border: 1px dashed var(--primary);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        .instruction-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+        .instruction-item i { color: var(--primary); font-size: 1.2rem; }
+
+        /* Upload Button */
+        .upload-btn-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+        .btn {
+            border: 2px solid var(--primary);
+            color: white;
+            background-color: var(--primary);
+            padding: 14px 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn:hover { background-color: #b0002a; }
+        .upload-btn-wrapper input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        /* Preview */
+        #preview-area {
+            margin-top: 20px;
+            display: none;
+        }
+        #preview-img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin-bottom: 15px;
+        }
+
+        /* States */
+        .hidden { display: none; }
+        .error-msg { color: #d32f2f; font-weight: bold; }
+        .success-msg { color: #2e7d32; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="main-container">
+        <div id="state-loading">
+            <div class="loader"></div>
+            <h3>Verificando Venda...</h3>
+            <p>Buscando registro no sistema.</p>
+        </div>
+
+        <div id="state-error" class="hidden">
+            <i class='bx bx-error-circle step-icon' style="color: #d32f2f;"></i>
+            <h3>Acesso Negado</h3>
+            <p id="error-text">Não foi possível validar a venda.</p>
+        </div>
+
+        <div id="state-exists" class="hidden">
+            <i class='bx bx-check-double step-icon' style="color: #2e7d32;"></i>
+            <h3>Comprovante já Enviado</h3>
+            <p>O comprovante desta venda já consta em nosso sistema.</p>
+            <a href="#" id="link-exists" target="_blank" class="btn" style="text-decoration: none;">Ver Comprovante</a>
+        </div>
+
+        <div id="state-upload" class="hidden">
+            <div class="logo"><i class='bx bxs-file-image'></i></div>
+            <h2>Anexar Assinatura</h2>
+            <p>Venda confirmada: <strong id="venda-data">...</strong></p>
+
+            <div class="instruction-box">
+                <div class="instruction-item">
+                    <i class='bx bx-pen'></i>
+                    <span>Peça para o cliente assinar o papel.</span>
+                </div>
+                <div class="instruction-item">
+                    <i class='bx bx-camera'></i>
+                    <span>Tire uma foto nítida e iluminada.</span>
+                </div>
+                <div class="instruction-item">
+                    <i class='bx bx-cloud-upload'></i>
+                    <span>Envie para concluir a validação.</span>
+                </div>
+            </div>
+
+            <div id="input-area">
+                <div class="upload-btn-wrapper">
+                    <button class="btn"><i class='bx bx-camera'></i> Tirar Foto / Enviar</button>
+                    <input type="file" id="file-input" accept="image/*" capture="environment">
+                </div>
+            </div>
+
+            <div id="preview-area">
+                <img id="preview-img" src="" alt="Preview">
+                <button class="btn" id="confirm-upload-btn">
+                    <i class='bx bx-check-circle'></i> Confirmar Envio
+                </button>
+                <button class="btn" id="cancel-upload-btn" style="background: white; color: #555; border-color: #ddd; margin-top: 10px;">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+
+        <div id="state-success" class="hidden">
+            <i class='bx bx-check-circle step-icon' style="color: #2e7d32;"></i>
+            <h3>Sucesso!</h3>
+            <p>Comprovante anexado ao log da venda.</p>
+            <p style="font-size: 0.8rem;">Pode fechar esta página.</p>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURAÇÃO ---
+        // COLE A SUA URL DO SCRIPT AQUI
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzvd0BBLEEQlu-ksnIbsmnYcjQNQuZcTrsCmXMKHGM5g7DPEk3Nj95X47LKbj7rRSAT/exec"; 
+
+        // --- Variáveis de Estado ---
+        let currentUserId = null;
+        let currentRowIndex = null;
+        let selectedFileBase64 = null;
+
+        // --- Elementos ---
+        const stateLoading = document.getElementById('state-loading');
+        const stateError = document.getElementById('state-error');
+        const stateExists = document.getElementById('state-exists');
+        const stateUpload = document.getElementById('state-upload');
+        const stateSuccess = document.getElementById('state-success');
+        const errorText = document.getElementById('error-text');
+        const linkExists = document.getElementById('link-exists');
+        const vendaDataLabel = document.getElementById('venda-data');
+        const fileInput = document.getElementById('file-input');
+        const inputArea = document.getElementById('input-area');
+        const previewArea = document.getElementById('preview-area');
+        const previewImg = document.getElementById('preview-img');
+        const confirmBtn = document.getElementById('confirm-upload-btn');
+        const cancelBtn = document.getElementById('cancel-upload-btn');
+
+        // --- Inicialização ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Pegar ID da URL
+            const urlParams = new URLSearchParams(window.location.search);
+            // Procura por ?id=XYZ ou apenas ?XYZ
+            let id = urlParams.get('id');
+            if (!id) {
+                // Tenta pegar a primeira chave vazia se não tiver "id="
+                const keys = Array.from(urlParams.keys());
+                if(keys.length > 0) id = keys[0];
+            }
+
+            if (!id) {
+                showError("ID do cliente não fornecido na URL.");
+                return;
+            }
+
+            currentUserId = id;
+            verificarLog(id);
+        });
+
+        // --- Funções Lógicas ---
+
+        async function verificarLog(id) {
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=verificarUltimoLog&idCliente=${id}`);
+                const result = await response.json();
+
+                hideAll();
+
+                if (result.status === 'success') {
+                    // Log encontrado e livre
+                    currentRowIndex = result.data.rowIndex;
+                    vendaDataLabel.textContent = result.data.timestamp;
+                    stateUpload.classList.remove('hidden');
+                } else if (result.status === 'existente') {
+                    // Já tem anexo
+                    linkExists.href = result.link;
+                    stateExists.classList.remove('hidden');
+                } else {
+                    // Erro ou não encontrado
+                    showError(result.message);
+                }
+
+            } catch (e) {
+                showError("Erro de conexão: " + e.message);
+            }
+        }
+
+        // Processar Seleção de Arquivo
+        fileInput.addEventListener('change', () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            // Converter para Base64
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                selectedFileBase64 = e.target.result;
+                previewImg.src = selectedFileBase64;
+                
+                // Troca UI
+                inputArea.style.display = 'none';
+                previewArea.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Cancelar Upload
+        cancelBtn.addEventListener('click', () => {
+            fileInput.value = '';
+            selectedFileBase64 = null;
+            inputArea.style.display = 'block';
+            previewArea.style.display = 'none';
+        });
+
+        // Confirmar Envio
+        confirmBtn.addEventListener('click', async () => {
+            if (!selectedFileBase64 || !currentRowIndex) return;
+
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Enviando...";
+
+            try {
+                // Usamos POST direto com text/plain ou JSON stringificado
+                // Apps Script lida melhor com isso do que FormData complexo
+                const payload = {
+                    action: 'uploadComprovante',
+                    idCliente: currentUserId,
+                    rowIndex: currentRowIndex,
+                    imageBase64: selectedFileBase64
+                };
+
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    hideAll();
+                    stateSuccess.classList.remove('hidden');
+                } else {
+                    alert("Erro no envio: " + result.message);
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = "<i class='bx bx-check-circle'></i> Tentar Novamente";
+                }
+
+            } catch (e) {
+                alert("Erro ao enviar: " + e.message);
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = "<i class='bx bx-check-circle'></i> Tentar Novamente";
+            }
+        });
+
+        function showError(msg) {
+            hideAll();
+            errorText.textContent = msg;
+            stateError.classList.remove('hidden');
+        }
+
+        function hideAll() {
+            stateLoading.classList.add('hidden');
+            stateError.classList.add('hidden');
+            stateExists.classList.add('hidden');
+            stateUpload.classList.add('hidden');
+            stateSuccess.classList.add('hidden');
+        }
+
+    </script>
+</body>
+</html>
