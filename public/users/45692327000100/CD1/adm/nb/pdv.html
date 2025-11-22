@@ -1734,6 +1734,12 @@
             cursor: pointer;
         }
         .btn-link-receipt:hover { text-decoration: underline; }
+
+        /* Efeito Hover para os cartões de impressão */
+        #btn-print-thermal:hover, #btn-print-a4:hover {
+            border-color: var(--primary-red) !important;
+            background-color: #fff0f3;
+        }
     </style>
 </head>
 
@@ -1746,6 +1752,32 @@
                 BLACK FRIDAY • OFERTAS IMPERDÍVEIS • DESCONTOS REAIS • BLACK FRIDAY • 22/11 DIVULGAÇÃO •
                 BLACK FRIDAY • OFERTAS IMPERDÍVEIS • DESCONTOS REAIS • BLACK FRIDAY • 22/11 DIVULGAÇÃO •
             </span>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="print-selection-modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Imprimir Comprovante</h3>
+                <button class="close-modal-btn" data-target="print-selection-modal"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <p style="text-align: center; margin-bottom: 20px; color: var(--text-dark);">Selecione o formato de impressão:</p>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div id="btn-print-thermal" style="border: 2px solid #eee; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s;">
+                        <i class='bx bx-receipt' style="font-size: 50px; color: var(--text-dark); margin-bottom: 10px;"></i>
+                        <h4 style="margin-bottom: 5px;">Cupom (Térmica)</h4>
+                        <p style="font-size: 0.8rem; color: #777;">Formato pequeno (80mm)</p>
+                    </div>
+
+                    <div id="btn-print-a4" style="border: 2px solid #eee; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s;">
+                        <i class='bx bx-file-blank' style="font-size: 50px; color: var(--primary-red); margin-bottom: 10px;"></i>
+                        <h4 style="margin-bottom: 5px;">Nota Auxiliar (A4)</h4>
+                        <p style="font-size: 0.8rem; color: #777;">Folha inteira com detalhes</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -2875,54 +2907,127 @@
             const debounce = (func, delay) => { clearTimeout(barcodeScanTimeout); barcodeScanTimeout = setTimeout(func, delay); };
             const handleQuickAddSubmit = async () => { const name = quickAddName.value; const price = parseFloat(quickAddPrice.value); if (!name || isNaN(price) || price <= 0) { showCustomAlert("Inválido", "Nome e preço."); return; } const newProduct = { id: lastScannedBarcode, name: name, price: price }; const produtoCadastrado = await cadastrarProdutoNaAPI(newProduct); if (produtoCadastrado) { addToCart(produtoCadastrado); closeModal(quickAddModal); } };
             const handlePaymentSelection = (method) => { if (splitPaymentArea.style.display === 'none') { selectedPaymentMethod = method; summaryPaymentMethod.textContent = method; summaryPaymentMethod.style.fontWeight = '600'; summaryPaymentMethod.style.color = 'var(--text-dark)'; updateSummary(); closeModal(paymentModal); } else { showCustomAlert("Atenção", "Confirme/cancele divisão."); } };
+            // --- Lógica de Impressão (Atualizada: Sem QR Code, Com A4) ---
+            
+            let tempClientNameForSignature = null; // Variável auxiliar
+
+            // 1. Abre o Modal de Seleção
             const handlePrintReceipt = (clientNameForSignature = null) => {
                 if (!lastSaleData || cart.length === 0) {
                     showCustomAlert("Erro", "Sem dados venda."); return;
                 }
-                const now = new Date();
-                const cnpj = "45.692.327/0001-00";
-                const nomeFantasia = "Dtudo Variedades e Utilidades";
-                const endereco = "Rua Jarbas Passarinho, SN";
+                tempClientNameForSignature = clientNameForSignature;
+                openModal(document.getElementById('print-selection-modal'));
+            };
 
+            // 2. Listeners das Opções
+            document.getElementById('btn-print-thermal').onclick = () => {
+                closeModal(document.getElementById('print-selection-modal'));
+                printThermal(tempClientNameForSignature);
+            };
+
+            document.getElementById('btn-print-a4').onclick = () => {
+                closeModal(document.getElementById('print-selection-modal'));
+                printA4(tempClientNameForSignature);
+            };
+
+            // --- Layout 1: Cupom Térmico ---
+            const printThermal = (clientName) => {
+                const now = new Date();
+                const uniqueSaleID = formatTimestamp(now);
+                
                 let itemLinesHtml = '';
                 cart.forEach(item => {
                     itemLinesHtml += `<div class="receipt-item"><div class="item-name">${item.name}</div><div class="item-details">${item.quantity} x ${formatCurrency(item.price)}<span>${formatCurrency(item.quantity * item.price)}</span></div></div>`;
                 });
 
-                // LÓGICA DE ASSINATURA
                 let signatureHtml = '';
-                if (clientNameForSignature) {
-                    signatureHtml = `
-                        <div style="margin-top: 30px; text-align: center; border-top: 1px solid #000; padding-top: 5px;">
-                            Assinatura do Cliente
-                        </div>
-                        <div style="text-align: center; font-weight: bold; margin-bottom: 20px;">
-                            ${clientNameForSignature}
-                        </div>
-                        <div style="text-align: center; font-size: 0.8rem;">
-                            Reconheço a dívida deste comprovante.
-                        </div>
+                if (clientName) {
+                    signatureHtml = `<div style="margin-top:30px;text-align:center;border-top:1px solid #000;padding-top:5px;">Assinatura</div><div style="text-align:center;font-weight:bold;">${clientName}</div>`;
+                }
+
+                const html = `<html><head><style>@media print{body{margin:0;padding:0;}iframe{display:none;}}body{font-family:'Courier New',monospace;font-size:10pt;color:#000;max-width:300px;margin:0 auto;padding:10px;}.header{text-align:center;border-bottom:1px dashed #000;padding-bottom:10px;margin-bottom:10px;}.items{border-bottom:1px dashed #000;padding-bottom:10px;}.item-details{display:flex;justify-content:space-between;}.summary{padding-top:10px;}.line{display:flex;justify-content:space-between;}</style></head><body>
+                <div class="header"><h3>Dtudo Variedades</h3><p>CNPJ: 45.692.327/0001-00</p><p>${uniqueSaleID}</p></div>
+                <p style="text-align:center;font-weight:bold">COMPROVANTE</p>
+                <div class="items">${itemLinesHtml}</div>
+                <div class="summary">
+                    <div class="line"><span>TOTAL:</span><span>${formatCurrency(lastSaleData.total)}</span></div>
+                    <div class="line"><span>Pagto:</span><span>${selectedPaymentMethod || 'N/A'}</span></div>
+                </div>
+                ${signatureHtml}
+                <div style="text-align:center;margin-top:20px;font-size:0.8rem"><p>Não é documento fiscal</p></div>
+                </body></html>`;
+                
+                executePrint(html);
+            };
+
+            // --- Layout 2: Nota Auxiliar A4 ---
+            const printA4 = (clientName) => {
+                const now = new Date();
+                const uniqueSaleID = formatTimestamp(now);
+
+                // Dados do Cliente
+                let clientHtml = '<p>Consumidor Final</p>';
+                if (selectedCrediarioClient) {
+                    clientHtml = `
+                        <p><strong>Cliente:</strong> ${selectedCrediarioClient.nomeCompleto || selectedCrediarioClient.nomeExibicao}</p>
+                        <p><strong>Endereço:</strong> ${selectedCrediarioClient.endereco || 'Não informado'}</p>
+                        <p><strong>Telefone:</strong> ${selectedCrediarioClient.telefone || 'Não informado'}</p>
                     `;
                 }
 
-                const receiptHtml = `<html><head><title>Recibo</title><style>@media print{body{margin:0;padding:0;background:#fff;}.print-iframe{display:none;}}@page{margin:5mm;}body{font-family:'Courier New','monospace';font-size:10pt;color:#000;max-width:300px;margin:0 auto;padding:10px;}.receipt-header{text-align:center;padding-bottom:10px;border-bottom:1px dashed #000;}.receipt-header h3{margin:0 0 5px 0;font-size:1.2rem;}.receipt-header p{margin:2px 0;font-size:0.9rem;}.receipt-title{text-align:center;font-weight:bold;margin:10px 0;font-size:0.9rem;}.receipt-items{border-bottom:1px dashed #000;padding-bottom:10px;}.receipt-item{margin-bottom:8px;font-size:0.9rem;}.item-name{font-weight:bold;}.item-details{display:flex;justify-content:space-between;padding-left:10px;}.receipt-summary{padding-top:10px;}.summary-line{display:flex;justify-content:space-between;margin-bottom:5px;font-size:0.9rem;}.summary-line.total{font-size:1.1rem;font-weight:bold;margin-top:8px;}.receipt-footer{text-align:center;margin-top:20px;font-size:0.8rem;}</style></head><body><div class="receipt-header"><h3>${nomeFantasia}</h3><p>${endereco}</p><p>CNPJ: ${cnpj}</p><p>${formatTimestamp(now)}</p></div><p class="receipt-title">COMPROVANTE (NÃO É DOCUMENTO FISCAL)</p><div class="receipt-items">${itemLinesHtml}</div><div class="receipt-summary"><div class="summary-line"><span>Subtotal:</span><span>${formatCurrency(lastSaleData.subtotal)}</span></div><div class="summary-line"><span>Desconto:</span><span>${formatCurrency(lastSaleData.discount > 0 ? lastSaleData.discount * -1 : 0)}</span></div><div class="summary-line total"><span>TOTAL:</span><span>${formatCurrency(lastSaleData.total)}</span></div><div class="summary-line"><span>Pagamento:</span><span>${selectedPaymentMethod || 'N/A'}</span></div></div> ${signatureHtml} <div class="receipt-footer"><p>Obrigado!</p></div></body></html>`;
+                let rows = '';
+                cart.forEach((item, idx) => {
+                    rows += `<tr><td style="text-align:center">${idx+1}</td><td>${item.name}</td><td style="text-align:center">${item.quantity}</td><td style="text-align:right">${formatCurrency(item.price)}</td><td style="text-align:right">${formatCurrency(item.price*item.quantity)}</td></tr>`;
+                });
 
+                const html = `<html><head><style>
+                    @media print { @page { size: A4; margin: 10mm; } }
+                    body { font-family: Arial, sans-serif; color: #333; max-width: 210mm; margin: 0 auto; padding: 20px; }
+                    .header { border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; }
+                    h1 { color: #db0038; margin: 0; font-size: 24px; }
+                    .box { background: #f9f9f9; border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+                    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
+                    th { background: #333; color: #fff; padding: 10px; text-align: left; }
+                    td { padding: 10px; border-bottom: 1px solid #eee; }
+                    .total { font-size: 18px; font-weight: bold; color: #db0038; text-align: right; }
+                    .footer { margin-top: 50px; display: flex; justify-content: flex-end; }
+                    .sig-line { width: 300px; text-align: center; border-top: 1px solid #000; padding-top: 5px; }
+                </style></head><body>
+                    <div class="header">
+                        <div><h1>Dtudo Variedades</h1><p>Rua Jarbas Passarinho, SN<br>CNPJ: 45.692.327/0001-00</p></div>
+                        <div style="text-align:right"><h2>NOTA AUXILIAR DE VENDA</h2><p>Data: ${formatTimestamp(now)}<br>ID: ${uniqueSaleID}</p></div>
+                    </div>
+                    <div class="box"><h3>Dados do Cliente</h3>${clientHtml}</div>
+                    
+                    <h3 style="text-align:center; margin: 30px 0;">COMPROVANTE DE COMPRA</h3>
+
+                    <table>
+                        <thead><tr><th>#</th><th>Descrição</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                    <div class="total">TOTAL A PAGAR: ${formatCurrency(lastSaleData.total)}</div>
+                    <div class="footer">
+                        <div class="sig-line"><p><strong>${clientName || 'Cliente'}</strong></p><small>Assinatura</small></div>
+                    </div>
+                    <p style="text-align:center; margin-top: 50px; font-size: 10px; color: #999;">Documento auxiliar de venda. Não possui valor fiscal.</p>
+                </body></html>`;
+                
+                executePrint(html);
+            };
+
+            const executePrint = (html) => {
                 const iframe = document.createElement('iframe');
                 iframe.style.display = 'none';
-                iframe.className = 'print-iframe';
                 document.body.appendChild(iframe);
                 iframe.contentDocument.open();
-                iframe.contentDocument.write(receiptHtml);
+                iframe.contentDocument.write(html);
                 iframe.contentDocument.close();
                 iframe.onload = () => {
-                    try {
-                        iframe.contentWindow.focus();
-                        iframe.contentWindow.print();
-                    } catch (error) {
-                        console.error("Erro imprimir:", error);
-                        showCustomAlert("Erro Impressão", "Não foi possível abrir.");
-                    }
-                    setTimeout(() => { document.body.removeChild(iframe); }, 1000);
+                    setTimeout(() => {
+                        try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch(e){}
+                        setTimeout(() => document.body.removeChild(iframe), 1000);
+                    }, 500);
                 };
             };
             const updateDiscountNavFocus = (focusEl = true) => { discountNavElements.forEach(el => el.classList.remove('nav-focus')); const currentEl = discountNavElements[discountNavIndex]; if (currentEl) { currentEl.classList.add('nav-focus'); if (focusEl) { currentEl.focus(); if (currentEl.tagName === 'INPUT') { currentEl.select(); } } removeDiscountHint.style.display = (currentEl.id === 'remove-discount-btn') ? 'block' : 'none'; } };
