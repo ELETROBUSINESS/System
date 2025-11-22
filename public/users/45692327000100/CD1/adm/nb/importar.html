@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Importador de Produtos - Eletro Business</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <!-- Biblioteca para ler Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #db0038;
+            --bg: #f4f4f9;
+            --card: #ffffff;
+            --text: #333;
+            --border: #e0e0e0;
+            --success: #28a745;
+            --warning: #ff9800;
+            --info: #17a2b8;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: var(--card); padding: 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        
+        h1 { color: var(--primary); display: flex; align-items: center; gap: 10px; margin-top: 0; }
+        
+        /* Área de Upload */
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+            background: #fafafa;
+        }
+        .upload-area:hover, .upload-area.dragover { border-color: var(--primary); background: #fff0f3; }
+        .upload-area i { font-size: 48px; color: #ccc; margin-bottom: 10px; }
+        .upload-area p { margin: 0; color: #666; }
+
+        /* Mapeamento de Colunas */
+        .mapping-section { display: none; margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid var(--border); }
+        .mapping-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px; }
+        .map-item label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 5px; color: #555; }
+        .map-item select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; }
+
+        /* Resumo */
+        .summary-section { display: none; margin-bottom: 30px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-card { padding: 15px; border-radius: 8px; text-align: center; color: white; }
+        .stat-total { background: var(--info); }
+        .stat-new { background: var(--success); }
+        .stat-update { background: var(--warning); }
+        .stat-card h3 { margin: 0; font-size: 2rem; }
+        .stat-card span { font-size: 0.9rem; opacity: 0.9; }
+
+        /* Tabela Preview */
+        .preview-table-wrapper { max-height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th { background: #eee; padding: 10px; text-align: left; position: sticky; top: 0; }
+        td { padding: 8px 10px; border-bottom: 1px solid #eee; }
+        tr.is-new td { border-left: 4px solid var(--success); }
+        tr.is-update td { border-left: 4px solid var(--warning); }
+        
+        /* Badge da coluna Cadastrado */
+        .badge-sim { background-color: #e6f4ea; color: #1e7e34; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
+
+        /* Botões */
+        .btn { background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn:hover { filter: brightness(0.9); }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-outline { background: transparent; border: 1px solid #ccc; color: #333; margin-right: 10px; }
+
+        /* Loading Overlay */
+        .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.9); display: none; justify-content: center; align-items: center; flex-direction: column; z-index: 100; }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1><i class='bx bxs-file-import'></i> Importador de Produtos</h1>
+        <p>Carregue sua planilha do Sebrae (Excel/CSV) para atualizar o estoque em massa.</p>
+
+        <!-- Passo 1: Upload -->
+        <div class="upload-area" id="drop-zone">
+            <i class='bx bx-cloud-upload'></i>
+            <p>Arraste seu arquivo Excel aqui ou clique para selecionar</p>
+            <input type="file" id="file-input" accept=".xlsx, .xls, .csv" style="display: none;">
+        </div>
+
+        <!-- Passo 2: Mapeamento -->
+        <div class="mapping-section" id="mapping-section">
+            <h3><i class='bx bx-map-alt'></i> Mapear Colunas</h3>
+            <p>Identifique qual coluna do seu Excel corresponde aos campos do sistema.</p>
+            
+            <div class="mapping-grid">
+                <div class="map-item">
+                    <label>Código (Barras/ID) *</label>
+                    <select id="map-codigo"></select>
+                </div>
+                <div class="map-item">
+                    <label>Nome / Descrição *</label>
+                    <select id="map-nome"></select>
+                </div>
+                <div class="map-item">
+                    <label>Preço Venda (R$) *</label>
+                    <select id="map-preco"></select>
+                </div>
+                <div class="map-item">
+                    <label>Custo (R$)</label>
+                    <select id="map-custo"></select>
+                </div>
+                <div class="map-item">
+                    <label>Categoria</label>
+                    <select id="map-categoria"></select>
+                </div>
+            </div>
+            <div style="margin-top: 20px; text-align: right;">
+                <button class="btn" id="btn-process-mapping">Processar Dados <i class='bx bx-right-arrow-alt'></i></button>
+            </div>
+        </div>
+
+        <!-- Passo 3: Resumo e Envio -->
+        <div class="summary-section" id="summary-section">
+            <div class="stats-grid">
+                <div class="stat-card stat-total">
+                    <h3 id="count-total">0</h3>
+                    <span>Total Lido</span>
+                </div>
+                <div class="stat-card stat-new">
+                    <h3 id="count-new">0</h3>
+                    <span>Novos Produtos</span>
+                </div>
+                <div class="stat-card stat-update">
+                    <h3 id="count-update">0</h3>
+                    <span>Atualizações</span>
+                </div>
+            </div>
+
+            <h4>Prévia dos Dados</h4>
+            <div class="preview-table-wrapper">
+                <table id="preview-table">
+                    <thead>
+                        <tr>
+                            <th>Ação</th>
+                            <th>Código</th>
+                            <th>Nome</th>
+                            <th>Preço</th>
+                            <th>Custo</th>
+                            <th>Categ.</th>
+                            <th>Cadastrado</th> <!-- NOVA COLUNA -->
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div style="margin-top: 20px; display: flex; justify-content: space-between;">
+                <button class="btn btn-outline" onclick="location.reload()">Cancelar</button>
+                <button class="btn" id="btn-send-data"><i class='bx bx-save'></i> Confirmar Importação</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loading">
+        <i class='bx bx-loader-alt bx-spin' style="font-size: 50px; color: var(--primary);"></i>
+        <h3 id="loading-text">Carregando...</h3>
+    </div>
+
+    <script>
+        // CONFIGURAÇÃO
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzvd0BBLEEQlu-ksnIbsmnYcjQNQuZcTrsCmXMKHGM5g7DPEk3Nj95X47LKbj7rRSAT/exec";
+
+        let excelData = []; 
+        let processedData = []; 
+        let currentProducts = new Map(); 
+
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const mappingSection = document.getElementById('mapping-section');
+        const summarySection = document.getElementById('summary-section');
+        const loading = document.getElementById('loading');
+
+        // --- Inicialização ---
+        window.onload = async () => {
+            showLoading("Buscando produtos existentes...");
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=listarProdutos`);
+                const result = await response.json();
+                if(result.status === 'success') {
+                    result.data.forEach(p => currentProducts.set(String(p.id), p));
+                    console.log("Produtos carregados:", currentProducts.size);
+                }
+            } catch(e) {
+                alert("Erro ao carregar produtos atuais. A importação pode gerar duplicatas.");
+            } finally {
+                hideLoading();
+            }
+        };
+
+        // --- Upload ---
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault(); dropZone.classList.remove('dragover');
+            handleFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+        function handleFile(file) {
+            if(!file) return;
+            showLoading("Lendo arquivo...");
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                excelData = XLSX.utils.sheet_to_json(firstSheet, {header: 1}); // Array de Arrays
+                
+                if(excelData.length < 2) {
+                    alert("Arquivo vazio ou inválido.");
+                    hideLoading();
+                    return;
+                }
+
+                setupMapping(excelData[0]); 
+                hideLoading();
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // --- Mapeamento ---
+        function setupMapping(headers) {
+            const selects = document.querySelectorAll('.map-item select');
+            const options = headers.map((h, i) => `<option value="${i}">${h}</option>`).join('');
+            
+            selects.forEach(sel => {
+                sel.innerHTML = '<option value="-1">-- Ignorar --</option>' + options;
+            });
+
+            autoSelect('map-codigo', headers, ['código', 'codigo', 'ean', 'gtin', 'id']);
+            autoSelect('map-nome', headers, ['descrição', 'descricao', 'nome', 'produto']);
+            autoSelect('map-preco', headers, ['preço', 'preco', 'valor venda', 'venda', 'valor']);
+            autoSelect('map-custo', headers, ['custo', 'valor custo', 'compra']);
+            autoSelect('map-categoria', headers, ['categoria', 'grupo', 'seção', 'ncm']);
+
+            dropZone.style.display = 'none';
+            mappingSection.style.display = 'block';
+        }
+
+        function autoSelect(selectId, headers, keywords) {
+            const select = document.getElementById(selectId);
+            const index = headers.findIndex(h => keywords.some(k => String(h).toLowerCase().includes(k)));
+            if(index >= 0) select.value = index;
+        }
+
+        // --- Processamento ---
+        document.getElementById('btn-process-mapping').addEventListener('click', () => {
+            const map = {
+                codigo: document.getElementById('map-codigo').value,
+                nome: document.getElementById('map-nome').value,
+                preco: document.getElementById('map-preco').value,
+                custo: document.getElementById('map-custo').value,
+                categoria: document.getElementById('map-categoria').value
+            };
+
+            if(map.codigo == -1 || map.nome == -1 || map.preco == -1) {
+                alert("Por favor, mapeie pelo menos Código, Nome e Preço.");
+                return;
+            }
+
+            processData(map);
+        });
+
+        // FUNÇÃO DE PARSE DE VALORES CORRIGIDA
+        function parseValue(val) {
+            if (typeof val === 'number') return val;
+            let str = String(val || "").trim();
+            str = str.replace("R$", "").trim();
+            
+            // Lógica Inteligente:
+            // Se tem vírgula, assume formato BR (1.000,00) -> remove ponto e troca vírgula por ponto
+            if (str.includes(',')) {
+                str = str.replace(/\./g, ''); // Remove separador de milhar
+                str = str.replace(',', '.');  // Vira decimal
+            } 
+            // Se NÃO tem vírgula, NÃO removemos o ponto, pois pode ser "39.99" (formato internacional/sistema)
+            // O bug anterior removia o ponto incondicionalmente, transformando 39.99 em 3999.
+            
+            return parseFloat(str) || 0;
+        }
+
+        function processData(map) {
+            processedData = [];
+            let stats = { new: 0, update: 0 };
+            
+            for(let i=1; i < excelData.length; i++) {
+                const row = excelData[i];
+                const codigo = String(row[map.codigo] || "").trim();
+                
+                if(!codigo) continue; 
+
+                // Aplica a nova função parseValue
+                const preco = parseValue(row[map.preco]);
+                const custo = map.custo != -1 ? parseValue(row[map.custo]) : 0;
+
+                const produto = {
+                    codigo: codigo,
+                    nome: String(row[map.nome] || "").trim(),
+                    preco: preco,
+                    custo: custo,
+                    categoria: map.categoria != -1 ? String(row[map.categoria] || "") : ""
+                };
+
+                const exists = currentProducts.has(codigo);
+                produto.acao = exists ? "Atualizar" : "Novo";
+                
+                if(exists) stats.update++; else stats.new++;
+                
+                processedData.push(produto);
+            }
+
+            document.getElementById('count-total').textContent = processedData.length;
+            document.getElementById('count-new').textContent = stats.new;
+            document.getElementById('count-update').textContent = stats.update;
+            
+            renderPreview();
+            
+            mappingSection.style.display = 'none';
+            summarySection.style.display = 'block';
+        }
+
+        function renderPreview() {
+            const tbody = document.querySelector('#preview-table tbody');
+            tbody.innerHTML = '';
+            
+            processedData.slice(0, 50).forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = p.acao === 'Novo' ? 'is-new' : 'is-update';
+                tr.innerHTML = `
+                    <td>${p.acao}</td>
+                    <td>${p.codigo}</td>
+                    <td>${p.nome}</td>
+                    <td>${p.preco.toFixed(2)}</td>
+                    <td>${p.custo.toFixed(2)}</td>
+                    <td>${p.categoria}</td>
+                    <td><span class="badge-sim">Sim</span></td> <!-- NOVA COLUNA -->
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- Envio ---
+        document.getElementById('btn-send-data').addEventListener('click', async () => {
+            if(!confirm(`Confirma a importação de ${processedData.length} produtos?`)) return;
+
+            showLoading("Enviando dados... Isso pode levar alguns segundos.");
+            
+            try {
+                const payload = {
+                    action: 'importarProdutosLote',
+                    produtos: processedData
+                };
+
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if(result.status === 'success') {
+                    alert("Importação concluída com sucesso!");
+                    location.href = "pdv.html"; 
+                } else {
+                    alert("Erro ao importar: " + result.message);
+                }
+
+            } catch(e) {
+                console.error(e);
+                alert("Erro de conexão ao enviar dados.");
+            } finally {
+                hideLoading();
+            }
+        });
+
+        function showLoading(msg) {
+            document.getElementById('loading-text').textContent = msg;
+            loading.style.display = 'flex';
+        }
+        function hideLoading() { loading.style.display = 'none'; }
+
+    </script>
+</body>
+</html>

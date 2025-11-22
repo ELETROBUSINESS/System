@@ -776,10 +776,15 @@
             padding: 0;
             width: 100%;
             max-width: 550px;
+            /* Define a altura máxima como 90% da altura da tela */
+            max-height: 90vh;
+            /* Cria um layout flexível para manter cabeçalho e rodapé fixos */
+            display: flex;
+            flex-direction: column;
+
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             transform: scale(0.95) translateY(10px);
             transition: all 0.3s ease;
-            overflow: hidden;
         }
 
         .modal-overlay.active .modal-content {
@@ -792,6 +797,8 @@
             align-items: center;
             padding: 20px 24px;
             border-bottom: 1px solid var(--border-color);
+            /* Impede que o cabeçalho encolha */
+            flex-shrink: 0;
         }
 
         .modal-header h3 {
@@ -811,6 +818,10 @@
 
         .modal-body {
             padding: 24px;
+            /* Permite scroll vertical apenas nesta área */
+            overflow-y: auto;
+            /* Faz o corpo ocupar todo o espaço disponível */
+            flex-grow: 1;
         }
 
         .modal-body p {
@@ -874,6 +885,8 @@
             justify-content: flex-end;
             border-top: 1px solid var(--border-color);
             background-color: #f9f9f9;
+            /* Impede que o rodapé encolha */
+            flex-shrink: 0;
         }
 
         /* Modal de Pagamento */
@@ -1670,13 +1683,14 @@
             display: flex;
             justify-content: space-between;
         }
+
         /* Estilos do Histórico do Cliente */
         .history-section {
             margin-top: 20px;
             border-top: 1px dashed var(--border-color);
             padding-top: 16px;
         }
-        
+
         .history-section h4 {
             font-size: 1rem;
             margin-bottom: 12px;
@@ -1721,8 +1735,16 @@
             font-size: 0.75rem;
             font-weight: 600;
         }
-        .type-compra { background: rgba(219, 0, 56, 0.1); color: var(--primary-red); }
-        .type-pagamento { background: rgba(40, 167, 69, 0.1); color: var(--success-green); }
+
+        .type-compra {
+            background: rgba(219, 0, 56, 0.1);
+            color: var(--primary-red);
+        }
+
+        .type-pagamento {
+            background: rgba(40, 167, 69, 0.1);
+            color: var(--success-green);
+        }
 
         .btn-link-receipt {
             color: var(--info-blue);
@@ -1733,12 +1755,75 @@
             gap: 4px;
             cursor: pointer;
         }
-        .btn-link-receipt:hover { text-decoration: underline; }
+
+        .btn-link-receipt:hover {
+            text-decoration: underline;
+        }
 
         /* Efeito Hover para os cartões de impressão */
-        #btn-print-thermal:hover, #btn-print-a4:hover {
+        #btn-print-thermal:hover,
+        #btn-print-a4:hover {
             border-color: var(--primary-red) !important;
             background-color: #fff0f3;
+        }
+
+
+        /* --- Barra de Pesquisa Moderna (Aba Clientes) --- */
+        .client-search-container {
+            position: relative;
+            width: 100%;
+            margin-bottom: 24px;
+        }
+
+        .client-search-input {
+            width: 100%;
+            padding: 16px 16px 16px 52px;
+            /* Espaço para o ícone */
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            color: var(--text-dark);
+            background-color: #ffffff;
+            border: 1px solid transparent;
+            /* Borda invisível inicialmente */
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            /* Sombra suave */
+            transition: all 0.3s ease;
+        }
+
+        .client-search-input::placeholder {
+            color: #aaa;
+            font-weight: 400;
+        }
+
+        /* Efeito ao clicar (Foco) */
+        .client-search-input:focus {
+            outline: none;
+            background-color: #fff;
+            border-color: rgba(219, 0, 56, 0.3);
+            /* Vermelho bem clarinho */
+            box-shadow: 0 8px 25px rgba(219, 0, 56, 0.15);
+            /* Sombra colorida difusa */
+            transform: translateY(-2px);
+            /* Leve subida */
+        }
+
+        .client-search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.4rem;
+            color: #bbb;
+            transition: color 0.3s ease;
+            pointer-events: none;
+            /* O clique passa pelo ícone e vai pro input */
+        }
+
+        /* Quando o input está focado, muda a cor do ícone */
+        .client-search-input:focus+.client-search-icon,
+        .client-search-container:focus-within .client-search-icon {
+            color: var(--primary-red);
         }
     </style>
 </head>
@@ -1762,17 +1847,22 @@
                 <button class="close-modal-btn" data-target="print-selection-modal"><i class='bx bx-x'></i></button>
             </div>
             <div class="modal-body">
-                <p style="text-align: center; margin-bottom: 20px; color: var(--text-dark);">Selecione o formato de impressão:</p>
-                
+                <p style="text-align: center; margin-bottom: 20px; color: var(--text-dark);">Selecione o formato de
+                    impressão:</p>
+
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div id="btn-print-thermal" style="border: 2px solid #eee; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s;">
-                        <i class='bx bx-receipt' style="font-size: 50px; color: var(--text-dark); margin-bottom: 10px;"></i>
+                    <div id="btn-print-thermal"
+                        style="border: 2px solid #eee; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s;">
+                        <i class='bx bx-receipt'
+                            style="font-size: 50px; color: var(--text-dark); margin-bottom: 10px;"></i>
                         <h4 style="margin-bottom: 5px;">Cupom (Térmica)</h4>
                         <p style="font-size: 0.8rem; color: #777;">Formato pequeno (80mm)</p>
                     </div>
 
-                    <div id="btn-print-a4" style="border: 2px solid #eee; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s;">
-                        <i class='bx bx-file-blank' style="font-size: 50px; color: var(--primary-red); margin-bottom: 10px;"></i>
+                    <div id="btn-print-a4"
+                        style="border: 2px solid #eee; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s;">
+                        <i class='bx bx-file-blank'
+                            style="font-size: 50px; color: var(--primary-red); margin-bottom: 10px;"></i>
                         <h4 style="margin-bottom: 5px;">Nota Auxiliar (A4)</h4>
                         <p style="font-size: 0.8rem; color: #777;">Folha inteira com detalhes</p>
                     </div>
@@ -1797,17 +1887,20 @@
                 <div class="search-box-wrapper">
                     <div class="search-icon-input">
                         <i class='bx bx-search'></i>
-                        <input type="text" id="client-selection-input" placeholder="Busque por nome ou apelido..." autocomplete="off" data-primary-focus="true">
+                        <input type="text" id="client-selection-input" placeholder="Busque por nome ou apelido..."
+                            autocomplete="off" data-primary-focus="true">
                     </div>
-                    <button class="btn btn-primary" id="btn-new-client-modal" style="width: auto; padding: 10px 14px;" title="Novo Cliente">
+                    <button class="btn btn-primary" id="btn-new-client-modal" style="width: auto; padding: 10px 14px;"
+                        title="Novo Cliente">
                         <i class='bx bx-plus'></i>
                     </button>
                 </div>
-                
+
                 <div class="client-results-list" id="client-selection-results">
-                    </div>
-                
-                <p style="text-align: center; color: var(--text-light); margin-top: 20px; font-size: 0.9rem;" id="client-search-hint">
+                </div>
+
+                <p style="text-align: center; color: var(--text-light); margin-top: 20px; font-size: 0.9rem;"
+                    id="client-search-hint">
                     Digite para buscar...
                 </p>
             </div>
@@ -1815,16 +1908,20 @@
     </div>
 
     <div class="modal-overlay" id="image-viewer-modal" style="z-index: 2000;">
-        <div class="modal-content" style="max-width: 90%; height: 90vh; display: flex; flex-direction: column; padding: 0;">
+        <div class="modal-content"
+            style="max-width: 90%; height: 90vh; display: flex; flex-direction: column; padding: 0;">
             <div class="modal-header" style="padding: 10px 20px;">
                 <h3>Visualizar Comprovante</h3>
                 <button class="close-modal-btn" data-target="image-viewer-modal"><i class='bx bx-x'></i></button>
             </div>
-            <div class="modal-body" style="flex-grow: 1; padding: 0; overflow: hidden; background-color: #f4f4f9; position: relative;">
-                <p id="viewer-loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #777;">
+            <div class="modal-body"
+                style="flex-grow: 1; padding: 0; overflow: hidden; background-color: #f4f4f9; position: relative;">
+                <p id="viewer-loading"
+                    style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #777;">
                     <i class='bx bx-loader-alt bx-spin'></i> Carregando imagem...
                 </p>
-                <iframe id="viewer-iframe" src="" style="width: 100%; height: 100%; border: none; position: relative; z-index: 2;"></iframe>
+                <iframe id="viewer-iframe" src=""
+                    style="width: 100%; height: 100%; border: none; position: relative; z-index: 2;"></iframe>
             </div>
         </div>
     </div>
@@ -1856,9 +1953,12 @@
                 <div class="limit-container">
                     <div class="limit-header">
                         <span>Limite: <strong id="detail-cliente-limite-total">R$ 0,00</strong></span>
-                        <button class="btn-edit-limit" id="btn-alterar-limite" title="Alterar Limite"><i class='bx bx-edit-alt'></i></button>
+                        <button class="btn-edit-limit" id="btn-alterar-limite" title="Alterar Limite"><i
+                                class='bx bx-edit-alt'></i></button>
                     </div>
-                    <div class="progress-track"><div class="progress-fill" id="detail-cliente-progress"></div></div>
+                    <div class="progress-track">
+                        <div class="progress-fill" id="detail-cliente-progress"></div>
+                    </div>
                     <div class="limit-stats">
                         <span id="detail-cliente-disponivel">Disponível: R$ 0,00</span>
                         <span id="detail-cliente-percentual">0% usado</span>
@@ -1871,7 +1971,7 @@
                         <p style="text-align:center; padding:20px; color:#999;">Carregando...</p>
                     </div>
                 </div>
-                
+
                 <div class="form-group" style="margin-top: 16px;">
                     <label>Contato</label>
                     <div class="info-box">
@@ -1941,6 +2041,7 @@
             <span class="navbar-item active" data-page="pdv">PDV</span>
             <span class="navbar-item" data-page="produtos">Produtos</span>
             <span class="navbar-item" data-page="clientes">Clientes</span>
+            <span class="navbar-item" data-page="historico">Histórico</span>
             <span class="navbar-item" data-page="configuracoes">Configurações</span>
             <div class="navbar-highlight" id="navbar-highlight"></div>
         </nav>
@@ -2022,6 +2123,29 @@
                             title="Selecionar forma de pagamento"> <span class="label"> <i
                                     class='bx bx-credit-card'></i> Pagamento (F4) </span> <span class="value editable"
                                 id="summary-payment-method">Não selecionado</span> </div>
+
+                        <!-- ... dentro de <aside class="pdv-summary"> ... -->
+
+                        <!-- SELETOR DE VENDEDOR -->
+                        <div class="summary-row summary-row-interactive" id="seller-toggle-row"
+                            title="Selecionar Vendedor">
+                            <span class="label">
+                                <i class='bx bx-id-card'></i> Vendedor
+                            </span>
+                            <span class="value editable" id="summary-seller-name">Não informado</span>
+                        </div>
+
+                        <!-- Popover de Vendedores (Escondido) -->
+                        <div class="discount-popover" id="seller-popover">
+                            <span class="discount-popover-label">Quem está vendendo?</span>
+                            <div class="seller-grid"
+                                style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px;">
+                                <button class="perc-btn seller-btn" data-name="Nubia">Nubia</button>
+                                <button class="perc-btn seller-btn" data-name="Evelyn">Evelyn</button>
+                                <button class="perc-btn seller-btn" data-name="Ryan">Ryan</button>
+                            </div>
+                        </div>
+
                         <div class="summary-total">
                             <div class="summary-row"> <span class="label">Total</span> <span class="value"
                                     id="summary-total">R$ 0,00</span> </div>
@@ -2060,6 +2184,16 @@
                 </div>
                 <p style="color: var(--text-light); margin-top: -16px; margin-bottom: 16px;"> Gerencie os clientes com
                     pagamentos pendentes. </p>
+
+                <div class="search-box-wrapper" style="margin-bottom: 20px;">
+
+
+                    <div class="client-search-container">
+                        <i class='bx bx-search client-search-icon'></i>
+                        <input type="text" id="clientes-page-search" class="client-search-input"
+                            placeholder="Buscar cliente por nome ou apelido..." autocomplete="off">
+                    </div>
+                </div>
                 <div id="clientes-list-container">
                     <p style="text-align: center; color: var(--text-light); padding: 20px 0;">
                         <i class='bx bx-loader-alt bx-spin'></i> Carregando clientes...
@@ -2070,6 +2204,23 @@
 
         <!-- PÁGINA 5: CAIXA (Agora vazia, apenas como placeholder se necessário) -->
         <div id="caixa-page" class="page-content" style="display: none;"></div>
+
+
+        <!-- PÁGINA 7: HISTÓRICO DE VENDAS -->
+        <div id="historico-page" class="page-content" style="display: none;">
+            <div class="card">
+                <div class="page-header">
+                    <h2>Histórico de Vendas (Dia)</h2>
+                    <button class="btn btn-secondary" id="btn-refresh-history" style="width: auto; padding: 8px 12px;">
+                        <i class='bx bx-refresh'></i> Atualizar
+                    </button>
+                </div>
+
+                <div id="sales-history-list" style="display: flex; flex-direction: column; gap: 12px;">
+                    <p style="text-align: center; color: #999; padding: 20px;">Carregando...</p>
+                </div>
+            </div>
+        </div>
 
         <!-- PÁGINA 6: CONFIGURAÇÕES -->
         <div id="configuracoes-page" class="page-content" style="display: none;">
@@ -2122,45 +2273,44 @@
     </div>
 
     <!-- Modal crediario select-->
-     <div class="modal-overlay" id="crediario-flow-modal">
-                <div class="modal-content" style="max-width: 500px;">
-                    <div class="modal-header">
-                        <h3>Finalizar Crediário</h3>
-                        <button class="close-modal-btn" data-target="crediario-flow-modal"><i
-                                class='bx bx-x'></i></button>
+    <div class="modal-overlay" id="crediario-flow-modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>Finalizar Crediário</h3>
+                <button class="close-modal-btn" data-target="crediario-flow-modal"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+
+                <div id="cred-step-1" class="qr-step-container">
+                    <div class="modal-icon info"><i class='bx bx-printer' style="font-size: 40px;"></i></div>
+                    <p class="step-instruction">Imprima o comprovante para assinatura do cliente.</p>
+                    <p class="step-subtext">Cliente: <strong id="cred-flow-client-name">...</strong></p>
+                    <button class="btn btn-primary" id="btn-force-print">
+                        <i class='bx bx-printer'></i> Imprimir Comprovante
+                    </button>
+                </div>
+
+                <div id="cred-step-2" class="qr-step-container locked-step"
+                    style="display:none; opacity: 0; transition: opacity 0.5s;">
+                    <p class="step-instruction">Anexar Comprovante Assinado</p>
+                    <p class="step-subtext" style="margin-bottom: 10px;">Escaneie para enviar a foto:</p>
+
+                    <div class="qr-img-wrapper">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://eletrobusiness.com.br/comprovante/buy/valid55102.html"
+                            alt="QR Code Comprovante">
                     </div>
-                    <div class="modal-body">
+                    <p style="font-size: 0.8rem; color: #777;">Link: eletrobusiness.com.br/comprovante...</p>
 
-                        <div id="cred-step-1" class="qr-step-container">
-                            <div class="modal-icon info"><i class='bx bx-printer' style="font-size: 40px;"></i></div>
-                            <p class="step-instruction">Imprima o comprovante para assinatura do cliente.</p>
-                            <p class="step-subtext">Cliente: <strong id="cred-flow-client-name">...</strong></p>
-                            <button class="btn btn-primary" id="btn-force-print">
-                                <i class='bx bx-printer'></i> Imprimir Comprovante
-                            </button>
-                        </div>
-
-                        <div id="cred-step-2" class="qr-step-container locked-step"
-                            style="display:none; opacity: 0; transition: opacity 0.5s;">
-                            <p class="step-instruction">Anexar Comprovante Assinado</p>
-                            <p class="step-subtext" style="margin-bottom: 10px;">Escaneie para enviar a foto:</p>
-
-                            <div class="qr-img-wrapper">
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://eletrobusiness.com.br/comprovante/buy/valid55102.html"
-                                    alt="QR Code Comprovante">
-                            </div>
-                            <p style="font-size: 0.8rem; color: #777;">Link: eletrobusiness.com.br/comprovante...</p>
-
-                            <div style="margin-top: 24px;">
-                                <button class="btn btn-success" id="btn-finish-crediario-final">
-                                    <i class='bx bx-check-double'></i> Concluir Conta e Salvar
-                                </button>
-                            </div>
-                        </div>
-
+                    <div style="margin-top: 24px;">
+                        <button class="btn btn-success" id="btn-finish-crediario-final">
+                            <i class='bx bx-check-double'></i> Concluir Conta e Salvar
+                        </button>
                     </div>
                 </div>
+
             </div>
+        </div>
+    </div>
 
     <!-- Modal 2: Seleção de Pagamento (Com Split) -->
     <div class="modal-overlay" id="payment-modal">
@@ -2184,48 +2334,46 @@
                             style="font-size: 32px;"></i> <span>Crediário</span> </div>
                 </div>
 
-                    <div id="crediario-limit-feedback" style="display: none;">
-                        <div class="mini-limit-bar">
-                            <div class="mini-limit-fill" id="crediario-limit-fill"></div>
-                        </div>
-                        <div class="mini-limit-info">
-                            <span id="crediario-limit-text">Limite disponível: R$ 0,00</span>
-                            <span id="crediario-status-text"></span>
-                        </div>
+                <div id="crediario-limit-feedback" style="display: none;">
+                    <div class="mini-limit-bar">
+                        <div class="mini-limit-fill" id="crediario-limit-fill"></div>
                     </div>
-                </div>
-
-                <button class="btn btn-secondary" id="split-payment-toggle-btn" style="margin-top: 20px;"> <i
-                        class='bx bx-columns'></i> Dividir Pagamento </button>
-
-                <div class="split-payment-area" id="split-payment-area" style="display: none;">
-                    <h4>Dividir Pagamento</h4>
-                    <div class="split-payment-row">
-                        <div class="form-group"> <label for="split-method-1">Forma 1</label> <select
-                                id="split-method-1">
-                                <option value="Dinheiro">Dinheiro</option>
-                                <option value="PIX">PIX</option>
-                                <option value="Cartão">Cartão</option>
-                            </select> </div>
-                        <div class="form-group"> <label for="split-value-1">Valor 1 (R$)</label> <input type="number"
-                                id="split-value-1" step="0.01"> </div>
+                    <div class="mini-limit-info">
+                        <span id="crediario-limit-text">Limite disponível: R$ 0,00</span>
+                        <span id="crediario-status-text"></span>
                     </div>
-                    <div class="split-payment-row">
-                        <div class="form-group"> <label for="split-method-2">Forma 2</label> <select
-                                id="split-method-2">
-                                <option value="Dinheiro">Dinheiro</option>
-                                <option value="PIX">PIX</option>
-                                <option value="Cartão">Cartão</option>
-                            </select> </div>
-                        <div class="form-group"> <label for="split-value-2">Valor 2 (R$)</label> <input type="number"
-                                id="split-value-2" step="0.01"> </div>
-                    </div>
-                    <div class="split-payment-remaining" id="split-payment-remaining"> Restante: R$ 0,00 </div>
-                    <button class="btn btn-primary" id="confirm-split-payment-btn" style="margin-top: 16px;" disabled>
-                        Confirmar Divisão </button>
                 </div>
             </div>
+
+            <button class="btn btn-secondary" id="split-payment-toggle-btn" style="margin-top: 20px;"> <i
+                    class='bx bx-columns'></i> Dividir Pagamento </button>
+
+            <div class="split-payment-area" id="split-payment-area" style="display: none;">
+                <h4>Dividir Pagamento</h4>
+                <div class="split-payment-row">
+                    <div class="form-group"> <label for="split-method-1">Forma 1</label> <select id="split-method-1">
+                            <option value="Dinheiro">Dinheiro</option>
+                            <option value="PIX">PIX</option>
+                            <option value="Cartão">Cartão</option>
+                        </select> </div>
+                    <div class="form-group"> <label for="split-value-1">Valor 1 (R$)</label> <input type="number"
+                            id="split-value-1" step="0.01"> </div>
+                </div>
+                <div class="split-payment-row">
+                    <div class="form-group"> <label for="split-method-2">Forma 2</label> <select id="split-method-2">
+                            <option value="Dinheiro">Dinheiro</option>
+                            <option value="PIX">PIX</option>
+                            <option value="Cartão">Cartão</option>
+                        </select> </div>
+                    <div class="form-group"> <label for="split-value-2">Valor 2 (R$)</label> <input type="number"
+                            id="split-value-2" step="0.01"> </div>
+                </div>
+                <div class="split-payment-remaining" id="split-payment-remaining"> Restante: R$ 0,00 </div>
+                <button class="btn btn-primary" id="confirm-split-payment-btn" style="margin-top: 16px;" disabled>
+                    Confirmar Divisão </button>
+            </div>
         </div>
+    </div>
     </div>
     </div>
 
@@ -2582,7 +2730,7 @@
             const clientSelectionResults = document.getElementById('client-selection-results');
             const clientSearchHint = document.getElementById('client-search-hint');
             const btnNewClientModal = document.getElementById('btn-new-client-modal');
-            
+
             // Seletores do Resumo (Sidebar)
             const summaryClientCard = document.getElementById('summary-client-card');
             const summaryClientNameText = document.getElementById('summary-client-name-text');
@@ -2603,33 +2751,33 @@
             // Modifique a função handlePaymentSelection existente ou a lógica de clique das opções
             // para lidar com a seleção visual do 'Crediário' sem fechar o modal imediatamente.
 
-            
+
 
             // Handler para Opções de Pagamento
             paymentOptions.forEach(option => {
                 option.addEventListener('click', () => {
                     const method = option.dataset.method;
-                    
+
                     if (method === 'Crediário') {
                         // 1. Fecha modal de pagamento
                         closeModal(paymentModal);
-                        
+
                         // 2. Abre modal de seleção de cliente
                         // (Reseta a busca antes)
                         clientSelectionInput.value = '';
                         clientSelectionResults.innerHTML = '';
                         clientSelectionResults.style.display = 'none';
                         clientSearchHint.style.display = 'block';
-                        
+
                         openModal(clientSelectionModal);
                         setTimeout(() => clientSelectionInput.focus(), 100);
                     } else {
                         // Fluxo normal (Dinheiro, Pix, Cartão)
                         // Se tinha um cliente selecionado antes, limpamos? 
                         // Depende da regra de negócio. Aqui vamos limpar para evitar confusão.
-                        selectedCrediarioClient = null; 
+                        selectedCrediarioClient = null;
                         updateSummaryClientCard(); // Esconde o card
-                        
+
                         handlePaymentSelection(method);
                     }
                 });
@@ -2640,7 +2788,7 @@
             clientSelectionInput.addEventListener('input', (e) => {
                 const term = e.target.value.toLowerCase();
                 clientSelectionResults.innerHTML = '';
-                
+
                 if (term.length < 2) {
                     clientSelectionResults.style.display = 'none';
                     clientSearchHint.style.display = 'block';
@@ -2651,8 +2799,8 @@
 
                 if (!localClientCache) { carregarClientesDaAPI(); return; }
 
-                const filtered = localClientCache.filter(c => 
-                    (c.nomeExibicao && c.nomeExibicao.toLowerCase().includes(term)) || 
+                const filtered = localClientCache.filter(c =>
+                    (c.nomeExibicao && c.nomeExibicao.toLowerCase().includes(term)) ||
                     (c.apelido && c.apelido.toLowerCase().includes(term))
                 );
 
@@ -2692,15 +2840,15 @@
             const confirmClientSelection = (client) => {
                 selectedCrediarioClient = client;
                 selectedPaymentMethod = 'Crediário'; // Define o método
-                
+
                 // Atualiza UI
                 updateSummary(); // Para atualizar o texto "Pagamento: Crediário"
                 summaryPaymentMethod.textContent = "Crediário";
                 summaryPaymentMethod.style.fontWeight = '600';
-                
+
                 // Mostra o Card no Resumo
                 updateSummaryClientCard();
-                
+
                 // Fecha modal
                 closeModal(clientSelectionModal);
             };
@@ -2718,28 +2866,28 @@
                 if (selectedCrediarioClient && selectedPaymentMethod === 'Crediário') {
                     summaryClientCard.style.display = 'block';
                     summaryClientNameText.textContent = selectedCrediarioClient.nomeExibicao;
-                    
+
                     // Cálculo do Limite em Tempo Real
                     const limite = parseFloat(selectedCrediarioClient.limite) || 0;
                     const dividaAntiga = parseFloat(selectedCrediarioClient.saldoDevedor) || 0;
                     const compraAtual = lastSaleData ? lastSaleData.total : 0;
-                    
+
                     // Disponível AGORA (antes de consolidar a compra atual)
                     const disponivelReal = limite - dividaAntiga;
-                    
+
                     // Como ficará APÓS a compra
                     const saldoFinalPrevisto = disponivelReal - compraAtual;
 
                     if (limite > 0) {
                         summaryLimitValue.textContent = formatCurrency(saldoFinalPrevisto);
-                        
+
                         // Barra de progresso baseada no uso total (Dívida + Compra)
                         const usoTotal = dividaAntiga + compraAtual;
                         let percentual = (usoTotal / limite) * 100;
                         if (percentual > 100) percentual = 100;
-                        
+
                         summaryLimitFill.style.width = `${percentual}%`;
-                        
+
                         if (saldoFinalPrevisto < 0) {
                             summaryLimitFill.classList.add('danger');
                             summaryLimitValue.style.color = 'var(--warning-red)';
@@ -2776,61 +2924,76 @@
             const renderProdutosPage = () => { /* ... (sem alterações, usa cache) ... */ produtosTableContainer.innerHTML = ''; if (!localProductCache) { produtosTableContainer.innerHTML = '<p style="text-align: center; color: var(--text-light);"><i class="bx bx-loader-alt bx-spin"></i> Carregando...</p>'; if (localProductCache === null) carregarCacheDeProdutos(); return; } if (localProductCache.length === 0) { produtosTableContainer.innerHTML = '<p style="text-align: center; color: var(--text-light);">Nenhum produto.</p>'; return; } const table = document.createElement('table'); table.className = 'data-table products-table'; table.innerHTML = `<thead><tr><th>Nome</th><th>Código</th><th>Preço</th></tr></thead><tbody></tbody>`; const tbody = table.querySelector('tbody'); localProductCache.forEach(product => { const tr = document.createElement('tr'); tr.innerHTML = `<td>${product.name}</td><td>${product.id}</td><td class="currency">${formatCurrency(product.price)}</td>`; tbody.appendChild(tr); }); produtosTableContainer.appendChild(table); };
 
             const renderClientesPage = () => {
-                clientesListContainer.innerHTML = '';
+                const container = document.getElementById('clientes-list-container');
+                const searchInput = document.getElementById('clientes-page-search');
+
+                // Limpa container
+                container.innerHTML = '';
+
+                // Verifica carregamento
                 if (localClientCache === null) {
-                    clientesListContainer.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px 0;"><i class="bx bx-loader-alt bx-spin"></i> Carregando...</p>';
-                    return;
-                }
-                if (localClientCache.length === 0) {
-                    clientesListContainer.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px 0;">Nenhum cliente.</p>';
+                    container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px 0;"><i class="bx bx-loader-alt bx-spin"></i> Carregando...</p>';
                     return;
                 }
 
+                // Lógica de Filtragem
+                const term = searchInput ? searchInput.value.toLowerCase() : "";
+
+                const clientesFiltrados = localClientCache.filter(c =>
+                    (c.nomeExibicao && c.nomeExibicao.toLowerCase().includes(term)) ||
+                    (c.apelido && c.apelido.toLowerCase().includes(term))
+                );
+
+                if (clientesFiltrados.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px 0;">Nenhum cliente encontrado.</p>';
+                    return;
+                }
+
+                // Renderiza Tabela
                 const table = document.createElement('table');
                 table.className = 'data-table clients-table';
                 table.innerHTML = `
-        <thead>
-            <tr>
-                <th>Nome / Apelido</th>
-                <th>Saldo Devedor</th>
-                <th>Próximo Venc.</th>
-                <th style="text-align: center;">Ações</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    `;
+                    <thead>
+                        <tr>
+                            <th>Nome / Apelido</th>
+                            <th>Saldo Devedor</th>
+                            <th>Próximo Venc.</th>
+                            <th style="text-align: center;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                `;
 
                 const tbody = table.querySelector('tbody');
 
-                localClientCache.forEach(cliente => {
+                clientesFiltrados.forEach(cliente => {
                     const tr = document.createElement('tr');
-                    // Botões atualizados: Olho (Detalhes) e Dinheiro (Pagar)
                     tr.innerHTML = `
-            <td>
-                ${cliente.nomeExibicao} 
-                <span style="font-size: 0.85rem; color: var(--text-light);">
-                    ${cliente.apelido && cliente.nomeExibicao !== cliente.apelido ? '(' + cliente.apelido + ')' : ''}
-                </span>
-            </td>
-            <td class="currency" style="color: ${cliente.saldoDevedor > 0 ? 'var(--warning-red)' : 'var(--success-green)'}">
-                ${formatCurrency(cliente.saldoDevedor)}
-            </td>
-            <td>${cliente.proximoVencimento || '-'}</td>
-            <td class="actions">
-                <button class="btn-view-client" data-id="${cliente.idCliente}" title="Ver Detalhes">
-                    <i class='bx bx-show'></i>
-                </button> 
-                <button class="btn-pay-client" data-id="${cliente.idCliente}" title="Registrar Pagamento">
-                    <i class='bx bx-money'></i>
-                </button>
-            </td>
-        `;
+                        <td>
+                            ${cliente.nomeExibicao} 
+                            <span style="font-size: 0.85rem; color: var(--text-light);">
+                                ${cliente.apelido && cliente.nomeExibicao !== cliente.apelido ? '(' + cliente.apelido + ')' : ''}
+                            </span>
+                        </td>
+                        <td class="currency" style="color: ${cliente.saldoDevedor > 0 ? 'var(--warning-red)' : 'var(--success-green)'}">
+                            ${formatCurrency(cliente.saldoDevedor)}
+                        </td>
+                        <td>${cliente.proximoVencimento || '-'}</td>
+                        <td class="actions">
+                            <button class="btn-view-client" data-id="${cliente.idCliente}" title="Ver Detalhes">
+                                <i class='bx bx-show'></i>
+                            </button> 
+                            <button class="btn-pay-client" data-id="${cliente.idCliente}" title="Registrar Pagamento">
+                                <i class='bx bx-money'></i>
+                            </button>
+                        </td>
+                    `;
                     tbody.appendChild(tr);
                 });
 
-                clientesListContainer.appendChild(table);
+                container.appendChild(table);
 
-                // Adiciona os eventos aos novos botões dinamicamente
+                // Reatribui os eventos aos botões da tabela filtrada
                 document.querySelectorAll('.btn-view-client').forEach(btn => {
                     btn.addEventListener('click', () => openClienteDetails(btn.dataset.id));
                 });
@@ -2839,6 +3002,160 @@
                     btn.addEventListener('click', () => openClientePayment(btn.dataset.id));
                 });
             };
+
+            // --- Variáveis Globais Novas ---
+            let currentSeller = localStorage.getItem('pdv_last_seller') || null; // Carrega do cache
+
+            // --- Seletores Novos ---
+            const sellerToggleRow = document.getElementById('seller-toggle-row');
+            const sellerPopover = document.getElementById('seller-popover');
+            const summarySellerName = document.getElementById('summary-seller-name');
+            const sellerButtons = document.querySelectorAll('.seller-btn');
+            const btnRefreshHistory = document.getElementById('btn-refresh-history');
+            const salesHistoryList = document.getElementById('sales-history-list');
+
+            // --- Inicialização do Vendedor ---
+            if (currentSeller) {
+                summarySellerName.textContent = currentSeller;
+                summarySellerName.style.color = 'var(--text-dark)';
+                // Marca visualmente o botão
+                sellerButtons.forEach(btn => {
+                    if (btn.dataset.name === currentSeller) btn.style.backgroundColor = 'var(--primary-red)';
+                });
+            }
+
+            // --- Lógica de Seleção de Vendedor ---
+            sellerToggleRow.addEventListener('click', () => {
+                sellerPopover.classList.toggle('active');
+            });
+
+            sellerButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Remove estilo dos outros
+                    sellerButtons.forEach(b => {
+                        b.style.backgroundColor = 'var(--card-white)';
+                        b.style.color = 'var(--text-dark)';
+                    });
+
+                    // Aplica ao selecionado
+                    currentSeller = btn.dataset.name;
+                    localStorage.setItem('pdv_last_seller', currentSeller); // Salva no cache
+
+                    btn.style.backgroundColor = 'var(--primary-red)';
+                    btn.style.color = 'white';
+
+                    summarySellerName.textContent = currentSeller;
+                    summarySellerName.style.color = 'var(--text-dark)';
+                    sellerPopover.classList.remove('active');
+                });
+            });
+
+            // Função para enviar os dados para o Histórico
+            async function salvarVendaNoHistorico(dadosVenda) {
+                // SCRIPT_URL é a variável com seu link ".../exec"
+                if (!SCRIPT_URL) {
+                    console.error("SCRIPT_URL não definida!");
+                    return;
+                }
+
+                // Estrutura exata que seu backend espera receber
+                const payload = {
+                    action: "registrarHistorico", // Isso ativa o if no doPost
+                    cliente: dadosVenda.cliente || "Cliente Balcão",
+                    vendedor: dadosVenda.vendedor || "Caixa",
+                    valor: dadosVenda.valorTotal, // Certifique-se que é número ou string formatada
+                    produtos: formatarListaProdutos(dadosVenda.itens), // Transforma array em string
+                    pagamento: dadosVenda.metodoPagamento,
+                    idVenda: dadosVenda.id || Date.now().toString()
+                };
+
+                const options = {
+                    method: 'POST', // OBRIGATÓRIO ser POST para cair no doPost
+                    body: JSON.stringify(payload) // OBRIGATÓRIO converter para string JSON
+                };
+
+                try {
+                    console.log("Enviando histórico...", payload);
+
+                    // O fetch dispara o request
+                    // mode: 'no-cors' NÃO deve ser usado se você quer ler a resposta JSON
+                    const response = await fetch(SCRIPT_URL, options);
+
+                    const jsonResponse = await response.json();
+
+                    if (jsonResponse.status === "success") {
+                        console.log("Histórico registrado com sucesso!");
+                    } else {
+                        console.error("Erro no backend:", jsonResponse.message);
+                    }
+                } catch (error) {
+                    console.error("Erro na requisição:", error);
+                }
+            }
+
+            // Função auxiliar para transformar o array de itens numa string legível na planilha
+            function formatarListaProdutos(itens) {
+                if (!itens || !Array.isArray(itens)) return "N/A";
+
+                // CORREÇÃO: Alterado de 'item.qtd' para 'item.quantity' e 'item.nome' para 'item.name'
+                return itens.map(item => `${item.quantity || 1}x ${item.name || item.nome || "Item"}`).join(", ");
+            }
+
+            // --- Lógica da Página de Histórico ---
+            const carregarHistorico = async () => {
+                salesHistoryList.innerHTML = '<p style="text-align: center; padding: 20px;"><i class="bx bx-loader-alt bx-spin"></i> Atualizando...</p>';
+
+                try {
+                    const response = await fetch(`${SCRIPT_URL}?action=listarHistoricoVendas`);
+                    const result = await response.json();
+
+                    if (result.status === 'success' && result.data.length > 0) {
+                        salesHistoryList.innerHTML = ''; // Limpa
+
+                        result.data.forEach(venda => {
+                            // Cria o cartão da venda
+                            const card = document.createElement('div');
+                            card.style.border = '1px solid var(--border-color)';
+                            card.style.borderRadius = '12px';
+                            card.style.padding = '16px';
+                            card.style.backgroundColor = '#fff';
+
+                            card.innerHTML = `
+                                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                                    <strong style="font-size:1rem;">${venda.cliente}</strong>
+                                    <span style="color:var(--success-green); font-weight:bold;">${formatCurrency(venda.valor)}</span>
+                                </div>
+                                <div style="font-size:0.85rem; color:#666; margin-bottom:8px;">
+                                    <i class='bx bx-user'></i> Vend: ${venda.vendedor} &bull; 
+                                    <i class='bx bx-credit-card'></i> ${venda.pagamento} &bull; 
+                                    <i class='bx bx-time'></i> ${venda.data}
+                                </div>
+                                <div style="font-size:0.8rem; background:#f9f9f9; padding:8px; border-radius:6px; color:#444;">
+                                    ${venda.produtos}
+                                </div>
+                            `;
+                            salesHistoryList.appendChild(card);
+                        });
+                    } else {
+                        salesHistoryList.innerHTML = '<p style="text-align: center; color: #777; padding: 20px;">Nenhuma venda registrada hoje.</p>';
+                    }
+                } catch (e) {
+                    salesHistoryList.innerHTML = '<p style="text-align: center; color: var(--warning-red);">Erro ao carregar histórico.</p>';
+                }
+            };
+
+            // Botão de Atualizar e Clique na Aba
+            btnRefreshHistory.addEventListener('click', carregarHistorico);
+
+            // Adiciona ao listener da navbar para carregar ao entrar na aba
+            navbarItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    // ... código existente ...
+                    if (item.dataset.page === 'historico') {
+                        carregarHistorico();
+                    }
+                });
+            });
 
             // --- Funções de Lógica do Carrinho ---
             const addToCart = (product) => { const existingItem = cart.find(item => item.id === product.id); if (existingItem) { existingItem.quantity += 1; } else { cart.push({ ...product, quantity: 1, isNew: true }); } renderCart(); };
@@ -2908,7 +3225,7 @@
             const handleQuickAddSubmit = async () => { const name = quickAddName.value; const price = parseFloat(quickAddPrice.value); if (!name || isNaN(price) || price <= 0) { showCustomAlert("Inválido", "Nome e preço."); return; } const newProduct = { id: lastScannedBarcode, name: name, price: price }; const produtoCadastrado = await cadastrarProdutoNaAPI(newProduct); if (produtoCadastrado) { addToCart(produtoCadastrado); closeModal(quickAddModal); } };
             const handlePaymentSelection = (method) => { if (splitPaymentArea.style.display === 'none') { selectedPaymentMethod = method; summaryPaymentMethod.textContent = method; summaryPaymentMethod.style.fontWeight = '600'; summaryPaymentMethod.style.color = 'var(--text-dark)'; updateSummary(); closeModal(paymentModal); } else { showCustomAlert("Atenção", "Confirme/cancele divisão."); } };
             // --- Lógica de Impressão (Atualizada: Sem QR Code, Com A4) ---
-            
+
             let tempClientNameForSignature = null; // Variável auxiliar
 
             // 1. Abre o Modal de Seleção
@@ -2935,7 +3252,7 @@
             const printThermal = (clientName) => {
                 const now = new Date();
                 const uniqueSaleID = formatTimestamp(now);
-                
+
                 let itemLinesHtml = '';
                 cart.forEach(item => {
                     itemLinesHtml += `<div class="receipt-item"><div class="item-name">${item.name}</div><div class="item-details">${item.quantity} x ${formatCurrency(item.price)}<span>${formatCurrency(item.quantity * item.price)}</span></div></div>`;
@@ -2957,7 +3274,7 @@
                 ${signatureHtml}
                 <div style="text-align:center;margin-top:20px;font-size:0.8rem"><p>Não é documento fiscal</p></div>
                 </body></html>`;
-                
+
                 executePrint(html);
             };
 
@@ -2978,7 +3295,7 @@
 
                 let rows = '';
                 cart.forEach((item, idx) => {
-                    rows += `<tr><td style="text-align:center">${idx+1}</td><td>${item.name}</td><td style="text-align:center">${item.quantity}</td><td style="text-align:right">${formatCurrency(item.price)}</td><td style="text-align:right">${formatCurrency(item.price*item.quantity)}</td></tr>`;
+                    rows += `<tr><td style="text-align:center">${idx + 1}</td><td>${item.name}</td><td style="text-align:center">${item.quantity}</td><td style="text-align:right">${formatCurrency(item.price)}</td><td style="text-align:right">${formatCurrency(item.price * item.quantity)}</td></tr>`;
                 });
 
                 const html = `<html><head><style>
@@ -3012,7 +3329,7 @@
                     </div>
                     <p style="text-align:center; margin-top: 50px; font-size: 10px; color: #999;">Documento auxiliar de venda. Não possui valor fiscal.</p>
                 </body></html>`;
-                
+
                 executePrint(html);
             };
 
@@ -3025,7 +3342,7 @@
                 iframe.contentDocument.close();
                 iframe.onload = () => {
                     setTimeout(() => {
-                        try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch(e){}
+                        try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch (e) { }
                         setTimeout(() => document.body.removeChild(iframe), 1000);
                     }, 500);
                 };
@@ -3060,21 +3377,21 @@
             [splitValue1, splitValue2, splitMethod1, splitMethod2].forEach(el => { el.addEventListener('input', updateSplitRemaining); el.addEventListener('change', updateSplitRemaining); });
             confirmSplitPaymentBtn.addEventListener('click', () => { if (Math.abs(currentSplitPayments.remaining) >= 0.01) { showCustomAlert("Erro", "Soma não bate."); return; } if (!splitMethod1.value || !splitMethod2.value || splitMethod1.value === splitMethod2.value) { showCustomAlert("Erro", "Selecione 2 formas diferentes."); return; } currentSplitPayments.method1 = splitMethod1.value; currentSplitPayments.value1 = parseFloat(splitValue1.value) || 0; currentSplitPayments.method2 = splitMethod2.value; currentSplitPayments.value2 = parseFloat(splitValue2.value) || 0; selectedPaymentMethod = `Dividido (${currentSplitPayments.method1} + ${currentSplitPayments.method2})`; summaryPaymentMethod.textContent = selectedPaymentMethod; summaryPaymentMethod.style.fontWeight = '600'; summaryPaymentMethod.style.color = 'var(--text-dark)'; updateSummary(); closeModal(paymentModal); });
 
-           // --- VARIÁVEIS GLOBAIS DE IMPRESSÃO ---
+            // --- VARIÁVEIS GLOBAIS DE IMPRESSÃO ---
             let selectedPrintFormat = 'thermal'; // 'thermal' ou 'a4'
 
             // --- 1. BOTÃO FINALIZAR VENDA (F9) ---
             // Agora ele apenas abre a seleção de impressão. Nada é registrado ainda.
             finishSaleBtn.addEventListener('click', () => {
-                if (cart.length === 0) { 
-                    showCustomAlert("Vazio", "Adicione itens."); 
-                    return; 
+                if (cart.length === 0) {
+                    showCustomAlert("Vazio", "Adicione itens.");
+                    return;
                 }
-                
-                if (!selectedPaymentMethod) { 
-                    showCustomAlert("Pagamento", "Selecione forma."); 
-                    openModal(paymentModal); 
-                    return; 
+
+                if (!selectedPaymentMethod) {
+                    showCustomAlert("Pagamento", "Selecione forma.");
+                    openModal(paymentModal);
+                    return;
                 }
 
                 // Validação extra para Crediário
@@ -3105,13 +3422,27 @@
                 // 1. Feedback Visual Imediato (Bloqueia a tela)
                 loadingOverlay.classList.remove('hidden');
                 loadingMessage.innerHTML = "Registrando Venda...<br>Aguarde a impressão.";
-                
+
                 // Desabilita botão original para evitar cliques extras no fundo
                 finishSaleBtn.disabled = true;
 
                 try {
                     const now = new Date();
                     const timestamp = formatTimestamp(now);
+
+                    // --- CORREÇÃO AQUI: Prepara e envia para o Histórico ---
+                    const dadosParaHistorico = {
+                        cliente: selectedCrediarioClient ? selectedCrediarioClient.nomeExibicao : "Cliente Balcão",
+                        vendedor: currentSeller || "Caixa", // Pega o vendedor selecionado ou define Caixa
+                        valorTotal: lastSaleData.total.toFixed(2),
+                        itens: cart, // Passa o array do carrinho
+                        metodoPagamento: selectedPaymentMethod,
+                        id: timestamp
+                    };
+
+                    // Chama a função que envia para a planilha 'historic' (sem await para não travar a impressão)
+                    salvarVendaNoHistorico(dadosParaHistorico);
+                    // -------------------------------------------------------
 
                     // 2. PREPARAR DADOS DO PAGAMENTO
                     let paymentsToSend = [];
@@ -3142,7 +3473,7 @@
 
                     // 5. IMPRIMIR (Dispara a janela do navegador UMA VEZ)
                     const clientName = selectedCrediarioClient ? selectedCrediarioClient.nomeExibicao : null;
-                    
+
                     if (format === 'a4') {
                         printA4(clientName);
                     } else {
@@ -3158,21 +3489,21 @@
                     if (selectedPaymentMethod === 'Crediário') {
                         // Se for Crediário, já imprimimos no passo 5.
                         // Então abrimos o modal DIRETO no Passo 2 (Validação), pulando o botão de imprimir.
-                        
+
                         credFlowClientName.textContent = selectedCrediarioClient.nomeExibicao;
-                        
+
                         // Esconde Passo 1 (Impressão)
-                        document.getElementById('cred-step-1').style.display = 'none'; 
-                        
+                        document.getElementById('cred-step-1').style.display = 'none';
+
                         // Mostra Passo 2 (Validação)
                         const step2 = document.getElementById('cred-step-2');
                         step2.style.display = 'block';
                         step2.style.opacity = '1';
                         step2.classList.remove('locked-step');
-                        
+
                         // Atualiza QR Code (caso use) ou apenas prepara a tela
                         const qrImg = document.querySelector('#cred-step-2 .qr-img-wrapper img');
-                        if(qrImg) {
+                        if (qrImg) {
                             const baseUrl = "http://eletrobusiness.com.br/comprovante/buy/valid55102.html";
                             const finalUrl = `${baseUrl}?id=${selectedCrediarioClient.idCliente}`;
                             qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(finalUrl)}`;
@@ -3197,16 +3528,16 @@
             // Como já salvamos no passo anterior, este botão serve apenas para fechar o ciclo.
             btnFinishCrediarioFinal.addEventListener('click', () => {
                 showCustomAlert("Sucesso", "Processo de crediário finalizado!");
-                
+
                 closeModal(crediarioFlowModal);
-                
+
                 // Limpa tudo e prepara para nova venda
-                clearCart(); 
+                clearCart();
                 selectedCrediarioClient = null;
                 // Reseta botão de imprimir para a próxima vez
                 btnForcePrint.disabled = false;
                 btnForcePrint.innerHTML = "<i class='bx bx-printer'></i> Imprimir Comprovante";
-                
+
                 barcodeInput.focus();
             });
 
@@ -3452,13 +3783,13 @@
                 if (limite > 0) {
                     const disponivel = limite - saldo;
                     const porcentagemUso = (saldo / limite) * 100;
-                    
+
                     detailLimitAvailable.textContent = `Disponível: ${formatCurrency(disponivel)}`;
                     detailLimitPercent.textContent = `${porcentagemUso.toFixed(1)}% usado`;
-                    
+
                     let width = porcentagemUso > 100 ? 100 : (porcentagemUso < 0 ? 0 : porcentagemUso);
                     detailProgressBar.style.width = `${width}%`;
-                    
+
                     detailProgressBar.className = 'progress-fill';
                     if (disponivel < 0) {
                         detailProgressBar.classList.add('danger');
@@ -3485,12 +3816,12 @@
 
                     if (result.status === 'success' && result.data.length > 0) {
                         let html = '<table class="history-table"><thead><tr><th>Data</th><th>Tipo</th><th>Valor</th><th>Anexo</th></tr></thead><tbody>';
-                        
+
                         result.data.forEach(item => {
                             const isCompra = item.valor > 0; // Positivo = Dívida (Compra)
                             const tipoClass = isCompra ? 'type-compra' : 'type-pagamento';
                             const valorColor = isCompra ? 'var(--warning-red)' : 'var(--success-green)';
-                            
+
                             // Ícone de anexo se houver link
                             let anexoHtml = '-';
                             if (item.anexo && item.anexo.startsWith('http')) {
@@ -3676,16 +4007,16 @@
             window.openReceiptViewer = (url) => {
                 const viewerModal = document.getElementById('image-viewer-modal');
                 const iframe = document.getElementById('viewer-iframe');
-                
+
                 // Extrai o ID do arquivo do link do Google Drive
                 // Padrão comum: .../d/ID_DO_ARQUIVO/view...
                 const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-                
+
                 if (match && match[1]) {
                     const fileId = match[1];
                     // Usa a URL de 'preview' que permite embutir sem a interface completa do Drive
                     const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-                    
+
                     iframe.src = embedUrl;
                     openModal(viewerModal);
                 } else {
@@ -3693,6 +4024,11 @@
                     window.open(url, '_blank');
                 }
             };
+
+            // Listener para filtro na página de clientes
+            document.getElementById('clientes-page-search').addEventListener('input', () => {
+                renderClientesPage();
+            });
 
             // Limpa o iframe ao fechar para economizar memória e parar vídeos/carregamento
             document.querySelector('[data-target="image-viewer-modal"]').addEventListener('click', () => {
