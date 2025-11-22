@@ -1670,6 +1670,70 @@
             display: flex;
             justify-content: space-between;
         }
+        /* Estilos do Histórico do Cliente */
+        .history-section {
+            margin-top: 20px;
+            border-top: 1px dashed var(--border-color);
+            padding-top: 16px;
+        }
+        
+        .history-section h4 {
+            font-size: 1rem;
+            margin-bottom: 12px;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .history-list-container {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .history-table th {
+            background: var(--bg-light);
+            padding: 8px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            border-bottom: 1px solid #ddd;
+            color: var(--text-light);
+        }
+
+        .history-table td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .history-type-tag {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .type-compra { background: rgba(219, 0, 56, 0.1); color: var(--primary-red); }
+        .type-pagamento { background: rgba(40, 167, 69, 0.1); color: var(--success-green); }
+
+        .btn-link-receipt {
+            color: var(--info-blue);
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+        .btn-link-receipt:hover { text-decoration: underline; }
     </style>
 </head>
 
@@ -1718,6 +1782,21 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="image-viewer-modal" style="z-index: 2000;">
+        <div class="modal-content" style="max-width: 90%; height: 90vh; display: flex; flex-direction: column; padding: 0;">
+            <div class="modal-header" style="padding: 10px 20px;">
+                <h3>Visualizar Comprovante</h3>
+                <button class="close-modal-btn" data-target="image-viewer-modal"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body" style="flex-grow: 1; padding: 0; overflow: hidden; background-color: #f4f4f9; position: relative;">
+                <p id="viewer-loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #777;">
+                    <i class='bx bx-loader-alt bx-spin'></i> Carregando imagem...
+                </p>
+                <iframe id="viewer-iframe" src="" style="width: 100%; height: 100%; border: none; position: relative; z-index: 2;"></iframe>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="cliente-details-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1726,9 +1805,7 @@
             </div>
             <div class="modal-body">
                 <div class="client-profile-header">
-                    <div class="client-avatar">
-                        <i class='bx bx-user'></i>
-                    </div>
+                    <div class="client-avatar"><i class='bx bx-user'></i></div>
                     <h4 id="detail-cliente-nome">Carregando...</h4>
                     <p id="detail-cliente-apelido" style="color: var(--text-light);">...</p>
                 </div>
@@ -1746,22 +1823,25 @@
 
                 <div class="limit-container">
                     <div class="limit-header">
-                        <span>Limite de Crédito: <strong id="detail-cliente-limite-total">R$ 0,00</strong></span>
-                        <button class="btn-edit-limit" id="btn-alterar-limite" title="Alterar Limite">
-                            <i class='bx bx-edit-alt'></i>
-                        </button>
+                        <span>Limite: <strong id="detail-cliente-limite-total">R$ 0,00</strong></span>
+                        <button class="btn-edit-limit" id="btn-alterar-limite" title="Alterar Limite"><i class='bx bx-edit-alt'></i></button>
                     </div>
-                    <div class="progress-track">
-                        <div class="progress-fill" id="detail-cliente-progress"></div>
-                    </div>
+                    <div class="progress-track"><div class="progress-fill" id="detail-cliente-progress"></div></div>
                     <div class="limit-stats">
-                        <span id="detail-cliente-disponivel" style="color: var(--success-green);">Disponível: R$
-                            0,00</span>
+                        <span id="detail-cliente-disponivel">Disponível: R$ 0,00</span>
                         <span id="detail-cliente-percentual">0% usado</span>
                     </div>
                 </div>
+
+                <div class="history-section">
+                    <h4><i class='bx bx-history'></i> Histórico Recente</h4>
+                    <div class="history-list-container" id="detail-history-container">
+                        <p style="text-align:center; padding:20px; color:#999;">Carregando...</p>
+                    </div>
+                </div>
+                
                 <div class="form-group" style="margin-top: 16px;">
-                    <label>Contato & Endereço</label>
+                    <label>Contato</label>
                     <div class="info-box">
                         <p><i class='bx bx-phone'></i> <span id="detail-cliente-telefone">--</span></p>
                         <p><i class='bx bx-map'></i> <span id="detail-cliente-endereco">--</span></p>
@@ -3223,12 +3303,12 @@
             const detailLimitPercent = document.getElementById('detail-cliente-percentual');
             const btnAlterarLimite = document.getElementById('btn-alterar-limite');
 
-            // --- Lógica de Abrir Modal de Detalhes (ATUALIZADA) ---
-            const openClienteDetails = (id) => {
+            // --- Função Lógica de Abrir Modal de Detalhes (ATUALIZADA COM HISTÓRICO) ---
+            const openClienteDetails = async (id) => {
                 const cliente = localClientCache.find(c => c.idCliente == id);
                 if (!cliente) return;
 
-                // Preenche dados básicos
+                // 1. Preenche dados básicos (Síncrono - Instantâneo)
                 document.getElementById('detail-cliente-nome').textContent = cliente.nomeCompleto || cliente.nomeExibicao;
                 document.getElementById('detail-cliente-apelido').textContent = cliente.apelido || 'Sem apelido';
                 document.getElementById('detail-cliente-saldo').textContent = formatCurrency(cliente.saldoDevedor);
@@ -3236,49 +3316,77 @@
                 document.getElementById('detail-cliente-telefone').textContent = cliente.telefone || 'Não informado';
                 document.getElementById('detail-cliente-endereco').textContent = cliente.endereco || 'Não informado';
 
-                // --- Lógica da Barra de Limite ---
+                // 2. Atualiza Barra de Limite
                 const limite = parseFloat(cliente.limite) || 0;
                 const saldo = parseFloat(cliente.saldoDevedor) || 0;
-
-                // Define o limite no texto
                 detailLimitTotal.textContent = formatCurrency(limite);
 
                 if (limite > 0) {
                     const disponivel = limite - saldo;
                     const porcentagemUso = (saldo / limite) * 100;
-
-                    // Atualiza textos
+                    
                     detailLimitAvailable.textContent = `Disponível: ${formatCurrency(disponivel)}`;
                     detailLimitPercent.textContent = `${porcentagemUso.toFixed(1)}% usado`;
-
-                    // Atualiza a barra
-                    let width = porcentagemUso;
-                    if (width > 100) width = 100; // Trava em 100% visualmente
-                    if (width < 0) width = 0;
-
+                    
+                    let width = porcentagemUso > 100 ? 100 : (porcentagemUso < 0 ? 0 : porcentagemUso);
                     detailProgressBar.style.width = `${width}%`;
-
-                    // Cores dinâmicas da barra
-                    detailProgressBar.className = 'progress-fill'; // Reseta classes
+                    
+                    detailProgressBar.className = 'progress-fill';
                     if (disponivel < 0) {
-                        detailProgressBar.classList.add('danger'); // Estourou o limite
+                        detailProgressBar.classList.add('danger');
                         detailLimitAvailable.style.color = 'var(--warning-red)';
-                        detailLimitAvailable.textContent = `Estourado: ${formatCurrency(Math.abs(disponivel))}`;
-                    } else if (porcentagemUso > 80) {
-                        detailProgressBar.classList.add('warning'); // Alerta
-                        detailLimitAvailable.style.color = '#ff9800'; // Laranja
                     } else {
                         detailLimitAvailable.style.color = 'var(--success-green)';
                     }
                 } else {
-                    // Caso não tenha limite definido (Limite = 0)
                     detailProgressBar.style.width = '0%';
-                    detailLimitAvailable.textContent = "Limite não definido";
-                    detailLimitAvailable.style.color = 'var(--text-light)';
+                    detailLimitAvailable.textContent = "Ilimitado";
                     detailLimitPercent.textContent = "-";
                 }
 
+                // 3. Abre o modal
                 openModal(clienteDetailsModal);
+
+                // 4. Carrega o Histórico (Assíncrono - Loading)
+                const historyContainer = document.getElementById('detail-history-container');
+                historyContainer.innerHTML = '<p style="text-align:center; padding:20px; color:#777;"><i class="bx bx-loader-alt bx-spin"></i> Buscando histórico...</p>';
+
+                try {
+                    const response = await fetch(`${SCRIPT_URL}?action=obterHistorico&idCliente=${id}`);
+                    const result = await response.json();
+
+                    if (result.status === 'success' && result.data.length > 0) {
+                        let html = '<table class="history-table"><thead><tr><th>Data</th><th>Tipo</th><th>Valor</th><th>Anexo</th></tr></thead><tbody>';
+                        
+                        result.data.forEach(item => {
+                            const isCompra = item.valor > 0; // Positivo = Dívida (Compra)
+                            const tipoClass = isCompra ? 'type-compra' : 'type-pagamento';
+                            const valorColor = isCompra ? 'var(--warning-red)' : 'var(--success-green)';
+                            
+                            // Ícone de anexo se houver link
+                            let anexoHtml = '-';
+                            if (item.anexo && item.anexo.startsWith('http')) {
+                                anexoHtml = `<button class="btn-link-receipt" onclick="window.openReceiptViewer('${item.anexo}')" style="background:none; border:none; font-family:inherit; font-size:inherit; cursor:pointer;" title="Ver Comprovante"><i class='bx bx-show'></i> Ver</button>`;
+                            }
+
+                            html += `
+                                <tr>
+                                    <td>${item.data}<br><small style="color:#999">${item.obs || ''}</small></td>
+                                    <td><span class="history-type-tag ${tipoClass}">${isCompra ? 'COMPRA' : 'PAGTO'}</span></td>
+                                    <td style="color:${valorColor}; font-weight:600;">${formatCurrency(Math.abs(item.valor))}</td>
+                                    <td>${anexoHtml}</td>
+                                </tr>
+                            `;
+                        });
+                        html += '</tbody></table>';
+                        historyContainer.innerHTML = html;
+                    } else {
+                        historyContainer.innerHTML = '<p style="text-align:center; padding:20px; color:#999;">Nenhum histórico encontrado.</p>';
+                    }
+                } catch (error) {
+                    console.error("Erro histórico:", error);
+                    historyContainer.innerHTML = '<p style="text-align:center; padding:20px; color:var(--warning-red);">Erro ao carregar.</p>';
+                }
             };
 
             // --- Listener para o Botão Alterar Limite ---
@@ -3434,6 +3542,33 @@
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalBtnText;
                 }
+            });
+
+            // --- Função Global para Visualizar Comprovante (Iframe) ---
+            window.openReceiptViewer = (url) => {
+                const viewerModal = document.getElementById('image-viewer-modal');
+                const iframe = document.getElementById('viewer-iframe');
+                
+                // Extrai o ID do arquivo do link do Google Drive
+                // Padrão comum: .../d/ID_DO_ARQUIVO/view...
+                const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                
+                if (match && match[1]) {
+                    const fileId = match[1];
+                    // Usa a URL de 'preview' que permite embutir sem a interface completa do Drive
+                    const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+                    
+                    iframe.src = embedUrl;
+                    openModal(viewerModal);
+                } else {
+                    // Fallback: Se não conseguir extrair o ID, abre em nova aba como antes
+                    window.open(url, '_blank');
+                }
+            };
+
+            // Limpa o iframe ao fechar para economizar memória e parar vídeos/carregamento
+            document.querySelector('[data-target="image-viewer-modal"]').addEventListener('click', () => {
+                document.getElementById('viewer-iframe').src = "";
             });
         });
     </script>
