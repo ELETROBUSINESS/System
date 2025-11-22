@@ -6,9 +6,6 @@
     <title>Anexar Comprovante - Eletro Business</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     <style>
         :root {
@@ -16,7 +13,7 @@
             --bg: #f4f4f9;
             --card: #ffffff;
             --text: #333;
-            --scan-color: #0f0; /* Cor do Laser do Scanner */
+            --scan-color: #0f0;
         }
         body {
             font-family: 'Inter', sans-serif;
@@ -38,6 +35,8 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             text-align: center;
             transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
         }
         .logo { color: var(--primary); font-size: 2rem; margin-bottom: 10px; }
         h2 { margin-bottom: 8px; font-size: 1.2rem; }
@@ -55,7 +54,7 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Steps */
+        /* Steps & Icons */
         .step-icon { font-size: 3rem; color: var(--primary); margin-bottom: 15px; }
         .instruction-box {
             background: #fff0f3;
@@ -68,7 +67,7 @@
         .instruction-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 0.85rem; }
         .instruction-item i { color: var(--primary); font-size: 1.2rem; }
 
-        /* Upload Button */
+        /* Buttons */
         .upload-btn-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; }
         .btn {
             border: 2px solid var(--primary);
@@ -88,6 +87,13 @@
         }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .btn:hover { background-color: #b0002a; }
+        .btn-outline {
+            background-color: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+        .btn-outline:hover { background-color: #fff0f3; }
+
         .upload-btn-wrapper input[type=file] {
             font-size: 100px;
             position: absolute;
@@ -99,10 +105,8 @@
             cursor: pointer;
         }
 
-        /* Preview e Scanner Area */
+        /* Preview & Scanner */
         #preview-area { margin-top: 20px; display: none; }
-        
-        /* Container relativo para posicionar o scanner */
         .preview-container {
             position: relative;
             width: 100%;
@@ -112,50 +116,63 @@
             border: 1px solid #ddd;
             margin-bottom: 15px;
         }
-
-        #preview-img {
-            display: block;
-            width: 100%;
-            height: auto;
-        }
-
-        /* Efeito de Scanner (Invisível por padrão) */
+        #preview-img { display: block; width: 100%; height: auto; }
+        
         .scanner-overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to bottom, 
-                rgba(0, 255, 0, 0) 0%, 
-                rgba(0, 255, 0, 0.2) 50%, 
-                rgba(0, 255, 0, 0) 100%);
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(0, 255, 0, 0), rgba(0, 255, 0, 0.2), rgba(0, 255, 0, 0));
             border-bottom: 2px solid #0f0;
             transform: translateY(-100%);
             opacity: 0;
             z-index: 10;
             pointer-events: none;
         }
+        .preview-container.scanning .scanner-overlay { opacity: 1; animation: scan-animation 2s linear infinite; }
+        .preview-container.scanning #preview-img { filter: brightness(0.8) contrast(1.2) grayscale(1); transition: filter 0.3s; }
+        @keyframes scan-animation { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
 
-        /* Classe ativada pelo JS para animar */
-        .preview-container.scanning .scanner-overlay {
-            opacity: 1;
-            animation: scan-animation 2s linear infinite;
+        /* --- MODAL DE ERRO PERSONALIZADO --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+            padding: 20px;
         }
-
-        .preview-container.scanning #preview-img {
-            filter: brightness(0.8) contrast(1.2) grayscale(0.3); /* Dá um look "digitalizado" */
-            transition: filter 0.3s;
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-box {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 350px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transform: scale(0.8);
+            transition: transform 0.3s;
         }
-
-        @keyframes scan-animation {
-            0% { transform: translateY(-100%); }
-            100% { transform: translateY(100%); }
+        .modal-overlay.active .modal-box { transform: scale(1); }
+        .modal-icon-box {
+            width: 60px; height: 60px;
+            background: #ffebee;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px auto;
         }
+        .modal-icon-box i { font-size: 32px; color: #d32f2f; }
+        .modal-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 10px; color: #333; }
+        .modal-text { font-size: 0.9rem; color: #666; margin-bottom: 20px; line-height: 1.4; }
 
         /* States */
         .hidden { display: none; }
-        .error-msg { color: #d32f2f; font-weight: bold; }
         .success-msg { color: #2e7d32; font-weight: bold; }
     </style>
 </head>
@@ -189,15 +206,15 @@
             <div class="instruction-box">
                 <div class="instruction-item">
                     <i class='bx bx-pen'></i>
-                    <span>Peça para o cliente assinar o papel.</span>
+                    <span>Peça para o cliente assinar.</span>
                 </div>
                 <div class="instruction-item">
                     <i class='bx bx-camera'></i>
-                    <span>Tire uma foto nítida e iluminada.</span>
+                    <span>A foto deve estar nítida.</span>
                 </div>
                 <div class="instruction-item">
-                    <i class='bx bx-cloud-upload'></i>
-                    <span>Envie para concluir a validação.</span>
+                    <i class='bx bx-id-card'></i>
+                    <span>O CNPJ deve estar legível.</span>
                 </div>
             </div>
 
@@ -217,7 +234,7 @@
                 <button class="btn" id="confirm-upload-btn">
                     <i class='bx bx-check-circle'></i> Confirmar Envio
                 </button>
-                <button class="btn" id="cancel-upload-btn" style="background: white; color: #555; border-color: #ddd; margin-top: 10px;">
+                <button class="btn btn-outline" id="cancel-upload-btn" style="margin-top: 10px;">
                     Cancelar
                 </button>
             </div>
@@ -226,8 +243,21 @@
         <div id="state-success" class="hidden">
             <i class='bx bx-check-circle step-icon' style="color: #2e7d32;"></i>
             <h3>Sucesso!</h3>
-            <p>Comprovante anexado ao log da venda.</p>
+            <p>Comprovante validado e salvo com sucesso.</p>
             <p style="font-size: 0.8rem;">Pode fechar esta página.</p>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="error-modal">
+        <div class="modal-box">
+            <div class="modal-icon-box">
+                <i class='bx bx-x'></i>
+            </div>
+            <div class="modal-title">Não foi possível ler</div>
+            <div class="modal-text" id="modal-error-msg">
+                A imagem não está nítida ou não é um comprovante válido da loja.
+            </div>
+            <button class="btn" id="btn-close-modal">Tentar Novamente</button>
         </div>
     </div>
 
@@ -236,13 +266,13 @@
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzvd0BBLEEQlu-ksnIbsmnYcjQNQuZcTrsCmXMKHGM5g7DPEk3Nj95X47LKbj7rRSAT/exec"; 
 
         // --- Constantes de Compressão ---
-        const MAX_WIDTH = 1200; // Largura máxima em px (Reduz muito o tamanho)
-        const JPEG_QUALITY = 0.7; // Qualidade 70% (Bom balanço tamanho/qualidade)
+        const MAX_WIDTH = 1200; 
+        const JPEG_QUALITY = 0.7;
 
         // --- Variáveis de Estado ---
         let currentUserId = null;
         let currentRowIndex = null;
-        let compressedFileBase64 = null; // Armazena a versão leve
+        let compressedFileBase64 = null; 
 
         // --- Elementos ---
         const stateLoading = document.getElementById('state-loading');
@@ -260,6 +290,11 @@
         const previewImg = document.getElementById('preview-img');
         const confirmBtn = document.getElementById('confirm-upload-btn');
         const cancelBtn = document.getElementById('cancel-upload-btn');
+        
+        // Modal Elements
+        const errorModal = document.getElementById('error-modal');
+        const modalErrorMsg = document.getElementById('modal-error-msg');
+        const btnCloseModal = document.getElementById('btn-close-modal');
 
         // --- Inicialização ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -279,7 +314,7 @@
             verificarLog(id);
         });
 
-        // --- Lógica de Compressão de Imagem ---
+        // --- Lógica de Compressão e Melhoria de Imagem (Binarização) ---
         const comprimirImagem = (file) => {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -288,12 +323,11 @@
                     const img = new Image();
                     img.src = event.target.result;
                     img.onload = () => {
-                        // Cria um canvas para redimensionar
                         const canvas = document.createElement('canvas');
                         let width = img.width;
                         let height = img.height;
 
-                        // Calcula nova dimensão mantendo proporção
+                        // Redimensionar
                         if (width > MAX_WIDTH) {
                             height = Math.round(height * (MAX_WIDTH / width));
                             width = MAX_WIDTH;
@@ -305,8 +339,27 @@
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
 
-                        // Exporta como JPEG comprimido (0.7)
-                        // Isso remove metadados e reduz drasticamente o tamanho
+                        // --- MELHORIA PARA OCR (Alto Contraste/Binarização Simples) ---
+                        // Isso ajuda MUITO a ler fotos de telas de computador
+                        const imageData = ctx.getImageData(0, 0, width, height);
+                        const data = imageData.data;
+                        
+                        // Loop por cada pixel
+                        for (let i = 0; i < data.length; i += 4) {
+                            // Converte para escala de cinza
+                            const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                            
+                            // Aplica limiar (Threshold) para deixar preto ou branco
+                            // Ajuste de 128 é padrão, mas 160 ajuda a limpar fundos cinzas claros de telas
+                            const color = avg > 140 ? 255 : 0; 
+
+                            data[i]     = color; // Red
+                            data[i + 1] = color; // Green
+                            data[i + 2] = color; // Blue
+                        }
+                        ctx.putImageData(imageData, 0, 0);
+                        // ---------------------------------------------------------
+
                         const dataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
                         resolve(dataUrl);
                     };
@@ -314,6 +367,35 @@
                 };
                 reader.onerror = (err) => reject(err);
             });
+        };
+
+        // --- Validação OCR ---
+        const validarConteudoImagem = async (imageBase64) => {
+            try {
+                const CNPJ_ALVO = "45692327000100";
+                const worker = await Tesseract.createWorker('por');
+                
+                const ret = await worker.recognize(imageBase64);
+                await worker.terminate();
+
+                const textoExtraido = ret.data.text;
+                console.log("Texto lido:", textoExtraido); 
+
+                // Limpa tudo que não é número
+                const apenasNumeros = textoExtraido.replace(/\D/g, '');
+
+                if (apenasNumeros.includes(CNPJ_ALVO)) {
+                    return { valido: true };
+                } else {
+                    return { 
+                        valido: false, 
+                        erro: "Não identificamos o CNPJ da loja (45...00) na imagem. Evite reflexos na tela e aproxime a câmera." 
+                    };
+                }
+            } catch (err) {
+                console.error(err);
+                return { valido: false, erro: "Erro técnico ao ler imagem." };
+            }
         };
 
         // --- Funções Lógicas ---
@@ -341,102 +423,61 @@
             }
         }
 
-        // Processar Seleção de Arquivo
+        // Seleção de Arquivo
         fileInput.addEventListener('change', async () => {
             const file = fileInput.files[0];
             if (!file) return;
 
-            // Feedback visual enquanto comprime
             confirmBtn.disabled = true;
-            confirmBtn.textContent = "Processando imagem...";
+            confirmBtn.textContent = "Otimizando imagem...";
 
             try {
-                // Chama a função de compressão
+                // Usa a versão otimizada (Preto e Branco)
                 compressedFileBase64 = await comprimirImagem(file);
                 
-                // Mostra o preview da imagem já comprimida (para garantir WYSIWYG)
+                // Mostra preview da versão tratada (usuário vai ver que ficou P&B, isso é bom!)
                 previewImg.src = compressedFileBase64;
                 
-                // Troca UI
                 inputArea.style.display = 'none';
                 previewArea.style.display = 'block';
                 confirmBtn.disabled = false;
                 confirmBtn.innerHTML = "<i class='bx bx-check-circle'></i> Confirmar Envio";
 
             } catch (err) {
-                alert("Erro ao processar imagem. Tente outra.");
-                console.error(err);
+                showErrorModal("Erro ao processar imagem. Tente outra.");
             }
         });
 
-        // Cancelar Upload
         cancelBtn.addEventListener('click', () => {
             fileInput.value = '';
             compressedFileBase64 = null;
             inputArea.style.display = 'block';
             previewArea.style.display = 'none';
-            previewContainer.classList.remove('scanning'); // Para animação se cancelar
+            previewContainer.classList.remove('scanning');
         });
 
-        // --- NOVA FUNÇÃO: Ler Texto da Imagem (OCR) ---
-        const validarConteudoImagem = async (imageBase64) => {
-            try {
-                // O CNPJ que estamos procurando (apenas números)
-                const CNPJ_ALVO = "45692327000100";
-
-                const worker = await Tesseract.createWorker('por'); // Cria um leitor em Português
-                
-                const ret = await worker.recognize(imageBase64);
-                await worker.terminate(); // Limpa a memória
-
-                const textoExtraido = ret.data.text;
-                console.log("Texto lido:", textoExtraido); // Para depuração no console
-
-                // Limpa o texto: remove tudo que NÃO for número (pontos, traços, espaços, letras)
-                const apenasNumeros = textoExtraido.replace(/\D/g, '');
-
-                // Verifica se a sequência do CNPJ existe no meio dos números encontrados
-                if (apenasNumeros.includes(CNPJ_ALVO)) {
-                    return { valido: true };
-                } else {
-                    return { 
-                        valido: false, 
-                        erro: "Não foi possível identificar o CNPJ da empresa (45.692.327/0001-00) na imagem. A foto está nítida?" 
-                    };
-                }
-            } catch (err) {
-                console.error(err);
-                return { valido: false, erro: "Erro técnico ao ler imagem." };
-            }
-        };
-
-        // --- Confirmar Envio (ATUALIZADO COM VALIDAÇÃO) ---
+        // Confirmar Envio
         confirmBtn.addEventListener('click', async () => {
             if (!compressedFileBase64 || !currentRowIndex) return;
 
-            // 1. UI de Validação
             confirmBtn.disabled = true;
             confirmBtn.innerHTML = "<i class='bx bx-scan bx-flashing'></i> Validando Comprovante...";
-            
-            // Ativa animação do scanner visual
             previewContainer.classList.add('scanning');
 
             try {
-                // 2. EXECUTAR A VALIDAÇÃO DE OCR
-                // Usamos a imagem comprimida para ser mais rápido
+                // Validação
                 const resultadoValidacao = await validarConteudoImagem(compressedFileBase64);
 
                 if (!resultadoValidacao.valido) {
-                    // SE FALHAR: Para tudo e avisa
                     previewContainer.classList.remove('scanning');
-                    alert("Erro de Validação: " + resultadoValidacao.erro);
+                    showErrorModal(resultadoValidacao.erro); // AQUI: Chama o Modal em vez de alert
                     
                     confirmBtn.disabled = false;
                     confirmBtn.innerHTML = "<i class='bx bx-check-circle'></i> Tentar Novamente";
-                    return; // Cancela o envio
+                    return;
                 }
 
-                // 3. SE PASSOU: Prossegue com o envio normal
+                // Envio
                 confirmBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Enviando...";
 
                 const payload = {
@@ -452,21 +493,20 @@
                 });
 
                 const result = await response.json();
-
                 previewContainer.classList.remove('scanning');
 
                 if (result.status === 'success') {
                     hideAll();
                     stateSuccess.classList.remove('hidden');
                 } else {
-                    alert("Erro no envio: " + result.message);
+                    showErrorModal("Erro no envio: " + result.message);
                     confirmBtn.disabled = false;
                     confirmBtn.innerHTML = "<i class='bx bx-check-circle'></i> Tentar Novamente";
                 }
 
             } catch (e) {
                 previewContainer.classList.remove('scanning');
-                alert("Erro ao enviar: " + e.message);
+                showErrorModal("Erro ao enviar: " + e.message);
                 confirmBtn.disabled = false;
                 confirmBtn.innerHTML = "<i class='bx bx-check-circle'></i> Tentar Novamente";
             }
@@ -485,6 +525,23 @@
             stateUpload.classList.add('hidden');
             stateSuccess.classList.add('hidden');
         }
+
+        // --- Funções do Modal de Erro ---
+        function showErrorModal(msg) {
+            modalErrorMsg.textContent = msg;
+            errorModal.classList.add('active');
+        }
+
+        btnCloseModal.addEventListener('click', () => {
+            errorModal.classList.remove('active');
+        });
+
+        // Fecha modal clicando fora
+        errorModal.addEventListener('click', (e) => {
+            if(e.target === errorModal) {
+                errorModal.classList.remove('active');
+            }
+        });
 
     </script>
 </body>
