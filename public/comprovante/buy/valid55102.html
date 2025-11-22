@@ -8,23 +8,32 @@
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     <style>
-        :root { --primary: #db0038; --bg: #f4f4f9; --card: #ffffff; --text: #333; }
+        :root { 
+            --primary: #db0038; 
+            --bg: #f4f4f9; 
+            --card: #ffffff; 
+            --text: #333; 
+            --scan-color: #0f0; /* Verde Laser */
+        }
         body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .container { background: var(--card); width: 100%; max-width: 450px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; position: relative; z-index: 1; }
+        .container { background: var(--card); width: 100%; max-width: 450px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; position: relative; z-index: 1; transition: all 0.3s ease; }
         .logo { color: var(--primary); font-size: 2rem; margin-bottom: 10px; }
         h2 { margin-bottom: 8px; font-size: 1.2rem; }
         p { color: #666; font-size: 0.9rem; margin-bottom: 24px; line-height: 1.5; }
         
         /* Opções de Tipo */
-        .type-options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; text-align: left; }
-        .type-card { border: 2px solid #eee; border-radius: 12px; padding: 15px; cursor: pointer; transition: all 0.2s; text-align: center; }
-        .type-card:hover { border-color: var(--primary); background-color: #fff0f3; }
-        .type-card i { font-size: 40px; color: #333; margin-bottom: 10px; display: block; }
-        .type-card span { font-weight: 600; font-size: 0.9rem; }
+        .doc-type-options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .doc-type-card { border: 2px solid #eee; border-radius: 12px; padding: 15px; cursor: pointer; transition: all 0.2s; }
+        .doc-type-card:hover { border-color: var(--primary); background-color: #fff0f3; }
+        .doc-type-card i { font-size: 40px; color: #555; margin-bottom: 10px; display: block; }
+        .doc-type-card span { font-weight: 600; font-size: 0.9rem; display: block; }
 
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* Instruções (Restaurado) */
+        .instruction-box { background: #fff0f3; border: 1px dashed var(--primary); border-radius: 8px; padding: 15px; text-align: left; margin-bottom: 20px; }
+        .instruction-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 0.85rem; }
+        .instruction-item i { color: var(--primary); font-size: 1.2rem; }
 
+        /* Botões */
         .btn { border: 2px solid var(--primary); color: white; background-color: var(--primary); padding: 14px 20px; border-radius: 8px; font-size: 1rem; font-weight: bold; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .btn-outline { background-color: transparent; color: var(--primary); border: 2px solid var(--primary); }
@@ -32,11 +41,22 @@
         .upload-btn-wrapper { position: relative; width: 100%; margin-bottom: 15px; }
         .upload-btn-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
 
+        /* Preview e Scanner (Restaurado) */
         #preview-container { position: relative; width: 100%; overflow: hidden; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px; }
         #preview-img { display: block; width: 100%; height: auto; }
-        .scanner-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, transparent, rgba(255,0,0,0.4), transparent); border-bottom: 2px solid red; transform: translateY(-100%); opacity: 0; pointer-events: none; }
-        .preview-container.scanning .scanner-overlay { opacity: 1; animation: scan 1.5s linear infinite; }
-        @keyframes scan { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
+        
+        .scanner-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(0, 255, 0, 0), rgba(0, 255, 0, 0.2), rgba(0, 255, 0, 0));
+            border-bottom: 2px solid var(--scan-color);
+            transform: translateY(-100%); opacity: 0; z-index: 10; pointer-events: none;
+        }
+        .preview-container.scanning .scanner-overlay { opacity: 1; animation: scan-animation 1.5s linear infinite; }
+        .preview-container.scanning #preview-img { filter: brightness(0.8) contrast(1.2) grayscale(1); transition: filter 0.3s; }
+        @keyframes scan-animation { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
+
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 9999; opacity: 0; visibility: hidden; transition: 0.3s; padding: 20px; }
         .modal-overlay.active { opacity: 1; visibility: visible; }
@@ -57,12 +77,12 @@
             <div class="logo"><i class='bx bx-printer'></i></div>
             <h2>Tipo de Documento</h2>
             <p>Qual formato você imprimiu?</p>
-            <div class="type-options">
-                <div class="type-card" onclick="selectType('cupom')">
+            <div class="doc-type-options">
+                <div class="doc-type-card" onclick="selectType('cupom')">
                     <i class='bx bx-receipt'></i>
                     <span>Cupom<br>Térmico</span>
                 </div>
-                <div class="type-card" onclick="selectType('a4')">
+                <div class="doc-type-card" onclick="selectType('a4')">
                     <i class='bx bx-file-blank'></i>
                     <span>Nota Auxiliar<br>(Folha A4)</span>
                 </div>
@@ -74,9 +94,19 @@
             <h2 id="upload-title">Fotografar Documento</h2>
             <p>Cliente: <strong id="venda-data">...</strong></p>
             
-            <div style="background:#f9f9f9; padding:15px; border-radius:8px; margin-bottom:20px; text-align:left; font-size:0.85rem;">
-                <p style="margin:0 0 5px 0;"><strong><i class='bx bx-search'></i> Instrução:</strong></p>
-                <p id="upload-instruction" style="margin:0; color:#db0038;">...</p>
+            <div class="instruction-box">
+                <div class="instruction-item">
+                    <i class='bx bx-expand'></i>
+                    <span id="instruction-text">Enquadre todo o documento.</span>
+                </div>
+                <div class="instruction-item">
+                    <i class='bx bx-sun'></i>
+                    <span>Use um local bem iluminado.</span>
+                </div>
+                <div class="instruction-item">
+                    <i class='bx bx-text'></i>
+                    <span>O texto deve estar legível.</span>
+                </div>
             </div>
 
             <div class="upload-btn-wrapper">
@@ -86,7 +116,7 @@
         </div>
 
         <div id="state-preview" class="hidden">
-            <div id="preview-container">
+            <div class="preview-container" id="preview-container">
                 <img id="preview-img" src="" alt="Preview">
                 <div class="scanner-overlay"></div>
             </div>
@@ -95,10 +125,10 @@
         </div>
 
         <div id="state-success" class="hidden">
-            <i class='bx bx-check-circle' style="font-size: 50px; color: var(--primary);"></i>
+            <i class='bx bx-check-circle' style="font-size: 50px; color: #28a745;"></i>
             <h3>Sucesso!</h3>
             <p id="success-msg">Comprovante arquivado.</p>
-            <a href="#" id="link-exists" target="_blank" class="btn hidden" style="text-decoration:none;">Ver Arquivo</a>
+            <a href="#" id="link-exists" target="_blank" class="btn hidden" style="text-decoration:none; margin-top:15px;">Ver Arquivo</a>
         </div>
     </div>
 
@@ -158,15 +188,16 @@
             document.getElementById('state-select-type').classList.add('hidden');
             document.getElementById('state-upload').classList.remove('hidden');
             
-            const instruction = document.getElementById('upload-instruction');
-            const title = document.getElementById('upload-title');
+            const instructionTitle = document.getElementById('upload-title');
+            const instructionText = document.getElementById('instruction-text');
             
+            // Texto genérico para o usuário
             if(type === 'cupom') {
-                title.textContent = "Fotografar Cupom";
-                instruction.textContent = "O sistema buscará a palavra 'COMPROVANTE' ou o CNPJ.";
+                instructionTitle.textContent = "Fotografar Cupom";
+                instructionText.textContent = "Enquadre o cupom inteiro.";
             } else {
-                title.textContent = "Fotografar Nota A4";
-                instruction.textContent = "O sistema buscará a frase 'COMPROVANTE DE COMPRA'.";
+                instructionTitle.textContent = "Fotografar Nota A4";
+                instructionText.textContent = "Enquadre a folha A4 inteira.";
             }
         };
 
@@ -245,11 +276,13 @@
         // OCR e Envio
         document.getElementById('confirm-btn').addEventListener('click', async () => {
             const btn = document.getElementById('confirm-btn');
-            const scanner = document.querySelector('.preview-container');
+            const scannerContainer = document.getElementById('preview-container'); // SELETOR CORRIGIDO
             
             btn.disabled = true;
-            btn.innerHTML = "Lendo Texto...";
-            scanner.classList.add('scanning');
+            btn.innerHTML = "<i class='bx bx-scan'></i> Analisando...";
+            
+            // Adiciona classe de animação (Laser Verde)
+            scannerContainer.classList.add('scanning');
 
             try {
                 const worker = await Tesseract.createWorker('por');
@@ -274,16 +307,15 @@
                 await worker.terminate();
 
                 if(!valid) {
-                    scanner.classList.remove('scanning');
-                    let msg = "Não encontramos a palavra 'COMPROVANTE' ou o CNPJ.";
-                    if(currentDocType === 'a4') msg = "Não encontramos a frase 'COMPROVANTE DE COMPRA'.";
+                    scannerContainer.classList.remove('scanning');
+                    let msg = "Documento não identificado. Verifique se a foto está nítida.";
                     showModal(msg);
                     btn.disabled = false; btn.innerHTML = "Tentar Novamente";
                     return;
                 }
 
                 // Envio
-                btn.innerHTML = "Enviando...";
+                btn.innerHTML = "<i class='bx bx-cloud-upload'></i> Enviando...";
                 const res = await fetch(SCRIPT_URL, {
                     method: 'POST',
                     body: JSON.stringify({
@@ -295,7 +327,7 @@
                 });
                 const json = await res.json();
                 
-                scanner.classList.remove('scanning');
+                scannerContainer.classList.remove('scanning');
                 
                 if(json.status === 'success') {
                     showSuccess("Salvo com sucesso!");
@@ -305,19 +337,18 @@
                 }
 
             } catch(e) {
-                scanner.classList.remove('scanning');
+                scannerContainer.classList.remove('scanning');
                 showModal("Erro técnico: " + e.message);
                 btn.disabled = false; btn.innerHTML = "Tentar Novamente";
             }
         });
 
-        // Função de Validação de Texto (O Cérebro)
+        // Função de Validação de Texto (O Cérebro Oculto)
         function checkText(text) {
+            // Lógica interna: O usuário não sabe, mas procuramos palavras-chave
             if(currentDocType === 'cupom') {
-                // Para cupom: Procura "COMPROVANTE" ou o CNPJ
                 if(text.includes("COMPROVANTE") || text.includes("45692327")) return true;
             } else {
-                // Para A4: Procura frase específica
                 if(text.includes("COMPROVANTE DE COMPRA") || text.includes("NOTA AUXILIAR")) return true;
             }
             return false;
@@ -328,6 +359,7 @@
             document.getElementById('state-preview').classList.add('hidden');
             document.getElementById('state-upload').classList.remove('hidden');
             document.getElementById('file-input').value = '';
+            document.getElementById('preview-container').classList.remove('scanning');
         };
 
         function showModal(msg) {

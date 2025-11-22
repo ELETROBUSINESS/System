@@ -3060,8 +3060,16 @@
             [splitValue1, splitValue2, splitMethod1, splitMethod2].forEach(el => { el.addEventListener('input', updateSplitRemaining); el.addEventListener('change', updateSplitRemaining); });
             confirmSplitPaymentBtn.addEventListener('click', () => { if (Math.abs(currentSplitPayments.remaining) >= 0.01) { showCustomAlert("Erro", "Soma não bate."); return; } if (!splitMethod1.value || !splitMethod2.value || splitMethod1.value === splitMethod2.value) { showCustomAlert("Erro", "Selecione 2 formas diferentes."); return; } currentSplitPayments.method1 = splitMethod1.value; currentSplitPayments.value1 = parseFloat(splitValue1.value) || 0; currentSplitPayments.method2 = splitMethod2.value; currentSplitPayments.value2 = parseFloat(splitValue2.value) || 0; selectedPaymentMethod = `Dividido (${currentSplitPayments.method1} + ${currentSplitPayments.method2})`; summaryPaymentMethod.textContent = selectedPaymentMethod; summaryPaymentMethod.style.fontWeight = '600'; summaryPaymentMethod.style.color = 'var(--text-dark)'; updateSummary(); closeModal(paymentModal); });
 
-            finishSaleBtn.addEventListener('click', async () => {
-                if (cart.length === 0) { showCustomAlert("Vazio", "Adicione itens."); return; }
+           // --- VARIÁVEIS GLOBAIS DE IMPRESSÃO ---
+            let selectedPrintFormat = 'thermal'; // 'thermal' ou 'a4'
+
+            // --- 1. BOTÃO FINALIZAR VENDA (F9) ---
+            // Agora ele apenas abre a seleção de impressão. Nada é registrado ainda.
+            finishSaleBtn.addEventListener('click', () => {
+                if (cart.length === 0) { 
+                    showCustomAlert("Vazio", "Adicione itens."); 
+                    return; 
+                }
                 
                 if (!selectedPaymentMethod) { 
                     showCustomAlert("Pagamento", "Selecione forma."); 
@@ -3069,106 +3077,121 @@
                     return; 
                 }
 
-                // Verifica Crediário
-                if (selectedPaymentMethod === 'Crediário') {
-                    if (!selectedCrediarioClient) {
-                        // Se por algum motivo o método é crediário mas não tem cliente (bug de estado), abre seleção
-                        openModal(clientSelectionModal);
-                        return;
-                    }
-
-                    // Abre Fluxo de Impressão/QR (Código que criamos no passo anterior)
-                    credFlowClientName.textContent = selectedCrediarioClient.nomeExibicao;
-                    credStep1.style.display = 'block';
-                    credStep2.style.display = 'none';
-                    credStep2.classList.add('locked-step');
-                    openModal(crediarioFlowModal);
+                // Validação extra para Crediário
+                if (selectedPaymentMethod === 'Crediário' && !selectedCrediarioClient) {
+                    showCustomAlert("Atenção", "Selecione o cliente para o Crediário.");
+                    openModal(clientSelectionModal);
                     return;
                 }
 
-                // --- FLUXO NORMAL (Dinheiro, Pix, Cartão) ---
+                // Abre escolha de impressão
+                openModal(document.getElementById('print-selection-modal'));
+            });
+
+            // --- 1. LISTENERS DOS BOTÕES DE SELEÇÃO DE IMPRESSÃO ---
+            // Ao clicar, fechamos o modal de seleção e iniciamos o processo único
+            document.getElementById('btn-print-thermal').onclick = () => {
+                closeModal(document.getElementById('print-selection-modal'));
+                processFinalSale('thermal');
+            };
+
+            document.getElementById('btn-print-a4').onclick = () => {
+                closeModal(document.getElementById('print-selection-modal'));
+                processFinalSale('a4');
+            };
+
+            // --- 2. FUNÇÃO MESTRA: REGISTRAR, IMPRIMIR E AVANÇAR ---
+            async function processFinalSale(format) {
+                // 1. Feedback Visual Imediato (Bloqueia a tela)
+                loadingOverlay.classList.remove('hidden');
+                loadingMessage.innerHTML = "Registrando Venda...<br>Aguarde a impressão.";
+                
+                // Desabilita botão original para evitar cliques extras no fundo
                 finishSaleBtn.disabled = true;
-                finishSaleBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Registrando...";
-
-                let paymentsToSend = [];
-                if (selectedPaymentMethod && selectedPaymentMethod.startsWith("Dividido")) {
-                    paymentsToSend.push({ method: currentSplitPayments.method1, value: currentSplitPayments.value1 });
-                    paymentsToSend.push({ method: currentSplitPayments.method2, value: currentSplitPayments.value2 });
-                } else {
-                    paymentsToSend.push({ method: selectedPaymentMethod, value: lastSaleData.total });
-                }
 
                 try {
+                    const now = new Date();
+                    const timestamp = formatTimestamp(now);
+
+                    // 2. PREPARAR DADOS DO PAGAMENTO
+                    let paymentsToSend = [];
+                    if (selectedPaymentMethod && selectedPaymentMethod.startsWith("Dividido")) {
+                        paymentsToSend.push({ method: currentSplitPayments.method1, value: currentSplitPayments.value1 });
+                        paymentsToSend.push({ method: currentSplitPayments.method2, value: currentSplitPayments.value2 });
+                    } else {
+                        paymentsToSend.push({ method: selectedPaymentMethod, value: lastSaleData.total });
+                    }
+
+                    // 3. REGISTRAR VENDA (API FLUXO DE CAIXA)
+                    // Esperamos a resposta (await) para garantir que salvou antes de imprimir
                     await registrarVendaAtual(paymentsToSend);
-                    openModal(receiptModal);
-                } catch (error) {
-                    console.error("Erro registro:", error);
-                    showCustomAlert("Erro Registro", `Não foi possível registrar: ${error.message}.`);
-                } finally {
+
+                    // 4. SE FOR CREDIÁRIO: REGISTRAR DÍVIDA (LOG)
+                    if (selectedPaymentMethod === 'Crediário') {
+                        const paramsCliente = new URLSearchParams({
+                            action: 'registrarTransacao',
+                            idCliente: selectedCrediarioClient.idCliente,
+                            tipo: 'Compra',
+                            valor: lastSaleData.total.toFixed(2),
+                            timestamp: timestamp
+                        });
+                        // Envia o log. Não precisamos esperar (await) a resposta do log para imprimir, 
+                        // mas é bom garantir para evitar erros de validação depois.
+                        await fetch(`${SCRIPT_URL}?${paramsCliente.toString()}`, { method: 'GET' });
+                    }
+
+                    // 5. IMPRIMIR (Dispara a janela do navegador UMA VEZ)
+                    const clientName = selectedCrediarioClient ? selectedCrediarioClient.nomeExibicao : null;
+                    
+                    if (format === 'a4') {
+                        printA4(clientName);
+                    } else {
+                        printThermal(clientName);
+                    }
+
+                    // 6. ATUALIZAR A TELA (Pós-Impressão)
+                    loadingOverlay.classList.add('hidden');
                     finishSaleBtn.disabled = false;
-                    finishSaleBtn.innerHTML = "<i class='bx bx-check-circle'></i> Finalizar (F9)";
-                }
-            });
+                    finishSaleBtn.innerHTML = "<i class='bx bx-check-circle'></i> Finalizar Venda (F9)";
 
-            // 1. Botão Imprimir (AGORA SALVA A VENDA E GERA O LOG AQUI)
-            btnForcePrint.addEventListener('click', async () => {
-                if (!selectedCrediarioClient) return;
-
-                // Bloqueia botão para evitar duplicação
-                btnForcePrint.disabled = true;
-                btnForcePrint.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Registrando e Imprimindo...";
-
-                try {
-                    // --- PASSO A: SALVAR NO SISTEMA (Antecipado) ---
-                    const timestamp = formatTimestamp(new Date());
-
-                    // 1. Registra no Fluxo de Caixa (Aba Vendas)
-                    const paymentsToSend = [{ method: 'Crediário', value: lastSaleData.total }];
-                    await registrarVendaAtual(paymentsToSend);
-
-                    // 2. Registra na Conta do Cliente (Aba Logs/Clientes)
-                    const paramsCliente = new URLSearchParams({
-                        action: 'registrarTransacao',
-                        idCliente: selectedCrediarioClient.idCliente,
-                        tipo: 'Compra',
-                        valor: lastSaleData.total.toFixed(2),
-                        timestamp: timestamp
-                    });
-                    
-                    // Aguarda a criação do log para que o anexo possa ser vinculado depois
-                    await fetch(`${SCRIPT_URL}?${paramsCliente.toString()}`, { method: 'GET' });
-
-                    // --- PASSO B: ATUALIZAR QR CODE COM ID DO CLIENTE ---
-                    const qrImg = document.querySelector('#cred-step-2 .qr-img-wrapper img');
-                    const baseUrl = "http://eletrobusiness.com.br/comprovante/buy/valid55102.html";
-                    // Adiciona o ID na URL
-                    const finalUrl = `${baseUrl}?id=${selectedCrediarioClient.idCliente}`;
-                    // Atualiza a imagem do QR Code
-                    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(finalUrl)}`;
-                    
-                    // --- PASSO C: IMPRIMIR ---
-                    handlePrintReceipt(selectedCrediarioClient.nomeExibicao);
-
-                    // --- PASSO D: AVANÇAR UI ---
-                    // Libera para a próxima etapa (Anexar)
-                    setTimeout(() => {
-                        credStep1.style.display = 'none';
-                        credStep2.style.display = 'block';
+                    // LÓGICA DE NAVEGAÇÃO:
+                    if (selectedPaymentMethod === 'Crediário') {
+                        // Se for Crediário, já imprimimos no passo 5.
+                        // Então abrimos o modal DIRETO no Passo 2 (Validação), pulando o botão de imprimir.
                         
-                        // Animação de entrada
-                        setTimeout(() => {
-                            credStep2.style.opacity = '1';
-                            credStep2.classList.remove('locked-step');
-                        }, 100);
-                    }, 1000);
+                        credFlowClientName.textContent = selectedCrediarioClient.nomeExibicao;
+                        
+                        // Esconde Passo 1 (Impressão)
+                        document.getElementById('cred-step-1').style.display = 'none'; 
+                        
+                        // Mostra Passo 2 (Validação)
+                        const step2 = document.getElementById('cred-step-2');
+                        step2.style.display = 'block';
+                        step2.style.opacity = '1';
+                        step2.classList.remove('locked-step');
+                        
+                        // Atualiza QR Code (caso use) ou apenas prepara a tela
+                        const qrImg = document.querySelector('#cred-step-2 .qr-img-wrapper img');
+                        if(qrImg) {
+                            const baseUrl = "http://eletrobusiness.com.br/comprovante/buy/valid55102.html";
+                            const finalUrl = `${baseUrl}?id=${selectedCrediarioClient.idCliente}`;
+                            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(finalUrl)}`;
+                        }
+
+                        openModal(crediarioFlowModal);
+                    } else {
+                        // Se for Venda Comum, apenas mostra o Recibo de Sucesso
+                        openModal(receiptModal);
+                    }
 
                 } catch (error) {
-                    console.error("Erro ao registrar venda no crediário:", error);
-                    showCustomAlert("Erro", "Falha ao registrar venda. Verifique a conexão e tente novamente.");
-                    btnForcePrint.disabled = false;
-                    btnForcePrint.innerHTML = "<i class='bx bx-printer'></i> Tentar Novamente";
+                    console.error("Erro fatal na venda:", error);
+                    loadingOverlay.classList.add('hidden');
+                    finishSaleBtn.disabled = false;
+                    finishSaleBtn.innerHTML = "<i class='bx bx-check-circle'></i> Finalizar Venda (F9)";
+                    showCustomAlert("Erro", "Falha ao registrar. Verifique sua conexão.");
                 }
-            });
+            }
 
             // 2. Botão Concluir Final (AGORA SÓ LIMPA A TELA)
             // Como já salvamos no passo anterior, este botão serve apenas para fechar o ciclo.
