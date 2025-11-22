@@ -6,6 +6,10 @@
     <title>Anexar Comprovante - Eletro Business</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     <style>
         :root {
             --primary: #db0038;
@@ -374,23 +378,72 @@
             previewContainer.classList.remove('scanning'); // Para animação se cancelar
         });
 
-        // Confirmar Envio
+        // --- NOVA FUNÇÃO: Ler Texto da Imagem (OCR) ---
+        const validarConteudoImagem = async (imageBase64) => {
+            try {
+                // O CNPJ que estamos procurando (apenas números)
+                const CNPJ_ALVO = "45692327000100";
+
+                const worker = await Tesseract.createWorker('por'); // Cria um leitor em Português
+                
+                const ret = await worker.recognize(imageBase64);
+                await worker.terminate(); // Limpa a memória
+
+                const textoExtraido = ret.data.text;
+                console.log("Texto lido:", textoExtraido); // Para depuração no console
+
+                // Limpa o texto: remove tudo que NÃO for número (pontos, traços, espaços, letras)
+                const apenasNumeros = textoExtraido.replace(/\D/g, '');
+
+                // Verifica se a sequência do CNPJ existe no meio dos números encontrados
+                if (apenasNumeros.includes(CNPJ_ALVO)) {
+                    return { valido: true };
+                } else {
+                    return { 
+                        valido: false, 
+                        erro: "Não foi possível identificar o CNPJ da empresa (45.692.327/0001-00) na imagem. A foto está nítida?" 
+                    };
+                }
+            } catch (err) {
+                console.error(err);
+                return { valido: false, erro: "Erro técnico ao ler imagem." };
+            }
+        };
+
+        // --- Confirmar Envio (ATUALIZADO COM VALIDAÇÃO) ---
         confirmBtn.addEventListener('click', async () => {
             if (!compressedFileBase64 || !currentRowIndex) return;
 
-            // UI de Envio + Animação
+            // 1. UI de Validação
             confirmBtn.disabled = true;
-            confirmBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Enviando...";
+            confirmBtn.innerHTML = "<i class='bx bx-scan bx-flashing'></i> Validando Comprovante...";
             
-            // ATIVA O SCANNER
+            // Ativa animação do scanner visual
             previewContainer.classList.add('scanning');
 
             try {
+                // 2. EXECUTAR A VALIDAÇÃO DE OCR
+                // Usamos a imagem comprimida para ser mais rápido
+                const resultadoValidacao = await validarConteudoImagem(compressedFileBase64);
+
+                if (!resultadoValidacao.valido) {
+                    // SE FALHAR: Para tudo e avisa
+                    previewContainer.classList.remove('scanning');
+                    alert("Erro de Validação: " + resultadoValidacao.erro);
+                    
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = "<i class='bx bx-check-circle'></i> Tentar Novamente";
+                    return; // Cancela o envio
+                }
+
+                // 3. SE PASSOU: Prossegue com o envio normal
+                confirmBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Enviando...";
+
                 const payload = {
                     action: 'uploadComprovante',
                     idCliente: currentUserId,
                     rowIndex: currentRowIndex,
-                    imageBase64: compressedFileBase64 // Envia a versão leve
+                    imageBase64: compressedFileBase64
                 };
 
                 const response = await fetch(SCRIPT_URL, {
@@ -400,7 +453,6 @@
 
                 const result = await response.json();
 
-                // Para animação
                 previewContainer.classList.remove('scanning');
 
                 if (result.status === 'success') {
