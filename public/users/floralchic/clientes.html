@@ -7,22 +7,19 @@
     <link rel="icon" href="/assets/img/iconWeb.png">
     <title>Clientes | Floralchic</title>
 
-    <!-- Importando o CSS -->
     <link rel="stylesheet" href="/assets/css/main.css">
-    
-    <!-- Ícones -->
     <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
 
     <style>
         /* --- ESTILOS GERAIS --- */
         body {
             background-color: #f8f9fa;
             padding-bottom: 40px;
+            font-family: 'Poppins', sans-serif;
         }
 
-        /* Header / Banner */
+        /* Header */
         .header-clientes {
             background-image: url(/assets/bannerHidle2.png);
             background-size: cover;
@@ -36,216 +33,78 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
-        .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-        }
-
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        
         .header-back {
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(4px);
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--secondary-color);
-            font-size: 24px;
-            text-decoration: none;
-            transition: background 0.3s;
+            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(4px); width: 40px; height: 40px;
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            color: var(--secondary-color); font-size: 24px; text-decoration: none;
         }
 
-        .header-title {
-            font-size: 18px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
+        .header-title { font-size: 18px; font-weight: 600; letter-spacing: 0.5px; }
 
-        /* Cards de Estatísticas */
-        .stats-wrapper {
-            margin-top: -30px;
-            padding: 0 20px;
-            display: flex;
-            gap: 15px;
-        }
-
+        /* Stats Cards */
+        .stats-wrapper { margin-top: -30px; padding: 0 20px; display: flex; gap: 15px; }
         .stat-card {
-            flex: 1;
-            background: #ffffff;
-            border-radius: 16px;
-            padding: 15px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
+            flex: 1; background: #ffffff; border-radius: 16px; padding: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05); display: flex; flex-direction: column;
+            justify-content: center; position: relative; overflow: hidden;
         }
-
-        .stat-card.blue::before { 
-            content: ''; position: absolute; right: -10px; top: -10px; width: 60px; height: 60px; 
-            border-radius: 50%; opacity: 0.1; background: var(--main); 
-        }
-        .stat-card.red::before { 
-            content: ''; position: absolute; right: -10px; top: -10px; width: 60px; height: 60px; 
-            border-radius: 50%; opacity: 0.1; background: var(--bs-color); 
-        }
-
-        .stat-icon {
-            width: 36px; height: 36px; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 18px; margin-bottom: 10px;
-        }
+        .stat-card.blue::before { content: ''; position: absolute; right: -10px; top: -10px; width: 60px; height: 60px; border-radius: 50%; opacity: 0.1; background: var(--main); }
+        .stat-card.red::before { content: ''; position: absolute; right: -10px; top: -10px; width: 60px; height: 60px; border-radius: 50%; opacity: 0.1; background: var(--bs-color); }
+        
+        .stat-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 10px; }
         .stat-card.blue .stat-icon { background: #e3f2fd; color: var(--main); }
         .stat-card.red .stat-icon { background: #ffebee; color: var(--bs-color); }
-
+        
         .stat-label { font-size: 12px; color: #888; font-weight: 500; margin-bottom: 4px; }
         .stat-value { font-size: 18px; font-weight: 700; color: #333; }
         .stat-value.danger { color: var(--bs-color); }
 
-        /* Barra de Ações e Pesquisa */
-        .actions-bar {
-            padding: 25px 20px 10px 20px;
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-
+        /* Actions Bar */
+        .actions-bar { padding: 25px 20px 10px 20px; display: flex; gap: 12px; align-items: center; }
         .search-box {
-            flex-grow: 1;
-            background: #ffffff;
-            border-radius: 12px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            padding: 0 15px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-            border: 1px solid #f0f0f0;
+            flex-grow: 1; background: #ffffff; border-radius: 12px; height: 50px;
+            display: flex; align-items: center; padding: 0 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03); border: 1px solid #f0f0f0;
         }
-
-        .search-box input {
-            background: transparent;
-            border: none;
-            outline: none;
-            width: 100%;
-            font-size: 14px;
-            color: #333;
-            margin-left: 10px;
-        }
-
+        .search-box input { background: transparent; border: none; outline: none; width: 100%; font-size: 14px; color: #333; margin-left: 10px; }
         .search-box i { color: #aaa; font-size: 20px; }
-
         .btn-add {
-            background: linear-gradient(135deg, var(--bs-color), #a1003e);
-            color: white;
-            width: 50px;
-            height: 50px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            border: none;
-            cursor: pointer;
+            background: linear-gradient(135deg, var(--bs-color), #a1003e); color: white;
+            width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center;
+            justify-content: center; font-size: 24px; border: none; cursor: pointer;
             box-shadow: 0 4px 15px rgba(219, 0, 56, 0.3);
-            transition: transform 0.2s;
-        }
-        .btn-add:active { transform: scale(0.95); }
-
-        /* LISTA DE CLIENTES (Design Atualizado) */
-        .clients-list {
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
         }
 
+        /* Lista de Clientes */
+        .clients-list { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
         .client-card {
-            background: #fff;
-            border-radius: 16px;
-            padding: 18px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-            border: 1px solid #f0f0f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
+            background: #fff; border-radius: 16px; padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03); border: 1px solid #f0f0f0;
+            display: flex; align-items: center; gap: 15px;
         }
-
-        .client-card.devedor { border-left: 4px solid var(--bs-color); }
-        .client-card:not(.devedor) { border-left: 4px solid #2ecc71; }
-
-        .client-info h4 {
-            color: #333;
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 5px;
+        .client-avatar {
+            width: 45px; height: 45px; background: #f3f4f6; color: #9ca3af;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 22px; flex-shrink: 0;
         }
-
-        .client-info p {
-            font-size: 13px;
-            color: #888;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        /* Botões de Ação no Card */
-        .client-actions-wrapper {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .action-btn-card {
-            width: 35px;
-            height: 35px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            border: none;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .btn-card-summary {
-            background-color: #eef2ff;
-            color: #4f46e5;
-        }
+        .client-info { flex-grow: 1; overflow: hidden; }
+        .client-info h4 { color: #333; font-size: 15px; font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .client-debt-display { font-size: 12px; font-weight: 500; color: #10b981; }
+        .client-debt-display.red { color: var(--bs-color); font-weight: 600; }
         
-        .btn-card-edit {
-            background-color: #f3f4f6;
-            color: #6b7280;
+        .client-actions { display: flex; gap: 8px; }
+        .action-btn {
+            width: 32px; height: 32px; border-radius: 8px; border: none;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; cursor: pointer; transition: 0.2s;
         }
+        .btn-soft-blue { background: #eef2ff; color: #4f46e5; }
+        .btn-soft-gray { background: #f3f4f6; color: #4b5563; }
+        .btn-soft-red { background: #fef2f2; color: #ef4444; }
 
-        .btn-card-delete {
-            background-color: #fee2e2;
-            color: #ef4444;
-        }
-
-        .btn-card-whatsapp {
-            background-color: #dcfce7;
-            color: #16a34a;
-            text-decoration: none;
-        }
-
-        .status-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 10px;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: 600;
-        }
-        .status-debt { background: #ffebee; color: var(--bs-color); }
-
-        /* --- MODAL GERAL --- */
+        /* --- MODAL --- */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); z-index: 2000;
@@ -253,7 +112,6 @@
             transition: opacity 0.3s; backdrop-filter: blur(2px);
         }
         .modal-overlay.open { opacity: 1; pointer-events: all; }
-
         .modal-content {
             background: #ffffff; width: 100%;
             border-top-left-radius: 30px; border-top-right-radius: 30px;
@@ -263,74 +121,72 @@
         }
         .modal-overlay.open .modal-content { transform: translateY(0); }
 
-        .modal-header {
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;
-        }
-        .modal-header h2 { font-size: 20px; color: #333; font-weight: 700; }
-        .close-modal {
-            width: 35px; height: 35px; background: #f5f5f5; border-radius: 50%;
-            border: none; display: flex; align-items: center; justify-content: center;
-            color: #555; font-size: 20px; cursor: pointer;
+        /* --- ESTILO FICHA DETALHADA (Estilo da imagem 2f613d.png) --- */
+        .ficha-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .ficha-header h2 { font-size: 20px; font-weight: 800; color: #111; }
+        .ficha-close { width: 32px; height: 32px; border-radius: 50%; background: #f3f4f6; border: none; font-size: 18px; color: #666; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+        .ficha-profile { text-align: center; margin-bottom: 25px; }
+        .ficha-avatar { width: 80px; height: 80px; background: #f3f4f6; border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 36px; color: #9ca3af; }
+        .ficha-name { font-size: 18px; font-weight: 800; color: #111; }
+        .ficha-cpf { font-size: 13px; color: #666; margin-top: 2px; }
+
+        .ficha-cards-row { display: flex; gap: 10px; margin-bottom: 20px; }
+        .ficha-card { flex: 1; background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 12px; padding: 15px; text-align: center; }
+        .ficha-label { font-size: 11px; color: #666; display: block; margin-bottom: 5px; }
+        .ficha-value { font-size: 18px; font-weight: 800; color: #111; }
+        .ficha-value.red { color: var(--bs-color); }
+
+        /* Limit Section Style */
+        .ficha-limit-box { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
+        .limit-top { display: flex; justify-content: space-between; font-size: 13px; color: #333; margin-bottom: 8px; }
+        .limit-bar { width: 100%; height: 8px; background: #f3f4f6; border-radius: 4px; overflow: hidden; }
+        .limit-fill { height: 100%; background: #10b981; border-radius: 4px; }
+        .limit-btm { display: flex; justify-content: space-between; margin-top: 5px; font-size: 11px; color: #999; }
+
+        /* Info Blocks Style (Rounded gray blocks) */
+        .ficha-info-block { background: #f9fafb; border-radius: 12px; padding: 15px; margin-bottom: 10px; display: flex; flex-direction: column; }
+        .ficha-info-title { font-size: 12px; font-weight: 700; color: #374151; display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+        .ficha-info-text { font-size: 13px; color: #6b7280; padding-left: 0; }
+
+        /* Botão de Pagamento */
+        .btn-pay-action {
+            width: 100%; background: #dcfce7; color: #166534; border: 1px solid #bbf7d0;
+            padding: 12px; border-radius: 12px; font-weight: 600; cursor: pointer;
+            margin: 15px 0; display: flex; align-items: center; justify-content: center; gap: 8px;
         }
 
-        /* --- ESTILOS FICHA DO CLIENTE (SUMMARY) --- */
-        .summary-profile {
-            display: flex; flex-direction: column; align-items: center; margin-bottom: 25px;
+        /* Histórico */
+        .hist-container { margin-top: 20px; }
+        .hist-title { font-size: 14px; font-weight: 700; color: #333; margin-bottom: 10px; padding-left: 5px; border-left: 3px solid var(--bs-color); }
+        .hist-item {
+            background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 8px;
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .summary-avatar {
-            width: 80px; height: 80px; background: #f3f4f6; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 32px; color: #9ca3af; margin-bottom: 10px;
-        }
-        .summary-name { font-size: 18px; font-weight: 700; color: #1f2937; text-align: center; }
-        .summary-subtitle { font-size: 13px; color: #6b7280; margin-top: 2px; }
+        .hist-left { display: flex; flex-direction: column; }
+        .hist-val { font-weight: 700; font-size: 14px; }
+        .hist-val.neg { color: var(--bs-color); } /* Compra/Dívida */
+        .hist-val.pos { color: #16a34a; } /* Pagamento */
+        .hist-date { font-size: 11px; color: #999; margin-top: 2px; }
+        .hist-tag { font-size: 10px; padding: 3px 8px; border-radius: 12px; font-weight: 600; }
+        .tag-compra { background: #fef2f2; color: var(--bs-color); }
+        .tag-pagamento { background: #dcfce7; color: #16a34a; }
 
-        .financial-cards {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px;
-        }
-        .fin-card {
-            background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 12px;
-            padding: 15px; text-align: center;
-        }
-        .fin-label { font-size: 11px; color: #6b7280; margin-bottom: 5px; display: block; }
-        .fin-value { font-size: 16px; font-weight: 700; color: #1f2937; }
-        .fin-value.red { color: var(--bs-color); }
+        /* Modal Pagamento */
+        .pay-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
+        .pay-opt { border: 1px solid #eee; padding: 10px; text-align: center; border-radius: 8px; font-size: 13px; cursor: pointer; }
+        .pay-opt.selected { background: #ecfdf5; border-color: #10b981; color: #047857; font-weight: 600; }
 
-        .limit-section {
-            background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
-            padding: 15px; margin-bottom: 25px;
-        }
-        .limit-header { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; }
-        .limit-bar-bg { width: 100%; height: 8px; background: #f3f4f6; border-radius: 4px; overflow: hidden; }
-        .limit-bar-fill { height: 100%; background: #10b981; border-radius: 4px; }
-        .limit-footer { display: flex; justify-content: space-between; font-size: 11px; color: #9ca3af; margin-top: 5px; }
-
-        .info-list { display: flex; flex-direction: column; gap: 12px; }
-        .info-item {
-            display: flex; align-items: flex-start; gap: 12px;
-            background: #f9fafb; padding: 12px; border-radius: 10px;
-        }
-        .info-item i { color: #6b7280; font-size: 18px; margin-top: 2px; }
-        .info-text h5 { font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 2px; }
-        .info-text p { font-size: 12px; color: #6b7280; }
-
-        /* --- FORM STYLES --- */
+        /* Form Styles */
+        .input-box input { background: #f9f9f9; border: 1px solid #eee; border-radius: 10px; width: 100%; padding: 12px; color: #333; }
+        .form-group label { font-size: 12px; color: #666; display: block; margin-bottom: 5px; }
         .form-group { margin-bottom: 15px; }
-        .form-group label { font-size: 13px; color: #666; margin-bottom: 6px; display: block; font-weight: 500; }
-        .input-box input {
-            background: #f9f9f9 !important; border: 1px solid #eee !important; color: #333 !important;
-            border-radius: 12px !important; width: 100%; padding: 14px;
-        }
-        .modal-btn-save {
-            width: 100%; padding: 16px; background: var(--bs-color); color: white;
-            border: none; border-radius: 14px; font-size: 16px; font-weight: 600; margin-top: 15px;
-        }
-
+        .modal-btn-save { width: 100%; padding: 15px; background: var(--bs-color); color: white; border: none; border-radius: 12px; font-weight: 600; margin-top: 10px; cursor: pointer; }
+        .btn-close-gray { width: 100%; padding: 15px; background: #f3f4f6; color: #4b5563; border: none; border-radius: 12px; font-weight: 600; margin-top: 20px; cursor: pointer; }
         .hidden-in-edit { display: block; }
         .edit-mode .hidden-in-edit { display: none; }
 
-        @media (min-width: 992px) {
-            .modal-overlay { align-items: center; justify-content: center; }
+        @media(min-width:992px) {
             .modal-content { width: 450px; border-radius: 20px; transform: translateY(20px); }
             .modal-overlay.open .modal-content { transform: translateY(0); }
             .stats-wrapper, .clients-list, .actions-bar { max-width: 800px; margin: 0 auto 15px auto; }
@@ -358,7 +214,7 @@
     <div class="header-clientes">
         <div class="header-top">
             <a href="conta.html" class="header-back"><i class='bx bx-chevron-left'></i></a>
-            <span class="header-title">Gerenciar Clientes</span>
+            <span class="header-title">Meus Clientes</span>
             <div style="width: 40px;"></div>
         </div>
     </div>
@@ -366,12 +222,12 @@
     <div class="stats-wrapper">
         <div class="stat-card blue">
             <div class="stat-icon"><i class='bx bx-group'></i></div>
-            <span class="stat-label">Total Clientes</span>
+            <span class="stat-label">Total Cadastrados</span>
             <span class="stat-value" id="total-clients">...</span>
         </div>
         <div class="stat-card red">
             <div class="stat-icon"><i class='bx bx-wallet'></i></div>
-            <span class="stat-label">A Receber</span>
+            <span class="stat-label">Total a Receber</span>
             <span class="stat-value danger" id="total-debt">...</span>
         </div>
     </div>
@@ -388,126 +244,151 @@
         <div class="loader"><div class="spinner"></div></div>
     </div>
 
-    <!-- MODAL 1: EDITAR / NOVO -->
+    <!-- MODAL 1: CADASTRO/EDIÇÃO -->
     <div class="modal-overlay" id="clientModal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modal-title">Novo Cliente</h2>
-                <button class="close-modal" onclick="closeModal('clientModal')"><i class='bx bx-x'></i></button>
+            <div class="ficha-header">
+                <h2>Novo Cliente</h2>
+                <button class="ficha-close" onclick="closeModal('clientModal')"><i class='bx bx-x'></i></button>
             </div>
             <form id="clientForm">
                 <input type="hidden" id="client-id">
-                
                 <div class="form-group">
                     <label>Nome Completo</label>
-                    <div class="input-box"><input type="text" id="client-name" required placeholder="Ex: Maria Silva"></div>
+                    <div class="input-box"><input type="text" id="client-name" required></div>
                 </div>
                 <div class="form-group">
                     <label>CPF</label>
-                    <div class="input-box"><input type="number" id="client-cpf" placeholder="Apenas números"></div>
+                    <div class="input-box"><input type="number" id="client-cpf"></div>
                 </div>
                 <div class="form-group">
                     <label>Telefone</label>
-                    <div class="input-box"><input type="tel" id="client-phone" required placeholder="(00) 00000-0000"></div>
+                    <div class="input-box"><input type="tel" id="client-phone" required></div>
                 </div>
                 <div class="form-group">
                     <label>Data de Nascimento</label>
-                    <div class="input-box"><input type="date" id="client-birth"></div>
+                    <!-- Data manual -->
+                    <div class="input-box"><input type="text" id="client-birth" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskDate(this)"></div>
                 </div>
                 <div class="form-group">
                     <label>Limite de Crédito (R$)</label>
-                    <div class="input-box"><input type="number" step="0.01" id="client-limit" placeholder="0.00"></div>
+                    <div class="input-box"><input type="number" step="0.01" id="client-limit"></div>
                 </div>
-                
-                <!-- Dívida só aparece na criação, na edição é bloqueada/oculta -->
                 <div class="form-group hidden-in-edit" id="div-debt">
-                    <label>Dívida Atual (Inicial)</label>
-                    <div class="input-box"><input type="number" step="0.01" id="client-debt-initial" placeholder="0.00"></div>
+                    <label>Dívida Inicial</label>
+                    <div class="input-box"><input type="number" step="0.01" id="client-debt-initial"></div>
                 </div>
-                
                 <div class="form-group">
                     <label>Observações</label>
-                    <div class="input-box"><input type="text" id="client-obs" placeholder="Ex: Preferência de cor..."></div>
+                    <div class="input-box"><input type="text" id="client-obs"></div>
                 </div>
-
-                <button type="submit" class="modal-btn-save">Salvar Alterações</button>
+                <button type="submit" class="modal-btn-save">Salvar</button>
             </form>
         </div>
     </div>
 
-    <!-- MODAL 2: RESUMO (FICHA DO CLIENTE) -->
+    <!-- MODAL 2: FICHA COMPLETA (Layout Restaurado) -->
     <div class="modal-overlay" id="summaryModal">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="ficha-header">
                 <h2>Ficha do Cliente</h2>
-                <button class="close-modal" onclick="closeModal('summaryModal')"><i class='bx bx-x'></i></button>
+                <button class="ficha-close" onclick="closeModal('summaryModal')"><i class='bx bx-x'></i></button>
             </div>
             
-            <div class="summary-profile">
-                <div class="summary-avatar"><i class='bx bx-user'></i></div>
-                <div class="summary-name" id="sum-name">--</div>
-                <div class="summary-subtitle" id="sum-cpf">CPF: --</div>
+            <div class="ficha-profile">
+                <div class="ficha-avatar"><i class='bx bx-user'></i></div>
+                <div class="ficha-name" id="sum-name">--</div>
+                <div class="ficha-cpf" id="sum-cpf">CPF: --</div>
             </div>
 
-            <div class="financial-cards">
-                <div class="fin-card">
-                    <span class="fin-label">Saldo Devedor</span>
-                    <span class="fin-value red" id="sum-debt">R$ 0,00</span>
+            <div class="ficha-cards-row">
+                <div class="ficha-card">
+                    <span class="ficha-label">Saldo Devedor</span>
+                    <span class="ficha-value red" id="sum-debt">R$ 0,00</span>
                 </div>
-                <div class="fin-card">
-                    <span class="fin-label">Próximo Venc.</span>
-                    <span class="fin-value" id="sum-due">--/--</span>
+                <div class="ficha-card">
+                    <span class="ficha-label">Próximo Venc.</span>
+                    <span class="ficha-value" id="sum-due">--/--</span>
                 </div>
             </div>
 
-            <div class="limit-section">
-                <div class="limit-header">
+            <!-- Botão de Pagamento -->
+            <button class="btn-pay-action" onclick="openPaymentModal()">
+                <i class='bx bx-dollar-circle'></i> Registrar Pagamento
+            </button>
+
+            <div class="ficha-limit-box">
+                <div class="limit-top">
                     <span>Limite Utilizado</span>
                     <span id="sum-limit-text">R$ 0,00 / R$ 0,00</span>
                 </div>
-                <div class="limit-bar-bg">
-                    <div class="limit-bar-fill" id="sum-limit-bar" style="width: 0%"></div>
+                <div class="limit-bar">
+                    <div class="limit-fill" id="sum-limit-bar" style="width: 0%"></div>
                 </div>
-                <div class="limit-footer">
+                <div class="limit-btm">
                     <span>Disponível</span>
                     <span id="sum-available">R$ 0,00</span>
                 </div>
             </div>
 
-            <div class="info-list">
-                <div class="info-item">
-                    <i class='bx bx-phone'></i>
-                    <div class="info-text">
-                        <h5>Telefone</h5>
-                        <p id="sum-phone">--</p>
-                    </div>
-                </div>
-                <div class="info-item">
-                    <i class='bx bx-calendar'></i>
-                    <div class="info-text">
-                        <h5>Nascimento</h5>
-                        <p id="sum-birth">Não informado</p>
-                    </div>
-                </div>
-                <div class="info-item">
-                    <i class='bx bx-note'></i>
-                    <div class="info-text">
-                        <h5>Observações</h5>
-                        <p id="sum-obs">--</p>
-                    </div>
+            <div class="ficha-info-block">
+                <div class="ficha-info-title"><i class='bx bx-phone'></i> Telefone</div>
+                <div class="ficha-info-text" id="sum-phone">--</div>
+            </div>
+
+            <div class="ficha-info-block">
+                <div class="ficha-info-title"><i class='bx bx-calendar'></i> Nascimento</div>
+                <div class="ficha-info-text" id="sum-birth">--</div>
+            </div>
+
+            <div class="ficha-info-block">
+                <div class="ficha-info-title"><i class='bx bx-note'></i> Observações</div>
+                <div class="ficha-info-text" id="sum-obs">--</div>
+            </div>
+
+            <!-- Histórico Unificado -->
+            <div class="hist-container">
+                <div class="hist-title"> Histórico do Cliente</div>
+                <div id="history-list">
+                    <!-- Lista via JS -->
                 </div>
             </div>
 
-            <button class="modal-btn-save" style="background-color: #f3f4f6; color: #555; margin-top:25px;" onclick="closeModal('summaryModal')">Fechar</button>
+            <button class="btn-close-gray" onclick="closeModal('summaryModal')">Fechar</button>
+        </div>
+    </div>
+
+    <!-- MODAL 3: REGISTRAR PAGAMENTO -->
+    <div class="modal-overlay" id="paymentModal">
+        <div class="modal-content" style="padding: 30px 25px;">
+            <div class="ficha-header">
+                <h2>Registrar Pagamento</h2>
+                <button class="ficha-close" onclick="closeModal('paymentModal')"><i class='bx bx-x'></i></button>
+            </div>
+            <p style="font-size:13px; color:#666; margin-bottom:15px;">Abater do saldo devedor deste cliente.</p>
+            
+            <div class="form-group">
+                <label>Valor do Pagamento (R$)</label>
+                <div class="input-box"><input type="number" step="0.01" id="pay-amount" placeholder="0.00"></div>
+            </div>
+
+            <label style="font-size:12px; color:#666;">Forma de Pagamento</label>
+            <div class="pay-options">
+                <div class="pay-opt selected" onclick="selectPayType('dinheiro', this)">Dinheiro</div>
+                <div class="pay-opt" onclick="selectPayType('pix', this)">Pix</div>
+                <div class="pay-opt" onclick="selectPayType('cartao', this)">Cartão</div>
+            </div>
+            <input type="hidden" id="pay-method" value="dinheiro">
+
+            <button class="modal-btn-save" onclick="confirmPayment()">Confirmar Pagamento</button>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
         import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 
-        // Configuração Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAVQ3tf6Qu4_9PajpJclZAJjVvRgB4ZE2I",
             authDomain: "super-app25.firebaseapp.com",
@@ -524,18 +405,16 @@
 
         let currentUser = null;
         let clientsData = [];
+        let currentClient = null; 
 
         onAuthStateChanged(auth, (user) => {
-            if (user) { 
-                currentUser = user; 
-                setupRealtimeListener(); 
-            } else {
-                console.log("Aguardando autenticação via Login...");
+            if (user) {
+                currentUser = user;
+                setupRealtimeListener();
             }
         });
 
         function setupRealtimeListener() {
-            if (!currentUser) return;
             const q = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'clients');
             onSnapshot(q, (snapshot) => {
                 clientsData = [];
@@ -561,117 +440,231 @@
             const container = document.getElementById('clients-container');
             container.innerHTML = '';
             if (list.length === 0) {
-                container.innerHTML = `<div class="empty-state"><i class='bx bx-user-plus'></i><p>Nenhum cliente.</p></div>`;
+                container.innerHTML = `<div style="text-align:center; padding:20px; color:#999;">Nenhum cliente.</div>`;
                 return;
             }
 
             list.forEach(client => {
-                const isDebtor = client.currentDebt > 0;
-                const debtClass = isDebtor ? 'devedor' : '';
-                const debtBadge = isDebtor ? `<span class="status-badge status-debt">Devendo</span>` : '';
-                
+                const debt = parseFloat(client.currentDebt || 0);
+                const debtHtml = debt > 0 
+                    ? `<span class="client-debt-display red">Devendo ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(debt)}</span>`
+                    : `<span class="client-debt-display">Em dia</span>`;
+
                 const card = document.createElement('div');
-                card.className = `client-card ${debtClass}`;
+                card.className = 'client-card';
                 card.innerHTML = `
+                    <div class="client-avatar"><i class='bx bx-user'></i></div>
                     <div class="client-info">
                         <h4>${client.name}</h4>
-                        <p><i class='bx bx-phone'></i> ${client.phone}</p>
+                        ${debtHtml}
                     </div>
-                    ${debtBadge}
-                    <div class="client-actions-wrapper">
-                        <button class="action-btn-card btn-card-summary" title="Resumo"><i class='bx bx-file'></i></button>
-                        <button class="action-btn-card btn-card-edit" title="Editar"><i class='bx bx-pencil'></i></button>
-                        <button class="action-btn-card btn-card-delete" title="Excluir"><i class='bx bx-trash'></i></button>
-                        <a href="https://wa.me/55${client.phone.replace(/\D/g,'')}" target="_blank" class="action-btn-card btn-card-whatsapp"><i class='bx bxl-whatsapp'></i></a>
+                    <div class="client-actions">
+                        <button class="action-btn btn-soft-blue summary-btn"><i class='bx bx-file'></i></button>
+                        <button class="action-btn btn-soft-gray edit-btn"><i class='bx bx-pencil'></i></button>
+                        <button class="action-btn btn-soft-red delete-btn"><i class='bx bx-trash'></i></button>
                     </div>
                 `;
                 
-                // Event Listeners
-                card.querySelector('.btn-card-summary').addEventListener('click', () => openSummaryModal(client));
-                card.querySelector('.btn-card-edit').addEventListener('click', () => openEditModal(client));
-                card.querySelector('.btn-card-delete').addEventListener('click', () => deleteClient(client.id));
+                card.querySelector('.summary-btn').onclick = () => openSummaryModal(client);
+                card.querySelector('.edit-btn').onclick = () => openEditModal(client);
+                card.querySelector('.delete-btn').onclick = () => deleteClient(client.id);
                 
                 container.appendChild(card);
             });
         }
 
-        // --- FUNÇÃO DE EXCLUSÃO ---
-        window.deleteClient = async function(id) {
-            if (confirm("Tem certeza que deseja excluir este cliente?")) {
-                try {
-                    await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'clients', id));
-                } catch (error) {
-                    console.error("Erro ao excluir:", error);
-                    alert("Erro ao excluir cliente.");
+        // --- HISTÓRICO (Vendas + Pagamentos) ---
+        async function loadClientHistory(clientId) {
+            const container = document.getElementById('history-list');
+            container.innerHTML = '<p style="font-size:12px; color:#999; text-align:center;">Carregando...</p>';
+
+            try {
+                // Busca registros da coleção 'sales' (onde salvamos vendas E pagamentos)
+                // Assumimos que pagamentos também são salvos aqui com type="payment"
+                const salesRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'sales');
+                const q = query(salesRef, where("clientId", "==", clientId));
+                
+                const querySnapshot = await getDocs(q);
+                let history = [];
+                querySnapshot.forEach((doc) => { 
+                    history.push(doc.data()); 
+                });
+
+                // Ordenar por data (decrescente)
+                history.sort((a, b) => new Date(b.date) - new Date(a.date));
+                const recent = history.slice(0, 10); // Últimos 10
+
+                container.innerHTML = '';
+                if (recent.length === 0) {
+                    container.innerHTML = '<p style="font-size:12px; color:#999; text-align:center;">Nenhum histórico recente.</p>';
+                    return;
                 }
+
+                recent.forEach(item => {
+                    const date = new Date(item.date).toLocaleDateString('pt-BR');
+                    const isPayment = item.type === 'payment';
+                    
+                    // Se for pagamento: valor positivo (verde), se for compra: valor negativo (vermelho) na lógica visual
+                    // Mas aqui vamos apenas colorir o valor.
+                    
+                    // Vendas antigas podem não ter o campo 'total', usar fallback
+                    const valNum = parseFloat(item.total || item.amount || 0);
+                    const val = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valNum);
+                    
+                    const valClass = isPayment ? 'hist-val pos' : 'hist-val neg';
+                    const tagClass = isPayment ? 'hist-tag tag-pagamento' : 'hist-tag tag-compra';
+                    const tagText = isPayment ? 'Pagamento' : 'Compra';
+                    const displayVal = isPayment ? `+ ${val}` : `- ${val}`;
+
+                    const div = document.createElement('div');
+                    div.className = 'hist-item';
+                    div.innerHTML = `
+                        <div class="hist-left">
+                            <span class="${valClass}">${displayVal}</span>
+                            <span class="hist-date">${date}</span>
+                        </div>
+                        <div class="${tagClass}">${tagText}</div>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch(e) {
+                console.error(e);
+                container.innerHTML = '<p style="font-size:12px; color:red; text-align:center;">Erro ao carregar histórico.</p>';
             }
         }
 
-        // --- MODAIS LOGIC ---
+        // --- MODAIS ---
         window.openCreateModal = function() {
-            const form = document.getElementById('clientForm');
-            form.reset();
+            document.getElementById('clientForm').reset();
             document.getElementById('client-id').value = '';
-            document.getElementById('modal-title').textContent = 'Novo Cliente';
-            document.getElementById('clientModal').classList.remove('edit-mode'); 
+            document.getElementById('div-debt').style.display = 'block';
             document.getElementById('clientModal').classList.add('open');
         }
 
         window.openEditModal = function(client) {
             document.getElementById('client-id').value = client.id;
             document.getElementById('client-name').value = client.name;
-            document.getElementById('client-phone').value = client.phone;
             document.getElementById('client-cpf').value = client.cpf || '';
+            document.getElementById('client-phone').value = client.phone;
             document.getElementById('client-birth').value = client.birthdate || '';
             document.getElementById('client-limit').value = client.creditLimit || '';
             document.getElementById('client-obs').value = client.obs || '';
-            
-            document.getElementById('modal-title').textContent = 'Editar Cliente';
-            document.getElementById('clientModal').classList.add('edit-mode'); 
+            document.getElementById('div-debt').style.display = 'none';
             document.getElementById('clientModal').classList.add('open');
         }
 
         window.openSummaryModal = function(client) {
-            const fmtMoney = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
-            
+            currentClient = client;
+            const fmtMoney = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
+
             document.getElementById('sum-name').textContent = client.name;
-            document.getElementById('sum-cpf').textContent = client.cpf ? `CPF: ${client.cpf}` : 'CPF não informado';
+            document.getElementById('sum-cpf').textContent = client.cpf ? `CPF: ${client.cpf}` : 'CPF: --';
             document.getElementById('sum-phone').textContent = client.phone;
-            document.getElementById('sum-birth').textContent = client.birthdate ? new Date(client.birthdate).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : 'Não informado';
+            document.getElementById('sum-birth').textContent = client.birthdate || 'Não informado';
             document.getElementById('sum-obs').textContent = client.obs || 'Nenhuma observação';
-            
+
             const debt = parseFloat(client.currentDebt || 0);
             const limit = parseFloat(client.creditLimit || 0);
             const available = Math.max(0, limit - debt);
             const percent = limit > 0 ? Math.min(100, (debt / limit) * 100) : 0;
 
             document.getElementById('sum-debt').textContent = fmtMoney(debt);
+            // Mock de vencimento
             document.getElementById('sum-due').textContent = debt > 0 ? '30/11/2025' : '--/--';
             
             document.getElementById('sum-limit-text').textContent = `${fmtMoney(debt)} / ${fmtMoney(limit)}`;
             document.getElementById('sum-limit-bar').style.width = `${percent}%`;
-            document.getElementById('sum-limit-bar').style.backgroundColor = percent > 90 ? '#ef4444' : '#10b981';
             document.getElementById('sum-available').textContent = fmtMoney(available);
 
+            loadClientHistory(client.id);
             document.getElementById('summaryModal').classList.add('open');
         }
 
-        window.closeModal = function(modalId) {
-            document.getElementById(modalId).classList.remove('open');
+        // --- PAGAMENTO (MODAL) ---
+        window.openPaymentModal = function() {
+            if(!currentClient) return;
+            document.getElementById('pay-amount').value = '';
+            document.getElementById('paymentModal').classList.add('open');
         }
 
-        // SAVE FORM
+        window.selectPayType = function(type, el) {
+            document.getElementById('pay-method').value = type;
+            document.querySelectorAll('.pay-opt').forEach(e => e.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+
+        window.confirmPayment = async function() {
+            const amount = parseFloat(document.getElementById('pay-amount').value);
+            const method = document.getElementById('pay-method').value;
+
+            if(isNaN(amount) || amount <= 0) { alert("Valor inválido."); return; }
+
+            const currentDebt = parseFloat(currentClient.currentDebt || 0);
+            const newDebt = Math.max(0, currentDebt - amount);
+
+            try {
+                // Atualiza Dívida do Cliente
+                await updateDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'clients', currentClient.id), {
+                    currentDebt: newDebt
+                });
+
+                // Salva no Histórico (Coleção Sales com tipo 'payment')
+                await addDoc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'sales'), {
+                    type: 'payment',
+                    clientId: currentClient.id,
+                    clientName: currentClient.name,
+                    total: amount, // Valor pago
+                    paymentMethod: method,
+                    date: new Date().toISOString()
+                });
+
+                // Atualiza UI localmente
+                currentClient.currentDebt = newDebt;
+                document.getElementById('sum-debt').textContent = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(newDebt);
+                
+                closeModal('paymentModal');
+                loadClientHistory(currentClient.id); // Recarrega histórico
+                alert("Pagamento registrado com sucesso!");
+
+            } catch(e) {
+                console.error(e);
+                alert("Erro ao processar pagamento.");
+            }
+        }
+
+        window.closeModal = function(id) {
+            document.getElementById(id).classList.remove('open');
+        }
+
+        window.deleteClient = async function(id) {
+            if(confirm('Excluir cliente permanentemente?')) {
+                await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'clients', id));
+            }
+        }
+
+        // Mascara Data Manual
+        window.maskDate = function(input) {
+            let v = input.value.replace(/\D/g,'');
+            if(v.length > 8) v = v.substring(0,8);
+            if(v.length >= 5) {
+                input.value = v.substring(0,2) + '/' + v.substring(2,4) + '/' + v.substring(4);
+            } else if(v.length >= 3) {
+                input.value = v.substring(0,2) + '/' + v.substring(2);
+            } else {
+                input.value = v;
+            }
+        }
+
+        // SALVAR CLIENTE
         document.getElementById('clientForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!currentUser) return;
-
             const btn = e.target.querySelector('button');
-            const oldText = btn.textContent;
             btn.textContent = 'Salvando...'; btn.disabled = true;
-
+            
             const id = document.getElementById('client-id').value;
             const isEdit = !!id;
-
+            
             const data = {
                 name: document.getElementById('client-name').value,
                 phone: document.getElementById('client-phone').value,
@@ -692,11 +685,10 @@
                 if (isEdit) await updateDoc(doc(col, id), data);
                 else await addDoc(col, data);
                 closeModal('clientModal');
-            } catch (error) {
-                console.error(error);
+            } catch(e) {
                 alert('Erro ao salvar.');
             } finally {
-                btn.textContent = oldText; btn.disabled = false;
+                btn.textContent = 'Salvar'; btn.disabled = false;
             }
         });
 

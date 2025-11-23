@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/assets/img/iconWeb.png">
+    <title>Nova Venda | Floralchic</title>
+
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <style>
+        /* --- ESTILOS GERAIS --- */
+        body {
+            background-color: #f8f9fa;
+            padding-bottom: 100px; /* Espaço para o bottom sheet do carrinho */
+        }
+
+        /* Header */
+        .header-venda {
+            background-image: url(/assets/bannerHidle2.png);
+            background-size: cover;
+            background-position: center;
+            background-color: var(--container-color);
+            padding: 20px;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            color: var(--secondary-color);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-back {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(4px);
+            width: 35px;
+            height: 35px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--secondary-color);
+            font-size: 20px;
+            text-decoration: none;
+        }
+
+        .header-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* Seleção de Cliente */
+        .client-selector {
+            background: #fff;
+            margin: -20px 20px 15px 20px;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            position: relative;
+            z-index: 51;
+        }
+
+        .selected-client {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+
+        .client-info h4 {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        .client-info p {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .change-client-btn {
+            font-size: 12px;
+            color: var(--bs-color);
+            font-weight: 500;
+        }
+
+        /* Lista de Produtos */
+        .products-container {
+            padding: 0 20px;
+        }
+
+        .search-bar {
+            position: sticky;
+            top: 75px; /* Abaixo do header */
+            background: #f8f9fa;
+            padding: 10px 0;
+            z-index: 40;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            background: #fff;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            outline: none;
+        }
+
+        .product-list-item {
+            background: #fff;
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+
+        .prod-img-thumb {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            background: #f3f4f6;
+            object-fit: cover;
+        }
+
+        .prod-details {
+            flex: 1;
+        }
+
+        .prod-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        .prod-price {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--bs-color);
+        }
+
+        .prod-stock {
+            font-size: 10px;
+            color: #999;
+        }
+
+        .add-btn {
+            width: 30px;
+            height: 30px;
+            background: #eef2ff;
+            color: var(--main);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* Carrinho Bottom Sheet */
+        .cart-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #fff;
+            border-top-left-radius: 25px;
+            border-top-right-radius: 25px;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+            z-index: 100;
+            transition: transform 0.3s ease;
+            transform: translateY(calc(100% - 70px)); /* Mostra só o resumo */
+        }
+
+        .cart-sheet.expanded {
+            transform: translateY(0);
+            height: 90vh; /* Ocupa quase toda a tela quando aberto */
+            overflow-y: auto;
+        }
+
+        .cart-summary-bar {
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+
+        .cart-total-label {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .cart-total-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .cart-expand-icon {
+            font-size: 24px;
+            color: #ccc;
+            transition: transform 0.3s;
+        }
+
+        .cart-sheet.expanded .cart-expand-icon {
+            transform: rotate(180deg);
+        }
+
+        .cart-content {
+            padding: 20px;
+            display: none; /* Escondido até expandir */
+        }
+
+        .cart-sheet.expanded .cart-content {
+            display: block;
+        }
+
+        .cart-items-list {
+            max-height: 40vh;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .cart-item-info h5 {
+            font-size: 13px;
+            color: #333;
+        }
+
+        .cart-item-price {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .cart-item-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .qty-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 1px solid #eee;
+            background: #fff;
+            color: #555;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .payment-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .payment-opt {
+            padding: 12px;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 12px;
+            color: #555;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .payment-opt.selected {
+            border-color: var(--bs-color);
+            background: #fff0f3;
+            color: var(--bs-color);
+            font-weight: 600;
+        }
+
+        .finish-btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--bs-color);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Modais de Seleção */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 200;
+            display: flex; align-items: flex-end; opacity: 0; pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+        .modal-content {
+            background: #ffffff; width: 100%;
+            border-top-left-radius: 25px; border-top-right-radius: 25px;
+            padding: 25px; max-height: 80vh; overflow-y: auto;
+            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .modal-overlay.open .modal-content { transform: translateY(0); }
+
+        .client-list-item {
+            padding: 12px;
+            border-bottom: 1px solid #f3f4f6;
+            cursor: pointer;
+        }
+        .client-list-item:hover { background: #f9f9f9; }
+
+        /* Desktop */
+        @media (min-width: 992px) {
+            .modal-overlay { align-items: center; justify-content: center; }
+            .modal-content { width: 450px; border-radius: 20px; transform: translateY(20px); }
+            .modal-overlay.open .modal-content { transform: translateY(0); }
+            .cart-sheet { 
+                width: 400px; right: 20px; left: auto; bottom: 20px; border-radius: 20px;
+                transform: translateY(0); height: auto; max-height: 80vh;
+                display: block; /* Sempre visível no desktop */
+            }
+            .cart-content { display: block; }
+            .cart-summary-bar { display: none; }
+            body { padding-bottom: 20px; padding-right: 440px; }
+        }
+    </style>
+</head>
+
+<body class="painel-adm1">
+
+    <!-- SCRIPT DE SEGURANÇA -->
+    <script>
+        (function () {
+            const LOGIN_PAGE = 'login.html';
+            const SESSION_DURATION = 45 * 60 * 1000;
+            function forceLogout() { localStorage.removeItem('session_token'); window.location.href = LOGIN_PAGE; }
+            const tokenString = localStorage.getItem('session_token');
+            if (!tokenString) { window.location.href = LOGIN_PAGE; return; }
+            try {
+                const token = JSON.parse(tokenString);
+                if (new Date().getTime() > token.expires) { forceLogout(); return; }
+            } catch (e) { forceLogout(); }
+        })();
+    </script>
+
+    <!-- HEADER -->
+    <div class="header-venda">
+        <div class="header-top">
+            <a href="conta.html" class="header-back"><i class='bx bx-chevron-left'></i></a>
+            <span class="header-title">Nova Venda</span>
+            <div style="width: 35px;"></div>
+        </div>
+    </div>
+
+    <!-- SELEÇÃO DE CLIENTE -->
+    <div class="client-selector" onclick="openClientModal()">
+        <div class="selected-client">
+            <div class="client-info">
+                <h4 id="sel-client-name">Cliente Balcão</h4>
+                <p id="sel-client-detail">Toque para selecionar cadastro</p>
+            </div>
+            <span class="change-client-btn">Alterar</span>
+        </div>
+        <input type="hidden" id="sel-client-id" value="balcao">
+    </div>
+
+    <!-- LISTA DE PRODUTOS -->
+    <div class="products-container">
+        <div class="search-bar">
+            <input type="text" id="prod-search" class="search-input" placeholder="Buscar produto...">
+        </div>
+        <div id="products-list">
+            <!-- Lista carregada via JS -->
+            <div style="text-align: center; padding: 20px; color: #999;">Carregando produtos...</div>
+        </div>
+    </div>
+
+    <!-- CARRINHO (BOTTOM SHEET) -->
+    <div class="cart-sheet" id="cartSheet">
+        <!-- Barra de Resumo (Sempre visível no mobile) -->
+        <div class="cart-summary-bar" onclick="toggleCart()">
+            <div>
+                <span class="cart-total-label">Total (<span id="cart-count">0</span> itens)</span>
+                <div class="cart-total-value" id="cart-total-mini">R$ 0,00</div>
+            </div>
+            <i class='bx bx-chevron-up cart-expand-icon'></i>
+        </div>
+
+        <!-- Conteúdo Expandido -->
+        <div class="cart-content">
+            <h3 style="margin-bottom: 15px; font-size: 16px;">Resumo do Pedido</h3>
+            
+            <div class="cart-items-list" id="cart-items-container">
+                <p style="text-align: center; color: #999; font-size: 13px;">Carrinho vazio</p>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; padding-top: 10px; border-top: 1px solid #eee;">
+                <span style="font-weight: 600;">Total a Pagar</span>
+                <span style="font-weight: 700; color: var(--bs-color); font-size: 18px;" id="cart-total-full">R$ 0,00</span>
+            </div>
+
+            <label style="font-size: 12px; color: #666; display: block; margin-bottom: 8px;">Forma de Pagamento</label>
+            <div class="payment-options">
+                <div class="payment-opt selected" onclick="selectPayment('dinheiro', this)">Dinheiro</div>
+                <div class="payment-opt" onclick="selectPayment('pix', this)">Pix</div>
+                <div class="payment-opt" onclick="selectPayment('cartao', this)">Cartão</div>
+                <div class="payment-opt" onclick="selectPayment('crediario', this)">Crediário</div>
+            </div>
+            <input type="hidden" id="payment-method" value="dinheiro">
+
+            <button class="finish-btn" onclick="finishSale()">Finalizar Venda</button>
+        </div>
+    </div>
+
+    <!-- MODAL SELEÇÃO DE CLIENTE -->
+    <div class="modal-overlay" id="clientModal">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <h3>Selecionar Cliente</h3>
+                <i class='bx bx-x' style="font-size: 24px; cursor: pointer;" onclick="closeModal('clientModal')"></i>
+            </div>
+            <input type="text" id="client-search" class="search-input" style="margin-bottom: 15px;" placeholder="Buscar cliente...">
+            <div id="client-list-container">
+                <!-- Lista via JS -->
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, runTransaction, getDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+
+        // Configuração Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAVQ3tf6Qu4_9PajpJclZAJjVvRgB4ZE2I",
+            authDomain: "super-app25.firebaseapp.com",
+            projectId: "super-app25",
+            storageBucket: "super-app25.firebasestorage.app",
+            messagingSenderId: "810900166273",
+            appId: "1:810900166273:web:24b8f055a68c9f0a6b5f80"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = 'floralchic-loja';
+
+        let currentUser = null;
+        let products = [];
+        let clients = [];
+        let cart = [];
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                loadData();
+            }
+        });
+
+        function loadData() {
+            // Carregar Produtos
+            onSnapshot(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'products'), (snap) => {
+                products = [];
+                snap.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
+                renderProducts(products);
+            });
+
+            // Carregar Clientes
+            onSnapshot(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'clients'), (snap) => {
+                clients = [];
+                snap.forEach(doc => clients.push({ id: doc.id, ...doc.data() }));
+                renderClients(clients);
+            });
+        }
+
+        // --- RENDERIZAÇÃO ---
+        function renderProducts(list) {
+            const container = document.getElementById('products-list');
+            container.innerHTML = '';
+            
+            if (list.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">Nenhum produto encontrado.</p>';
+                return;
+            }
+
+            list.forEach(prod => {
+                const img = prod.imgUrl || 'https://placehold.co/50x50?text=Box';
+                const fmtPrice = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(prod.price);
+                
+                const div = document.createElement('div');
+                div.className = 'product-list-item';
+                div.innerHTML = `
+                    <img src="${img}" class="prod-img-thumb">
+                    <div class="prod-details">
+                        <div class="prod-name">${prod.name}</div>
+                        <div class="prod-price">${fmtPrice}</div>
+                        <div class="prod-stock">Estoque: ${prod.stock}</div>
+                    </div>
+                    <button class="add-btn" onclick="addToCart('${prod.id}')"><i class='bx bx-plus'></i></button>
+                `;
+                // Adicionando o evento manualmente para passar a função addToCart para o escopo global
+                div.querySelector('.add-btn').onclick = () => addToCart(prod.id);
+                container.appendChild(div);
+            });
+        }
+
+        function renderClients(list) {
+            const container = document.getElementById('client-list-container');
+            container.innerHTML = `<div class="client-list-item" onclick="selectClient('balcao', 'Cliente Balcão', '')">
+                <strong>Cliente Balcão</strong><br><small>Venda Avulsa</small>
+            </div>`;
+
+            list.forEach(cli => {
+                const div = document.createElement('div');
+                div.className = 'client-list-item';
+                div.innerHTML = `<strong>${cli.name}</strong><br><small>${cli.cpf || cli.phone}</small>`;
+                div.onclick = () => selectClient(cli.id, cli.name, cli.cpf || cli.phone);
+                container.appendChild(div);
+            });
+        }
+
+        // --- CARRINHO ---
+        window.addToCart = function(prodId) {
+            const prod = products.find(p => p.id === prodId);
+            if (!prod) return;
+
+            const existing = cart.find(item => item.id === prodId);
+            if (existing) {
+                if (existing.qty < prod.stock) {
+                    existing.qty++;
+                } else {
+                    alert('Estoque insuficiente!');
+                }
+            } else {
+                if (prod.stock > 0) {
+                    cart.push({ ...prod, qty: 1 });
+                } else {
+                    alert('Produto sem estoque!');
+                }
+            }
+            updateCartUI();
+        }
+
+        window.updateQty = function(prodId, change) {
+            const item = cart.find(i => i.id === prodId);
+            if (!item) return;
+
+            const newQty = item.qty + change;
+            if (newQty > 0) {
+                const prodStock = products.find(p => p.id === prodId).stock;
+                if (newQty <= prodStock) {
+                    item.qty = newQty;
+                } else {
+                    alert('Estoque máximo atingido!');
+                }
+            } else {
+                cart = cart.filter(i => i.id !== prodId);
+            }
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const container = document.getElementById('cart-items-container');
+            container.innerHTML = '';
+            
+            let total = 0;
+            let count = 0;
+
+            if (cart.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #999; font-size: 13px;">Carrinho vazio</p>';
+            } else {
+                cart.forEach(item => {
+                    total += item.price * item.qty;
+                    count += item.qty;
+
+                    const div = document.createElement('div');
+                    div.className = 'cart-item';
+                    div.innerHTML = `
+                        <div class="cart-item-info">
+                            <h5>${item.name}</h5>
+                            <span class="cart-item-price">${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.price)}</span>
+                        </div>
+                        <div class="cart-item-controls">
+                            <button class="qty-btn" onclick="updateQty('${item.id}', -1)">-</button>
+                            <span>${item.qty}</span>
+                            <button class="qty-btn" onclick="updateQty('${item.id}', 1)">+</button>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+
+            const fmtTotal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total);
+            document.getElementById('cart-total-mini').textContent = fmtTotal;
+            document.getElementById('cart-total-full').textContent = fmtTotal;
+            document.getElementById('cart-count').textContent = count;
+        }
+
+        // --- LÓGICA DE VENDA CORRIGIDA (Reads Before Writes) ---
+        window.finishSale = async function() {
+            if (cart.length === 0) {
+                alert('O carrinho está vazio!');
+                return;
+            }
+
+            const clientId = document.getElementById('sel-client-id').value;
+            const paymentMethod = document.getElementById('payment-method').value;
+            const total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+
+            // Validação Crediário
+            if (paymentMethod === 'crediario' && clientId === 'balcao') {
+                alert('Para venda no crediário, é necessário selecionar um cliente cadastrado.');
+                openClientModal(); 
+                return;
+            }
+
+            const btn = document.querySelector('.finish-btn');
+            const originalText = btn.textContent;
+            btn.textContent = 'Processando...';
+            btn.disabled = true;
+
+            try {
+                await runTransaction(db, async (transaction) => {
+                    // --- FASE 1: LEITURAS ---
+                    
+                    // 1. Ler produtos (Estoque)
+                    const productReads = [];
+                    for (const item of cart) {
+                        const prodRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'products', item.id);
+                        productReads.push(transaction.get(prodRef));
+                    }
+                    const productDocs = await Promise.all(productReads);
+
+                    // 2. Ler Cliente (se crediário)
+                    let clientDoc = null;
+                    let clientRef = null;
+                    if (paymentMethod === 'crediario') {
+                        clientRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'clients', clientId);
+                        clientDoc = await transaction.get(clientRef);
+                        if (!clientDoc.exists()) throw "Cliente não encontrado!";
+                    }
+
+                    // 3. Ler Loja (Faturamento)
+                    const storeRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'stores', 'floralchic');
+                    const storeDoc = await transaction.get(storeRef);
+
+                    // --- FASE 2: ESCRITAS ---
+
+                    // 1. Atualizar Estoque
+                    productDocs.forEach((docSnap, index) => {
+                        if (!docSnap.exists()) throw "Um dos produtos não foi encontrado!";
+                        const item = cart[index];
+                        const currentStock = docSnap.data().stock;
+                        const newStock = currentStock - item.qty;
+                        
+                        if (newStock < 0) throw `Estoque insuficiente para: ${item.name}`;
+                        
+                        transaction.update(docSnap.ref, { stock: newStock });
+                    });
+
+                    // 2. Atualizar Dívida (se necessário)
+                    if (paymentMethod === 'crediario' && clientDoc) {
+                        const currentDebt = parseFloat(clientDoc.data().currentDebt || 0);
+                        transaction.update(clientRef, { currentDebt: currentDebt + total });
+                    }
+
+                    // 3. Atualizar Faturamento
+                    if (storeDoc.exists()) {
+                        const currentRevenue = parseFloat(storeDoc.data().todayRevenue || 0);
+                        // Apenas soma ao faturamento do dia
+                        transaction.update(storeRef, { todayRevenue: currentRevenue + total });
+                    }
+
+                    // 4. Criar Registro da Venda
+                    const saleRef = doc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'sales'));
+                    transaction.set(saleRef, {
+                        clientId: clientId,
+                        clientName: document.getElementById('sel-client-name').textContent,
+                        items: cart,
+                        total: total,
+                        paymentMethod: paymentMethod,
+                        date: new Date().toISOString()
+                    });
+                });
+
+                alert('Venda realizada com sucesso!');
+                cart = [];
+                updateCartUI();
+                toggleCart(); 
+                selectClient('balcao', 'Cliente Balcão', 'Toque para selecionar cadastro');
+
+            } catch (error) {
+                console.error("Erro na venda:", error);
+                alert("Erro ao processar venda: " + error);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // --- UI HELPERS ---
+        window.toggleCart = function() {
+            document.getElementById('cartSheet').classList.toggle('expanded');
+        }
+
+        window.openClientModal = function() {
+            document.getElementById('clientModal').classList.add('open');
+        }
+
+        window.closeModal = function(id) {
+            document.getElementById(id).classList.remove('open');
+        }
+
+        window.selectClient = function(id, name, detail) {
+            document.getElementById('sel-client-id').value = id;
+            document.getElementById('sel-client-name').textContent = name;
+            document.getElementById('sel-client-detail').textContent = detail || 'Venda Avulsa';
+            closeModal('clientModal');
+        }
+
+        window.selectPayment = function(method, element) {
+            document.getElementById('payment-method').value = method;
+            document.querySelectorAll('.payment-opt').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+
+        // Filtro Produtos
+        document.getElementById('prod-search').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = products.filter(p => p.name.toLowerCase().includes(term));
+            renderProducts(filtered);
+        });
+
+        // Filtro Clientes
+        document.getElementById('client-search').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = clients.filter(c => c.name.toLowerCase().includes(term));
+            renderClients(filtered);
+        });
+
+        // Expor funções para global window para o HTML acessar
+        window.addToCart = addToCart;
+        window.updateQty = updateQty;
+    </script>
+</body>
+</html>

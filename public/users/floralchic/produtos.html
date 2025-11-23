@@ -123,7 +123,8 @@
 
         .product-image {
             width: 100%;
-            height: 140px;
+            /* CORREÇÃO: aspect-ratio garante que seja sempre um quadrado (1:1) */
+            aspect-ratio: 1 / 1; 
             background-color: #e9ecef;
             display: flex;
             align-items: center;
@@ -134,7 +135,7 @@
         .product-image img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: cover; /* Garante que a imagem preencha o quadrado sem distorcer */
         }
 
         .product-image i {
@@ -385,7 +386,8 @@
                             <p>Toque para adicionar foto</p>
                         </div>
                         <img id="img-preview" style="display: none;">
-                        <input type="file" id="prod-img-file" accept="image/*" capture="environment" style="display: none;" onchange="handleImageUpload(this)">
+                        <!-- CORREÇÃO: capture removido para permitir seleção de arquivo -->
+                        <input type="file" id="prod-img-file" accept="image/*" style="display: none;" onchange="handleImageUpload(this)">
                     </div>
                 </div>
 
@@ -524,7 +526,7 @@
         let currentUser = null;
         let productsData = [];
         let currentDetailId = null;
-        let scannerIsRunning = false; // Variável de controle corrigida
+        let scannerIsRunning = false; // Controla o estado do scanner
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -601,7 +603,7 @@
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d');
                         
-                        // 1. Redimensionar (Máx 1024x1024 para boa qualidade em telas retina, mas leve)
+                        // 1. Redimensionar (Máx 1024x1024 para reduzir resolução conforme solicitado)
                         const MAX_DIM = 1024;
                         let width = img.width;
                         let height = img.height;
@@ -617,13 +619,12 @@
                         ctx.drawImage(img, 0, 0, width, height);
 
                         // 2. Comprimir Iterativamente até < 500KB
-                        // Começamos com qualidade 0.8 (bom balanço)
                         const MAX_SIZE_BYTES = 500 * 1024; // 500KB
-                        let quality = 0.8;
+                        let quality = 0.8; // Começar com qualidade 80%
                         let dataUrl = canvas.toDataURL('image/jpeg', quality);
                         
-                        // Loop de redução de qualidade se ainda estiver grande
-                        while (dataUrl.length * 0.75 > MAX_SIZE_BYTES && quality > 0.3) {
+                        // Loop de redução de qualidade se o arquivo ainda for grande
+                        while (dataUrl.length * 0.75 > MAX_SIZE_BYTES && quality > 0.1) {
                             quality -= 0.1;
                             dataUrl = canvas.toDataURL('image/jpeg', quality);
                         }
@@ -740,7 +741,7 @@
 
         window.closeModal = function(id) {
             document.getElementById(id).classList.remove('open');
-            stopScanner(); // Para a câmera ao fechar modal
+            stopScanner(); // Para scanner se fechar o modal
         }
 
         // --- CRUD FIREBASE ---
@@ -778,9 +779,8 @@
                 closeModal('productModal');
             } catch (error) {
                 console.error(error);
-                // Tratamento de erro comum: Base64 muito grande
                 if(error.code === 'resource-exhausted') {
-                    alert('A imagem é muito grande para salvar. Tente uma foto mais simples.');
+                    alert('A imagem é muito grande. Tente tirar uma foto mais simples.');
                 } else {
                     alert('Erro ao salvar.');
                 }
@@ -789,12 +789,12 @@
             }
         });
 
-        // --- SCANNER BARCODE (QUAGGAJS FIX COM TRY-CATCH) ---
+        // --- SCANNER BARCODE (QUAGGAJS FIX) ---
         window.startScanner = function() {
             const container = document.getElementById('scanner-container');
             container.style.display = 'block';
 
-            // Reseta flag
+            // Importante: Garante que a flag comece falsa para não tentar parar algo que não existe
             scannerIsRunning = false;
 
             Quagga.init({
@@ -808,12 +808,13 @@
             }, function(err) {
                 if (err) {
                     console.log(err);
-                    alert("Erro ao iniciar câmera. Verifique as permissões.");
+                    alert("Erro ao iniciar câmera. Verifique permissões.");
                     container.style.display = 'none';
                     return;
                 }
-                scannerIsRunning = true;
+                // Só marca como rodando se o init foi sucesso
                 Quagga.start();
+                scannerIsRunning = true; 
             });
 
             Quagga.onDetected(function(result) {

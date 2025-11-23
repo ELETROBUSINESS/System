@@ -7,21 +7,90 @@
     <link rel="icon" href="/assets/img/iconWeb.png">
     <title>Minha Empresa | Floralchic</title>
 
-    <!-- Link do CSS ajustado -->
     <link rel="stylesheet" href="/assets/css/main.css">
-
     <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+
+    <style>
+        /* Modal de Configuração Obrigatória */
+        .setup-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 9, 31, 0.95); /* Fundo bem escuro */
+            z-index: 9999; display: none; align-items: center; justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+        .setup-overlay.open { display: flex; }
+
+        .setup-content {
+            background: #fff; width: 90%; max-width: 400px; padding: 30px;
+            border-radius: 20px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .setup-icon {
+            width: 60px; height: 60px; background: #eef2ff; color: var(--main);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 30px; margin: 0 auto 20px;
+        }
+
+        .setup-content h2 { font-size: 22px; font-weight: 700; color: #333; margin-bottom: 10px; }
+        .setup-content p { font-size: 14px; color: #666; margin-bottom: 25px; line-height: 1.5; }
+
+        .setup-form .input-group { margin-bottom: 15px; text-align: left; }
+        .setup-form label { display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 5px; }
+        .setup-form input, .setup-form select {
+            width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 10px;
+            font-size: 15px; outline: none; background: #f9f9f9;
+        }
+        .setup-form input:focus { border-color: var(--main); background: #fff; }
+
+        .btn-setup-save {
+            width: 100%; padding: 15px; background: var(--bs-color); color: white;
+            border: none; border-radius: 12px; font-size: 16px; font-weight: 600;
+            cursor: pointer; margin-top: 10px; transition: transform 0.2s;
+        }
+        .btn-setup-save:active { transform: scale(0.98); }
+    </style>
 </head>
 
 <body class="painel-adm1">
+
+    <!-- MODAL DE SETUP OBRIGATÓRIO -->
+    <div class="setup-overlay" id="setupModal">
+        <div class="setup-content">
+            <div class="setup-icon"><i class='bx bxs-bank'></i></div>
+            <h2>Configuração Inicial</h2>
+            <p>Para começar a usar o sistema, precisamos definir os dados bancários da sua empresa e o caixa inicial.</p>
+            
+            <div class="setup-form">
+                <div class="input-group">
+                    <label>Banco Principal</label>
+                    <select id="setup-bank">
+                        <option value="" disabled selected>Selecione o banco...</option>
+                        <option value="Nubank">Nubank</option>
+                        <option value="Inter">Banco Inter</option>
+                        <option value="Itau">Itaú</option>
+                        <option value="Bradesco">Bradesco</option>
+                        <option value="Santander">Santander</option>
+                        <option value="Caixa">Caixa Econômica</option>
+                        <option value="Brasil">Banco do Brasil</option>
+                        <option value="Outros">Outros</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Saldo Atual em Caixa (R$)</label>
+                    <input type="number" id="setup-balance" step="0.01" placeholder="Ex: 1500.00">
+                </div>
+                <button class="btn-setup-save" onclick="saveInitialSetup()">Começar a Usar</button>
+            </div>
+        </div>
+    </div>
 
     <!-- SCRIPT DE SEGURANÇA E SESSÃO -->
     <script>
         (function () {
             const LOGIN_PAGE = 'login.html';
-            const SESSION_DURATION = 45 * 60 * 1000; // 45 minutos
+            const SESSION_DURATION = 45 * 60 * 1000;
 
             function forceLogout(email = null) {
                 localStorage.removeItem('session_token');
@@ -34,7 +103,6 @@
 
             const tokenString = localStorage.getItem('session_token');
             if (!tokenString) {
-                // Se não estiver logado no localStorage, redireciona
                 window.location.href = LOGIN_PAGE;
                 return;
             }
@@ -102,7 +170,6 @@
     <main class="main-content">
         <div class="info">
             <div class="photo-profile">
-                <!-- Imagem específica solicitada -->
                 <img src="https://scontent.cdninstagram.com/v/t51.82787-15/517422782_17875160028431439_4615772131715565418_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=102&ig_cache_key=MzY3NDEwNDM1ODg3ODg4Nzc5Mg%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6InhwaWRzLjUwMHg1MDAuc2RyLkMzIn0%3D&_nc_ohc=bjlCbeKkCbwQ7kNvwGSBXkj&_nc_oc=AdlNrddvofCL36b3kpOx6NVWz6-CMzNVykq5yJqvccZ0bPanCmcCjZdpnMqOQctWu3I&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&_nc_gid=IFsGXn04qlpKYFwUV5YRbw&oh=00_AfiRDQPLv2KE2wBDo9H-uiHxvcPY5Dm_3fGA8u5EjbILOQ&oe=6928E1E3">
                 <div class="detals">
                     <h1 id="profile-name">Carregando...</h1>
@@ -113,7 +180,7 @@
             
             <!-- CARD DE SALDO -->
             <div class="balance">
-                <p>Saldo Atual</p>
+                <p>Saldo em Caixa (Total)</p>
                 <div class="saldo">
                     <span id="valor1" class="skeleton shimmer">Carregando...</span>
                     <i class='bx bx-eye' id="toggle-balance-icon"></i>
@@ -129,7 +196,6 @@
             <div class="conta-info">
                 <p>Meu empreendimento</p>
                 
-                <!-- FATURAMENTO -->
                 <div class="faturamento-section">
                     <div class="faturamento-container">
                         <div class="faturamento-display" style="padding-top: 10px;">
@@ -137,7 +203,7 @@
                                 <h1 id="faturamento-valor" class="skeleton shimmer">R$ ...</h1>
                                 <a href="#" class="metricas-link">Métricas <i class='bx bx-chevron-right'></i></a>
                             </div>
-                            <p id="faturamento-hoje">Faturamento de hoje</p>
+                            <p id="faturamento-hoje">Faturamento Total (Hoje)</p>
                         </div>
                     </div>
                 </div>
@@ -184,7 +250,7 @@
         </div>
     </main>
 
-    <!-- SIDEBAR DE NAVEGAÇÃO -->
+    <!-- SIDEBAR -->
     <div class="navigation" id="main-navigation">
         <button class="sidebar-toggle" id="sidebarToggle">
             <i class='bx bx-menu'></i>
@@ -203,13 +269,13 @@
                 </a>
             </li>
             <li class="list">
-                <a href="#">
+                <a href="venda.html">
                     <span class="icon"><i class='bx bx-plus-circle'></i></span>
                     <span class="text">Venda</span>
                 </a>
             </li>
             <li class="list">
-                <a href="#">
+                <a href="extrato.html">
                     <span class="icon"><i class='bx bx-copy-alt'></i></span>
                     <span class="text">Extrato</span>
                 </a>
@@ -223,10 +289,9 @@
         </ul>
     </div>
 
-    <!-- LOGICA FIREBASE E UI -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-        import { getFirestore, collection, doc, onSnapshot, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+        import { getFirestore, collection, doc, onSnapshot, setDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
         import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 
         // --- Configuração Firebase ---
@@ -243,93 +308,162 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        // ID da Aplicação e da Loja
         const appId = 'floralchic-loja'; 
         const STORE_DOC_ID = 'floralchic';
 
-        // Estado da UI
         let currentUserId = null;
         let unsubscribeFinancials = null;
+        let initialStoreBalance = 0;
 
-        // Elementos da UI
+        // Elementos UI
         const elValorSaldo = document.getElementById('valor1');
         const elValorReceber = document.getElementById('valor2');
         const elFaturamento = document.getElementById('faturamento-valor');
         const elProfileName = document.getElementById('profile-name');
         const toggleIcon = document.getElementById('toggle-balance-icon');
+        const setupModal = document.getElementById('setupModal');
 
-        // Valores
-        let realValues = {
-            balance: 0,
-            pending: 0,
-            revenue: 0
-        };
+        let realValues = { balance: 0, pending: 0, revenue: 0 };
         let isBalanceVisible = localStorage.getItem('balanceVisible') === 'true';
 
-        // 1. OUVINTE DE ESTADO DE AUTENTICAÇÃO
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // Usuário está logado (v veio do login.html)
                 currentUserId = user.uid;
-                
-                // Atualiza nome na tela
-                const localToken = JSON.parse(localStorage.getItem('session_token') || '{}');
-                if (localToken.username) {
-                    elProfileName.textContent = `Olá, ${localToken.username.charAt(0).toUpperCase() + localToken.username.slice(1)}!`;
-                } else {
-                    elProfileName.textContent = "Olá, Empreendedor!";
-                }
-
-                // Começa a ouvir os dados do banco
-                listenToStoreData();
-            } else {
-                console.warn("Nenhum usuário Firebase detectado. Verifique se o login foi feito corretamente.");
-                // O script do topo já vai redirecionar se não tiver session_token,
-                // mas se tiver token e não tiver auth (ex: limpou cookies), precisamos redirecionar também.
-                // Por segurança, vamos deixar o loading ou redirecionar:
-                // window.location.href = 'login.html'; 
+                updateProfileName();
+                startRealtimeListeners();
             }
         });
 
-        // 2. OUVINTE DE DADOS (STORE)
-        function listenToStoreData() {
+        function updateProfileName() {
+            const localToken = JSON.parse(localStorage.getItem('session_token') || '{}');
+            if (localToken.username) {
+                elProfileName.textContent = `Olá, ${localToken.username.charAt(0).toUpperCase() + localToken.username.slice(1)}!`;
+            } else {
+                elProfileName.textContent = "Olá, Empreendedor!";
+            }
+        }
+
+        // --- FUNÇÃO DE SETUP INICIAL ---
+        window.saveInitialSetup = async function() {
+            const bank = document.getElementById('setup-bank').value;
+            const balance = parseFloat(document.getElementById('setup-balance').value);
+
+            if (!bank) { alert("Selecione o banco."); return; }
+            if (isNaN(balance)) { alert("Informe um saldo válido."); return; }
+
+            const btn = document.querySelector('.btn-setup-save');
+            btn.textContent = "Salvando...";
+            btn.disabled = true;
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'stores', STORE_DOC_ID);
+                
+                // Atualiza (ou cria se não existir) com os dados de setup
+                await setDoc(docRef, {
+                    bankName: bank,
+                    initialBalance: balance,
+                    setupCompleted: true,
+                    storeName: 'Floralchic',
+                    createdAt: new Date().toISOString()
+                }, { merge: true }); // merge para não apagar outros dados se houver
+
+                setupModal.classList.remove('open');
+                alert("Configuração concluída com sucesso!");
+
+            } catch (e) {
+                console.error("Erro no setup:", e);
+                alert("Erro ao salvar configurações.");
+            } finally {
+                btn.textContent = "Começar a Usar";
+                btn.disabled = false;
+            }
+        }
+
+        function startRealtimeListeners() {
             if (!currentUserId) return;
-            if (unsubscribeFinancials) unsubscribeFinancials();
 
-            const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'stores', STORE_DOC_ID);
-
-            unsubscribeFinancials = onSnapshot(docRef, async (docSnap) => {
+            // 1. Listener da LOJA (Verifica Setup + Pega Saldo Inicial)
+            const storeRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'stores', STORE_DOC_ID);
+            
+            onSnapshot(storeRef, (docSnap) => {
                 if (docSnap.exists()) {
-                    // Dados existem -> Atualiza UI
                     const data = docSnap.data();
-                    realValues.balance = data.balance || 0;
-                    realValues.pending = data.pending || 0;
-                    realValues.revenue = data.todayRevenue || 0;
                     
-                    updateUI();
-                } else {
-                    // Dados NÃO existem -> Cria (Autonomia)
-                    console.log(`Inicializando dados financeiros...`);
-                    try {
-                        await setDoc(docRef, {
-                            balance: 0,
-                            pending: 0,
-                            todayRevenue: 0,
-                            storeName: 'Floralchic',
-                            createdAt: new Date().toISOString()
-                        });
-                    } catch (e) {
-                        console.error("Erro ao criar dados:", e);
-                        elValorSaldo.textContent = "Erro";
+                    // Verifica se já fez o setup
+                    if (!data.setupCompleted) {
+                        setupModal.classList.add('open');
+                    } else {
+                        // Setup feito, pega o saldo inicial
+                        initialStoreBalance = parseFloat(data.initialBalance || 0);
+                        // Recalcula visualmente caso sales já tenha carregado
+                        calculateTotals();
                     }
+                } else {
+                    // Documento não existe, abre setup para criar
+                    setupModal.classList.add('open');
                 }
-            }, (error) => {
-                console.error("Erro ao ler dados:", error);
-                elValorSaldo.textContent = "---";
+            });
+
+            // 2. Listener de CLIENTES (Total a Receber)
+            const clientsQuery = collection(db, 'artifacts', appId, 'users', currentUserId, 'clients');
+            onSnapshot(clientsQuery, (snapshot) => {
+                let totalDebt = 0;
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    totalDebt += parseFloat(data.currentDebt || 0);
+                });
+                realValues.pending = totalDebt;
+                updateUI();
+            });
+
+            // 3. Listener de VENDAS (Movimentação de Caixa)
+            // Precisamos ler TODAS as vendas para calcular o Saldo Atual (Saldo Inicial + Entradas - Saídas)
+            // Otimização: Em produção, isso deveria ser feito no backend ou com agregações.
+            const salesQuery = collection(db, 'artifacts', appId, 'users', currentUserId, 'sales');
+            
+            onSnapshot(salesQuery, (snapshot) => {
+                calculateTotals(snapshot);
             });
         }
 
-        // 3. ATUALIZAÇÃO VISUAL
+        // Função auxiliar para calcular totais sempre que Store ou Sales mudar
+        let lastSalesSnapshot = null;
+        function calculateTotals(snapshot) {
+            if(snapshot) lastSalesSnapshot = snapshot;
+            if(!lastSalesSnapshot) return;
+
+            let totalCashInflow = 0; // Dinheiro que entrou desde o início
+            let todayRevenue = 0; // Vendas de hoje (inc. crediário)
+            
+            const todayStr = new Date().toDateString();
+
+            lastSalesSnapshot.forEach(doc => {
+                const data = doc.data();
+                const tDate = new Date(data.date);
+                const val = parseFloat(data.total || data.amount || 0);
+                const isPayment = data.type === 'payment';
+                const isCrediario = data.paymentMethod === 'crediario';
+
+                // A) Faturamento de HOJE (Para o card de baixo)
+                if (tDate.toDateString() === todayStr && !isPayment) {
+                    todayRevenue += val;
+                }
+
+                // B) Saldo Geral (Para o card principal)
+                // Soma tudo que é dinheiro real (Vendas à vista + Recebimentos de dívida)
+                if (isPayment || !isCrediario) {
+                    totalCashInflow += val;
+                }
+                // Se tiver saídas (expenses) futuramente, subtrair aqui
+            });
+
+            // Saldo Final = Saldo Inicial (Do Setup) + Movimentação Acumulada
+            realValues.balance = initialStoreBalance + totalCashInflow;
+            realValues.revenue = todayRevenue;
+            
+            updateUI();
+        }
+
         function updateUI() {
             elValorSaldo.classList.remove('skeleton', 'shimmer');
             elValorReceber.classList.remove('skeleton', 'shimmer');
@@ -350,14 +484,12 @@
              toggleIcon.className = isBalanceVisible ? 'bx bx-eye' : 'bx bx-eye-closed';
         }
 
-        // 4. BOTÃO OLHO (ESCONDER SALDO)
         toggleIcon.addEventListener('click', () => {
             isBalanceVisible = !isBalanceVisible;
             localStorage.setItem('balanceVisible', isBalanceVisible);
             updateUI();
         });
 
-        // 5. MENU LATERAL & LOGOUT
         document.addEventListener('DOMContentLoaded', () => {
             const toggleButton = document.getElementById('sidebarToggle');
             const body = document.querySelector('body');

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/assets/img/iconWeb.png">
+    <title>Extrato | Floralchic</title>
+
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <style>
+        /* --- ESTILOS GERAIS --- */
+        body {
+            background-color: #f8f9fa;
+            padding-bottom: 100px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* NOVO HEADER VERMELHO (Estilo image_2fcdfc.png) */
+        .header-extrato {
+            background-color: var(--bs-color); /* Vermelho Principal */
+            background-image: linear-gradient(45deg, rgba(0,0,0,0.05) 25%, transparent 25%, transparent 50%, rgba(0,0,0,0.05) 50%, rgba(0,0,0,0.05) 75%, transparent 75%, transparent);
+            background-size: 20px 20px;
+            padding: 30px 20px 60px 20px; /* Espaço extra em baixo para os cards flutuantes */
+            border-bottom-left-radius: 35px;
+            border-bottom-right-radius: 35px;
+            color: white;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(219, 0, 56, 0.3);
+        }
+
+        .header-top {
+            display: flex; align-items: center; justify-content: center; position: relative;
+            margin-bottom: 10px;
+        }
+        
+        .header-back {
+            position: absolute; left: 0;
+            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(4px);
+            width: 40px; height: 40px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 24px; text-decoration: none;
+            transition: background 0.2s;
+        }
+        .header-back:hover { background: rgba(255, 255, 255, 0.3); }
+
+        .header-title { font-size: 20px; font-weight: 700; letter-spacing: 0.5px; }
+
+        /* Cards de Resumo (Sobrepostos) */
+        .balance-overview {
+            display: flex; gap: 15px; padding: 0 20px; margin-top: -40px;
+            position: relative; z-index: 10;
+        }
+
+        .overview-card {
+            flex: 1; background: #fff; border-radius: 16px; padding: 15px 10px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.06); text-align: center;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 60px;
+        }
+
+        .overview-value { font-size: 18px; font-weight: 800; }
+        .val-green { color: #10b981; }
+        .val-red { color: var(--bs-color); }
+
+        /* Filtros (Estilo Pílula) */
+        .filters-container {
+            padding: 25px 20px 15px 20px; display: flex; gap: 10px; overflow-x: auto;
+        }
+        .filter-chip {
+            padding: 8px 20px; border-radius: 25px; font-size: 13px; font-weight: 600;
+            cursor: pointer; transition: 0.2s; border: 1px solid transparent;
+            background: #fff; color: #666; box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+        }
+        .filter-chip.active {
+            background: var(--bs-color); color: #fff; box-shadow: 0 4px 10px rgba(219, 0, 56, 0.3);
+        }
+
+        /* Lista de Transações */
+        .transactions-list { padding: 0 20px; }
+        
+        .day-header {
+            font-size: 11px; color: #9ca3af; font-weight: 700; margin: 20px 0 10px 0; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        .transaction-item {
+            background: #fff; border-radius: 16px; padding: 15px; margin-bottom: 12px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02); border: 1px solid #f3f4f6;
+        }
+
+        .trans-left { display: flex; align-items: center; gap: 15px; }
+        
+        .trans-icon-box {
+            width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            font-size: 22px; flex-shrink: 0;
+        }
+        /* Ícones específicos */
+        .icon-sale { background: #dcfce7; color: #16a34a; } /* Venda (Verde claro) */
+        .icon-pay { background: #d1fae5; color: #059669; } /* Pagamento (Verde mais escuro/diferente) */
+        .icon-out { background: #fee2e2; color: var(--bs-color); } /* Saída */
+        .icon-pending { background: #fff7ed; color: #ea580c; } /* Crediário (Laranja/Neutro pois não entra caixa) */
+
+        .trans-info h4 { font-size: 14px; color: #1f2937; font-weight: 700; margin-bottom: 4px; }
+        .trans-info p { font-size: 12px; color: #9ca3af; }
+
+        .trans-amount { font-size: 15px; font-weight: 800; }
+        .amount-in { color: #10b981; }
+        .amount-neutral { color: #9ca3af; } /* Crediário não soma */
+        .amount-out { color: var(--bs-color); }
+
+        /* Loading */
+        .loader-container { text-align: center; padding: 40px; color: #ccc; font-size: 13px; }
+
+        @media(min-width:992px) {
+            .balance-overview, .transactions-list, .filters-container { max-width: 800px; margin-left: auto; margin-right: auto; }
+            .balance-overview { margin-top: -30px; }
+            .fab-download { right: calc(50% - 400px + 25px); }
+        }
+    </style>
+</head>
+
+<body class="painel-adm1">
+
+    <!-- SCRIPT SEGURANÇA -->
+    <script>
+        (function () {
+            const LOGIN_PAGE = 'login.html';
+            function forceLogout() { localStorage.removeItem('session_token'); window.location.href = LOGIN_PAGE; }
+            const tokenString = localStorage.getItem('session_token');
+            if (!tokenString) { window.location.href = LOGIN_PAGE; return; }
+            try {
+                const token = JSON.parse(tokenString);
+                if (new Date().getTime() > token.expires) { forceLogout(); return; }
+            } catch (e) { forceLogout(); }
+        })();
+    </script>
+
+    <div class="header-extrato">
+        <div class="header-top">
+            <a href="conta.html" class="header-back"><i class='bx bx-chevron-left'></i></a>
+            <span class="header-title">Extrato</span>
+        </div>
+    </div>
+
+    <div class="balance-overview">
+        <div class="overview-card">
+            <span class="overview-value val-green" id="total-in">R$ 0,00</span>
+        </div>
+        <div class="overview-card">
+            <span class="overview-value val-red" id="total-out">R$ 0,00</span>
+        </div>
+    </div>
+
+    <div class="filters-container">
+        <div class="filter-chip active" onclick="filterList('all', this)">Tudo</div>
+        <div class="filter-chip" onclick="filterList('in', this)">Entradas</div>
+        <div class="filter-chip" onclick="filterList('out', this)">Saídas</div>
+    </div>
+
+    <div class="transactions-list" id="trans-list">
+        <div class="loader-container"><div class="spinner"></div> Carregando...</div>
+    </div>
+    
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getFirestore, collection, onSnapshot, query, orderBy, where, limit } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAVQ3tf6Qu4_9PajpJclZAJjVvRgB4ZE2I",
+            authDomain: "super-app25.firebaseapp.com",
+            projectId: "super-app25",
+            storageBucket: "super-app25.firebasestorage.app",
+            messagingSenderId: "810900166273",
+            appId: "1:810900166273:web:24b8f055a68c9f0a6b5f80"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = 'floralchic-loja';
+
+        let currentUser = null;
+        let allTransactions = [];
+        let currentFilter = 'all';
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                setupRealtimeListener();
+            }
+        });
+
+        function setupRealtimeListener() {
+            const q = query(
+                collection(db, 'artifacts', appId, 'users', currentUser.uid, 'sales'),
+                orderBy('date', 'desc'),
+                limit(50)
+            );
+
+            onSnapshot(q, (snapshot) => {
+                allTransactions = [];
+                let todayIn = 0;
+                let todayOut = 0;
+                
+                const todayStr = new Date().toDateString();
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    data.id = doc.id;
+                    
+                    // --- LÓGICA DE CATEGORIA E VALOR ---
+                    data.category = 'in'; 
+                    if (data.type === 'expense') data.category = 'out';
+
+                    // Valor da transação
+                    const val = parseFloat(data.total || data.amount || 0);
+
+                    // --- CÁLCULO DE CAIXA (REGRA DE NEGÓCIO) ---
+                    // Só soma nas entradas se NÃO for crediário
+                    // Se for Pagamento de Dívida (type='payment'), soma.
+                    // Se for Venda (type='sale' ou undefined) E method != crediario, soma.
+                    
+                    const isCrediario = data.paymentMethod === 'crediario';
+                    const isPayment = data.type === 'payment';
+                    
+                    // Flag para saber se conta como dinheiro real
+                    data.isCash = !isCrediario || isPayment;
+
+                    const tDate = new Date(data.date);
+                    if (tDate.toDateString() === todayStr) {
+                        if (data.category === 'in') {
+                            if (data.isCash) {
+                                todayIn += val;
+                            }
+                        } else {
+                            todayOut += val;
+                        }
+                    }
+
+                    allTransactions.push(data);
+                });
+
+                updateTotals(todayIn, todayOut);
+                renderTransactions();
+            }, (error) => {
+                console.error("Erro:", error);
+                document.getElementById('trans-list').innerHTML = '<p style="text-align:center; color:#999; padding:20px;">Erro ao carregar.</p>';
+            });
+        }
+
+        function updateTotals(inVal, outVal) {
+            const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('total-in').textContent = fmt.format(inVal);
+            document.getElementById('total-out').textContent = fmt.format(outVal);
+        }
+
+        window.filterList = function(type, el) {
+            currentFilter = type;
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            renderTransactions();
+        }
+
+        function renderTransactions() {
+            const container = document.getElementById('trans-list');
+            container.innerHTML = '';
+
+            if (allTransactions.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center; padding:40px; color:#ccc;">
+                        <i class='bx bx-receipt' style="font-size:48px; margin-bottom:10px;"></i>
+                        <p>Nenhuma movimentação.</p>
+                    </div>`;
+                return;
+            }
+
+            const filtered = allTransactions.filter(t => {
+                if (currentFilter === 'all') return true;
+                // Filtro visual: crediário ainda aparece na lista de "Vendas/Entradas", 
+                // mas não soma no totalizador. Se quiser esconder do filtro 'in', altere aqui.
+                return t.category === currentFilter;
+            });
+
+            const grouped = {};
+            filtered.forEach(item => {
+                const dateKey = new Date(item.date).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'long' });
+                if (!grouped[dateKey]) grouped[dateKey] = [];
+                grouped[dateKey].push(item);
+            });
+
+            Object.keys(grouped).forEach(dateKey => {
+                const header = document.createElement('div');
+                header.className = 'day-header';
+                header.textContent = dateKey;
+                container.appendChild(header);
+
+                grouped[dateKey].forEach(item => {
+                    const isPayment = item.type === 'payment';
+                    const isCrediario = item.paymentMethod === 'crediario';
+                    
+                    let iconBoxClass = 'icon-sale';
+                    let iconName = 'bx-shopping-bag';
+                    let title = 'Venda Realizada';
+                    let sub = '';
+                    let amountClass = 'amount-in';
+                    let sign = '+';
+
+                    if (isPayment) {
+                        title = 'Pagamento Recebido';
+                        sub = `Cliente: ${item.clientName || '---'}`;
+                        iconBoxClass = 'icon-pay';
+                        iconName = 'bx-dollar-circle'; // Cifrão
+                    } else {
+                        // É venda
+                        const itemCount = item.items ? item.items.length : 0;
+                        const method = item.paymentMethod ? item.paymentMethod.charAt(0).toUpperCase() + item.paymentMethod.slice(1) : 'Dinheiro';
+                        sub = `${itemCount} itens • ${method}`;
+                        
+                        if (isCrediario) {
+                            iconBoxClass = 'icon-pending'; // Cor diferente para crediário
+                            amountClass = 'amount-neutral'; // Cor cinza para o valor
+                            // Mantém o sinal +, mas visualmente neutro
+                        }
+                    }
+
+                    if (item.category === 'out') {
+                        title = 'Despesa';
+                        iconBoxClass = 'icon-out';
+                        iconName = 'bx-up-arrow-alt';
+                        amountClass = 'amount-out';
+                        sign = '-';
+                    }
+
+                    const val = parseFloat(item.total || item.amount || 0);
+                    const fmtVal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+
+                    const div = document.createElement('div');
+                    div.className = 'transaction-item';
+                    div.innerHTML = `
+                        <div class="trans-left">
+                            <div class="trans-icon-box ${iconBoxClass}"><i class='bx ${iconName}'></i></div>
+                            <div class="trans-info">
+                                <h4>${title}</h4>
+                                <p>${sub}</p>
+                            </div>
+                        </div>
+                        <div class="trans-amount ${amountClass}">${sign} ${fmtVal}</div>
+                    `;
+                    container.appendChild(div);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
