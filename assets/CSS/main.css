@@ -47,6 +47,103 @@ header{
     box-shadow: 0 1px 4px hsla(0,0%,98%,0.1);
     z-index: 1000;
 }
+
+/* ========================================= */
+/* NOVA NAVBAR: MOBILE (FLUTUANTE & LIMPA)   */
+/* ========================================= */
+
+/* Classe utilitária para esconder itens no mobile (ex: PDV) */
+.desktop-only {
+    display: none !important;
+}
+
+/* Container Flutuante */
+.navigation {
+    position: fixed;
+    bottom: 20px; /* Distância do chão */
+    left: 50%;
+    transform: translateX(-50%); /* Centraliza na tela */
+    width: 90%; /* Largura reduzida */
+    height: 70px;
+    background: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 25px; /* Bordas bem arredondadas */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15); /* Sombra suave */
+    z-index: 1000;
+    padding: 0 10px;
+}
+
+.navigation ul {
+    display: flex;
+    width: 100%;
+    justify-content: space-evenly; /* Distribui itens igualmente */
+    padding: 0;
+    margin: 0;
+    gap: 0;
+}
+
+.navigation ul li {
+    list-style: none;
+    position: relative;
+    width: 60px;
+    height: 60px;
+    z-index: 1;
+}
+
+.navigation ul li a {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    text-decoration: none;
+}
+
+/* Ícone Padrão (Cinza/Escuro) */
+.navigation ul li a .icon {
+    position: relative;
+    display: block;
+    line-height: 1;
+    font-size: 1.6rem;
+    color: #555; /* Cor inativa */
+    transition: 0.3s ease;
+}
+
+/* Texto Padrão (Escondido no mobile) */
+.navigation ul li a .text {
+    position: absolute;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--bs-color);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: 0.3s ease;
+}
+
+/* --- ESTADO ATIVO (SELECIONADO) --- */
+
+/* Ícone sobe levemente e fica VERMELHO */
+.navigation ul li.active a .icon {
+    transform: translateY(-10px);
+    color: var(--bs-color); 
+}
+
+/* Texto aparece e fica VERMELHO */
+.navigation ul li.active a .text {
+    opacity: 1;
+    transform: translateY(18px);
+}
+
+/* Removemos a "Indicator" (bolinha) antiga para limpar o visual */
+.indicator {
+    display: none !important;
+}
+
 .nav{
     display: flex;
     align-items: center;
@@ -772,134 +869,6 @@ input[type="number"]::-webkit-inner-spin-button{
     height: 300px;
 }
 
-.new_nav{
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-}
-.navigation{
-    position: fixed;
-    width: 100%;
-    height: 70px;
-    background: #f8f9fa;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 10px;
-    z-index: 5;
-    bottom: 0;
-}
-.navigation ul{
-    display: flex;
-    width: 350px;
-}
-
-.navigation ul li{
-    position: relative;
-    width: 70px;
-    height: 70px;
-    z-index: 1;
-}
-
-.navigation ul li a{
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    width: 100%;
-    text-align: center;
-    font-weight: 500;
-}
-
-.navigation ul li a .icon{
-    position: relative;
-    display: block;
-    line-height: 75px;
-    font-size: 1.5rem;
-    text-align: center;
-    transition: 0.5s;
-    color: var(--container-color);
-}
-.navigation ul li.active a .icon{
-    transform: translateY(-32px);
-    color: var(--secondary-color);
-}
-
-.navigation ul li a .text{
-    position: absolute;
-    color: var(--bg-color);
-    font-weight: 400;
-    font-size: 0.75rem;
-    letter-spacing: 0.05em;
-    transition: 0.5s;
-    opacity: 0;
-    transform: translateY(20px);
-}
-
-.navigation ul li.active a .text{
-    opacity: 1;
-    transform: translateY(10px);
-}
-.indicator{
-    position: absolute;
-    top: -50%;
-    width: 70px;
-    height: 70px;
-    background: var(--bs-color);
-    border-radius: 50%;
-    border: 6px solid var(--container-color);
-    transition: 0.5s;
-}
-.color11{
-    border: 6px solid var(--secondary-color);
-}
-
-.indicator::before{
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: -38%;
-    width: 20px;
-    height: 20px;
-    background: transparent;
-    border-top-right-radius: 20px;
-    box-shadow: 0px -10px 0 0 var(--container-color);
-}
-.color11::before{
-    box-shadow: 0px -10px 0 0 var(--secondary-color);
-}
-.indicator::after{
-    content: '';
-    position: absolute;
-    top: 50%;
-    right: -38%;
-    width: 20px;
-    height: 20px;
-    background: transparent;
-    border-top-left-radius: 20px;
-    box-shadow: 0px -10px 0 0 var(--container-color);
-}
-.color11::after{
-    box-shadow: 0px -10px 0 0 var(--secondary-color);
-}
-
-.navigation ul li:nth-child(1).active ~ .indicator{
-    transform: translateX(calc(70px * 0));
-}
-.navigation ul li:nth-child(2).active ~ .indicator{
-    transform: translateX(calc(70px * 1));
-}
-.navigation ul li:nth-child(3).active ~ .indicator{
-    transform: translateX(calc(70px * 2));
-}
-.navigation ul li:nth-child(4).active ~ .indicator{
-    transform: translateX(calc(70px * 3));
-}
-.navigation ul li:nth-child(5).active ~ .indicator{
-    transform: translateX(calc(70px * 4));
-}
-
 .option{
     display: grid;
     justify-content: center;
@@ -1593,11 +1562,82 @@ section{
     border-bottom-left-radius: 15px;
     border-bottom-right-radius: 15px;
 }
+/* ========================================= */
+/* AJUSTE PARA DESKTOP (PC)                  */
+/* ========================================= */
+@media screen and (min-width: 992px) {
 
-/* Making Responsive */
-@media (max-width: 949px) {
-    .option{
-        grid-template-columns: repeat(auto-fit, minmax(100px, auto));
+    /* Mostra o ícone PDV que sumiu no celular */
+    .desktop-only {
+        display: block !important;
+        width: 100% !important;
+    }
+
+    /* Reseta a navbar para ser Lateral Fixa */
+    .navigation {
+        bottom: 0; 
+        top: 0;
+        left: 0;
+        transform: none; /* Remove centralização do mobile */
+        width: 260px; /* Largura da Sidebar */
+        height: 100vh;
+        border-radius: 0; /* Tira o arredondado */
+        border-right: 1px solid #f0f0f0;
+        align-items: flex-start; /* Alinha tudo à esquerda */
+        flex-direction: column;
+        padding: 2rem 1rem;
+        box-shadow: 4px 0 15px rgba(0,0,0,0.05);
+    }
+
+    .navigation ul {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .navigation ul li {
+        width: 100%;
+        height: auto;
+    }
+
+    /* Botão no Desktop: Ícone ao lado do Texto */
+    .navigation ul li a {
+        flex-direction: row;
+        justify-content: flex-start;
+        padding: 12px 20px;
+        border-radius: 10px;
+        gap: 15px;
+    }
+
+    /* Reset das animações do mobile para não bugar no PC */
+    .navigation ul li a .icon,
+    .navigation ul li.active a .icon {
+        transform: none !important;
+        font-size: 1.4rem;
+        color: #555;
+    }
+
+    /* Texto sempre visível no PC */
+    .navigation ul li a .text,
+    .navigation ul li.active a .text {
+        position: static;
+        opacity: 1;
+        transform: none !important;
+        color: #555;
+    }
+
+    /* Item Ativo no PC: Fundo Vermelho, Texto Branco */
+    .navigation ul li.active a {
+        background-color: var(--bs-color);
+    }
+
+    .navigation ul li.active a .icon,
+    .navigation ul li.active a .text {
+        color: #fff !important;
+    }
+
+    /* Hover */
+    .navigation ul li:not(.active) a:hover {
+        background-color: #f5f5f5;
     }
 }
 @media (max-width: 714px) {
