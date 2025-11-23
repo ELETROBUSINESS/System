@@ -904,7 +904,7 @@ input[type="number"]::-webkit-inner-spin-button {
     position: fixed;
     width: 100%;
     height: 70px;
-    background: #f8f9fa;
+    background: #ffffff;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -1033,6 +1033,9 @@ input[type="number"]::-webkit-inner-spin-button {
 .navigation ul li:nth-child(5).active~.indicator {
     transform: translateX(calc(70px * 4));
 }
+
+/* Garante que itens de PC sumam */
+.desktop-only { display: none !important; }
 
 .option {
     display: grid;
@@ -2945,6 +2948,12 @@ section {
     @keyframes slide-in-sidebar {
         from { transform: translateX(-100%); }
         to { transform: translateX(0); }
+    }
+
+    /* Mostra o ícone de PDV no desktop */
+    .desktop-only {
+        display: block !important;
+        width: 100% !important;
     }
     
     /* ESTADO PADRÃO (EXPANDIDO) */

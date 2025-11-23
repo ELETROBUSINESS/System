@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/assets/img/iconWeb.png">
+    <title>Clientes | Floralchic</title>
+
+    <!-- Importando o CSS -->
+    <link rel="stylesheet" href="/assets/css/main.css">
+    
+    <!-- Ícones -->
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+
+    <style>
+        /* --- ESTILOS GERAIS --- */
+        body {
+            background-color: #f8f9fa;
+            padding-bottom: 40px;
+        }
+
+        /* Header / Banner */
+        .header-clientes {
+            background-image: url(/assets/bannerHidle2.png);
+            background-size: cover;
+            background-position: center;
+            background-color: var(--container-color);
+            padding: 25px 20px 40px 20px;
+            border-bottom-left-radius: 30px;
+            border-bottom-right-radius: 30px;
+            color: var(--secondary-color);
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .header-back {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(4px);
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--secondary-color);
+            font-size: 24px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        /* Cards de Estatísticas */
+        .stats-wrapper {
+            margin-top: -30px;
+            padding: 0 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .stat-card {
+            flex: 1;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card.blue::before { 
+            content: ''; position: absolute; right: -10px; top: -10px; width: 60px; height: 60px; 
+            border-radius: 50%; opacity: 0.1; background: var(--main); 
+        }
+        .stat-card.red::before { 
+            content: ''; position: absolute; right: -10px; top: -10px; width: 60px; height: 60px; 
+            border-radius: 50%; opacity: 0.1; background: var(--bs-color); 
+        }
+
+        .stat-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; margin-bottom: 10px;
+        }
+        .stat-card.blue .stat-icon { background: #e3f2fd; color: var(--main); }
+        .stat-card.red .stat-icon { background: #ffebee; color: var(--bs-color); }
+
+        .stat-label { font-size: 12px; color: #888; font-weight: 500; margin-bottom: 4px; }
+        .stat-value { font-size: 18px; font-weight: 700; color: #333; }
+        .stat-value.danger { color: var(--bs-color); }
+
+        /* Barra de Ações e Pesquisa */
+        .actions-bar {
+            padding: 25px 20px 10px 20px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .search-box {
+            flex-grow: 1;
+            background: #ffffff;
+            border-radius: 12px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            border: 1px solid #f0f0f0;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 14px;
+            color: #333;
+            margin-left: 10px;
+        }
+
+        .search-box i { color: #aaa; font-size: 20px; }
+
+        .btn-add {
+            background: linear-gradient(135deg, var(--bs-color), #a1003e);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(219, 0, 56, 0.3);
+            transition: transform 0.2s;
+        }
+        .btn-add:active { transform: scale(0.95); }
+
+        /* LISTA DE CLIENTES (Design Atualizado) */
+        .clients-list {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .client-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            border: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .client-card.devedor { border-left: 4px solid var(--bs-color); }
+        .client-card:not(.devedor) { border-left: 4px solid #2ecc71; }
+
+        .client-info h4 {
+            color: #333;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .client-info p {
+            font-size: 13px;
+            color: #888;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Botões de Ação no Card */
+        .client-actions-wrapper {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .action-btn-card {
+            width: 35px;
+            height: 35px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-card-summary {
+            background-color: #eef2ff;
+            color: #4f46e5;
+        }
+        
+        .btn-card-edit {
+            background-color: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .btn-card-delete {
+            background-color: #fee2e2;
+            color: #ef4444;
+        }
+
+        .btn-card-whatsapp {
+            background-color: #dcfce7;
+            color: #16a34a;
+            text-decoration: none;
+        }
+
+        .status-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .status-debt { background: #ffebee; color: var(--bs-color); }
+
+        /* --- MODAL GERAL --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 2000;
+            display: flex; align-items: flex-end; opacity: 0; pointer-events: none;
+            transition: opacity 0.3s; backdrop-filter: blur(2px);
+        }
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+        .modal-content {
+            background: #ffffff; width: 100%;
+            border-top-left-radius: 30px; border-top-right-radius: 30px;
+            padding: 30px 25px; max-height: 90vh; overflow-y: auto;
+            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 -5px 30px rgba(0,0,0,0.1);
+        }
+        .modal-overlay.open .modal-content { transform: translateY(0); }
+
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;
+        }
+        .modal-header h2 { font-size: 20px; color: #333; font-weight: 700; }
+        .close-modal {
+            width: 35px; height: 35px; background: #f5f5f5; border-radius: 50%;
+            border: none; display: flex; align-items: center; justify-content: center;
+            color: #555; font-size: 20px; cursor: pointer;
+        }
+
+        /* --- ESTILOS FICHA DO CLIENTE (SUMMARY) --- */
+        .summary-profile {
+            display: flex; flex-direction: column; align-items: center; margin-bottom: 25px;
+        }
+        .summary-avatar {
+            width: 80px; height: 80px; background: #f3f4f6; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 32px; color: #9ca3af; margin-bottom: 10px;
+        }
+        .summary-name { font-size: 18px; font-weight: 700; color: #1f2937; text-align: center; }
+        .summary-subtitle { font-size: 13px; color: #6b7280; margin-top: 2px; }
+
+        .financial-cards {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px;
+        }
+        .fin-card {
+            background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 12px;
+            padding: 15px; text-align: center;
+        }
+        .fin-label { font-size: 11px; color: #6b7280; margin-bottom: 5px; display: block; }
+        .fin-value { font-size: 16px; font-weight: 700; color: #1f2937; }
+        .fin-value.red { color: var(--bs-color); }
+
+        .limit-section {
+            background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+            padding: 15px; margin-bottom: 25px;
+        }
+        .limit-header { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; }
+        .limit-bar-bg { width: 100%; height: 8px; background: #f3f4f6; border-radius: 4px; overflow: hidden; }
+        .limit-bar-fill { height: 100%; background: #10b981; border-radius: 4px; }
+        .limit-footer { display: flex; justify-content: space-between; font-size: 11px; color: #9ca3af; margin-top: 5px; }
+
+        .info-list { display: flex; flex-direction: column; gap: 12px; }
+        .info-item {
+            display: flex; align-items: flex-start; gap: 12px;
+            background: #f9fafb; padding: 12px; border-radius: 10px;
+        }
+        .info-item i { color: #6b7280; font-size: 18px; margin-top: 2px; }
+        .info-text h5 { font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 2px; }
+        .info-text p { font-size: 12px; color: #6b7280; }
+
+        /* --- FORM STYLES --- */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { font-size: 13px; color: #666; margin-bottom: 6px; display: block; font-weight: 500; }
+        .input-box input {
+            background: #f9f9f9 !important; border: 1px solid #eee !important; color: #333 !important;
+            border-radius: 12px !important; width: 100%; padding: 14px;
+        }
+        .modal-btn-save {
+            width: 100%; padding: 16px; background: var(--bs-color); color: white;
+            border: none; border-radius: 14px; font-size: 16px; font-weight: 600; margin-top: 15px;
+        }
+
+        .hidden-in-edit { display: block; }
+        .edit-mode .hidden-in-edit { display: none; }
+
+        @media (min-width: 992px) {
+            .modal-overlay { align-items: center; justify-content: center; }
+            .modal-content { width: 450px; border-radius: 20px; transform: translateY(20px); }
+            .modal-overlay.open .modal-content { transform: translateY(0); }
+            .stats-wrapper, .clients-list, .actions-bar { max-width: 800px; margin: 0 auto 15px auto; }
+        }
+    </style>
+</head>
+
+<body class="painel-adm1">
+
+    <!-- SCRIPT SEGURANÇA -->
+    <script>
+        (function () {
+            const LOGIN_PAGE = 'login.html';
+            const SESSION_DURATION = 45 * 60 * 1000;
+            function forceLogout() { localStorage.removeItem('session_token'); window.location.href = LOGIN_PAGE; }
+            const tokenString = localStorage.getItem('session_token');
+            if (!tokenString) { window.location.href = LOGIN_PAGE; return; }
+            try {
+                const token = JSON.parse(tokenString);
+                if (new Date().getTime() > token.expires) { forceLogout(); return; }
+            } catch (e) { forceLogout(); }
+        })();
+    </script>
+
+    <div class="header-clientes">
+        <div class="header-top">
+            <a href="conta.html" class="header-back"><i class='bx bx-chevron-left'></i></a>
+            <span class="header-title">Gerenciar Clientes</span>
+            <div style="width: 40px;"></div>
+        </div>
+    </div>
+
+    <div class="stats-wrapper">
+        <div class="stat-card blue">
+            <div class="stat-icon"><i class='bx bx-group'></i></div>
+            <span class="stat-label">Total Clientes</span>
+            <span class="stat-value" id="total-clients">...</span>
+        </div>
+        <div class="stat-card red">
+            <div class="stat-icon"><i class='bx bx-wallet'></i></div>
+            <span class="stat-label">A Receber</span>
+            <span class="stat-value danger" id="total-debt">...</span>
+        </div>
+    </div>
+
+    <div class="actions-bar">
+        <div class="search-box">
+            <i class='bx bx-search'></i>
+            <input type="text" id="search-input" placeholder="Buscar cliente...">
+        </div>
+        <button class="btn-add" onclick="openCreateModal()"><i class='bx bx-plus'></i></button>
+    </div>
+
+    <div class="clients-list" id="clients-container">
+        <div class="loader"><div class="spinner"></div></div>
+    </div>
+
+    <!-- MODAL 1: EDITAR / NOVO -->
+    <div class="modal-overlay" id="clientModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Novo Cliente</h2>
+                <button class="close-modal" onclick="closeModal('clientModal')"><i class='bx bx-x'></i></button>
+            </div>
+            <form id="clientForm">
+                <input type="hidden" id="client-id">
+                
+                <div class="form-group">
+                    <label>Nome Completo</label>
+                    <div class="input-box"><input type="text" id="client-name" required placeholder="Ex: Maria Silva"></div>
+                </div>
+                <div class="form-group">
+                    <label>CPF</label>
+                    <div class="input-box"><input type="number" id="client-cpf" placeholder="Apenas números"></div>
+                </div>
+                <div class="form-group">
+                    <label>Telefone</label>
+                    <div class="input-box"><input type="tel" id="client-phone" required placeholder="(00) 00000-0000"></div>
+                </div>
+                <div class="form-group">
+                    <label>Data de Nascimento</label>
+                    <div class="input-box"><input type="date" id="client-birth"></div>
+                </div>
+                <div class="form-group">
+                    <label>Limite de Crédito (R$)</label>
+                    <div class="input-box"><input type="number" step="0.01" id="client-limit" placeholder="0.00"></div>
+                </div>
+                
+                <!-- Dívida só aparece na criação, na edição é bloqueada/oculta -->
+                <div class="form-group hidden-in-edit" id="div-debt">
+                    <label>Dívida Atual (Inicial)</label>
+                    <div class="input-box"><input type="number" step="0.01" id="client-debt-initial" placeholder="0.00"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Observações</label>
+                    <div class="input-box"><input type="text" id="client-obs" placeholder="Ex: Preferência de cor..."></div>
+                </div>
+
+                <button type="submit" class="modal-btn-save">Salvar Alterações</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: RESUMO (FICHA DO CLIENTE) -->
+    <div class="modal-overlay" id="summaryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Ficha do Cliente</h2>
+                <button class="close-modal" onclick="closeModal('summaryModal')"><i class='bx bx-x'></i></button>
+            </div>
+            
+            <div class="summary-profile">
+                <div class="summary-avatar"><i class='bx bx-user'></i></div>
+                <div class="summary-name" id="sum-name">--</div>
+                <div class="summary-subtitle" id="sum-cpf">CPF: --</div>
+            </div>
+
+            <div class="financial-cards">
+                <div class="fin-card">
+                    <span class="fin-label">Saldo Devedor</span>
+                    <span class="fin-value red" id="sum-debt">R$ 0,00</span>
+                </div>
+                <div class="fin-card">
+                    <span class="fin-label">Próximo Venc.</span>
+                    <span class="fin-value" id="sum-due">--/--</span>
+                </div>
+            </div>
+
+            <div class="limit-section">
+                <div class="limit-header">
+                    <span>Limite Utilizado</span>
+                    <span id="sum-limit-text">R$ 0,00 / R$ 0,00</span>
+                </div>
+                <div class="limit-bar-bg">
+                    <div class="limit-bar-fill" id="sum-limit-bar" style="width: 0%"></div>
+                </div>
+                <div class="limit-footer">
+                    <span>Disponível</span>
+                    <span id="sum-available">R$ 0,00</span>
+                </div>
+            </div>
+
+            <div class="info-list">
+                <div class="info-item">
+                    <i class='bx bx-phone'></i>
+                    <div class="info-text">
+                        <h5>Telefone</h5>
+                        <p id="sum-phone">--</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class='bx bx-calendar'></i>
+                    <div class="info-text">
+                        <h5>Nascimento</h5>
+                        <p id="sum-birth">Não informado</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class='bx bx-note'></i>
+                    <div class="info-text">
+                        <h5>Observações</h5>
+                        <p id="sum-obs">--</p>
+                    </div>
+                </div>
+            </div>
+
+            <button class="modal-btn-save" style="background-color: #f3f4f6; color: #555; margin-top:25px;" onclick="closeModal('summaryModal')">Fechar</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+
+        // Configuração Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAVQ3tf6Qu4_9PajpJclZAJjVvRgB4ZE2I",
+            authDomain: "super-app25.firebaseapp.com",
+            projectId: "super-app25",
+            storageBucket: "super-app25.firebasestorage.app",
+            messagingSenderId: "810900166273",
+            appId: "1:810900166273:web:24b8f055a68c9f0a6b5f80"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = 'floralchic-loja';
+
+        let currentUser = null;
+        let clientsData = [];
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) { 
+                currentUser = user; 
+                setupRealtimeListener(); 
+            } else {
+                console.log("Aguardando autenticação via Login...");
+            }
+        });
+
+        function setupRealtimeListener() {
+            if (!currentUser) return;
+            const q = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'clients');
+            onSnapshot(q, (snapshot) => {
+                clientsData = [];
+                let totalDebt = 0;
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    data.id = doc.id;
+                    clientsData.push(data);
+                    if (data.currentDebt) totalDebt += parseFloat(data.currentDebt);
+                });
+                clientsData.sort((a, b) => a.name.localeCompare(b.name));
+                updateStats(clientsData.length, totalDebt);
+                renderList(clientsData);
+            });
+        }
+
+        function updateStats(count, debt) {
+            document.getElementById('total-clients').textContent = count;
+            document.getElementById('total-debt').textContent = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(debt);
+        }
+
+        function renderList(list) {
+            const container = document.getElementById('clients-container');
+            container.innerHTML = '';
+            if (list.length === 0) {
+                container.innerHTML = `<div class="empty-state"><i class='bx bx-user-plus'></i><p>Nenhum cliente.</p></div>`;
+                return;
+            }
+
+            list.forEach(client => {
+                const isDebtor = client.currentDebt > 0;
+                const debtClass = isDebtor ? 'devedor' : '';
+                const debtBadge = isDebtor ? `<span class="status-badge status-debt">Devendo</span>` : '';
+                
+                const card = document.createElement('div');
+                card.className = `client-card ${debtClass}`;
+                card.innerHTML = `
+                    <div class="client-info">
+                        <h4>${client.name}</h4>
+                        <p><i class='bx bx-phone'></i> ${client.phone}</p>
+                    </div>
+                    ${debtBadge}
+                    <div class="client-actions-wrapper">
+                        <button class="action-btn-card btn-card-summary" title="Resumo"><i class='bx bx-file'></i></button>
+                        <button class="action-btn-card btn-card-edit" title="Editar"><i class='bx bx-pencil'></i></button>
+                        <button class="action-btn-card btn-card-delete" title="Excluir"><i class='bx bx-trash'></i></button>
+                        <a href="https://wa.me/55${client.phone.replace(/\D/g,'')}" target="_blank" class="action-btn-card btn-card-whatsapp"><i class='bx bxl-whatsapp'></i></a>
+                    </div>
+                `;
+                
+                // Event Listeners
+                card.querySelector('.btn-card-summary').addEventListener('click', () => openSummaryModal(client));
+                card.querySelector('.btn-card-edit').addEventListener('click', () => openEditModal(client));
+                card.querySelector('.btn-card-delete').addEventListener('click', () => deleteClient(client.id));
+                
+                container.appendChild(card);
+            });
+        }
+
+        // --- FUNÇÃO DE EXCLUSÃO ---
+        window.deleteClient = async function(id) {
+            if (confirm("Tem certeza que deseja excluir este cliente?")) {
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'clients', id));
+                } catch (error) {
+                    console.error("Erro ao excluir:", error);
+                    alert("Erro ao excluir cliente.");
+                }
+            }
+        }
+
+        // --- MODAIS LOGIC ---
+        window.openCreateModal = function() {
+            const form = document.getElementById('clientForm');
+            form.reset();
+            document.getElementById('client-id').value = '';
+            document.getElementById('modal-title').textContent = 'Novo Cliente';
+            document.getElementById('clientModal').classList.remove('edit-mode'); 
+            document.getElementById('clientModal').classList.add('open');
+        }
+
+        window.openEditModal = function(client) {
+            document.getElementById('client-id').value = client.id;
+            document.getElementById('client-name').value = client.name;
+            document.getElementById('client-phone').value = client.phone;
+            document.getElementById('client-cpf').value = client.cpf || '';
+            document.getElementById('client-birth').value = client.birthdate || '';
+            document.getElementById('client-limit').value = client.creditLimit || '';
+            document.getElementById('client-obs').value = client.obs || '';
+            
+            document.getElementById('modal-title').textContent = 'Editar Cliente';
+            document.getElementById('clientModal').classList.add('edit-mode'); 
+            document.getElementById('clientModal').classList.add('open');
+        }
+
+        window.openSummaryModal = function(client) {
+            const fmtMoney = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+            
+            document.getElementById('sum-name').textContent = client.name;
+            document.getElementById('sum-cpf').textContent = client.cpf ? `CPF: ${client.cpf}` : 'CPF não informado';
+            document.getElementById('sum-phone').textContent = client.phone;
+            document.getElementById('sum-birth').textContent = client.birthdate ? new Date(client.birthdate).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : 'Não informado';
+            document.getElementById('sum-obs').textContent = client.obs || 'Nenhuma observação';
+            
+            const debt = parseFloat(client.currentDebt || 0);
+            const limit = parseFloat(client.creditLimit || 0);
+            const available = Math.max(0, limit - debt);
+            const percent = limit > 0 ? Math.min(100, (debt / limit) * 100) : 0;
+
+            document.getElementById('sum-debt').textContent = fmtMoney(debt);
+            document.getElementById('sum-due').textContent = debt > 0 ? '30/11/2025' : '--/--';
+            
+            document.getElementById('sum-limit-text').textContent = `${fmtMoney(debt)} / ${fmtMoney(limit)}`;
+            document.getElementById('sum-limit-bar').style.width = `${percent}%`;
+            document.getElementById('sum-limit-bar').style.backgroundColor = percent > 90 ? '#ef4444' : '#10b981';
+            document.getElementById('sum-available').textContent = fmtMoney(available);
+
+            document.getElementById('summaryModal').classList.add('open');
+        }
+
+        window.closeModal = function(modalId) {
+            document.getElementById(modalId).classList.remove('open');
+        }
+
+        // SAVE FORM
+        document.getElementById('clientForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUser) return;
+
+            const btn = e.target.querySelector('button');
+            const oldText = btn.textContent;
+            btn.textContent = 'Salvando...'; btn.disabled = true;
+
+            const id = document.getElementById('client-id').value;
+            const isEdit = !!id;
+
+            const data = {
+                name: document.getElementById('client-name').value,
+                phone: document.getElementById('client-phone').value,
+                cpf: document.getElementById('client-cpf').value,
+                birthdate: document.getElementById('client-birth').value,
+                creditLimit: parseFloat(document.getElementById('client-limit').value) || 0,
+                obs: document.getElementById('client-obs').value,
+                updatedAt: new Date().toISOString()
+            };
+
+            if (!isEdit) {
+                data.currentDebt = parseFloat(document.getElementById('client-debt-initial').value) || 0;
+                data.createdAt = new Date().toISOString();
+            }
+
+            try {
+                const col = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'clients');
+                if (isEdit) await updateDoc(doc(col, id), data);
+                else await addDoc(col, data);
+                closeModal('clientModal');
+            } catch (error) {
+                console.error(error);
+                alert('Erro ao salvar.');
+            } finally {
+                btn.textContent = oldText; btn.disabled = false;
+            }
+        });
+
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = clientsData.filter(c => c.name.toLowerCase().includes(term));
+            renderList(filtered);
+        });
+    </script>
+</body>
+</html>

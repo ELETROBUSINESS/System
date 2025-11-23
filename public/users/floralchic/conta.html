@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/assets/img/iconWeb.png">
+    <title>Minha Empresa | Floralchic</title>
+
+    <!-- Link do CSS ajustado -->
+    <link rel="stylesheet" href="/assets/css/main.css">
+
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+</head>
+
+<body class="painel-adm1">
+
+    <!-- SCRIPT DE SEGURANÇA E SESSÃO -->
+    <script>
+        (function () {
+            const LOGIN_PAGE = 'login.html';
+            const SESSION_DURATION = 45 * 60 * 1000; // 45 minutos
+
+            function forceLogout(email = null) {
+                localStorage.removeItem('session_token');
+                let url = LOGIN_PAGE;
+                if (email) {
+                    url += `?email=${encodeURIComponent(email)}&reauth=true`;
+                }
+                window.location.href = url;
+            }
+
+            const tokenString = localStorage.getItem('session_token');
+            if (!tokenString) {
+                // Se não estiver logado no localStorage, redireciona
+                window.location.href = LOGIN_PAGE;
+                return;
+            }
+
+            try {
+                const token = JSON.parse(tokenString);
+                const now = new Date().getTime();
+
+                if (now > token.expires) {
+                    forceLogout(token.email);
+                    return;
+                }
+
+                setTimeout(() => {
+                    alert("Sua sessão expirou.");
+                    forceLogout(token.email);
+                }, SESSION_DURATION);
+
+            } catch (error) {
+                localStorage.removeItem('session_token');
+                window.location.href = LOGIN_PAGE;
+            }
+        })();
+    </script>
+
+    <!-- MENSAGEM DE BOAS VINDAS -->
+    <div class="mensagerLocal">
+        <div class="mensager">
+            <img src="/assets/img/eFriend.png">
+            <div>
+                <h1>Olá, <span id="welcome-user">Usuário</span></h1>
+                <p>Tenha um ótimo dia de vendas!</p>
+            </div>
+            <div class="progress-bar"></div>
+        </div>
+    </div>
+    
+    <script>
+        try {
+            const t = JSON.parse(localStorage.getItem('session_token'));
+            if(t && t.username) {
+                const nome = t.username.charAt(0).toUpperCase() + t.username.slice(1);
+                document.querySelector('.mensager h1 span').textContent = nome;
+            }
+        } catch(e) {}
+
+        const MENSAGEM_KEY = 'ultimaMensagemEletro';
+        const INTERVALO_MS = 20 * 60 * 60 * 1000;
+        const agora = new Date().getTime();
+        const ultimaVisualizacao = localStorage.getItem(MENSAGEM_KEY);
+        const mensagemEl = document.querySelector('.mensagerLocal');
+
+        if (!ultimaVisualizacao || (agora - parseInt(ultimaVisualizacao)) > INTERVALO_MS) {
+            mensagemEl.style.display = 'flex';
+            setTimeout(() => {
+                mensagemEl.style.opacity = 0;
+                setTimeout(() => { mensagemEl.style.display = "none"; }, 500);
+            }, 6200);
+            localStorage.setItem(MENSAGEM_KEY, agora);
+        } else {
+            mensagemEl.style.display = 'none';
+        }
+    </script>
+
+    <main class="main-content">
+        <div class="info">
+            <div class="photo-profile">
+                <!-- Imagem específica solicitada -->
+                <img src="https://scontent.cdninstagram.com/v/t51.82787-15/517422782_17875160028431439_4615772131715565418_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=102&ig_cache_key=MzY3NDEwNDM1ODg3ODg4Nzc5Mg%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6InhwaWRzLjUwMHg1MDAuc2RyLkMzIn0%3D&_nc_ohc=bjlCbeKkCbwQ7kNvwGSBXkj&_nc_oc=AdlNrddvofCL36b3kpOx6NVWz6-CMzNVykq5yJqvccZ0bPanCmcCjZdpnMqOQctWu3I&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&_nc_gid=IFsGXn04qlpKYFwUV5YRbw&oh=00_AfiRDQPLv2KE2wBDo9H-uiHxvcPY5Dm_3fGA8u5EjbILOQ&oe=6928E1E3">
+                <div class="detals">
+                    <h1 id="profile-name">Carregando...</h1>
+                    <p>CEO: Floralchic</p>
+                </div>
+                <i class="fi fi-rr-shield-trust"></i>
+            </div>
+            
+            <!-- CARD DE SALDO -->
+            <div class="balance">
+                <p>Saldo Atual</p>
+                <div class="saldo">
+                    <span id="valor1" class="skeleton shimmer">Carregando...</span>
+                    <i class='bx bx-eye' id="toggle-balance-icon"></i>
+                </div>
+                <div class="pending">
+                    <p>Vendas a receber: </p>
+                    <span id="valor2" class="skeleton shimmer">...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="new_nav">
+            <div class="conta-info">
+                <p>Meu empreendimento</p>
+                
+                <!-- FATURAMENTO -->
+                <div class="faturamento-section">
+                    <div class="faturamento-container">
+                        <div class="faturamento-display" style="padding-top: 10px;">
+                            <div class="valor-principal">
+                                <h1 id="faturamento-valor" class="skeleton shimmer">R$ ...</h1>
+                                <a href="#" class="metricas-link">Métricas <i class='bx bx-chevron-right'></i></a>
+                            </div>
+                            <p id="faturamento-hoje">Faturamento de hoje</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MENU MOBILE -->
+                <div class="option">
+                    <div class="card-option">
+                        <a href="produtos.html">
+                            <i class='bx bx-shopping-bag-alt'></i> 
+                            <h3>Produtos</h3>
+                        </a>
+                    </div>
+                    <div class="card-option">
+                        <a href="#">
+                            <i class='bx bx-scan'></i>
+                            <h3>Despesas</h3>
+                        </a>
+                    </div>
+                    <div class="card-option">
+                        <a href="clientes.html">
+                            <i class='bx bx-user'></i> 
+                            <h3>Clientes</h3>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- MENU DESKTOP -->
+                <div class="desktop-options">
+                    <div class="card-option">
+                        <a href="#">
+                            <i class='bx bx-file-blank'></i>
+                            <h3>Fiscal</h3>
+                        </a>
+                    </div>
+                    <div class="card-option">
+                        <a href="#">
+                            <i class='bx bx-group'></i>
+                            <h3>Equipe</h3>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- SIDEBAR DE NAVEGAÇÃO -->
+    <div class="navigation" id="main-navigation">
+        <button class="sidebar-toggle" id="sidebarToggle">
+            <i class='bx bx-menu'></i>
+        </button>
+        <ul>
+            <li class="list active">
+                <a href="#">
+                    <span class="icon"><i class='bx bxs-home-alt-3'></i> </span>
+                    <span class="text">Conta</span>
+                </a>
+            </li>
+            <li class="list">
+                <a href="#">
+                    <span class="icon"><i class='bx bx-bar-chart-alt-2'></i></span>
+                    <span class="text">Métrica</span>
+                </a>
+            </li>
+            <li class="list">
+                <a href="#">
+                    <span class="icon"><i class='bx bx-plus-circle'></i></span>
+                    <span class="text">Venda</span>
+                </a>
+            </li>
+            <li class="list">
+                <a href="#">
+                    <span class="icon"><i class='bx bx-copy-alt'></i></span>
+                    <span class="text">Extrato</span>
+                </a>
+            </li>
+            <li class="list">
+                <a href="#" id="logout-btn">
+                    <span class="icon"><i class='bx bx-log-out'></i></span>
+                    <span class="text">Sair</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- LOGICA FIREBASE E UI -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getFirestore, collection, doc, onSnapshot, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+
+        // --- Configuração Firebase ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAVQ3tf6Qu4_9PajpJclZAJjVvRgB4ZE2I",
+            authDomain: "super-app25.firebaseapp.com",
+            projectId: "super-app25",
+            storageBucket: "super-app25.firebasestorage.app",
+            messagingSenderId: "810900166273",
+            appId: "1:810900166273:web:24b8f055a68c9f0a6b5f80"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        // ID da Aplicação e da Loja
+        const appId = 'floralchic-loja'; 
+        const STORE_DOC_ID = 'floralchic';
+
+        // Estado da UI
+        let currentUserId = null;
+        let unsubscribeFinancials = null;
+
+        // Elementos da UI
+        const elValorSaldo = document.getElementById('valor1');
+        const elValorReceber = document.getElementById('valor2');
+        const elFaturamento = document.getElementById('faturamento-valor');
+        const elProfileName = document.getElementById('profile-name');
+        const toggleIcon = document.getElementById('toggle-balance-icon');
+
+        // Valores
+        let realValues = {
+            balance: 0,
+            pending: 0,
+            revenue: 0
+        };
+        let isBalanceVisible = localStorage.getItem('balanceVisible') === 'true';
+
+        // 1. OUVINTE DE ESTADO DE AUTENTICAÇÃO
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Usuário está logado (v veio do login.html)
+                currentUserId = user.uid;
+                
+                // Atualiza nome na tela
+                const localToken = JSON.parse(localStorage.getItem('session_token') || '{}');
+                if (localToken.username) {
+                    elProfileName.textContent = `Olá, ${localToken.username.charAt(0).toUpperCase() + localToken.username.slice(1)}!`;
+                } else {
+                    elProfileName.textContent = "Olá, Empreendedor!";
+                }
+
+                // Começa a ouvir os dados do banco
+                listenToStoreData();
+            } else {
+                console.warn("Nenhum usuário Firebase detectado. Verifique se o login foi feito corretamente.");
+                // O script do topo já vai redirecionar se não tiver session_token,
+                // mas se tiver token e não tiver auth (ex: limpou cookies), precisamos redirecionar também.
+                // Por segurança, vamos deixar o loading ou redirecionar:
+                // window.location.href = 'login.html'; 
+            }
+        });
+
+        // 2. OUVINTE DE DADOS (STORE)
+        function listenToStoreData() {
+            if (!currentUserId) return;
+            if (unsubscribeFinancials) unsubscribeFinancials();
+
+            const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'stores', STORE_DOC_ID);
+
+            unsubscribeFinancials = onSnapshot(docRef, async (docSnap) => {
+                if (docSnap.exists()) {
+                    // Dados existem -> Atualiza UI
+                    const data = docSnap.data();
+                    realValues.balance = data.balance || 0;
+                    realValues.pending = data.pending || 0;
+                    realValues.revenue = data.todayRevenue || 0;
+                    
+                    updateUI();
+                } else {
+                    // Dados NÃO existem -> Cria (Autonomia)
+                    console.log(`Inicializando dados financeiros...`);
+                    try {
+                        await setDoc(docRef, {
+                            balance: 0,
+                            pending: 0,
+                            todayRevenue: 0,
+                            storeName: 'Floralchic',
+                            createdAt: new Date().toISOString()
+                        });
+                    } catch (e) {
+                        console.error("Erro ao criar dados:", e);
+                        elValorSaldo.textContent = "Erro";
+                    }
+                }
+            }, (error) => {
+                console.error("Erro ao ler dados:", error);
+                elValorSaldo.textContent = "---";
+            });
+        }
+
+        // 3. ATUALIZAÇÃO VISUAL
+        function updateUI() {
+            elValorSaldo.classList.remove('skeleton', 'shimmer');
+            elValorReceber.classList.remove('skeleton', 'shimmer');
+            elFaturamento.classList.remove('skeleton', 'shimmer');
+
+            const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            if (isBalanceVisible) {
+                elValorSaldo.textContent = fmt.format(realValues.balance);
+                elValorReceber.textContent = fmt.format(realValues.pending);
+                elFaturamento.textContent = fmt.format(realValues.revenue);
+            } else {
+                elValorSaldo.textContent = 'R$ ••••••';
+                elValorReceber.textContent = 'R$ ••••••';
+                elFaturamento.textContent = 'R$ ••••••';
+            }
+             
+             toggleIcon.className = isBalanceVisible ? 'bx bx-eye' : 'bx bx-eye-closed';
+        }
+
+        // 4. BOTÃO OLHO (ESCONDER SALDO)
+        toggleIcon.addEventListener('click', () => {
+            isBalanceVisible = !isBalanceVisible;
+            localStorage.setItem('balanceVisible', isBalanceVisible);
+            updateUI();
+        });
+
+        // 5. MENU LATERAL & LOGOUT
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleButton = document.getElementById('sidebarToggle');
+            const body = document.querySelector('body');
+            const logoutButton = document.getElementById('logout-btn');
+
+            if (toggleButton) {
+                toggleButton.addEventListener('click', () => {
+                    body.classList.toggle('sidebar-collapsed');
+                });
+            }
+
+            if (logoutButton) {
+                logoutButton.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    localStorage.removeItem('session_token');
+                    window.location.href = 'login.html';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

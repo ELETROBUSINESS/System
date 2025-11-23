@@ -7,17 +7,19 @@
     <link rel="icon" href="/assets/img/iconWeb.png">
     <title>Minha Empresa | D'TUDO</title>
 
-     <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/main.css">
     <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
-    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+    <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+    <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
 </head>
 
 <body class="painel-adm1" onload="AnimationLoading()">
 
     <script>
-        (function() {
+        (function () {
             const tokenString = localStorage.getItem('session_token');
             const LOGIN_URL = '/users/e-finance.html';
             if (!tokenString) {
@@ -212,7 +214,7 @@
                                 boletoEmpresa.textContent = currentConta.descricao;
                                 boletoValor.textContent = `R$ ${parseFloat(currentConta.valor).toFixed(2).replace('.', ',')}`;
                                 boletoVencimento.textContent = currentConta.vencimento;
-                                
+
                                 cardContent.classList.remove('slide-out-up');
                                 cardContent.classList.add('slide-in-down');
 
@@ -257,7 +259,8 @@
                         <div class="faturamento-display">
                             <div class="valor-principal">
                                 <h1 id="faturamento-valor" class="skeleton shimmer"></h1>
-                                <a href="/users/45692327000100/CD1/adm/nb/metricas.html" class="metricas-link">Métricas <i class='bx bx-chevron-right'></i></a>
+                                <a href="/users/45692327000100/CD1/adm/nb/metricas.html" class="metricas-link">Métricas
+                                    <i class='bx bx-chevron-right'></i></a>
                             </div>
                             <p id="faturamento-hoje">Faturamento de hoje</p>
                         </div>
@@ -272,9 +275,9 @@
 
                         function updateDisplay(lojaId) {
                             if (document.querySelector(`.loja-btn[data-loja="${lojaId}"]`).classList.contains('active')) return;
-                            
+
                             valorFaturamentoEl.classList.add('valor-faturamento-animando');
-                            
+
                             setTimeout(() => {
                                 valorFaturamentoEl.textContent = (lojaId === 'dtudo') ? faturamentoDtudo : 'R$ 0,00';
                                 valorFaturamentoEl.classList.remove('valor-faturamento-animando');
@@ -282,7 +285,7 @@
 
                             btnsLoja.forEach(btn => btn.classList.toggle('active', btn.dataset.loja === lojaId));
                         }
-                        
+
                         fetch(FATURAMENTO_URL)
                             .then(response => response.json())
                             .then(data => {
@@ -297,11 +300,11 @@
                                 console.error('Erro ao buscar faturamento:', error);
                                 valorFaturamentoEl.textContent = 'Erro';
                             });
-                        
+
                         btnsLoja.forEach(btn => btn.addEventListener('click', () => updateDisplay(btn.dataset.loja)));
                     });
                 </script>
-                
+
                 <!-- BOTÕES DE OPÇÕES PARA MOBILE -->
                 <div class="option">
                     <div class="card-option">
@@ -323,7 +326,7 @@
                         </a>
                     </div>
                 </div>
-                
+
                 <!-- NOVA SEÇÃO DE OPÇÕES APENAS PARA DESKTOP -->
                 <div class="desktop-options">
                     <div class="card-option">
@@ -357,13 +360,13 @@
             </li>
 
             <li class="list desktop-only">
-                    <a href="/users/45692327000100/CD1/adm/nb/pdv.html">
-                        <span class="icon">
-                            <i class='bx  bx-cart-minus'></i>
-                        </span>
-                        <span class="text">PDV</span>
-                    </a>
-                </li>
+                <a href="/users/45692327000100/CD1/adm/nb/pdv.html">
+                    <span class="icon">
+                        <i class='bx  bx-cart-minus'></i>
+                    </span>
+                    <span class="text">PDV</span>
+                </a>
+            </li>
 
             <li class="list">
                 <a href="/users/45692327000100/CD1/adm/nb/metricas.html">
@@ -389,10 +392,39 @@
                     <span class="text">Sair</span>
                 </a>
             </li>
+
+            <!--
+            <li class="list" id="mobile-menu-btn">
+                <a href="#">
+                    <span class="icon"><i class='bx bx-menu'></i></span>
+                    <span class="text">Menu</span>
+                </a>
+            </li>
+            -->
             <div class="indicator color11"></div>
         </ul>
     </div>
+
+    <script>
+    // Script para ativar a animação da Navbar e abrir o Menu Lateral
+    const list = document.querySelectorAll('.list');
     
+    function activeLink() {
+        list.forEach((item) => item.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Se clicar no botão "Menu", abre a sidebar lateral
+        if (this.id === 'mobile-menu-btn') {
+            document.body.classList.toggle('sidebar-collapsed'); // Ou a classe que abre seu menu
+            // Se você usa o logic do sidebarToggle antigo:
+            const toggleBtn = document.getElementById('sidebarToggle');
+            if(toggleBtn) toggleBtn.click(); 
+        }
+    }
+    
+    list.forEach((item) => item.addEventListener('click', activeLink));
+</script>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const navigation = document.getElementById('main-navigation');
@@ -401,7 +433,7 @@
             const logoutButton = document.getElementById('logout-btn');
 
             if (sessionStorage.getItem('sidebarAnimated') !== 'true') {
-                if(window.innerWidth >= 992) {
+                if (window.innerWidth >= 992) {
                     navigation.classList.add('run-animation');
                     sessionStorage.setItem('sidebarAnimated', 'true');
                 }
@@ -426,4 +458,5 @@
     <script src="/assets/js/loading.js"></script>
 
 </body>
+
 </html>

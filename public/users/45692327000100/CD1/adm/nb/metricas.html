@@ -4,258 +4,209 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Insights | ELETRO</title>
+    <title>Dashboard Varejo | ELETRO</title>
     <link rel="icon" href="/assets/img/iconWeb.png">
-
     <link rel="stylesheet" href="/assets/css/main.css">
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- ApexCharts (para gráficos modernos) -->
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-
     <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-
-    <!-- Flaticon Icons (para o ícone de escudo) -->
-    <link rel='stylesheet'
-        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
-
     <link rel='stylesheet'
         href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
     <link rel='stylesheet'
         href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap"
-        rel="stylesheet">
-</head>
-
-<body class="painel-adm1" onload="AnimationLoading()">
-    <main class="main-content">
-        <div class="info">
-            <div class="photo-profile">
-                <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg">
-                <div class="detals">
-                    <h1>Olá, Nubia!</h1>
-                    <p>CEO: D'TUDO | Dupão</p>
-                </div>
-                <i class="fi fi-rr-shield-trust"></i>
-            </div>
-            <div class="balance">
-                <div class="pending">
-                    <p>Vendas a receber: </p>
-                    <span id="valor2" class="skeleton shimmer"></span>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- Container para o restante do conteúdo com padding -->
-    <div class="px-6 md:px-8 lg:px-10 pb-10">
-        <!-- Grid de Métricas (KPIs) -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <!-- Card de Faturamento -->
-            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center justify-between">
-                        <h3 class="font-semibold text-gray-500">Faturamento (Hoje)</h3>
-                        <div class="w-10 h-10 flex items-center justify-center bg-green-100 rounded-lg">
-                            <i class='bx bx-trending-up text-xl text-green-600'></i>
-                        </div>
-                    </div>
-                    <div id="faturamentoDate" class="text-4xl font-bold text-gray-800 mt-2 shimmer h-10 rounded-md">
-                    </div>
-                </div>
-                <!--<p class="text-sm text-green-500 mt-4 font-semibold">+5.2% vs. mês anterior</p>-->
-            </div>
-            <!-- Card de Contas a Pagar -->
-            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center justify-between">
-                        <h3 class="font-semibold text-gray-500">Contas a Pagar (Mês)</h3>
-                        <div class="w-10 h-10 flex items-center justify-center bg-red-100 rounded-lg">
-                            <i class='bx bx-trending-down text-xl text-red-600'></i>
-                        </div>
-                    </div>
-                    <div id="boletosPayDate" class="text-4xl font-bold text-gray-800 mt-2 shimmer h-10 rounded-md">
-                    </div>
-                </div>
-                <p class="text-sm text-gray-400 mt-4 font-semibold">Total de despesas pendentes</p>
-            </div>
-            <!-- Card de Lucro -->
-            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center justify-between">
-                        <h3 class="font-semibold text-gray-500">Lucro (Hoje)</h3>
-                        <div class="w-10 h-10 flex items-center justify-center bg-blue-100 rounded-lg">
-                            <i class='bx bx-dollar-circle text-xl text-blue-600'></i>
-                        </div>
-                    </div>
-                    <div id="lucroDate" class="text-4xl font-bold text-gray-800 mt-2 shimmer h-10 rounded-md"></div>
-                </div>
-                <!--<p class="text-sm text-green-500 mt-4 font-semibold">+8.1% vs. mês anterior</p>-->
-            </div>
-            <!-- Card de Ticket Médio -->
-            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center justify-between">
-                        <h3 class="font-semibold text-gray-500">Ticket Médio</h3>
-                        <div class="w-10 h-10 flex items-center justify-center bg-yellow-100 rounded-lg">
-                            <i class='bx bx-purchase-tag-alt text-xl text-yellow-600'></i>
-                        </div>
-                    </div>
-                    <div id="ticketLJDate" class="text-4xl font-bold text-gray-800 mt-2 shimmer h-10 rounded-md">
-                    </div>
-                </div>
-                <p class="text-sm text-gray-400 mt-4 font-semibold">Valor médio por venda</p>
-            </div>
-        </div>
-
-        <!-- Seção de Gráficos -->
-        <div class="grid grid-cols-1 gap-6">
-            <!-- Gráfico de Faturamento Diário (Gráfico de Área) -->
-            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                <h3 class="text-lg font-bold font-poppins text-gray-800 mb-4">Faturamento Diário (Últimos 7 dias)
-                </h3>
-                <div id="daily-revenue-chart" class="h-80 shimmer rounded-lg"></div>
-            </div>
-
-            <!-- Gráfico de Clientes (Gráfico de Rosca) - Comentado -->
-            <!--
-                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                    <h3 class="text-lg font-bold font-poppins text-gray-800 mb-4">Novos vs. Recorrentes</h3>
-                    <div id="customer-type-chart" class="h-80 shimmer rounded-lg flex items-center justify-center"></div>
-                </div>
-                -->
-        </div>
-    </div>
-
+    <link rel="stylesheet" href="/assets/css/main.css">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-
-            const formatCurrency = (value) => {
-                if (typeof value !== 'string') return 'R$ 0,00';
-                const number = parseFloat(value.replace('R$', '').replace(/\./g, '').replace(',', '.').trim());
-                return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(isNaN(number) ? 0 : number);
-            };
-
-            // --- Carregar Dados do Cabeçalho (Vendas a Receber) ---
-            const headerUrl = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=1`;
-            fetch(headerUrl)
-                .then(response => response.json())
-                .then(data => {
-                    const el = document.getElementById('valor2');
-                    if (el && data.valor2) {
-                        el.textContent = formatCurrency(data.valor2);
-                        el.classList.remove('shimmer', 'h-9', 'w-48', 'rounded-md', 'bg-white/20');
-                    }
-                })
-                .catch(error => console.error('Erro ao buscar dados do cabeçalho:', error));
-
-            // --- Carregar Dados dos KPIs ---
-            const kpiUrl = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=2`;
-            fetch(kpiUrl)
-                .then(response => response.json())
-                .then(data => {
-                    const kpiFields = ['faturamentoDate', 'boletosPayDate', 'lucroDate', 'ticketLJDate'];
-                    kpiFields.forEach(id => {
-                        const el = document.getElementById(id);
-                        if (el && data[id]) {
-                            el.textContent = formatCurrency(data[id]);
-                            el.classList.remove('shimmer', 'h-10', 'rounded-md');
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        slate: {
+                            50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1',
+                            400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334155',
+                            800: '#1e293b', 900: '#0f172a',
+                        },
+                        primary: '#3b82f6',
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
                         }
-                    });
-                })
-                .catch(error => console.error('Erro ao buscar dados dos KPIs:', error));
-
-
-            // --- GRÁFICO 1: Faturamento Diário (ApexCharts) ---
-            const revenueChartUrl = 'https://script.google.com/macros/s/AKfycbzbeCWhW4cyixLvkvpYYpv1UK72CfLYQblJv8jWSPPSSHFzNehv0vW5vLjHZrua-qeMJg/exec';
-            fetch(revenueChartUrl)
-                .then(response => response.json())
-                .then(data => {
-                    const chartEl = document.getElementById('daily-revenue-chart');
-                    if (data && data.length > 0) {
-                        chartEl.classList.remove('shimmer', 'rounded-lg');
-                        const sortedData = data.sort((a, b) => new Date(a.dia) - new Date(b.dia));
-                        const last7Days = sortedData.slice(-7);
-                        const chartOptions = {
-                            chart: { type: 'area', height: '100%', toolbar: { show: false }, zoom: { enabled: false } },
-                            series: [{ name: 'Faturamento', data: last7Days.map(item => item.faturamento) }],
-                            xaxis: {
-                                categories: last7Days.map(item => new Date(item.dia).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })),
-                                labels: { style: { colors: '#6b7280', fontWeight: 600 } },
-                                axisBorder: { show: false },
-                                axisTicks: { show: false }
-                            },
-                            yaxis: { labels: { style: { colors: '#6b7280', fontWeight: 600 }, formatter: (value) => `R$ ${value.toFixed(0)}` } },
-                            dataLabels: { enabled: false },
-                            stroke: { curve: 'smooth', width: 3 },
-                            colors: ['#ef4444'],
-                            fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.1, stops: [0, 100] } },
-                            grid: { borderColor: '#e5e7eb', strokeDashArray: 4 },
-                            tooltip: { x: { format: 'dd MMM' }, y: { formatter: (value) => `R$ ${value.toFixed(2).replace('.', ',')}` } }
-                        };
-                        const chart = new ApexCharts(chartEl, chartOptions);
-                        chart.render();
                     }
-                })
-                .catch(error => console.error('Erro ao buscar dados do gráfico de faturamento:', error));
-
-            /* --- GRÁFICO 2: Tipos de Clientes (Código Comentado) ---
-            const customerChartEl = document.getElementById('customer-type-chart');
-            if(customerChartEl) {
-                customerChartEl.classList.remove('shimmer', 'rounded-lg');
-                const customerChartOptions = {
-                    chart: { type: 'donut', height: '100%' },
-                    series: [72, 28],
-                    labels: ['Clientes Recorrentes', 'Novos Clientes'],
-                    colors: ['#ef4444', '#f87171'],
-                    legend: { position: 'bottom', fontFamily: 'Inter', fontWeight: 600, labels: { colors: '#4b5563' } },
-                    dataLabels: { enabled: true, formatter: (val) => `${val.toFixed(0)}%`, style: { fontSize: '14px', fontFamily: 'Poppins, sans-serif', fontWeight: 'bold' }, dropShadow: { enabled: false } },
-                    plotOptions: { pie: { donut: { labels: { show: true, total: { show: true, label: 'Total de Clientes', color: '#4b5563', fontSize: '16px', fontWeight: 'bold', formatter: () => '42' } } } } },
-                    tooltip: { y: { formatter: (value) => `${value}%` } }
-                };
-                const customerChart = new ApexCharts(customerChartEl, customerChartOptions);
-                customerChart.render();
-            }
-            */
-        });
-    </script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const navigation = document.getElementById('main-navigation');
-            const toggleButton = document.getElementById('sidebarToggle');
-            const body = document.querySelector('body');
-            const logoutButton = document.getElementById('logout-btn');
-
-            if (sessionStorage.getItem('sidebarAnimated') !== 'true') {
-                if(window.innerWidth >= 992) {
-                    navigation.classList.add('run-animation');
-                    sessionStorage.setItem('sidebarAnimated', 'true');
                 }
             }
-
-            if (toggleButton) {
-                toggleButton.addEventListener('click', () => {
-                    body.classList.toggle('sidebar-collapsed');
-                });
-            }
-
-            if (logoutButton) {
-                logoutButton.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    localStorage.removeItem('session_token');
-                    window.location.href = '/users/e-finance.html';
-                });
-            }
-        });
+        }
     </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+            color: #1e293b;
+        }
+
+        /* --- LAYOUT SIDEBAR --- */
+        .dashboard-wrapper {
+            width: 100%;
+            min-height: 100vh;
+            transition: padding-left 0.3s ease;
+            padding-bottom: 80px;
+        }
+
+        @media (min-width: 992px) {
+            body:not(.sidebar-collapsed) .dashboard-wrapper { padding-left: 260px; }
+            body.sidebar-collapsed .dashboard-wrapper { padding-left: 90px; }
+            .dashboard-wrapper { padding-bottom: 0; }
+        }
+
+        /* Skeleton Loading mais sutil */
+        .skeleton {
+            background-color: #e2e8f0;
+            border-radius: 0.375rem;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        
+        /* Esconde o conteúdo até carregar para fazer o fade-in */
+        .loading-state { opacity: 0; }
+    </style>
+</head>
+
+<body class="painel-adm1">
+
+    <div class="dashboard-wrapper bg-slate-50">
+        
+        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-20">
+            <div class="flex items-center gap-4">
+                <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5 text-slate-400"></i>
+                    Painel de Controle
+                </h2>
+            </div>
+
+            <div class="flex items-center gap-4 md:gap-6">
+                <button class="relative p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors">
+                    <i data-lucide="bell" class="w-5 h-5"></i>
+                    <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                </button>
+
+                <div class="flex items-center gap-3 border-l border-slate-200 pl-6">
+                    <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg" class="w-9 h-9 rounded-full bg-slate-200 object-cover border border-slate-200">
+                </div>
+            </div>
+        </header>
+
+        <main class="p-6 md:p-8 max-w-[1600px] mx-auto space-y-8">
+
+            <div class="flex justify-end">
+                <div class="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
+                    <button class="px-3 py-1.5 text-xs font-medium rounded-md bg-blue-50 text-blue-600 transition-colors">7D</button>
+                    <button class="px-3 py-1.5 text-xs font-medium rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors">30D</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-3 bg-emerald-50 rounded-lg text-emerald-600">
+                            <i data-lucide="trending-up" class="w-5 h-5"></i>
+                        </div>
+                        <div class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600">
+                            <span>Hoje</span>
+                        </div>
+                    </div>
+                    <h3 class="text-slate-500 text-sm font-medium mb-1">Faturamento</h3>
+                    <div id="faturamentoDate" class="text-2xl font-bold text-slate-800 skeleton h-8 w-32"></div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-3 bg-indigo-50 rounded-lg text-indigo-600">
+                            <i data-lucide="piggy-bank" class="w-5 h-5"></i>
+                        </div>
+                        <div class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-600">
+                            <span>Estimado</span>
+                        </div>
+                    </div>
+                    <h3 class="text-slate-500 text-sm font-medium mb-1">Lucro Líquido</h3>
+                    <div id="lucroDate" class="text-2xl font-bold text-slate-800 skeleton h-8 w-32"></div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-3 bg-amber-50 rounded-lg text-amber-600">
+                            <i data-lucide="ticket" class="w-5 h-5"></i>
+                        </div>
+                         <div class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-600">
+                            <span>Geral</span>
+                        </div>
+                    </div>
+                    <h3 class="text-slate-500 text-sm font-medium mb-1">Ticket Médio</h3>
+                    <div id="ticketLJDate" class="text-2xl font-bold text-slate-800 skeleton h-8 w-32"></div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-3 bg-rose-50 rounded-lg text-rose-600">
+                            <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                        </div>
+                        <div class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-600">
+                            <span>Pendente</span>
+                        </div>
+                    </div>
+                    <h3 class="text-slate-500 text-sm font-medium mb-1">Contas a Pagar</h3>
+                    <div id="boletosPayDate" class="text-2xl font-bold text-slate-800 skeleton h-8 w-32"></div>
+                </div>
+
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <div class="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">Evolução da Receita</h3>
+                            <p class="text-sm text-slate-500">Faturamento diário dos últimos 7 dias</p>
+                        </div>
+                    </div>
+                    <div id="revenueChart" class="w-full h-[300px] skeleton bg-slate-50 rounded-lg"></div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">Top Produtos</h3>
+                    
+                    <div class="flex-1 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-slate-100 rounded-lg">
+                        <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-300">
+                            <i data-lucide="package-open" class="w-8 h-8"></i>
+                        </div>
+                        <h4 class="text-slate-600 font-medium mb-1">Sem dados suficientes</h4>
+                        <p class="text-slate-400 text-sm">Realize mais vendas para ver o ranking de produtos aqui.</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
 
     <div class="navigation">
         <button class="sidebar-toggle" id="sidebarToggle">
@@ -264,17 +215,13 @@
         <ul>
             <li class="list">
                 <a href="/users/45692327000100/CD1/adm/nb/conta.html">
-                    <span class="icon">
-                        <i class="fi fi-rr-shop"></i>
-                    </span>
+                    <span class="icon"><i class="fi fi-rr-shop"></i></span>
                     <span class="text">Loja</span>
                 </a>
             </li>
             <li class="list active">
                 <a href="#">
-                    <span class="icon">
-                        <i class='bx  bxs-bar-chart-big'></i>
-                    </span>
+                    <span class="icon"><i class='bx bxs-bar-chart-big'></i></span>
                     <span class="text">Métrica</span>
                 </a>
             </li>
@@ -299,6 +246,129 @@
             <div class="indicator color11"></div>
         </ul>
     </div>
-</body>
 
+    <script>
+        lucide.createIcons();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // Formatação Moeda
+            const formatCurrency = (value) => {
+                if (!value) return 'R$ 0,00';
+                let number = value;
+                if (typeof value === 'string') {
+                    number = parseFloat(value.replace('R$', '').replace(/\./g, '').replace(',', '.').trim());
+                }
+                return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(isNaN(number) ? 0 : number);
+            };
+
+            // Função de Animação de Entrada (Substitui o shimmer)
+            const revealData = (elementId, value) => {
+                const el = document.getElementById(elementId);
+                if(el) {
+                    // Remove o skeleton
+                    el.classList.remove('skeleton', 'h-8', 'w-32'); 
+                    // Aplica o valor
+                    el.textContent = value;
+                    // Adiciona a classe de animação suave
+                    el.classList.add('animate-fade-in');
+                }
+            };
+
+            // --- Carregar KPIs ---
+            fetch(`https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=2`)
+                .then(res => res.json())
+                .then(data => {
+                    // Mapeando os IDs corretos conforme sua solicitação de ordem
+                    if(data.faturamentoDate) revealData('faturamentoDate', formatCurrency(data.faturamentoDate));
+                    if(data.lucroDate) revealData('lucroDate', formatCurrency(data.lucroDate));
+                    if(data.ticketLJDate) revealData('ticketLJDate', formatCurrency(data.ticketLJDate));
+                    if(data.boletosPayDate) revealData('boletosPayDate', formatCurrency(data.boletosPayDate));
+                });
+
+            // --- Gráfico ---
+            fetch('https://script.google.com/macros/s/AKfycbzbeCWhW4cyixLvkvpYYpv1UK72CfLYQblJv8jWSPPSSHFzNehv0vW5vLjHZrua-qeMJg/exec')
+                .then(res => res.json())
+                .then(data => {
+                    const chartEl = document.getElementById('revenueChart');
+                    
+                    if (data && data.length > 0 && chartEl) {
+                        chartEl.classList.remove('skeleton', 'bg-slate-50'); // Remove skeleton do gráfico
+                        chartEl.classList.add('animate-fade-in'); // Adiciona fade-in
+                        
+                        const sortedData = data.sort((a, b) => new Date(a.dia) - new Date(b.dia)).slice(-7);
+                        
+                        const options = {
+                            chart: {
+                                type: 'area',
+                                height: '100%',
+                                toolbar: { show: false },
+                                fontFamily: 'Inter, sans-serif',
+                                zoom: { enabled: false }
+                            },
+                            series: [{
+                                name: 'Receita',
+                                data: sortedData.map(d => d.faturamento)
+                            }],
+                            colors: ['#3b82f6'],
+                            fill: {
+                                type: 'gradient',
+                                gradient: {
+                                    shadeIntensity: 1,
+                                    opacityFrom: 0.4,
+                                    opacityTo: 0.05,
+                                    stops: [0, 100]
+                                }
+                            },
+                            dataLabels: { enabled: false },
+                            stroke: { curve: 'smooth', width: 2 },
+                            xaxis: {
+                                categories: sortedData.map(d => new Date(d.dia).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })),
+                                axisBorder: { show: false },
+                                axisTicks: { show: false },
+                                labels: { style: { colors: '#94a3b8', fontSize: '12px' } }
+                            },
+                            yaxis: {
+                                labels: { 
+                                    formatter: (val) => `R$ ${val >= 1000 ? (val/1000).toFixed(1) + 'k' : val}`,
+                                    style: { colors: '#94a3b8', fontSize: '12px' } 
+                                }
+                            },
+                            grid: {
+                                show: true,
+                                borderColor: '#f1f5f9',
+                                strokeDashArray: 4,
+                                xaxis: { lines: { show: false } } 
+                            },
+                            tooltip: {
+                                theme: 'light',
+                                y: { formatter: (val) => formatCurrency(val) }
+                            }
+                        };
+                        
+                        new ApexCharts(chartEl, options).render();
+                    }
+                });
+
+            // --- Sidebar ---
+            const toggleButton = document.getElementById('sidebarToggle');
+            const body = document.querySelector('body');
+            const logoutButton = document.getElementById('logout-btn');
+
+            if (toggleButton) {
+                toggleButton.addEventListener('click', () => {
+                    body.classList.toggle('sidebar-collapsed');
+                });
+            }
+            
+            if (logoutButton) {
+                logoutButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    localStorage.removeItem('session_token');
+                    window.location.href = '/users/e-finance.html';
+                });
+            }
+        });
+    </script>
+</body>
 </html>
