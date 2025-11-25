@@ -5,6 +5,7 @@ let paymentBrickController;
 
 document.addEventListener("DOMContentLoaded", () => {
     setupCheckoutSteps();
+    setupPixEvents(); // Configura o botão de copiar e finalizar
 });
 
 function setupCheckoutSteps() {
@@ -16,6 +17,7 @@ function setupCheckoutSteps() {
                 showToast("Por favor, preencha o CEP", "error");
                 return;
             }
+            // Avança para tela do Brick
             document.getElementById("step-shipping").classList.remove("active");
             document.getElementById("step-payment").classList.add("active");
             document.getElementById("step-indic-2").classList.add("active"); 
@@ -24,13 +26,33 @@ function setupCheckoutSteps() {
     }
 }
 
+function setupPixEvents() {
+    // Botão Copiar Código
+    const btnCopy = document.getElementById("btn-copy-pix");
+    if (btnCopy) {
+        btnCopy.addEventListener("click", () => {
+            const input = document.getElementById("display-pix-copypaste");
+            input.select();
+            document.execCommand("copy");
+            showToast("Código PIX copiado!", "success");
+        });
+    }
+
+    // Botão "Pagamento Feito" (Redireciona para Pedidos)
+    const btnFinish = document.getElementById("btn-finish-pix");
+    if (btnFinish) {
+        btnFinish.addEventListener("click", () => {
+            window.location.href = "pedidos.html";
+        });
+    }
+}
+
 async function initPaymentBrick() {
     const cart = CartManager.get();
     const total = CartManager.total();
     
-    // Tratamento de email do usuário
+    // Usuário
     const user = auth.currentUser;
-    // Se não tiver email (login google as vezes demora), usa um fallback válido
     const userEmail = (user && user.email) ? user.email : "cliente_guest@eletrobusiness.com.br";
     const userName = (user && user.displayName) ? user.displayName : "Cliente Eletro";
 
@@ -58,9 +80,7 @@ async function initPaymentBrick() {
             initialization: {
                 amount: total,
                 preferenceId: data.preferenceId,
-                payer: {
-                    email: userEmail,
-                },
+                payer: { email: userEmail },
             },
             customization: {
                 paymentMethods: {
@@ -79,10 +99,8 @@ async function initPaymentBrick() {
                     if (loading) loading.style.display = 'none';
                 },
                 onSubmit: ({ formData }) => {
-                    // CÓPIA LIMPA DO DADO
+                    // Prepara dados
                     const finalData = { ...formData };
-                    
-                    // Injeção forçada de dados do pagador
                     if (!finalData.payer) finalData.payer = {};
                     finalData.payer.email = userEmail;
                     finalData.payer.first_name = userName.split(' ')[0];
@@ -90,38 +108,39 @@ async function initPaymentBrick() {
                     finalData.payer.entity_type = 'individual';
                     finalData.payer.type = 'customer';
                     
-                    // LOG NO NAVEGADOR PARA VOCÊ CONFERIR
-                    console.log("Enviando para Backend:", finalData);
+                    console.log("Enviando Pagamento...", finalData);
 
                     return new Promise((resolve, reject) => {
                         fetch(API_URLS.CREATE_PAYMENT, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
-                                // Envia como payment_data para o backend pegar
                                 payment_data: finalData,
-                                orderId: data.orderId,
-                                // NÃO enviamos mais preferenceId aqui, pois o backend não precisa 
-                                // e se ele tentar usar, da erro no MP.
+                                orderId: data.orderId
                             })
                         })
                         .then(res => {
-                            if(!res.ok) {
-                                return res.json().then(err => { throw err; });
-                            }
+                            if(!res.ok) return res.json().then(err => { throw err; });
                             return res.json();
                         })
-                        .then(result => {
-                            console.log("Sucesso:", result);
+                        .then(paymentResult => {
+                            console.log("Resultado Pagamento:", paymentResult);
                             CartManager.clear();
-                            window.location.href = "pedidos.html"; 
-                            resolve();
+
+                            // LÓGICA DE DECISÃO (PIX vs CARTÃO)
+                            if (paymentResult.status === 'pending' && paymentResult.point_of_interaction) {
+                                // É PIX! Mostrar tela de QR Code
+                                showPixScreen(paymentResult);
+                                resolve(); // Resolve a promise do Brick (para loading parar)
+                            } else {
+                                // É Cartão Aprovado (ou outro status final), redireciona direto
+                                window.location.href = "pedidos.html"; 
+                                resolve();
+                            }
                         })
                         .catch(error => {
                             console.error("Erro Backend:", error);
-                            // Mostra erro na tela se possível, ou genérico
-                            const msg = error.message || "Erro ao processar pagamento";
-                            showToast("Erro: " + msg, "error");
+                            showToast("Erro ao processar pagamento.", "error");
                             reject();
                         });
                     });
@@ -137,6 +156,24 @@ async function initPaymentBrick() {
 
     } catch (e) {
         console.error("Erro fatal:", e);
-        showToast("Erro ao iniciar sistema de pagamento.", "error");
+        showToast("Erro ao iniciar sistema.", "error");
     }
+}
+
+// Função para exibir a tela de PIX sem sair da página
+function showPixScreen(paymentResult) {
+    const qrCodeBase64 = paymentResult.point_of_interaction.transaction_data.qr_code_base64;
+    const qrCodeCopy = paymentResult.point_of_interaction.transaction_data.qr_code;
+
+    // Preenche os elementos
+    document.getElementById("display-pix-qr").src = `data:image/png;base64,${qrCodeBase64}`;
+    document.getElementById("display-pix-copypaste").value = qrCodeCopy;
+
+    // Troca a visualização
+    document.getElementById("checkout-stepper").style.display = 'none'; // Esconde stepper opcionalmente
+    document.getElementById("step-payment").style.display = 'none'; // Esconde Brick
+    document.getElementById("step-pix-result").style.display = 'block'; // Mostra PIX
+    
+    // Scroll para o topo
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }

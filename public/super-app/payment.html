@@ -8,6 +8,15 @@
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="style.css">
     <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <style>
+        /* Estilos específicos para a tela de PIX */
+        .pix-container { text-align: center; padding: 1rem; }
+        .pix-qr-img { max-width: 250px; margin: 1rem auto; display: block; border: 1px solid #ddd; border-radius: 8px; }
+        .pix-copy-box { display: flex; gap: 0.5rem; margin-top: 1rem; }
+        .pix-copy-box input { flex: 1; padding: 0.8rem; border: 1px solid #ccc; border-radius: 4px; background: #f9f9f9; color: #555; }
+        .pix-copy-box button { background: var(--color-accent-blue); color: white; border: none; padding: 0 1rem; border-radius: 4px; cursor: pointer; }
+        .pix-timer { color: #d32f2f; font-weight: bold; margin-bottom: 1rem; }
+    </style>
 </head>
 
 <body>
@@ -20,7 +29,7 @@
     </header>
 
     <main class="container checkout-page">
-        <div class="checkout-stepper">
+        <div class="checkout-stepper" id="checkout-stepper">
             <div class="step active" id="step-indic-1">
                 <span class="step-number">1</span><span class="step-title">Envio</span>
             </div>
@@ -34,8 +43,7 @@
             <div class="shipping-form">
                 <h3><i class='bx bxs-truck'></i> Endereço</h3>
                 <div class="form-group"><label>CEP</label><input type="tel" id="cep" placeholder="00000-000"></div>
-                <div class="form-group"><label>Rua</label><input type="text" id="address" placeholder="Endereço...">
-                </div>
+                <div class="form-group"><label>Rua</label><input type="text" id="address" placeholder="Endereço..."></div>
                 <div class="form-group-row">
                     <div class="form-group"><label>Número</label><input type="text" id="num" placeholder="123"></div>
                     <div class="form-group"><label>Cidade</label><input type="text" value="Ipixuna" disabled></div>
@@ -47,9 +55,29 @@
         <div id="step-payment" class="checkout-step">
             <div class="modal-section">
                 <h4>Total: <span id="payment-total-display"></span></h4>
-                <div id="brick-loading-message" class="loading-message-brick" style="display:block;">Carregando MP...
-                </div>
+                <div id="brick-loading-message" class="loading-message-brick" style="display:block;">Carregando Pagamento...</div>
                 <div id="payment-brick-container"></div>
+            </div>
+        </div>
+
+        <div id="step-pix-result" class="checkout-step" style="display: none;">
+            <div class="pix-container">
+                <i class='bx bx-qr-scan' style="font-size: 3rem; color: #333;"></i>
+                <h3>Escaneie o QR Code</h3>
+                <p>Abra o app do seu banco e pague via PIX.</p>
+                
+                <img id="display-pix-qr" class="pix-qr-img" src="" alt="QR Code Pix">
+                
+                <p>Ou copie o código abaixo:</p>
+                <div class="pix-copy-box">
+                    <input type="text" id="display-pix-copypaste" readonly>
+                    <button id="btn-copy-pix"><i class='bx bx-copy'></i></button>
+                </div>
+                
+                <br><br>
+                <button id="btn-finish-pix" class="cta-button" style="background-color: #00a650;">
+                    <i class='bx bx-check'></i> Pagamento Feito!
+                </button>
             </div>
         </div>
     </main>
@@ -63,5 +91,4 @@
     <script src="js/global.js"></script>
     <script src="js/payment.js"></script>
 </body>
-
 </html>
