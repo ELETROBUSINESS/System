@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Identificação - EletroBusiness</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos específicos para centralizar o login */
+        .login-container {
+            max-width: 400px;
+            margin: 4rem auto;
+            background: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .login-icon {
+            font-size: 4rem;
+            color: var(--color-accent-blue);
+            margin-bottom: 1rem;
+        }
+        .login-title {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--color-text-dark);
+        }
+        .login-subtitle {
+            color: var(--color-text-muted);
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="container header-container">
+            <a href="index.html" class="logo">ELETRO<span class="logo-highlight">BUSINESS</span></a>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="login-container">
+            <i class='bx bxs-user-circle login-icon'></i>
+            <h2 class="login-title">Identifique-se</h2>
+            <p class="login-subtitle">Faça login com sua conta Google para finalizar a compra com segurança.</p>
+            
+            <button class="google-login-button" id="page-login-google">
+                <i class='bx bxl-google'></i>
+                <span>Entrar com Google</span>
+            </button>
+            
+            <br>
+            <a href="index.html" style="color: #666; font-size: 0.9rem; text-decoration: none; display: block; margin-top: 1.5rem;">
+                <i class='bx bx-arrow-back'></i> Voltar para a loja
+            </a>
+        </div>
+    </main>
+    
+    <div id="toast-notification" class="toast"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <script src="js/global.js"></script>
+    <script src="js/login.js"></script>
+</body>
+</html>

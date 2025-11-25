@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finalizar Compra</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+</head>
+
+<body>
+    <header class="main-header">
+        <div class="container header-container">
+            <a href="carrinho.html" class="back-button"><i class='bx bx-chevron-left'></i></a>
+            <span class="logo">Checkout</span>
+            <div style="width: 24px;"></div>
+        </div>
+    </header>
+
+    <main class="container checkout-page">
+        <div class="checkout-stepper">
+            <div class="step active" id="step-indic-1">
+                <span class="step-number">1</span><span class="step-title">Envio</span>
+            </div>
+            <div class="step-divider"></div>
+            <div class="step" id="step-indic-2">
+                <span class="step-number">2</span><span class="step-title">Pagamento</span>
+            </div>
+        </div>
+
+        <div id="step-shipping" class="checkout-step active">
+            <div class="shipping-form">
+                <h3><i class='bx bxs-truck'></i> Endereço</h3>
+                <div class="form-group"><label>CEP</label><input type="tel" id="cep" placeholder="00000-000"></div>
+                <div class="form-group"><label>Rua</label><input type="text" id="address" placeholder="Endereço...">
+                </div>
+                <div class="form-group-row">
+                    <div class="form-group"><label>Número</label><input type="text" id="num" placeholder="123"></div>
+                    <div class="form-group"><label>Cidade</label><input type="text" value="Ipixuna" disabled></div>
+                </div>
+                <button id="btn-go-payment" class="cta-button">Ir para Pagamento</button>
+            </div>
+        </div>
+
+        <div id="step-payment" class="checkout-step">
+            <div class="modal-section">
+                <h4>Total: <span id="payment-total-display"></span></h4>
+                <div id="brick-loading-message" class="loading-message-brick" style="display:block;">Carregando MP...
+                </div>
+                <div id="payment-brick-container"></div>
+            </div>
+        </div>
+    </main>
+
+    <div id="toast-notification" class="toast"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <script src="js/global.js"></script>
+    <script src="js/payment.js"></script>
+</body>
+
+</html>

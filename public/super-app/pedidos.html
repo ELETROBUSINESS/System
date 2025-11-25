@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus Pedidos</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header class="main-header">
+        <div class="container header-container">
+            <a href="index.html" class="back-button"><i class='bx bx-chevron-left'></i></a>
+            <span class="logo">Meus Pedidos</span>
+            <div style="width: 24px;"></div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div id="orders-list" class="orders-list">
+            <p style="text-align: center; margin-top: 2rem; color: #666;">Carregando pedidos...</p>
+        </div>
+
+        <div id="pix-display-area" style="display:none; margin-top:1rem;" class="pix-container">
+            <h3>Pagamento Pendente</h3>
+            <div class="pix-qr-code" id="pix-qr-img"></div>
+            <div class="pix-copy-paste">
+                <input type="text" id="pix-code-text" readonly>
+                <button onclick="copyPix()"><i class='bx bx-copy'></i></button>
+            </div>
+        </div>
+    </main>
+
+    <nav class="bottom-navbar">
+        <a href="index.html" class="nav-item"><i class='bx bxs-home'></i><span>Início</span></a>
+        <a href="favoritos.html" class="nav-item"><i class='bx bx-heart'></i><span>Salvos</span></a>
+        <a href="carrinho.html" class="nav-item">
+            <i class='bx bx-cart'></i>
+            <span id="cart-badge" class="cart-badge" style="display: none;">0</span>
+            <span>Carrinho</span>
+        </a>
+        <a href="pedidos.html" class="nav-item active"><i class='bx bx-receipt'></i><span>Pedidos</span></a>
+    </nav>
+
+    <div id="toast-notification" class="toast"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <script src="js/global.js"></script>
+    <script src="js/orders.js"></script>
+
+    <script>
+        document.addEventListener('userReady', (e) => {
+            const user = e.detail;
+            const container = document.getElementById("orders-list");
+
+            if (!user || user.isAnonymous) {
+                container.innerHTML = "<div class='cart-empty'><h3>Faça login para ver seus pedidos</h3></div>";
+                return;
+            }
+
+            db.collection("orders")
+                .where("userId", "==", user.uid)
+                .orderBy("createdAt", "desc")
+                .onSnapshot(snapshot => {
+                    if (snapshot.empty) {
+                        container.innerHTML = "<div class='cart-empty'><h3>Nenhum pedido encontrado.</h3></div>";
+                        return;
+                    }
+
+                    container.innerHTML = "";
+                    snapshot.forEach(doc => {
+                        const order = { id: doc.id, ...doc.data() };
+                        renderOrderCard(order, container);
+                    });
+                });
+        });
+
+        function renderOrderCard(order, container) {
+            const firstItem = order.items[0];
+            const date = order.createdAt ? order.createdAt.toDate().toLocaleDateString('pt-BR') : 'Data desc.';
+
+            // Lógica de Status
+            let statusClass = 'status-' + order.status;
+            let btnAction = '';
+
+            if (order.status === 'pending_payment') {
+                btnAction = `<button class="cta-button retry-payment-button" onclick="showPix('${order.id}')">Ver QR Code</button>`;
+            } else if (order.status === 'failed') {
+                btnAction = `<span style="color:red; font-size:0.8rem;">Pagamento Expirado</span>`;
+            }
+
+            container.innerHTML += `
+                <div class="order-card">
+                    <div class="order-header">
+                        <span class="order-date">${date}</span>
+                        <span class="order-status ${statusClass}">${order.statusText || order.status}</span>
+                    </div>
+                    <div class="order-body">
+                        <div class="order-item-preview">
+                            <img src="${firstItem.image}" alt="Prod">
+                            <div class="order-item-info">
+                                <h4>${firstItem.name}</h4>
+                                <p>Total: R$ ${order.total.toFixed(2).replace('.', ',')}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="order-footer">
+                        <div class="order-actions">${btnAction}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Função auxiliar para recuperar dados do PIX do pedido se clicado
+        window.showPix = async (orderId) => {
+            const doc = await db.collection("orders").doc(orderId).get();
+            const order = doc.data();
+            if (order.paymentData && order.paymentData.qr_code_base64) {
+                document.getElementById("pix-display-area").style.display = "block";
+                document.getElementById("pix-qr-img").innerHTML =
+                    `<img src="data:image/png;base64, ${order.paymentData.qr_code_base64}" style="width:100%">`;
+                document.getElementById("pix-code-text").value = order.paymentData.qr_code;
+                window.scrollTo(0, 0);
+            } else {
+                showToast("Dados do PIX não disponíveis", "error");
+            }
+        }
+
+        window.copyPix = () => {
+            const copyText = document.getElementById("pix-code-text");
+            copyText.select();
+            document.execCommand("copy");
+            showToast("Código Copiado!", "success");
+        }
+    </script>
+</body>
+
+</html>

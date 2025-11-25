@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Carrinho</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header class="main-header">
+        <div class="container header-container">
+            <a href="index.html" class="back-button"><i class='bx bx-chevron-left'></i></a>
+            <span class="logo">Meu Carrinho</span>
+            <div style="width: 24px;"></div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div id="cart-items-container"></div>
+
+        <div id="cart-summary-box" class="cart-summary" style="display: none;">
+            <h3>Resumo</h3>
+            <div class="summary-line"><span>Total</span><span id="summary-total-value">R$ 0,00</span></div>
+            <button id="go-to-checkout" class="cta-button checkout-btn">Finalizar Compra</button>
+        </div>
+    </main>
+
+    <nav class="bottom-navbar">
+        <a href="index.html" class="nav-item"><i class='bx bxs-home'></i><span>Início</span></a>
+        <a href="favoritos.html" class="nav-item"><i class='bx bx-heart'></i><span>Salvos</span></a>
+        <a href="carrinho.html" class="nav-item active">
+            <i class='bx bx-cart'></i>
+            <span id="cart-badge" class="cart-badge" style="display: none;">0</span>
+            <span>Carrinho</span>
+        </a>
+        <a href="pedidos.html" class="nav-item"><i class='bx bx-receipt'></i><span>Pedidos</span></a>
+    </nav>
+
+    <div id="user-profile-modal" class="modal-overlay">
+        <div class="modal-content profile-modal-content">
+            <button class="modal-close">&times;</button>
+            <div id="user-logged-out-view">
+                <h3>Login Necessário</h3>
+                <p>Faça login para finalizar sua compra.</p>
+                <button class="google-login-button" id="google-login-button"><i class='bx bxl-google'></i> Entrar com
+                    Google</button>
+            </div>
+            <div id="user-logged-in-view" style="display:none;"></div>
+        </div>
+    </div>
+    <div id="toast-notification" class="toast"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <script src="js/global.js"></script>
+    <script src="js/cart.js"></script>
+</body>
+</html>
