@@ -1,6 +1,5 @@
 // js/payment.js
 
-// Inicializa o SDK
 const mp = new MercadoPago(MP_PUBLIC_KEY);
 let paymentBrickController;
 
@@ -10,22 +9,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function setupCheckoutSteps() {
     const btnGoPayment = document.getElementById("btn-go-payment");
-    
     if (btnGoPayment) {
         btnGoPayment.addEventListener("click", async () => {
-            // 1. Validação do CEP
             const cepInput = document.getElementById("cep");
             if (cepInput && !cepInput.value) {
                 showToast("Por favor, preencha o CEP", "error");
                 return;
             }
-
-            // 2. Transição de tela
             document.getElementById("step-shipping").classList.remove("active");
             document.getElementById("step-payment").classList.add("active");
             document.getElementById("step-indic-2").classList.add("active"); 
-            
-            // 3. Inicia o Brick
             await initPaymentBrick();
         });
     }
@@ -35,15 +28,17 @@ async function initPaymentBrick() {
     const cart = CartManager.get();
     const total = CartManager.total();
     
-    // Pega o usuário logado
+    // Tratamento de email do usuário
     const user = auth.currentUser;
-    const userEmail = (user && user.email) ? user.email : "cliente@eletrobusiness.com.br";
+    // Se não tiver email (login google as vezes demora), usa um fallback válido
+    const userEmail = (user && user.email) ? user.email : "cliente_guest@eletrobusiness.com.br";
+    const userName = (user && user.displayName) ? user.displayName : "Cliente Eletro";
 
     const displayTotal = document.getElementById("payment-total-display");
     if(displayTotal) displayTotal.innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
 
     try {
-        // A. Cria Preferência no Backend
+        // 1. Cria Preferência
         const response = await fetch(API_URLS.CREATE_PREFERENCE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -57,7 +52,7 @@ async function initPaymentBrick() {
         if (!response.ok) throw new Error("Erro ao criar preferência");
         const data = await response.json(); 
         
-        // B. Configurações do Brick
+        // 2. Monta o Brick
         const builder = mp.bricks();
         const settings = {
             initialization: {
@@ -65,15 +60,13 @@ async function initPaymentBrick() {
                 preferenceId: data.preferenceId,
                 payer: {
                     email: userEmail,
-                    // REMOVIDO entity_type daqui para sumir o aviso amarelo.
-                    // Ele será injetado apenas na hora de pagar.
                 },
             },
             customization: {
                 paymentMethods: {
                     bankTransfer: "all",
                     creditCard: "all",
-                    mercadoPago: "all",
+                    mercadoPago: "all", 
                 },
                 visual: {
                     style: { theme: 'light' },
@@ -86,29 +79,30 @@ async function initPaymentBrick() {
                     if (loading) loading.style.display = 'none';
                 },
                 onSubmit: ({ formData }) => {
-                    // [CORREÇÃO CRÍTICA]
-                    // Criamos uma COPIA LIMPA do objeto para não quebrar a referência do SDK
-                    const cleanFormData = { ...formData };
-
-                    // Garante a estrutura do Payer
-                    if (!cleanFormData.payer) cleanFormData.payer = {};
+                    // CÓPIA LIMPA DO DADO
+                    const finalData = { ...formData };
                     
-                    // Preenche os dados obrigatórios para evitar erro 500
-                    cleanFormData.payer.email = userEmail;
-                    cleanFormData.payer.entity_type = 'individual';
-                    cleanFormData.payer.type = 'customer';
-                    cleanFormData.payer.first_name = user && user.displayName ? user.displayName.split(' ')[0] : 'Cliente';
+                    // Injeção forçada de dados do pagador
+                    if (!finalData.payer) finalData.payer = {};
+                    finalData.payer.email = userEmail;
+                    finalData.payer.first_name = userName.split(' ')[0];
+                    finalData.payer.last_name = userName.split(' ').slice(1).join(' ') || 'Cliente';
+                    finalData.payer.entity_type = 'individual';
+                    finalData.payer.type = 'customer';
                     
-                    console.log("Payload enviado:", cleanFormData); // Debug
+                    // LOG NO NAVEGADOR PARA VOCÊ CONFERIR
+                    console.log("Enviando para Backend:", finalData);
 
                     return new Promise((resolve, reject) => {
                         fetch(API_URLS.CREATE_PAYMENT, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
-                                formData: cleanFormData, // Envia o objeto limpo
+                                // Envia como payment_data para o backend pegar
+                                payment_data: finalData,
                                 orderId: data.orderId,
-                                preferenceId: data.preferenceId
+                                // NÃO enviamos mais preferenceId aqui, pois o backend não precisa 
+                                // e se ele tentar usar, da erro no MP.
                             })
                         })
                         .then(res => {
@@ -118,32 +112,31 @@ async function initPaymentBrick() {
                             return res.json();
                         })
                         .then(result => {
+                            console.log("Sucesso:", result);
                             CartManager.clear();
                             window.location.href = "pedidos.html"; 
                             resolve();
                         })
                         .catch(error => {
-                            console.error("Erro detalhado do backend:", error);
-                            showToast("Erro ao processar pagamento. Tente novamente.", "error");
+                            console.error("Erro Backend:", error);
+                            // Mostra erro na tela se possível, ou genérico
+                            const msg = error.message || "Erro ao processar pagamento";
+                            showToast("Erro: " + msg, "error");
                             reject();
                         });
                     });
                 },
                 onError: (error) => {
-                    console.error("Erro no Brick:", error);
-                    showToast("Erro no formulário de pagamento", "error");
+                    console.error("Erro Brick:", error);
+                    showToast("Erro no formulário", "error");
                 },
             },
         };
 
-        // Renderiza o Brick
         paymentBrickController = await builder.create("payment", "payment-brick-container", settings);
 
     } catch (e) {
-        console.error("Erro fatal no checkout:", e);
-        showToast("Erro ao carregar pagamentos.", "error");
-        
-        document.getElementById("step-shipping").classList.add("active");
-        document.getElementById("step-payment").classList.remove("active");
+        console.error("Erro fatal:", e);
+        showToast("Erro ao iniciar sistema de pagamento.", "error");
     }
 }
