@@ -11,7 +11,7 @@ const mercadoPagoToken = defineString('MERCADOPAGO_ACCESS_TOKEN');
 const WEBHOOK_URL = "https://us-central1-super-app25.cloudfunctions.net/processWebhook";
 
 // ==========================================================
-// FUNÇÃO 1: CRIAR PREFERÊNCIA (CORRIGIDA)
+// FUNÇÃO 1: CRIAR PREFERÊNCIA (MANTIDA IGUAL)
 // ==========================================================
 exports.createPreference = functions.https.onRequest(async (req, res) => {
     cors(req, res, async () => {
@@ -22,11 +22,9 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
             
             if (!items || items.length === 0) return res.status(400).send({ error: "No items" });
 
-            // 1. Sanitização de Dados (CORREÇÃO DO ERRO 400)
             const cleanPhone = clientData && clientData.phone ? clientData.phone.replace(/\D/g, '') : '';
             const cleanEmail = clientData && clientData.email ? clientData.email : 'cliente@eletrobusiness.com.br';
             
-            // Cálculos
             const productsTotal = items.reduce((sum, item) => sum + (Number(item.priceNew) * Number(item.quantity)), 0);
             const freight = Number(shippingCost) || 0;
             const finalTotal = productsTotal + freight;
@@ -35,7 +33,6 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
             const client = new MercadoPagoConfig({ accessToken });
             const preferenceClient = new Preference(client);
 
-            // Formata Itens
             const formattedItems = items.map(item => ({
                 id: item.id,
                 title: item.name,
@@ -43,7 +40,6 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
                 unit_price: Number(item.priceNew),
             }));
 
-            // Adiciona Frete
             if (freight > 0) {
                 formattedItems.push({
                     id: "shipping",
@@ -53,7 +49,6 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
                 });
             }
 
-            // Salva no Firestore
             const orderRef = await db.collection("orders").add({
                 userId: userId || 'guest',
                 items: items,
@@ -67,7 +62,6 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
             });
 
-            // Cria Preferência
             const preferenceData = {
                 body: {
                     items: formattedItems,
@@ -77,7 +71,7 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
                         email: cleanEmail,
                         phone: {
                             area_code: "",
-                            number: cleanPhone // Envia apenas números
+                            number: cleanPhone 
                         }
                     },
                     back_urls: {
@@ -101,7 +95,6 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
 
         } catch (error) {
             console.error("Erro Preference:", error);
-            // Retorna o erro detalhado do MP se existir
             const mpError = error.cause || error.message;
             return res.status(500).send({ error: mpError });
         }
@@ -109,7 +102,7 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
 });
 
 // ==========================================================
-// FUNÇÃO 2: CRIAR PAGAMENTO (MANTIDA IGUAL)
+// FUNÇÃO 2: CRIAR PAGAMENTO (ATUALIZADA PARA CORRIGIR ERROS DE HOMOLOGAÇÃO)
 // ==========================================================
 exports.createPayment = functions.https.onRequest(async (req, res) => {
     cors(req, res, async () => {
@@ -124,15 +117,34 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
             const client = new MercadoPagoConfig({ accessToken });
             const payment = new Payment(client);
 
+            // [CORREÇÃO 1]: Identificador do Dispositivo e IP
+            // Captura o IP real do cliente através do proxy do Firebase/Google
+            let ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+            if (ipAddress && ipAddress.indexOf(',') > -1) {
+                ipAddress = ipAddress.split(',')[0]; // Pega o primeiro IP se houver lista
+            }
+
+            // Adiciona informações adicionais obrigatórias para análise de risco
+            paymentData.additional_info = {
+                ip_address: ipAddress,
+                items: paymentData.items || [] // Repassa itens se disponível, ajuda na aprovação
+            };
+
+            // [CORREÇÃO 2]: Descrição da Fatura (Statement Descriptor)
+            // Nome que aparecerá na fatura do cartão (Máx 22 caracteres)
+            paymentData.statement_descriptor = "ELETROBUSINESS";
+            paymentData.description = `Pedido ${orderId}`; // Descrição interna
+
+            // Configurações Padrão
             paymentData.external_reference = orderId;
-            if (!paymentData.statement_descriptor) paymentData.statement_descriptor = "ELETROBUSINESS";
             paymentData.notification_url = WEBHOOK_URL;
 
-            console.log("Processando pagamento para Order:", orderId);
+            console.log("Processando pagamento para Order:", orderId, "IP:", ipAddress);
 
             const requestOptions = { idempotencyKey: orderId };
             const paymentResponse = await payment.create({ body: paymentData, requestOptions });
             
+            // Atualiza Firestore
             const updateData = {
                 status: paymentResponse.status,
                 statusText: paymentResponse.status_detail,
