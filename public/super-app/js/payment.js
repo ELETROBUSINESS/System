@@ -3,20 +3,24 @@
 const mp = new MercadoPago(MP_PUBLIC_KEY);
 let paymentBrickController;
 let currentShippingCost = 0;
-let deliveryMode = 'delivery'; // 'delivery' ou 'pickup'
+let deliveryMode = 'delivery'; 
 let selectedStore = '';
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Tenta preencher email assim que o user estiver pronto
     document.addEventListener('userReady', (e) => {
         const user = e.detail;
         if (user && user.email) {
-            document.getElementById("reg-email").value = user.email;
+            const emailInput = document.getElementById("reg-email");
+            if(emailInput) emailInput.value = user.email;
             loadUserData(user.uid);
         }
     });
 
+    // Se já estiver cacheado
     if (auth && auth.currentUser) {
-        document.getElementById("reg-email").value = auth.currentUser.email;
+        const emailInput = document.getElementById("reg-email");
+        if(emailInput) emailInput.value = auth.currentUser.email;
         loadUserData(auth.currentUser.uid);
     }
 
@@ -40,11 +44,16 @@ async function loadUserData(uid) {
 }
 
 function setupStepNavigation() {
-    // 1 -> 2
     document.getElementById("btn-go-shipping").addEventListener("click", async () => {
         const fname = document.getElementById("reg-first-name").value.trim();
         const lname = document.getElementById("reg-last-name").value.trim();
         const phone = document.getElementById("reg-phone").value.trim();
+        const emailInput = document.getElementById("reg-email").value;
+
+        // Se o email estiver vazio (erro de carregamento), tenta pegar do auth de novo
+        if(!emailInput && auth.currentUser) {
+            document.getElementById("reg-email").value = auth.currentUser.email;
+        }
 
         if (!fname || !lname || !phone) {
             showToast("Preencha todos os campos obrigatórios.", "error");
@@ -64,19 +73,17 @@ function setupStepNavigation() {
         changeStep(2);
     });
 
-    // 2 -> 3
     document.getElementById("btn-go-payment").addEventListener("click", async () => {
         if (deliveryMode === 'delivery') {
             const cep = document.getElementById("cep").value;
             const city = document.getElementById("city-select").value;
             const address = document.getElementById("address").value;
             const displayCost = document.getElementById("shipping-cost-display").innerText;
-
+            
             if (!cep || !city || !address) {
                 showToast("Preencha o endereço completo.", "error");
                 return;
             }
-            // Bloqueia se o frete for inválido (cidade não atendida)
             if (displayCost.includes("Não entregamos")) {
                 showToast("Não entregamos nesta região.", "error");
                 return;
@@ -118,11 +125,11 @@ function setupDeliveryLogic() {
         if (type === 'delivery') {
             document.getElementById("container-delivery-form").style.display = 'block';
             document.getElementById("container-pickup-list").style.display = 'none';
-            calculateShipping();
+            calculateShipping(); 
         } else {
             document.getElementById("container-delivery-form").style.display = 'none';
             document.getElementById("container-pickup-list").style.display = 'block';
-            currentShippingCost = 0;
+            currentShippingCost = 0; 
         }
     };
 
@@ -139,7 +146,6 @@ function setupDeliveryLogic() {
     document.getElementById("city-select").addEventListener("change", calculateShipping);
 }
 
-// --- LÓGICA DE FRETE ATUALIZADA ---
 function calculateShipping() {
     if (deliveryMode === 'pickup') return;
 
@@ -148,7 +154,6 @@ function calculateShipping() {
     const cartTotal = CartManager.total();
     const display = document.getElementById("shipping-cost-display");
 
-    // 1. Prioridade: Frete Bullf
     if (isBullf) {
         currentShippingCost = 0;
         display.innerText = "Grátis (Frete Bullf)";
@@ -163,27 +168,22 @@ function calculateShipping() {
         return;
     }
 
-    // 2. Ipixuna do Pará
     if (city === "Ipixuna do Pará") {
         if (cartTotal >= 29.99) {
             currentShippingCost = 0;
             display.innerText = "Grátis (Pedido > R$ 29,99)";
             display.style.color = "green";
         } else {
-            currentShippingCost = 7.99; // Taxa atualizada
+            currentShippingCost = 7.99;
             display.innerText = "R$ 7,99";
             display.style.color = "#333";
         }
-    }
-    // 3. Aurora do Pará
-    else if (city === "Aurora do Pará") {
+    } else if (city === "Aurora do Pará") {
         currentShippingCost = 50.00;
         display.innerText = "R$ 50,00";
         display.style.color = "#333";
-    }
-    // 4. Outros (Bloqueio)
-    else {
-        currentShippingCost = 0;
+    } else {
+        currentShippingCost = 0; 
         display.innerText = "Não entregamos nesta região";
         display.style.color = "red";
     }
@@ -201,7 +201,15 @@ async function initPaymentBrick() {
     const firstName = document.getElementById("reg-first-name").value;
     const lastName = document.getElementById("reg-last-name").value;
     const phone = document.getElementById("reg-phone").value;
-    const email = document.getElementById("reg-email").value;
+    
+    // Garante um email válido
+    let email = document.getElementById("reg-email").value;
+    if((!email || email === "") && auth.currentUser) {
+        email = auth.currentUser.email;
+    }
+    // Fallback de segurança extremo se tudo falhar
+    if(!email) email = "cliente@eletrobusiness.com.br";
+
     const user = auth.currentUser;
     const uid = user ? user.uid : 'guest';
 
@@ -209,29 +217,33 @@ async function initPaymentBrick() {
         const response = await fetch(API_URLS.CREATE_PREFERENCE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                items: cart,
-                shippingCost: currentShippingCost,
+            body: JSON.stringify({ 
+                items: cart, 
+                shippingCost: currentShippingCost, 
                 deliveryData: {
                     mode: deliveryMode,
                     store: selectedStore,
                     address: deliveryMode === 'delivery' ? document.getElementById("address").value : null,
                     city: deliveryMode === 'delivery' ? document.getElementById("city-select").value : null,
                 },
-                clientData: { firstName, lastName, phone, email },
-                userId: uid
+                clientData: { firstName, lastName, phone, email }, 
+                userId: uid 
             }),
         });
-
-        if (!response.ok) throw new Error("Erro ao criar preferência");
-        const data = await response.json();
-
-        if (paymentBrickController) paymentBrickController.unmount();
-
+        
+        if (!response.ok) {
+            const errData = await response.json();
+            console.error("Erro Backend:", errData);
+            throw new Error("Erro ao criar preferência: " + (errData.error || "Desconhecido"));
+        }
+        const data = await response.json(); 
+        
+        if (paymentBrickController) paymentBrickController.unmount(); 
+        
         const builder = mp.bricks();
         const settings = {
             initialization: {
-                amount: finalTotal,
+                amount: finalTotal, 
                 preferenceId: data.preferenceId,
                 payer: { email: email },
             },
@@ -251,7 +263,7 @@ async function initPaymentBrick() {
                     finalData.payer.last_name = lastName;
                     finalData.payer.entity_type = 'individual';
                     finalData.payer.type = 'customer';
-
+                    
                     console.log("Enviando Pagamento...", finalData);
 
                     return new Promise((resolve, reject) => {
@@ -263,26 +275,22 @@ async function initPaymentBrick() {
                                 orderId: data.orderId
                             })
                         })
-                            .then(res => res.json())
-                            .then(paymentResult => {
-                                console.log("SUCESSO! Payment ID Gerado:", paymentResult.id); // <--- ADICIONE ISSO
-                                console.log("Status:", paymentResult.status);
-
-                                CartManager.clear();
-                                CartManager.clear();
-                                if (paymentResult.status === 'pending' && paymentResult.point_of_interaction) {
-                                    showPixScreen(paymentResult);
-                                    resolve();
-                                } else {
-                                    window.location.href = "pedidos.html";
-                                    resolve();
-                                }
-                            })
-                            .catch(error => {
-                                console.error("Erro Backend:", error);
-                                showToast("Erro ao processar pagamento.", "error");
-                                reject();
-                            });
+                        .then(res => res.json())
+                        .then(paymentResult => {
+                            CartManager.clear();
+                            if (paymentResult.status === 'pending' && paymentResult.point_of_interaction) {
+                                showPixScreen(paymentResult);
+                                resolve();
+                            } else {
+                                window.location.href = "pedidos.html"; 
+                                resolve();
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Erro Backend:", error);
+                            showToast("Erro ao processar pagamento.", "error");
+                            reject();
+                        });
                     });
                 },
                 onError: (error) => {
@@ -296,7 +304,7 @@ async function initPaymentBrick() {
 
     } catch (e) {
         console.error("Erro fatal:", e);
-        showToast("Erro ao iniciar pagamento.", "error");
+        showToast("Erro ao iniciar sistema de pagamento.", "error");
     }
 }
 
@@ -325,13 +333,11 @@ function showPixScreen(paymentResult) {
     document.getElementById("display-pix-qr").src = `data:image/png;base64,${qrCodeBase64}`;
     document.getElementById("display-pix-copypaste").value = qrCodeCopy;
 
-    // CORREÇÃO DO ERRO DO CONSOLE:
-    // Verifica se o elemento existe antes de tentar acessar o style
     const stepper = document.getElementById("checkout-stepper");
     if (stepper) stepper.style.display = 'none';
-
+    
     document.getElementById("step-payment").style.display = 'none';
     document.getElementById("step-pix-result").style.display = 'block';
-
+    
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }

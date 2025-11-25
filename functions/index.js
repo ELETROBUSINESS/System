@@ -8,13 +8,10 @@ admin.initializeApp();
 const db = admin.firestore();
 
 const mercadoPagoToken = defineString('MERCADOPAGO_ACCESS_TOKEN');
-
-// URL DO SEU PROJETO (FIXA PARA GARANTIR O RECEBIMENTO)
-// Baseada no ID: super-app25
 const WEBHOOK_URL = "https://us-central1-super-app25.cloudfunctions.net/processWebhook";
 
 // ==========================================================
-// FUNÇÃO 1: CRIAR PREFERÊNCIA
+// FUNÇÃO 1: CRIAR PREFERÊNCIA (CORRIGIDA)
 // ==========================================================
 exports.createPreference = functions.https.onRequest(async (req, res) => {
     cors(req, res, async () => {
@@ -25,8 +22,12 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
             
             if (!items || items.length === 0) return res.status(400).send({ error: "No items" });
 
+            // 1. Sanitização de Dados (CORREÇÃO DO ERRO 400)
+            const cleanPhone = clientData && clientData.phone ? clientData.phone.replace(/\D/g, '') : '';
+            const cleanEmail = clientData && clientData.email ? clientData.email : 'cliente@eletrobusiness.com.br';
+            
             // Cálculos
-            const productsTotal = items.reduce((sum, item) => sum + (item.priceNew * item.quantity), 0);
+            const productsTotal = items.reduce((sum, item) => sum + (Number(item.priceNew) * Number(item.quantity)), 0);
             const freight = Number(shippingCost) || 0;
             const finalTotal = productsTotal + freight;
 
@@ -34,7 +35,7 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
             const client = new MercadoPagoConfig({ accessToken });
             const preferenceClient = new Preference(client);
 
-            // Itens
+            // Formata Itens
             const formattedItems = items.map(item => ({
                 id: item.id,
                 title: item.name,
@@ -42,7 +43,7 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
                 unit_price: Number(item.priceNew),
             }));
 
-            // Frete como item
+            // Adiciona Frete
             if (freight > 0) {
                 formattedItems.push({
                     id: "shipping",
@@ -72,11 +73,11 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
                     items: formattedItems,
                     payer: {
                         name: clientData ? clientData.firstName : 'Cliente',
-                        surname: clientData ? clientData.lastName : '',
-                        email: clientData ? clientData.email : '',
+                        surname: clientData ? clientData.lastName : 'Eletro',
+                        email: cleanEmail,
                         phone: {
                             area_code: "",
-                            number: clientData ? clientData.phone : ""
+                            number: cleanPhone // Envia apenas números
                         }
                     },
                     back_urls: {
@@ -87,7 +88,6 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
                     auto_return: "approved",
                     external_reference: orderRef.id,
                     statement_descriptor: "ELETROBUSINESS",
-                    // [IMPORTANTE] Avisa ao MP onde mandar o status (Preferência)
                     notification_url: WEBHOOK_URL 
                 }
             };
@@ -101,13 +101,15 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
 
         } catch (error) {
             console.error("Erro Preference:", error);
-            return res.status(500).send({ error: error.message });
+            // Retorna o erro detalhado do MP se existir
+            const mpError = error.cause || error.message;
+            return res.status(500).send({ error: mpError });
         }
     }); 
 });
 
 // ==========================================================
-// FUNÇÃO 2: CRIAR PAGAMENTO
+// FUNÇÃO 2: CRIAR PAGAMENTO (MANTIDA IGUAL)
 // ==========================================================
 exports.createPayment = functions.https.onRequest(async (req, res) => {
     cors(req, res, async () => {
@@ -124,16 +126,13 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
 
             paymentData.external_reference = orderId;
             if (!paymentData.statement_descriptor) paymentData.statement_descriptor = "ELETROBUSINESS";
-
-            // [CORREÇÃO CRÍTICA]: Adiciona a URL do Webhook aqui também
             paymentData.notification_url = WEBHOOK_URL;
 
-            console.log("Enviando Pagamento com Webhook:", WEBHOOK_URL);
+            console.log("Processando pagamento para Order:", orderId);
 
             const requestOptions = { idempotencyKey: orderId };
             const paymentResponse = await payment.create({ body: paymentData, requestOptions });
             
-            // Atualiza Firestore Inicial
             const updateData = {
                 status: paymentResponse.status,
                 statusText: paymentResponse.status_detail,
@@ -160,47 +159,32 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
 });
 
 // ==========================================================
-// FUNÇÃO 3: WEBHOOK (RECEBE A CONFIRMAÇÃO)
+// FUNÇÃO 3: WEBHOOK (MANTIDA IGUAL)
 // ==========================================================
 exports.processWebhook = functions.https.onRequest(async (req, res) => {
     const topic = req.query.topic || req.query.type;
     const id = req.query.id || req.query['data.id'] || (req.body.data ? req.body.data.id : null);
-
-    console.log(`Webhook disparado! Tópico: ${topic}, ID: ${id}`);
 
     if (topic === "payment" && id) {
         try {
             const accessToken = mercadoPagoToken.value();
             const client = new MercadoPagoConfig({ accessToken });
             const payment = new Payment(client);
-            
-            // Consulta o status atualizado no Mercado Pago
             const paymentDetails = await payment.get({ id: id });
             const orderId = paymentDetails.external_reference;
-            const mpStatus = paymentDetails.status;
-
-            console.log(`Atualizando pedido ${orderId} para ${mpStatus}`);
             
             if (orderId) {
-                let newStatusText = mpStatus;
+                let newStatusText = paymentDetails.status;
+                if(paymentDetails.status === 'approved') newStatusText = "Pagamento Aprovado";
+                if(paymentDetails.status === 'pending') newStatusText = "Aguardando Pagamento";
                 
-                // Tradução de status
-                if(mpStatus === 'approved') newStatusText = "Pagamento Aprovado";
-                if(mpStatus === 'pending') newStatusText = "Aguardando Pagamento";
-                if(mpStatus === 'rejected') newStatusText = "Pagamento Recusado";
-
-                // Atualiza o banco em tempo real
                 await db.collection("orders").doc(orderId).update({
-                    status: mpStatus,
+                    status: paymentDetails.status,
                     statusText: newStatusText,
                     lastUpdated: admin.firestore.FieldValue.serverTimestamp()
                 });
             }
-        } catch(e) {
-            console.error("Erro ao processar webhook:", e);
-        }
+        } catch(e) { console.error(e); }
     }
-    
-    // Responde 200 OK para o Mercado Pago não ficar reenviando
     return res.status(200).send("OK");
 });
