@@ -12,56 +12,81 @@ const mercadoPagoToken = defineString('MERCADOPAGO_ACCESS_TOKEN');
 // ==========================================================
 // FUNÇÃO 1: CRIAR PREFERÊNCIA
 // ==========================================================
+// ... Imports iguais ...
+
 exports.createPreference = functions.https.onRequest(async (req, res) => {
     cors(req, res, async () => {
-        if (req.method !== "POST") {
-            return res.status(405).send({ error: "Método não permitido" });
-        }
+        if (req.method !== "POST") return res.status(405).send({ error: "Method not allowed" });
 
         try {
-            const { price, items, userId } = req.body;
+            // [ATUALIZAÇÃO]: Recebemos shippingCost, deliveryData e clientData
+            const { items, userId, shippingCost, deliveryData, clientData } = req.body;
             
-            // Validação básica
-            if (!items || items.length === 0) {
-                console.error("Tentativa de criar preferência sem itens.");
-                return res.status(400).send({ error: "Sem itens no carrinho" });
-            }
+            if (!items || items.length === 0) return res.status(400).send({ error: "No items" });
+
+            // 1. Calcula total dos produtos
+            const productsTotal = items.reduce((sum, item) => sum + (item.priceNew * item.quantity), 0);
+            
+            // 2. Soma o frete (garante que é número)
+            const freight = Number(shippingCost) || 0;
+            const finalTotal = productsTotal + freight;
 
             const accessToken = mercadoPagoToken.value();
             const client = new MercadoPagoConfig({ accessToken });
             const preferenceClient = new Preference(client);
 
-            // Formata itens
+            // 3. Formata Itens para o MP
             const formattedItems = items.map(item => ({
                 id: item.id,
                 title: item.name,
-                description: item.description ? item.description.substring(0, 250) : "Produto",
                 quantity: parseInt(item.quantity),
                 unit_price: Number(item.priceNew),
-                category_id: "MLB1000"
             }));
 
-            // Cria Pedido no Firestore
+            // [ATUALIZAÇÃO]: Adiciona o frete como um "Item" no MP para somar no total visual
+            if (freight > 0) {
+                formattedItems.push({
+                    id: "shipping",
+                    title: "Frete / Entrega",
+                    quantity: 1,
+                    unit_price: freight
+                });
+            }
+
+            // 4. Salva no Firestore com os novos dados
             const orderRef = await db.collection("orders").add({
                 userId: userId || 'guest',
                 items: items,
-                total: price,
+                productsTotal: productsTotal,
+                shippingCost: freight,
+                total: finalTotal, // Total Final
+                deliveryData: deliveryData || {}, // Salva endereço/loja
+                clientData: clientData || {},     // Salva nome/fone
                 status: "pending_payment", 
                 statusText: "Iniciando Checkout",
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
             });
 
-            // Cria Preferência no MP
+            // 5. Cria Preferência
             const preferenceData = {
                 body: {
                     items: formattedItems,
+                    payer: {
+                        name: clientData ? clientData.firstName : 'Cliente',
+                        surname: clientData ? clientData.lastName : '',
+                        email: clientData ? clientData.email : '',
+                        phone: {
+                            area_code: "",
+                            number: clientData ? clientData.phone : ""
+                        }
+                    },
                     back_urls: {
                         success: "https://eletrobusiness.com.br/", 
                         failure: "https://eletrobusiness.com.br/",
                         pending: "https://eletrobusiness.com.br/"
                     },
                     auto_return: "approved",
-                    external_reference: orderRef.id, // VÍNCULO IMPORTANTE
+                    external_reference: orderRef.id,
                     statement_descriptor: "ELETROBUSINESS",
                 }
             };
@@ -74,10 +99,84 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
             });
 
         } catch (error) {
-            console.error("Erro ao criar preferência:", error);
-            return res.status(500).send({ error: "Erro interno ao criar preferência" });
+            console.error("Erro Preference:", error);
+            return res.status(500).send({ error: error.message });
         }
     }); 
+});
+
+// ... createPayment e webhook continuam iguais (o createPayment apenas lê o total validado no backend ou confia no payment_data) ...
+// OBS: Mantenha o createPayment como estava na versão "blindada" anterior.
+exports.createPayment = functions.https.onRequest(async (req, res) => {
+    // ... use o código da resposta anterior (o blindado) ...
+    // A única diferença é que agora o pedido no banco terá mais dados, mas o pagamento flui igual.
+    cors(req, res, async () => {
+        try {
+            const body = req.body;
+            const paymentData = body.payment_data || body.formData;
+            const orderId = body.orderId;
+
+            if (!paymentData || !orderId) return res.status(400).send({ error: "Dados ausentes" });
+            
+            const accessToken = mercadoPagoToken.value();
+            const client = new MercadoPagoConfig({ accessToken });
+            const payment = new Payment(client);
+
+            paymentData.external_reference = orderId;
+            if (!paymentData.statement_descriptor) paymentData.statement_descriptor = "ELETROBUSINESS";
+
+            const requestOptions = { idempotencyKey: orderId };
+            const paymentResponse = await payment.create({ body: paymentData, requestOptions });
+            
+            const updateData = {
+                status: paymentResponse.status,
+                statusText: paymentResponse.status_detail,
+                paymentId: paymentResponse.id,
+                paymentType: paymentResponse.payment_type_id,
+            };
+
+            if (paymentResponse.status === "pending" && paymentResponse.point_of_interaction) {
+                updateData.paymentData = paymentResponse.point_of_interaction.transaction_data;
+                updateData.statusText = "Aguardando Pagamento";
+            } else if (paymentResponse.status === "approved") {
+                updateData.statusText = "Pagamento Aprovado";
+            }
+            
+            await db.collection("orders").doc(orderId).update(updateData);
+            return res.status(200).send(paymentResponse);
+
+        } catch (error) {
+            console.error("Erro Pagamento:", error);
+            const mpError = error.response ? error.response.data : error;
+            return res.status(500).send(mpError);
+        }
+    });
+});
+
+exports.processWebhook = functions.https.onRequest(async (req, res) => {
+    // Mantenha o webhook igual
+    const topic = req.query.topic || req.query.type;
+    const id = req.query.id || req.query['data.id'] || (req.body.data ? req.body.data.id : null);
+    if (topic === "payment" && id) {
+        try {
+            const accessToken = mercadoPagoToken.value();
+            const client = new MercadoPagoConfig({ accessToken });
+            const payment = new Payment(client);
+            const paymentDetails = await payment.get({ id: id });
+            const orderId = paymentDetails.external_reference;
+            
+            if (orderId) {
+                let newStatusText = paymentDetails.status;
+                if(paymentDetails.status === 'approved') newStatusText = "Pagamento Aprovado";
+                
+                await db.collection("orders").doc(orderId).update({
+                    status: paymentDetails.status,
+                    statusText: newStatusText
+                });
+            }
+        } catch(e) {}
+    }
+    return res.status(200).send("OK");
 });
 
 // ==========================================================

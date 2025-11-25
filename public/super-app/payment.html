@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,13 +8,25 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <style>
-        /* Estilos específicos para a tela de PIX */
-        .pix-container { text-align: center; padding: 1rem; }
-        .pix-qr-img { max-width: 250px; margin: 1rem auto; display: block; border: 1px solid #ddd; border-radius: 8px; }
-        .pix-copy-box { display: flex; gap: 0.5rem; margin-top: 1rem; }
-        .pix-copy-box input { flex: 1; padding: 0.8rem; border: 1px solid #ccc; border-radius: 4px; background: #f9f9f9; color: #555; }
-        .pix-copy-box button { background: var(--color-accent-blue); color: white; border: none; padding: 0 1rem; border-radius: 4px; cursor: pointer; }
-        .pix-timer { color: #d32f2f; font-weight: bold; margin-bottom: 1rem; }
+        /* Estilos específicos para seleção de entrega */
+        .delivery-options { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+        .delivery-option-card {
+            flex: 1; border: 2px solid #ddd; border-radius: 8px; padding: 1rem;
+            text-align: center; cursor: pointer; transition: all 0.2s;
+        }
+        .delivery-option-card.selected { border-color: var(--color-accent-blue); background: #f0f8ff; }
+        .delivery-option-card i { font-size: 2rem; color: #666; margin-bottom: 0.5rem; }
+        .delivery-option-card.selected i { color: var(--color-accent-blue); }
+        
+        /* Lista de Lojas */
+        .store-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .store-item { border: 1px solid #eee; padding: 1rem; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+        .store-item.selected { border-color: var(--color-accent-green); background: #eafff0; }
+        
+        /* Resumo de Frete */
+        .shipping-summary { background: #f9f9f9; padding: 1rem; margin-top: 1rem; border-radius: 6px; }
+        .shipping-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        .shipping-row.total { font-weight: bold; font-size: 1.1rem; border-top: 1px solid #ddd; padding-top: 0.5rem; margin-top: 0.5rem; }
     </style>
 </head>
 
@@ -29,33 +40,113 @@
     </header>
 
     <main class="container checkout-page">
-        <div class="checkout-stepper" id="checkout-stepper">
+        <div class="checkout-stepper">
             <div class="step active" id="step-indic-1">
-                <span class="step-number">1</span><span class="step-title">Envio</span>
+                <span class="step-number">1</span><span class="step-title">Cadastro</span>
             </div>
             <div class="step-divider"></div>
             <div class="step" id="step-indic-2">
-                <span class="step-number">2</span><span class="step-title">Pagamento</span>
+                <span class="step-number">2</span><span class="step-title">Envio</span>
+            </div>
+            <div class="step-divider"></div>
+            <div class="step" id="step-indic-3">
+                <span class="step-number">3</span><span class="step-title">Pagamento</span>
             </div>
         </div>
 
-        <div id="step-shipping" class="checkout-step active">
+        <div id="step-registration" class="checkout-step active">
             <div class="shipping-form">
-                <h3><i class='bx bxs-truck'></i> Endereço</h3>
-                <div class="form-group"><label>CEP</label><input type="tel" id="cep" placeholder="00000-000"></div>
-                <div class="form-group"><label>Rua</label><input type="text" id="address" placeholder="Endereço..."></div>
-                <div class="form-group-row">
-                    <div class="form-group"><label>Número</label><input type="text" id="num" placeholder="123"></div>
-                    <div class="form-group"><label>Cidade</label><input type="text" value="Ipixuna" disabled></div>
+                <h3><i class='bx bxs-user-detail'></i> Seus Dados</h3>
+                <p style="margin-bottom: 1rem; color: #666; font-size: 0.9rem;">Precisamos desses dados para emitir sua nota e contato.</p>
+                
+                <div class="form-group">
+                    <label>E-mail (Login Google)</label>
+                    <input type="email" id="reg-email" disabled style="background: #eee; cursor: not-allowed;">
                 </div>
-                <button id="btn-go-payment" class="cta-button">Ir para Pagamento</button>
+                <div class="form-group-row">
+                    <div class="form-group">
+                        <label>Primeiro Nome</label>
+                        <input type="text" id="reg-first-name" placeholder="Ex: João">
+                    </div>
+                    <div class="form-group">
+                        <label>Sobrenome</label>
+                        <input type="text" id="reg-last-name" placeholder="Ex: Silva">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Celular (com DDD)</label>
+                    <input type="tel" id="reg-phone" placeholder="(00) 90000-0000">
+                </div>
+
+                <button id="btn-go-shipping" class="cta-button">Ir para Entrega</button>
+            </div>
+        </div>
+
+        <div id="step-shipping" class="checkout-step">
+            <div class="shipping-form">
+                <h3><i class='bx bxs-package'></i> Como quer receber?</h3>
+                
+                <div class="delivery-options">
+                    <div class="delivery-option-card selected" data-type="delivery" onclick="selectDeliveryType('delivery')">
+                        <i class='bx bxs-truck'></i>
+                        <div>Receber em Casa</div>
+                    </div>
+                    <div class="delivery-option-card" data-type="pickup" onclick="selectDeliveryType('pickup')">
+                        <i class='bx bxs-store'></i>
+                        <div>Retirar na Loja</div>
+                    </div>
+                </div>
+
+                <div id="container-delivery-form">
+                    <div class="form-group"><label>CEP</label><input type="tel" id="cep" placeholder="00000-000"></div>
+                    <div class="form-group"><label>Rua</label><input type="text" id="address" placeholder="Endereço..."></div>
+                    <div class="form-group-row">
+                        <div class="form-group"><label>Número</label><input type="text" id="num" placeholder="123"></div>
+                        <div class="form-group">
+                            <label>Cidade</label>
+                            <select id="city-select" style="width: 100%; padding: 0.9rem; border: 1px solid #ddd; border-radius: 6px;">
+                                <option value="">Selecione...</option>
+                                <option value="Ipixuna do Pará">Ipixuna do Pará</option>
+                                <option value="Aurora do Pará">Aurora do Pará</option>
+                                <option value="Outra">Outra</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="shipping-summary">
+                        <div class="shipping-row"><span>Frete:</span> <span id="shipping-cost-display">A calcular</span></div>
+                        <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">
+                            * Ipixuna: Grátis acima de R$ 29,99.<br>
+                            * Aurora: Taxa fixa de R$ 50,00.
+                        </p>
+                    </div>
+                </div>
+
+                <div id="container-pickup-list" style="display: none;">
+                    <p style="margin-bottom: 1rem;">Escolha a unidade mais próxima (Grátis):</p>
+                    <div class="store-list">
+                        <div class="store-item" onclick="selectStore(this, 'Ipixuna')">
+                            <div><strong>D'Tudo Ipixuna</strong><br><small>Centro</small></div>
+                            <i class='bx bx-circle'></i>
+                        </div>
+                        <div class="store-item" onclick="selectStore(this, 'Aurora')">
+                            <div><strong>D'Tudo Aurora</strong><br><small>Rodovia Principal</small></div>
+                            <i class='bx bx-circle'></i>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="btn-go-payment" class="cta-button" style="margin-top: 1.5rem;">Ir para Pagamento</button>
             </div>
         </div>
 
         <div id="step-payment" class="checkout-step">
             <div class="modal-section">
-                <h4>Total: <span id="payment-total-display"></span></h4>
-                <div id="brick-loading-message" class="loading-message-brick" style="display:block;">Carregando Pagamento...</div>
+                <h4>Resumo da Compra</h4>
+                <div class="shipping-row"><span>Produtos:</span> <span id="payment-subtotal-display">R$ 0,00</span></div>
+                <div class="shipping-row"><span>Frete:</span> <span id="payment-shipping-display">R$ 0,00</span></div>
+                <div class="shipping-row total"><span>Total Final:</span> <span id="payment-total-display">R$ 0,00</span></div>
+                
+                <div id="brick-loading-message" class="loading-message-brick" style="display:block; margin-top: 1rem;">Carregando Pagamento...</div>
                 <div id="payment-brick-container"></div>
             </div>
         </div>
@@ -64,20 +155,13 @@
             <div class="pix-container">
                 <i class='bx bx-qr-scan' style="font-size: 3rem; color: #333;"></i>
                 <h3>Escaneie o QR Code</h3>
-                <p>Abra o app do seu banco e pague via PIX.</p>
-                
                 <img id="display-pix-qr" class="pix-qr-img" src="" alt="QR Code Pix">
-                
-                <p>Ou copie o código abaixo:</p>
                 <div class="pix-copy-box">
                     <input type="text" id="display-pix-copypaste" readonly>
                     <button id="btn-copy-pix"><i class='bx bx-copy'></i></button>
                 </div>
-                
-                <br><br>
-                <button id="btn-finish-pix" class="cta-button" style="background-color: #00a650;">
-                    <i class='bx bx-check'></i> Pagamento Feito!
-                </button>
+                <br>
+                <button id="btn-finish-pix" class="cta-button" style="background-color: #00a650;">Pagamento Feito!</button>
             </div>
         </div>
     </main>
