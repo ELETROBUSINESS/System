@@ -37,6 +37,10 @@ async function loadUserData(uid) {
             document.getElementById("reg-first-name").value = data.firstName || '';
             document.getElementById("reg-last-name").value = data.lastName || '';
             document.getElementById("reg-phone").value = data.phone || '';
+            // Se tiver CPF salvo, já preenche também (opcional)
+            if(data.cpf && document.getElementById("reg-cpf")) {
+                document.getElementById("reg-cpf").value = data.cpf;
+            }
         }
     } catch (e) {
         console.error("Erro ao carregar perfil", e);
@@ -50,7 +54,7 @@ function setupStepNavigation() {
         const phone = document.getElementById("reg-phone").value.trim();
         const emailInput = document.getElementById("reg-email").value;
 
-        // Se o email estiver vazio (erro de carregamento), tenta pegar do auth de novo
+        // Se o email estiver vazio, tenta pegar do auth
         if(!emailInput && auth.currentUser) {
             document.getElementById("reg-email").value = auth.currentUser.email;
         }
@@ -62,10 +66,14 @@ function setupStepNavigation() {
 
         if (auth.currentUser) {
             try {
+                // Salva também o CPF se estiver preenchido nesta etapa
+                const cpfVal = document.getElementById("reg-cpf") ? document.getElementById("reg-cpf").value : "";
+                
                 await db.collection("users").doc(auth.currentUser.uid).set({
                     firstName: fname,
                     lastName: lname,
                     phone: phone,
+                    cpf: cpfVal,
                     email: auth.currentUser.email
                 }, { merge: true });
             } catch (e) { console.error("Erro ao salvar user", e); }
@@ -150,7 +158,7 @@ function calculateShipping() {
     if (deliveryMode === 'pickup') return;
 
     const city = document.getElementById("city-select").value;
-    const isBullf = document.getElementById("frete-bullf").checked;
+    const isBullf = document.getElementById("frete-bullf") ? document.getElementById("frete-bullf").checked : false;
     const cartTotal = CartManager.total();
     const display = document.getElementById("shipping-cost-display");
 
@@ -189,10 +197,6 @@ function calculateShipping() {
     }
 }
 
-// js/payment.js - Atualização na função initPaymentBrick
-
-// js/payment.js - Atualização da função initPaymentBrick
-
 async function initPaymentBrick() {
     const cart = CartManager.get();
     const productsTotal = CartManager.total();
@@ -207,7 +211,8 @@ async function initPaymentBrick() {
     const firstName = document.getElementById("reg-first-name").value;
     const lastName = document.getElementById("reg-last-name").value;
     const rawPhone = document.getElementById("reg-phone").value;
-    const rawCpf = document.getElementById("reg-cpf").value || "00000000000"; // Fallback se vazio (evitar erro, mas ideal é obrigar)
+    // Proteção caso o elemento reg-cpf não exista no HTML ainda (embora tenhamos pedido para adicionar)
+    const rawCpf = document.getElementById("reg-cpf") ? document.getElementById("reg-cpf").value : "00000000000";
     
     // Endereço
     const cep = document.getElementById("cep").value || "00000000";
@@ -270,16 +275,14 @@ async function initPaymentBrick() {
                     document.getElementById("brick-loading-message").style.display = 'none';
                 },
                 onSubmit: ({ formData }) => {
-                    // [LÓGICA CRUCIAL PARA AS BOAS PRÁTICAS]
-                    // Preparamos um objeto 'customPayer' limpo e formatado para o Backend
-                    
-                    // 1. Limpa CPF (apenas números)
+                    // [LÓGICA DE BOAS PRÁTICAS]
                     const cleanCpf = rawCpf.replace(/\D/g, '');
                     
-                    // 2. Formata Telefone (Separa DDD)
+                    // Formata Telefone
                     const cleanPhone = rawPhone.replace(/\D/g, '');
-                    const areaCode = cleanPhone.substring(0, 2);
-                    const phoneNumber = cleanPhone.substring(2);
+                    // Fallback simples se o telefone for curto demais
+                    const areaCode = cleanPhone.length >= 2 ? cleanPhone.substring(0, 2) : "11";
+                    const phoneNumber = cleanPhone.length > 2 ? cleanPhone.substring(2) : "900000000";
 
                     const customPayer = {
                         email: email,
@@ -308,15 +311,19 @@ async function initPaymentBrick() {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
-                                payment_data: formData, // Dados do Cartão/Pix (Token)
+                                payment_data: formData, // Token
                                 orderId: data.orderId,
-                                items: cart, // Itens para Análise de Risco
+                                items: cart, 
                                 shippingCost: currentShippingCost,
-                                customPayer: customPayer // [NOVO] Dados do Comprador Formatados
+                                customPayer: customPayer // Dados do comprador
                             })
                         })
                         .then(res => res.json())
                         .then(paymentResult => {
+                            
+                            // [LOG INCLUÍDO AQUI PARA MEDIÇÃO]
+                            console.log("✅ PAGAMENTO PROCESSADO! ID:", paymentResult.id, "| Status:", paymentResult.status);
+
                             CartManager.clear();
                             if (paymentResult.status === 'pending' && paymentResult.point_of_interaction) {
                                 showPixScreen(paymentResult);
