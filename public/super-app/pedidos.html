@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,20 +23,23 @@
             <p style="text-align: center; margin-top: 2rem; color: #666;">Carregando pedidos...</p>
         </div>
 
-        <div id="pix-display-area" style="display:none; margin-top:1rem;" class="pix-container">
-            <div style="background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center;">
-                <h3 style="color: #333; margin-bottom: 1rem;">Pagamento Pendente</h3>
-                <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">Escaneie para finalizar sua compra</p>
-                
-                <div class="pix-qr-code" id="pix-qr-img" style="margin-bottom: 1rem;"></div>
-                
+        <div id="pix-display-area" style="display:none;">
+            <div class="pix-modal-card">
+                <h3 style="color: #333;">Pagamento Pendente</h3>
+                <p style="font-size: 0.9rem; color: #666;">Escaneie para finalizar sua compra</p>
+
+                <div class="pix-qr-code" id="pix-qr-img" style="margin-bottom: 1.5rem;"></div>
+
                 <div class="pix-copy-paste">
                     <input type="text" id="pix-code-text" readonly>
-                    <button onclick="copyPixCode()"><i class='bx bx-copy'></i></button>
+                    <button onclick="copyPixCode()" title="Copiar código"><i class='bx bx-copy'></i></button>
                 </div>
-                
-                <button onclick="closePixModal()" class="cta-button" style="margin-top: 1rem; background-color: #666;">Fechar</button>
+
+                <button onclick="closePixModal()" class="cta-button" style="margin-top: 1rem; background-color: #666;">
+                    Fechar
+                </button>
             </div>
+
         </div>
     </main>
 
@@ -55,8 +59,9 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    
+
     <script src="js/global.js"></script>
     <script src="js/orders.js"></script>
 </body>
+
 </html>

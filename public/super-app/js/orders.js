@@ -123,12 +123,14 @@ window.openPixModal = async (orderId) => {
             const pixInput = document.getElementById("pix-code-text");
             
             if (pixArea) {
-                pixArea.style.display = "block";
-                pixImg.innerHTML = `<img src="data:image/png;base64, ${order.paymentData.qr_code_base64}" style="max-width:200px; width:100%; display:block; margin:0 auto;">`;
+                // CORREÇÃO: Usamos 'flex' para ativar o alinhamento central do CSS
+                pixArea.style.display = "flex"; 
+                
+                pixImg.innerHTML = `<img src="data:image/png;base64, ${order.paymentData.qr_code_base64}" alt="QR Code Pix">`;
                 pixInput.value = order.paymentData.qr_code;
                 
-                // Scroll suave até o modal
-                pixArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Removemos o scrollIntoView pois agora é um modal fixo na tela
+                // pixArea.scrollIntoView(...); 
             }
         } else {
             showToast("QR Code expirado ou indisponível.", "error");
