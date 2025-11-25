@@ -45,7 +45,6 @@ document.addEventListener('userReady', (e) => {
 function renderOrderCard(order, container) {
     const firstItem = order.items && order.items.length > 0 ? order.items[0] : { name: 'Produto', image: 'https://placehold.co/60' };
     
-    // Tratamento de data seguro
     let date = 'Data recente';
     if (order.createdAt && order.createdAt.toDate) {
         date = order.createdAt.toDate().toLocaleDateString('pt-BR');
@@ -53,38 +52,44 @@ function renderOrderCard(order, container) {
 
     let statusClass = '';
     let statusLabel = '';
-    let actionsHtml = '';
+    let pixBtnHtml = '';
 
     // --- LÓGICA DE STATUS ---
     switch(order.status) {
         case 'approved': 
-            statusClass = 'status-approved'; // Verde (style.css)
+            statusClass = 'status-approved'; 
             statusLabel = 'Preparando Pedido';
             break;
             
-        case 'pending':          // Retorno padrão do MP para Pix
-        case 'pending_payment':  // Retorno do nosso backend inicial
+        case 'pending':
+        case 'pending_payment':
         case 'in_process':
-            statusClass = 'status-pending_payment'; // Amarelo/Laranja (style.css)
+            statusClass = 'status-pending_payment'; 
             statusLabel = 'Aguardando Pagamento';
             
-            // Verifica se tem dados de Pix para mostrar o botão
             if (order.paymentData && (order.paymentData.qr_code || order.paymentData.qr_code_base64)) {
-                 actionsHtml = `<button class="cta-button retry-payment-button" onclick="openPixModal('${order.id}')" style="font-size:0.9rem; padding:0.5rem;">Ver QR Code</button>`;
+                 pixBtnHtml = `<button class="cta-button retry-payment-button" onclick="openPixModal('${order.id}')" style="font-size:0.9rem; padding:0.5rem; margin-right:auto;">Ver QR Code</button>`;
             }
             break;
 
         case 'rejected':
         case 'cancelled':
         case 'failed': 
-            statusClass = 'status-failed'; // Vermelho
+            statusClass = 'status-failed'; 
             statusLabel = 'Cancelado';
             break;
 
         default: 
-            statusClass = 'status-processing'; // Azul
+            statusClass = 'status-processing'; 
             statusLabel = order.statusText || 'Processando';
     }
+
+    // Botão de Deletar (Lixeira)
+    const deleteBtnHtml = `
+        <button class="order-btn-delete" onclick="deleteOrder('${order.id}')" title="Excluir Pedido">
+            <i class='bx bx-trash'></i>
+        </button>
+    `;
 
     const cardHtml = `
         <div class="order-card">
@@ -101,14 +106,33 @@ function renderOrderCard(order, container) {
                     </div>
                 </div>
             </div>
-            ${actionsHtml ? `<div class="order-footer"><div class="order-actions" style="width:100%;">${actionsHtml}</div></div>` : ''}
+            <div class="order-footer">
+                <div class="order-actions" style="width:100%; display:flex; justify-content: space-between; align-items: center;">
+                    ${pixBtnHtml ? pixBtnHtml : '<span></span>'} ${deleteBtnHtml}
+                </div>
+            </div>
         </div>
     `;
     
     container.innerHTML += cardHtml;
 }
 
-// --- FUNÇÕES GLOBAIS DE SUPORTE ---
+// --- FUNÇÕES GLOBAIS ---
+
+// NOVA FUNÇÃO: DELETAR PEDIDO
+window.deleteOrder = async (orderId) => {
+    // Confirmação de segurança
+    if (confirm("Tem certeza que deseja excluir este pedido do seu histórico?")) {
+        try {
+            await db.collection("orders").doc(orderId).delete();
+            showToast("Pedido excluído com sucesso!", "success");
+            // A lista atualiza sozinha graças ao onSnapshot
+        } catch (error) {
+            console.error("Erro ao excluir:", error);
+            showToast("Erro ao excluir pedido.", "error");
+        }
+    }
+};
 
 window.openPixModal = async (orderId) => {
     try {
@@ -123,14 +147,9 @@ window.openPixModal = async (orderId) => {
             const pixInput = document.getElementById("pix-code-text");
             
             if (pixArea) {
-                // CORREÇÃO: Usamos 'flex' para ativar o alinhamento central do CSS
                 pixArea.style.display = "flex"; 
-                
                 pixImg.innerHTML = `<img src="data:image/png;base64, ${order.paymentData.qr_code_base64}" alt="QR Code Pix">`;
                 pixInput.value = order.paymentData.qr_code;
-                
-                // Removemos o scrollIntoView pois agora é um modal fixo na tela
-                // pixArea.scrollIntoView(...); 
             }
         } else {
             showToast("QR Code expirado ou indisponível.", "error");
