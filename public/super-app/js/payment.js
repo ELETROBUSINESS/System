@@ -189,31 +189,32 @@ function calculateShipping() {
     }
 }
 
+// js/payment.js - Atualização na função initPaymentBrick
+
 async function initPaymentBrick() {
     const cart = CartManager.get();
     const productsTotal = CartManager.total();
     const finalTotal = productsTotal + currentShippingCost;
 
+    // Atualiza visual
     document.getElementById("payment-subtotal-display").innerText = `R$ ${productsTotal.toFixed(2).replace('.', ',')}`;
     document.getElementById("payment-shipping-display").innerText = currentShippingCost === 0 ? "Grátis" : `R$ ${currentShippingCost.toFixed(2).replace('.', ',')}`;
     document.getElementById("payment-total-display").innerText = `R$ ${finalTotal.toFixed(2).replace('.', ',')}`;
 
+    // Coleta dados do formulário
     const firstName = document.getElementById("reg-first-name").value;
     const lastName = document.getElementById("reg-last-name").value;
     const phone = document.getElementById("reg-phone").value;
     
-    // Garante um email válido
     let email = document.getElementById("reg-email").value;
-    if((!email || email === "") && auth.currentUser) {
-        email = auth.currentUser.email;
-    }
-    // Fallback de segurança extremo se tudo falhar
+    if((!email || email === "") && auth.currentUser) email = auth.currentUser.email;
     if(!email) email = "cliente@eletrobusiness.com.br";
 
     const user = auth.currentUser;
     const uid = user ? user.uid : 'guest';
 
     try {
+        // 1. Cria Preferência
         const response = await fetch(API_URLS.CREATE_PREFERENCE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -233,11 +234,11 @@ async function initPaymentBrick() {
         
         if (!response.ok) {
             const errData = await response.json();
-            console.error("Erro Backend:", errData);
             throw new Error("Erro ao criar preferência: " + (errData.error || "Desconhecido"));
         }
         const data = await response.json(); 
         
+        // 2. Monta o Brick
         if (paymentBrickController) paymentBrickController.unmount(); 
         
         const builder = mp.bricks();
@@ -272,7 +273,10 @@ async function initPaymentBrick() {
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
                                 payment_data: finalData,
-                                orderId: data.orderId
+                                orderId: data.orderId,
+                                // [NOVO] Enviamos os itens e frete também na hora de pagar
+                                items: cart, 
+                                shippingCost: currentShippingCost 
                             })
                         })
                         .then(res => res.json())

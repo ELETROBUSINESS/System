@@ -102,7 +102,7 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
 });
 
 // ==========================================================
-// FUNÇÃO 2: CRIAR PAGAMENTO (ATUALIZADA PARA CORRIGIR ERROS DE HOMOLOGAÇÃO)
+// FUNÇÃO 2: CRIAR PAGAMENTO (CORREÇÃO FINAL: ITENS E RISCO)
 // ==========================================================
 exports.createPayment = functions.https.onRequest(async (req, res) => {
     cors(req, res, async () => {
@@ -110,6 +110,10 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
             const body = req.body;
             const paymentData = body.payment_data || body.formData;
             const orderId = body.orderId;
+            
+            // [NOVO] Recebemos itens e frete do frontend
+            const items = body.items || [];
+            const shippingCost = Number(body.shippingCost) || 0;
 
             if (!paymentData || !orderId) return res.status(400).send({ error: "Dados ausentes" });
             
@@ -117,29 +121,51 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
             const client = new MercadoPagoConfig({ accessToken });
             const payment = new Payment(client);
 
-            // [CORREÇÃO 1]: Identificador do Dispositivo e IP
-            // Captura o IP real do cliente através do proxy do Firebase/Google
+            // 1. Captura IP (Obrigatório para Device ID)
             let ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
             if (ipAddress && ipAddress.indexOf(',') > -1) {
-                ipAddress = ipAddress.split(',')[0]; // Pega o primeiro IP se houver lista
+                ipAddress = ipAddress.split(',')[0];
+            }
+            if (!ipAddress || ipAddress === '::1') ipAddress = '127.0.0.1';
+
+            // 2. Formatação dos Itens para 'additional_info' (Resolve as pendências da imagem)
+            const formattedItems = items.map(item => ({
+                id: item.id || "ID_DESCONHECIDO",
+                title: item.name || "Produto",
+                description: item.description ? item.description.substring(0, 200) : "Descrição do produto",
+                picture_url: item.image || "",
+                category_id: "electronics", // Categoria genérica para EletroBusiness
+                quantity: parseInt(item.quantity),
+                unit_price: Number(item.priceNew)
+            }));
+
+            // Adiciona o frete como um item se houver custo (para fechar a conta)
+            if (shippingCost > 0) {
+                formattedItems.push({
+                    id: "shipping",
+                    title: "Frete / Entrega",
+                    description: "Custo de envio",
+                    category_id: "services",
+                    quantity: 1,
+                    unit_price: shippingCost
+                });
             }
 
-            // Adiciona informações adicionais obrigatórias para análise de risco
-            paymentData.additional_info = {
-                ip_address: ipAddress,
-                items: paymentData.items || [] // Repassa itens se disponível, ajuda na aprovação
-            };
+            // 3. Monta o additional_info completo
+            if (!paymentData.additional_info) {
+                paymentData.additional_info = {};
+            }
+            paymentData.additional_info.ip_address = ipAddress;
+            paymentData.additional_info.items = formattedItems; // <--- AQUI ESTÁ A SOLUÇÃO
 
-            // [CORREÇÃO 2]: Descrição da Fatura (Statement Descriptor)
-            // Nome que aparecerá na fatura do cartão (Máx 22 caracteres)
-            paymentData.statement_descriptor = "ELETROBUSINESS";
-            paymentData.description = `Pedido ${orderId}`; // Descrição interna
-
-            // Configurações Padrão
+            // 4. Outros metadados
             paymentData.external_reference = orderId;
+            if (!paymentData.statement_descriptor) {
+                paymentData.statement_descriptor = "ELETROBUSINESS";
+            }
             paymentData.notification_url = WEBHOOK_URL;
 
-            console.log("Processando pagamento para Order:", orderId, "IP:", ipAddress);
+            console.log(`Processando Pgto ${orderId} | IP: ${ipAddress} | Itens: ${formattedItems.length}`);
 
             const requestOptions = { idempotencyKey: orderId };
             const paymentResponse = await payment.create({ body: paymentData, requestOptions });
