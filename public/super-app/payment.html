@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,23 +9,80 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <style>
-        .delivery-options { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
-        .delivery-option-card {
-            flex: 1; border: 2px solid #ddd; border-radius: 8px; padding: 1rem;
-            text-align: center; cursor: pointer; transition: all 0.2s;
+        .delivery-options {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
-        .delivery-option-card.selected { border-color: var(--color-accent-blue); background: #f0f8ff; }
-        .delivery-option-card i { font-size: 2rem; color: #666; margin-bottom: 0.5rem; }
-        .delivery-option-card.selected i { color: var(--color-accent-blue); }
-        
-        .store-list { display: flex; flex-direction: column; gap: 0.5rem; }
-        .store-item { border: 1px solid #eee; padding: 1rem; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
-        .store-item.selected { border-color: var(--color-accent-green); background: #eafff0; }
-        
-        .shipping-summary { background: #f9f9f9; padding: 1rem; margin-top: 1rem; border-radius: 6px; }
-        .shipping-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; }
-        .shipping-row.total { font-weight: bold; font-size: 1.1rem; border-top: 1px solid #ddd; padding-top: 0.5rem; margin-top: 0.5rem; }
-        
+
+        .delivery-option-card {
+            flex: 1;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .delivery-option-card.selected {
+            border-color: var(--color-accent-blue);
+            background: #f0f8ff;
+        }
+
+        .delivery-option-card i {
+            font-size: 2rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+
+        .delivery-option-card.selected i {
+            color: var(--color-accent-blue);
+        }
+
+        .store-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .store-item {
+            border: 1px solid #eee;
+            padding: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .store-item.selected {
+            border-color: var(--color-accent-green);
+            background: #eafff0;
+        }
+
+        .shipping-summary {
+            background: #f9f9f9;
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 6px;
+        }
+
+        .shipping-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .shipping-row.total {
+            font-weight: bold;
+            font-size: 1.1rem;
+            border-top: 1px solid #ddd;
+            padding-top: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
         /* Estilo do Frete Bullf */
         .bullf-option {
             margin-top: 10px;
@@ -68,8 +126,9 @@
         <div id="step-registration" class="checkout-step active">
             <div class="shipping-form">
                 <h3><i class='bx bxs-user-detail'></i> Seus Dados</h3>
-                <p style="margin-bottom: 1rem; color: #666; font-size: 0.9rem;">Precisamos desses dados para emitir sua nota e contato.</p>
-                
+                <p style="margin-bottom: 1rem; color: #666; font-size: 0.9rem;">Precisamos desses dados para emitir sua
+                    nota e contato.</p>
+
                 <div class="form-group">
                     <label>E-mail</label>
                     <input type="email" id="reg-email" disabled style="background: #eee; cursor: not-allowed;">
@@ -84,9 +143,15 @@
                         <input type="text" id="reg-last-name" placeholder="Ex: Silva">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Celular (com DDD)</label>
-                    <input type="tel" id="reg-phone" placeholder="(00) 90000-0000">
+                <div class="form-group-row">
+                    <div class="form-group">
+                        <label>Celular (com DDD)</label>
+                        <input type="tel" id="reg-phone" placeholder="(00) 90000-0000">
+                    </div>
+                    <div class="form-group">
+                        <label>CPF</label>
+                        <input type="tel" id="reg-cpf" placeholder="000.000.000-00">
+                    </div>
                 </div>
 
                 <button id="btn-go-shipping" class="cta-button">Ir para Entrega</button>
@@ -96,9 +161,10 @@
         <div id="step-shipping" class="checkout-step">
             <div class="shipping-form">
                 <h3><i class='bx bxs-package'></i> Como quer receber?</h3>
-                
+
                 <div class="delivery-options">
-                    <div class="delivery-option-card selected" data-type="delivery" onclick="selectDeliveryType('delivery')">
+                    <div class="delivery-option-card selected" data-type="delivery"
+                        onclick="selectDeliveryType('delivery')">
                         <i class='bx bxs-truck'></i>
                         <div>Receber em Casa</div>
                     </div>
@@ -110,12 +176,15 @@
 
                 <div id="container-delivery-form">
                     <div class="form-group"><label>CEP</label><input type="tel" id="cep" placeholder="00000-000"></div>
-                    <div class="form-group"><label>Rua</label><input type="text" id="address" placeholder="Endereço..."></div>
+                    <div class="form-group"><label>Rua</label><input type="text" id="address" placeholder="Endereço...">
+                    </div>
                     <div class="form-group-row">
-                        <div class="form-group"><label>Número</label><input type="text" id="num" placeholder="123"></div>
+                        <div class="form-group"><label>Número</label><input type="text" id="num" placeholder="123">
+                        </div>
                         <div class="form-group">
                             <label>Cidade</label>
-                            <select id="city-select" style="width: 100%; padding: 0.9rem; border: 1px solid #ddd; border-radius: 6px;">
+                            <select id="city-select"
+                                style="width: 100%; padding: 0.9rem; border: 1px solid #ddd; border-radius: 6px;">
                                 <option value="">Selecione...</option>
                                 <option value="Ipixuna do Pará">Ipixuna do Pará</option>
                                 <option value="Aurora do Pará">Aurora do Pará</option>
@@ -123,12 +192,13 @@
                         </div>
                     </div>
                     <div class="shipping-summary">
-                        <div class="shipping-row"><span>Frete:</span> <span id="shipping-cost-display">A calcular</span></div>
+                        <div class="shipping-row"><span>Frete:</span> <span id="shipping-cost-display">A calcular</span>
+                        </div>
                         <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">
                             * Ipixuna: R$ 7,99 (Grátis acima de R$ 29,99)<br>
                             * Aurora: Taxa fixa de R$ 50,00
                         </p>
-                        
+
                         <label class="bullf-option">
                             <input type="checkbox" id="frete-bullf" onchange="calculateShipping()">
                             <span>Usar Frete Bullf (Grátis)</span>
@@ -157,11 +227,14 @@
         <div id="step-payment" class="checkout-step">
             <div class="modal-section">
                 <h4>Resumo da Compra</h4>
-                <div class="shipping-row"><span>Produtos:</span> <span id="payment-subtotal-display">R$ 0,00</span></div>
+                <div class="shipping-row"><span>Produtos:</span> <span id="payment-subtotal-display">R$ 0,00</span>
+                </div>
                 <div class="shipping-row"><span>Frete:</span> <span id="payment-shipping-display">R$ 0,00</span></div>
-                <div class="shipping-row total"><span>Total Final:</span> <span id="payment-total-display">R$ 0,00</span></div>
-                
-                <div id="brick-loading-message" class="loading-message-brick" style="display:block; margin-top: 1rem;">Carregando Pagamento...</div>
+                <div class="shipping-row total"><span>Total Final:</span> <span id="payment-total-display">R$
+                        0,00</span></div>
+
+                <div id="brick-loading-message" class="loading-message-brick" style="display:block; margin-top: 1rem;">
+                    Carregando Pagamento...</div>
                 <div id="payment-brick-container"></div>
             </div>
         </div>
@@ -176,7 +249,8 @@
                     <button id="btn-copy-pix"><i class='bx bx-copy'></i></button>
                 </div>
                 <br>
-                <button id="btn-finish-pix" class="cta-button" style="background-color: #00a650;">Pagamento Feito!</button>
+                <button id="btn-finish-pix" class="cta-button" style="background-color: #00a650;">Pagamento
+                    Feito!</button>
             </div>
         </div>
     </main>
@@ -190,4 +264,5 @@
     <script src="js/global.js"></script>
     <script src="js/payment.js"></script>
 </body>
+
 </html>

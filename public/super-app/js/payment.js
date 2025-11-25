@@ -191,21 +191,30 @@ function calculateShipping() {
 
 // js/payment.js - Atualização na função initPaymentBrick
 
+// js/payment.js - Atualização da função initPaymentBrick
+
 async function initPaymentBrick() {
     const cart = CartManager.get();
     const productsTotal = CartManager.total();
     const finalTotal = productsTotal + currentShippingCost;
 
-    // Atualiza visual
+    // Visual
     document.getElementById("payment-subtotal-display").innerText = `R$ ${productsTotal.toFixed(2).replace('.', ',')}`;
     document.getElementById("payment-shipping-display").innerText = currentShippingCost === 0 ? "Grátis" : `R$ ${currentShippingCost.toFixed(2).replace('.', ',')}`;
     document.getElementById("payment-total-display").innerText = `R$ ${finalTotal.toFixed(2).replace('.', ',')}`;
 
-    // Coleta dados do formulário
+    // Coleta dados
     const firstName = document.getElementById("reg-first-name").value;
     const lastName = document.getElementById("reg-last-name").value;
-    const phone = document.getElementById("reg-phone").value;
+    const rawPhone = document.getElementById("reg-phone").value;
+    const rawCpf = document.getElementById("reg-cpf").value || "00000000000"; // Fallback se vazio (evitar erro, mas ideal é obrigar)
     
+    // Endereço
+    const cep = document.getElementById("cep").value || "00000000";
+    const street = document.getElementById("address").value || "Retirada na Loja";
+    const number = document.getElementById("num").value || "S/N";
+    const city = document.getElementById("city-select").value || "Cidade";
+
     let email = document.getElementById("reg-email").value;
     if((!email || email === "") && auth.currentUser) email = auth.currentUser.email;
     if(!email) email = "cliente@eletrobusiness.com.br";
@@ -224,10 +233,10 @@ async function initPaymentBrick() {
                 deliveryData: {
                     mode: deliveryMode,
                     store: selectedStore,
-                    address: deliveryMode === 'delivery' ? document.getElementById("address").value : null,
-                    city: deliveryMode === 'delivery' ? document.getElementById("city-select").value : null,
+                    address: deliveryMode === 'delivery' ? street : null,
+                    city: deliveryMode === 'delivery' ? city : null,
                 },
-                clientData: { firstName, lastName, phone, email }, 
+                clientData: { firstName, lastName, phone: rawPhone, email, cpf: rawCpf }, 
                 userId: uid 
             }),
         });
@@ -246,7 +255,11 @@ async function initPaymentBrick() {
             initialization: {
                 amount: finalTotal, 
                 preferenceId: data.preferenceId,
-                payer: { email: email },
+                payer: { 
+                    email: email,
+                    firstName: firstName,
+                    lastName: lastName,
+                },
             },
             customization: {
                 paymentMethods: { bankTransfer: "all", creditCard: "all", mercadoPago: "all" },
@@ -257,26 +270,49 @@ async function initPaymentBrick() {
                     document.getElementById("brick-loading-message").style.display = 'none';
                 },
                 onSubmit: ({ formData }) => {
-                    const finalData = { ...formData };
-                    if (!finalData.payer) finalData.payer = {};
-                    finalData.payer.email = email;
-                    finalData.payer.first_name = firstName;
-                    finalData.payer.last_name = lastName;
-                    finalData.payer.entity_type = 'individual';
-                    finalData.payer.type = 'customer';
+                    // [LÓGICA CRUCIAL PARA AS BOAS PRÁTICAS]
+                    // Preparamos um objeto 'customPayer' limpo e formatado para o Backend
                     
-                    console.log("Enviando Pagamento...", finalData);
+                    // 1. Limpa CPF (apenas números)
+                    const cleanCpf = rawCpf.replace(/\D/g, '');
+                    
+                    // 2. Formata Telefone (Separa DDD)
+                    const cleanPhone = rawPhone.replace(/\D/g, '');
+                    const areaCode = cleanPhone.substring(0, 2);
+                    const phoneNumber = cleanPhone.substring(2);
+
+                    const customPayer = {
+                        email: email,
+                        first_name: firstName,
+                        last_name: lastName,
+                        identification: {
+                            type: "CPF",
+                            number: cleanCpf
+                        },
+                        phone: {
+                            area_code: areaCode,
+                            number: phoneNumber
+                        },
+                        address: {
+                            zip_code: cep.replace(/\D/g, ''),
+                            street_name: street,
+                            street_number: number,
+                            city: city
+                        }
+                    };
+
+                    console.log("Enviando Pagamento com Dados Completos...", customPayer);
 
                     return new Promise((resolve, reject) => {
                         fetch(API_URLS.CREATE_PAYMENT, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
-                                payment_data: finalData,
+                                payment_data: formData, // Dados do Cartão/Pix (Token)
                                 orderId: data.orderId,
-                                // [NOVO] Enviamos os itens e frete também na hora de pagar
-                                items: cart, 
-                                shippingCost: currentShippingCost 
+                                items: cart, // Itens para Análise de Risco
+                                shippingCost: currentShippingCost,
+                                customPayer: customPayer // [NOVO] Dados do Comprador Formatados
                             })
                         })
                         .then(res => res.json())

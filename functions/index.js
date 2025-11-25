@@ -102,7 +102,7 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
 });
 
 // ==========================================================
-// FUNÇÃO 2: CRIAR PAGAMENTO (CORREÇÃO FINAL: ITENS E RISCO)
+// FUNÇÃO 2: CRIAR PAGAMENTO (COM BOAS PRÁTICAS - DADOS COMPLETOS)
 // ==========================================================
 exports.createPayment = functions.https.onRequest(async (req, res) => {
     cors(req, res, async () => {
@@ -111,9 +111,10 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
             const paymentData = body.payment_data || body.formData;
             const orderId = body.orderId;
             
-            // [NOVO] Recebemos itens e frete do frontend
+            // Dados extras para Aprovação
             const items = body.items || [];
             const shippingCost = Number(body.shippingCost) || 0;
+            const customPayer = body.customPayer || {}; // [NOVO] Dados do comprador
 
             if (!paymentData || !orderId) return res.status(400).send({ error: "Dados ausentes" });
             
@@ -121,51 +122,83 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
             const client = new MercadoPagoConfig({ accessToken });
             const payment = new Payment(client);
 
-            // 1. Captura IP (Obrigatório para Device ID)
+            // 1. Captura IP
             let ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
             if (ipAddress && ipAddress.indexOf(',') > -1) {
                 ipAddress = ipAddress.split(',')[0];
             }
             if (!ipAddress || ipAddress === '::1') ipAddress = '127.0.0.1';
 
-            // 2. Formatação dos Itens para 'additional_info' (Resolve as pendências da imagem)
+            // 2. Formata Itens (Risco)
             const formattedItems = items.map(item => ({
-                id: item.id || "ID_DESCONHECIDO",
+                id: item.id || "ID_GEN",
                 title: item.name || "Produto",
-                description: item.description ? item.description.substring(0, 200) : "Descrição do produto",
+                description: item.description ? item.description.substring(0, 200) : "Item",
                 picture_url: item.image || "",
-                category_id: "electronics", // Categoria genérica para EletroBusiness
+                category_id: "electronics",
                 quantity: parseInt(item.quantity),
                 unit_price: Number(item.priceNew)
             }));
 
-            // Adiciona o frete como um item se houver custo (para fechar a conta)
             if (shippingCost > 0) {
                 formattedItems.push({
                     id: "shipping",
-                    title: "Frete / Entrega",
-                    description: "Custo de envio",
+                    title: "Frete",
                     category_id: "services",
                     quantity: 1,
                     unit_price: shippingCost
                 });
             }
 
-            // 3. Monta o additional_info completo
-            if (!paymentData.additional_info) {
-                paymentData.additional_info = {};
+            // 3. Mesclagem do Payer (Endereço, Telefone, CPF)
+            // O objeto paymentData já vem com o email do frontend, mas vamos reforçar com dados completos
+            if (!paymentData.payer) paymentData.payer = {};
+            
+            // Injeta os dados formatados que vieram do frontend
+            if (customPayer.email) paymentData.payer.email = customPayer.email;
+            if (customPayer.first_name) paymentData.payer.first_name = customPayer.first_name;
+            if (customPayer.last_name) paymentData.payer.last_name = customPayer.last_name;
+            
+            // identification (CPF)
+            if (customPayer.identification) {
+                paymentData.payer.identification = customPayer.identification;
             }
+            
+            // address (Endereço do comprador) - Resolve "Endereço do comprador"
+            if (customPayer.address) {
+                paymentData.payer.address = customPayer.address;
+            }
+
+            // phone (Telefone) - Resolve "Telefone do comprador"
+            if (customPayer.phone) {
+                // O MP espera apenas números, já limpamos no frontend
+                paymentData.payer.phone = {
+                    area_code: customPayer.phone.area_code,
+                    number: customPayer.phone.number
+                };
+            }
+
+            // 4. Additional Info
+            if (!paymentData.additional_info) paymentData.additional_info = {};
             paymentData.additional_info.ip_address = ipAddress;
-            paymentData.additional_info.items = formattedItems; // <--- AQUI ESTÁ A SOLUÇÃO
+            paymentData.additional_info.items = formattedItems;
+            // Também enviamos o payer aqui para redundância de análise de risco
+            paymentData.additional_info.payer = {
+                first_name: customPayer.first_name,
+                last_name: customPayer.last_name,
+                phone: {
+                    area_code: customPayer.phone ? customPayer.phone.area_code : "",
+                    number: customPayer.phone ? customPayer.phone.number : ""
+                },
+                address: customPayer.address
+            };
 
-            // 4. Outros metadados
+            // 5. Configs Finais
             paymentData.external_reference = orderId;
-            if (!paymentData.statement_descriptor) {
-                paymentData.statement_descriptor = "ELETROBUSINESS";
-            }
             paymentData.notification_url = WEBHOOK_URL;
+            paymentData.statement_descriptor = "ELETROBUSINESS"; 
 
-            console.log(`Processando Pgto ${orderId} | IP: ${ipAddress} | Itens: ${formattedItems.length}`);
+            console.log(`Processando Pgto ${orderId} | IP: ${ipAddress} | CPF Enviado: ${customPayer.identification ? 'SIM' : 'NÃO'}`);
 
             const requestOptions = { idempotencyKey: orderId };
             const paymentResponse = await payment.create({ body: paymentData, requestOptions });
