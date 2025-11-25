@@ -102,38 +102,98 @@ exports.createPreference = functions.https.onRequest(async (req, res) => {
 });
 
 // ==========================================================
-// FUNÇÃO 2: CRIAR PAGAMENTO (COM BOAS PRÁTICAS - DADOS COMPLETOS)
+// FUNÇÃO 2: CRIAR PAGAMENTO (BLINDADA CONTRA ERROS DE DADOS)
 // ==========================================================
 exports.createPayment = functions.https.onRequest(async (req, res) => {
     cors(req, res, async () => {
         try {
             const body = req.body;
+            // Dados brutos do Frontend
             const paymentData = body.payment_data || body.formData;
+            const customPayer = body.customPayer || {}; 
             const orderId = body.orderId;
-            
-            // Dados extras para Aprovação
             const items = body.items || [];
             const shippingCost = Number(body.shippingCost) || 0;
-            const customPayer = body.customPayer || {}; // [NOVO] Dados do comprador
 
-            if (!paymentData || !orderId) return res.status(400).send({ error: "Dados ausentes" });
+            if (!paymentData || !orderId) return res.status(400).send({ error: "Dados de pagamento ausentes" });
             
             const accessToken = mercadoPagoToken.value();
             const client = new MercadoPagoConfig({ accessToken });
             const payment = new Payment(client);
 
-            // 1. Captura IP
+            // 1. Captura IP (Obrigatório para Device ID)
             let ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-            if (ipAddress && ipAddress.indexOf(',') > -1) {
-                ipAddress = ipAddress.split(',')[0];
-            }
+            if (ipAddress && ipAddress.indexOf(',') > -1) ipAddress = ipAddress.split(',')[0];
             if (!ipAddress || ipAddress === '::1') ipAddress = '127.0.0.1';
 
-            // 2. Formata Itens (Risco)
+            // 2. Sanitização de Dados (AQUI ESTAVA O ERRO PROVÁVEL)
+            // O MP exige strings limpas para telefone e CPF
+            const cleanAreaCode = customPayer.phone ? String(customPayer.phone.area_code).replace(/\D/g, '') : "11";
+            const cleanNumber = customPayer.phone ? String(customPayer.phone.number).replace(/\D/g, '') : "900000000";
+            const cleanCpf = customPayer.identification ? String(customPayer.identification.number).replace(/\D/g, '') : "";
+            const cleanZip = customPayer.address ? String(customPayer.address.zip_code).replace(/\D/g, '') : "00000000";
+
+            // 3. Constrói o Payload Limpo
+            // Em vez de usar o objeto 'sujo' do frontend, injetamos os dados validados
+            
+            // Preserva dados vitais do token gerado pelo Brick
+            const finalPaymentData = {
+                token: paymentData.token,
+                issuer_id: paymentData.issuer_id,
+                payment_method_id: paymentData.payment_method_id,
+                transaction_amount: Number(paymentData.transaction_amount),
+                installments: Number(paymentData.installments),
+                payer: {
+                    email: customPayer.email || paymentData.payer.email,
+                    first_name: customPayer.first_name || "Cliente",
+                    last_name: customPayer.last_name || "Eletro",
+                    identification: {
+                        type: "CPF", // Obrigatório ser CPF
+                        number: cleanCpf 
+                    },
+                    address: {
+                        zip_code: cleanZip,
+                        street_name: customPayer.address?.street_name || "Rua",
+                        street_number: customPayer.address?.street_number || "0",
+                        neighborhood: "Centro", // Opcional mas bom ter
+                        city: customPayer.address?.city || "Cidade",
+                        federal_unit: "PA" // Opcional
+                    }
+                },
+                additional_info: {
+                    ip_address: ipAddress,
+                    items: [], // Será preenchido abaixo
+                    payer: {
+                        first_name: customPayer.first_name,
+                        last_name: customPayer.last_name,
+                        phone: {
+                            area_code: cleanAreaCode,
+                            number: cleanNumber
+                        },
+                        address: {
+                            zip_code: cleanZip,
+                            street_name: customPayer.address?.street_name || "Rua",
+                            street_number: customPayer.address?.street_number || "0"
+                        }
+                    }
+                },
+                external_reference: orderId,
+                statement_descriptor: "ELETROBUSINESS",
+                notification_url: WEBHOOK_URL
+            };
+
+            // Se for PIX, removemos campos exclusivos de cartão para não dar erro
+            if (paymentData.payment_method_id === 'pix') {
+                delete finalPaymentData.token;
+                delete finalPaymentData.issuer_id;
+                delete finalPaymentData.installments;
+            }
+
+            // 4. Preenche Itens (Risco)
             const formattedItems = items.map(item => ({
-                id: item.id || "ID_GEN",
-                title: item.name || "Produto",
-                description: item.description ? item.description.substring(0, 200) : "Item",
+                id: item.id ? String(item.id) : "ID",
+                title: item.name ? String(item.name) : "Produto",
+                description: "Item da Loja",
                 picture_url: item.image || "",
                 category_id: "electronics",
                 quantity: parseInt(item.quantity),
@@ -144,66 +204,20 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
                 formattedItems.push({
                     id: "shipping",
                     title: "Frete",
+                    description: "Entrega",
                     category_id: "services",
                     quantity: 1,
-                    unit_price: shippingCost
+                    unit_price: Number(shippingCost)
                 });
             }
+            finalPaymentData.additional_info.items = formattedItems;
 
-            // 3. Mesclagem do Payer (Endereço, Telefone, CPF)
-            // O objeto paymentData já vem com o email do frontend, mas vamos reforçar com dados completos
-            if (!paymentData.payer) paymentData.payer = {};
-            
-            // Injeta os dados formatados que vieram do frontend
-            if (customPayer.email) paymentData.payer.email = customPayer.email;
-            if (customPayer.first_name) paymentData.payer.first_name = customPayer.first_name;
-            if (customPayer.last_name) paymentData.payer.last_name = customPayer.last_name;
-            
-            // identification (CPF)
-            if (customPayer.identification) {
-                paymentData.payer.identification = customPayer.identification;
-            }
-            
-            // address (Endereço do comprador) - Resolve "Endereço do comprador"
-            if (customPayer.address) {
-                paymentData.payer.address = customPayer.address;
-            }
-
-            // phone (Telefone) - Resolve "Telefone do comprador"
-            if (customPayer.phone) {
-                // O MP espera apenas números, já limpamos no frontend
-                paymentData.payer.phone = {
-                    area_code: customPayer.phone.area_code,
-                    number: customPayer.phone.number
-                };
-            }
-
-            // 4. Additional Info
-            if (!paymentData.additional_info) paymentData.additional_info = {};
-            paymentData.additional_info.ip_address = ipAddress;
-            paymentData.additional_info.items = formattedItems;
-            // Também enviamos o payer aqui para redundância de análise de risco
-            paymentData.additional_info.payer = {
-                first_name: customPayer.first_name,
-                last_name: customPayer.last_name,
-                phone: {
-                    area_code: customPayer.phone ? customPayer.phone.area_code : "",
-                    number: customPayer.phone ? customPayer.phone.number : ""
-                },
-                address: customPayer.address
-            };
-
-            // 5. Configs Finais
-            paymentData.external_reference = orderId;
-            paymentData.notification_url = WEBHOOK_URL;
-            paymentData.statement_descriptor = "ELETROBUSINESS"; 
-
-            console.log(`Processando Pgto ${orderId} | IP: ${ipAddress} | CPF Enviado: ${customPayer.identification ? 'SIM' : 'NÃO'}`);
+            console.log(`Enviando Payload Blindado para Order ${orderId}`);
 
             const requestOptions = { idempotencyKey: orderId };
-            const paymentResponse = await payment.create({ body: paymentData, requestOptions });
+            const paymentResponse = await payment.create({ body: finalPaymentData, requestOptions });
             
-            // Atualiza Firestore
+            // Salva sucesso no Firestore
             const updateData = {
                 status: paymentResponse.status,
                 statusText: paymentResponse.status_detail,
@@ -222,9 +236,11 @@ exports.createPayment = functions.https.onRequest(async (req, res) => {
             return res.status(200).send(paymentResponse);
 
         } catch (error) {
-            console.error("Erro Pagamento:", error);
-            const mpError = error.response ? error.response.data : error;
-            return res.status(500).send(mpError);
+            console.error("Erro Pagamento Backend:", error);
+            // Tenta pegar a mensagem de erro real do MP
+            const mpError = error.response ? error.response.data : { message: error.message };
+            // Retorna 400 para o frontend saber que falhou, com os detalhes
+            return res.status(400).send(mpError);
         }
     });
 });
