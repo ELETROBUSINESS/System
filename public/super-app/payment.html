@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <style>
-        /* Estilos específicos para seleção de entrega */
         .delivery-options { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
         .delivery-option-card {
             flex: 1; border: 2px solid #ddd; border-radius: 8px; padding: 1rem;
@@ -18,15 +17,27 @@
         .delivery-option-card i { font-size: 2rem; color: #666; margin-bottom: 0.5rem; }
         .delivery-option-card.selected i { color: var(--color-accent-blue); }
         
-        /* Lista de Lojas */
         .store-list { display: flex; flex-direction: column; gap: 0.5rem; }
         .store-item { border: 1px solid #eee; padding: 1rem; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
         .store-item.selected { border-color: var(--color-accent-green); background: #eafff0; }
         
-        /* Resumo de Frete */
         .shipping-summary { background: #f9f9f9; padding: 1rem; margin-top: 1rem; border-radius: 6px; }
         .shipping-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; }
         .shipping-row.total { font-weight: bold; font-size: 1.1rem; border-top: 1px solid #ddd; padding-top: 0.5rem; margin-top: 0.5rem; }
+        
+        /* Estilo do Frete Bullf */
+        .bullf-option {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #ccc;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: var(--color-accent-blue);
+            font-weight: bold;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -40,7 +51,7 @@
     </header>
 
     <main class="container checkout-page">
-        <div class="checkout-stepper">
+        <div class="checkout-stepper" id="checkout-stepper">
             <div class="step active" id="step-indic-1">
                 <span class="step-number">1</span><span class="step-title">Cadastro</span>
             </div>
@@ -60,7 +71,7 @@
                 <p style="margin-bottom: 1rem; color: #666; font-size: 0.9rem;">Precisamos desses dados para emitir sua nota e contato.</p>
                 
                 <div class="form-group">
-                    <label>E-mail (Login Google)</label>
+                    <label>E-mail</label>
                     <input type="email" id="reg-email" disabled style="background: #eee; cursor: not-allowed;">
                 </div>
                 <div class="form-group-row">
@@ -108,16 +119,20 @@
                                 <option value="">Selecione...</option>
                                 <option value="Ipixuna do Pará">Ipixuna do Pará</option>
                                 <option value="Aurora do Pará">Aurora do Pará</option>
-                                <option value="Outra">Outra</option>
                             </select>
                         </div>
                     </div>
                     <div class="shipping-summary">
                         <div class="shipping-row"><span>Frete:</span> <span id="shipping-cost-display">A calcular</span></div>
                         <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">
-                            * Ipixuna: Grátis acima de R$ 29,99.<br>
-                            * Aurora: Taxa fixa de R$ 50,00.
+                            * Ipixuna: R$ 7,99 (Grátis acima de R$ 29,99)<br>
+                            * Aurora: Taxa fixa de R$ 50,00
                         </p>
+                        
+                        <label class="bullf-option">
+                            <input type="checkbox" id="frete-bullf" onchange="calculateShipping()">
+                            <span>Usar Frete Bullf (Grátis)</span>
+                        </label>
                     </div>
                 </div>
 

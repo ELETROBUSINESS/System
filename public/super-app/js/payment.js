@@ -7,7 +7,6 @@ let deliveryMode = 'delivery'; // 'delivery' ou 'pickup'
 let selectedStore = '';
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Escuta o login para preencher o email
     document.addEventListener('userReady', (e) => {
         const user = e.detail;
         if(user && user.email) {
@@ -16,7 +15,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
     
-    // Se o usuário já estiver carregado antes do listener
     if(auth && auth.currentUser) {
         document.getElementById("reg-email").value = auth.currentUser.email;
         loadUserData(auth.currentUser.uid);
@@ -27,7 +25,6 @@ document.addEventListener("DOMContentLoaded", () => {
     setupPixEvents();
 });
 
-// --- CARREGAR DADOS DO USUÁRIO ---
 async function loadUserData(uid) {
     try {
         const doc = await db.collection("users").doc(uid).get();
@@ -42,9 +39,8 @@ async function loadUserData(uid) {
     }
 }
 
-// --- NAVEGAÇÃO ENTRE ETAPAS ---
 function setupStepNavigation() {
-    // Botão: Cadastro -> Envio
+    // 1 -> 2
     document.getElementById("btn-go-shipping").addEventListener("click", async () => {
         const fname = document.getElementById("reg-first-name").value.trim();
         const lname = document.getElementById("reg-last-name").value.trim();
@@ -55,7 +51,6 @@ function setupStepNavigation() {
             return;
         }
 
-        // Salva no Firebase
         if (auth.currentUser) {
             try {
                 await db.collection("users").doc(auth.currentUser.uid).set({
@@ -66,21 +61,24 @@ function setupStepNavigation() {
                 }, { merge: true });
             } catch (e) { console.error("Erro ao salvar user", e); }
         }
-
-        // Avança UI
         changeStep(2);
     });
 
-    // Botão: Envio -> Pagamento
+    // 2 -> 3
     document.getElementById("btn-go-payment").addEventListener("click", async () => {
-        // Validação da Entrega
         if (deliveryMode === 'delivery') {
             const cep = document.getElementById("cep").value;
             const city = document.getElementById("city-select").value;
             const address = document.getElementById("address").value;
+            const displayCost = document.getElementById("shipping-cost-display").innerText;
             
             if (!cep || !city || !address) {
                 showToast("Preencha o endereço completo.", "error");
+                return;
+            }
+            // Bloqueia se o frete for inválido (cidade não atendida)
+            if (displayCost.includes("Não entregamos")) {
+                showToast("Não entregamos nesta região.", "error");
                 return;
             }
         } else {
@@ -90,18 +88,15 @@ function setupStepNavigation() {
             }
         }
 
-        // Avança UI
         changeStep(3);
         await initPaymentBrick();
     });
 }
 
 function changeStep(stepNum) {
-    // Esconde todos
     document.querySelectorAll('.checkout-step').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
 
-    // Mostra o atual
     if (stepNum === 2) {
         document.getElementById("step-shipping").classList.add("active");
         document.getElementById("step-indic-1").classList.add("active");
@@ -114,25 +109,20 @@ function changeStep(stepNum) {
     }
 }
 
-// --- LÓGICA DE ENTREGA E FRETE ---
 function setupDeliveryLogic() {
-    // Funções globais para o HTML acessar
     window.selectDeliveryType = (type) => {
         deliveryMode = type;
-        
-        // Visual Cards
         document.querySelectorAll('.delivery-option-card').forEach(c => c.classList.remove('selected'));
         document.querySelector(`.delivery-option-card[data-type="${type}"]`).classList.add('selected');
 
-        // Toggle Forms
         if (type === 'delivery') {
             document.getElementById("container-delivery-form").style.display = 'block';
             document.getElementById("container-pickup-list").style.display = 'none';
-            calculateShipping(); // Recalcula
+            calculateShipping(); 
         } else {
             document.getElementById("container-delivery-form").style.display = 'none';
             document.getElementById("container-pickup-list").style.display = 'block';
-            currentShippingCost = 0; // Retirada é grátis
+            currentShippingCost = 0; 
         }
     };
 
@@ -146,78 +136,89 @@ function setupDeliveryLogic() {
         selectedStore = storeName;
     };
 
-    // Recalcula frete ao mudar a cidade
     document.getElementById("city-select").addEventListener("change", calculateShipping);
 }
 
+// --- LÓGICA DE FRETE ATUALIZADA ---
 function calculateShipping() {
     if (deliveryMode === 'pickup') return;
 
     const city = document.getElementById("city-select").value;
+    const isBullf = document.getElementById("frete-bullf").checked;
     const cartTotal = CartManager.total();
     const display = document.getElementById("shipping-cost-display");
+
+    // 1. Prioridade: Frete Bullf
+    if (isBullf) {
+        currentShippingCost = 0;
+        display.innerText = "Grátis (Frete Bullf)";
+        display.style.color = "var(--color-accent-blue)";
+        return;
+    }
 
     if (!city) {
         currentShippingCost = 0;
         display.innerText = "Selecione a cidade";
+        display.style.color = "#666";
         return;
     }
 
+    // 2. Ipixuna do Pará
     if (city === "Ipixuna do Pará") {
         if (cartTotal >= 29.99) {
             currentShippingCost = 0;
             display.innerText = "Grátis (Pedido > R$ 29,99)";
             display.style.color = "green";
         } else {
-            currentShippingCost = 10.00; // Taxa simbólica se for menor (ou pode bloquear)
-            display.innerText = "R$ 10,00 (Min. R$ 29,99 para grátis)";
-            display.style.color = "red";
+            currentShippingCost = 7.99; // Taxa atualizada
+            display.innerText = "R$ 7,99";
+            display.style.color = "#333";
         }
-    } else if (city === "Aurora do Pará") {
+    } 
+    // 3. Aurora do Pará
+    else if (city === "Aurora do Pará") {
         currentShippingCost = 50.00;
         display.innerText = "R$ 50,00";
         display.style.color = "#333";
-    } else {
-        currentShippingCost = 0; // Outra cidade (lógica a definir, deixei 0 pra não travar)
-        display.innerText = "A combinar";
+    } 
+    // 4. Outros (Bloqueio)
+    else {
+        currentShippingCost = 0; 
+        display.innerText = "Não entregamos nesta região";
+        display.style.color = "red";
     }
 }
 
-// --- PAGAMENTO (MERCADO PAGO) ---
 async function initPaymentBrick() {
     const cart = CartManager.get();
     const productsTotal = CartManager.total();
     const finalTotal = productsTotal + currentShippingCost;
 
-    // Atualiza Display do Resumo
     document.getElementById("payment-subtotal-display").innerText = `R$ ${productsTotal.toFixed(2).replace('.', ',')}`;
     document.getElementById("payment-shipping-display").innerText = currentShippingCost === 0 ? "Grátis" : `R$ ${currentShippingCost.toFixed(2).replace('.', ',')}`;
     document.getElementById("payment-total-display").innerText = `R$ ${finalTotal.toFixed(2).replace('.', ',')}`;
 
-    // Dados do Usuário Coletados
     const firstName = document.getElementById("reg-first-name").value;
     const lastName = document.getElementById("reg-last-name").value;
     const phone = document.getElementById("reg-phone").value;
     const email = document.getElementById("reg-email").value;
-
     const user = auth.currentUser;
     const uid = user ? user.uid : 'guest';
 
     try {
-        // 1. Cria Preferência (Enviando o Frete e Dados do Cliente)
         const response = await fetch(API_URLS.CREATE_PREFERENCE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ 
                 items: cart, 
-                shippingCost: currentShippingCost, // NOVO: Envia o frete
+                shippingCost: currentShippingCost, 
                 deliveryData: {
                     mode: deliveryMode,
                     store: selectedStore,
                     address: deliveryMode === 'delivery' ? document.getElementById("address").value : null,
                     city: deliveryMode === 'delivery' ? document.getElementById("city-select").value : null,
                 },
-                clientData: { firstName, lastName, phone, email }, // NOVO: Envia dados do cliente
+                clientData: { firstName, lastName, phone, email }, 
                 userId: uid 
             }),
         });
@@ -225,13 +226,12 @@ async function initPaymentBrick() {
         if (!response.ok) throw new Error("Erro ao criar preferência");
         const data = await response.json(); 
         
-        // 2. Monta o Brick
-        if (paymentBrickController) paymentBrickController.unmount(); // Limpa se já existir
+        if (paymentBrickController) paymentBrickController.unmount(); 
         
         const builder = mp.bricks();
         const settings = {
             initialization: {
-                amount: finalTotal, // Envia o total COM frete para o Brick
+                amount: finalTotal, 
                 preferenceId: data.preferenceId,
                 payer: { email: email },
             },
@@ -244,7 +244,6 @@ async function initPaymentBrick() {
                     document.getElementById("brick-loading-message").style.display = 'none';
                 },
                 onSubmit: ({ formData }) => {
-                    // Prepara Payload
                     const finalData = { ...formData };
                     if (!finalData.payer) finalData.payer = {};
                     finalData.payer.email = email;
@@ -253,9 +252,6 @@ async function initPaymentBrick() {
                     finalData.payer.entity_type = 'individual';
                     finalData.payer.type = 'customer';
                     
-                    // Adiciona o telefone se o MP aceitar (opcional, mas bom ter)
-                    // finalData.payer.phone = { number: phone }; 
-
                     console.log("Enviando Pagamento...", finalData);
 
                     return new Promise((resolve, reject) => {
@@ -300,7 +296,6 @@ async function initPaymentBrick() {
     }
 }
 
-// --- PIX ---
 function setupPixEvents() {
     const btnCopy = document.getElementById("btn-copy-pix");
     if (btnCopy) {
@@ -326,7 +321,11 @@ function showPixScreen(paymentResult) {
     document.getElementById("display-pix-qr").src = `data:image/png;base64,${qrCodeBase64}`;
     document.getElementById("display-pix-copypaste").value = qrCodeCopy;
 
-    document.getElementById("checkout-stepper").style.display = 'none';
+    // CORREÇÃO DO ERRO DO CONSOLE:
+    // Verifica se o elemento existe antes de tentar acessar o style
+    const stepper = document.getElementById("checkout-stepper");
+    if (stepper) stepper.style.display = 'none';
+    
     document.getElementById("step-payment").style.display = 'none';
     document.getElementById("step-pix-result").style.display = 'block';
     
