@@ -1,6 +1,5 @@
 // js/orders.js
 
-// Ouve o evento customizado disparado pelo global.js quando o Auth carrega
 document.addEventListener('userReady', (e) => {
     const user = e.detail;
     const container = document.getElementById("orders-list");
@@ -10,14 +9,14 @@ document.addEventListener('userReady', (e) => {
     if (!user || user.isAnonymous) {
         container.innerHTML = `
             <div class='cart-empty'>
-                <i class='bx bx-user-circle' style='font-size: 3rem;'></i>
-                <h3>Faça login</h3>
-                <p>Entre com sua conta para ver seus pedidos.</p>
+                <i class='bx bx-user-circle' style='font-size: 3rem; color:#ccc;'></i>
+                <h3 style="margin-top:1rem;">Faça login</h3>
+                <p style="color:#666;">Entre com sua conta para ver seus pedidos.</p>
             </div>`;
         return;
     }
 
-    // Listener em tempo real do Firestore
+    // Listener em tempo real
     db.collection("orders")
       .where("userId", "==", user.uid)
       .orderBy("createdAt", "desc")
@@ -25,13 +24,13 @@ document.addEventListener('userReady', (e) => {
           if (snapshot.empty) {
               container.innerHTML = `
                 <div class='cart-empty'>
-                    <i class='bx bx-shopping-bag' style='font-size: 3rem;'></i>
-                    <h3>Nenhum pedido encontrado.</h3>
+                    <i class='bx bx-shopping-bag' style='font-size: 3rem; color:#ccc;'></i>
+                    <h3 style="margin-top:1rem;">Nenhum pedido encontrado.</h3>
                 </div>`;
               return;
           }
           
-          container.innerHTML = ""; // Limpa lista atual
+          container.innerHTML = "";
           
           snapshot.forEach(doc => {
               const order = { id: doc.id, ...doc.data() };
@@ -39,56 +38,54 @@ document.addEventListener('userReady', (e) => {
           });
       }, error => {
           console.error("Erro ao buscar pedidos:", error);
-          container.innerHTML = "<p>Erro ao carregar pedidos.</p>";
+          container.innerHTML = "<p style='text-align:center; margin-top:2rem;'>Erro ao carregar pedidos.</p>";
       });
 });
 
 function renderOrderCard(order, container) {
-    // Garante que existe item para exibir imagem
     const firstItem = order.items && order.items.length > 0 ? order.items[0] : { name: 'Produto', image: 'https://placehold.co/60' };
-    const date = order.createdAt ? order.createdAt.toDate().toLocaleDateString('pt-BR') : 'Data recente';
     
-    // Variáveis de controle
+    // Tratamento de data seguro
+    let date = 'Data recente';
+    if (order.createdAt && order.createdAt.toDate) {
+        date = order.createdAt.toDate().toLocaleDateString('pt-BR');
+    }
+
     let statusClass = '';
     let statusLabel = '';
     let actionsHtml = '';
 
-    // --- LÓGICA DE STATUS UNIFICADA ---
+    // --- LÓGICA DE STATUS ---
     switch(order.status) {
-        // PAGAMENTO APROVADO
         case 'approved': 
-            statusClass = 'status-approved'; 
-            statusLabel = 'Preparando Pedido'; // Texto solicitado
+            statusClass = 'status-approved'; // Verde (style.css)
+            statusLabel = 'Preparando Pedido';
             break;
             
-        // PAGAMENTO PENDENTE (Pix gerado ou Processando)
-        case 'pending':          // Status padrão do MP
-        case 'pending_payment':  // Status interno nosso
-        case 'in_process':       // Status de análise do MP
-            statusClass = 'status-pending_payment'; // Cor Laranja/Amarela
+        case 'pending':          // Retorno padrão do MP para Pix
+        case 'pending_payment':  // Retorno do nosso backend inicial
+        case 'in_process':
+            statusClass = 'status-pending_payment'; // Amarelo/Laranja (style.css)
             statusLabel = 'Aguardando Pagamento';
             
-            // Só mostra o botão se tivermos o QR Code salvo no banco
+            // Verifica se tem dados de Pix para mostrar o botão
             if (order.paymentData && (order.paymentData.qr_code || order.paymentData.qr_code_base64)) {
-                 actionsHtml = `<button class="cta-button retry-payment-button" onclick="openPixModal('${order.id}')">Ver QR Code</button>`;
+                 actionsHtml = `<button class="cta-button retry-payment-button" onclick="openPixModal('${order.id}')" style="font-size:0.9rem; padding:0.5rem;">Ver QR Code</button>`;
             }
             break;
 
-        // PAGAMENTO FALHOU / CANCELADO
         case 'rejected':
         case 'cancelled':
         case 'failed': 
-            statusClass = 'status-failed'; 
-            statusLabel = 'Cancelado/Recusado';
+            statusClass = 'status-failed'; // Vermelho
+            statusLabel = 'Cancelado';
             break;
 
-        // DEFAULT (Caso venha algo novo)
         default: 
-            statusClass = 'status-processing';
+            statusClass = 'status-processing'; // Azul
             statusLabel = order.statusText || 'Processando';
     }
 
-    // Monta o HTML do Card
     const cardHtml = `
         <div class="order-card">
             <div class="order-header">
@@ -97,23 +94,22 @@ function renderOrderCard(order, container) {
             </div>
             <div class="order-body">
                 <div class="order-item-preview">
-                    <img src="${firstItem.image}" alt="Imagem do Produto">
+                    <img src="${firstItem.image}" alt="Imagem" style="background:#fff;">
                     <div class="order-item-info">
                         <h4>${firstItem.name}</h4>
                         <p>Total: <strong>R$ ${order.total.toFixed(2).replace('.', ',')}</strong></p>
                     </div>
                 </div>
             </div>
-            ${actionsHtml ? `<div class="order-footer"><div class="order-actions">${actionsHtml}</div></div>` : ''}
+            ${actionsHtml ? `<div class="order-footer"><div class="order-actions" style="width:100%;">${actionsHtml}</div></div>` : ''}
         </div>
     `;
     
     container.innerHTML += cardHtml;
 }
 
-// --- Funções Auxiliares (Pix) ---
+// --- FUNÇÕES GLOBAIS DE SUPORTE ---
 
-// Torna global para ser acessada pelo onclick do HTML gerado acima
 window.openPixModal = async (orderId) => {
     try {
         const doc = await db.collection("orders").doc(orderId).get();
@@ -121,22 +117,21 @@ window.openPixModal = async (orderId) => {
         
         const order = doc.data();
         
-        if (order.paymentData && order.paymentData.qr_code && order.paymentData.qr_code_base64) {
-            // Exibe a área de Pix (definida no HTML do pedidos.html)
+        if (order.paymentData && order.paymentData.qr_code_base64) {
             const pixArea = document.getElementById("pix-display-area");
             const pixImg = document.getElementById("pix-qr-img");
             const pixInput = document.getElementById("pix-code-text");
             
             if (pixArea) {
                 pixArea.style.display = "block";
-                pixImg.innerHTML = `<img src="data:image/png;base64, ${order.paymentData.qr_code_base64}" style="max-width:200px; display:block; margin:0 auto;">`;
+                pixImg.innerHTML = `<img src="data:image/png;base64, ${order.paymentData.qr_code_base64}" style="max-width:200px; width:100%; display:block; margin:0 auto;">`;
                 pixInput.value = order.paymentData.qr_code;
                 
-                // Scroll para ver o Pix
-                pixArea.scrollIntoView({ behavior: 'smooth' });
+                // Scroll suave até o modal
+                pixArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         } else {
-            showToast("Código PIX indisponível ou expirado.", "error");
+            showToast("QR Code expirado ou indisponível.", "error");
         }
     } catch (e) {
         console.error(e);
@@ -144,7 +139,6 @@ window.openPixModal = async (orderId) => {
     }
 };
 
-// Função para copiar o código
 window.copyPixCode = () => {
     const input = document.getElementById("pix-code-text");
     if (input) {
@@ -152,4 +146,8 @@ window.copyPixCode = () => {
         document.execCommand("copy");
         showToast("Código Copiado!", "success");
     }
+};
+
+window.closePixModal = () => {
+    document.getElementById("pix-display-area").style.display = "none";
 };
