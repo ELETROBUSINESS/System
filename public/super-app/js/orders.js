@@ -45,28 +45,50 @@ document.addEventListener('userReady', (e) => {
 
 function renderOrderCard(order, container) {
     // Garante que existe item para exibir imagem
-    const firstItem = order.items && order.items.length > 0 ? order.items[0] : { name: 'Produto', image: '' };
-    const date = order.createdAt ? order.createdAt.toDate().toLocaleDateString('pt-BR') : 'Data desconhecida';
+    const firstItem = order.items && order.items.length > 0 ? order.items[0] : { name: 'Produto', image: 'https://placehold.co/60' };
+    const date = order.createdAt ? order.createdAt.toDate().toLocaleDateString('pt-BR') : 'Data recente';
     
-    // Tratamento de Status
+    // Variáveis de controle
     let statusClass = '';
-    let statusLabel = order.statusText || 'Pendente';
+    let statusLabel = '';
     let actionsHtml = '';
 
-    // Mapeia classes de cor baseadas no status do MP
+    // --- LÓGICA DE STATUS UNIFICADA ---
     switch(order.status) {
-        case 'approved': statusClass = 'status-approved'; break;
-        case 'pending_payment': statusClass = 'status-pending_payment'; break;
+        // PAGAMENTO APROVADO
+        case 'approved': 
+            statusClass = 'status-approved'; 
+            statusLabel = 'Preparando Pedido'; // Texto solicitado
+            break;
+            
+        // PAGAMENTO PENDENTE (Pix gerado ou Processando)
+        case 'pending':          // Status padrão do MP
+        case 'pending_payment':  // Status interno nosso
+        case 'in_process':       // Status de análise do MP
+            statusClass = 'status-pending_payment'; // Cor Laranja/Amarela
+            statusLabel = 'Aguardando Pagamento';
+            
+            // Só mostra o botão se tivermos o QR Code salvo no banco
+            if (order.paymentData && (order.paymentData.qr_code || order.paymentData.qr_code_base64)) {
+                 actionsHtml = `<button class="cta-button retry-payment-button" onclick="openPixModal('${order.id}')">Ver QR Code</button>`;
+            }
+            break;
+
+        // PAGAMENTO FALHOU / CANCELADO
+        case 'rejected':
+        case 'cancelled':
         case 'failed': 
-        case 'cancelled': statusClass = 'status-failed'; break;
-        default: statusClass = 'status-processing';
+            statusClass = 'status-failed'; 
+            statusLabel = 'Cancelado/Recusado';
+            break;
+
+        // DEFAULT (Caso venha algo novo)
+        default: 
+            statusClass = 'status-processing';
+            statusLabel = order.statusText || 'Processando';
     }
 
-    // Botões de Ação
-    if (order.status === 'pending_payment') {
-        actionsHtml = `<button class="cta-button retry-payment-button" onclick="openPixModal('${order.id}')">Ver Código PIX</button>`;
-    }
-
+    // Monta o HTML do Card
     const cardHtml = `
         <div class="order-card">
             <div class="order-header">
@@ -75,7 +97,7 @@ function renderOrderCard(order, container) {
             </div>
             <div class="order-body">
                 <div class="order-item-preview">
-                    <img src="${firstItem.image || 'https://placehold.co/60'}" alt="Imagem do Produto">
+                    <img src="${firstItem.image}" alt="Imagem do Produto">
                     <div class="order-item-info">
                         <h4>${firstItem.name}</h4>
                         <p>Total: <strong>R$ ${order.total.toFixed(2).replace('.', ',')}</strong></p>
