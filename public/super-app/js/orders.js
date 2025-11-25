@@ -84,17 +84,25 @@ function renderOrderCard(order, container) {
             statusLabel = order.statusText || 'Processando';
     }
 
-    // Botão de Deletar (Lixeira)
+    // Botão de Deletar
     const deleteBtnHtml = `
         <button class="order-btn-delete" onclick="deleteOrder('${order.id}')" title="Excluir Pedido">
             <i class='bx bx-trash'></i>
         </button>
     `;
 
+    // [NOVO] Exibir ID do Pagamento se existir
+    // Isso ajuda a rastrear a eficiência no painel do MP
+    const paymentIdHtml = order.paymentId 
+        ? `<div style="font-size: 0.75rem; color: #999; margin-top: 4px;">ID MP: <strong>${order.paymentId}</strong></div>` 
+        : '';
+
     const cardHtml = `
         <div class="order-card">
             <div class="order-header">
-                <span class="order-date">${date}</span>
+                <div>
+                    <span class="order-date">${date}</span>
+                    ${paymentIdHtml} </div>
                 <span class="order-status ${statusClass}">${statusLabel}</span>
             </div>
             <div class="order-body">
@@ -108,7 +116,8 @@ function renderOrderCard(order, container) {
             </div>
             <div class="order-footer">
                 <div class="order-actions" style="width:100%; display:flex; justify-content: space-between; align-items: center;">
-                    ${pixBtnHtml ? pixBtnHtml : '<span></span>'} ${deleteBtnHtml}
+                    ${pixBtnHtml ? pixBtnHtml : '<span></span>'} 
+                    ${deleteBtnHtml}
                 </div>
             </div>
         </div>
@@ -119,14 +128,11 @@ function renderOrderCard(order, container) {
 
 // --- FUNÇÕES GLOBAIS ---
 
-// NOVA FUNÇÃO: DELETAR PEDIDO
 window.deleteOrder = async (orderId) => {
-    // Confirmação de segurança
     if (confirm("Tem certeza que deseja excluir este pedido do seu histórico?")) {
         try {
             await db.collection("orders").doc(orderId).delete();
             showToast("Pedido excluído com sucesso!", "success");
-            // A lista atualiza sozinha graças ao onSnapshot
         } catch (error) {
             console.error("Erro ao excluir:", error);
             showToast("Erro ao excluir pedido.", "error");
