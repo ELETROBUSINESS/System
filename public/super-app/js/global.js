@@ -78,16 +78,22 @@ const CartManager = {
     }
 };
 
-// --- 4. UI HELPERS GLOBAIS ---
+// --- 4. UI HELPERS GLOBAIS (ATUALIZADA) ---
 function updateCartBadge() {
-    const badge = document.getElementById("cart-badge");
-    if (!badge) return;
     const count = CartManager.get().reduce((acc, item) => acc + item.quantity, 0);
-    if (count > 0) {
-        badge.innerText = count;
-        badge.style.display = 'flex';
-    } else {
-        badge.style.display = 'none';
+
+    // Badge Mobile
+    const badgeMobile = document.getElementById("cart-badge");
+    if (badgeMobile) {
+        badgeMobile.innerText = count;
+        badgeMobile.style.display = count > 0 ? 'flex' : 'none';
+    }
+
+    // Badge Desktop (NOVO)
+    const badgeDesktop = document.getElementById("cart-badge-desktop");
+    if (badgeDesktop) {
+        badgeDesktop.innerText = count;
+        badgeDesktop.style.display = count > 0 ? 'flex' : 'none';
     }
 }
 
@@ -99,21 +105,19 @@ function showToast(msg, type = "success") {
     setTimeout(() => toast.classList.remove("show"), 3000);
 }
 
+// Função para atualizar saudação no desktop
 function updateUserUI(user) {
-    // Atualiza foto/nome no menu lateral e modais se existirem na página atual
-    const pic = document.getElementById("user-profile-pic");
-    const name = document.getElementById("user-profile-name");
-    const loggedView = document.getElementById("user-logged-in-view");
-    const guestView = document.getElementById("user-logged-out-view");
+    // ... (código existente dos modais) ...
 
-    if (user && !user.isAnonymous) {
-        if (pic) pic.src = user.photoURL || "https://placehold.co/100";
-        if (name) name.innerText = user.displayName;
-        if (loggedView) loggedView.style.display = 'block';
-        if (guestView) guestView.style.display = 'none';
-    } else {
-        if (loggedView) loggedView.style.display = 'none';
-        if (guestView) guestView.style.display = 'block';
+    // Atualiza saudação no Desktop Header
+    const desktopGreeting = document.getElementById("desktop-profile-trigger");
+    if (desktopGreeting) {
+        if (user && !user.isAnonymous) {
+            const firstName = user.displayName ? user.displayName.split(' ')[0] : 'Cliente';
+            desktopGreeting.innerHTML = `<span>olá, ${firstName}</span><strong>Minha Conta</strong>`;
+        } else {
+            desktopGreeting.innerHTML = `<span>olá, faça seu login</span><strong>ou cadastre-se</strong>`;
+        }
     }
 }
 

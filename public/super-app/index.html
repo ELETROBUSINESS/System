@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EletroBusiness - Início</title>
+    <title>Dtudo - Varejo Online</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -15,100 +15,161 @@
 
     <header class="main-header">
         <div class="container header-container">
-            <a href="index.html" class="logo">ELETRO<span class="logo-highlight">BUSINESS</span></a>
+            <a href="index.html" class="logo">
+                <img src="dtudo.png" alt="Logo" class="logo-img">
+                <span>D<span class="logo-highlight">tudo</span></span>
+            </a>
+            
             <div class="search-bar">
-                <input type="text" placeholder="Buscar produtos...">
+                <input type="text" placeholder="buscar na Dtudo">
                 <i class='bx bx-search'></i>
+                <div id="search-dropdown" class="search-dropdown"></div>
             </div>
-            <button class="header-icons" id="profile-button">
-                <i class='bx bx-user'></i>
+            
+            <button class="header-icons header-icon-mobile" id="profile-button-mobile">
+                <i class='bx bx-user-circle'></i>
             </button>
+
+            <div class="header-actions-desktop">
+                <div class="header-user-greeting" id="desktop-profile-trigger">
+                    <span>olá, faça seu login</span>
+                    <strong>ou cadastre-se</strong>
+                </div>
+
+                <a href="favoritos.html" class="header-icon-btn" title="Favoritos">
+                    <i class='bx bx-heart'></i>
+                </a>
+
+                <a href="carrinho.html" class="header-icon-btn" title="Carrinho">
+                    <i class='bx bx-basket'></i>
+                    <span class="header-cart-badge" id="cart-badge-desktop">0</span>
+                </a>
+
+                <div style="position: relative;">
+                    <button class="header-icon-btn" id="desktop-menu-trigger">
+                        <i class='bx bx-menu'></i>
+                    </button>
+                    <div class="desktop-menu-dropdown" id="desktop-menu">
+                        <a href="pedidos.html" class="desktop-menu-item"><i class='bx bx-receipt'></i> Meus Pedidos</a>
+                        <a href="conta.html" class="desktop-menu-item"><i class='bx bx-user'></i> Minha Conta</a>
+                        <a href="#" class="desktop-menu-item" id="desktop-logout"><i class='bx bx-log-out'></i> Sair</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </header>
 
     <main>
-        <section class="banner-slider">
-            <div class="slider-wrapper">
-                <div class="slide"><img src="https://http2.mlstatic.com/D_NQ_802221-MLA76503923376_052024-OO.webp"
-                        alt="Banner 1"></div>
-                <div class="slide"><img src="https://http2.mlstatic.com/D_NQ_784918-MLA76503901966_052024-OO.webp"
-                        alt="Banner 2"></div>
-                <div class="slide"><img src="https://http2.mlstatic.com/D_NQ_938367-MLA76356760814_052024-OO.webp"
-                        alt="Banner 3"></div>
-            </div>
-        </section>
-
-        <section class="categories-section">
-            <div class="container">
-                <h2 class="section-title">Categorias</h2>
-                <div class="categories-scroll">
-                    <div class="category-item">
-                        <div class="category-icon"><i class='bx bx-mobile-alt'></i></div><span>Smartphones</span>
-                    </div>
-                    <div class="category-item">
-                        <div class="category-icon"><i class='bx bx-laptop'></i></div><span>Informática</span>
-                    </div>
-                    <div class="category-item">
-                        <div class="category-icon"><i class='bx bx-tv'></i></div><span>TVs</span>
-                    </div>
-                    <div class="category-item">
-                        <div class="category-icon"><i class='bx bx-headphone'></i></div><span>Áudio</span>
-                    </div>
+        <div id="home-view">
+            
+            <section class="banner-slider">
+                <div class="slider-wrapper">
+                    <div class="slide"><img src="3.png" alt="Ofertas"></div>
+                    <div class="slide"><img src="4.png" alt="Varejo"></div>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <section id="products">
-            <div class="container">
-                <h2 class="section-title">Nossas Ofertas</h2>
-                <div class="product-grid">
-                    <div class="product-card" data-id="test-pix-01" data-name="Teste de Pix" data-price-old="5.00"
-                        data-price-new="1.22" data-image="https://placehold.co/400x400/FF0000/FFFFFF?text=TESTE+PIX"
-                        data-description="Produto exclusivo para teste de pagamento.">
-
-                        <div class="product-image">
-                            <img src="https://placehold.co/400x400/FF0000/FFFFFF?text=TESTE+PIX" alt="Teste Pix">
-                            <span class="tag">TESTE</span>
+            <section class="categories-section">
+                <div class="container">
+                    <div class="categories-scroll">
+                        <div class="category-item fire">
+                            <div class="category-icon"><i class='bx bxs-hot'></i></div>
+                            <span style="color: var(--color-accent); font-weight: 700;">Ofertas!</span>
                         </div>
-                        <div class="product-info">
-                            <span class="price-old">R$ 5,00</span>
-                            <span class="price-new">R$ 1,22</span>
-                            <h4 class="product-name">Teste de Pix</h4>
-                            <button class="cta-button">Adicionar</button>
+                        <div class="category-item">
+                            <div class="category-icon"><i class='bx bx-basket'></i></div>
+                            <span>Mercado</span>
                         </div>
-                    </div>
-
-                    <div class="product-card" data-id="p1" data-name="Smartphone Pro X" data-price-old="4299.00"
-                        data-price-new="2999.00"
-                        data-image="https://placehold.co/400x400/EBEBEB/333?text=Smartphone+Pro+X"
-                        data-description="Smartphone 256GB, câmera tripla.">
-                        <div class="product-image"><img
-                                src="https://placehold.co/400x400/EBEBEB/333?text=Smartphone+Pro+X"><span
-                                class="tag">-30%</span></div>
-                        <div class="product-info">
-                            <span class="price-old">R$ 4.299,00</span>
-                            <span class="price-new">R$ 2.999,00</span>
-                            <h4 class="product-name">Smartphone Pro X</h4>
-                            <button class="cta-button">Adicionar</button>
+                        <div class="category-item">
+                            <div class="category-icon"><i class='bx bx-t-shirt'></i></div>
+                            <span>Moda</span>
                         </div>
-                    </div>
-                    <div class="product-card" data-id="p2" data-name="Notebook Ultra" data-price-old="6399.00"
-                        data-price-new="4799.50"
-                        data-image="https://placehold.co/400x400/EBEBEB/333?text=Notebook+Ultra"
-                        data-description="Core i7, 16GB RAM.">
-                        <div class="product-image"><img
-                                src="https://placehold.co/400x400/EBEBEB/333?text=Notebook+Ultra"><span
-                                class="tag">-25%</span></div>
-                        <div class="product-info">
-                            <span class="price-old">R$ 6.399,00</span>
-                            <span class="price-new">R$ 4.799,50</span>
-                            <h4 class="product-name">Notebook Ultra</h4>
-                            <button class="cta-button">Adicionar</button>
+                        <div class="category-item">
+                            <div class="category-icon"><i class='bx bx-home'></i></div>
+                            <span>Casa</span>
+                        </div>
+                        <div class="category-item">
+                            <div class="category-icon"><i class='bx bx-wrench'></i></div>
+                            <span>Ferramentas</span>
+                        </div>
+                        <div class="category-item">
+                            <div class="category-icon"><i class='bx bx-mobile'></i></div>
+                            <span>Eletrônicos</span>
                         </div>
                     </div>
                 </div>
+            </section>
+
+            <section id="products">
+                <div class="container">
+                    <h2 class="section-title">Destaques para você</h2>
+                    
+                    <div class="product-grid" id="firebase-products-container">
+                        <div class="product-card skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text-sm"></div></div>
+                        <div class="product-card skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text-sm"></div></div>
+                        <div class="product-card skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text-sm"></div></div>
+                        <div class="product-card skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text-sm"></div></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div id="product-detail-view" class="product-detail-view">
+            <div class="container">
+                <a href="index.html" style="display: inline-flex; align-items: center; color: #333; text-decoration: none; margin-bottom: 15px;">
+                    <i class='bx bx-arrow-back' style="margin-right: 5px;"></i> Voltar
+                </a>
+                
+                <div class="detail-container">
+                    <div class="detail-gallery">
+                        <div class="main-image-container">
+                            <img id="p-detail-img" src="" alt="Produto">
+                        </div>
+                    </div>
+
+                    <div class="detail-info">
+                        <div class="detail-condition">Novo | <span id="p-detail-sold">0</span> vendidos</div>
+                        <h1 class="detail-title" id="p-detail-name">--</h1>
+                        
+                        <div class="detail-price-box">
+                            <div class="detail-price-real" id="p-detail-price">R$ --</div>
+                            <div class="detail-installments">em <span>12x sem juros</span></div>
+                        </div>
+
+                        <div class="detail-meta">
+                            <div class="meta-row">
+                                <i class='bx bxs-truck meta-icon'></i>
+                                <div class="meta-text">
+                                    <p><strong>Frete Grátis</strong></p>
+                                    <p>Saiba os prazos de entrega.</p>
+                                </div>
+                            </div>
+                            <div class="meta-row">
+                                <i class='bx bx-undo meta-icon'></i>
+                                <div class="meta-text">
+                                    <p><strong>Devolução grátis</strong></p>
+                                    <p>Você tem 30 dias.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stock-selector">
+                            Estoque disponível: <strong id="p-detail-stock">--</strong>
+                        </div>
+
+                        <div class="detail-actions">
+                            <button class="btn-buy-now" id="btn-buy-now">Comprar agora</button>
+                            <button class="btn-add-cart" id="btn-add-cart-detail">Adicionar ao carrinho</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-description">
+                    <h2 class="desc-title">Descrição</h2>
+                    <div class="desc-content" id="p-detail-desc">--</div>
+                </div>
             </div>
-        </section>
+        </div>
     </main>
 
     <nav class="bottom-navbar">
@@ -116,7 +177,7 @@
         <a href="favoritos.html" class="nav-item"><i class='bx bx-heart'></i><span>Salvos</span></a>
         <a href="carrinho.html" class="nav-item">
             <i class='bx bx-cart'></i>
-            <span id="cart-badge" class="cart-badge" style="display: none;">0</span>
+            <span id="cart-badge" class="cart-badge">0</span>
             <span>Carrinho</span>
         </a>
         <a href="pedidos.html" class="nav-item"><i class='bx bx-receipt'></i><span>Pedidos</span></a>
@@ -134,8 +195,7 @@
             </div>
             <div id="user-logged-out-view">
                 <h3>Login</h3>
-                <button class="google-login-button" id="google-login-button"><i class='bx bxl-google'></i> Entrar com
-                    Google</button>
+                <button class="google-login-button" id="google-login-button"><i class='bx bxl-google'></i> Entrar com Google</button>
             </div>
         </div>
     </div>
@@ -147,6 +207,33 @@
 
     <script src="js/global.js"></script>
     <script src="js/index.js"></script>
-</body>
+    
+    <script>
+        const menuTrigger = document.getElementById('desktop-menu-trigger');
+        const desktopMenu = document.getElementById('desktop-menu');
+        
+        if(menuTrigger) {
+            menuTrigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                desktopMenu.classList.toggle('active');
+            });
+            document.addEventListener('click', () => {
+                desktopMenu.classList.remove('active');
+            });
+        }
 
+        const profileTrigger = document.getElementById('desktop-profile-trigger');
+        if(profileTrigger) {
+            profileTrigger.addEventListener('click', () => {
+                document.getElementById('user-profile-modal').classList.add('show');
+            });
+        }
+        const profileMobile = document.getElementById('profile-button-mobile');
+        if(profileMobile) {
+            profileMobile.addEventListener('click', () => {
+                document.getElementById('user-profile-modal').classList.add('show');
+            });
+        }
+    </script>
+</body>
 </html>
