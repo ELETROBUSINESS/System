@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,13 +9,38 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 
+    <!-- Meta Pixel Code -->
+    <script>
+        !function (f, b, e, v, n, t, s) {
+            if (f.fbq) return; n = f.fbq = function () {
+                n.callMethod ?
+                n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+            };
+            if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
+            n.queue = []; t = b.createElement(e); t.async = !0;
+            t.src = v; s = b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t, s)
+        }(window, document, 'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '1449877756561731');
+        fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+            src="https://www.facebook.com/tr?id=1449877756561731&ev=PageView&noscript=1" /></noscript>
+    <!-- End Meta Pixel Code -->
+
     <style>
         /* ================= RESET E BASE ================= */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Roboto', sans-serif;
-            background-color: #050505; /* Preto Profundo */
+            background-color: #050505;
+            /* Preto Profundo */
             color: #ffffff;
             height: 100vh;
             display: flex;
@@ -32,6 +58,7 @@
             left: 50%;
             transform: translateX(-50%);
         }
+
         .logo {
             display: flex;
             align-items: center;
@@ -43,8 +70,14 @@
             text-transform: uppercase;
             letter-spacing: -0.5px;
         }
-        .logo-highlight { color: #db0038; }
-        .logo img { height: 35px; }
+
+        .logo-highlight {
+            color: #db0038;
+        }
+
+        .logo img {
+            height: 35px;
+        }
 
         /* ================= CONTEÚDO PRINCIPAL ================= */
         .main-content {
@@ -76,7 +109,10 @@
             text-transform: uppercase;
             font-weight: 900;
         }
-        h1 span { color: #db0038; }
+
+        h1 span {
+            color: #db0038;
+        }
 
         p.subtitle {
             font-size: 1.1rem;
@@ -93,9 +129,10 @@
             margin-bottom: 40px;
             flex-wrap: wrap;
         }
+
         .discount-tag {
             border: 1px solid #333;
-            background: rgba(255,255,255,0.05);
+            background: rgba(255, 255, 255, 0.05);
             padding: 8px 15px;
             border-radius: 8px;
             font-weight: 700;
@@ -117,7 +154,7 @@
             padding: 15px;
             border-radius: 8px;
             min-width: 80px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
         }
 
         .time-box .number {
@@ -141,7 +178,8 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            background: #00a884; /* Verde WhatsApp */
+            background: #00a884;
+            /* Verde WhatsApp */
             color: white;
             text-decoration: none;
             font-size: 1.2rem;
@@ -160,7 +198,9 @@
             background: #008f6f;
         }
 
-        .cta-button i { font-size: 1.5rem; }
+        .cta-button i {
+            font-size: 1.5rem;
+        }
 
         .cta-subtext {
             display: block;
@@ -171,21 +211,46 @@
 
         /* ================= ANIMAÇÕES ================= */
         @keyframes pulse-green {
-            0% { box-shadow: 0 0 0 0 rgba(0, 168, 132, 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(0, 168, 132, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(0, 168, 132, 0); }
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 168, 132, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 15px rgba(0, 168, 132, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 168, 132, 0);
+            }
         }
 
         /* ================= RESPONSIVO ================= */
         @media (max-width: 480px) {
-            h1 { font-size: 2.5rem; }
-            .time-box { min-width: 60px; padding: 10px; }
-            .time-box .number { font-size: 1.8rem; }
-            .discounts-row { gap: 5px; }
-            .discount-tag { font-size: 1rem; padding: 5px 10px; }
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .time-box {
+                min-width: 60px;
+                padding: 10px;
+            }
+
+            .time-box .number {
+                font-size: 1.8rem;
+            }
+
+            .discounts-row {
+                gap: 5px;
+            }
+
+            .discount-tag {
+                font-size: 1rem;
+                padding: 5px 10px;
+            }
         }
     </style>
 </head>
+
 <body>
 
     <div class="logo-container">
@@ -197,7 +262,7 @@
 
     <div class="main-content">
         <span class="badge-bf">Oferta Secreta</span>
-        
+
         <h1>Black <span>Friday</span></h1>
         <p class="subtitle">A maior queima de estoque do ano está chegando. <br>Preços que você nunca viu na Dtudo.</p>
 
@@ -267,10 +332,11 @@
 
         // Atualiza a cada 1 segundo
         setInterval(updateCountdown, 1000);
-        
+
         // Executa imediatamente para não esperar 1 seg
         updateCountdown();
     </script>
 
 </body>
+
 </html>
