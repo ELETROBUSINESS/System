@@ -896,73 +896,61 @@ button {
     padding-bottom: 0.25rem;
 }
 
-/* ==================== MODAL 1: DETALHES DO PRODUTO ==================== */
-.product-modal-body img {
+/* style.css */
+
+/* ==================== DETALHES DO PRODUTO (CORRIGIDO) ==================== */
+
+/* Botão Comprar Agora (Vermelho Sólido) */
+.btn-buy-now {
+    background-color: #db0038 !important; /* Vermelho Dtudo Forçado */
+    color: #fff !important;
+    border: none;
+    border-radius: 6px;
+    padding: 16px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
     width: 100%;
-    aspect-ratio: 1/1;
-    object-fit: contain;
-    border-radius: 6px;
-    background: var(--color-bg-main);
-    margin-bottom: 1rem;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 10px rgba(219, 0, 56, 0.3);
 }
-.modal-urgency-timer {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--color-error);
-    font-weight: 700;
-    font-size: 0.9rem;
-    margin-bottom: 0.5rem;
-}
-.modal-prices {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin: 0.5rem 0;
-}
-#modal-product-price-old {
-    font-size: 1rem;
-    color: var(--color-price-old);
-    text-decoration: line-through;
-}
-#modal-product-price-new {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--color-text-dark);
-}
-.modal-objections {
-    background: #f3f9ff;
-    border: 1px solid #d1e7ff;
-    border-radius: 6px;
-    padding: 1rem;
-    margin: 1rem 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-.objection-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #055160;
-    font-size: 0.9rem;
-}
-.objection-item i {
-    font-size: 1.25rem;
-    color: var(--color-accent-blue);
-}
-#modal-product-description {
-    font-size: 0.9rem;
-    color: var(--color-text-muted);
-    margin-bottom: 1.5rem;
-}
-#add-to-cart-button {
-    background: var(--color-accent-green);
-}
-#add-to-cart-button:hover {
-    background: #008a40;
+.btn-buy-now:hover { 
+    background-color: #b71c1c !important; 
+    transform: translateY(-2px);
 }
 
+/* Botão Adicionar ao Carrinho (Borda Vermelha / Fundo Claro) */
+.btn-add-cart {
+    background-color: #fff !important;
+    color: #db0038 !important;
+    border: 2px solid #db0038 !important;
+    border-radius: 6px;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+    width: 100%;
+}
+.btn-add-cart:hover { 
+    background-color: rgba(219, 0, 56, 0.05) !important; 
+}
+
+/* Cronômetro Real */
+.scarcity-box {
+    background: #fff5f5;
+    border: 1px solid #ffcdd2;
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #c62828;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
 /* ==================== PÁGINA 4: CHECKOUT ==================== */
 .checkout-page {
     padding-bottom: 3rem;

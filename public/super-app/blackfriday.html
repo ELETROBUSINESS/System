@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esquenta Black Friday | Dtudo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <style>
+        /* ================= RESET E BASE ================= */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #050505; /* Preto Profundo */
+            color: #ffffff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-image: radial-gradient(circle at center, #1a0005 0%, #000000 70%);
+        }
+
+        /* ================= LOGO ================= */
+        .logo-container {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: #fff;
+            font-size: 1.5rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: -0.5px;
+        }
+        .logo-highlight { color: #db0038; }
+        .logo img { height: 35px; }
+
+        /* ================= CONTEÚDO PRINCIPAL ================= */
+        .main-content {
+            text-align: center;
+            padding: 20px;
+            max-width: 600px;
+            width: 100%;
+            z-index: 10;
+        }
+
+        .badge-bf {
+            background: #db0038;
+            color: #fff;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: inline-block;
+            margin-bottom: 20px;
+            box-shadow: 0 0 15px rgba(219, 0, 56, 0.5);
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            line-height: 1;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-weight: 900;
+        }
+        h1 span { color: #db0038; }
+
+        p.subtitle {
+            font-size: 1.1rem;
+            color: #ccc;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        /* ================= TAGS DE DESCONTO ================= */
+        .discounts-row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+        .discount-tag {
+            border: 1px solid #333;
+            background: rgba(255,255,255,0.05);
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #db0038;
+        }
+
+        /* ================= CRONÔMETRO ================= */
+        .countdown-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .time-box {
+            background: #111;
+            border: 1px solid #333;
+            padding: 15px;
+            border-radius: 8px;
+            min-width: 80px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        .time-box .number {
+            display: block;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1;
+        }
+
+        .time-box .label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* ================= CTA BUTTON ================= */
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #00a884; /* Verde WhatsApp */
+            color: white;
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: 700;
+            padding: 18px 40px;
+            border-radius: 50px;
+            box-shadow: 0 0 20px rgba(0, 168, 132, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            animation: pulse-green 2s infinite;
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .cta-button:hover {
+            transform: scale(1.05);
+            background: #008f6f;
+        }
+
+        .cta-button i { font-size: 1.5rem; }
+
+        .cta-subtext {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        /* ================= ANIMAÇÕES ================= */
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(0, 168, 132, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(0, 168, 132, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 168, 132, 0); }
+        }
+
+        /* ================= RESPONSIVO ================= */
+        @media (max-width: 480px) {
+            h1 { font-size: 2.5rem; }
+            .time-box { min-width: 60px; padding: 10px; }
+            .time-box .number { font-size: 1.8rem; }
+            .discounts-row { gap: 5px; }
+            .discount-tag { font-size: 1rem; padding: 5px 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="logo-container">
+        <a href="#" class="logo">
+            <img src="dtudo.png" alt="Logo">
+            <span>D<span class="logo-highlight">tudo</span></span>
+        </a>
+    </div>
+
+    <div class="main-content">
+        <span class="badge-bf">Oferta Secreta</span>
+        
+        <h1>Black <span>Friday</span></h1>
+        <p class="subtitle">A maior queima de estoque do ano está chegando. <br>Preços que você nunca viu na Dtudo.</p>
+
+        <div class="discounts-row">
+            <div class="discount-tag">-30%</div>
+            <div class="discount-tag">-50%</div>
+            <div class="discount-tag">-70%</div>
+            <div class="discount-tag">-90%</div>
+        </div>
+
+        <!-- CRONÔMETRO -->
+        <div class="countdown-container">
+            <div class="time-box">
+                <span class="number" id="days">00</span>
+                <span class="label">Dias</span>
+            </div>
+            <div class="time-box">
+                <span class="number" id="hours">00</span>
+                <span class="label">Horas</span>
+            </div>
+            <div class="time-box">
+                <span class="number" id="minutes">00</span>
+                <span class="label">Min</span>
+            </div>
+            <div class="time-box">
+                <span class="number" id="seconds">00</span>
+                <span class="label">Seg</span>
+            </div>
+        </div>
+
+        <a href="https://chat.whatsapp.com/IdMR6Bth0hm3pj0AOskzRU?mode=hqrc" class="cta-button">
+            <i class='bx bxl-whatsapp'></i>
+            Entrar no Grupo VIP
+        </a>
+        <span class="cta-subtext">Vagas limitadas. Ofertas exclusivas no grupo.</span>
+    </div>
+
+    <script>
+        // DATA DE ENCERRAMENTO: 28/11/2025 às 06:00:00
+        // O mês no JavaScript começa em 0 (Janeiro=0, Novembro=10)
+        // Formato: Ano, Mês(Index), Dia, Hora, Minuto, Segundo
+        const targetDate = new Date(2025, 10, 28, 6, 0, 0).getTime();
+
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+
+            // Se a contagem acabou
+            if (distance < 0) {
+                // REDIRECIONA PARA A LOJA
+                window.location.href = "index.html";
+                return;
+            }
+
+            // Cálculos de tempo
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            // Atualiza o HTML com zero à esquerda
+            document.getElementById("days").innerText = String(days).padStart(2, '0');
+            document.getElementById("hours").innerText = String(hours).padStart(2, '0');
+            document.getElementById("minutes").innerText = String(minutes).padStart(2, '0');
+            document.getElementById("seconds").innerText = String(seconds).padStart(2, '0');
+        }
+
+        // Atualiza a cada 1 segundo
+        setInterval(updateCountdown, 1000);
+        
+        // Executa imediatamente para não esperar 1 seg
+        updateCountdown();
+    </script>
+
+</body>
+</html>

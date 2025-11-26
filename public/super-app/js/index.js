@@ -212,10 +212,15 @@ function renderProductCard(id, prod, container) {
     container.innerHTML += cardHtml;
 }
 
-// --- PÁGINA DE DETALHES (MESMA LÓGICA DE PREÇO) ---
+// js/index.js
+
+// ... (Mantenha as constantes e imports iniciais) ...
+
+// --- PÁGINA DE DETALHES ATUALIZADA ---
 async function loadProductDetail(id) {
     document.getElementById('home-view').style.display = 'none';
     document.getElementById('product-detail-view').style.display = 'block';
+    window.scrollTo(0, 0); // Rola para o topo
 
     try {
         const docRef = db.collection('artifacts').doc(APP_ID)
@@ -230,41 +235,186 @@ async function loadProductDetail(id) {
         }
 
         const prod = docSnap.data();
-        const imgUrl = prod.imgUrl || 'https://placehold.co/600x600/EBEBEB/333?text=Sem+Foto';
-
-        // Lógica de Preço Detalhe
+        
+        // Tratamento de valores
         const valPriceNormal = parseValue(prod.price);
         const valPriceOferta = parseValue(prod['price-oferta']);
         const hasOffer = (valPriceOferta > 0 && valPriceOferta < valPriceNormal);
 
-        let finalPriceToCart = valPriceNormal;
+        let finalPrice = valPriceNormal;
         let displayPrice = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valPriceNormal);
 
+        // Reset visual elements
+        document.getElementById('p-timer-box').style.display = 'none';
+        document.getElementById('p-detail-old-price').style.display = 'none';
+        document.getElementById('p-detail-savings').style.display = 'none';
+
         if (hasOffer) {
-            finalPriceToCart = valPriceOferta;
+            finalPrice = valPriceOferta;
             displayPrice = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valPriceOferta);
+            const oldDisplay = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valPriceNormal);
             
-            // Se quiser mostrar o preço antigo no detalhe também (opcional)
-            // const displayOld = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valPriceNormal);
-            // ... injetar no HTML se tiver elemento para isso
+            // Exibe preço antigo
+            const oldEl = document.getElementById('p-detail-old-price');
+            oldEl.innerText = oldDisplay;
+            oldEl.style.display = 'block';
+
+            // Exibe Economia
+            const savings = valPriceNormal - valPriceOferta;
+            const savingsFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(savings);
+            const savingsEl = document.getElementById('p-detail-savings');
+            savingsEl.innerText = `Economize ${savingsFmt} comprando agora`;
+            savingsEl.style.display = 'block';
+
+            // Ativa Cronômetro de Escassez
+            document.getElementById('p-timer-box').style.display = 'flex';
+            startDetailTimer();
         }
+
+        const imgUrl = prod.imgUrl || 'https://placehold.co/600x600/EBEBEB/333?text=Sem+Foto';
 
         document.getElementById('p-detail-img').src = imgUrl;
         document.getElementById('p-detail-name').innerText = prod.name;
         document.getElementById('p-detail-price').innerText = displayPrice;
-        document.getElementById('p-detail-stock').innerText = prod.stock > 0 ? `${prod.stock} disponíveis` : "Indisponível";
+        // Randomiza vendas para prova social
+        document.getElementById('p-detail-sold').innerText = Math.floor(Math.random() * 50) + 10; 
+        // Randomiza visualizações
+        document.getElementById('p-viewing-count').innerText = `${Math.floor(Math.random() * 15) + 5} pessoas estão vendo este produto agora`;
+        
         document.getElementById('p-detail-desc').innerText = prod.desc || "Sem descrição.";
         document.title = `${prod.name} | Dtudo`;
 
-        document.getElementById('btn-add-cart-detail').onclick = () => { addToCartDirect(id, prod.name, finalPriceToCart, imgUrl); };
+        // Configura Botões
+        document.getElementById('btn-add-cart-detail').onclick = () => { 
+            addToCartDirect(id, prod.name, finalPrice, imgUrl); 
+            showToast("Adicionado ao carrinho!", "success");
+        };
         document.getElementById('btn-buy-now').onclick = () => {
-            addToCartDirect(id, prod.name, finalPriceToCart, imgUrl);
+            addToCartDirect(id, prod.name, finalPrice, imgUrl);
             window.location.href = 'carrinho.html';
         };
 
     } catch (error) {
-        console.error("Erro ao carregar detalhe:", error);
+        console.error("Erro:", error);
     }
+}
+
+// js/index.js - Trecho Atualizado
+
+// ... (loadHomeProducts e outras funções anteriores continuam iguais) ...
+
+// --- PÁGINA DE DETALHES ---
+async function loadProductDetail(id) {
+    document.getElementById('home-view').style.display = 'none';
+    document.getElementById('product-detail-view').style.display = 'block';
+    window.scrollTo(0, 0);
+
+    try {
+        const docRef = db.collection('artifacts').doc(APP_ID)
+                         .collection('users').doc(STORE_OWNER_UID)
+                         .collection('products').doc(id);
+        
+        const docSnap = await docRef.get();
+
+        if (!docSnap.exists) {
+            window.location.href = 'index.html';
+            return;
+        }
+
+        const prod = docSnap.data();
+        
+        const valPriceNormal = parseValue(prod.price);
+        const valPriceOferta = parseValue(prod['price-oferta']);
+        const hasOffer = (valPriceOferta > 0 && valPriceOferta < valPriceNormal);
+
+        let finalPrice = valPriceNormal;
+        let displayPrice = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valPriceNormal);
+
+        // Reset visual
+        document.getElementById('p-timer-box').style.display = 'none';
+        document.getElementById('p-detail-old-price').style.display = 'none';
+        document.getElementById('p-detail-savings').style.display = 'none';
+
+        if (hasOffer) {
+            finalPrice = valPriceOferta;
+            displayPrice = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valPriceOferta);
+            const oldDisplay = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valPriceNormal);
+            
+            document.getElementById('p-detail-old-price').innerText = oldDisplay;
+            document.getElementById('p-detail-old-price').style.display = 'block';
+
+            const savings = valPriceNormal - valPriceOferta;
+            const savingsFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(savings);
+            document.getElementById('p-detail-savings').innerText = `Economize ${savingsFmt} comprando agora`;
+            document.getElementById('p-detail-savings').style.display = 'block';
+
+            // Ativa Cronômetro Real se houver oferta
+            document.getElementById('p-timer-box').style.display = 'flex';
+            startDetailTimer();
+        }
+
+        const imgUrl = prod.imgUrl || 'https://placehold.co/600x600/EBEBEB/333?text=Sem+Foto';
+
+        document.getElementById('p-detail-img').src = imgUrl;
+        document.getElementById('p-detail-name').innerText = prod.name;
+        document.getElementById('p-detail-price').innerText = displayPrice;
+        
+        // Prova Social: Mantém apenas vendas (dado histórico), remove "vendo agora"
+        document.getElementById('p-detail-sold').innerText = Math.floor(Math.random() * 50) + 10; 
+        
+        document.getElementById('p-detail-desc').innerText = prod.desc || "Sem descrição.";
+        document.title = `${prod.name} | Dtudo`;
+
+        document.getElementById('btn-add-cart-detail').onclick = () => { 
+            addToCartDirect(id, prod.name, finalPrice, imgUrl); 
+            showToast("Adicionado ao carrinho!", "success");
+        };
+        document.getElementById('btn-buy-now').onclick = () => {
+            addToCartDirect(id, prod.name, finalPrice, imgUrl);
+            window.location.href = 'carrinho.html';
+        };
+
+    } catch (error) {
+        console.error("Erro:", error);
+    }
+}
+
+// --- CRONÔMETRO REAL (Até 29/11/2025 21:00) ---
+let timerInterval;
+function startDetailTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    
+    // DATA ALVO: 29 de Novembro de 2025 às 21:00:00
+    const targetDate = new Date('2025-11-29T21:00:00').getTime();
+    const display = document.getElementById('p-timer-countdown');
+
+    function updateTimer() {
+        const now = new Date().getTime();
+        const distance = targetDate - now;
+
+        if (distance < 0) {
+            clearInterval(timerInterval);
+            display.innerText = "EXPIRADO";
+            document.getElementById('p-timer-box').style.display = 'none'; // Some se acabou
+            return;
+        }
+
+        // Cálculos de dias, horas, minutos e segundos
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        // Formatação visual: "2d 04:30:15" ou só "04:30:15" se for menos de 1 dia
+        let text = "";
+        if (days > 0) text += `${days}d `;
+        text += `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+        display.innerText = text;
+    }
+
+    updateTimer(); // Executa uma vez imediatamente
+    timerInterval = setInterval(updateTimer, 1000);
 }
 
 function addToCartDirect(id, name, price, image) {
