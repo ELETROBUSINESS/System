@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Encartes de Ofertas</title>
+    <title>Gerador de Encartes - Black Friday</title>
     
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Roboto:wght@900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Poppins:wght@400;600;800&family=Roboto:wght@700;900&display=swap" rel="stylesheet">
     
     <!-- Ícones -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
@@ -18,11 +18,22 @@
 
     <style>
         :root {
-            --primary-color: #e63946; /* Vermelho Oferta */
-            --highlight-color: #ffca3a; /* Amarelo Fundo Preço */
-            --text-dark: #1d3557;
+            /* Paleta Black Friday Premium */
+            --bf-black: #111111;
+            --bf-red: #cf0437;
+            --bf-yellow: #cf0437; /* Amarelo Promoção */
+            --bf-white: #ffffff;
+            
             --paper-width: 210mm;
             --paper-height: 297mm;
+        }
+
+        /* Modo Preto e Branco */
+        body.bw-mode {
+            --bf-black: #000000;
+            --bf-red: #000000;
+            --bf-yellow: #ffffff; /* Amarelo vira branco */
+            --bf-white: #ffffff;
         }
 
         * {
@@ -33,43 +44,96 @@
 
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #f0f2f5;
+            background-color: #222; 
+            transition: background 0.3s;
         }
 
-        /* --- CONTROLES DA TELA (Não aparecem na impressão) --- */
+        /* --- CONTROLES DA TELA --- */
         .screen-controls {
-            background: white;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: var(--bf-black);
+            color: white;
+            padding: 15px 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             display: flex;
             justify-content: space-between;
             align-items: center;
             position: sticky;
             top: 0;
             z-index: 100;
+            border-bottom: 3px solid var(--bf-red);
         }
 
-        .screen-controls h1 {
-            font-size: 1.2rem;
-            color: var(--text-dark);
+        .controls-left h1 {
+            font-family: 'Anton', sans-serif;
+            font-size: 1.5rem;
+            color: var(--bf-yellow); /* Destaque no título da UI */
+            letter-spacing: 1px;
+            text-transform: uppercase;
         }
 
-        .btn-print {
-            background-color: var(--text-dark);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1rem;
+        .controls-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .toggle-mode {
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: background 0.2s;
+            font-size: 0.9rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .toggle-switch {
+            width: 40px;
+            height: 20px;
+            background: #555;
+            border-radius: 20px;
+            position: relative;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s;
+        }
+
+        #mode-checkbox:checked + .toggle-switch {
+            background: var(--bf-white);
+        }
+        #mode-checkbox:checked + .toggle-switch::after {
+            transform: translateX(20px);
+            background: var(--bf-black);
+        }
+
+        .btn-print {
+            background-color: var(--bf-red);
+            color: white;
+            border: none;
+            padding: 8px 25px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Anton', sans-serif;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s;
         }
 
         .btn-print:hover {
-            background-color: #000;
+            transform: scale(1.05);
+            background-color: #ff1a53;
         }
 
         /* --- ÁREA DE IMPRESSÃO (Folha A4) --- */
@@ -77,191 +141,247 @@
             width: var(--paper-width);
             min-height: var(--paper-height);
             background: white;
-            margin: 20px auto;
-            padding: 10mm; /* Margem de segurança */
-            box-shadow: 0 0 15px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            gap: 5mm; /* Espaço entre encartes */
+            margin: 30px auto;
+            padding: 10mm;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* 2 colunas */
+            grid-template-rows: 1fr 1fr;    /* 2 linhas (total 4 por pág) */
+            gap: 5mm; /* Espaço de corte */
         }
 
         /* --- CARD DO ENCARTE --- */
         .offer-card {
-            border: 2px dashed #ccc; /* Pontilhado para recorte */
-            height: calc((297mm - 40mm) / 4); /* Divide a altura útil por 4 */
+            border: 3px solid var(--bf-black);
+            border-radius: 8px; /* Leve arredondamento moderno */
             display: flex;
+            flex-direction: column;
             background: white;
             position: relative;
+            height: calc((297mm - 40mm) / 2);
             overflow: hidden;
             page-break-inside: avoid;
         }
-
-        /* Lado Esquerdo: Imagem e Nome */
-        .card-info {
-            flex: 1;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            border-right: 1px solid #eee;
+        
+        /* Ajuste P&B para borda */
+        body.bw-mode .offer-card {
+            border: 2px solid black;
+            border-radius: 0;
         }
 
-        .product-img {
-            width: 100px;
-            height: 100px;
-            object-fit: contain;
-            margin-bottom: 10px;
-            align-self: center;
-        }
-
-        .product-name {
-            font-size: 1.2rem;
-            color: #333;
-            font-weight: 600;
-            line-height: 1.2;
+        /* Cabeçalho do Card */
+        .card-header {
+            background-color: var(--bf-black);
+            color: var(--bf-yellow); /* Amarelo sobre preto = contraste alto */
             text-align: center;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+            padding: 10px 0;
+            font-family: 'Anton', sans-serif;
+            font-size: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 4px solid var(--bf-red);
+        }
+        
+        /* Ajuste P&B para o header */
+        body.bw-mode .card-header {
+            background-color: white;
+            color: black;
+            border-bottom: 2px solid black;
+            border-top: 1px solid transparent; 
         }
 
-        /* Lado Direito: Preços */
-        .card-price-area {
-            flex: 1.2;
-            background: var(--highlight-color);
+        /* Corpo do Card */
+        .card-body {
+            flex: 1;
+            padding: 10px 15px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: space-between; /* Distribui header, preço e footer */
             align-items: center;
-            padding: 10px;
+            text-align: center;
             position: relative;
-            clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
-            margin-left: -20px; /* Sobreposição visual */
-            padding-left: 30px;
         }
 
-        .tag-offer {
-            background: var(--primary-color);
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-weight: bold;
+        .card-content-center {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1; /* Ocupa o espaço central */
+        }
+
+        /* Nome do Produto */
+        .product-name {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.2rem;
+            color: #222;
+            font-weight: 700;
             text-transform: uppercase;
-            font-size: 0.9rem;
-            margin-bottom: 5px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            margin-bottom: 10px;
+            line-height: 1.1;
+            max-height: 2.2em;
+            overflow: hidden;
+            width: 95%;
         }
 
+        /* Preço "De" */
         .price-from {
             font-size: 1rem;
-            color: #d32f2f;
+            color: #777;
             text-decoration: line-through;
-            opacity: 0.8;
+            font-weight: 500;
             margin-bottom: -5px;
+            height: 1.2em;
         }
 
-        .price-currency {
-            font-size: 1.5rem;
-            font-weight: 800;
-            vertical-align: top;
-        }
-
-        .price-value {
+        /* WRAPPER DO PREÇO OFERTA */
+        .price-main-wrapper {
+            display: flex;
+            align-items: flex-start; 
+            justify-content: center;
+            color: var(--bf-red);
             font-family: 'Roboto', sans-serif;
-            font-size: 4rem; /* Tamanho Gigante */
             font-weight: 900;
-            color: var(--primary-color);
-            line-height: 1;
-            text-shadow: 2px 2px 0px #fff;
+            line-height: 0.8;
+            margin: 5px 0;
+            /* Sombra sólida para destacar no papel */
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
         }
 
-        .price-decimal {
+        .currency-symbol {
             font-size: 2rem;
-            vertical-align: super;
+            margin-top: 12px; 
+            margin-right: 4px;
+            font-weight: 700;
+            color: var(--bf-black); /* R$ em preto para contraste com o número vermelho */
+        }
+        
+        body.bw-mode .currency-symbol { color: black; }
+
+        .price-int {
+            font-size: 7rem; /* Aumentado para impacto */
+            letter-spacing: -4px;
         }
 
-        .savings-box {
+        .price-cents {
+            font-size: 3rem;
+            margin-top: 8px;
+            text-decoration: underline;
+            text-underline-offset: 4px;
+        }
+
+        /* Badge de Economia */
+        .savings-badge {
+            background-color: var(--bf-yellow);
+            color: #000; /* Texto preto no amarelo para legibilidade máxima */
+            font-family: 'Poppins', sans-serif;
+            font-weight: 800;
+            font-size: 1.1rem;
+            padding: 4px 18px;
+            border-radius: 4px; /* Reto mas suave */
             margin-top: 10px;
-            background: #000;
-            color: #fff;
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            font-weight: 600;
+            text-transform: uppercase;
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+            transform: rotate(-2deg); /* Charme visual */
+        }
+        
+        body.bw-mode .savings-badge {
+            background: white;
+            color: black;
+            border: 2px solid black;
+            box-shadow: none;
+            transform: none;
         }
 
-        /* Footer do Encarte (opcional) */
-        .card-footer {
-            position: absolute;
-            bottom: 5px;
-            left: 10px;
-            font-size: 0.7rem;
-            color: #999;
+        /* Footer com Data */
+        .card-footer-date {
+            width: 100%;
+            font-size: 0.8rem;
+            color: #666;
+            border-top: 1px dashed #ccc;
+            padding-top: 8px;
+            margin-top: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
         }
 
         #loading {
+            grid-column: span 2;
             text-align: center;
             padding: 50px;
             font-size: 1.2rem;
             color: #666;
         }
 
+        .error-box {
+            grid-column: span 2;
+            background-color: #fee2e2;
+            border: 2px solid #ef4444;
+            color: #991b1b;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: left;
+        }
+
         /* --- MODO DE IMPRESSÃO --- */
         @media print {
             @page {
                 size: A4 portrait;
-                margin: 0; /* Remove margens do navegador */
+                margin: 0;
             }
             
             body {
                 background: white;
-                -webkit-print-color-adjust: exact !important; /* Força impressão de cores */
+                -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
 
-            .screen-controls {
-                display: none !important;
-            }
+            .screen-controls { display: none !important; }
 
             .page-container {
                 box-shadow: none;
                 margin: 0;
                 width: 100%;
                 min-height: 100vh;
-                padding: 5mm; /* Margem física pequena */
+                padding: 10mm;
             }
 
             .offer-card {
-                border: 1px dashed #999; /* Mais leve na impressão */
-                /* Força altura para caber 4 na página */
-                height: 68mm; 
-                margin-bottom: 5mm;
+                height: auto;
+                min-height: 130mm;
             }
         }
     </style>
 </head>
-<body>
+<body class="">
 
     <!-- Controles de Tela -->
     <div class="screen-controls">
-        <div>
-            <h1>🖨️ Gerador de Encartes</h1>
-            <small>Apenas produtos com desconto (Preço De > Preço Por)</small>
+        <div class="controls-left">
+            <h1>🏷️ Encartes Black Friday</h1>
         </div>
-        <button class="btn-print" onclick="window.print()">
-            <i class='bx bxs-printer'></i> Imprimir Encartes
-        </button>
+        
+        <div class="controls-right">
+            <label class="toggle-mode">
+                <span>Colorido</span>
+                <input type="checkbox" id="mode-checkbox" onchange="toggleMode()">
+                <div class="toggle-switch"></div>
+                <span>Preto e Branco</span>
+            </label>
+
+            <button class="btn-print" onclick="window.print()">
+                <i class='bx bxs-printer'></i> Imprimir
+            </button>
+        </div>
     </div>
 
     <!-- Área da Folha A4 -->
     <div class="page-container" id="printable-area">
-        <div id="loading">Carregando ofertas do sistema...</div>
+        <div id="loading">Carregando ofertas...</div>
     </div>
 
     <script>
-        // --- ÁREA DE CONFIGURAÇÃO (PREENCHA AQUI SE USAR FORA DO CHAT) ---
-        // Se estiver rodando no seu site, substitua o objeto abaixo com suas chaves do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAVQ3tf6Qu4_9PajpJclZAJjVvRgB4ZE2I",
             authDomain: "super-app25.firebaseapp.com",
@@ -270,50 +390,46 @@
             messagingSenderId: "810900166273",
             appId: "1:810900166273:web:24b8f055a68c9f0a6b5f80"
         };
-        // CONSTANTES DO USUÁRIO (NÃO ALTERAR SE ESTIVER FUNCIONANDO)
+
         const STORE_OWNER_UID = "3zYT9Y6hXWeJSuvmEYP4FMZa5gI2"; 
         const APP_ID = 'floralchic-loja';
 
-        // Lógica para detectar ambiente (Não precisa mexer)
         if (typeof __firebase_config !== 'undefined') {
-            // Estamos no ambiente de preview do chat, usa config automática
             firebaseConfig = JSON.parse(__firebase_config);
         }
 
-        // Inicialização
         const app = firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // Função Principal
-        async function initApp() {
-            try {
-                // Tenta usar token do ambiente se disponível, senão login anônimo
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await auth.signInWithCustomToken(__initial_auth_token);
-                } else {
-                    // Se você usar em produção, certifique-se que o Auth Anônimo está ativado no console do Firebase
-                    await auth.signInAnonymously();
-                }
-
-                loadOffers();
-            } catch (error) {
-                console.error("Erro auth:", error);
-                document.getElementById('loading').innerHTML = `
-                    <div style="color:red">
-                        Erro de configuração ou autenticação.<br>
-                        <small>Se estiver usando fora do chat, verifique se preencheu o firebaseConfig corretamente.</small>
-                    </div>
-                `;
+        // Alternar Modo de Cor
+        function toggleMode() {
+            const body = document.body;
+            const checkbox = document.getElementById('mode-checkbox');
+            if (checkbox.checked) {
+                body.classList.add('bw-mode');
+            } else {
+                body.classList.remove('bw-mode');
             }
         }
 
-        // Carregar Produtos
+        async function initApp() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await auth.signInWithCustomToken(__initial_auth_token);
+                } else {
+                    await auth.signInAnonymously();
+                }
+                loadOffers();
+            } catch (error) {
+                console.error("Erro auth:", error);
+                document.getElementById('loading').innerHTML = `<div class="error-box">Erro de autenticação: ${error.message}</div>`;
+            }
+        }
+
         async function loadOffers() {
             const container = document.getElementById('printable-area');
-
             try {
-                // Caminho exato da sua coleção conforme index.js
                 const productsRef = db.collection('artifacts').doc(APP_ID)
                                       .collection('users').doc(STORE_OWNER_UID)
                                       .collection('products');
@@ -321,63 +437,83 @@
                 const snapshot = await productsRef.get();
                 
                 if (snapshot.empty) {
-                    container.innerHTML = '<div style="padding:20px; text-align:center;">Nenhum produto encontrado na loja.</div>';
+                    container.innerHTML = '<div style="grid-column:span 2; text-align:center; padding:20px;">Nenhum produto encontrado.</div>';
                     return;
                 }
 
                 let products = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    // Filtra APENAS se tiver oferta real
-                    if (data.originalPrice && data.price && (data.originalPrice > data.price)) {
+                    if (data.price) {
                         products.push({ id: doc.id, ...data });
                     }
                 });
 
                 renderOffers(products, container);
-
             } catch (error) {
-                console.error("Erro ao carregar:", error);
-                container.innerHTML = '<div style="padding:20px; text-align:center;">Erro ao carregar dados do Firebase. Verifique se as permissões (Rules) do Firestore permitem leitura.</div>';
+                container.innerHTML = `<div class="error-box">Erro ao carregar dados: ${error.message}</div>`;
             }
         }
 
-        // Renderizar HTML
         function renderOffers(products, container) {
-            container.innerHTML = ''; // Limpa loading
+            container.innerHTML = '';
 
             if (products.length === 0) {
-                container.innerHTML = '<div style="padding:20px; text-align:center;">Nenhuma oferta ativa encontrada (Produtos com preço "DE" maior que preço "POR").</div>';
+                container.innerHTML = '<div style="padding:20px; text-align:center;">Nenhum produto disponível.</div>';
                 return;
             }
 
             products.forEach(prod => {
-                const economize = prod.originalPrice - prod.price;
-                const fmtEconomize = formatMoney(economize);
-                const fmtOld = formatMoney(prod.originalPrice);
+                // Lógica de Preços
+                const regularPrice = parseFloat(prod.price || 0);
+                const offerPrice = prod['price-oferta'] ? parseFloat(prod['price-oferta']) : 0;
                 
-                // Quebra o preço novo em Inteiro e Centavos para estilizar grande
-                const [intPart, decPart] = prod.price.toFixed(2).split('.');
-                const imgUrl = prod.imgUrl || 'https://placehold.co/150x150/eee/999?text=Sem+Foto';
+                let mainPriceToDisplay = regularPrice;
+                let oldPriceHtml = '';
+                let savingsHtml = '';
+                let savingsValue = 0;
+
+                // Se existe oferta válida
+                if (offerPrice > 0 && offerPrice < regularPrice) {
+                    mainPriceToDisplay = offerPrice;
+                    savingsValue = regularPrice - offerPrice;
+                    
+                    const fmtOld = formatMoney(regularPrice);
+                    const fmtSaved = formatMoney(savingsValue);
+                    
+                    oldPriceHtml = `<div class="price-from">De ${fmtOld}</div>`;
+                    savingsHtml = `<div class="savings-badge">Economize ${fmtSaved}</div>`;
+                } else {
+                    // Preço normal
+                    mainPriceToDisplay = regularPrice;
+                    oldPriceHtml = `<div class="price-from" style="visibility:hidden;">.</div>`;
+                    savingsHtml = `<div class="savings-badge" style="visibility:hidden;">.</div>`;
+                }
+
+                // Formatação Visual (Inteiro Gigante, Centavos Pequenos em Cima)
+                const [intPart, decPart] = mainPriceToDisplay.toFixed(2).split('.');
 
                 const cardHtml = `
                     <div class="offer-card">
-                        <div class="card-info">
-                            <img src="${imgUrl}" alt="${prod.name}" class="product-img">
-                            <h3 class="product-name">${prod.name}</h3>
-                            <div class="card-footer">Cód: ${prod.id.slice(0,6)}</div>
-                        </div>
-                        <div class="card-price-area">
-                            <div class="tag-offer">OFERTA ESPECIAL</div>
-                            <div class="price-from">De ${fmtOld}</div>
-                            
-                            <div class="price-main-display">
-                                <span class="price-currency">R$</span>
-                                <span class="price-value">${intPart},<small class="price-decimal">${decPart}</small></span>
-                            </div>
+                        <div class="card-header">BLACK FRIDAY</div>
+                        
+                        <div class="card-body">
+                            <div class="card-content-center">
+                                <div class="product-name">${prod.name}</div>
+                                
+                                ${oldPriceHtml}
+                                
+                                <div class="price-main-wrapper">
+                                    <span class="currency-symbol">R$</span>
+                                    <span class="price-int">${intPart}</span>
+                                    <span class="price-cents">,${decPart}</span>
+                                </div>
 
-                            <div class="savings-box">
-                                Economize ${fmtEconomize}
+                                ${savingsHtml}
+                            </div>
+                            
+                            <div class="card-footer-date">
+                                Ofertas válidas até 29 de novembro de 2025
                             </div>
                         </div>
                     </div>
@@ -386,14 +522,11 @@
             });
         }
 
-        // Utilitário de formatação
         function formatMoney(value) {
             return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
         }
 
-        // Inicia
         initApp();
-
     </script>
 </body>
 </html>
