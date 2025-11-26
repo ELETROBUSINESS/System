@@ -157,6 +157,21 @@
 
         .stock-badge.low { background: #ef4444; }
 
+        /* Badge de Oferta na Lista */
+        .offer-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: #ef4444; /* Vermelho Oferta */
+            color: #fff;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            box-shadow: 0 2px 5px rgba(239, 68, 68, 0.4);
+            z-index: 5;
+        }
+
         .product-info {
             padding: 10px;
         }
@@ -171,13 +186,22 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
             line-height: 1.3;
-            height: 34px;
+            height: 34px; /* Altura fixa para 2 linhas */
         }
 
         .product-price {
             font-size: 15px;
             font-weight: 700;
             color: var(--bs-color);
+        }
+        
+        /* Estilo Preço Antigo (Riscado) */
+        .price-old {
+            font-size: 11px;
+            color: #9ca3af;
+            text-decoration: line-through;
+            margin-right: 5px;
+            font-weight: 400;
         }
 
         .product-sku {
@@ -260,9 +284,20 @@
             padding: 10px; display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 15px; margin-top: 5px;
         }
+        
+        /* Estilo diferente se tiver oferta */
+        .profit-display.has-offer {
+            background: #fff1f2; border-color: #fecdd3;
+        }
+
         .profit-item span { display: block; font-size: 10px; color: #555; }
         .profit-item strong { font-size: 14px; color: #0284c7; }
         .profit-item.margin strong { color: #16a34a; }
+        
+        .discount-tag {
+            background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700;
+            display: none; /* Oculto por padrão */
+        }
 
         /* Scanner Button inside Input */
         .scan-btn {
@@ -375,10 +410,9 @@
             <form id="productForm">
                 <input type="hidden" id="prod-id">
                 
-                <!-- Upload de Imagem (Câmera/Arquivo) -->
+                <!-- Upload de Imagem -->
                 <div class="form-group">
                     <label>Foto do Produto (Máx 500KB)</label>
-                    <!-- Campo hidden para guardar a string base64 -->
                     <input type="hidden" id="prod-img-base64">
                     <div class="image-upload-container" onclick="document.getElementById('prod-img-file').click()">
                         <div class="image-upload-placeholder" id="img-placeholder">
@@ -386,7 +420,6 @@
                             <p>Toque para adicionar foto</p>
                         </div>
                         <img id="img-preview" style="display: none;">
-                        <!-- CORREÇÃO: capture removido para permitir seleção de arquivo -->
                         <input type="file" id="prod-img-file" accept="image/*" style="display: none;" onchange="handleImageUpload(this)">
                     </div>
                 </div>
@@ -424,8 +457,16 @@
                     </div>
                 </div>
 
+                <!-- Oferta -->
+                <div class="form-group">
+                    <label style="color: #ef4444; font-weight: 700;">Preço de Oferta (Opcional)</label>
+                    <div class="input-box">
+                        <input type="number" id="prod-price-offer" step="0.01" placeholder="Deixe vazio se não houver oferta" style="border-color: #fecdd3;" oninput="calculateMargin()">
+                    </div>
+                </div>
+
                 <!-- Display de Lucro e Margem -->
-                <div class="profit-display">
+                <div class="profit-display" id="profit-box">
                     <div class="profit-item">
                         <span>Lucro Estimado</span>
                         <strong id="profit-val">R$ 0,00</strong>
@@ -433,6 +474,9 @@
                     <div class="profit-item margin">
                         <span>Margem</span>
                         <strong id="margin-val">0%</strong>
+                    </div>
+                    <div class="profit-item" style="text-align: right;">
+                        <span class="discount-tag" id="discount-tag">-0% OFF</span>
                     </div>
                 </div>
 
@@ -464,7 +508,9 @@
                 <img src="" id="det-img" class="detail-img" onerror="this.src='https://placehold.co/400x400?text=Sem+Foto'">
                 <span class="detail-code" id="det-code">SKU: --</span>
                 <h1 class="detail-name" id="det-name">--</h1>
-                <p class="detail-price" id="det-price">R$ 0,00</p>
+                <div class="detail-price" id="det-price-container">
+                    <span id="det-price">R$ 0,00</span>
+                </div>
             </div>
 
             <div class="detail-grid">
@@ -526,7 +572,7 @@
         let currentUser = null;
         let productsData = [];
         let currentDetailId = null;
-        let scannerIsRunning = false; // Controla o estado do scanner
+        let scannerIsRunning = false;
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -568,8 +614,20 @@
 
             list.forEach(prod => {
                 const stockClass = (prod.stock <= (prod.minStock || 5)) ? 'low' : '';
-                const fmtPrice = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(prod.price || 0);
                 
+                // Lógica de Oferta
+                const hasOffer = prod['price-oferta'] && parseFloat(prod['price-oferta']) > 0 && parseFloat(prod['price-oferta']) < prod.price;
+                const finalPrice = hasOffer ? prod['price-oferta'] : prod.price;
+                
+                const fmtPrice = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(finalPrice);
+                const fmtOldPrice = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(prod.price);
+
+                // Se tiver oferta, mostra o badge e o preço riscado
+                const offerBadge = hasOffer ? `<span class="offer-badge">OFERTA</span>` : '';
+                const priceHtml = hasOffer 
+                    ? `<div class="price-old">${fmtOldPrice}</div><div class="product-price" style="color:#ef4444;">${fmtPrice}</div>`
+                    : `<div class="product-price">${fmtPrice}</div>`;
+
                 const card = document.createElement('div');
                 card.className = 'product-card';
                 card.innerHTML = `
@@ -577,10 +635,13 @@
                         ${prod.imgUrl ? `<img src="${prod.imgUrl}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">` : ''}
                         <i class='bx bx-image' style="display: ${prod.imgUrl ? 'none' : 'block'}"></i>
                         <span class="stock-badge ${stockClass}">${prod.stock} un</span>
+                        ${offerBadge}
                     </div>
                     <div class="product-info">
                         <h3 class="product-title">${prod.name}</h3>
-                        <div class="product-price">${fmtPrice}</div>
+                        <div style="display:flex; align-items:baseline;">
+                            ${priceHtml}
+                        </div>
                         <div class="product-sku">SKU: ${prod.code || 'N/A'}</div>
                     </div>
                 `;
@@ -589,73 +650,41 @@
             });
         }
 
-        // --- LÓGICA DE IMAGEM OTIMIZADA (COMPRESSÃO < 500KB) ---
-        window.handleImageUpload = function(input) {
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                const reader = new FileReader();
-
-                reader.onload = function(e) {
-                    const img = new Image();
-                    img.src = e.target.result;
-                    
-                    img.onload = function() {
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        
-                        // 1. Redimensionar (Máx 1024x1024 para reduzir resolução conforme solicitado)
-                        const MAX_DIM = 1024;
-                        let width = img.width;
-                        let height = img.height;
-
-                        if (width > height) {
-                            if (width > MAX_DIM) { height *= MAX_DIM / width; width = MAX_DIM; }
-                        } else {
-                            if (height > MAX_DIM) { width *= MAX_DIM / height; height = MAX_DIM; }
-                        }
-
-                        canvas.width = width;
-                        canvas.height = height;
-                        ctx.drawImage(img, 0, 0, width, height);
-
-                        // 2. Comprimir Iterativamente até < 500KB
-                        const MAX_SIZE_BYTES = 500 * 1024; // 500KB
-                        let quality = 0.8; // Começar com qualidade 80%
-                        let dataUrl = canvas.toDataURL('image/jpeg', quality);
-                        
-                        // Loop de redução de qualidade se o arquivo ainda for grande
-                        while (dataUrl.length * 0.75 > MAX_SIZE_BYTES && quality > 0.1) {
-                            quality -= 0.1;
-                            dataUrl = canvas.toDataURL('image/jpeg', quality);
-                        }
-                        
-                        // Atualizar UI
-                        document.getElementById('img-preview').src = dataUrl;
-                        document.getElementById('img-preview').style.display = 'block';
-                        document.getElementById('img-placeholder').style.display = 'none';
-                        document.getElementById('prod-img-base64').value = dataUrl;
-                    }
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-
-        // --- CÁLCULO DE MARGEM ---
+        // --- CÁLCULO DE MARGEM (COM LÓGICA DE OFERTA) ---
         window.calculateMargin = function() {
             const cost = parseFloat(document.getElementById('prod-cost').value) || 0;
-            const price = parseFloat(document.getElementById('prod-price').value) || 0;
+            const priceNormal = parseFloat(document.getElementById('prod-price').value) || 0;
+            const priceOffer = parseFloat(document.getElementById('prod-price-offer').value) || 0;
             
-            const profit = price - cost;
+            // Verifica se oferta é válida (menor que preço normal)
+            const hasOffer = priceOffer > 0 && priceOffer < priceNormal;
+            const finalPrice = hasOffer ? priceOffer : priceNormal;
+
+            const profit = finalPrice - cost;
             let margin = 0;
             
-            if (price > 0) {
-                margin = (profit / price) * 100;
+            if (finalPrice > 0) {
+                margin = (profit / finalPrice) * 100;
             }
 
             const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
             document.getElementById('profit-val').textContent = fmt.format(profit);
             document.getElementById('margin-val').textContent = margin.toFixed(1) + '%';
             
+            // Visual da Oferta no Modal
+            const profitBox = document.getElementById('profit-box');
+            const discountTag = document.getElementById('discount-tag');
+
+            if (hasOffer) {
+                profitBox.classList.add('has-offer');
+                const discountPercent = ((priceNormal - priceOffer) / priceNormal) * 100;
+                discountTag.style.display = 'inline-block';
+                discountTag.textContent = `-${discountPercent.toFixed(0)}% OFF`;
+            } else {
+                profitBox.classList.remove('has-offer');
+                discountTag.style.display = 'none';
+            }
+
             document.getElementById('profit-val').style.color = profit >= 0 ? '#16a34a' : '#ef4444';
             document.getElementById('margin-val').style.color = margin >= 0 ? '#16a34a' : '#ef4444';
         }
@@ -670,6 +699,9 @@
             document.getElementById('img-placeholder').style.display = 'block';
             document.getElementById('profit-val').textContent = 'R$ 0,00';
             document.getElementById('margin-val').textContent = '0%';
+            document.getElementById('discount-tag').style.display = 'none';
+            document.getElementById('profit-box').classList.remove('has-offer');
+
             document.getElementById('modal-title').textContent = 'Novo Produto';
             document.getElementById('productModal').classList.add('open');
         }
@@ -678,15 +710,26 @@
             currentDetailId = prod.id;
             const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 
+            const hasOffer = prod['price-oferta'] && parseFloat(prod['price-oferta']) > 0;
+            const finalPrice = hasOffer ? parseFloat(prod['price-oferta']) : prod.price;
+
             document.getElementById('det-name').textContent = prod.name;
             document.getElementById('det-code').textContent = prod.code ? `SKU: ${prod.code}` : 'Sem código';
-            document.getElementById('det-price').textContent = fmt(prod.price);
+            
+            // Mostra preço de oferta se tiver
+            if(hasOffer) {
+                document.getElementById('det-price').innerHTML = `<span style="font-size:16px; text-decoration:line-through; color:#999; margin-right:5px;">${fmt(prod.price)}</span> <span style="color:#ef4444;">${fmt(finalPrice)}</span>`;
+            } else {
+                document.getElementById('det-price').textContent = fmt(prod.price);
+            }
+
             document.getElementById('det-stock').textContent = `${prod.stock} unidades`;
             document.getElementById('det-cost').textContent = fmt(prod.cost);
             document.getElementById('det-desc').textContent = prod.desc || 'Sem descrição.';
             
-            const profit = (prod.price || 0) - (prod.cost || 0);
-            const margin = prod.price > 0 ? ((profit / prod.price) * 100) : 0;
+            // Lucro no detalhe
+            const profit = finalPrice - (prod.cost || 0);
+            const margin = finalPrice > 0 ? ((profit / finalPrice) * 100) : 0;
             document.getElementById('det-profit').textContent = fmt(profit);
             document.getElementById('det-margin').textContent = margin.toFixed(1) + '%';
 
@@ -707,6 +750,7 @@
             document.getElementById('prod-code').value = prod.code || '';
             document.getElementById('prod-price').value = prod.price || '';
             document.getElementById('prod-cost').value = prod.cost || '';
+            document.getElementById('prod-price-offer').value = prod['price-oferta'] || ''; // Carrega oferta com nome correto
             document.getElementById('prod-stock').value = prod.stock || '';
             document.getElementById('prod-min-stock').value = prod.minStock || '';
             document.getElementById('prod-desc').value = prod.desc || '';
@@ -722,7 +766,7 @@
                 document.getElementById('img-placeholder').style.display = 'block';
             }
 
-            calculateMargin();
+            calculateMargin(); // Recalcula com os dados carregados
             document.getElementById('modal-title').textContent = 'Editar Produto';
             document.getElementById('productModal').classList.add('open');
         }
@@ -741,7 +785,7 @@
 
         window.closeModal = function(id) {
             document.getElementById(id).classList.remove('open');
-            stopScanner(); // Para scanner se fechar o modal
+            stopScanner();
         }
 
         // --- CRUD FIREBASE ---
@@ -756,15 +800,17 @@
             const id = document.getElementById('prod-id').value;
             const isEdit = !!id;
 
+            // USANDO O NOME "price-oferta" PARA O FIREBASE
             const data = {
                 name: document.getElementById('prod-name').value,
                 code: document.getElementById('prod-code').value,
                 price: parseFloat(document.getElementById('prod-price').value) || 0,
+                'price-oferta': parseFloat(document.getElementById('prod-price-offer').value) || 0, // Nome corrigido
                 cost: parseFloat(document.getElementById('prod-cost').value) || 0,
                 stock: parseInt(document.getElementById('prod-stock').value) || 0,
                 minStock: parseInt(document.getElementById('prod-min-stock').value) || 5,
                 desc: document.getElementById('prod-desc').value,
-                imgUrl: document.getElementById('prod-img-base64').value, // Salva Base64 aqui
+                imgUrl: document.getElementById('prod-img-base64').value,
                 updatedAt: new Date().toISOString()
             };
 
@@ -789,32 +835,71 @@
             }
         });
 
+        // --- LÓGICA DE IMAGEM OTIMIZADA (COMPRESSÃO < 500KB) ---
+        window.handleImageUpload = function(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        const MAX_DIM = 1024;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_DIM) { height *= MAX_DIM / width; width = MAX_DIM; }
+                        } else {
+                            if (height > MAX_DIM) { width *= MAX_DIM / height; height = MAX_DIM; }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        const MAX_SIZE_BYTES = 500 * 1024;
+                        let quality = 0.8;
+                        let dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        
+                        while (dataUrl.length * 0.75 > MAX_SIZE_BYTES && quality > 0.1) {
+                            quality -= 0.1;
+                            dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        }
+                        
+                        document.getElementById('img-preview').src = dataUrl;
+                        document.getElementById('img-preview').style.display = 'block';
+                        document.getElementById('img-placeholder').style.display = 'none';
+                        document.getElementById('prod-img-base64').value = dataUrl;
+                    }
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
         // --- SCANNER BARCODE (QUAGGAJS FIX) ---
         window.startScanner = function() {
             const container = document.getElementById('scanner-container');
             container.style.display = 'block';
-
-            // Importante: Garante que a flag comece falsa para não tentar parar algo que não existe
             scannerIsRunning = false;
 
             Quagga.init({
-                inputStream : {
-                    name : "Live",
-                    type : "LiveStream",
-                    target: container,
-                    constraints: { facingMode: "environment" }
-                },
+                inputStream : { name : "Live", type : "LiveStream", target: container, constraints: { facingMode: "environment" } },
                 decoder : { readers : ["ean_reader", "code_128_reader"] }
             }, function(err) {
                 if (err) {
                     console.log(err);
-                    alert("Erro ao iniciar câmera. Verifique permissões.");
+                    alert("Erro ao iniciar câmera.");
                     container.style.display = 'none';
                     return;
                 }
-                // Só marca como rodando se o init foi sucesso
+                scannerIsRunning = true;
                 Quagga.start();
-                scannerIsRunning = true; 
             });
 
             Quagga.onDetected(function(result) {
@@ -829,11 +914,7 @@
 
         window.stopScanner = function() {
             if(scannerIsRunning) {
-                try {
-                    Quagga.stop();
-                } catch(e) {
-                    console.warn("Erro ao parar scanner:", e);
-                }
+                try { Quagga.stop(); } catch(e) { console.warn(e); }
                 scannerIsRunning = false;
             }
             document.getElementById('scanner-container').style.display = 'none';
