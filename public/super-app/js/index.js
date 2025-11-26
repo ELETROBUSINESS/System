@@ -144,54 +144,46 @@ async function loadHomeProducts() {
     }
 }
 
-// --- RENDERIZA CARD (LÓGICA RIGOROSA DE PREÇO) ---
 function renderProductCard(id, prod, container) {
     const imgUrl = prod.imgUrl || 'https://placehold.co/400x400/EBEBEB/333?text=Sem+Foto';
     
     // 1. Extrai os valores numéricos limpos
-    const valPriceNormal = parseValue(prod.price);           // Campo 'price'
-    const valPriceOferta = parseValue(prod['price-oferta']); // Campo 'price-oferta'
+    const valPriceNormal = parseValue(prod.price);
+    const valPriceOferta = parseValue(prod['price-oferta']);
 
     // 2. Define se existe oferta
-    // Consideramos oferta se o valor da oferta for maior que 0 e menor que o preço normal
     const hasOffer = (valPriceOferta > 0 && valPriceOferta < valPriceNormal);
     
     let priceHtml = '';
-    let finalPriceToCart = valPriceNormal; // Preço padrão para o carrinho
+    let finalPriceToCart = valPriceNormal;
 
     if (hasOffer) {
         // --- TEM OFERTA ---
-        // price -> price-old (Riscado)
-        // price-oferta -> price-new (Destaque)
-        
         finalPriceToCart = valPriceOferta;
         
         const fmtOld = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valPriceNormal);
         const fmtNew = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valPriceOferta);
         
-        // Calcula desconto
+        // Calcula quanto economiza em Reais
         const discountVal = valPriceNormal - valPriceOferta;
-        const discountPercent = Math.round((discountVal / valPriceNormal) * 100);
+        const discountFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(discountVal);
         
         priceHtml = `
             <div class="price-container">
                 <span class="price-old">${fmtOld}</span>
-                
-                <div class="price-wrapper">
-                    <span class="price-new">${fmtNew}</span>
-                    <span class="discount-tag">${discountPercent}% OFF</span>
-                </div>
+                <span class="price-new">${fmtNew}</span>
+                <span class="economy-text">Economize ${discountFmt} nesse produto</span>
             </div>
         `;
     } else {
         // --- SEM OFERTA ---
-        // Apenas mostra o preço normal no destaque
         const fmtNormal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valPriceNormal);
         
         priceHtml = `
             <div class="price-container">
                 <span class="price-old" style="visibility:hidden">-</span>
                 <span class="price-new">${fmtNormal}</span>
+                <span class="economy-text" style="visibility:hidden">-</span>
             </div>
         `;
     }
