@@ -1978,6 +1978,485 @@
                 text-align: left;
             }
         }
+
+
+
+
+        /* --- Estilos da Página de Pedidos --- */
+
+        /* Abas de Filtro */
+        .orders-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+
+        .order-tab {
+            background: var(--card-white);
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            font-weight: 600;
+            color: var(--text-light);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .order-tab.active {
+            background: var(--text-dark);
+            color: #fff;
+            border-color: var(--text-dark);
+        }
+
+        .order-tab .badge {
+            background: var(--primary-red);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+
+        /* Grid de Pedidos */
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            /* Responsivo */
+            gap: 20px;
+        }
+
+        /* Card do Pedido Individual */
+        .order-card {
+            background: var(--card-white);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .order-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+            border-color: #ddd;
+        }
+
+        /* Cabeçalho do Card */
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px dashed var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .order-id {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text-dark);
+        }
+
+        .order-time {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Status Tag */
+        .order-status {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+
+        .status-pendente {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        /* Amarelo */
+        .status-aprovado {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        /* Verde */
+        .status-cancelado {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Vermelho */
+
+        /* Informações do Cliente */
+        .order-client {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .client-avatar-small {
+            width: 36px;
+            height: 36px;
+            background: var(--bg-light);
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            color: var(--text-light);
+        }
+
+        .client-info h4 {
+            font-size: 0.95rem;
+            margin: 0;
+            color: var(--text-dark);
+        }
+
+        .client-info p {
+            font-size: 0.8rem;
+            margin: 0;
+            color: var(--text-light);
+        }
+
+        /* Resumo de Itens */
+        .order-items-summary {
+            background: var(--bg-light);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            max-height: 80px;
+            overflow: hidden;
+            /* Corta se for muito longo */
+            position: relative;
+        }
+
+        /* Rodapé do Card */
+        .order-footer {
+            margin-top: auto;
+            /* Empurra para baixo */
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .order-total {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-red);
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon-action {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: white;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            transition: all 0.2s;
+            color: var(--text-light);
+        }
+
+        .btn-icon-action:hover {
+            background: var(--primary-red);
+            color: white;
+            border-color: var(--primary-red);
+        }
+
+        .btn-main-action {
+            background: var(--text-dark);
+            color: white;
+            border: none;
+            padding: 0 16px;
+            height: 36px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .btn-main-action:hover {
+            background: black;
+        }
+
+        /* --- Estilo da Notificação na Navbar --- */
+        .navbar-item {
+            position: relative;
+            /* Necessário para posicionar a bolinha */
+        }
+
+        .nav-badge {
+            position: absolute;
+            top: -5px;
+            right: -12px;
+            background-color: var(--primary-red);
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 700;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--bg-light);
+            /* Borda branca para destacar */
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .nav-badge.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Ajuste na responsividade para a bolinha não sumir */
+        @media (max-width: 768px) {
+            .nav-badge {
+                top: 0;
+                right: 0;
+            }
+        }
+
+        /* ======================================== */
+        /* == ANIMAÇÃO DE NOTIFICAÇÃO (PEDIDOS)  == */
+        /* ======================================== */
+
+        @keyframes nav-notify-pulse {
+            0% {
+                color: var(--text-light);
+                transform: scale(1);
+            }
+
+            50% {
+                color: var(--primary-red);
+                transform: scale(1.15);
+                /* Aumenta um pouco */
+                text-shadow: 0 0 8px rgba(219, 0, 56, 0.3);
+                /* Brilho suave */
+            }
+
+            100% {
+                color: var(--text-light);
+                transform: scale(1);
+            }
+        }
+
+        .navbar-item.notify-active {
+            animation: nav-notify-pulse 1s ease-in-out infinite;
+            /* Pisca a cada 1s */
+            font-weight: 700 !important;
+            /* Deixa negrito */
+        }
+
+        /* --- Estilos do Modal de Detalhes de Pedido --- */
+
+        /* Barra de Progresso Visual */
+        .order-progress-track {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            position: relative;
+            padding: 0 10px;
+        }
+
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            z-index: 2;
+            /* Fica acima da linha */
+            opacity: 0.5;
+            transition: all 0.3s;
+        }
+
+        .step-item.active {
+            opacity: 1;
+        }
+
+        .step-item.active .step-icon {
+            background-color: var(--primary-red);
+            color: white;
+            border-color: var(--primary-red);
+            transform: scale(1.1);
+            box-shadow: 0 4px 10px rgba(219, 0, 56, 0.3);
+        }
+
+        .step-item.completed .step-icon {
+            background-color: var(--success-green);
+            border-color: var(--success-green);
+            color: white;
+        }
+
+        .step-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: white;
+            border: 2px solid #ddd;
+            display: grid;
+            place-items: center;
+            font-size: 1.1rem;
+            color: #999;
+            transition: all 0.3s;
+        }
+
+        .step-item span {
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .step-line {
+            flex-grow: 1;
+            height: 2px;
+            background-color: #eee;
+            margin: 0 -5px;
+            /* Conecta os bolinhas */
+            margin-bottom: 20px;
+            /* Alinha com o ícone */
+            z-index: 1;
+        }
+
+        /* Lista de Itens dentro do Modal */
+        .order-items-scroll {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .modal-order-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+        }
+
+        .modal-order-item:last-child {
+            border-bottom: none;
+        }
+
+        .modal-item-qty {
+            font-weight: 700;
+            color: var(--primary-red);
+            margin-right: 8px;
+        }
+
+        /* --- Estilos Atualizados do Modal de Pedidos (Varejo) --- */
+
+        /* Lista de Itens com Conferência */
+        .modal-order-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            /* Centraliza verticalmente */
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.95rem;
+            transition: background-color 0.2s;
+        }
+
+        .item-info-text {
+            flex-grow: 1;
+        }
+
+        /* Estado: Item Esgotado */
+        .modal-order-item.item-unavailable {
+            background-color: #fff5f5;
+            color: #ccc;
+            text-decoration: line-through;
+        }
+
+        .modal-order-item.item-unavailable .modal-item-qty {
+            color: #ccc;
+            /* Tira o vermelho da quantidade */
+        }
+
+        /* Botões de Ação do Item (Estoque) */
+        .item-stock-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-stock-check {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            background: white;
+            color: #ddd;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-stock-check:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* Botão Confirmar (Verde) */
+        .btn-stock-check.confirmed {
+            background-color: var(--success-green);
+            border-color: var(--success-green);
+            color: white;
+        }
+
+        /* Botão Esgotado (Vermelho) */
+        .btn-stock-check.missing {
+            background-color: white;
+            border-color: var(--warning-red);
+            color: var(--warning-red);
+        }
+
+        .btn-stock-check.missing.active {
+            background-color: var(--warning-red);
+            color: white;
+        }
+
+        /* Botão Fechar Gigante */
+        .btn-close-modal-lg {
+            width: 100%;
+            padding: 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 10px;
+            background-color: #f1f1f1;
+            color: var(--text-dark);
+            border: 1px solid #ddd;
+        }
+
+        .btn-close-modal-lg:hover {
+            background-color: #e0e0e0;
+        }
     </style>
 </head>
 
@@ -2202,6 +2681,12 @@
         <!-- Navbar Estilizada -->
         <nav class="navbar" id="main-navbar">
             <span class="navbar-item active" data-page="pdv">PDV</span>
+
+            <span class="navbar-item" data-page="pedidos">
+                Pedidos
+                <span class="nav-badge" id="pedidos-badge">0</span>
+            </span>
+
             <span class="navbar-item" data-page="produtos">Produtos</span>
             <span class="navbar-item" data-page="clientes">Clientes</span>
             <span class="navbar-item" data-page="historico">Histórico</span>
@@ -2321,6 +2806,49 @@
                                 class="tooltip-text">Limpa todos os itens da venda atual</span> </div>
                     </div>
                 </aside>
+            </div>
+        </div>
+
+        <div id="pedidos-page" class="page-content" style="display: none;">
+            <div class="card"
+                style="max-width: 1000px; margin: 0 auto; background: transparent; border: none; box-shadow: none;">
+
+                <div class="page-header"
+                    style="background: var(--card-white); padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 24px;">
+                    <div>
+                        <h2><i class='bx bx-shopping-bag'></i> Pedidos Online</h2>
+                        <p style="color: var(--text-light); margin-bottom: 0;">Gerencie as vendas em tempo real.</p>
+                    </div>
+                    <div>
+                        <button class="btn btn-secondary" onclick="renderDummyOrders()"
+                            style="width: auto; padding: 10px 16px;">
+                            <i class='bx bx-refresh'></i> Atualizar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="orders-tabs" id="order-status-tabs">
+                    <div class="order-tab active" data-status="pendente">
+                        Pendentes <span class="badge warning" id="count-pendente">0</span>
+                    </div>
+                    <div class="order-tab" data-status="preparando">
+                        Preparando <span class="badge" id="count-preparando"
+                            style="background:#eee; color:#333">0</span>
+                    </div>
+                    <div class="order-tab" data-status="enviado">
+                        Enviados
+                    </div>
+                    <div class="order-tab" data-status="finalizado">
+                        Finalizados
+                    </div>
+                </div>
+
+                <div id="orders-grid-container" class="orders-grid">
+                    <p style="grid-column: 1/-1; text-align: center; color: var(--text-light); padding: 40px;">
+                        <i class='bx bx-loader-alt bx-spin' style="font-size: 2rem;"></i><br>Carregando...
+                    </p>
+                </div>
+
             </div>
         </div>
 
@@ -2582,6 +3110,76 @@
             </div>
         </div>
     </div>
+
+    <div class="modal-overlay" id="order-details-modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Pedido <span id="modal-order-id" style="color: var(--text-light);">#0000</span></h3>
+                <button class="close-modal-btn" data-target="order-details-modal"><i class='bx bx-x'></i></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="order-progress-track">
+                    <div class="step-item" id="step-pendente">
+                        <div class="step-icon"><i class='bx bx-list-ul'></i></div> <span>Recebido</span>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step-item" id="step-preparando">
+                        <div class="step-icon"><i class='bx bx-box'></i></div> <span>Separando</span>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step-item" id="step-enviado">
+                        <div class="step-icon"><i class='bx bx-car'></i></div>
+                        <span>Enviado</span>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step-item" id="step-finalizado">
+                        <div class="step-icon"><i class='bx bx-check-double'></i></div>
+                        <span>Entregue</span>
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-light); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+                    <h4 style="font-size: 0.95rem; margin-bottom: 8px; display:flex; align-items:center; gap:8px;">
+                        <i class='bx bx-user'></i> <span id="modal-order-client">Nome do Cliente</span>
+                    </h4>
+                    <p style="font-size: 0.9rem; color: var(--text-light); margin-bottom: 4px;">
+                        <i class='bx bx-map'></i> <span id="modal-order-address">Endereço...</span>
+                    </p>
+                    <div style="display:flex; justify-content:space-between; margin-top:8px;">
+                        <span style="font-size: 0.8rem; background: #eee; padding: 4px 8px; border-radius: 4px;"
+                            id="modal-payment-method">Pagamento: --</span>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h4 style="font-size: 1rem; margin:0;">Conferência de Estoque</h4>
+                    <small style="color:var(--text-light);">Marque os itens disponíveis</small>
+                </div>
+
+                <div id="modal-order-items-list" class="order-items-scroll">
+                </div>
+
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px dashed var(--border-color);">
+                    <span style="font-size: 1rem; font-weight: 600;">Total do Pedido</span>
+                    <span id="modal-order-total"
+                        style="font-size: 1.4rem; font-weight: 700; color: var(--primary-red);">R$ 0,00</span>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="flex-direction: column; gap: 10px;">
+                <button id="btn-update-status" class="btn btn-primary">
+                    Avançar Status
+                </button>
+
+                <button class="btn btn-close-modal-lg close-modal-btn" data-target="order-details-modal">
+                    Fechar Janela
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal 4: Confirmação -->
     <div class="modal-overlay" id="confirm-modal">
         <div class="modal-content">
@@ -3357,16 +3955,6 @@
             // Botão de Atualizar e Clique na Aba
             btnRefreshHistory.addEventListener('click', carregarHistorico);
 
-            // Adiciona ao listener da navbar para carregar ao entrar na aba
-            navbarItems.forEach(item => {
-                item.addEventListener('click', (e) => {
-                    // ... código existente ...
-                    if (item.dataset.page === 'historico') {
-                        carregarHistorico();
-                    }
-                });
-            });
-
             // --- Funções de Lógica do Carrinho ---
             const addToCart = (product) => { const existingItem = cart.find(item => item.id === product.id); if (existingItem) { existingItem.quantity += 1; } else { cart.push({ ...product, quantity: 1, isNew: true }); } renderCart(); };
             const updateQuantity = (id, action) => { const item = cart.find(item => item.id === id); if (!item) return; if (action === 'increase') { item.quantity += 1; } else if (action === 'decrease') { item.quantity -= 1; if (item.quantity === 0) { removeFromCart(id); return; } } renderCart(); };
@@ -3764,15 +4352,45 @@
             smartRoundingToggle.addEventListener('change', (e) => { isSmartRoundingEnabled = e.target.checked; if (discount > 0) { applyDiscount(discount, false); } });
             reloadCacheBtn.addEventListener('click', () => { showCustomConfirm("Recarregar Produtos", "Buscar lista recente?", () => { closeModal(confirmModal); carregarCacheDeProdutos(); }); });
 
-            // Lógica da Navbar SPA
+            // Lógica da Navbar SPA (Atualizada)
             const updateNavbarHighlight = (activeItem) => { if (!activeItem) return; const itemRect = activeItem.getBoundingClientRect(); const navbarRect = mainNavbar.getBoundingClientRect(); navbarHighlight.style.width = `${itemRect.width}px`; navbarHighlight.style.left = `${itemRect.left - navbarRect.left}px`; };
+
             navbarItems.forEach(item => {
                 item.addEventListener('click', (e) => {
-                    e.preventDefault(); const previouslyActive = document.querySelector('.navbar-item.active'); if (previouslyActive === item) { return; } navbarItems.forEach(navItem => navItem.classList.remove('active')); item.classList.add('active'); updateNavbarHighlight(item); allPages.forEach(page => page.style.display = 'none'); const pageId = item.dataset.page + '-page'; const targetPage = document.getElementById(pageId);
+                    e.preventDefault();
+
+                    // --- NOVA LÓGICA: LIMPAR NOTIFICAÇÃO AO CLICAR ---
+                    if (item.dataset.page === 'pedidos') {
+                        // 1. Para a animação imediatamente
+                        item.classList.remove('notify-active');
+
+                        // 2. Esconde a bolinha vermelha visualmente
+                        const badge = document.getElementById('pedidos-badge');
+                        if (badge) badge.classList.remove('active');
+
+                        // 3. Simula delay de carregamento
+                        document.getElementById('orders-grid-container').innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px;"><i class="bx bx-loader-alt bx-spin"></i> Atualizando...</p>';
+                        setTimeout(renderDummyOrders, 500);
+                    }
+                    // -------------------------------------------------
+
+                    const previouslyActive = document.querySelector('.navbar-item.active');
+                    if (previouslyActive === item) { return; }
+                    navbarItems.forEach(navItem => navItem.classList.remove('active'));
+                    item.classList.add('active');
+                    updateNavbarHighlight(item);
+                    allPages.forEach(page => page.style.display = 'none');
+                    const pageId = item.dataset.page + '-page';
+                    const targetPage = document.getElementById(pageId);
+
                     if (targetPage) { targetPage.style.display = 'block'; }
-                    if (pageId === 'produtos-page') { renderProdutosPage(); } else if (pageId === 'clientes-page') { if (localClientCache === null) { carregarClientesDaAPI(); } else { renderClientesPage(); } }
+                    if (pageId === 'produtos-page') { renderProdutosPage(); }
+                    else if (pageId === 'clientes-page') { if (localClientCache === null) { carregarClientesDaAPI(); } else { renderClientesPage(); } }
+                    else if (pageId === 'historico') { carregarHistorico(); }
                 });
             });
+
+
             window.addEventListener('resize', () => { updateNavbarHighlight(document.querySelector('.navbar-item.active')); });
 
             // Listeners do Modal Adicionar Cliente
@@ -4442,6 +5060,364 @@
                     submitBtn.innerHTML = originalBtnText;
                 }
             });
+
+            // --- LÓGICA DE PEDIDOS: AUTOMATIZAÇÃO E NOTIFICAÇÃO REAL ---
+
+            let orderPollingInterval = null; // Variável para controlar o relógio
+            let lastOrderCount = 0; // Para saber se chegou algo novo e tocar som/alerta
+
+            // --- LÓGICA DE PEDIDOS: VARIÁVEIS GLOBAIS ---
+
+            // ESTA É A VARIÁVEL QUE FALTAVA:
+            let currentOrderStatusFilter = 'pendente';
+
+            // Dados Iniciais (Simulação)
+            let activeOrdersData = [
+                { id: '#9825', time: '11:05', client: 'Carlos Silva', address: 'Rua A, 123', items: '1x Coca-Cola 2L', total: 'R$ 12,00', status: 'pendente' },
+                // ... seus outros dados ...
+            ];
+
+            // 1. Função Principal de Renderização (Visual)
+            function renderDummyOrders() {
+                const container = document.getElementById('orders-grid-container');
+                const badgeNavbar = document.getElementById('pedidos-badge');
+
+                // Conta quantos estão pendentes
+                const pendingOrders = activeOrdersData.filter(o => o.status === 'pendente');
+                const pendingCount = pendingOrders.length;
+
+                // --- ATUALIZA A NAVBAR (Onde você estiver) ---
+                if (pendingCount > 0) {
+                    badgeNavbar.innerText = pendingCount;
+                    badgeNavbar.classList.add('active'); // Mostra a bolinha vermelha
+                } else {
+                    badgeNavbar.classList.remove('active'); // Esconde
+                }
+
+                // Atualiza contadores das abas internas
+                const countPendenteEl = document.getElementById('count-pendente');
+                const countPreparandoEl = document.getElementById('count-preparando');
+                if (countPendenteEl) countPendenteEl.innerText = pendingCount;
+                if (countPreparandoEl) countPreparandoEl.innerText = activeOrdersData.filter(o => o.status === 'preparando').length;
+
+                // Se a tela de pedidos NÃO estiver visível, paramos aqui (só atualiza a notificação)
+                const pedidosPage = document.getElementById('pedidos-page');
+                if (pedidosPage.style.display === 'none') return;
+
+                // --- ATUALIZA A GRID (Se a tela estiver aberta) ---
+                // Filtra baseado na aba selecionada (global currentOrderStatusFilter)
+                const filteredOrders = activeOrdersData.filter(order => order.status === currentOrderStatusFilter);
+
+                container.innerHTML = '';
+
+                if (filteredOrders.length === 0) {
+                    container.innerHTML = `
+                <div style="grid-column: 1/-1; text-align: center; color: var(--text-light); padding: 60px; display:flex; flex-direction:column; align-items:center;">
+                    <i class='bx bx-check-circle' style="font-size: 3rem; margin-bottom:10px; opacity:0.3;"></i>
+                    <p>Nenhum pedido "${currentOrderStatusFilter}" no momento.</p>
+                </div>`;
+                    return;
+                }
+
+                filteredOrders.forEach(order => {
+                    const card = document.createElement('div');
+                    card.className = 'order-card';
+
+                    // Cores dinâmicas
+                    let statusLabel = order.status.toUpperCase();
+                    let labelColor = '#856404'; // Amarelo (Padrão)
+                    let bgColor = '#fff3cd';
+
+                    if (order.status === 'preparando') { labelColor = '#004085'; bgColor = '#cce5ff'; }
+                    if (order.status === 'enviado' || order.status === 'finalizado') { labelColor = '#155724'; bgColor = '#d4edda'; }
+
+                    card.innerHTML = `
+                <div class="order-status" style="background:${bgColor}; color:${labelColor}">
+                    ${statusLabel}
+                </div>
+                
+                <div class="order-header">
+                    <span class="order-id">${order.id}</span>
+                    <span class="order-time"><i class='bx bx-time'></i> ${order.time}</span>
+                </div>
+
+                <div class="order-client">
+                    <div class="client-avatar-small"><i class='bx bx-user'></i></div>
+                    <div class="client-info">
+                        <h4>${order.client}</h4>
+                        <p><i class='bx bx-map' style="font-size:0.7rem"></i> ${order.address}</p>
+                    </div>
+                </div>
+
+                <div class="order-items-summary">
+                    <strong>Itens:</strong> ${order.items}
+                </div>
+
+                <div class="order-footer">
+                    <span class="order-total">${order.total}</span>
+                    <div class="order-actions">
+                        <button class="btn-icon-action" title="Imprimir"><i class='bx bx-printer'></i></button>
+
+<button class="btn-main-action" onclick="openOrderDetailModal('${order.id}')">
+    Detalhes <i class='bx bx-chevron-right'></i>
+</button>
+                    </div>
+                </div>
+            `;
+                    container.appendChild(card);
+                });
+            }
+
+            // 2. Simulação de "Chegada de Pedido" (Backend Fake)
+            function simulateNewOrderArrival() {
+                // Cria um pedido aleatório
+                const idRandom = Math.floor(Math.random() * 1000) + 9000;
+                const newOrder = {
+                    id: `#${idRandom}`,
+                    time: formatTime(new Date()), // Usa sua função existente de hora
+                    client: 'Cliente Novo (Auto)',
+                    address: 'Rua Automática, 00',
+                    items: '1x Item Surpresa',
+                    total: 'R$ 50,00',
+                    status: 'pendente'
+                };
+
+                // Adiciona ao topo da lista
+                activeOrdersData.unshift(newOrder);
+                console.log("Novo pedido chegou simulado!", newOrder.id);
+
+                // Toca um som de notificação (opcional, mas bom para agilidade)
+                // playNotificationSound(); 
+            }
+
+            // 3. O "Relógio" Verificador (Polling) - ATUALIZADO
+            function startOrderPolling() {
+                if (orderPollingInterval) clearInterval(orderPollingInterval);
+
+                // Roda imediatamente uma vez
+                renderDummyOrders();
+                lastOrderCount = activeOrdersData.length;
+
+                // Configura o intervalo de 60 segundos (60000 ms)
+                orderPollingInterval = setInterval(() => {
+
+                    // --- SIMULAÇÃO ---
+                    simulateNewOrderArrival();
+                    // -----------------
+
+                    // Verifica se mudou a quantidade (Novo Pedido Chegou!)
+                    const currentCount = activeOrdersData.length;
+
+                    if (currentCount > lastOrderCount) {
+                        showToastFirebase("Novo pedido recebido!");
+
+                        // --- NOVA LÓGICA DE ANIMAÇÃO DA NAVBAR ---
+                        const pedidosNav = document.querySelector('.navbar-item[data-page="pedidos"]');
+
+                        // Só anima se a pessoa NÃO estiver na aba de pedidos agora
+                        if (pedidosNav && !pedidosNav.classList.contains('active')) {
+                            pedidosNav.classList.add('notify-active'); // Adiciona classe CSS
+
+                            // Remove a animação automaticamente após 15 segundos
+                            setTimeout(() => {
+                                pedidosNav.classList.remove('notify-active');
+                            }, 15000);
+                        }
+                    }
+                    lastOrderCount = currentCount;
+
+                    // Atualiza a tela e a notificação (badge)
+                    renderDummyOrders();
+
+                }, 60000); // 60 segundos
+            }
+
+
+            // --- LÓGICA DO MODAL DE DETALHES (VAREJO & ESTOQUE) ---
+
+            let currentOpenOrder = null;
+
+            window.openOrderDetailModal = (orderId) => {
+                const order = activeOrdersData.find(o => o.id === orderId);
+
+                if (!order) {
+                    showCustomAlert("Erro", "Pedido não encontrado.");
+                    return;
+                }
+
+                currentOpenOrder = order;
+
+                // Preenche dados
+                document.getElementById('modal-order-id').innerText = order.id;
+                document.getElementById('modal-order-client').innerText = order.client;
+                document.getElementById('modal-order-address').innerText = order.address;
+                document.getElementById('modal-order-total').innerText = order.total;
+                document.getElementById('modal-payment-method').innerText = "Pagamento: A combinar/Site"; // Ou pegue do objeto se tiver
+
+                // Renderiza Itens com Botões de Estoque
+                const itemsContainer = document.getElementById('modal-order-items-list');
+                itemsContainer.innerHTML = '';
+
+                const itemsArray = order.items.split(',');
+
+                itemsArray.forEach((itemStr, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'modal-order-item';
+                    div.id = `item-row-${index}`;
+
+                    // Lógica simples para separar Qtd do Nome (ex: "2x Copo")
+                    // Se não tiver padrão, exibe string inteira
+
+                    div.innerHTML = `
+                <div class="item-info-text">
+                    ${itemStr.trim()}
+                </div>
+                <div class="item-stock-actions">
+                    <button class="btn-stock-check missing" onclick="toggleItemStock(${index}, 'missing')" title="Esgotado / Falta no Estoque">
+                        <i class='bx bx-x'></i>
+                    </button>
+                    <button class="btn-stock-check" id="btn-check-${index}" onclick="toggleItemStock(${index}, 'confirm')" title="Confirmar Estoque">
+                        <i class='bx bx-check'></i>
+                    </button>
+                </div>
+            `;
+                    itemsContainer.appendChild(div);
+                });
+
+                // Atualiza UI dos Status
+                updateModalStatusUI(order.status);
+
+                openModal(document.getElementById('order-details-modal'));
+            };
+
+            // Função para marcar item como Esgotado ou Confirmado
+            window.toggleItemStock = (index, action) => {
+                const row = document.getElementById(`item-row-${index}`);
+                const btnMissing = row.querySelector('.missing');
+                const btnConfirm = document.querySelector(`#btn-check-${index}`);
+
+                if (action === 'missing') {
+                    // Marca como Esgotado
+                    const isCurrentlyMissing = row.classList.contains('item-unavailable');
+
+                    if (isCurrentlyMissing) {
+                        // Desfazer (Volta ao normal)
+                        row.classList.remove('item-unavailable');
+                        btnMissing.classList.remove('active');
+                    } else {
+                        // Aplica Esgotado
+                        row.classList.add('item-unavailable');
+                        btnMissing.classList.add('active');
+                        btnConfirm.classList.remove('confirmed'); // Remove o verde se estava confirmado
+                    }
+                } else if (action === 'confirm') {
+                    // Marca como Confirmado (Verde)
+                    const isConfirmed = btnConfirm.classList.contains('confirmed');
+
+                    if (isConfirmed) {
+                        btnConfirm.classList.remove('confirmed');
+                    } else {
+                        btnConfirm.classList.add('confirmed');
+                        // Remove estado de esgotado se tiver
+                        row.classList.remove('item-unavailable');
+                        btnMissing.classList.remove('active');
+                    }
+                }
+            };
+
+            function updateModalStatusUI(status) {
+                // Reseta timeline
+                ['pendente', 'preparando', 'enviado', 'finalizado'].forEach(step => {
+                    const el = document.getElementById(`step-${step}`);
+                    el.className = 'step-item';
+                });
+
+                const btn = document.getElementById('btn-update-status');
+                btn.onclick = () => advanceOrderStatus();
+                btn.style.display = 'flex'; // Garante que aparece
+
+                // --- LÓGICA DE VAREJO ---
+                if (status === 'pendente') {
+                    document.getElementById('step-pendente').classList.add('active');
+
+                    // Texto adaptado para Loja
+                    btn.innerHTML = "<i class='bx bx-box'></i> Iniciar Separação";
+                    btn.className = "btn btn-primary";
+                    btn.disabled = false;
+
+                } else if (status === 'preparando') {
+                    document.getElementById('step-pendente').classList.add('completed');
+                    document.getElementById('step-preparando').classList.add('active');
+
+                    // Texto adaptado para Loja
+                    btn.innerHTML = "<i class='bx bx-send'></i> Concluir e Enviar p/ Entrega";
+                    btn.className = "btn btn-primary";
+                    btn.style.backgroundColor = "#e67e22";
+                    btn.disabled = false;
+
+                } else if (status === 'enviado') {
+                    document.getElementById('step-pendente').classList.add('completed');
+                    document.getElementById('step-preparando').classList.add('completed');
+                    document.getElementById('step-enviado').classList.add('active');
+
+                    btn.innerHTML = "<i class='bx bx-check-double'></i> Confirmar Entrega (Finalizar)";
+                    btn.className = "btn btn-success";
+                    btn.style.backgroundColor = "";
+                    btn.disabled = false;
+
+                } else if (status === 'finalizado') {
+                    document.getElementById('step-pendente').classList.add('completed');
+                    document.getElementById('step-preparando').classList.add('completed');
+                    document.getElementById('step-enviado').classList.add('completed');
+                    document.getElementById('step-finalizado').classList.add('completed');
+
+                    btn.innerHTML = "Pedido Finalizado";
+                    btn.className = "btn btn-secondary";
+                    btn.disabled = true;
+                }
+            }
+
+            function advanceOrderStatus() {
+                if (!currentOpenOrder) return;
+
+                let newStatus = '';
+                let msg = '';
+
+                if (currentOpenOrder.status === 'pendente') {
+                    newStatus = 'preparando';
+                    msg = "Pedido em separação.";
+                } else if (currentOpenOrder.status === 'preparando') {
+                    // Opcional: Verificar se todos os itens foram conferidos aqui
+                    // const unchecked = document.querySelectorAll('.modal-order-item:not(.item-unavailable) .btn-stock-check:not(.confirmed).missing'); ...
+
+                    newStatus = 'enviado';
+                    msg = "Pedido saiu para entrega.";
+                } else if (currentOpenOrder.status === 'enviado') {
+                    newStatus = 'finalizado';
+                    msg = "Entrega confirmada. Pedido encerrado.";
+                }
+
+                if (newStatus) {
+                    currentOpenOrder.status = newStatus;
+                    updateModalStatusUI(newStatus);
+                    renderDummyOrders(); // Atualiza a lista principal
+                    showCustomAlert("Sucesso", msg);
+
+                    // Fecha modal automaticamente se finalizou
+                    if (newStatus === 'finalizado') {
+                        setTimeout(() => {
+                            const modal = document.getElementById('order-details-modal');
+                            closeModal(modal);
+                        }, 1500);
+                    }
+                }
+            }
+
+
+            
+            // --- Inicialização ---
+            // Coloque isso no final do seu DOMContentLoaded
+            startOrderPolling();
 
             // --- Função Global para Visualizar Comprovante (Iframe) ---
             window.openReceiptViewer = (url) => {
