@@ -18,11 +18,11 @@
 
     <style>
         :root {
-            /* Paleta Black Friday Premium */
-            --bf-black: #111111;
-            --bf-red: #cf0437;
-            --bf-yellow: #ffca3a; /* Amarelo Promoção */
-            --bf-white: #ffffff;
+            /* Paleta Black Friday Dark Mode */
+            --bf-bg: #111111;       /* Fundo Preto */
+            --bf-text: #ffffff;     /* Texto Branco */
+            --bf-red: #cf0437;      /* Vermelho Destaque */
+            --bf-yellow: #ffca3a;   /* Amarelo (secundário, se necessário) */
             
             --paper-width: 210mm;
             --paper-height: 297mm;
@@ -30,10 +30,10 @@
 
         /* Modo Preto e Branco */
         body.bw-mode {
-            --bf-black: #000000;
+            --bf-bg: #ffffff;
+            --bf-text: #000000;
             --bf-red: #000000;
             --bf-yellow: #ffffff; 
-            --bf-white: #ffffff;
         }
 
         * {
@@ -50,8 +50,8 @@
 
         /* --- CONTROLES DA TELA --- */
         .screen-controls {
-            background: var(--bf-black);
-            color: white;
+            background: var(--bf-bg);
+            color: var(--bf-text);
             padding: 15px 30px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             display: flex;
@@ -66,10 +66,13 @@
         .controls-left h1 {
             font-family: 'Anton', sans-serif;
             font-size: 1.5rem;
-            color: var(--bf-yellow);
+            color: var(--bf-red);
             letter-spacing: 1px;
             text-transform: uppercase;
         }
+
+        /* Ajuste do título no modo P&B */
+        body.bw-mode .controls-left h1 { color: black; }
 
         .controls-right {
             display: flex;
@@ -108,11 +111,11 @@
         }
 
         #mode-checkbox:checked + .toggle-switch {
-            background: var(--bf-white);
+            background: white;
         }
         #mode-checkbox:checked + .toggle-switch::after {
             transform: translateX(20px);
-            background: var(--bf-black);
+            background: black;
         }
 
         .btn-print {
@@ -133,64 +136,80 @@
 
         .btn-print:hover {
             transform: scale(1.05);
-            background-color: #ff1a53;
+            filter: brightness(1.1);
+        }
+        
+        body.bw-mode .btn-print {
+            background-color: black;
         }
 
         /* --- ÁREA DE IMPRESSÃO (Folha A4) --- */
         .page-container {
             width: var(--paper-width);
-            min-height: var(--paper-height);
+            min-height: var(--paper-height); /* Força altura exata A4 */
+            height: var(--paper-height);    /* Importante para cálculo percentual */
             background: white;
-            margin: 30px auto;
-            padding: 10mm;
+            /* MUDANÇA AQUI: Padding zero e margem apenas para tela */
+            padding: 0;
+            margin: 30px auto; 
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            gap: 5mm;
+            display: flex;
+            flex-wrap: wrap; /* Permite quebra de linha para 2x2 */
+            align-content: flex-start;
         }
 
         /* --- CARD DO ENCARTE --- */
         .offer-card {
-            border: 3px solid var(--bf-black);
-            border-radius: 8px;
+            /* MUDANÇA AQUI: Tamanho exato 50% largura e altura */
+            width: 50%;
+            height: 50%;
+            
+            /* Borda interna para não somar ao tamanho total (box-sizing já está border-box) */
+            border: 4px solid var(--bf-red); 
+            border-radius: 0;
+            
             display: flex;
             flex-direction: column;
-            background: white;
+            background: var(--bf-bg); 
+            color: var(--bf-text);
             position: relative;
-            height: calc((297mm - 40mm) / 2);
             overflow: hidden;
             page-break-inside: avoid;
+            
+            /* Pequeno ajuste para garantir que bordas não fiquem duplas demais visualmente na união, 
+               mas mantendo simples para corte */
+            margin: 0; 
         }
         
         body.bw-mode .offer-card {
             border: 2px solid black;
-            border-radius: 0;
+            background: white;
+            color: black;
         }
 
         /* Cabeçalho */
         .card-header {
-            background-color: var(--bf-black);
-            color: var(--bf-yellow);
+            background-color: var(--bf-red);
+            color: white;
             text-align: center;
             padding: 8px 0;
             font-family: 'Anton', sans-serif;
             font-size: 1.8rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            border-bottom: 4px solid var(--bf-red);
+            letter-spacing: 2px;
+            border-bottom: 2px solid var(--bf-red); 
         }
         
         body.bw-mode .card-header {
-            background-color: white;
-            color: black;
+            background-color: black;
+            color: white;
             border-bottom: 2px solid black;
         }
 
         /* Corpo */
         .card-body {
             flex: 1;
-            padding: 10px 15px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -211,11 +230,11 @@
         /* Produto */
         .product-name {
             font-family: 'Poppins', sans-serif;
-            font-size: 1.1rem;
-            color: #222;
+            font-size: 1.3rem;
+            color: var(--bf-text);
             font-weight: 700;
             text-transform: uppercase;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
             line-height: 1.1;
             max-height: 2.2em;
             overflow: hidden;
@@ -224,39 +243,58 @@
 
         /* Preço "De" */
         .price-from {
-            font-size: 0.9rem;
-            color: #777;
-            text-decoration: line-through;
+            font-size: 1.1rem;
+            color: #aaa; 
+            position: relative;
+            display: inline-block;
             font-weight: 500;
-            margin-bottom: 0px;
-            height: 1.1em;
+            margin-bottom: 5px;
+            height: 1.2em;
         }
+        
+        /* Linha Vermelha cortando o preço */
+        .price-from::after {
+            content: '';
+            position: absolute;
+            left: -5%;
+            top: 50%;
+            width: 110%;
+            height: 2px;
+            background-color: var(--bf-red);
+            transform: none; 
+        }
+        
+        body.bw-mode .price-from { color: #555; }
+        body.bw-mode .price-from::after { background-color: black; }
 
         /* NOVA ESTRUTURA DO PREÇO */
         .price-main-wrapper {
             display: flex;
             align-items: flex-start; 
             justify-content: center;
-            color: var(--bf-red);
+            color: var(--bf-text); 
             font-family: 'Roboto', sans-serif;
             font-weight: 900;
             line-height: 0.8;
-            margin: 5px 0 10px 0;
-            text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+            margin: 5px 0 15px 0;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.5);
+        }
+        
+        body.bw-mode .price-main-wrapper { 
+            color: black; 
+            text-shadow: none;
         }
 
         .currency-symbol {
-            font-size: 1.8rem;
-            margin-top: 10px; 
-            margin-right: 4px;
+            font-size: 2rem;
+            margin-top: 15px; 
+            margin-right: 5px;
             font-weight: 700;
-            color: var(--bf-black);
+            color: var(--bf-text);
         }
-        
-        body.bw-mode .currency-symbol { color: black; }
 
         .price-int {
-            font-size: 6rem;
+            font-size: 7.5rem;
             letter-spacing: -4px;
         }
 
@@ -264,28 +302,31 @@
         .price-right-col {
             display: flex;
             flex-direction: column;
-            align-items: center; /* Alterado para center */
-            margin-left: 3px;
-            margin-top: 8px;
+            align-items: center; /* Centralizado */
+            margin-left: 5px;
+            margin-top: 12px;
         }
 
         .price-cents {
-            font-size: 2.5rem;
-            text-decoration: underline;
-            text-underline-offset: 4px;
-            line-height: 1;
+            font-size: 3rem;
+            /* Sublinhado Vermelho */
+            border-bottom: 4px solid var(--bf-red); 
+            line-height: 0.9;
+            padding-bottom: 2px;
         }
+        
+        body.bw-mode .price-cents { border-bottom-color: black; }
 
         .cash-label-small {
-            background: var(--bf-black);
-            color: var(--bf-white);
+            background: var(--bf-red); /* Fundo Vermelho */
+            color: white;
             font-family: 'Poppins', sans-serif;
-            font-size: 0.6rem;
+            font-size: 0.7rem;
             text-transform: uppercase;
-            font-weight: 700;
-            padding: 2px 8px; /* Aumentado ligeiramente o padding horizontal */
+            font-weight: 800;
+            padding: 3px 10px;
             border-radius: 4px;
-            margin-top: 6px; /* Aumentado o espaço superior */
+            margin-top: 8px; /* Espaço entre barra e label */
             white-space: nowrap;
         }
         
@@ -294,79 +335,85 @@
             color: white;
         }
 
+        /* Badge de Economia */
+        .savings-box {
+            border: 2px solid var(--bf-red);
+            color: var(--bf-red);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 800;
+            font-size: 1.1rem;
+            padding: 4px 20px;
+            background: transparent; 
+            margin-top: 5px;
+            text-transform: uppercase;
+        }
+        
+        body.bw-mode .savings-box {
+            border-color: black;
+            color: black;
+        }
+
         /* Seção Cartão de Crédito */
         .credit-card-box {
-            background-color: #f5f5f5;
-            width: 90%;
-            padding: 5px;
+            width: 95%;
+            padding: 8px;
+            border: 1px solid var(--bf-red);
             border-radius: 6px;
-            border: 1px dashed #aaa;
-            margin-top: 5px;
+            margin-top: 15px;
             display: flex;
             flex-direction: column;
             align-items: center;
+            background: transparent;
         }
         
         body.bw-mode .credit-card-box {
-            background: white;
-            border: 1px solid black;
+            border-color: black;
         }
 
         .credit-label {
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             text-transform: uppercase;
             font-weight: 700;
-            color: #444;
+            color: #ccc; 
+            margin-bottom: 2px;
         }
+        
+        body.bw-mode .credit-label { color: #555; }
 
         .installment-price {
-            font-size: 1.1rem;
+            font-size: 1.3rem;
             font-weight: 800;
-            color: var(--bf-black);
+            color: var(--bf-text);
             font-family: 'Roboto', sans-serif;
         }
 
         .installment-detail {
-            font-size: 0.75rem;
-            color: #666;
-        }
-
-        /* Badge de Economia */
-        .savings-badge {
-            background-color: var(--bf-yellow);
-            color: #000;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 800;
-            font-size: 0.9rem;
-            padding: 2px 12px;
-            border-radius: 4px;
-            margin-top: 8px;
-            text-transform: uppercase;
-            box-shadow: 2px 2px 0px rgba(0,0,0,0.1);
-            transform: rotate(-1deg);
+            font-size: 0.8rem;
+            color: #999;
         }
         
-        body.bw-mode .savings-badge {
-            background: white;
-            color: black;
-            border: 2px solid black;
-            box-shadow: none;
-            transform: none;
-        }
+        body.bw-mode .installment-detail { color: #555; }
 
+        /* Footer com Data */
         .card-footer-date {
             width: 100%;
-            font-size: 0.7rem;
-            color: #666;
-            border-top: 1px dashed #ccc;
-            padding-top: 5px;
-            margin-top: 5px;
+            font-size: 0.75rem;
+            color: #999;
+            /* Linha pontilhada vermelha */
+            border-top: 2px dotted var(--bf-red); 
+            padding-top: 8px;
+            margin-top: 10px;
             font-weight: 600;
             text-transform: uppercase;
         }
+        
+        body.bw-mode .card-footer-date {
+            color: #555;
+            border-top-color: black;
+        }
 
         #loading {
-            grid-column: span 2;
+            width: 100%; /* Ocupa linha inteira */
             text-align: center;
             padding: 50px;
             font-size: 1.2rem;
@@ -374,7 +421,7 @@
         }
 
         .error-box {
-            grid-column: span 2;
+            width: 100%;
             background-color: #fee2e2;
             border: 2px solid #ef4444;
             color: #991b1b;
@@ -392,6 +439,7 @@
                 background: white;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
+                margin: 0;
             }
             .screen-controls { display: none !important; }
             .page-container {
@@ -399,11 +447,18 @@
                 margin: 0;
                 width: 100%;
                 min-height: 100vh;
-                padding: 10mm;
+                height: 100vh; /* Garante altura total na impressão */
+                padding: 0; /* Padding Zero para impressão sangrada */
             }
             .offer-card {
-                height: auto;
-                min-height: 130mm;
+                /* Força tamanho exato */
+                height: 50% !important; 
+                width: 50% !important;
+                border: 2px solid var(--bf-red); /* Borda um pouco menor na impressão para não somar 8px no meio */
+            }
+            /* Ajuste específico para P&B na impressão */
+            body.bw-mode .offer-card {
+                border: 1px solid black;
             }
         }
     </style>
@@ -488,7 +543,7 @@
                 const snapshot = await productsRef.get();
                 
                 if (snapshot.empty) {
-                    container.innerHTML = '<div style="grid-column:span 2; text-align:center; padding:20px;">Nenhum produto encontrado.</div>';
+                    container.innerHTML = '<div style="width:100%; text-align:center; padding:20px;">Nenhum produto encontrado.</div>';
                     return;
                 }
 
@@ -511,7 +566,7 @@
             container.innerHTML = '';
 
             if (products.length === 0) {
-                container.innerHTML = '<div style="padding:20px; text-align:center;">Nenhum produto disponível.</div>';
+                container.innerHTML = '<div style="width:100%; text-align:center; padding:20px;">Nenhum produto disponível.</div>';
                 return;
             }
 
@@ -536,23 +591,19 @@
                     const fmtSaved = formatMoney(savingsValue);
                     
                     oldPriceHtml = `<div class="price-from">De ${fmtOld}</div>`;
-                    savingsHtml = `<div class="savings-badge">Economize ${fmtSaved}</div>`;
+                    savingsHtml = `<div class="savings-box">Economize ${fmtSaved}</div>`;
                 } else {
                     // Preço normal
                     mainPriceToDisplay = regularPrice;
                     oldPriceHtml = `<div class="price-from" style="visibility:hidden;">.</div>`;
-                    savingsHtml = `<div class="savings-badge" style="visibility:hidden;">.</div>`;
+                    savingsHtml = `<div class="savings-box" style="visibility:hidden;">.</div>`;
                 }
 
                 // --- 2. LÓGICA DE CARTÃO DE CRÉDITO ---
-                // Prioridade: Campos 'parcelas' e 'pc-oferta' do Firebase
-                // pc-oferta = valor total parcelado
-                // parcelas = número de vezes
                 const dbParcelas = parseInt(prod['parcelas']);
                 const dbPcOferta = parseFloat(prod['pc-oferta']);
 
                 if (dbParcelas && dbPcOferta && dbPcOferta > 0) {
-                    // Se existirem dados específicos no banco
                     const valParcela = dbPcOferta / dbParcelas;
                     const fmtParcela = formatMoney(valParcela);
                     const fmtTotalPrazo = formatMoney(dbPcOferta);
@@ -565,8 +616,6 @@
                         </div>
                     `;
                 } else {
-                    // Fallback padrão se não houver dados específicos
-                    // Parcelamento padrão do preço "De" (sem desconto à vista)
                     const installments = 10;
                     const installmentValue = regularPrice / installments;
                     const fmtInstallment = formatMoney(installmentValue);
@@ -579,7 +628,6 @@
                     `;
                 }
 
-                // Formatação do Preço Principal (Ex: 4,99)
                 const [intPart, decPart] = mainPriceToDisplay.toFixed(2).split('.');
 
                 const cardHtml = `
@@ -592,7 +640,6 @@
                                 
                                 ${oldPriceHtml}
                                 
-                                <!-- Preço Principal com Layout Novo -->
                                 <div class="price-main-wrapper">
                                     <span class="currency-symbol">R$</span>
                                     <span class="price-int">${intPart}</span>
