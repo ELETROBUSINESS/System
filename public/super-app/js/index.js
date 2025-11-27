@@ -299,11 +299,7 @@ async function loadProductDetail(id) {
     }
 }
 
-// js/index.js - Trecho Atualizado
-
-// ... (loadHomeProducts e outras funções anteriores continuam iguais) ...
-
-// --- PÁGINA DE DETALHES ---
+// --- PÁGINA DE DETALHES (ATUALIZADA) ---
 async function loadProductDetail(id) {
     document.getElementById('home-view').style.display = 'none';
     document.getElementById('product-detail-view').style.display = 'block';
@@ -323,6 +319,7 @@ async function loadProductDetail(id) {
 
         const prod = docSnap.data();
         
+        // Lógica de Preço
         const valPriceNormal = parseValue(prod.price);
         const valPriceOferta = parseValue(prod['price-oferta']);
         const hasOffer = (valPriceOferta > 0 && valPriceOferta < valPriceNormal);
@@ -340,15 +337,19 @@ async function loadProductDetail(id) {
             displayPrice = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valPriceOferta);
             const oldDisplay = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valPriceNormal);
             
-            document.getElementById('p-detail-old-price').innerText = oldDisplay;
-            document.getElementById('p-detail-old-price').style.display = 'block';
+            // Exibe preço antigo riscado
+            const oldEl = document.getElementById('p-detail-old-price');
+            oldEl.innerText = oldDisplay;
+            oldEl.style.display = 'block';
 
+            // Exibe Economia
             const savings = valPriceNormal - valPriceOferta;
             const savingsFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(savings);
-            document.getElementById('p-detail-savings').innerText = `Economize ${savingsFmt} comprando agora`;
-            document.getElementById('p-detail-savings').style.display = 'block';
+            const savingsEl = document.getElementById('p-detail-savings');
+            savingsEl.innerText = `Você economiza ${savingsFmt}`;
+            savingsEl.style.display = 'inline-block'; // Ajuste para o novo estilo de "tag"
 
-            // Ativa Cronômetro Real se houver oferta
+            // Ativa Cronômetro
             document.getElementById('p-timer-box').style.display = 'flex';
             startDetailTimer();
         }
@@ -359,12 +360,14 @@ async function loadProductDetail(id) {
         document.getElementById('p-detail-name').innerText = prod.name;
         document.getElementById('p-detail-price').innerText = displayPrice;
         
-        // Prova Social: Mantém apenas vendas (dado histórico), remove "vendo agora"
-        document.getElementById('p-detail-sold').innerText = Math.floor(Math.random() * 50) + 10; 
+        // CORREÇÃO: Define fixo como "0" (Honestidade)
+        // Se no futuro o firebase tiver o campo 'soldCount', você muda para: prod.soldCount || 0
+        document.getElementById('p-detail-sold').innerText = "0"; 
         
         document.getElementById('p-detail-desc').innerText = prod.desc || "Sem descrição.";
         document.title = `${prod.name} | Dtudo`;
 
+        // Botões
         document.getElementById('btn-add-cart-detail').onclick = () => { 
             addToCartDirect(id, prod.name, finalPrice, imgUrl); 
             showToast("Adicionado ao carrinho!", "success");

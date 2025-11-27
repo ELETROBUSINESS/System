@@ -21,7 +21,7 @@
             /* Paleta Black Friday Premium */
             --bf-black: #111111;
             --bf-red: #cf0437;
-            --bf-yellow: #cf0437; /* Amarelo Promoção */
+            --bf-yellow: #ffca3a; /* Amarelo Promoção */
             --bf-white: #ffffff;
             
             --paper-width: 210mm;
@@ -32,7 +32,7 @@
         body.bw-mode {
             --bf-black: #000000;
             --bf-red: #000000;
-            --bf-yellow: #ffffff; /* Amarelo vira branco */
+            --bf-yellow: #ffffff; 
             --bf-white: #ffffff;
         }
 
@@ -66,7 +66,7 @@
         .controls-left h1 {
             font-family: 'Anton', sans-serif;
             font-size: 1.5rem;
-            color: var(--bf-yellow); /* Destaque no título da UI */
+            color: var(--bf-yellow);
             letter-spacing: 1px;
             text-transform: uppercase;
         }
@@ -145,15 +145,15 @@
             padding: 10mm;
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
             display: grid;
-            grid-template-columns: 1fr 1fr; /* 2 colunas */
-            grid-template-rows: 1fr 1fr;    /* 2 linhas (total 4 por pág) */
-            gap: 5mm; /* Espaço de corte */
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 5mm;
         }
 
         /* --- CARD DO ENCARTE --- */
         .offer-card {
             border: 3px solid var(--bf-black);
-            border-radius: 8px; /* Leve arredondamento moderno */
+            border-radius: 8px;
             display: flex;
             flex-direction: column;
             background: white;
@@ -163,40 +163,37 @@
             page-break-inside: avoid;
         }
         
-        /* Ajuste P&B para borda */
         body.bw-mode .offer-card {
             border: 2px solid black;
             border-radius: 0;
         }
 
-        /* Cabeçalho do Card */
+        /* Cabeçalho */
         .card-header {
             background-color: var(--bf-black);
-            color: var(--bf-yellow); /* Amarelo sobre preto = contraste alto */
+            color: var(--bf-yellow);
             text-align: center;
-            padding: 10px 0;
+            padding: 8px 0;
             font-family: 'Anton', sans-serif;
-            font-size: 2rem;
+            font-size: 1.8rem;
             text-transform: uppercase;
             letter-spacing: 1px;
             border-bottom: 4px solid var(--bf-red);
         }
         
-        /* Ajuste P&B para o header */
         body.bw-mode .card-header {
             background-color: white;
             color: black;
             border-bottom: 2px solid black;
-            border-top: 1px solid transparent; 
         }
 
-        /* Corpo do Card */
+        /* Corpo */
         .card-body {
             flex: 1;
             padding: 10px 15px;
             display: flex;
             flex-direction: column;
-            justify-content: space-between; /* Distribui header, preço e footer */
+            justify-content: space-between;
             align-items: center;
             text-align: center;
             position: relative;
@@ -208,17 +205,17 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            flex: 1; /* Ocupa o espaço central */
+            flex: 1;
         }
 
-        /* Nome do Produto */
+        /* Produto */
         .product-name {
             font-family: 'Poppins', sans-serif;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: #222;
             font-weight: 700;
             text-transform: uppercase;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             line-height: 1.1;
             max-height: 2.2em;
             overflow: hidden;
@@ -227,15 +224,15 @@
 
         /* Preço "De" */
         .price-from {
-            font-size: 1rem;
+            font-size: 0.9rem;
             color: #777;
             text-decoration: line-through;
             font-weight: 500;
-            margin-bottom: -5px;
-            height: 1.2em;
+            margin-bottom: 0px;
+            height: 1.1em;
         }
 
-        /* WRAPPER DO PREÇO OFERTA */
+        /* NOVA ESTRUTURA DO PREÇO */
         .price-main-wrapper {
             display: flex;
             align-items: flex-start; 
@@ -244,46 +241,109 @@
             font-family: 'Roboto', sans-serif;
             font-weight: 900;
             line-height: 0.8;
-            margin: 5px 0;
-            /* Sombra sólida para destacar no papel */
+            margin: 5px 0 10px 0;
             text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
         }
 
         .currency-symbol {
-            font-size: 2rem;
-            margin-top: 12px; 
+            font-size: 1.8rem;
+            margin-top: 10px; 
             margin-right: 4px;
             font-weight: 700;
-            color: var(--bf-black); /* R$ em preto para contraste com o número vermelho */
+            color: var(--bf-black);
         }
         
         body.bw-mode .currency-symbol { color: black; }
 
         .price-int {
-            font-size: 7rem; /* Aumentado para impacto */
+            font-size: 6rem;
             letter-spacing: -4px;
         }
 
-        .price-cents {
-            font-size: 3rem;
+        /* Coluna para Centavos e Label "À Vista" */
+        .price-right-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Alterado para center */
+            margin-left: 3px;
             margin-top: 8px;
+        }
+
+        .price-cents {
+            font-size: 2.5rem;
             text-decoration: underline;
             text-underline-offset: 4px;
+            line-height: 1;
+        }
+
+        .cash-label-small {
+            background: var(--bf-black);
+            color: var(--bf-white);
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            padding: 2px 8px; /* Aumentado ligeiramente o padding horizontal */
+            border-radius: 4px;
+            margin-top: 6px; /* Aumentado o espaço superior */
+            white-space: nowrap;
+        }
+        
+        body.bw-mode .cash-label-small {
+            background: black;
+            color: white;
+        }
+
+        /* Seção Cartão de Crédito */
+        .credit-card-box {
+            background-color: #f5f5f5;
+            width: 90%;
+            padding: 5px;
+            border-radius: 6px;
+            border: 1px dashed #aaa;
+            margin-top: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        body.bw-mode .credit-card-box {
+            background: white;
+            border: 1px solid black;
+        }
+
+        .credit-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #444;
+        }
+
+        .installment-price {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--bf-black);
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .installment-detail {
+            font-size: 0.75rem;
+            color: #666;
         }
 
         /* Badge de Economia */
         .savings-badge {
             background-color: var(--bf-yellow);
-            color: #000; /* Texto preto no amarelo para legibilidade máxima */
+            color: #000;
             font-family: 'Poppins', sans-serif;
             font-weight: 800;
-            font-size: 1.1rem;
-            padding: 4px 18px;
-            border-radius: 4px; /* Reto mas suave */
-            margin-top: 10px;
+            font-size: 0.9rem;
+            padding: 2px 12px;
+            border-radius: 4px;
+            margin-top: 8px;
             text-transform: uppercase;
             box-shadow: 2px 2px 0px rgba(0,0,0,0.1);
-            transform: rotate(-2deg); /* Charme visual */
+            transform: rotate(-1deg);
         }
         
         body.bw-mode .savings-badge {
@@ -294,14 +354,13 @@
             transform: none;
         }
 
-        /* Footer com Data */
         .card-footer-date {
             width: 100%;
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             color: #666;
             border-top: 1px dashed #ccc;
-            padding-top: 8px;
-            margin-top: 10px;
+            padding-top: 5px;
+            margin-top: 5px;
             font-weight: 600;
             text-transform: uppercase;
         }
@@ -324,21 +383,17 @@
             text-align: left;
         }
 
-        /* --- MODO DE IMPRESSÃO --- */
         @media print {
             @page {
                 size: A4 portrait;
                 margin: 0;
             }
-            
             body {
                 background: white;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
-
             .screen-controls { display: none !important; }
-
             .page-container {
                 box-shadow: none;
                 margin: 0;
@@ -346,7 +401,6 @@
                 min-height: 100vh;
                 padding: 10mm;
             }
-
             .offer-card {
                 height: auto;
                 min-height: 130mm;
@@ -356,7 +410,6 @@
 </head>
 <body class="">
 
-    <!-- Controles de Tela -->
     <div class="screen-controls">
         <div class="controls-left">
             <h1>🏷️ Encartes Black Friday</h1>
@@ -376,7 +429,6 @@
         </div>
     </div>
 
-    <!-- Área da Folha A4 -->
     <div class="page-container" id="printable-area">
         <div id="loading">Carregando ofertas...</div>
     </div>
@@ -395,14 +447,13 @@
         const APP_ID = 'floralchic-loja';
 
         if (typeof __firebase_config !== 'undefined') {
-            firebaseConfig = JSON.parse(__firebase_config);
+            Object.assign(firebaseConfig, JSON.parse(__firebase_config));
         }
 
         const app = firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // Alternar Modo de Cor
         function toggleMode() {
             const body = document.body;
             const checkbox = document.getElementById('mode-checkbox');
@@ -444,6 +495,7 @@
                 let products = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
+                    // Agora aceitamos produtos que tenham pelo menos o price
                     if (data.price) {
                         products.push({ id: doc.id, ...data });
                     }
@@ -464,17 +516,19 @@
             }
 
             products.forEach(prod => {
-                // Lógica de Preços
                 const regularPrice = parseFloat(prod.price || 0);
                 const offerPrice = prod['price-oferta'] ? parseFloat(prod['price-oferta']) : 0;
                 
+                // Variáveis que vamos calcular
                 let mainPriceToDisplay = regularPrice;
                 let oldPriceHtml = '';
                 let savingsHtml = '';
                 let savingsValue = 0;
+                let creditCardHtml = '';
 
-                // Se existe oferta válida
+                // --- 1. LÓGICA DE PREÇO (DE / POR) ---
                 if (offerPrice > 0 && offerPrice < regularPrice) {
+                    // Tem oferta
                     mainPriceToDisplay = offerPrice;
                     savingsValue = regularPrice - offerPrice;
                     
@@ -490,7 +544,42 @@
                     savingsHtml = `<div class="savings-badge" style="visibility:hidden;">.</div>`;
                 }
 
-                // Formatação Visual (Inteiro Gigante, Centavos Pequenos em Cima)
+                // --- 2. LÓGICA DE CARTÃO DE CRÉDITO ---
+                // Prioridade: Campos 'parcelas' e 'pc-oferta' do Firebase
+                // pc-oferta = valor total parcelado
+                // parcelas = número de vezes
+                const dbParcelas = parseInt(prod['parcelas']);
+                const dbPcOferta = parseFloat(prod['pc-oferta']);
+
+                if (dbParcelas && dbPcOferta && dbPcOferta > 0) {
+                    // Se existirem dados específicos no banco
+                    const valParcela = dbPcOferta / dbParcelas;
+                    const fmtParcela = formatMoney(valParcela);
+                    const fmtTotalPrazo = formatMoney(dbPcOferta);
+
+                    creditCardHtml = `
+                        <div class="credit-card-box">
+                            <span class="credit-label">Ou a prazo no cartão</span>
+                            <span class="installment-price">${dbParcelas}x de ${fmtParcela}</span>
+                            <span class="installment-detail">Total a prazo: ${fmtTotalPrazo}</span>
+                        </div>
+                    `;
+                } else {
+                    // Fallback padrão se não houver dados específicos
+                    // Parcelamento padrão do preço "De" (sem desconto à vista)
+                    const installments = 10;
+                    const installmentValue = regularPrice / installments;
+                    const fmtInstallment = formatMoney(installmentValue);
+
+                    creditCardHtml = `
+                        <div class="credit-card-box">
+                            <span class="credit-label">Parcelado no cartão</span>
+                            <span class="installment-price">${installments}x de ${fmtInstallment}</span>
+                        </div>
+                    `;
+                }
+
+                // Formatação do Preço Principal (Ex: 4,99)
                 const [intPart, decPart] = mainPriceToDisplay.toFixed(2).split('.');
 
                 const cardHtml = `
@@ -503,13 +592,18 @@
                                 
                                 ${oldPriceHtml}
                                 
+                                <!-- Preço Principal com Layout Novo -->
                                 <div class="price-main-wrapper">
                                     <span class="currency-symbol">R$</span>
                                     <span class="price-int">${intPart}</span>
-                                    <span class="price-cents">,${decPart}</span>
+                                    <div class="price-right-col">
+                                        <span class="price-cents">,${decPart}</span>
+                                        <span class="cash-label-small">À VISTA</span>
+                                    </div>
                                 </div>
 
                                 ${savingsHtml}
+                                ${creditCardHtml}
                             </div>
                             
                             <div class="card-footer-date">

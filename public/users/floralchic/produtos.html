@@ -299,6 +299,15 @@
             display: none; /* Oculto por padrão */
         }
 
+        /* Section Divider */
+        .section-divider {
+            margin: 20px 0 10px 0; border-top: 1px dashed #eee; position: relative;
+        }
+        .section-divider span {
+            position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+            background: #fff; padding: 0 10px; font-size: 11px; color: #999;
+        }
+
         /* Scanner Button inside Input */
         .scan-btn {
             position: absolute; right: 5px; top: 5px; bottom: 5px;
@@ -480,6 +489,22 @@
                     </div>
                 </div>
 
+                <!-- SEÇÃO DE PARCELAMENTO -->
+                <div class="section-divider"><span>Parcelamento & Oferta Cartão</span></div>
+
+                <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label>Máx. Parcelas</label>
+                        <div class="input-box"><input type="number" id="prod-parcelas" placeholder="Ex: 10"></div>
+                    </div>
+                    <div>
+                        <label>Oferta Cartão (Total)</label>
+                        <div class="input-box"><input type="number" id="prod-pc-oferta" step="0.01" placeholder="R$ Total"></div>
+                    </div>
+                </div>
+
+                <div class="section-divider"><span>Estoque</span></div>
+
                 <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div>
                         <label>Estoque Atual</label>
@@ -510,6 +535,10 @@
                 <h1 class="detail-name" id="det-name">--</h1>
                 <div class="detail-price" id="det-price-container">
                     <span id="det-price">R$ 0,00</span>
+                </div>
+                <!-- Exibição do Parcelamento -->
+                <div style="margin-top: 5px; font-size: 13px; color: #666;" id="det-installments">
+                    <!-- JS preenche aqui -->
                 </div>
             </div>
 
@@ -723,6 +752,17 @@
                 document.getElementById('det-price').textContent = fmt(prod.price);
             }
 
+            // Exibir Parcelamento no Detalhe
+            if(prod.parcelas && prod.parcelas > 0) {
+                // Se tiver preço oferta cartão (pc-oferta), usa ele. Se não, usa o preço final (oferta ou normal).
+                const cardPrice = (prod['pc-oferta'] && parseFloat(prod['pc-oferta']) > 0) ? parseFloat(prod['pc-oferta']) : finalPrice;
+                const valParcela = cardPrice / prod.parcelas;
+                // Exibe algo como: "Em até 10x de R$ 15,90"
+                document.getElementById('det-installments').textContent = `Em até ${prod.parcelas}x de ${fmt(valParcela)}`;
+            } else {
+                document.getElementById('det-installments').textContent = '';
+            }
+
             document.getElementById('det-stock').textContent = `${prod.stock} unidades`;
             document.getElementById('det-cost').textContent = fmt(prod.cost);
             document.getElementById('det-desc').textContent = prod.desc || 'Sem descrição.';
@@ -750,7 +790,12 @@
             document.getElementById('prod-code').value = prod.code || '';
             document.getElementById('prod-price').value = prod.price || '';
             document.getElementById('prod-cost').value = prod.cost || '';
-            document.getElementById('prod-price-offer').value = prod['price-oferta'] || ''; // Carrega oferta com nome correto
+            document.getElementById('prod-price-offer').value = prod['price-oferta'] || ''; 
+            
+            // Novos campos no Edit
+            document.getElementById('prod-parcelas').value = prod.parcelas || '';
+            document.getElementById('prod-pc-oferta').value = prod['pc-oferta'] || '';
+
             document.getElementById('prod-stock').value = prod.stock || '';
             document.getElementById('prod-min-stock').value = prod.minStock || '';
             document.getElementById('prod-desc').value = prod.desc || '';
@@ -766,7 +811,7 @@
                 document.getElementById('img-placeholder').style.display = 'block';
             }
 
-            calculateMargin(); // Recalcula com os dados carregados
+            calculateMargin(); 
             document.getElementById('modal-title').textContent = 'Editar Produto';
             document.getElementById('productModal').classList.add('open');
         }
@@ -800,13 +845,17 @@
             const id = document.getElementById('prod-id').value;
             const isEdit = !!id;
 
-            // USANDO O NOME "price-oferta" PARA O FIREBASE
             const data = {
                 name: document.getElementById('prod-name').value,
                 code: document.getElementById('prod-code').value,
                 price: parseFloat(document.getElementById('prod-price').value) || 0,
-                'price-oferta': parseFloat(document.getElementById('prod-price-offer').value) || 0, // Nome corrigido
+                'price-oferta': parseFloat(document.getElementById('prod-price-offer').value) || 0,
                 cost: parseFloat(document.getElementById('prod-cost').value) || 0,
+                
+                // Novos Campos
+                parcelas: parseInt(document.getElementById('prod-parcelas').value) || 0,
+                'pc-oferta': parseFloat(document.getElementById('prod-pc-oferta').value) || 0,
+
                 stock: parseInt(document.getElementById('prod-stock').value) || 0,
                 minStock: parseInt(document.getElementById('prod-min-stock').value) || 5,
                 desc: document.getElementById('prod-desc').value,

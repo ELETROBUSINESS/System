@@ -898,192 +898,137 @@ button {
 
 /* style.css */
 
-/* ==================== DETALHES DO PRODUTO (CORRIGIDO) ==================== */
+/* style.css */
 
-/* Botão Comprar Agora (Vermelho Sólido) */
-.btn-buy-now {
-    background-color: #db0038 !important; /* Vermelho Dtudo Forçado */
-    color: #fff !important;
-    border: none;
-    border-radius: 6px;
-    padding: 16px;
-    font-size: 18px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background 0.2s, transform 0.1s;
+/* ... (Mantenha o Header e Variáveis como estão) ... */
+
+/* ==================== CRONÔMETRO FIXO (NOVO) ==================== */
+.fixed-offer-timer {
+    position: fixed;
+    top: var(--header-height); /* Logo abaixo do header */
+    left: 0;
     width: 100%;
-    margin-bottom: 10px;
-    box-shadow: 0 4px 10px rgba(219, 0, 56, 0.3);
-}
-.btn-buy-now:hover { 
-    background-color: #b71c1c !important; 
-    transform: translateY(-2px);
-}
-
-/* Botão Adicionar ao Carrinho (Borda Vermelha / Fundo Claro) */
-.btn-add-cart {
-    background-color: #fff !important;
-    color: #db0038 !important;
-    border: 2px solid #db0038 !important;
-    border-radius: 6px;
-    padding: 16px;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background 0.2s;
-    width: 100%;
-}
-.btn-add-cart:hover { 
-    background-color: rgba(219, 0, 56, 0.05) !important; 
-}
-
-/* Cronômetro Real */
-.scarcity-box {
-    background: #fff5f5;
-    border: 1px solid #ffcdd2;
-    border-radius: 6px;
+    background-color: #000; /* Fundo Preto */
+    color: #fff;            /* Texto Branco */
+    text-align: center;
     padding: 10px;
-    margin-bottom: 15px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    z-index: 90;
+    display: none; /* Controlado pelo JS */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     display: flex;
+    justify-content: center;
     align-items: center;
-    gap: 10px;
-    color: #c62828;
+    gap: 8px;
+}
+.fixed-offer-timer i {
+    color: var(--color-brand-red); /* Ícone vermelho para destaque */
+    font-size: 1.1rem;
+}
+
+/* ==================== DETALHES DO PRODUTO (ATUALIZADO) ==================== */
+
+/* Ajuste no container para compensar o cronômetro fixo */
+.product-detail-view {
+    padding-top: 50px; /* Espaço extra para o cronômetro não cobrir o conteúdo */
+}
+
+/* Preço */
+.detail-price-box {
+    margin-bottom: 5px;
+}
+.detail-price-real {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #333;
+    line-height: 1;
+}
+
+/* Texto de Economia (Verde sem fundo) */
+.detail-savings {
+    font-size: 0.95rem;
+    color: var(--color-success); /* Verde */
+    font-weight: 600;
+    margin-bottom: 15px;
+    display: block;
+    background: transparent; /* Sem fundo */
+    padding: 0;
+}
+
+/* Área de Frete (Reposicionada) */
+.shipping-calc {
+    margin: 15px 0;
+    padding: 0;
+    background: transparent;
+    border: none;
+}
+.shipping-label {
     font-size: 0.9rem;
     font-weight: 600;
-}
-/* ==================== PÁGINA 4: CHECKOUT ==================== */
-.checkout-page {
-    padding-bottom: 3rem;
-}
-
-.checkout-stepper {
+    color: #333;
+    margin-bottom: 8px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    margin: 1.5rem 0 2.5rem;
+    gap: 5px;
 }
-.step {
+.shipping-input-group {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--color-text-muted);
-    font-weight: 500;
+    gap: 10px;
 }
-.step-number {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: var(--color-bg-main);
-    border: 2px solid var(--color-text-muted);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-    font-weight: 700;
-    transition: all 0.3s ease;
-}
-.step-title {
-    font-size: 0.9rem;
-}
-.step.active {
-    color: var(--color-accent-blue);
-}
-.step.active .step-number {
-    background: var(--color-accent-blue);
-    color: var(--color-text-light);
-    border-color: var(--color-accent-blue);
-}
-.step-divider {
-    flex-grow: 1;
-    height: 2px;
-    background: var(--color-bg-main);
-    margin: 0 1rem;
-    margin-top: -15px; /* Alinha com o centro dos números */
-}
-
-/* Oculta/Mostra os passos */
-.checkout-step {
-    display: none;
-}
-.checkout-step.active {
-    display: block;
-    animation: fadeIn 0.5s ease;
-}
-
-/* Formulário de Envio */
-.shipping-form {
-    background: var(--color-bg-light);
-    padding: 1.5rem;
-    border-radius: 8px;
-}
-.shipping-form h3 {
-    font-size: 1.25rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-}
-.shipping-form h3 i {
-    color: var(--color-accent-blue);
-}
-.form-group {
-    margin-bottom: 1rem;
-}
-.form-group label {
-    display: block;
-    font-size: 0.9rem;
-    font-weight: 500;
-    margin-bottom: 0.25rem;
-    color: var(--color-text-muted);
-}
-.form-group input {
-    width: 100%;
-    padding: 0.9rem;
-    font-size: 1rem;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-family: var(--font-family-main);
-}
-.form-group input:focus {
-    outline: none;
-    border-color: var(--color-accent-blue);
-    box-shadow: 0 0 0 2px rgba(52, 131, 250, 0.2);
-}
-.form-group-row {
-    display: flex;
-    gap: 1rem;
-}
-.form-group-row .form-group {
+.shipping-input-group input {
     flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
 }
-
-#continue-to-payment-button {
-    margin-top: 1.5rem;
-}
-
-/* Estilos do Brick (movidos do modal) */
-.modal-product-info span {
-    color: var(--color-text-dark);
-}
-#payment-brick-container {
-    margin-top: 1rem;
-    /* Remove o tema escuro vindo do inline style */
-    background-color: transparent !important; 
-}
-.loading-message-brick {
+.shipping-result {
+    margin-top: 8px;
+    font-size: 0.9rem;
+    color: #333;
+    padding: 10px;
+    background: #f0fdf4; /* Fundo verde bem clarinho */
+    border: 1px solid #bbf7d0;
+    border-radius: 6px;
     display: none;
-    text-align: center;
-    color: var(--color-text-muted);
-    padding: 20px 0;
-    font-style: italic;
-    font-size: 0.9rem;
 }
-.payment-error-message {
-    color: var(--color-error);
-    font-size: 0.9rem;
-    margin-top: 1rem;
-    display: none; /* Começa oculto */
+
+/* Barra de Estoque */
+.stock-bar-container {
+    margin: 20px 0;
+}
+
+/* CORREÇÃO: Garantia e Devolução (Anexo 2) */
+.policy-box {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+.policy-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 15px;
+    align-items: flex-start;
+}
+.policy-item i {
+    color: var(--color-text-dark); /* Ícone escuro */
+    font-size: 1.4rem;
+    margin-top: 2px;
+}
+.policy-item div {
+    display: flex;
+    flex-direction: column;
+}
+.policy-item strong {
+    font-size: 0.95rem;
+    color: #333;
+    font-weight: 600;
+}
+.policy-item span {
+    font-size: 0.85rem;
+    color: #666;
+    line-height: 1.4;
 }
 
 /* ==================== PÁGINA 5: RESULTADO PIX (NOVO) ==================== */

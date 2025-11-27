@@ -14,11 +14,11 @@
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
 
-  gtag('config', 'G-BV6V3GTMR0');
+    gtag('config', 'G-BV6V3GTMR0');
 </script>
 
 <body>
@@ -29,13 +29,13 @@
                 <img src="dtudo.png" alt="Logo" class="logo-img">
                 <span>D<span class="logo-highlight">tudo</span></span>
             </a>
-            
+
             <div class="search-bar">
                 <input type="text" placeholder="buscar na Dtudo">
                 <i class='bx bx-search'></i>
                 <div id="search-dropdown" class="search-dropdown"></div>
             </div>
-            
+
             <button class="header-icons header-icon-mobile" id="profile-button-mobile">
                 <i class='bx bx-user-circle'></i>
             </button>
@@ -69,9 +69,14 @@
         </div>
     </header>
 
+    <div id="fixed-offer-timer" class="fixed-offer-timer" style="display: none;">
+        <i class='bx bxs-alarm'></i>
+        <span>Oferta encerra em: <span id="p-timer-countdown">--:--:--</span></span>
+    </div>
+
     <main>
         <div id="home-view">
-            
+
             <section class="banner-slider">
                 <div class="slider-wrapper">
                     <div class="slide"><img src="3.png" alt="Ofertas"></div>
@@ -105,12 +110,28 @@
             <section id="products">
                 <div class="container">
                     <h2 class="section-title">Destaques para você</h2>
-                    
+
                     <div class="product-grid" id="firebase-products-container">
-                        <div class="product-card skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text-sm"></div></div>
-                        <div class="product-card skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text-sm"></div></div>
-                        <div class="product-card skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text-sm"></div></div>
-                        <div class="product-card skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text-sm"></div></div>
+                        <div class="product-card skeleton-card">
+                            <div class="skeleton skeleton-img"></div>
+                            <div class="skeleton skeleton-text"></div>
+                            <div class="skeleton skeleton-text-sm"></div>
+                        </div>
+                        <div class="product-card skeleton-card">
+                            <div class="skeleton skeleton-img"></div>
+                            <div class="skeleton skeleton-text"></div>
+                            <div class="skeleton skeleton-text-sm"></div>
+                        </div>
+                        <div class="product-card skeleton-card">
+                            <div class="skeleton skeleton-img"></div>
+                            <div class="skeleton skeleton-text"></div>
+                            <div class="skeleton skeleton-text-sm"></div>
+                        </div>
+                        <div class="product-card skeleton-card">
+                            <div class="skeleton skeleton-img"></div>
+                            <div class="skeleton skeleton-text"></div>
+                            <div class="skeleton skeleton-text-sm"></div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -118,10 +139,11 @@
 
         <div id="product-detail-view" class="product-detail-view">
             <div class="container">
-                <a href="index.html" style="display: inline-flex; align-items: center; color: #333; text-decoration: none; margin-bottom: 15px;">
+                <a href="index.html"
+                    style="display: inline-flex; align-items: center; color: #333; text-decoration: none; margin-bottom: 15px;">
                     <i class='bx bx-arrow-back' style="margin-right: 5px;"></i> Voltar
                 </a>
-                
+
                 <div class="detail-container">
                     <div class="detail-gallery">
                         <div class="main-image-container">
@@ -131,74 +153,78 @@
                 </div>
 
                 <div class="detail-info">
-                        <div class="detail-condition">Novo | <span id="p-detail-sold">0</span> vendidos</div>
-                        <h1 class="detail-title" id="p-detail-name">--</h1>
-                        
-                        <div class="scarcity-box" id="p-timer-box" style="display:none;">
-                            <i class='bx bxs-timer'></i>
-                            <span>Oferta encerra em: <strong id="p-timer-countdown">--:--:--</strong></span>
-                        </div>
 
-                        <div class="detail-price-box">
-                            <div class="price-old" id="p-detail-old-price" style="display:none; font-size: 1.1rem;">--</div>
-                            <div class="detail-price-real" id="p-detail-price">R$ --</div>
-                            <div class="detail-installments" style="color: #00a650;">
-                                <i class='bx bx-check'></i> Melhor preço no <span>Pix</span>
+                    <div class="detail-condition" style="font-size: 0.85rem; color: #999; margin-bottom: 5px;">
+                        Novo | 0 vendidos
+                    </div>
+
+                    <h1 class="detail-title" id="p-detail-name">--</h1>
+
+                    <div class="detail-price-box">
+                        <div class="price-old" id="p-detail-old-price"
+                            style="display:none; font-size: 1rem; color: #999; text-decoration: line-through;">--</div>
+                        <div class="detail-price-real" id="p-detail-price">R$ --</div>
+                    </div>
+
+                    <span class="detail-savings" id="p-detail-savings" style="display:none;">
+                        Você economiza R$ 0,00
+                    </span>
+
+                    <div class="shipping-calc">
+                        <div class="shipping-label">
+                            <i class='bx bxs-truck'></i>
+                            <span id="shipping-status-text">Frete grátis, verifique o endereço</span>
+                        </div>
+                        <div class="shipping-input-group">
+                            <input type="tel" id="detail-cep" placeholder="Digite seu CEP" maxlength="9">
+                            <button class="btn-calc" onclick="calculateDetailShipping()">Calcular</button>
+                        </div>
+                        <div id="detail-shipping-result" class="shipping-result"></div>
+                    </div>
+
+                    <div class="stock-bar-container">
+                        <div class="stock-text"
+                            style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 5px;">
+                            <span style="color: #666;">Disponibilidade</span>
+                            <span style="color: #d32f2f; font-weight: 700;">Restam poucas unidades!</span>
+                        </div>
+                        <div class="progress-bg">
+                            <div class="progress-fill" style="width: 85%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="detail-actions">
+                        <button class="btn-buy-now" id="btn-buy-now">Comprar Agora</button>
+                        <button class="btn-add-cart" id="btn-add-cart-detail">Adicionar ao carrinho</button>
+                    </div>
+
+                    <div class="policy-box">
+                        <div class="policy-item">
+                            <i class='bx bx-undo'></i>
+                            <div>
+                                <strong>Devolução Grátis</strong>
+                                <span>Você tem 7 dias a partir do recebimento.</span>
                             </div>
                         </div>
-
-                        <span class="detail-savings" id="p-detail-savings" style="display:none;">
-                            Você economiza R$ 0,00
-                        </span>
-
-                        <div class="stock-bar-container">
-                            <div class="stock-text">
-                                <span>Estoque disponível</span>
-                                <span style="color: #d32f2f; font-weight: 700;">Restam poucas unidades!</span>
-                            </div>
-                            <div class="progress-bg">
-                                <div class="progress-fill" style="width: 85%;"></div>
-                            </div>
-                        </div>
-
-                        <div class="shipping-calc">
-                            <div class="shipping-title"><i class='bx bxs-truck'></i> Calcular Frete e Prazo</div>
-                            <div class="shipping-input-group">
-                                <input type="tel" id="detail-cep" placeholder="Digite seu CEP" maxlength="9">
-                                <button class="btn-calc" onclick="calculateDetailShipping()">Calcular</button>
-                            </div>
-                            <div id="detail-shipping-result" class="shipping-result"></div>
-                            <a href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" style="font-size: 0.75rem; color: #999; text-decoration: underline; margin-top: 5px; display: block;">Não sei meu CEP</a>
-                        </div>
-
-                        <div class="detail-actions">
-                            <button class="btn-buy-now" id="btn-buy-now">Comprar Agora</button>
-                            <button class="btn-add-cart" id="btn-add-cart-detail">Adicionar ao carrinho</button>
-                        </div>
-
-                        <div class="policy-box">
-                            <div class="policy-item">
-                                <i class='bx bx-undo'></i>
-                                <div>
-                                    <strong>Devolução Grátis</strong>
-                                    <br>Você tem 7 dias a partir do recebimento.
-                                </div>
-                            </div>
-                            <div class="policy-item">
-                                <i class='bx bx-shield-quarter'></i>
-                                <div>
-                                    <strong>Compra Garantida</strong>
-                                    <br>Receba o produto que está esperando ou devolvemos seu dinheiro.
-                                </div>
+                        <div class="policy-item">
+                            <i class='bx bx-shield-check'></i>
+                            <div>
+                                <strong>Compra Garantida</strong>
+                                <span>Receba o produto que está esperando ou devolvemos seu dinheiro.</span>
                             </div>
                         </div>
                     </div>
 
-                <div class="detail-description">
-                    <h2 class="desc-title">Descrição</h2>
-                    <div class="desc-content" id="p-detail-desc">--</div>
                 </div>
+
+
             </div>
+
+            <div class="detail-description">
+                <h2 class="desc-title">Descrição</h2>
+                <div class="desc-content" id="p-detail-desc">--</div>
+            </div>
+        </div>
         </div>
     </main>
 
@@ -225,7 +251,8 @@
             </div>
             <div id="user-logged-out-view">
                 <h3>Login</h3>
-                <button class="google-login-button" id="google-login-button"><i class='bx bxl-google'></i> Entrar com Google</button>
+                <button class="google-login-button" id="google-login-button"><i class='bx bxl-google'></i> Entrar com
+                    Google</button>
             </div>
         </div>
     </div>
@@ -237,12 +264,12 @@
 
     <script src="js/global.js"></script>
     <script src="js/index.js"></script>
-    
+
     <script>
         const menuTrigger = document.getElementById('desktop-menu-trigger');
         const desktopMenu = document.getElementById('desktop-menu');
-        
-        if(menuTrigger) {
+
+        if (menuTrigger) {
             menuTrigger.addEventListener('click', (e) => {
                 e.stopPropagation();
                 desktopMenu.classList.toggle('active');
@@ -253,17 +280,18 @@
         }
 
         const profileTrigger = document.getElementById('desktop-profile-trigger');
-        if(profileTrigger) {
+        if (profileTrigger) {
             profileTrigger.addEventListener('click', () => {
                 document.getElementById('user-profile-modal').classList.add('show');
             });
         }
         const profileMobile = document.getElementById('profile-button-mobile');
-        if(profileMobile) {
+        if (profileMobile) {
             profileMobile.addEventListener('click', () => {
                 document.getElementById('user-profile-modal').classList.add('show');
             });
         }
     </script>
 </body>
+
 </html>
