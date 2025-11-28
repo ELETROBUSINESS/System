@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador Black Friday HD - Floral Chic</title>
+    <title>Gerador Black Friday HD (Crop Correto) - Floral Chic</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
@@ -88,7 +88,7 @@
         /* --- O CARD INSTAGRAM (STORIES 9:16) --- */
         .instagram-wrapper {
             width: 300px; 
-            height: 533px; /* Proporção exata para visualização */
+            height: 533px; 
             position: relative;
             margin-bottom: 20px;
         }
@@ -98,12 +98,11 @@
             width: 1080px;
             height: 1920px;
             background-color: var(--bf-red);
-            /* O transform fica aqui apenas para VISUALIZAÇÃO na tela */
             position: absolute;
             top: 0;
             left: 0;
             transform-origin: top left;
-            transform: scale(0.2777); /* 300 / 1080 */
+            transform: scale(0.2777); 
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -159,6 +158,7 @@
         .white-card {
             background: #111111;
             width: 900px;
+            height: 1150px;
             border-radius: 40px;
             margin-top: 350px;
             z-index: 2;
@@ -166,32 +166,33 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start; /* Conteúdo no topo */
+            justify-content: flex-start; 
             padding: 50px 30px;
             box-sizing: border-box;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
             color: white; 
         }
 
-        /* --- IMAGEM QUADRADA PADRONIZADA --- */
+        /* --- IMAGEM QUADRADA PADRONIZADA (CORREÇÃO DE CROP) --- */
         .product-img-box {
-            width: 650px;  /* Levemente maior */
-            height: 650px; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            width: 650px;  /* Tamanho Fixo Quadrado */
+            height: 650px; /* Tamanho Fixo Quadrado */
+            /* Flexbox removido aqui para não interferir no tamanho da imagem filha */
+            display: block; 
+            position: relative;
             margin-bottom: 40px;
             background: white;
             border-radius: 20px;
-            overflow: hidden;
+            overflow: hidden; /* ESSENCIAL: Corta o que passar do quadrado */
             flex-shrink: 0;
         }
 
         .product-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover; 
-            object-position: center;
+            display: block;
+            width: 100% !important;  /* Força a largura total do box */
+            height: 100% !important; /* Força a altura total do box */
+            object-fit: cover !important; /* O SEGREDO: Preenche e corta sem esticar */
+            object-position: center; /* Centraliza o corte */
         }
 
         /* Informações do Produto */
@@ -220,7 +221,7 @@
             align-items: center;
             gap: 10px;
             flex-shrink: 0;
-            margin-top: auto; /* Empurra para baixo se sobrar espaço */
+            margin-top: auto;
             margin-bottom: 20px;
         }
 
@@ -323,8 +324,8 @@
 
     <div class="controls">
         <div class="logo-area">
-            <h2>BLACK FRIDAY (HD)</h2>
-            <span>Gerador Stories Alta Resolução</span>
+            <h2>BLACK FRIDAY (HD + Crop)</h2>
+            <span>Gerador Stories (Imagens Quadradas)</span>
         </div>
         <div style="display: flex; gap: 10px;">
             <button class="btn-action" onclick="loadOffers()">
@@ -451,7 +452,8 @@
                 }
 
                 const [intPart, decPart] = mainPrice.toFixed(2).split('.');
-                const imgUrl = prod.imgUrl || 'https://placehold.co/650x650/333/eee?text=Sem+Foto';
+                // Usando uma imagem de placeholder retangular para testar o crop
+                const imgUrl = prod.imgUrl || 'https://placehold.co/800x500/333/eee?text=Imagem+Retangular';
 
                 const cardHtml = `
                     <div class="instagram-wrapper">
@@ -544,22 +546,17 @@
                 let fileName = rawName.replace(/[^a-z0-9]/gi, '_').toLowerCase().substring(0, 40) + '.png';
 
                 try {
-                    // 1. Clona o card
                     const clone = card.cloneNode(true);
-                    
-                    // 2. Remove o zoom de visualização (scale) para ficar tamanho real (1080x1920)
                     clone.style.transform = "none";
-                    clone.style.position = "static"; // Remove absolute para o stage
+                    clone.style.position = "static"; 
                     clone.style.margin = "0";
                     
-                    // 3. Coloca no container invisível
                     hdStage.innerHTML = '';
                     hdStage.appendChild(clone);
 
-                    // 4. Renderiza em ALTA RESOLUÇÃO (scale: 1 garante 1080p nativo, scale 2 garante 4K)
-                    // Usaremos scale 1.5 para garantir nitidez extra nos textos sem ficar pesado demais
+                    // Scale 1.5 para garantir nitidez HD
                     const canvas = await html2canvas(clone, { 
-                        scale: 1.5, // 1080 * 1.5 = 1620px largura (Fica super nítido)
+                        scale: 1.5, 
                         useCORS: true, 
                         backgroundColor: "#D30000", 
                         allowTaint: true
@@ -575,11 +572,10 @@
                 }
             }
 
-            // Limpa o stage
             hdStage.innerHTML = '';
 
             zip.generateAsync({type:"blob"}).then(function(content) {
-                saveAs(content, "black-friday-stories-hd.zip");
+                saveAs(content, "black-friday-stories-hd-cropped.zip");
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             });

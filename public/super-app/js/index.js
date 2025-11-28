@@ -1,41 +1,78 @@
-// js/index.js
+// js/index.js - CÓDIGO COMPLETO E CORRIGIDO
 
 const STORE_OWNER_UID = "3zYT9Y6hXWeJSuvmEYP4FMZa5gI2"; 
 const APP_ID = 'floralchic-loja';
 
 let allProductsCache = [];
 
-document.addEventListener("DOMContentLoaded", () => {
-    initSlider();
-    setupSearch();
+// --- 1. FUNÇÃO DE ATUALIZAÇÃO DO BALÃO (Centralizada) ---
+function updateCartBadges() {
+    let cart = [];
     
-    // --- DICA DE LOGIN ---
-    setTimeout(() => {
-        if (!auth.currentUser) {
-            const hintBox = document.getElementById('login-hint-box');
-            const mobileIcon = document.getElementById('profile-button-mobile');
-            if(hintBox && mobileIcon) {
-                hintBox.style.display = 'block';
-                mobileIcon.classList.add('login-attention');
-                
-                // Remove a dica após 5 segundos para não atrapalhar
-                setTimeout(() => {
-                    hintBox.style.display = 'none';
-                    mobileIcon.classList.remove('login-attention');
-                }, 8000);
+    // Tenta ler o CartManager (definido em global.js) de forma segura
+    try {
+        if (typeof CartManager !== 'undefined' && CartManager.items) {
+            cart = CartManager.items; // Forma mais segura
+        } else {
+            // Fallback se CartManager não estiver totalmente inicializado.
+            // Nota: Se a chave 'dtudo_cart' for diferente no seu global.js, altere aqui.
+            const cartData = localStorage.getItem('dtudo_cart');
+            if (cartData) {
+                cart = JSON.parse(cartData);
             }
         }
-    }, 2000); // Aparece 2 segundos após carregar
-    
-    const urlParams = new URLSearchParams(window.location.search);
-    const productId = urlParams.get('id');
-
-    if (productId) {
-        loadProductDetail(productId);
-    } else {
-        loadHomeProducts();
+    } catch (e) {
+        console.error("Erro ao ler carrinho:", e);
     }
-});
+
+    // Soma a quantidade de todos os produtos
+    const totalItems = cart.reduce((total, item) => total + (item.quantity || 1), 0);
+
+    // Atualiza os elementos HTML
+    const badgeMobile = document.getElementById('cart-badge');
+    const badgeDesktop = document.getElementById('cart-badge-desktop');
+
+    const updateElement = (el) => {
+        if (el) {
+            el.innerText = totalItems;
+            // Se tiver 0 itens, esconde. Se tiver > 0, mostra.
+            el.style.display = totalItems > 0 ? 'flex' : 'none';
+            
+            // Animação para chamar atenção ao adicionar
+            el.classList.remove('pulse-animation');
+            void el.offsetWidth; 
+            if (totalItems > 0) el.classList.add('pulse-animation');
+        }
+    };
+
+    updateElement(badgeMobile);
+    updateElement(badgeDesktop);
+}
+
+// --- 2. FUNÇÃO DE ADIÇÃO AO CARRINHO (Unificada e Chamando a Atualização) ---
+// Usamos window. para garantir que esta seja a versão global acessível pelos botões HTML.
+window.addToCartDirect = function(id, name, price, image) {
+    if (typeof CartManager !== 'undefined') {
+        CartManager.add({ 
+            id: id, 
+            name: name, 
+            priceNew: parseFloat(price), 
+            priceOld: parseFloat(price), 
+            image: image, 
+            quantity: 1, 
+            description: "" 
+        });
+        
+        // CHAMA A ATUALIZAÇÃO IMEDIATAMENTE APÓS ADICIONAR
+        updateCartBadges(); 
+        
+        showToast(`+1 ${name} adicionado!`, "success");
+    } else {
+        console.error("CartManager não encontrado. Carrinho não atualizado.");
+    }
+}
+
+// --- 3. FUNÇÕES UTILITÁRIAS ---
 
 function parseValue(val) {
     if (!val) return 0;
@@ -46,7 +83,13 @@ function parseValue(val) {
     return parseFloat(str) || 0;
 }
 
-// --- BUSCA ---
+window.goToProduct = function(id) {
+    window.location.href = `index.html?id=${id}`;
+}
+
+
+// --- 4. FUNÇÕES PRINCIPAIS DE CARREGAMENTO E INICIALIZAÇÃO ---
+
 function setupSearch() {
     const searchInput = document.querySelector('.search-bar input');
     const dropdown = document.getElementById('search-dropdown');
@@ -95,11 +138,6 @@ function renderDropdownResults(products, container) {
     container.classList.add('active');
 }
 
-window.goToProduct = function(id) {
-    window.location.href = `index.html?id=${id}`;
-}
-
-// --- HOME ---
 async function loadHomeProducts() {
     const container = document.getElementById('firebase-products-container');
     try {
@@ -126,7 +164,6 @@ async function loadHomeProducts() {
     }
 }
 
-// --- RENDERIZAÇÃO COM VERIFICAÇÃO DE ESTOQUE ---
 function renderProductCard(id, prod, container) {
     const imgUrl = prod.imgUrl || 'https://placehold.co/400x400/EBEBEB/333?text=Sem+Foto';
     const valPriceNormal = parseValue(prod.price);
@@ -134,7 +171,7 @@ function renderProductCard(id, prod, container) {
     const hasOffer = (valPriceOferta > 0 && valPriceOferta < valPriceNormal);
     
     // VERIFICAÇÃO DE ESTOQUE
-    const stock = prod.stock !== undefined ? parseInt(prod.stock) : 10; // Se não tiver campo stock, assume 10 (disponível)
+    const stock = prod.stock !== undefined ? parseInt(prod.stock) : 10; 
     const isSoldOut = stock <= 0;
 
     let priceHtml = '';
@@ -183,7 +220,6 @@ function renderProductCard(id, prod, container) {
     container.innerHTML += cardHtml;
 }
 
-// --- DETALHES ---
 async function loadProductDetail(id) {
     document.getElementById('home-view').style.display = 'none';
     document.getElementById('product-detail-view').style.display = 'block';
@@ -208,7 +244,6 @@ async function loadProductDetail(id) {
         let finalPrice = valPriceNormal;
         let displayPrice = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valPriceNormal);
 
-        // Reset visual seguro
         const timerFixed = document.getElementById('fixed-offer-timer');
         const oldPriceEl = document.getElementById('p-detail-old-price');
         const savingsEl = document.getElementById('p-detail-savings');
@@ -233,7 +268,6 @@ async function loadProductDetail(id) {
             startDetailTimer();
         }
 
-        // Preenche informações na tela
         document.getElementById('p-detail-img').src = prod.imgUrl || 'https://placehold.co/600x600/EBEBEB/333?text=Sem+Foto';
         document.getElementById('p-detail-name').innerText = prod.name;
         document.getElementById('p-detail-price').innerText = displayPrice;
@@ -241,40 +275,35 @@ async function loadProductDetail(id) {
         document.getElementById('p-detail-desc').innerText = prod.desc || "Sem descrição.";
         document.title = `${prod.name} | Dtudo`;
 
-        // --- LÓGICA DE ESTOQUE (NOVO) ---
-        // Se não tiver campo stock, assume 10 para não travar produtos antigos
         const stock = prod.stock !== undefined ? parseInt(prod.stock) : 10;
         const btnBuy = document.getElementById('btn-buy-now');
         const btnCart = document.getElementById('btn-add-cart-detail');
 
         if (stock <= 0) {
-            // ESTOQUE ZERO: Bloqueia botões e muda visual
             btnBuy.disabled = true;
             btnBuy.innerText = "Esgotado";
             btnBuy.style.backgroundColor = "#ccc";
             btnBuy.style.cursor = "not-allowed";
-            btnBuy.onclick = null; // Remove ação
+            btnBuy.onclick = null; 
 
             btnCart.disabled = true;
             btnCart.innerText = "Indisponível";
             btnCart.style.borderColor = "#ccc";
             btnCart.style.color = "#ccc";
             btnCart.style.cursor = "not-allowed";
-            btnCart.onclick = null; // Remove ação
+            btnCart.onclick = null; 
         } else {
-            // COM ESTOQUE: Libera botões e atribui ações
             btnBuy.disabled = false;
             btnBuy.innerText = "Comprar Agora";
-            btnBuy.style.backgroundColor = ""; // Volta ao CSS original
+            btnBuy.style.backgroundColor = ""; 
             btnBuy.style.cursor = "pointer";
 
             btnCart.disabled = false;
             btnCart.innerText = "Adicionar ao carrinho";
-            btnCart.style.borderColor = ""; // Volta ao CSS original
-            btnCart.style.color = ""; // Volta ao CSS original
+            btnCart.style.borderColor = ""; 
+            btnCart.style.color = ""; 
             btnCart.style.cursor = "pointer";
 
-            // Adiciona os eventos de clique apenas se tiver estoque
             btnCart.onclick = () => { 
                 addToCartDirect(id, prod.name, finalPrice, prod.imgUrl); 
                 showToast("Adicionado ao carrinho!", "success");
@@ -290,13 +319,11 @@ async function loadProductDetail(id) {
     }
 }
 
-// --- FRETE (CORRIGIDO) ---
 window.calculateDetailShipping = function() {
     const cepInput = document.getElementById('detail-cep');
     const resultDiv = document.getElementById('detail-shipping-result');
     const statusText = document.getElementById('shipping-status-text');
 
-    // Validação de segurança se os elementos não existirem
     if (!cepInput || !resultDiv || !statusText) return;
 
     const cepVal = cepInput.value.replace(/\D/g, '');
@@ -328,7 +355,6 @@ window.calculateDetailShipping = function() {
     }, 600);
 }
 
-// --- TIMER ---
 let timerInterval;
 function startDetailTimer() {
     if (timerInterval) clearInterval(timerInterval);
@@ -364,12 +390,6 @@ function startDetailTimer() {
     timerInterval = setInterval(updateTimer, 1000);
 }
 
-function addToCartDirect(id, name, price, image) {
-    if (typeof CartManager !== 'undefined') {
-        CartManager.add({ id: id, name: name, priceNew: parseFloat(price), priceOld: parseFloat(price), image: image, quantity: 1, description: "" });
-    }
-}
-
 function initSlider() {
     const sliderWrapper = document.querySelector(".slider-wrapper");
     if (!sliderWrapper) return;
@@ -381,78 +401,38 @@ function initSlider() {
     }, 5000);
 }
 
-// --- No final ou início do seu js/index.js ---
 
-// 1. Função que conta os itens e atualiza o visual
-function updateCartBadges() {
-    let cart = [];
-    
-    // Tenta ler o carrinho. NOTA: Verifique no seu 'global.js' qual a chave usada no localStorage.
-    // Geralmente é algo como 'dtudo_cart', 'shopping_cart' ou 'cart'.
-    // Vou tentar ler a variável global CartManager se ela expor os itens, senão tento localStorage.
-    
-    try {
-        if (typeof CartManager !== 'undefined' && CartManager.items) {
-            cart = CartManager.items;
-        } else {
-            // Substitua 'dtudo_cart' pelo nome exato que está no seu global.js se não funcionar
-            cart = JSON.parse(localStorage.getItem('dtudo_cart') || '[]'); 
-        }
-    } catch (e) {
-        console.error("Erro ao ler carrinho:", e);
-    }
-
-    // Soma a quantidade de todos os produtos
-    const totalItems = cart.reduce((total, item) => total + (item.quantity || 1), 0);
-
-    // Atualiza os elementos HTML (Mobile e Desktop)
-    const badgeMobile = document.getElementById('cart-badge');
-    const badgeDesktop = document.getElementById('cart-badge-desktop');
-
-    // Função auxiliar para mostrar/esconder
-    const updateElement = (el) => {
-        if (el) {
-            el.innerText = totalItems;
-            // Se tiver 0 itens, esconde a bolinha. Se tiver > 0, mostra.
-            el.style.display = totalItems > 0 ? 'flex' : 'none';
-            
-            // Adiciona uma animação de "pulo" para chamar atenção
-            el.classList.remove('pulse-animation');
-            void el.offsetWidth; // Trigger reflow
-            if (totalItems > 0) el.classList.add('pulse-animation');
-        }
-    };
-
-    updateElement(badgeMobile);
-    updateElement(badgeDesktop);
-}
-
-// 2. Modifique a função addToCartDirect existente para chamar a atualização
-function addToCartDirect(id, name, price, image) {
-    if (typeof CartManager !== 'undefined') {
-        CartManager.add({ 
-            id: id, 
-            name: name, 
-            priceNew: parseFloat(price), 
-            priceOld: parseFloat(price), 
-            image: image, 
-            quantity: 1, 
-            description: "" 
-        });
-        
-        // CHAMA A ATUALIZAÇÃO IMEDIATAMENTE APÓS ADICIONAR
-        updateCartBadges(); 
-        
-        // Feedback visual extra (opcional)
-        showToast(`+1 ${name} adicionado!`, "success");
-    } else {
-        console.error("CartManager não encontrado.");
-    }
-}
-
-// 3. Garanta que a contagem atualize ao carregar a página
+// --- 5. EVENTO PRINCIPAL DE INICIALIZAÇÃO ---
 document.addEventListener("DOMContentLoaded", () => {
-    // ... seus outros inits (initSlider, setupSearch, etc) ...
+    initSlider();
+    setupSearch();
     
-    updateCartBadges(); // <--- ADICIONE ISSO NO SEU DOMContentLoaded
+    // --- DICA DE LOGIN ---
+    setTimeout(() => {
+        if (!auth.currentUser) {
+            const hintBox = document.getElementById('login-hint-box');
+            const mobileIcon = document.getElementById('profile-button-mobile');
+            if(hintBox && mobileIcon) {
+                hintBox.style.display = 'block';
+                mobileIcon.classList.add('login-attention');
+                
+                setTimeout(() => {
+                    hintBox.style.display = 'none';
+                    mobileIcon.classList.remove('login-attention');
+                }, 8000);
+            }
+        }
+    }, 2000); 
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+
+    if (productId) {
+        loadProductDetail(productId);
+    } else {
+        loadHomeProducts();
+    }
+    
+    // CORREÇÃO CRÍTICA: Chama a atualização do carrinho ao carregar a página
+    updateCartBadges(); 
 });

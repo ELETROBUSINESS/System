@@ -139,12 +139,13 @@
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
 
-  gtag('config', 'G-BV6V3GTMR0');
+    gtag('config', 'G-BV6V3GTMR0');
 </script>
+
 <body>
 
 
@@ -172,9 +173,13 @@
                     <span>olá, faça seu login</span><strong>ou cadastre-se</strong>
                 </div>
                 <a href="favoritos.html" class="header-icon-btn" title="Favoritos"><i class='bx bx-heart'></i></a>
-                <a href="carrinho.html" class="header-icon-btn" title="Carrinho">
-                    <i class='bx bx-basket'></i><span class="header-cart-badge" id="cart-badge-desktop">0</span>
+
+                <a href="carrinho.html" class="nav-item">
+                    <i class='bx bx-cart'></i>
+                    <span id="cart-badge" class="cart-badge" style="display: none;">0</span>
+                    <span>Carrinho</span>
                 </a>
+
                 <div style="position: relative;">
                     <button class="header-icon-btn" id="desktop-menu-trigger"><i class='bx bx-menu'></i></button>
                     <div class="desktop-menu-dropdown" id="desktop-menu">
