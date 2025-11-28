@@ -9,6 +9,24 @@ document.addEventListener("DOMContentLoaded", () => {
     initSlider();
     setupSearch();
     
+    // --- DICA DE LOGIN ---
+    setTimeout(() => {
+        if (!auth.currentUser) {
+            const hintBox = document.getElementById('login-hint-box');
+            const mobileIcon = document.getElementById('profile-button-mobile');
+            if(hintBox && mobileIcon) {
+                hintBox.style.display = 'block';
+                mobileIcon.classList.add('login-attention');
+                
+                // Remove a dica após 5 segundos para não atrapalhar
+                setTimeout(() => {
+                    hintBox.style.display = 'none';
+                    mobileIcon.classList.remove('login-attention');
+                }, 8000);
+            }
+        }
+    }, 2000); // Aparece 2 segundos após carregar
+    
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
 
@@ -108,12 +126,17 @@ async function loadHomeProducts() {
     }
 }
 
+// --- RENDERIZAÇÃO COM VERIFICAÇÃO DE ESTOQUE ---
 function renderProductCard(id, prod, container) {
     const imgUrl = prod.imgUrl || 'https://placehold.co/400x400/EBEBEB/333?text=Sem+Foto';
     const valPriceNormal = parseValue(prod.price);
     const valPriceOferta = parseValue(prod['price-oferta']);
     const hasOffer = (valPriceOferta > 0 && valPriceOferta < valPriceNormal);
     
+    // VERIFICAÇÃO DE ESTOQUE
+    const stock = prod.stock !== undefined ? parseInt(prod.stock) : 10; // Se não tiver campo stock, assume 10 (disponível)
+    const isSoldOut = stock <= 0;
+
     let priceHtml = '';
     let finalPriceToCart = valPriceNormal;
 
@@ -140,20 +163,27 @@ function renderProductCard(id, prod, container) {
             </div>`;
     }
 
+    // Lógica Visual de Esgotado
+    const soldOutClass = isSoldOut ? 'sold-out' : '';
+    const soldOutTag = isSoldOut ? '<div class="sold-out-tag">Esgotado</div>' : '';
+    const buttonAttr = isSoldOut ? 'disabled style="background:#ccc; cursor:not-allowed;"' : `onclick="event.stopPropagation(); addToCartDirect('${id}', '${prod.name}', ${finalPriceToCart}, '${imgUrl}')"`;
+    const buttonText = isSoldOut ? 'Indisponível' : 'Comprar';
+
     const cardHtml = `
-        <div class="product-card" onclick="window.location.href='index.html?id=${id}'">
+        <div class="product-card ${soldOutClass}" onclick="${isSoldOut ? '' : `window.location.href='index.html?id=${id}'`}">
+            ${soldOutTag}
             <div class="product-image"><img src="${imgUrl}" alt="${prod.name}" loading="lazy"></div>
             <div class="product-info">
                 <h4 class="product-name">${prod.name}</h4>
                 ${priceHtml}
                 <div class="free-shipping"><i class='bx bxs-truck'></i> Frete Grátis</div>
-                <button class="cta-button" onclick="event.stopPropagation(); addToCartDirect('${id}', '${prod.name}', ${finalPriceToCart}, '${imgUrl}')">Comprar</button>
+                <button class="cta-button" ${buttonAttr}>${buttonText}</button>
             </div>
         </div>`;
     container.innerHTML += cardHtml;
 }
 
-// --- DETALHES (CORRIGIDO) ---
+// --- DETALHES ---
 async function loadProductDetail(id) {
     document.getElementById('home-view').style.display = 'none';
     document.getElementById('product-detail-view').style.display = 'block';
@@ -203,6 +233,7 @@ async function loadProductDetail(id) {
             startDetailTimer();
         }
 
+        // Preenche informações na tela
         document.getElementById('p-detail-img').src = prod.imgUrl || 'https://placehold.co/600x600/EBEBEB/333?text=Sem+Foto';
         document.getElementById('p-detail-name').innerText = prod.name;
         document.getElementById('p-detail-price').innerText = displayPrice;
@@ -210,14 +241,49 @@ async function loadProductDetail(id) {
         document.getElementById('p-detail-desc').innerText = prod.desc || "Sem descrição.";
         document.title = `${prod.name} | Dtudo`;
 
-        document.getElementById('btn-add-cart-detail').onclick = () => { 
-            addToCartDirect(id, prod.name, finalPrice, prod.imgUrl); 
-            showToast("Adicionado ao carrinho!", "success");
-        };
-        document.getElementById('btn-buy-now').onclick = () => {
-            addToCartDirect(id, prod.name, finalPrice, prod.imgUrl);
-            window.location.href = 'carrinho.html';
-        };
+        // --- LÓGICA DE ESTOQUE (NOVO) ---
+        // Se não tiver campo stock, assume 10 para não travar produtos antigos
+        const stock = prod.stock !== undefined ? parseInt(prod.stock) : 10;
+        const btnBuy = document.getElementById('btn-buy-now');
+        const btnCart = document.getElementById('btn-add-cart-detail');
+
+        if (stock <= 0) {
+            // ESTOQUE ZERO: Bloqueia botões e muda visual
+            btnBuy.disabled = true;
+            btnBuy.innerText = "Esgotado";
+            btnBuy.style.backgroundColor = "#ccc";
+            btnBuy.style.cursor = "not-allowed";
+            btnBuy.onclick = null; // Remove ação
+
+            btnCart.disabled = true;
+            btnCart.innerText = "Indisponível";
+            btnCart.style.borderColor = "#ccc";
+            btnCart.style.color = "#ccc";
+            btnCart.style.cursor = "not-allowed";
+            btnCart.onclick = null; // Remove ação
+        } else {
+            // COM ESTOQUE: Libera botões e atribui ações
+            btnBuy.disabled = false;
+            btnBuy.innerText = "Comprar Agora";
+            btnBuy.style.backgroundColor = ""; // Volta ao CSS original
+            btnBuy.style.cursor = "pointer";
+
+            btnCart.disabled = false;
+            btnCart.innerText = "Adicionar ao carrinho";
+            btnCart.style.borderColor = ""; // Volta ao CSS original
+            btnCart.style.color = ""; // Volta ao CSS original
+            btnCart.style.cursor = "pointer";
+
+            // Adiciona os eventos de clique apenas se tiver estoque
+            btnCart.onclick = () => { 
+                addToCartDirect(id, prod.name, finalPrice, prod.imgUrl); 
+                showToast("Adicionado ao carrinho!", "success");
+            };
+            btnBuy.onclick = () => {
+                addToCartDirect(id, prod.name, finalPrice, prod.imgUrl);
+                window.location.href = 'carrinho.html';
+            };
+        }
 
     } catch (error) {
         console.error("Erro detalhes:", error);

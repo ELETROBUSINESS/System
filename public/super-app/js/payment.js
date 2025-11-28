@@ -298,13 +298,10 @@ function calculateShipping() {
     const cepVal = cepInput.value.replace(/\D/g, '');
     const display = document.getElementById("shipping-cost-display");
     const cartTotal = CartManager.total();
-    const isBullf = document.getElementById("frete-bullf") ? document.getElementById("frete-bullf").checked : false;
+    
+    // REMOVIDA A LINHA: const isBullf = ...
 
-    if (isBullf) {
-        currentShippingCost = 0;
-        display.innerText = "Grátis (Frete Bullf)";
-        display.style.color = "var(--color-secondary)";
-    } else if (cepVal === '68637000') {
+    if (cepVal === '68637000') {
         if (cartTotal >= 29.99) {
             currentShippingCost = 0;
             display.innerText = "Grátis (Pedido > R$ 29,99)";
