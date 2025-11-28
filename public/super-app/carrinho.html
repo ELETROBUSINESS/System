@@ -1,214 +1,587 @@
 <!DOCTYPE html>
-<html lang="pt-br">
-
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Carrinho</title>
+    <title>Gerador Black Friday HD (Crop Correto) - Floral Chic</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
 
     <style>
-        /* ==================== BARRA DE FRETE GRÁTIS (CARRINHO) ==================== */
-        .shipping-progress-container {
-            background: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            border: 1px solid #e0e0e0;
+        :root {
+            --bf-red: #D30000;
+            --bf-dark: #0a0a0a;
+            --bf-white: #ffffff;
         }
 
-        .shipping-progress-text {
-            font-size: 0.9rem;
-            color: #333;
-            margin-bottom: 8px;
+        body {
+            background-color: #1a1a1a;
+            color: white;
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* --- Header de Controles --- */
+        .controls {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: #222;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 6px;
+            margin-bottom: 30px;
+            border: 1px solid #333;
         }
 
-        .shipping-progress-text strong {
-            color: #00a650;
-            /* Verde */
-        }
+        .logo-area h2 { margin: 0; font-weight: 900; color: var(--bf-red); text-transform: uppercase; letter-spacing: 1px; }
+        .logo-area span { color: white; }
 
-        .progress-track-cart {
-            width: 100%;
-            height: 8px;
-            background-color: #f1f1f1;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .progress-fill-cart {
-            height: 100%;
-            width: 0%;
-            background-color: #00a650;
-            /* Verde do sucesso */
-            border-radius: 4px;
-            transition: width 0.5s ease-in-out;
-        }
-
-        /* Estado quando faltar valor (Vermelho/Laranja para incentivar) */
-        .progress-fill-cart.incomplete {
-            background-color: #db0038;
-        }
-
-        /* ==================== CÁLCULO DE FRETE NO CARRINHO ==================== */
-        .cart-shipping-area {
-            margin-top: 20px;
-            background: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #eee;
-        }
-
-        .cart-shipping-title {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: #333;
+        .btn-action {
+            background: var(--bf-white);
+            color: var(--bf-dark);
+            border: none;
+            padding: 12px 25px;
+            font-weight: 700;
+            border-radius: 5px;
+            cursor: pointer;
             display: flex;
             align-items: center;
             gap: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
         }
 
-        .cart-cep-group {
+        .btn-zip {
+            background: var(--bf-red);
+            color: white;
+            box-shadow: 0 0 15px rgba(211, 0, 0, 0.4);
+        }
+
+        .btn-zip:hover { background: #ff1a1a; transform: translateY(-2px); }
+        .btn-zip:disabled { background: #555; cursor: not-allowed; }
+
+        /* --- Grid de Visualização --- */
+        #printable-area {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 40px;
+            justify-items: center;
+            padding-bottom: 100px;
+        }
+
+        /* --- O CARD INSTAGRAM (STORIES 9:16) --- */
+        .instagram-wrapper {
+            width: 300px; 
+            height: 533px; 
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        /* Design do Card */
+        .offer-card {
+            width: 1080px;
+            height: 1920px;
+            background-color: var(--bf-red);
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform-origin: top left;
+            transform: scale(0.2777); 
+            overflow: hidden;
             display: flex;
-            gap: 10px;
-        }
-
-        .cart-cep-input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-family: 'Roboto', sans-serif;
-        }
-
-        .btn-calc-cart {
-            background-color: #333;
-            color: #fff;
-            padding: 0 20px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .cart-shipping-result {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px dashed #eee;
-            display: none;
-            /* JS controla */
             flex-direction: column;
-            gap: 10px;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        .pickup-only-msg {
-            background-color: #fff3cd;
-            color: #856404;
-            padding: 10px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            border: 1px solid #ffeeba;
-        }
-
-        .store-suggestion {
+        /* Fundo com texto repetido */
+        .bg-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            z-index: 1;
+            opacity: 0.15;
+            pointer-events: none;
+            overflow: hidden;
+            padding: 20px 0;
+        }
+
+        .bg-line {
+            font-family: 'Oswald', sans-serif;
+            font-size: 160px;
+            line-height: 0.85;
+            white-space: nowrap;
+            color: transparent;
+            -webkit-text-stroke: 4px white;
+            font-weight: 700;
+            transform: rotate(-5deg) scale(1.2);
+            text-align: center;
+        }
+
+        /* Header da Marca */
+        .brand-header {
+            position: absolute;
+            top: 120px;
+            z-index: 3;
+            background: black;
+            color: white;
+            padding: 20px 60px;
+            font-size: 42px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            border-radius: 10px;
+        }
+
+        /* Card Central (Preto) */
+        .white-card {
+            background: #111111;
+            width: 900px;
+            height: 1150px;
+            border-radius: 40px;
+            margin-top: 350px;
+            z-index: 2;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start; 
+            padding: 50px 30px;
+            box-sizing: border-box;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            color: white; 
+        }
+
+        /* --- IMAGEM QUADRADA PADRONIZADA (CORREÇÃO DE CROP) --- */
+        .product-img-box {
+            width: 650px;  /* Tamanho Fixo Quadrado */
+            height: 650px; /* Tamanho Fixo Quadrado */
+            /* Flexbox removido aqui para não interferir no tamanho da imagem filha */
+            display: block; 
+            position: relative;
+            margin-bottom: 40px;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden; /* ESSENCIAL: Corta o que passar do quadrado */
+            flex-shrink: 0;
+        }
+
+        .product-img {
+            display: block;
+            width: 100% !important;  /* Força a largura total do box */
+            height: 100% !important; /* Força a altura total do box */
+            object-fit: cover !important; /* O SEGREDO: Preenche e corta sem esticar */
+            object-position: center; /* Centraliza o corte */
+        }
+
+        /* Informações do Produto */
+        .product-name {
+            font-size: 48px;
+            font-weight: 700;
+            color: white;
+            text-align: center;
+            line-height: 1.1;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            max-width: 95%;
+            height: 110px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            flex-shrink: 0;
+        }
+
+        /* Container Geral de Preços */
+        .prices-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
             align-items: center;
             gap: 10px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            background: #fafafa;
+            flex-shrink: 0;
+            margin-top: auto;
+            margin-bottom: 20px;
         }
+
+        .old-price {
+            font-size: 32px;
+            color: #aaa;
+            text-decoration: line-through;
+            font-weight: 500;
+        }
+
+        .savings-tag {
+            background: var(--bf-white);
+            color: var(--bf-red);
+            padding: 10px 30px;
+            border-radius: 50px;
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        /* Layout Lado a Lado */
+        .price-row {
+            display: flex;
+            flex-direction: row;
+            align-items: center; 
+            justify-content: center;
+            gap: 30px; 
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        /* Bloco de Preço Principal */
+        .main-price-block {
+            background: #c70202;
+            color: #fff;
+            padding: 15px 40px;
+            border-radius: 25px;
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            margin: 0; 
+            box-shadow: 0px 10px 25px rgba(0,0,0,0.4); 
+            flex-shrink: 0; 
+        }
+
+        .currency { font-size: 40px; font-weight: 700; }
+        .big-price { font-size: 130px; font-weight: 900; line-height: 0.9; letter-spacing: -4px; }
+        .cents { font-size: 50px; font-weight: 700; }
+        
+        /* Info de Pagamento */
+        .payment-info-side {
+            color: white;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .payment-label {
+            font-size: 28px;
+            font-weight: 400;
+            opacity: 0.9;
+        }
+
+        .payment-value {
+            font-size: 40px;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+
+        /* Footer do Card */
+        .card-footer {
+            position: absolute;
+            bottom: 80px;
+            width: 100%;
+            text-align: center;
+            z-index: 2;
+        }
+        
+        .footer-pill {
+            background: white;
+            color: black;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 24px;
+            font-weight: 700;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        .loading-box { width: 100%; text-align: center; padding: 50px; }
+        .error-box { color: #ff6b6b; padding: 20px; background: rgba(255,0,0,0.1); border-radius: 8px; text-align: center; }
+
     </style>
 </head>
-
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
-<script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('js', new Date());
-
-    gtag('config', 'G-BV6V3GTMR0');
-</script>
-
 <body>
-    <header class="main-header">
-        <div class="container header-container">
-            <a href="index.html" class="back-button"><i class='bx bx-chevron-left'></i></a>
-            <span class="logo">Meu Carrinho</span>
-            <div style="width: 24px;"></div>
-        </div>
-    </header>
 
-    <div class="container" style="margin-top: 10px;">
-        <div class="shipping-progress-container" id="shipping-progress-box" style="display:none;">
-            <div class="shipping-progress-text" id="shipping-progress-text">
-                Faltam <strong>R$ 10,00</strong> para Frete Grátis
-            </div>
-            <div class="progress-track-cart">
-                <div class="progress-fill-cart incomplete" id="shipping-progress-fill"></div>
-            </div>
+    <div class="controls">
+        <div class="logo-area">
+            <h2>BLACK FRIDAY (HD + Crop)</h2>
+            <span>Gerador Stories (Imagens Quadradas)</span>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-action" onclick="loadOffers()">
+                <i class='bx bx-refresh'></i> Recarregar
+            </button>
+            <button id="btn-zip-all" class="btn-action btn-zip" onclick="downloadAllZIP()">
+                <i class='bx bxs-file-archive'></i> Baixar Tudo (HD)
+            </button>
         </div>
     </div>
-    <div class="container">
-    <div class="cart-shipping-area">
-        <div class="cart-shipping-title"><i class='bx bxs-truck'></i> Opções de Entrega</div>
-        <div class="cart-cep-group">
-            <input type="tel" id="cart-cep-input" class="cart-cep-input" placeholder="Digite seu CEP" maxlength="9">
-            <button class="btn-calc-cart" onclick="calculateCartShipping()">Calcular</button>
-        </div>
+
+    <div id="loading" class="loading-box"><i class='bx bx-loader-alt bx-spin' style="font-size: 40px;"></i> Carregando produtos...</div>
+    <div id="printable-area"></div>
+    
+    <div id="hd-render-stage" style="position: absolute; left: -9999px; top: 0;"></div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAVQ3tf6Qu4_9PajpJclZAJjVvRgB4ZE2I",
+            authDomain: "super-app25.firebaseapp.com",
+            projectId: "super-app25",
+            storageBucket: "super-app25.firebasestorage.app",
+            messagingSenderId: "810900166273",
+            appId: "1:810900166273:web:24b8f055a68c9f0a6b5f80"
+        };
+
+        const STORE_OWNER_UID = "3zYT9Y6hXWeJSuvmEYP4FMZa5gI2"; 
+        const APP_ID = 'floralchic-loja';
+
+        if (typeof __firebase_config !== 'undefined') {
+            Object.assign(firebaseConfig, JSON.parse(__firebase_config));
+        }
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         
-        <div id="cart-shipping-result" class="cart-shipping-result">
-            </div>
-    </div>
-</div>
+        const db = firebase.firestore();
+        const auth = firebase.auth();
 
-    <main class="container">
-        <div id="cart-items-container"></div>
+        // ---------------- LÓGICA DE NEGÓCIO ----------------
 
-        <div id="cart-summary-box" class="cart-summary" style="display: none;">
-            <h3>Resumo</h3>
-            <div class="summary-line"><span>Total</span><span id="summary-total-value">R$ 0,00</span></div>
-            <button id="go-to-checkout" class="cta-button checkout-btn">Finalizar Compra</button>
-        </div>
-    </main>
+        async function initApp() {
+            try {
+                await auth.signInAnonymously();
+                loadOffers();
+            } catch (error) {
+                console.error("Erro auth:", error);
+                document.getElementById('loading').innerHTML = `<div class="error-box">Erro de autenticação: ${error.message}</div>`;
+            }
+        }
 
-    <nav class="bottom-navbar">
-        <a href="index.html" class="nav-item"><i class='bx bxs-home'></i><span>Início</span></a>
-        <a href="carrinho.html" class="nav-item active">
-            <i class='bx bx-cart'></i>
-            <span id="cart-badge" class="cart-badge" style="display: none;">0</span>
-            <span>Carrinho</span>
-        </a>
-        <a href="pedidos.html" class="nav-item"><i class='bx bx-receipt'></i><span>Pedidos</span></a>
-    </nav>
+        async function loadOffers() {
+            const container = document.getElementById('printable-area');
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+            container.innerHTML = '';
 
-    <div id="user-profile-modal" class="modal-overlay">
-        <div class="modal-content profile-modal-content">
-            <button class="modal-close">&times;</button>
-            <div id="user-logged-out-view">
-                <h3>Login Necessário</h3>
-                <p>Faça login para finalizar sua compra.</p>
-                <button class="google-login-button" id="google-login-button"><i class='bx bxl-google'></i> Entrar com
-                    Google</button>
-            </div>
-            <div id="user-logged-in-view" style="display:none;"></div>
-        </div>
-    </div>
-    <div id="toast-notification" class="toast"></div>
+            try {
+                const productsRef = db.collection('artifacts').doc(APP_ID)
+                                     .collection('users').doc(STORE_OWNER_UID)
+                                     .collection('products');
+                
+                const snapshot = await productsRef.get();
+                
+                loading.style.display = 'none';
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+                if (snapshot.empty) {
+                    container.innerHTML = '<div style="width:100%; text-align:center;">Nenhum produto encontrado.</div>';
+                    return;
+                }
 
-    <script src="js/global.js"></script>
-    <script src="js/cart.js"></script>
+                let products = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.price) {
+                        products.push({ id: doc.id, ...data });
+                    }
+                });
+
+                renderOffers(products, container);
+
+            } catch (error) {
+                loading.style.display = 'none';
+                container.innerHTML = `<div class="error-box">Erro ao carregar dados: ${error.message}</div>`;
+            }
+        }
+
+        function renderOffers(products, container) {
+            container.innerHTML = '';
+
+            products.forEach((prod, index) => {
+                const regularPrice = parseFloat(prod.price || 0);
+                const offerPrice = prod['price-oferta'] ? parseFloat(prod['price-oferta']) : 0;
+                
+                let mainPrice = regularPrice;
+                let oldPriceEl = '';
+                let savingsEl = '';
+
+                if (offerPrice > 0 && offerPrice < regularPrice) {
+                    mainPrice = offerPrice;
+                    const diff = regularPrice - offerPrice;
+                    oldPriceEl = `<div class="old-price">De ${formatMoney(regularPrice)}</div>`;
+                    savingsEl = `<div class="savings-tag">Economize ${formatMoney(diff)}</div>`;
+                } else {
+                    oldPriceEl = `<div class="old-price" style="opacity:0;">.</div>`;
+                    savingsEl = `<div class="savings-tag" style="opacity:0;">.</div>`;
+                }
+
+                const dbParcelas = parseInt(prod['parcelas']) || 10;
+                const dbPcOferta = parseFloat(prod['pc-oferta']);
+                
+                let installmentLabel = '';
+                let installmentValueText = '';
+
+                if(dbPcOferta && dbPcOferta > 0) {
+                    const valParcela = dbPcOferta / dbParcelas;
+                    installmentLabel = "Ou a prazo:";
+                    installmentValueText = `${dbParcelas}x de ${formatMoney(valParcela)}`;
+                } else {
+                    const valParcela = mainPrice / dbParcelas;
+                    installmentLabel = "Parcelado s/ juros:";
+                    installmentValueText = `${dbParcelas}x de ${formatMoney(valParcela)}`;
+                }
+
+                const [intPart, decPart] = mainPrice.toFixed(2).split('.');
+                // Usando uma imagem de placeholder retangular para testar o crop
+                const imgUrl = prod.imgUrl || 'https://placehold.co/800x500/333/eee?text=Imagem+Retangular';
+
+                const cardHtml = `
+                    <div class="instagram-wrapper">
+                        <div class="offer-card" id="card-${index}">
+                            
+                            <div class="bg-pattern">
+                                <div class="bg-line">BLACK FRIDAY</div>
+                                <div class="bg-line">BLACK FRIDAY</div>
+                                <div class="bg-line">BLACK FRIDAY</div>
+                                <div class="bg-line">BLACK FRIDAY</div>
+                                <div class="bg-line">BLACK FRIDAY</div>
+                                <div class="bg-line">BLACK FRIDAY</div>
+                                <div class="bg-line">BLACK FRIDAY</div>
+                                <div class="bg-line">BLACK FRIDAY</div>
+                            </div>
+
+                            <div class="brand-header">BLACK FRIDAY</div>
+
+                            <div class="white-card">
+                                
+                                <div class="product-img-box">
+                                    <img src="${imgUrl}" class="product-img" crossorigin="anonymous" alt="${prod.name}">
+                                </div>
+
+                                <div class="product-name">${prod.name}</div>
+
+                                <div class="prices-container">
+                                    ${savingsEl}
+                                    ${oldPriceEl}
+
+                                    <div class="price-row">
+                                        <div class="main-price-block">
+                                            <span class="currency">R$</span>
+                                            <span class="big-price">${intPart}</span>
+                                            <div style="display:flex; flex-direction:column; line-height:1;">
+                                                <span class="cents">,${decPart}</span>
+                                                <span style="font-size:20px; font-weight:400;">À VISTA</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="payment-info-side">
+                                            <span class="payment-label">${installmentLabel}</span>
+                                            <span class="payment-value">${installmentValueText}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-footer">
+                                <div class="footer-pill">
+                                    <i class='bx bxs-map' style="color:var(--bf-red)"></i>
+                                    Ofertas válidas até 29/11
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        }
+
+        function formatMoney(value) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+        }
+
+        // ---------------- FUNÇÃO DE DOWNLOAD HD ----------------
+
+        async function downloadAllZIP() {
+            const btn = document.getElementById('btn-zip-all');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Gerando HD...";
+            btn.disabled = true;
+
+            const zip = new JSZip();
+            const cards = document.querySelectorAll('.offer-card');
+            const hdStage = document.getElementById('hd-render-stage');
+            
+            if(cards.length === 0) {
+                alert("Nenhum card para baixar.");
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                return;
+            }
+
+            for (let i = 0; i < cards.length; i++) {
+                const card = cards[i];
+                const nameEl = card.querySelector('.product-name');
+                let rawName = nameEl ? nameEl.innerText : `oferta-${i}`;
+                let fileName = rawName.replace(/[^a-z0-9]/gi, '_').toLowerCase().substring(0, 40) + '.png';
+
+                try {
+                    const clone = card.cloneNode(true);
+                    clone.style.transform = "none";
+                    clone.style.position = "static"; 
+                    clone.style.margin = "0";
+                    
+                    hdStage.innerHTML = '';
+                    hdStage.appendChild(clone);
+
+                    // Scale 1.5 para garantir nitidez HD
+                    const canvas = await html2canvas(clone, { 
+                        scale: 1.5, 
+                        useCORS: true, 
+                        backgroundColor: "#D30000", 
+                        allowTaint: true
+                    });
+                    
+                    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                    zip.file(fileName, blob);
+                    
+                    btn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> Processando ${i+1}/${cards.length}...`;
+
+                } catch (error) {
+                    console.error("Erro no card " + i, error);
+                }
+            }
+
+            hdStage.innerHTML = '';
+
+            zip.generateAsync({type:"blob"}).then(function(content) {
+                saveAs(content, "black-friday-stories-hd-cropped.zip");
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        }
+
+        initApp();
+    </script>
 </body>
-
 </html>
