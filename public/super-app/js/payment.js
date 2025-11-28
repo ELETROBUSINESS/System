@@ -27,37 +27,41 @@ document.addEventListener("DOMContentLoaded", () => {
     setupStepNavigation();
     setupDeliveryLogic();
     setupPixEvents();
+    updateStoreAddresses(); // Atualiza os endereços visuais ao carregar
 });
 
-// --- FUNÇÃO VALIDADORA DE CPF (NOVO) ---
+// --- ATUALIZAÇÃO VISUAL DOS ENDEREÇOS (Novo) ---
+function updateStoreAddresses() {
+    const storeItems = document.querySelectorAll('.store-item');
+    storeItems.forEach(item => {
+        const text = item.innerText;
+        const small = item.querySelector('small');
+        if (!small) return;
+
+        if (text.includes("Ipixuna")) {
+            small.innerText = "R. Jarbas Passarinho, Centro, Ipixuna do Pará";
+        } else if (text.includes("Aurora")) {
+            small.innerText = "Av. Bernardo Sayão, n° 10, centro, Aurora do Pará";
+        }
+    });
+}
+
+// --- VALIDAÇÃO DE CPF ---
 function isValidCPF(cpf) {
     if (typeof cpf !== 'string') return false;
-    
-    // Remove caracteres não numéricos
     cpf = cpf.replace(/[^\d]+/g, '');
-    
-    // Verifica tamanho e se todos os dígitos são iguais
     if (cpf.length !== 11 || !!cpf.match(/(\d)\1{10}/)) return false;
-    
-    // Validação do 1º Dígito
     let soma = 0;
     let resto;
-    for (let i = 1; i <= 9; i++) 
-        soma = soma + parseInt(cpf.substring(i-1, i)) * (11 - i);
-    
+    for (let i = 1; i <= 9; i++) soma = soma + parseInt(cpf.substring(i-1, i)) * (11 - i);
     resto = (soma * 10) % 11;
     if ((resto === 10) || (resto === 11)) resto = 0;
     if (resto !== parseInt(cpf.substring(9, 10))) return false;
-    
-    // Validação do 2º Dígito
     soma = 0;
-    for (let i = 1; i <= 10; i++) 
-        soma = soma + parseInt(cpf.substring(i-1, i)) * (12 - i);
-    
+    for (let i = 1; i <= 10; i++) soma = soma + parseInt(cpf.substring(i-1, i)) * (12 - i);
     resto = (soma * 10) % 11;
     if ((resto === 10) || (resto === 11)) resto = 0;
     if (resto !== parseInt(cpf.substring(10, 11))) return false;
-    
     return true;
 }
 
@@ -83,34 +87,29 @@ function setupStepNavigation() {
         const fname = document.getElementById("reg-first-name").value.trim();
         const lname = document.getElementById("reg-last-name").value.trim();
         const phone = document.getElementById("reg-phone").value.trim();
-        const cpfInput = document.getElementById("reg-cpf"); // Pega o elemento
+        const cpfInput = document.getElementById("reg-cpf");
         const cpfVal = cpfInput ? cpfInput.value.trim() : "";
-        
         const emailInput = document.getElementById("reg-email").value;
 
         if(!emailInput && auth.currentUser) {
             document.getElementById("reg-email").value = auth.currentUser.email;
         }
 
-        // 1. Validação de Campos Vazios
         if (!fname || !lname || !phone || !cpfVal) {
             showToast("Preencha todos os campos obrigatórios, incluindo CPF.", "error");
             return;
         }
 
-        // 2. Validação RIGOROSA de CPF (NOVO)
         if (!isValidCPF(cpfVal)) {
             showToast("CPF Inválido. Verifique os números digitados.", "error");
             if(cpfInput) {
                 cpfInput.style.borderColor = "red";
                 cpfInput.focus();
-                // Reseta a cor depois de 3 segundos
                 setTimeout(() => cpfInput.style.borderColor = "#e0e0e0", 3000);
             }
-            return; // PARA AQUI se o CPF for ruim
+            return;
         }
 
-        // Se chegou aqui, o CPF é válido matematicamente
         if (auth.currentUser) {
             try {
                 await db.collection("users").doc(auth.currentUser.uid).set({
@@ -126,7 +125,6 @@ function setupStepNavigation() {
     });
 
     document.getElementById("btn-go-payment").addEventListener("click", async () => {
-        // Verificação de Segurança do Carrinho
         const cart = CartManager.get();
         if (cart.length === 0) {
             showToast("Seu carrinho está vazio!", "error");
@@ -176,10 +174,8 @@ function changeStep(stepNum) {
     }
 }
 
-// Substitua a função setupDeliveryLogic por esta:
 function setupDeliveryLogic() {
     window.selectDeliveryType = (type) => {
-        // Se tentar selecionar entrega mas estiver bloqueado pelo CEP, impede
         const deliveryCard = document.querySelector(`.delivery-option-card[data-type="delivery"]`);
         if (type === 'delivery' && deliveryCard.classList.contains('blocked-option')) {
             showToast("Entrega indisponível para este CEP.", "error");
@@ -198,7 +194,7 @@ function setupDeliveryLogic() {
             document.getElementById("container-delivery-form").style.display = 'none';
             document.getElementById("container-pickup-list").style.display = 'block';
             currentShippingCost = 0; 
-            updateTotalDisplay(); // Atualiza visualmente o total zerando o frete
+            updateTotalDisplay();
         }
     };
 
@@ -212,7 +208,6 @@ function setupDeliveryLogic() {
         selectedStore = storeName;
     };
 
-    // Listener de CEP para validação de área de entrega
     const cepInput = document.getElementById("cep");
     if (cepInput) {
         cepInput.addEventListener("blur", () => {
@@ -222,7 +217,6 @@ function setupDeliveryLogic() {
             }
         });
         
-        // Formatação automática do CEP (00000-000)
         cepInput.addEventListener("input", (e) => {
             let val = e.target.value.replace(/\D/g, '');
             if (val.length > 5) val = val.substring(0, 5) + '-' + val.substring(5, 8);
@@ -233,47 +227,66 @@ function setupDeliveryLogic() {
     document.getElementById("city-select").addEventListener("change", calculateShipping);
 }
 
-// Nova função auxiliar para bloquear/desbloquear entrega
+// --- FUNÇÃO DE VALIDAÇÃO DE ÁREA COM BOTÃO DE VOLTAR (NOVO) ---
 function validateDeliveryArea(cep) {
     const deliveryCard = document.querySelector(`.delivery-option-card[data-type="delivery"]`);
-    const display = document.getElementById("shipping-cost-display");
+    const pickupContainer = document.getElementById("container-pickup-list");
+    const deliveryForm = document.getElementById("container-delivery-form");
 
     if (cep !== '68637000') {
-        // --- BLOQUEIA ENTREGA ---
+        // Bloqueia Entrega
         deliveryCard.style.opacity = '0.5';
         deliveryCard.style.filter = 'grayscale(1)';
         deliveryCard.style.cursor = 'not-allowed';
-        deliveryCard.classList.add('blocked-option'); // Marcador lógico
+        deliveryCard.classList.add('blocked-option');
         
-        // Força mudança para Retirada
         selectDeliveryType('pickup');
-        
         showToast("Entrega indisponível para este CEP. Apenas retirada.", "warning");
-        
-        // Atualiza UI da loja mais próxima (simulação simples baseada no bloqueio)
-        // Aqui você poderia ter uma lógica complexa de distância, mas vamos sugerir a principal
-        const storeList = document.querySelector('.store-list');
-        if(storeList) {
-            // Exemplo: Seleciona automaticamente a loja de Aurora se não for Ipixuna
-            // Ou apenas abre a lista para o usuário escolher
-            document.getElementById("container-pickup-list").style.display = 'block';
+
+        // Injeta Botão "Alterar CEP" se não existir
+        if (!document.getElementById("btn-change-cep-retry")) {
+            const btn = document.createElement("button");
+            btn.id = "btn-change-cep-retry";
+            btn.style = "background:none; border:none; color:#db0038; text-decoration:underline; cursor:pointer; margin-bottom:15px; font-size:0.9rem; display:flex; align-items:center; gap:5px; font-weight:600;";
+            btn.innerHTML = "<i class='bx bx-left-arrow-alt'></i> Alterar CEP / Endereço";
+            
+            btn.onclick = (e) => {
+                e.preventDefault();
+                // Reseta visual
+                pickupContainer.style.display = "none";
+                deliveryForm.style.display = "block";
+                
+                deliveryCard.style.opacity = '1';
+                deliveryCard.style.filter = 'none';
+                deliveryCard.style.cursor = 'pointer';
+                deliveryCard.classList.remove('blocked-option');
+                
+                // Volta para modo delivery e foca no CEP
+                selectDeliveryType('delivery');
+                const cInput = document.getElementById("cep");
+                cInput.value = ""; // Limpa para obrigar nova digitação
+                cInput.focus();
+            };
+            pickupContainer.insertBefore(btn, pickupContainer.firstChild);
         }
 
     } else {
-        // --- LIBERA ENTREGA ---
+        // Libera Entrega
         deliveryCard.style.opacity = '1';
         deliveryCard.style.filter = 'none';
         deliveryCard.style.cursor = 'pointer';
         deliveryCard.classList.remove('blocked-option');
         
-        // Calcula o frete real se estivermos na aba de entrega
+        // Remove botão se existir (pois agora está liberado)
+        const btnRetry = document.getElementById("btn-change-cep-retry");
+        if(btnRetry) btnRetry.remove();
+
         if (deliveryMode === 'delivery') {
             calculateShipping();
         }
     }
 }
 
-// Substitua a função calculateShipping por esta:
 function calculateShipping() {
     if (deliveryMode === 'pickup') {
         currentShippingCost = 0;
@@ -287,26 +300,21 @@ function calculateShipping() {
     const cartTotal = CartManager.total();
     const isBullf = document.getElementById("frete-bullf") ? document.getElementById("frete-bullf").checked : false;
 
-    // Se o CEP for inválido ou fora da área, a função validateDeliveryArea já cuidou do bloqueio.
-    // Aqui cuidamos apenas do cálculo de VALOR para o CEP '68637000' permitido.
-
     if (isBullf) {
         currentShippingCost = 0;
         display.innerText = "Grátis (Frete Bullf)";
         display.style.color = "var(--color-secondary)";
     } else if (cepVal === '68637000') {
-        // Regra de Negócio Ipixuna
         if (cartTotal >= 29.99) {
             currentShippingCost = 0;
             display.innerText = "Grátis (Pedido > R$ 29,99)";
-            display.style.color = "#00a650"; // Verde
+            display.style.color = "#00a650"; 
         } else {
             currentShippingCost = 7.99;
             display.innerText = "R$ 7,99";
             display.style.color = "#333";
         }
     } else {
-        // Fallback caso a validação visual falhe
         currentShippingCost = 0;
         display.innerText = "Calculando...";
     }
@@ -314,7 +322,6 @@ function calculateShipping() {
     updateTotalDisplay();
 }
 
-// Função auxiliar para atualizar o total na tela sem duplicar código
 function updateTotalDisplay() {
     const productsTotal = CartManager.total();
     const finalTotal = productsTotal + currentShippingCost;
@@ -324,52 +331,6 @@ function updateTotalDisplay() {
     
     if(shippingDisplay) shippingDisplay.innerText = currentShippingCost === 0 ? "Grátis" : `R$ ${currentShippingCost.toFixed(2).replace('.', ',')}`;
     if(totalDisplay) totalDisplay.innerText = `R$ ${finalTotal.toFixed(2).replace('.', ',')}`;
-    
-    // Se o brick de pagamento já estiver carregado, precisaria atualizá-lo, 
-    // mas geralmente o usuário preenche o endereço antes de chegar no brick (Passo 2 vs Passo 3).
-}
-
-function calculateShipping() {
-    if (deliveryMode === 'pickup') return;
-
-    const city = document.getElementById("city-select").value;
-    const isBullf = document.getElementById("frete-bullf") ? document.getElementById("frete-bullf").checked : false;
-    const cartTotal = CartManager.total();
-    const display = document.getElementById("shipping-cost-display");
-
-    if (isBullf) {
-        currentShippingCost = 0;
-        display.innerText = "Grátis (Frete Bullf)";
-        display.style.color = "var(--color-accent-blue)";
-        return;
-    }
-
-    if (!city) {
-        currentShippingCost = 0;
-        display.innerText = "Selecione a cidade";
-        display.style.color = "#666";
-        return;
-    }
-
-    if (city === "Ipixuna do Pará") {
-        if (cartTotal >= 29.99) {
-            currentShippingCost = 0;
-            display.innerText = "Grátis (Pedido > R$ 29,99)";
-            display.style.color = "green";
-        } else {
-            currentShippingCost = 7.99;
-            display.innerText = "R$ 7,99";
-            display.style.color = "#333";
-        }
-    } else if (city === "Aurora do Pará") {
-        currentShippingCost = 50.00;
-        display.innerText = "R$ 50,00";
-        display.style.color = "#333";
-    } else {
-        currentShippingCost = 0; 
-        display.innerText = "Não entregamos nesta região";
-        display.style.color = "red";
-    }
 }
 
 async function initPaymentBrick() {

@@ -3,6 +3,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     renderCartPage();
     setupCartEvents();
+    // A barra será inicializada pelo renderCartPage
 });
 
 // Expondo função global para o HTML acessar (onclick)
@@ -21,7 +22,7 @@ window.updateQty = function(id, change) {
         
         // Salva e Renderiza
         localStorage.setItem('app_cart', JSON.stringify(cart));
-        renderCartPage();
+        renderCartPage(); // Isso agora atualizará a barra automaticamente
         
         // Atualiza badge global (se a função existir no global.js)
         if (typeof updateCartBadge === 'function') {
@@ -41,6 +42,10 @@ function renderCartPage() {
     if (items.length === 0) {
         if (summaryBox) summaryBox.style.display = 'none';
         
+        // Esconde a barra se estiver vazia
+        const progressBox = document.getElementById('shipping-progress-box');
+        if(progressBox) progressBox.style.display = 'none';
+
         if (container) {
             container.innerHTML = `
                 <div class="cart-empty" style="text-align: center; padding: 3rem;">
@@ -85,6 +90,9 @@ function renderCartPage() {
     });
     
     updateSummary();
+    
+    // ATUALIZAÇÃO AUTOMÁTICA DA BARRA DE FRETE
+    updateShippingProgressBar();
 }
 
 function updateSummary() {
@@ -104,7 +112,7 @@ function setupCartEvents() {
             if (btn) {
                 const itemId = btn.closest(".cart-item").dataset.id;
                 CartManager.remove(itemId);
-                renderCartPage();
+                renderCartPage(); // Isso atualizará a lista, o total e a barra de progresso
             }
         });
     }
@@ -117,8 +125,6 @@ function setupCartEvents() {
             
             // Verifica Login e Redireciona
             if (!auth || !auth.currentUser || auth.currentUser.isAnonymous) {
-                // Se tiver modal de login, abre ele, senão redireciona para página de login (se existir)
-                // Assumindo que você usa o modal global:
                 const modal = document.getElementById("user-profile-modal");
                 if(modal) {
                     modal.classList.add('show');
@@ -170,16 +176,7 @@ function updateShippingProgressBar() {
     }
 }
 
-// Chame isso ao carregar a página
-document.addEventListener("DOMContentLoaded", () => {
-    updateShippingProgressBar();
-});
-
-// Sobrescreva ou integre com o renderCart existente para atualizar a barra
-// Exemplo: Se você tem uma função renderCart(), adicione updateShippingProgressBar() no final dela.
-
-
-// --- 2. LÓGICA DO CEP NO CARRINHO ---
+// --- 2. LÓGICA DO CEP NO CARRINHO (COM ENDEREÇOS ATUALIZADOS) ---
 function calculateCartShipping() {
     const cepInput = document.getElementById('cart-cep-input');
     const resultDiv = document.getElementById('cart-shipping-result');
@@ -226,13 +223,13 @@ function calculateCartShipping() {
                     <i class='bx bxs-store' style="color:#333; font-size:1.4rem;"></i>
                     <div class="shipping-info">
                         <span class="shipping-title-opt" style="color:#333; font-weight:600;">Retirar na Loja</span>
-                        <span class="shipping-subtitle-opt">Disponível em 1 hora</span>
+                        <span class="shipping-subtitle-opt">D'Tudo Ipixuna - R. Jarbas Passarinho, Centro</span>
                     </div>
                     <div style="margin-left:auto; color:#00a650; font-weight:700;">Grátis</div>
                 </div>
             `;
         } else {
-            // Outro CEP -> Apenas Retirada
+            // Outro CEP -> Apenas Retirada com endereço novo
             resultDiv.innerHTML = `
                 <div class="pickup-only-msg">
                     <i class='bx bx-error-circle'></i> 
@@ -245,7 +242,7 @@ function calculateCartShipping() {
                     <i class='bx bxs-map' style="font-size:1.5rem; color:#db0038;"></i>
                     <div>
                         <strong style="display:block; font-size:0.9rem;">D'Tudo Aurora</strong>
-                        <span style="font-size:0.8rem; color:#666;">Rodovia Principal, Centro - Aurora do Pará</span>
+                        <span style="font-size:0.8rem; color:#666;">Av. Bernardo Sayão, n° 10, centro, Aurora do Pará</span>
                     </div>
                     <span style="margin-left:auto; color:#00a650; font-weight:700; font-size:0.85rem;">Grátis</span>
                 </div>
