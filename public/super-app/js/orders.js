@@ -57,7 +57,7 @@ function renderOrderCard(order, container) {
         });
     }
 
-    // --- LÓGICA DE REEMBOLSO (NOVO) ---
+    // --- LÓGICA DE REEMBOLSO ---
     let refundHtml = '';
     let refundTotal = 0;
     let missingNames = [];
@@ -66,10 +66,7 @@ function renderOrderCard(order, container) {
         order.missingIndices.forEach(index => {
             if (order.items && order.items[index]) {
                 const item = order.items[index];
-                // Tenta pegar o preço novo, senão o antigo, senão 0
                 const price = item.priceNew || item.price || 0;
-                // Multiplica pela quantidade (assumindo que falta tudo daquele item, 
-                // ou ajuste se sua lógica de falta for parcial)
                 const qty = item.quantity || 1; 
                 
                 refundTotal += (price * qty);
@@ -78,8 +75,6 @@ function renderOrderCard(order, container) {
         });
 
         const refundFormatted = refundTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        
-        // Cria a lista de nomes para exibir (opcional, pode mostrar só "X itens")
         const listHtml = missingNames.map(name => `<li>${name}</li>`).join('');
 
         refundHtml = `
@@ -88,20 +83,20 @@ function renderOrderCard(order, container) {
                 <div>
                     <strong>Item Indisponível</strong>
                     <p>Infelizmente, alguns itens acabaram no estoque. O valor de <strong>${refundFormatted}</strong> será estornado ou ficará como crédito.</p>
-                    <ul class="refund-items-list">
-                        ${listHtml}
-                    </ul>
+                    <ul class="refund-items-list">${listHtml}</ul>
                 </div>
             </div>
         `;
     }
-    // ----------------------------------
 
     let statusClass = 'status-pending'; 
     let statusLabel = 'Processando';
     let showPixButton = false;
     let showTracking = false;
     
+    // Controle se pode deletar (Padrão: Sim, exceto se pago)
+    let canDelete = true; 
+
     // Variáveis Rastreio
     let step1Active = false, step2Active = false, step3Active = false;
     let showTruckAnimation = false;
@@ -109,11 +104,12 @@ function renderOrderCard(order, container) {
     // Lógica de Status
     switch(order.status) {
         case 'approved': 
-        case 'preparation': // Adicionado caso usem esse status interno
+        case 'preparation': 
             statusClass = 'status-approved'; 
             statusLabel = 'Aprovado';
             showTracking = true;
             step1Active = true; 
+            canDelete = false; // PAGO: Não pode apagar
             break;
         
         case 'shipped': 
@@ -123,6 +119,7 @@ function renderOrderCard(order, container) {
             step1Active = true; 
             step2Active = true; 
             showTruckAnimation = true; 
+            canDelete = false; // PAGO: Não pode apagar
             break;
 
         case 'delivered': 
@@ -132,6 +129,7 @@ function renderOrderCard(order, container) {
             step1Active = true;
             step2Active = true;
             step3Active = true; 
+            canDelete = false; // PAGO: Não pode apagar
             break;
             
         case 'pending':
@@ -142,6 +140,8 @@ function renderOrderCard(order, container) {
             if (order.paymentData && (order.paymentData.qr_code || order.paymentData.qr_code_base64)) {
                  showPixButton = true;
             }
+            // PENDENTE: Pode apagar (para limpar a lista se desistiu)
+            canDelete = true; 
             break;
 
         case 'rejected':
@@ -149,6 +149,8 @@ function renderOrderCard(order, container) {
         case 'failed': 
             statusClass = 'status-cancelled'; 
             statusLabel = 'Cancelado';
+            // CANCELADO: Pode apagar para limpar histórico
+            canDelete = true;
             break;
             
         default:
@@ -161,6 +163,13 @@ function renderOrderCard(order, container) {
              <i class='bx bx-qr-scan'></i> Pagar com Pix
            </button>` 
         : ``; 
+
+    // Botão Lixeira (Condicional)
+    const deleteBtnHtml = canDelete 
+        ? `<button class="btn-delete-order" onclick="deleteOrder('${order.id}')" title="Remover do histórico">
+             <i class='bx bx-trash'></i>
+           </button>`
+        : ``; // Se não puder deletar, não renderiza nada
 
     // HTML do Rastreamento
     let trackingHtml = '';
@@ -179,9 +188,7 @@ function renderOrderCard(order, container) {
         trackingHtml = `
             <div class="tracking-section">
                 <div class="tracking-title">Acompanhe seu pedido</div>
-                
                 ${truckHtml}
-
                 <div class="tracking-steps" style="${showTruckAnimation ? 'margin-top:15px;' : ''}">
                     <div class="step-item ${s1Class}">
                         <div class="step-icon"><i class='bx bx-package'></i></div>
@@ -226,14 +233,11 @@ function renderOrderCard(order, container) {
             </div>
             
             ${refundHtml}
-
             ${trackingHtml}
 
             <div class="card-footer">
                 ${pixActionHtml ? pixActionHtml : '<div style="flex:1"></div>'}
-                <button class="btn-delete-order" onclick="deleteOrder('${order.id}')" title="Remover do histórico">
-                    <i class='bx bx-trash'></i>
-                </button>
+                ${deleteBtnHtml}
             </div>
         </div>
     `;
