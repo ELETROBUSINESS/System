@@ -7,16 +7,134 @@
     <title>Meu Carrinho</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* ==================== BARRA DE FRETE GRÁTIS (CARRINHO) ==================== */
+        .shipping-progress-container {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e0e0e0;
+        }
+
+        .shipping-progress-text {
+            font-size: 0.9rem;
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .shipping-progress-text strong {
+            color: #00a650;
+            /* Verde */
+        }
+
+        .progress-track-cart {
+            width: 100%;
+            height: 8px;
+            background-color: #f1f1f1;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill-cart {
+            height: 100%;
+            width: 0%;
+            background-color: #00a650;
+            /* Verde do sucesso */
+            border-radius: 4px;
+            transition: width 0.5s ease-in-out;
+        }
+
+        /* Estado quando faltar valor (Vermelho/Laranja para incentivar) */
+        .progress-fill-cart.incomplete {
+            background-color: #db0038;
+        }
+
+        /* ==================== CÁLCULO DE FRETE NO CARRINHO ==================== */
+        .cart-shipping-area {
+            margin-top: 20px;
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+
+        .cart-shipping-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cart-cep-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .cart-cep-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .btn-calc-cart {
+            background-color: #333;
+            color: #fff;
+            padding: 0 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .cart-shipping-result {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #eee;
+            display: none;
+            /* JS controla */
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .pickup-only-msg {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            border: 1px solid #ffeeba;
+        }
+
+        .store-suggestion {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+    </style>
 </head>
 
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
 
-  gtag('config', 'G-BV6V3GTMR0');
+    gtag('config', 'G-BV6V3GTMR0');
 </script>
 
 <body>
@@ -27,6 +145,29 @@
             <div style="width: 24px;"></div>
         </div>
     </header>
+
+    <div class="container" style="margin-top: 10px;">
+        <div class="shipping-progress-container" id="shipping-progress-box" style="display:none;">
+            <div class="shipping-progress-text" id="shipping-progress-text">
+                Faltam <strong>R$ 10,00</strong> para Frete Grátis
+            </div>
+            <div class="progress-track-cart">
+                <div class="progress-fill-cart incomplete" id="shipping-progress-fill"></div>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+    <div class="cart-shipping-area">
+        <div class="cart-shipping-title"><i class='bx bxs-truck'></i> Opções de Entrega</div>
+        <div class="cart-cep-group">
+            <input type="tel" id="cart-cep-input" class="cart-cep-input" placeholder="Digite seu CEP" maxlength="9">
+            <button class="btn-calc-cart" onclick="calculateCartShipping()">Calcular</button>
+        </div>
+        
+        <div id="cart-shipping-result" class="cart-shipping-result">
+            </div>
+    </div>
+</div>
 
     <main class="container">
         <div id="cart-items-container"></div>
@@ -69,4 +210,5 @@
     <script src="js/global.js"></script>
     <script src="js/cart.js"></script>
 </body>
+
 </html>
