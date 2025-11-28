@@ -2457,6 +2457,90 @@
         .btn-close-modal-lg:hover {
             background-color: #e0e0e0;
         }
+
+
+
+        /* --- Resumo Financeiro no Modal --- */
+        .financial-breakdown {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px dashed var(--border-color);
+            font-size: 0.95rem;
+        }
+
+        .financial-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            color: var(--text-light);
+        }
+
+        .financial-row.danger {
+            color: var(--warning-red);
+        }
+
+        .financial-row.final {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-top: 12px;
+            border-top: 1px solid #eee;
+            padding-top: 12px;
+        }
+
+        /* Botão desativado visualmente */
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+
+        /* --- Navegação na Timeline (Interativa) --- */
+        .step-item {
+            cursor: pointer;
+            /* Mostra a mãozinha */
+            position: relative;
+            transition: transform 0.2s ease;
+        }
+
+        .step-item:hover {
+            transform: translateY(-3px);
+            /* Leve pulo ao passar o mouse */
+        }
+
+        .step-item:hover .step-icon {
+            border-color: var(--primary-red);
+            color: var(--primary-red);
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Quando estiver ativo ou completado, mantém as cores originais no hover */
+        .step-item.active:hover .step-icon,
+        .step-item.completed:hover .step-icon {
+            transform: none;
+            /* Remove efeito extra se já estiver ativo */
+        }
+
+        /* --- Bloqueio de Navegação na Timeline --- */
+        .step-item.locked {
+            cursor: not-allowed;
+            /* Mostra o símbolo de bloqueio */
+            opacity: 0.6;
+            /* Deixa um pouco mais apagado */
+            pointer-events: none;
+            /* (Opcional) Impede o clique via CSS também */
+        }
+
+        .step-item.locked:hover {
+            transform: none;
+            /* Remove a animação de pulo */
+        }
+
+        .step-item.locked .step-icon {
+            border-color: #ddd;
+            /* Mantém cinza */
+            color: #999;
+        }
     </style>
 </head>
 
@@ -2820,8 +2904,7 @@
                         <p style="color: var(--text-light); margin-bottom: 0;">Gerencie as vendas em tempo real.</p>
                     </div>
                     <div>
-                        <button class="btn btn-secondary" onclick="renderDummyOrders()"
-                            style="width: auto; padding: 10px 16px;">
+                        <button class="btn btn-secondary" style="width: auto; padding: 10px 16px;">
                             <i class='bx bx-refresh'></i> Atualizar
                         </button>
                     </div>
@@ -3120,20 +3203,32 @@
 
             <div class="modal-body">
                 <div class="order-progress-track">
-                    <div class="step-item" id="step-pendente">
-                        <div class="step-icon"><i class='bx bx-list-ul'></i></div> <span>Recebido</span>
+                    <div class="step-item" id="step-pendente" onclick="manualSetStatus('pendente')"
+                        title="Voltar para Recebido">
+                        <div class="step-icon"><i class='bx bx-list-ul'></i></div>
+                        <span>Recebido</span>
                     </div>
+
                     <div class="step-line"></div>
-                    <div class="step-item" id="step-preparando">
-                        <div class="step-icon"><i class='bx bx-box'></i></div> <span>Separando</span>
+
+                    <div class="step-item" id="step-preparando" onclick="manualSetStatus('preparando')"
+                        title="Mudar para Separando">
+                        <div class="step-icon"><i class='bx bx-box'></i></div>
+                        <span>Separando</span>
                     </div>
+
                     <div class="step-line"></div>
-                    <div class="step-item" id="step-enviado">
+
+                    <div class="step-item" id="step-enviado" onclick="manualSetStatus('enviado')"
+                        title="Mudar para Enviado">
                         <div class="step-icon"><i class='bx bx-car'></i></div>
                         <span>Enviado</span>
                     </div>
+
                     <div class="step-line"></div>
-                    <div class="step-item" id="step-finalizado">
+
+                    <div class="step-item" id="step-finalizado" onclick="manualSetStatus('finalizado')"
+                        title="Mudar para Entregue">
                         <div class="step-icon"><i class='bx bx-check-double'></i></div>
                         <span>Entregue</span>
                     </div>
@@ -3160,11 +3255,19 @@
                 <div id="modal-order-items-list" class="order-items-scroll">
                 </div>
 
-                <div
-                    style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px dashed var(--border-color);">
-                    <span style="font-size: 1rem; font-weight: 600;">Total do Pedido</span>
-                    <span id="modal-order-total"
-                        style="font-size: 1.4rem; font-weight: 700; color: var(--primary-red);">R$ 0,00</span>
+                <div class="financial-breakdown">
+                    <div class="financial-row">
+                        <span>Subtotal</span>
+                        <span id="modal-calc-subtotal">R$ 0,00</span>
+                    </div>
+                    <div class="financial-row danger" id="row-canceled-items" style="display: none;">
+                        <span>Itens Cancelados/Sem Estoque</span>
+                        <span id="modal-calc-canceled">- R$ 0,00</span>
+                    </div>
+                    <div class="financial-row final">
+                        <span>Total Final</span>
+                        <span id="modal-calc-total" style="color: var(--primary-red);">R$ 0,00</span>
+                    </div>
                 </div>
             </div>
 
@@ -3172,11 +3275,11 @@
                 <button id="btn-update-status" class="btn btn-primary">
                     Avançar Status
                 </button>
-
                 <button class="btn btn-close-modal-lg close-modal-btn" data-target="order-details-modal">
                     Fechar Janela
                 </button>
             </div>
+
         </div>
     </div>
 
@@ -5066,56 +5169,190 @@
             let orderPollingInterval = null; // Variável para controlar o relógio
             let lastOrderCount = 0; // Para saber se chegou algo novo e tocar som/alerta
 
-            // --- LÓGICA DE PEDIDOS: VARIÁVEIS GLOBAIS ---
+            // --- LÓGICA DE PEDIDOS: INTEGRAÇÃO FIREBASE REAL ---
 
-            // ESTA É A VARIÁVEL QUE FALTAVA:
             let currentOrderStatusFilter = 'pendente';
+            let activeOrdersData = []; // Agora começa vazio e é preenchido pelo Firebase
+            let realtimeOrdersUnsubscribe = null; // Para controlar o listener
 
-            // Dados Iniciais (Simulação)
-            let activeOrdersData = [
-                { id: '#9825', time: '11:05', client: 'Carlos Silva', address: 'Rua A, 123', items: '1x Coca-Cola 2L', total: 'R$ 12,00', status: 'pendente' },
-                // ... seus outros dados ...
-            ];
+            // Mapeamento de Status (Firebase -> Abas do PDV)
+            // 'approved' (Pago) -> Aba 'pendente' (Aguardando Separação)
+            // 'preparation' -> Aba 'preparando'
+            // 'shipped' -> Aba 'enviado'
+            // 'delivered' -> Aba 'finalizado'
+            const mapStatusFirebaseToUI = (fbStatus) => {
+                if (fbStatus === 'approved') return 'pendente';
+                if (fbStatus === 'preparation') return 'preparando';
+                if (fbStatus === 'shipped') return 'enviado';
+                if (fbStatus === 'delivered') return 'finalizado';
+                return fbStatus; // Fallback
+            };
 
-            // 1. Função Principal de Renderização (Visual)
+            // Mapeamento Inverso (Abas do PDV -> Firebase)
+            const mapStatusUIToFirebase = (uiStatus) => {
+                if (uiStatus === 'pendente') return 'approved';
+                if (uiStatus === 'preparando') return 'preparation';
+                if (uiStatus === 'enviado') return 'shipped';
+                if (uiStatus === 'finalizado') return 'delivered';
+                return uiStatus;
+            };
+
+            // 1. Iniciar Listener em Tempo Real
+            function startOrderPolling() {
+                if (realtimeOrdersUnsubscribe) realtimeOrdersUnsubscribe();
+
+                const ordersContainer = document.getElementById('orders-grid-container');
+                ordersContainer.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px;"><i class="bx bx-loader-alt bx-spin"></i> Conectando aos pedidos...</p>';
+
+                // Consulta: Ordenado por data
+                // OBS: Filtramos no cliente (JS) para garantir flexibilidade, 
+                // mas idealmente faríamos .where('status', '!=', 'pending_payment') se houvesse índice composto.
+                const q = db.collection('orders').orderBy('createdAt', 'desc').limit(50);
+
+                realtimeOrdersUnsubscribe = q.onSnapshot((snapshot) => {
+                    const fetchedOrders = [];
+                    let hasNewOrder = false;
+
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+
+                        // FILTRO DE SEGURANÇA:
+                        // Só mostra pedidos que NÃO estejam aguardando pagamento ou cancelados.
+                        if (data.status === 'pending_payment' || data.status === 'cancelled' || data.status === 'rejected') {
+                            return;
+                        }
+
+                        // Formatação de Dados
+                        const dateObj = data.createdAt ? data.createdAt.toDate() : new Date();
+                        const timeStr = formatTime(dateObj); // HH:MM:SS
+
+                        // Mapeia o status do banco para a aba correta
+                        const uiStatus = mapStatusFirebaseToUI(data.status);
+
+                        // Monta string de itens
+                        let itemsStr = "Sem itens";
+                        if (data.items && Array.isArray(data.items)) {
+                            itemsStr = data.items.map(i => `${i.quantity}x ${i.name}`).join(', ');
+                        }
+
+                        fetchedOrders.push({
+                            id: doc.id, // ID do Documento (usado para update)
+                            displayId: data.orderId || doc.id.substring(0, 6), // ID visual (#1234)
+                            time: timeStr,
+                            client: data.client ? data.client.name : 'Cliente Online',
+                            address: data.shipping && data.shipping.mode === 'delivery' ? data.shipping.address : 'Retirada na Loja',
+                            status: uiStatus, // Status da Aba
+                            firebaseStatus: data.status, // Status original
+                            total: formatCurrency(data.total || 0),
+                            rawTotal: data.total || 0,
+                            items: itemsStr,
+                            itemsDetails: (data.items || []).map(i => ({
+                                name: i.name,
+                                qty: i.quantity,
+                                price: i.priceNew || i.price || 0
+                            })),
+                            // Carrega itens que faltaram (conferência)
+                            missingIndices: data.missingIndices || []
+                        });
+                    });
+
+                    // Verifica se houve mudança na quantidade (para notificação)
+                    if (fetchedOrders.length > activeOrdersData.length && activeOrdersData.length > 0) {
+                        showToastFirebase("Novo pedido aprovado chegou!");
+                        const pedidosNav = document.querySelector('.navbar-item[data-page="pedidos"]');
+                        if (pedidosNav && !pedidosNav.classList.contains('active')) {
+                            pedidosNav.classList.add('notify-active');
+                            setTimeout(() => pedidosNav.classList.remove('notify-active'), 15000);
+                        }
+                    }
+
+                    activeOrdersData = fetchedOrders;
+                    renderDummyOrders(); // Usa a mesma função de renderização, agora com dados reais
+
+                }, (error) => {
+                    console.error("Erro ao ouvir pedidos:", error);
+                    ordersContainer.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--warning-red);">Erro de conexão: ${error.message}</p>`;
+                });
+            }
+
+            // Função auxiliar para calcular total inicial (para exibir na lista principal)
+            // Adicione isso para compatibilidade com o código anterior que espera .items (string) e .total (string)
+            activeOrdersData.forEach(order => {
+                let totalVal = 0;
+                let itemsStr = [];
+                order.itemsDetails.forEach(i => {
+                    totalVal += i.price;
+                    itemsStr.push(`${i.qty}x ${i.name}`);
+                });
+                order.total = totalVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                order.items = itemsStr.join(', ');
+            });
+
+
+            // Adicione esta linha junto com seus outros listeners:
+            const btnRefreshOrders = document.getElementById('btn-refresh-orders');
+            if (btnRefreshOrders) {
+                btnRefreshOrders.addEventListener('click', () => {
+                    // Reinicia o listener do Firebase para garantir dados frescos
+                    startOrderPolling();
+                });
+            }
+
+            // --- CORREÇÃO: Adicionar Click nas Abas de Status ---
+            const statusTabs = document.querySelectorAll('#order-status-tabs .order-tab');
+
+            statusTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // 1. Remove a classe 'active' de todas as abas
+                    statusTabs.forEach(t => t.classList.remove('active'));
+
+                    // 2. Adiciona 'active' apenas na aba clicada (visual)
+                    tab.classList.add('active');
+
+                    // 3. Atualiza a variável de controle global
+                    currentOrderStatusFilter = tab.dataset.status;
+
+                    // 4. Manda desenhar a lista novamente com o novo filtro
+                    renderDummyOrders();
+                });
+            });
+
+            // 2. Renderização (Adaptada para usar os novos campos)
             function renderDummyOrders() {
                 const container = document.getElementById('orders-grid-container');
                 const badgeNavbar = document.getElementById('pedidos-badge');
 
-                // Conta quantos estão pendentes
+                // Conta quantos estão na aba 'pendente' (Aprovados esperando ação)
                 const pendingOrders = activeOrdersData.filter(o => o.status === 'pendente');
                 const pendingCount = pendingOrders.length;
 
-                // --- ATUALIZA A NAVBAR (Onde você estiver) ---
+                // Atualiza Badges
                 if (pendingCount > 0) {
                     badgeNavbar.innerText = pendingCount;
-                    badgeNavbar.classList.add('active'); // Mostra a bolinha vermelha
+                    badgeNavbar.classList.add('active');
                 } else {
-                    badgeNavbar.classList.remove('active'); // Esconde
+                    badgeNavbar.classList.remove('active');
                 }
 
-                // Atualiza contadores das abas internas
                 const countPendenteEl = document.getElementById('count-pendente');
                 const countPreparandoEl = document.getElementById('count-preparando');
                 if (countPendenteEl) countPendenteEl.innerText = pendingCount;
                 if (countPreparandoEl) countPreparandoEl.innerText = activeOrdersData.filter(o => o.status === 'preparando').length;
 
-                // Se a tela de pedidos NÃO estiver visível, paramos aqui (só atualiza a notificação)
+                // Se a tela não estiver visível, sai
                 const pedidosPage = document.getElementById('pedidos-page');
                 if (pedidosPage.style.display === 'none') return;
 
-                // --- ATUALIZA A GRID (Se a tela estiver aberta) ---
-                // Filtra baseado na aba selecionada (global currentOrderStatusFilter)
+                // Filtra e Renderiza
                 const filteredOrders = activeOrdersData.filter(order => order.status === currentOrderStatusFilter);
-
                 container.innerHTML = '';
 
                 if (filteredOrders.length === 0) {
                     container.innerHTML = `
-                <div style="grid-column: 1/-1; text-align: center; color: var(--text-light); padding: 60px; display:flex; flex-direction:column; align-items:center;">
-                    <i class='bx bx-check-circle' style="font-size: 3rem; margin-bottom:10px; opacity:0.3;"></i>
-                    <p>Nenhum pedido "${currentOrderStatusFilter}" no momento.</p>
-                </div>`;
+                        <div style="grid-column: 1/-1; text-align: center; color: var(--text-light); padding: 60px; display:flex; flex-direction:column; align-items:center;">
+                            <i class='bx bx-check-circle' style="font-size: 3rem; margin-bottom:10px; opacity:0.3;"></i>
+                            <p>Nenhum pedido "${currentOrderStatusFilter}" no momento.</p>
+                        </div>`;
                     return;
                 }
 
@@ -5123,301 +5360,427 @@
                     const card = document.createElement('div');
                     card.className = 'order-card';
 
-                    // Cores dinâmicas
-                    let statusLabel = order.status.toUpperCase();
-                    let labelColor = '#856404'; // Amarelo (Padrão)
+                    // Cores visuais das tags
+                    let labelText = order.status.toUpperCase();
+                    let labelColor = '#856404';
                     let bgColor = '#fff3cd';
 
                     if (order.status === 'preparando') { labelColor = '#004085'; bgColor = '#cce5ff'; }
                     if (order.status === 'enviado' || order.status === 'finalizado') { labelColor = '#155724'; bgColor = '#d4edda'; }
 
                     card.innerHTML = `
-                <div class="order-status" style="background:${bgColor}; color:${labelColor}">
-                    ${statusLabel}
-                </div>
-                
-                <div class="order-header">
-                    <span class="order-id">${order.id}</span>
-                    <span class="order-time"><i class='bx bx-time'></i> ${order.time}</span>
-                </div>
+                        <div class="order-status" style="background:${bgColor}; color:${labelColor}">
+                            ${labelText}
+                        </div>
+                        
+                        <div class="order-header">
+                            <span class="order-id">#${order.displayId}</span>
+                            <span class="order-time"><i class='bx bx-time'></i> ${order.time}</span>
+                        </div>
 
-                <div class="order-client">
-                    <div class="client-avatar-small"><i class='bx bx-user'></i></div>
-                    <div class="client-info">
-                        <h4>${order.client}</h4>
-                        <p><i class='bx bx-map' style="font-size:0.7rem"></i> ${order.address}</p>
-                    </div>
-                </div>
+                        <div class="order-client">
+                            <div class="client-avatar-small"><i class='bx bx-user'></i></div>
+                            <div class="client-info">
+                                <h4>${order.client}</h4>
+                                <p><i class='bx bx-map' style="font-size:0.7rem"></i> ${order.address}</p>
+                            </div>
+                        </div>
 
-                <div class="order-items-summary">
-                    <strong>Itens:</strong> ${order.items}
-                </div>
+                        <div class="order-items-summary">
+                            <strong>Itens:</strong> ${order.items}
+                        </div>
 
-                <div class="order-footer">
-                    <span class="order-total">${order.total}</span>
-                    <div class="order-actions">
-                        <button class="btn-icon-action" title="Imprimir"><i class='bx bx-printer'></i></button>
-
-<button class="btn-main-action" onclick="openOrderDetailModal('${order.id}')">
-    Detalhes <i class='bx bx-chevron-right'></i>
-</button>
-                    </div>
-                </div>
-            `;
+                        <div class="order-footer">
+                            <span class="order-total">${order.total}</span>
+                            <div class="order-actions">
+                                <button class="btn-icon-action" title="Imprimir" onclick="alert('Funcionalidade de impressão de pedido online em breve!')"><i class='bx bx-printer'></i></button>
+                                <button class="btn-main-action" onclick="openOrderDetailModal('${order.id}')">
+                                    Detalhes <i class='bx bx-chevron-right'></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
                     container.appendChild(card);
                 });
             }
 
-            // 2. Simulação de "Chegada de Pedido" (Backend Fake)
-            function simulateNewOrderArrival() {
-                // Cria um pedido aleatório
-                const idRandom = Math.floor(Math.random() * 1000) + 9000;
-                const newOrder = {
-                    id: `#${idRandom}`,
-                    time: formatTime(new Date()), // Usa sua função existente de hora
-                    client: 'Cliente Novo (Auto)',
-                    address: 'Rua Automática, 00',
-                    items: '1x Item Surpresa',
-                    total: 'R$ 50,00',
-                    status: 'pendente'
-                };
 
-                // Adiciona ao topo da lista
-                activeOrdersData.unshift(newOrder);
-                console.log("Novo pedido chegou simulado!", newOrder.id);
-
-                // Toca um som de notificação (opcional, mas bom para agilidade)
-                // playNotificationSound(); 
-            }
-
-            // 3. O "Relógio" Verificador (Polling) - ATUALIZADO
-            function startOrderPolling() {
-                if (orderPollingInterval) clearInterval(orderPollingInterval);
-
-                // Roda imediatamente uma vez
-                renderDummyOrders();
-                lastOrderCount = activeOrdersData.length;
-
-                // Configura o intervalo de 60 segundos (60000 ms)
-                orderPollingInterval = setInterval(() => {
-
-                    // --- SIMULAÇÃO ---
-                    simulateNewOrderArrival();
-                    // -----------------
-
-                    // Verifica se mudou a quantidade (Novo Pedido Chegou!)
-                    const currentCount = activeOrdersData.length;
-
-                    if (currentCount > lastOrderCount) {
-                        showToastFirebase("Novo pedido recebido!");
-
-                        // --- NOVA LÓGICA DE ANIMAÇÃO DA NAVBAR ---
-                        const pedidosNav = document.querySelector('.navbar-item[data-page="pedidos"]');
-
-                        // Só anima se a pessoa NÃO estiver na aba de pedidos agora
-                        if (pedidosNav && !pedidosNav.classList.contains('active')) {
-                            pedidosNav.classList.add('notify-active'); // Adiciona classe CSS
-
-                            // Remove a animação automaticamente após 15 segundos
-                            setTimeout(() => {
-                                pedidosNav.classList.remove('notify-active');
-                            }, 15000);
-                        }
-                    }
-                    lastOrderCount = currentCount;
-
-                    // Atualiza a tela e a notificação (badge)
-                    renderDummyOrders();
-
-                }, 60000); // 60 segundos
-            }
-
-
-            // --- LÓGICA DO MODAL DE DETALHES (VAREJO & ESTOQUE) ---
+            // --- LÓGICA DO MODAL (VAREJO - FLUXO OTIMIZADO) ---
 
             let currentOpenOrder = null;
+            let missingItemsSet = new Set();
 
             window.openOrderDetailModal = (orderId) => {
                 const order = activeOrdersData.find(o => o.id === orderId);
-
-                if (!order) {
-                    showCustomAlert("Erro", "Pedido não encontrado.");
-                    return;
-                }
+                if (!order) return;
 
                 currentOpenOrder = order;
+                missingItemsSet.clear();
 
-                // Preenche dados
+                // Se o pedido já tiver itens marcados como falta no "banco de dados" (memória), recupera eles
+                if (order.missingIndices) {
+                    order.missingIndices.forEach(idx => missingItemsSet.add(idx));
+                }
+
+                // Preenche cabeçalho
                 document.getElementById('modal-order-id').innerText = order.id;
                 document.getElementById('modal-order-client').innerText = order.client;
                 document.getElementById('modal-order-address').innerText = order.address;
-                document.getElementById('modal-order-total').innerText = order.total;
-                document.getElementById('modal-payment-method').innerText = "Pagamento: A combinar/Site"; // Ou pegue do objeto se tiver
 
-                // Renderiza Itens com Botões de Estoque
+                // Renderiza Lista de Itens
                 const itemsContainer = document.getElementById('modal-order-items-list');
                 itemsContainer.innerHTML = '';
 
-                const itemsArray = order.items.split(',');
+                // REGRA: Botões de estoque SÓ aparecem se status for 'pendente'
+                const showStockButtons = (order.status === 'pendente');
 
-                itemsArray.forEach((itemStr, index) => {
+                // Atualiza título da seção
+                const stockTitle = document.querySelector('.modal-body h4');
+                if (stockTitle) {
+                    stockTitle.innerText = showStockButtons ? "Conferência de Estoque" : "Resumo do Pedido (Separação)";
+                    // Esconde subtítulo se não for hora de conferir
+                    const stockSmall = stockTitle.nextElementSibling;
+                    if (stockSmall && stockSmall.tagName === 'SMALL') {
+                        stockSmall.style.display = showStockButtons ? 'block' : 'none';
+                    }
+                }
+
+                order.itemsDetails.forEach((item, index) => {
                     const div = document.createElement('div');
                     div.className = 'modal-order-item';
                     div.id = `item-row-${index}`;
 
-                    // Lógica simples para separar Qtd do Nome (ex: "2x Copo")
-                    // Se não tiver padrão, exibe string inteira
+                    // Verifica se este item foi marcado como falta anteriormente
+                    const isMissing = missingItemsSet.has(index);
+                    if (isMissing) div.classList.add('item-unavailable');
+
+                    // HTML dos botões (Só gera se estiver Pendente)
+                    let actionHtml = '';
+
+                    if (showStockButtons) {
+                        // Modo Edição (Pendente)
+                        actionHtml = `
+                    <div class="item-stock-actions">
+                        <button class="btn-stock-check missing ${isMissing ? 'active' : ''}" onclick="toggleItemStock(${index})" title="Sem Estoque">
+                            <i class='bx bx-x'></i>
+                        </button>
+                    </div>
+                `;
+                    } else {
+                        // Modo Leitura (Preparando, Enviado, etc)
+                        if (isMissing) {
+                            actionHtml = `<span style="font-size:0.8rem; color:var(--warning-red); font-weight:600;">Sem Estoque</span>`;
+                        } else {
+                            // Se não falta e não estamos editando, não mostra nada (Visual Limpo) ou um check discreto
+                            // Deixarei vazio para focar no "Resumo" limpo
+                            actionHtml = ``;
+                        }
+                    }
 
                     div.innerHTML = `
                 <div class="item-info-text">
-                    ${itemStr.trim()}
+                    <span class="modal-item-qty">${item.qty}x</span> ${item.name}
+                    <div style="font-size:0.8rem; color:#999;">${formatCurrency(item.price)}</div>
                 </div>
-                <div class="item-stock-actions">
-                    <button class="btn-stock-check missing" onclick="toggleItemStock(${index}, 'missing')" title="Esgotado / Falta no Estoque">
-                        <i class='bx bx-x'></i>
-                    </button>
-                    <button class="btn-stock-check" id="btn-check-${index}" onclick="toggleItemStock(${index}, 'confirm')" title="Confirmar Estoque">
-                        <i class='bx bx-check'></i>
-                    </button>
-                </div>
+                ${actionHtml}
             `;
                     itemsContainer.appendChild(div);
                 });
 
-                // Atualiza UI dos Status
+                // Atualiza UI dos Status (Botão Grande)
                 updateModalStatusUI(order.status);
+
+                // Calcula totais
+                recalculateOrderTotals();
 
                 openModal(document.getElementById('order-details-modal'));
             };
 
-            // Função para marcar item como Esgotado ou Confirmado
-            window.toggleItemStock = (index, action) => {
+            // Função 1: Marca como OK (apenas visual)
+            window.markItemOk = (index) => {
+                const row = document.getElementById(`item-row-${index}`);
+                const btnCheck = document.getElementById(`btn-check-${index}`);
+                const btnMissing = row.querySelector('.missing');
+
+                // Remove status de erro se tiver
+                if (missingItemsSet.has(index)) {
+                    missingItemsSet.delete(index);
+                    recalculateOrderTotals();
+                }
+
+                row.classList.remove('item-unavailable');
+                btnMissing.classList.remove('active');
+
+                // Toggle visual do verde
+                btnCheck.classList.toggle('confirmed');
+            };
+
+            // Função de Marcar Falta (Apenas toggle no X)
+            window.toggleItemStock = (index) => {
                 const row = document.getElementById(`item-row-${index}`);
                 const btnMissing = row.querySelector('.missing');
-                const btnConfirm = document.querySelector(`#btn-check-${index}`);
 
-                if (action === 'missing') {
-                    // Marca como Esgotado
-                    const isCurrentlyMissing = row.classList.contains('item-unavailable');
+                if (missingItemsSet.has(index)) {
+                    // Remove falta
+                    missingItemsSet.delete(index);
+                    row.classList.remove('item-unavailable');
+                    btnMissing.classList.remove('active');
+                } else {
+                    // Adiciona falta
+                    missingItemsSet.add(index);
+                    row.classList.add('item-unavailable');
+                    btnMissing.classList.add('active');
+                }
+                recalculateOrderTotals();
+            };
 
-                    if (isCurrentlyMissing) {
-                        // Desfazer (Volta ao normal)
-                        row.classList.remove('item-unavailable');
-                        btnMissing.classList.remove('active');
-                    } else {
-                        // Aplica Esgotado
-                        row.classList.add('item-unavailable');
-                        btnMissing.classList.add('active');
-                        btnConfirm.classList.remove('confirmed'); // Remove o verde se estava confirmado
+            // --- CÉREBRO DA OPERAÇÃO: CALCULA TOTAIS E BLOQUEIA BOTÃO ---
+            function recalculateOrderTotals() {
+                if (!currentOpenOrder) return;
+
+                let subtotal = 0;
+                let canceledTotal = 0;
+
+                // Itera sobre todos os itens originais
+                currentOpenOrder.itemsDetails.forEach((item, index) => {
+                    subtotal += item.price;
+
+                    if (missingItemsSet.has(index)) {
+                        canceledTotal += item.price;
                     }
-                } else if (action === 'confirm') {
-                    // Marca como Confirmado (Verde)
-                    const isConfirmed = btnConfirm.classList.contains('confirmed');
+                });
 
-                    if (isConfirmed) {
-                        btnConfirm.classList.remove('confirmed');
+                const finalTotal = subtotal - canceledTotal;
+
+                // Atualiza HTML dos valores
+                document.getElementById('modal-calc-subtotal').innerText = formatCurrency(subtotal);
+                document.getElementById('modal-calc-total').innerText = formatCurrency(finalTotal);
+
+                const rowCanceled = document.getElementById('row-canceled-items');
+                const valCanceled = document.getElementById('modal-calc-canceled');
+
+                if (canceledTotal > 0) {
+                    rowCanceled.style.display = 'flex';
+                    valCanceled.innerText = `- ${formatCurrency(canceledTotal)}`;
+                } else {
+                    rowCanceled.style.display = 'none';
+                }
+
+                // --- LÓGICA DE BLOQUEIO ---
+                const btnAction = document.getElementById('btn-update-status');
+                const totalItemsCount = currentOpenOrder.itemsDetails.length;
+                const missingItemsCount = missingItemsSet.size;
+
+                // Se TODOS os itens estiverem marcados como falta
+                if (missingItemsCount === totalItemsCount && totalItemsCount > 0) {
+                    btnAction.disabled = true;
+                    btnAction.innerHTML = "<i class='bx bx-block'></i> Pedido Vazio / Cancelado";
+                    btnAction.style.backgroundColor = "#ccc";
+                    btnAction.style.borderColor = "#ccc";
+                    btnAction.style.color = "#666";
+                } else {
+                    // CORREÇÃO: Removemos forçadamente os estilos de bloqueio
+                    btnAction.disabled = false;
+                    btnAction.style.backgroundColor = ""; // Remove o cinza inline
+                    btnAction.style.borderColor = "";     // Remove a borda cinza
+                    btnAction.style.color = "";           // Remove a cor de texto cinza
+
+                    // Reaplica a cor correta baseada no status atual (Laranja, Verde, etc)
+                    updateModalStatusUI(currentOpenOrder.status);
+                }
+            }
+
+            // 3. Atualizar Status no Firebase (Substitui advanceOrderStatus local)
+            async function advanceOrderStatus() {
+                if (!currentOpenOrder) return;
+
+                const btnAction = document.getElementById('btn-update-status');
+                const oldText = btnAction.innerHTML;
+
+                // Define o próximo status baseado na aba atual
+                let newUiStatus = '';
+                let newFirebaseStatus = '';
+                let msg = '';
+
+                if (currentOpenOrder.status === 'pendente') {
+                    newUiStatus = 'preparando';
+                    newFirebaseStatus = 'preparation'; // Firebase key
+                    msg = "Pedido enviado para separação.";
+                } else if (currentOpenOrder.status === 'preparando') {
+                    newUiStatus = 'enviado';
+                    newFirebaseStatus = 'shipped'; // Firebase key
+                    msg = "Separação concluída. Pedido enviado.";
+                } else if (currentOpenOrder.status === 'enviado') {
+                    newUiStatus = 'finalizado';
+                    newFirebaseStatus = 'delivered'; // Firebase key
+                    msg = "Pedido entregue e finalizado.";
+                }
+
+                if (!newFirebaseStatus) return;
+
+                // Loading no botão
+                btnAction.disabled = true;
+                btnAction.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Atualizando...";
+
+                try {
+                    // Atualiza no Firebase
+                    await db.collection('orders').doc(currentOpenOrder.id).update({
+                        status: newFirebaseStatus,
+                        // Salva também a conferência de estoque (índices que faltaram)
+                        missingIndices: Array.from(missingItemsSet)
+                    });
+
+                    // O Listener (startOrderPolling) vai atualizar a interface automaticamente
+                    // Mas atualizamos o modal localmente para feedback instantâneo
+                    currentOpenOrder.status = newUiStatus;
+                    showCustomAlert("Sucesso", msg);
+
+                    if (newUiStatus === 'finalizado') {
+                        setTimeout(() => closeModal(document.getElementById('order-details-modal')), 1500);
                     } else {
-                        btnConfirm.classList.add('confirmed');
-                        // Remove estado de esgotado se tiver
-                        row.classList.remove('item-unavailable');
-                        btnMissing.classList.remove('active');
+                        // Recarrega modal para atualizar botões
+                        openOrderDetailModal(currentOpenOrder.id);
                     }
+
+                } catch (error) {
+                    console.error("Erro ao atualizar status:", error);
+                    showCustomAlert("Erro", "Falha ao atualizar no banco de dados.");
+                } finally {
+                    btnAction.disabled = false;
+                    btnAction.innerHTML = oldText;
+                }
+            }
+
+            // 4. Navegação Manual pela Barra de Progresso (Com Update no Firebase)
+            window.manualSetStatus = async (targetUiStatus) => {
+                if (!currentOpenOrder) return;
+
+                const stepsOrder = ['pendente', 'preparando', 'enviado', 'finalizado'];
+                const currentIndex = stepsOrder.indexOf(currentOpenOrder.status);
+                const targetIndex = stepsOrder.indexOf(targetUiStatus);
+
+                // Bloqueia avançar pelo clique (obrigatório usar botão principal)
+                // Permite apenas voltar ou ficar no mesmo
+                if (targetIndex > currentIndex) {
+                    showCustomAlert("Ação Inválida", "Use o botão inferior para avançar o status.");
+                    return;
+                }
+
+                if (currentOpenOrder.status === targetUiStatus) return;
+
+                // Converte para status do Firebase
+                const targetFbStatus = mapStatusUIToFirebase(targetUiStatus);
+
+                try {
+                    // Atualiza no Firebase
+                    await db.collection('orders').doc(currentOpenOrder.id).update({
+                        status: targetFbStatus,
+                        // Salva a conferência atual caso esteja saindo de pendente
+                        missingIndices: Array.from(missingItemsSet)
+                    });
+
+                    // Listener atualiza o resto
+                    // Fechamos o modal para evitar inconsistência visual rápida ou recarregamos
+                    closeModal(document.getElementById('order-details-modal'));
+
+                } catch (error) {
+                    console.error("Erro ao voltar status:", error);
+                    showCustomAlert("Erro", "Não foi possível alterar o status.");
                 }
             };
 
+
+
+            // --- Inicialização ---
+            // Coloque isso no final do seu DOMContentLoaded
+            startOrderPolling();
+
+
+
+            // --- FUNÇÃO PARA NAVEGAR CLICANDO NA BARRA DE PROGRESSO (SEGURA) ---
+            window.manualSetStatus = (newStatus) => {
+                if (!currentOpenOrder) return;
+
+                // 1. Define a hierarquia dos status
+                const stepsOrder = ['pendente', 'preparando', 'enviado', 'finalizado'];
+
+                const currentIndex = stepsOrder.indexOf(currentOpenOrder.status);
+                const targetIndex = stepsOrder.indexOf(newStatus);
+
+                // 2. REGRA DE SEGURANÇA:
+                // Se tentar ir para um índice maior (futuro), BLOQUEIA.
+                // Só permite ir para índice menor ou igual (passado/presente).
+                if (targetIndex > currentIndex) {
+                    showCustomAlert("Ação Inválida", "Você deve avançar o status pelo botão principal abaixo.");
+                    return;
+                }
+
+                // Verifica se realmente mudou algo
+                if (currentOpenOrder.status === newStatus) return;
+
+                // Salva estado de itens faltantes se estiver saindo de pendente
+                if (currentOpenOrder.status === 'pendente') {
+                    currentOpenOrder.missingIndices = Array.from(missingItemsSet);
+                }
+
+                // 3. Aplica a mudança (apenas se for voltar/manter)
+                currentOpenOrder.status = newStatus;
+
+                // Recarrega o modal e a grid
+                openOrderDetailModal(currentOpenOrder.id);
+                renderDummyOrders();
+            };
+
+            // --- ATUALIZA UI DO MODAL (COM BLOQUEIO VISUAL) ---
             function updateModalStatusUI(status) {
-                // Reseta timeline
-                ['pendente', 'preparando', 'enviado', 'finalizado'].forEach(step => {
+                const stepsOrder = ['pendente', 'preparando', 'enviado', 'finalizado'];
+                const currentIndex = stepsOrder.indexOf(status);
+
+                // Atualiza a Timeline Visualmente
+                stepsOrder.forEach((step, index) => {
                     const el = document.getElementById(`step-${step}`);
+
+                    // Reseta classes
                     el.className = 'step-item';
+
+                    // Lógica de Cores e Bloqueio
+                    if (index < currentIndex) {
+                        // Passado (Verde/Completado) - Clicável para voltar
+                        el.classList.add('completed');
+                    } else if (index === currentIndex) {
+                        // Presente (Ativo)
+                        el.classList.add('active');
+                    } else {
+                        // Futuro (Bloqueado) - Não clicável
+                        el.classList.add('locked');
+                    }
                 });
 
+                // Configuração do Botão Principal (Avançar)
                 const btn = document.getElementById('btn-update-status');
                 btn.onclick = () => advanceOrderStatus();
-                btn.style.display = 'flex'; // Garante que aparece
+                btn.style.display = 'flex';
 
-                // --- LÓGICA DE VAREJO ---
                 if (status === 'pendente') {
-                    document.getElementById('step-pendente').classList.add('active');
-
-                    // Texto adaptado para Loja
-                    btn.innerHTML = "<i class='bx bx-box'></i> Iniciar Separação";
+                    btn.innerHTML = "Confirmar Estoque e Separar";
                     btn.className = "btn btn-primary";
-                    btn.disabled = false;
 
                 } else if (status === 'preparando') {
-                    document.getElementById('step-pendente').classList.add('completed');
-                    document.getElementById('step-preparando').classList.add('active');
-
-                    // Texto adaptado para Loja
-                    btn.innerHTML = "<i class='bx bx-send'></i> Concluir e Enviar p/ Entrega";
+                    btn.innerHTML = "<i class='bx bx-box'></i> Confirmar Separação (Pronto)";
                     btn.className = "btn btn-primary";
                     btn.style.backgroundColor = "#e67e22";
-                    btn.disabled = false;
 
                 } else if (status === 'enviado') {
-                    document.getElementById('step-pendente').classList.add('completed');
-                    document.getElementById('step-preparando').classList.add('completed');
-                    document.getElementById('step-enviado').classList.add('active');
-
-                    btn.innerHTML = "<i class='bx bx-check-double'></i> Confirmar Entrega (Finalizar)";
+                    btn.innerHTML = "<i class='bx bx-check-double'></i> Confirmar Entrega";
                     btn.className = "btn btn-success";
                     btn.style.backgroundColor = "";
-                    btn.disabled = false;
 
                 } else if (status === 'finalizado') {
-                    document.getElementById('step-pendente').classList.add('completed');
-                    document.getElementById('step-preparando').classList.add('completed');
-                    document.getElementById('step-enviado').classList.add('completed');
-                    document.getElementById('step-finalizado').classList.add('completed');
-
                     btn.innerHTML = "Pedido Finalizado";
                     btn.className = "btn btn-secondary";
                     btn.disabled = true;
                 }
             }
-
-            function advanceOrderStatus() {
-                if (!currentOpenOrder) return;
-
-                let newStatus = '';
-                let msg = '';
-
-                if (currentOpenOrder.status === 'pendente') {
-                    newStatus = 'preparando';
-                    msg = "Pedido em separação.";
-                } else if (currentOpenOrder.status === 'preparando') {
-                    // Opcional: Verificar se todos os itens foram conferidos aqui
-                    // const unchecked = document.querySelectorAll('.modal-order-item:not(.item-unavailable) .btn-stock-check:not(.confirmed).missing'); ...
-
-                    newStatus = 'enviado';
-                    msg = "Pedido saiu para entrega.";
-                } else if (currentOpenOrder.status === 'enviado') {
-                    newStatus = 'finalizado';
-                    msg = "Entrega confirmada. Pedido encerrado.";
-                }
-
-                if (newStatus) {
-                    currentOpenOrder.status = newStatus;
-                    updateModalStatusUI(newStatus);
-                    renderDummyOrders(); // Atualiza a lista principal
-                    showCustomAlert("Sucesso", msg);
-
-                    // Fecha modal automaticamente se finalizou
-                    if (newStatus === 'finalizado') {
-                        setTimeout(() => {
-                            const modal = document.getElementById('order-details-modal');
-                            closeModal(modal);
-                        }, 1500);
-                    }
-                }
-            }
-
-
-            
-            // --- Inicialização ---
-            // Coloque isso no final do seu DOMContentLoaded
-            startOrderPolling();
 
             // --- Função Global para Visualizar Comprovante (Iframe) ---
             window.openReceiptViewer = (url) => {

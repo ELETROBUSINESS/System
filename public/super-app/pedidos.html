@@ -7,55 +7,480 @@
     <title>Meus Pedidos</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* =========================================
+           RESET E VARIÁVEIS LOCAIS
+           ========================================= */
+        :root {
+            --bg-page: #f2f4f8;
+            --card-bg: #ffffff;
+            --text-dark: #1f2937;
+            --text-gray: #6b7280;
+            --primary-color: #000;
+            --accent-green: #059669;
+            /* Aprovado */
+            --accent-orange: #d90634;
+            /* Pendente */
+            --accent-red: #dc2626;
+            /* Cancelado */
+            --radius-card: 16px;
+        }
+
+        body {
+            background-color: var(--bg-page);
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding-bottom: 80px;
+            /* Espaço para navbar */
+        }
+
+        /* =========================================
+           HEADER (Estilo Limpo)
+           ========================================= */
+        .page-header {
+            background: var(--card-bg);
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .header-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-back {
+            position: absolute;
+            left: 20px;
+            color: var(--text-dark);
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        /* =========================================
+           LISTA DE PEDIDOS
+           ========================================= */
+        .container-orders {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .order-card-modern {
+            background: var(--card-bg);
+            border-radius: var(--radius-card);
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e5e7eb;
+            transition: transform 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px dashed #e5e7eb;
+        }
+
+        .order-date {
+            font-size: 0.85rem;
+            color: var(--text-gray);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Badges de Status */
+        .status-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .status-approved {
+            background: #d1fae5;
+            color: var(--accent-green);
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: var(--accent-orange);
+        }
+
+        .status-cancelled {
+            background: #fee2e2;
+            color: var(--accent-red);
+        }
+
+        /* Conteúdo do Produto */
+        .card-body {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .product-thumb {
+            width: 70px;
+            height: 70px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 1px solid #f3f4f6;
+            background: #f9fafb;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+
+        .product-total {
+            font-size: 0.95rem;
+            color: var(--text-gray);
+        }
+
+        .product-total strong {
+            color: var(--text-dark);
+            font-weight: 800;
+        }
+
+        /* Ações (Botões) */
+        .card-footer {
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        /* Botão PIX */
+        .btn-pix-action {
+            flex: 1;
+            background-color: var(--accent-orange);
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(217, 119, 6, 0.2);
+            transition: background 0.2s;
+        }
+
+        .btn-pix-action:hover {
+            background-color: #b45309;
+        }
+
+        .btn-pix-action i {
+            font-size: 1.2rem;
+        }
+
+        /* Botão Deletar */
+        .btn-delete-order {
+            background: #fee2e2;
+            color: var(--accent-red);
+            border: none;
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-delete-order:hover {
+            background: #fecaca;
+        }
+
+        /* =========================================
+           MODAL PIX (Local)
+           ========================================= */
+        .pix-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            display: none;
+            /* Controlado via JS */
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .pix-card {
+            background: #fff;
+            width: 100%;
+            max-width: 340px;
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            animation: zoomIn 0.3s ease;
+        }
+
+        @keyframes zoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .pix-qr-container img {
+            width: 100%;
+            max-width: 200px;
+            margin: 15px auto;
+            border-radius: 8px;
+            border: 2px solid #f3f4f6;
+            padding: 5px;
+        }
+
+        .pix-input-group {
+            display: flex;
+            margin-top: 15px;
+            margin-bottom: 20px;
+        }
+
+        .pix-input-group input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px 0 0 8px;
+            background: #f9fafb;
+            color: #666;
+            outline: none;
+        }
+
+        .pix-input-group button {
+            padding: 0 15px;
+            background: var(--text-dark);
+            color: #fff;
+            border: none;
+            border-radius: 0 8px 8px 0;
+            cursor: pointer;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-gray);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            color: #d1d5db;
+        }
+
+        /* --- CSS DA LINHA DO TEMPO E ANIMAÇÃO (Adicionar em pedidos.html) --- */
+
+        .tracking-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #e5e7eb;
+        }
+
+        .tracking-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+        }
+
+        /* Steps (Bolinhas verticais) */
+        .tracking-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            position: relative;
+            padding-left: 10px;
+        }
+
+        /* Linha vertical conectando os pontos */
+        .tracking-steps::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 17px;
+            width: 2px;
+            height: 90%;
+            background: #e5e7eb;
+            z-index: 0;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            position: relative;
+            z-index: 1;
+            opacity: 0.5;
+            /* Inativo por padrão */
+        }
+
+        .step-item.active {
+            opacity: 1;
+        }
+
+        .step-item.completed .step-icon {
+            background: var(--accent-green);
+            color: #fff;
+            border-color: var(--accent-green);
+        }
+
+        .step-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid #ccc;
+            flex-shrink: 0;
+            margin-top: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+
+        .step-content h5 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-dark);
+        }
+
+        .step-content p {
+            font-size: 0.8rem;
+            color: var(--text-gray);
+            margin: 2px 0 0 0;
+        }
+
+        /* --- ANIMAÇÃO DO CAMINHÃO --- */
+        .truck-animation-container {
+            width: 100%;
+            height: 50px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            margin-top: 15px;
+            border: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+        }
+
+        .road-line {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            height: 2px;
+            background: repeating-linear-gradient(90deg,
+                    #ccc,
+                    #ccc 10px,
+                    transparent 10px,
+                    transparent 20px);
+        }
+
+        .moving-truck {
+            position: absolute;
+            left: -30px;
+            font-size: 28px;
+            color: var(--accent-orange);
+            /* Cor do caminhão */
+            animation: driveTruck 4s linear infinite;
+            bottom: 8px;
+        }
+
+        @keyframes driveTruck {
+            0% {
+                left: -40px;
+            }
+
+            100% {
+                left: 110%;
+            }
+
+            /* Vai até sair da tela à direita */
+        }
+    </style>
 </head>
 
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-BV6V3GTMR0');
-</script>
-
 <body>
-    <header class="main-header">
-        <div class="container header-container">
-            <a href="index.html" class="back-button"><i class='bx bx-chevron-left'></i></a>
-            <span class="logo">Meus Pedidos</span>
-            <div style="width: 24px;"></div>
-        </div>
+    <header class="page-header">
+        <a href="index.html" class="btn-back"><i class='bx bx-chevron-left'></i></a>
+        <span class="header-title">Meus Pedidos</span>
     </header>
 
-    <main class="container">
-        <div id="orders-list" class="orders-list">
-            <p style="text-align: center; margin-top: 2rem; color: #666;">Carregando pedidos...</p>
-        </div>
-
-        <div id="pix-display-area" style="display:none;">
-            <div class="pix-modal-card">
-                <h3 style="color: #333;">Pagamento Pendente</h3>
-                <p style="font-size: 0.9rem; color: #666;">Escaneie para finalizar sua compra</p>
-
-                <div class="pix-qr-code" id="pix-qr-img" style="margin-bottom: 1.5rem;"></div>
-
-                <div class="pix-copy-paste">
-                    <input type="text" id="pix-code-text" readonly>
-                    <button onclick="copyPixCode()" title="Copiar código"><i class='bx bx-copy'></i></button>
-                </div>
-
-                <button onclick="closePixModal()" class="cta-button" style="margin-top: 1rem; background-color: #666;">
-                    Fechar
-                </button>
-            </div>
-
+    <main class="container-orders">
+        <div id="orders-list">
+            <p style="text-align: center; margin-top: 2rem; color: #999;">Carregando...</p>
         </div>
     </main>
 
+    <div id="pix-display-area" class="pix-overlay">
+        <div class="pix-card">
+            <h3 style="margin-bottom: 5px;">Pagar com Pix</h3>
+            <p style="font-size: 0.9rem; color: #666;">O pagamento aprova na hora!</p>
+
+            <div id="pix-qr-img" class="pix-qr-container">
+            </div>
+
+            <div class="pix-input-group">
+                <input type="text" id="pix-code-text" readonly>
+                <button onclick="copyPixCode()"><i class='bx bx-copy'></i></button>
+            </div>
+
+            <button onclick="closePixModal()"
+                style="background:none; border:none; color:#666; text-decoration:underline; cursor:pointer;">
+                Fechar
+            </button>
+        </div>
+    </div>
+
     <nav class="bottom-navbar">
         <a href="index.html" class="nav-item"><i class='bx bxs-home'></i><span>Início</span></a>
-        <a href="favoritos.html" class="nav-item"><i class='bx bx-heart'></i><span>Salvos</span></a>
         <a href="carrinho.html" class="nav-item">
             <i class='bx bx-cart'></i>
             <span id="cart-badge" class="cart-badge" style="display: none;">0</span>

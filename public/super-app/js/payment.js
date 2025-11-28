@@ -62,6 +62,7 @@ function setupStepNavigation() {
             return;
         }
 
+        // Salva dados parciais no perfil do usuário
         if (auth.currentUser) {
             try {
                 const cpfVal = document.getElementById("reg-cpf") ? document.getElementById("reg-cpf").value : "";
@@ -198,11 +199,12 @@ async function initPaymentBrick() {
     const productsTotal = CartManager.total();
     const finalTotal = productsTotal + currentShippingCost;
 
+    // Atualiza resumo visual
     document.getElementById("payment-subtotal-display").innerText = `R$ ${productsTotal.toFixed(2).replace('.', ',')}`;
     document.getElementById("payment-shipping-display").innerText = currentShippingCost === 0 ? "Grátis" : `R$ ${currentShippingCost.toFixed(2).replace('.', ',')}`;
     document.getElementById("payment-total-display").innerText = `R$ ${finalTotal.toFixed(2).replace('.', ',')}`;
 
-    // Coleta dados do DOM
+    // Coleta dados do DOM para uso no Brick e no Salvamento Global
     const firstName = document.getElementById("reg-first-name").value;
     const lastName = document.getElementById("reg-last-name").value;
     const rawPhone = document.getElementById("reg-phone").value;
@@ -215,13 +217,13 @@ async function initPaymentBrick() {
 
     let email = document.getElementById("reg-email").value;
     if((!email || email === "") && auth.currentUser) email = auth.currentUser.email;
-    if(!email) email = "cliente@eletrobusiness.com.br";
+    if(!email) email = "cliente@eletrobusiness.com.br"; // Fallback
 
     const user = auth.currentUser;
     const uid = user ? user.uid : 'guest';
 
     try {
-        // 1. Cria Preferência
+        // 1. Cria Preferência no Back-end (Gera ID do Pedido)
         const response = await fetch(API_URLS.CREATE_PREFERENCE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -243,9 +245,10 @@ async function initPaymentBrick() {
             const errData = await response.json();
             throw new Error("Erro ao criar preferência: " + (errData.error || "Desconhecido"));
         }
-        const data = await response.json(); 
+        const data = await response.json(); // Recebe { preferenceId, orderId }
+        const currentOrderId = data.orderId; // O ID único do pedido gerado
         
-        // 2. Monta o Brick
+        // 2. Monta o Brick (APENAS PIX)
         if (paymentBrickController) paymentBrickController.unmount(); 
         
         const builder = mp.bricks();
@@ -260,34 +263,35 @@ async function initPaymentBrick() {
                 },
             },
             customization: {
-                paymentMethods: { bankTransfer: "all", creditCard: "all", mercadoPago: "all" },
-                visual: { style: { theme: 'light' } }
+                // CONFIGURAÇÃO DE PAGAMENTO EXCLUSIVO PIX
+                paymentMethods: {
+                    creditCard: [],      // Desabilita Cartão de Crédito
+                    debitCard: [],       // Desabilita Cartão de Débito
+                    ticket: [],          // Desabilita Boleto
+                    bankTransfer: ['pix'] // Habilita APENAS Pix
+                },
+                visual: { 
+                    style: { theme: 'light' },
+                    hidePaymentButton: false
+                }
             },
             callbacks: {
                 onReady: () => {
                     document.getElementById("brick-loading-message").style.display = 'none';
                 },
-                // AQUI ESTAVA O ERRO: O CÓDIGO ESTAVA FALTANDO
                 onSubmit: ({ formData }) => {
-                    // Recria a lógica de formatação de dados que estava faltando
+                    // Prepara dados limpos
                     const cleanCpf = rawCpf.replace(/\D/g, '');
                     const cleanPhone = rawPhone.replace(/\D/g, '');
                     const areaCode = cleanPhone.length >= 2 ? cleanPhone.substring(0, 2) : "11";
                     const phoneNumber = cleanPhone.length > 2 ? cleanPhone.substring(2) : "900000000";
 
-                    // Constrói o objeto customPayer COMPLETO
                     const customPayer = {
                         email: email,
                         first_name: firstName,
                         last_name: lastName,
-                        identification: {
-                            type: "CPF",
-                            number: cleanCpf
-                        },
-                        phone: {
-                            area_code: areaCode,
-                            number: phoneNumber
-                        },
+                        identification: { type: "CPF", number: cleanCpf },
+                        phone: { area_code: areaCode, number: phoneNumber },
                         address: {
                             zip_code: cep.replace(/\D/g, ''),
                             street_name: street,
@@ -296,18 +300,48 @@ async function initPaymentBrick() {
                         }
                     };
 
-                    console.log("Enviando Pagamento com Dados Completos...", customPayer);
+                    // --- SALVAMENTO GLOBAL DE DADOS (CRUCIAL PARA ADM) ---
+                    // Antes de enviar o pagamento, garantimos que os dados completos estão no Firebase
+                    // na coleção 'orders' (acessível globalmente, não apenas dentro do usuário)
+                    const globalOrderData = {
+                        orderId: currentOrderId,
+                        userId: uid,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        status: 'pending_payment', // Status Global Inicial
+                        statusText: 'Aguardando Pagamento',
+                        paymentMethod: 'pix',
+                        total: finalTotal,
+                        items: cart,
+                        client: {
+                            name: `${firstName} ${lastName}`,
+                            phone: rawPhone,
+                            email: email,
+                            cpf: rawCpf
+                        },
+                        shipping: {
+                            mode: deliveryMode,
+                            cost: currentShippingCost,
+                            address: deliveryMode === 'delivery' ? `${street}, ${number} - ${city}` : `Retirada: ${selectedStore}`
+                        }
+                    };
 
+                    // Salvamos no Firebase GLOBALMENTE
+                    db.collection("orders").doc(currentOrderId).set(globalOrderData, { merge: true })
+                    .then(() => console.log("Dados do pedido salvos globalmente para ADM."))
+                    .catch(err => console.error("Erro ao salvar dados globais:", err));
+
+
+                    // --- ENVIA PAGAMENTO PARA MERCADO PAGO VIA API ---
                     return new Promise((resolve, reject) => {
                         fetch(API_URLS.CREATE_PAYMENT, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
                                 payment_data: formData,
-                                orderId: data.orderId,
+                                orderId: currentOrderId,
                                 items: cart, 
                                 shippingCost: currentShippingCost,
-                                customPayer: customPayer // Agora esta variável existe!
+                                customPayer: customPayer
                             })
                         })
                         .then(async res => {
@@ -318,18 +352,21 @@ async function initPaymentBrick() {
                             return res.json();
                         })
                         .then(paymentResult => {
-                            console.log("✅ SUCESSO REAL:", paymentResult);
+                            console.log("Status Pagamento:", paymentResult.status);
                             CartManager.clear();
+
+                            // Se for Pix pendente (normal)
                             if (paymentResult.status === 'pending' && paymentResult.point_of_interaction) {
                                 showPixScreen(paymentResult);
                                 resolve();
                             } else {
+                                // Caso seja aprovado automaticamente (raro em pix imediato sem webhook, mas possível)
                                 window.location.href = "pedidos.html"; 
                                 resolve();
                             }
                         })
                         .catch(error => {
-                            console.error("❌ Erro no Pagamento:", error);
+                            console.error("Erro no Processamento:", error);
                             showToast("Falha: " + error.message, "error");
                             reject();
                         });
@@ -337,7 +374,7 @@ async function initPaymentBrick() {
                 },
                 onError: (error) => {
                     console.error(error);
-                    showToast("Erro no formulário", "error");
+                    showToast("Erro no formulário de pagamento", "error");
                 },
             },
         };
@@ -346,7 +383,7 @@ async function initPaymentBrick() {
 
     } catch (e) {
         console.error("Erro fatal:", e);
-        showToast("Erro ao iniciar sistema de pagamento.", "error");
+        showToast("Erro ao iniciar sistema. Tente novamente.", "error");
     }
 }
 

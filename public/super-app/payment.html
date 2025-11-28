@@ -6,95 +6,548 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Finalizar Compra</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="stylesheet" href="style.css">
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <style>
-        .delivery-options {
+        /* =========================================
+   VARIÁVEIS & RESET (Checkout Exclusivo)
+   ========================================= */
+        :root {
+            --color-bg: #f4f6f8;
+            /* Fundo da página (Cinza claro profissional) */
+            --color-surface: #ffffff;
+            /* Fundo dos cartões */
+            --color-primary: #db0038;
+            /* Verde Ação/Sucesso (Estilo ML) */
+            --color-secondary: #2d3277;
+            /* Azul Confiança */
+            --color-text-main: #333333;
+            --color-text-muted: #737373;
+            --color-border: #e0e0e0;
+            --color-focus: #2968c8;
+            /* Azul para foco em inputs */
+            --radius-sm: 6px;
+            --radius-lg: 12px;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+            /* Certifique-se de importar a fonte no HTML */
+        }
+
+        body {
+            background-color: var(--color-bg);
+            color: var(--color-text-main);
+            padding-bottom: 40px;
+            /* Espaço para não colar no fundo em mobile */
+            line-height: 1.5;
+        }
+
+        /* =========================================
+   HEADER SIMPLIFICADO
+   ========================================= */
+        .main-header {
+            background: var(--color-surface);
+            height: 60px;
             display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            width: 100%;
+            max-width: 600px;
+            /* Checkout focado e estreito */
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-button {
+            color: var(--color-text-muted);
+            font-size: 1.5rem;
+            text-decoration: none;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .back-button:hover {
+            color: var(--color-text-main);
+        }
+
+        .logo {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--color-text-main);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* =========================================
+   CONTAINER PRINCIPAL
+   ========================================= */
+        .checkout-page {
+            max-width: 600px;
+            margin: 20px auto 0;
+            padding: 0 15px;
+        }
+
+        /* =========================================
+   STEPPER (Barra de Progresso)
+   ========================================= */
+        .checkout-stepper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        /* Linha de fundo cinza */
+        .checkout-stepper::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            /* Metade da altura da bolinha (30px/2) */
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--color-border);
+            z-index: 0;
+        }
+
+        .step {
+            background: var(--color-bg);
+            /* Máscara para a linha passar por trás */
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            padding: 0 10px;
+            cursor: default;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            opacity: 1;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--color-border);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+
+        .step.active .step-number {
+            background: var(--color-primary);
+            /* Verde quando ativo */
+            box-shadow: 0 0 0 4px rgba(166, 0, 0, 0.15);
+            /* Aura suave */
+        }
+
+        .step-title {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--color-text-muted);
+        }
+
+        .step.active .step-title {
+            color: var(--color-primary);
+            font-weight: 700;
+        }
+
+        .step-divider {
+            display: none;
+            /* A linha é feita pelo ::before agora */
+        }
+
+        /* =========================================
+   CARD DE CONTEÚDO (Passos)
+   ========================================= */
+        .checkout-step {
+            display: none;
+            /* Oculto por padrão */
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .checkout-step.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .shipping-form,
+        .modal-section,
+        .pix-container {
+            background: var(--color-surface);
+            border-radius: var(--radius-lg);
+            padding: 25px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--color-border);
+        }
+
+        h3,
+        h4 {
+            font-size: 1.25rem;
+            color: var(--color-text-main);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h3 i {
+            color: var(--color-primary);
+        }
+
+        /* =========================================
+   FORMULÁRIOS & INPUTS
+   ========================================= */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--color-text-muted);
+            margin-bottom: 6px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 1rem;
+            color: var(--color-text-main);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            background: #fff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--color-focus);
+            box-shadow: 0 0 0 3px rgba(41, 104, 200, 0.1);
+        }
+
+        input:disabled {
+            background: #f0f0f0;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        /* =========================================
+   OPÇÕES DE ENTREGA (Cards Selecionáveis)
+   ========================================= */
+        .delivery-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
         }
 
         .delivery-option-card {
-            flex: 1;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            padding: 1rem;
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            padding: 15px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
+            background: #fff;
+        }
+
+        .delivery-option-card:hover {
+            border-color: #bbb;
         }
 
         .delivery-option-card.selected {
-            border-color: var(--color-accent-blue);
-            background: #f0f8ff;
+            border-color: var(--color-primary);
+            background: #fdf0f0;
+            /* Verde bem clarinho */
+            color: var(--color-primary);
+            font-weight: 600;
         }
 
         .delivery-option-card i {
             font-size: 2rem;
-            color: #666;
-            margin-bottom: 0.5rem;
+            display: block;
+            margin-bottom: 8px;
+            color: #999;
         }
 
         .delivery-option-card.selected i {
-            color: var(--color-accent-blue);
+            color: var(--color-primary);
         }
 
+        /* =========================================
+   LISTA DE LOJAS (Pickup)
+   ========================================= */
         .store-list {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 10px;
         }
 
         .store-item {
-            border: 1px solid #eee;
-            padding: 1rem;
-            border-radius: 6px;
+            border: 1px solid var(--color-border);
+            padding: 15px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            transition: all 0.2s;
+        }
+
+        .store-item:hover {
+            border-color: #aaa;
         }
 
         .store-item.selected {
-            border-color: var(--color-accent-green);
-            background: #eafff0;
+            border-color: var(--color-primary);
+            background: #fdf0f0;
         }
 
-        .shipping-summary {
-            background: #f9f9f9;
-            padding: 1rem;
-            margin-top: 1rem;
-            border-radius: 6px;
+        .store-item i {
+            font-size: 1.4rem;
+            color: #ccc;
+        }
+
+        .store-item.selected i {
+            color: var(--color-primary);
+        }
+
+        /* =========================================
+   RESUMO DE VALORES
+   ========================================= */
+        .shipping-summary,
+        .modal-section {
+            background: #fafafa;
+            /* Fundo levemente cinza para destacar */
+            padding: 15px;
+            border-radius: var(--radius-sm);
+            margin-top: 10px;
+            border: 1px dashed #ddd;
         }
 
         .shipping-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            color: var(--color-text-muted);
+        }
+
+        .shipping-row span:last-child {
+            color: var(--color-text-main);
+            font-weight: 500;
         }
 
         .shipping-row.total {
-            font-weight: bold;
-            font-size: 1.1rem;
-            border-top: 1px solid #ddd;
-            padding-top: 0.5rem;
-            margin-top: 0.5rem;
+            border-top: 1px solid #e0e0e0;
+            margin-top: 12px;
+            padding-top: 12px;
+            font-size: 1.2rem;
+            color: var(--color-text-main);
+            font-weight: 800;
         }
 
-        /* Estilo do Frete Bullf */
         .bullf-option {
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px dashed #ccc;
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
-            color: var(--color-accent-blue);
-            font-weight: bold;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 12px;
+            background: #e8f4fd;
+            /* Azul bem claro */
+            border-radius: var(--radius-sm);
             cursor: pointer;
+            font-weight: 600;
+            color: var(--color-secondary);
+        }
+
+        /* =========================================
+   BOTÕES DE AÇÃO (CTA)
+   ========================================= */
+        .cta-button {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            margin-top: 25px;
+            background-color: var(--color-primary);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 4px 6px rgba(0, 166, 80, 0.2);
+            text-align: center;
+        }
+
+        .cta-button:hover {
+            background-color: #8e0000;
+            /* Verde um pouco mais escuro */
+        }
+
+        .cta-button:active {
+            transform: scale(0.98);
+        }
+
+        /* =========================================
+   TELA PIX
+   ========================================= */
+        .pix-container {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .pix-qr-img {
+            max-width: 250px;
+            margin: 20px auto;
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .pix-copy-box {
+            display: flex;
+            max-width: 400px;
+            margin: 0 auto 20px;
+        }
+
+        .pix-copy-box input {
+            border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+            border-right: none;
+            background: #f9f9f9;
+        }
+
+        .pix-copy-box button {
+            padding: 0 20px;
+            background: var(--color-secondary);
+            color: #fff;
+            border: none;
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        /* =========================================
+   MERCADO PAGO BRICK & TOAST
+   ========================================= */
+        #payment-brick-container {
+            margin-top: 20px;
+        }
+
+        /* Toast Notification (Flutuante) */
+        .toast {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #323232;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 50px;
+            box-shadow: var(--shadow-md);
+            font-weight: 500;
+            z-index: 2000;
+            transition: bottom 0.4s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            bottom: 30px;
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--color-primary);
+        }
+
+        .toast.error {
+            border-left: 4px solid #d93025;
+        }
+
+        /* =========================================
+   RESPONSIVIDADE (Mobile)
+   ========================================= */
+        @media (max-width: 480px) {
+            .checkout-page {
+                padding: 0 10px;
+                margin-top: 15px;
+            }
+
+            .checkout-stepper {
+                margin-bottom: 20px;
+            }
+
+            .step-title {
+                display: none;
+                /* Em telas muito pequenas, mostra só o número */
+            }
+
+            .step.active .step-title {
+                display: block;
+                /* Mostra o título só do passo atual */
+                position: absolute;
+                top: 35px;
+                width: 100px;
+                text-align: center;
+                background: var(--color-bg);
+            }
+
+            .form-group-row {
+                grid-template-columns: 1fr;
+                /* Um campo por linha no mobile */
+                gap: 0;
+            }
         }
     </style>
 </head>
@@ -102,11 +555,11 @@
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
 
-  gtag('config', 'G-BV6V3GTMR0');
+    gtag('config', 'G-BV6V3GTMR0');
 </script>
 
 <body>

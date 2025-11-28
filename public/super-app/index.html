@@ -9,17 +9,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="style.css">
+    
+    <style>
+        .home-offer-banner {
+            background-color: #111; color: #fff; text-align: center; padding: 8px;
+            font-size: 0.85rem; font-weight: 700; display: flex; justify-content: center; align-items: center; gap: 8px; letter-spacing: 0.5px;
+        }
+        .home-offer-banner i { color: #db0038; font-size: 1.1rem; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    </style>
 </head>
-
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
-<script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('js', new Date());
-
-    gtag('config', 'G-BV6V3GTMR0');
-</script>
 
 <body>
 
@@ -29,36 +28,25 @@
                 <img src="dtudo.png" alt="Logo" class="logo-img">
                 <span>D<span class="logo-highlight">tudo</span></span>
             </a>
-
+            
             <div class="search-bar">
                 <input type="text" placeholder="buscar na Dtudo">
                 <i class='bx bx-search'></i>
                 <div id="search-dropdown" class="search-dropdown"></div>
             </div>
-
-            <button class="header-icons header-icon-mobile" id="profile-button-mobile">
-                <i class='bx bx-user-circle'></i>
-            </button>
+            
+            <button class="header-icons header-icon-mobile" id="profile-button-mobile"><i class='bx bx-user-circle'></i></button>
 
             <div class="header-actions-desktop">
                 <div class="header-user-greeting" id="desktop-profile-trigger">
-                    <span>olá, faça seu login</span>
-                    <strong>ou cadastre-se</strong>
+                    <span>olá, faça seu login</span><strong>ou cadastre-se</strong>
                 </div>
-
-                <a href="favoritos.html" class="header-icon-btn" title="Favoritos">
-                    <i class='bx bx-heart'></i>
-                </a>
-
+                <a href="favoritos.html" class="header-icon-btn" title="Favoritos"><i class='bx bx-heart'></i></a>
                 <a href="carrinho.html" class="header-icon-btn" title="Carrinho">
-                    <i class='bx bx-basket'></i>
-                    <span class="header-cart-badge" id="cart-badge-desktop">0</span>
+                    <i class='bx bx-basket'></i><span class="header-cart-badge" id="cart-badge-desktop">0</span>
                 </a>
-
                 <div style="position: relative;">
-                    <button class="header-icon-btn" id="desktop-menu-trigger">
-                        <i class='bx bx-menu'></i>
-                    </button>
+                    <button class="header-icon-btn" id="desktop-menu-trigger"><i class='bx bx-menu'></i></button>
                     <div class="desktop-menu-dropdown" id="desktop-menu">
                         <a href="pedidos.html" class="desktop-menu-item"><i class='bx bx-receipt'></i> Meus Pedidos</a>
                         <a href="conta.html" class="desktop-menu-item"><i class='bx bx-user'></i> Minha Conta</a>
@@ -71,38 +59,30 @@
 
     <div id="fixed-offer-timer" class="fixed-offer-timer" style="display: none;">
         <i class='bx bxs-alarm'></i>
-        <span>Oferta encerra em: <span id="p-timer-countdown">--:--:--</span></span>
+        <span>OFERTA BLACK FRIDAY: Encerra em <span id="p-timer-countdown-fixed">--:--:--</span></span>
     </div>
 
     <main>
         <div id="home-view">
+            <div class="home-offer-banner">
+                <i class='bx bxs-hot'></i>
+                <span>OFERTAS BLACK FRIDAY: Encerram em <span id="home-timer-countdown">--:--:--</span></span>
+            </div>
 
             <section class="banner-slider">
                 <div class="slider-wrapper">
-                    <div class="slide"><img src="3.png" alt="Ofertas"></div>
-                    <div class="slide"><img src="4.png" alt="Varejo"></div>
+                    <div class="slide"><img src="3.png" alt="Black Friday"></div>
+                    <div class="slide"><img src="4.png" alt="Ofertas"></div>
                 </div>
             </section>
 
             <section class="categories-section">
                 <div class="container">
                     <div class="categories-scroll">
-                        <div class="category-item fire">
-                            <div class="category-icon"><i class='bx bxs-hot'></i></div>
-                            <span style="color: var(--color-accent); font-weight: 700;">Ofertas!</span>
-                        </div>
-                        <div class="category-item">
-                            <div class="category-icon"><i class='bx bx-home'></i></div>
-                            <span>Casa</span>
-                        </div>
-                        <div class="category-item">
-                            <div class="category-icon"><i class='bx bx-wrench'></i></div>
-                            <span>Ferramentas</span>
-                        </div>
-                        <div class="category-item">
-                            <div class="category-icon"><i class='bx bx-mobile'></i></div>
-                            <span>Eletrônicos</span>
-                        </div>
+                        <div class="category-item fire"><div class="category-icon"><i class='bx bxs-hot'></i></div><span style="color: var(--color-accent); font-weight: 700;">Ofertas!</span></div>
+                        <div class="category-item"><div class="category-icon"><i class='bx bx-home'></i></div><span>Casa</span></div>
+                        <div class="category-item"><div class="category-icon"><i class='bx bx-wrench'></i></div><span>Ferramentas</span></div>
+                        <div class="category-item"><div class="category-icon"><i class='bx bx-mobile'></i></div><span>Eletrônicos</span></div>
                     </div>
                 </div>
             </section>
@@ -110,28 +90,11 @@
             <section id="products">
                 <div class="container">
                     <h2 class="section-title">Destaques para você</h2>
-
                     <div class="product-grid" id="firebase-products-container">
-                        <div class="product-card skeleton-card">
-                            <div class="skeleton skeleton-img"></div>
-                            <div class="skeleton skeleton-text"></div>
-                            <div class="skeleton skeleton-text-sm"></div>
-                        </div>
-                        <div class="product-card skeleton-card">
-                            <div class="skeleton skeleton-img"></div>
-                            <div class="skeleton skeleton-text"></div>
-                            <div class="skeleton skeleton-text-sm"></div>
-                        </div>
-                        <div class="product-card skeleton-card">
-                            <div class="skeleton skeleton-img"></div>
-                            <div class="skeleton skeleton-text"></div>
-                            <div class="skeleton skeleton-text-sm"></div>
-                        </div>
-                        <div class="product-card skeleton-card">
-                            <div class="skeleton skeleton-img"></div>
-                            <div class="skeleton skeleton-text"></div>
-                            <div class="skeleton skeleton-text-sm"></div>
-                        </div>
+                        <div class="product-card skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton skeleton-text"></div></div>
+                        <div class="product-card skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton skeleton-text"></div></div>
+                        <div class="product-card skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton skeleton-text"></div></div>
+                        <div class="product-card skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton skeleton-text"></div></div>
                     </div>
                 </div>
             </section>
@@ -139,103 +102,90 @@
 
         <div id="product-detail-view" class="product-detail-view">
             <div class="container">
-                <a href="index.html"
-                    style="display: inline-flex; align-items: center; color: #333; text-decoration: none; margin-bottom: 15px;">
+                <a href="index.html" style="display: inline-flex; align-items: center; color: #333; text-decoration: none; margin-bottom: 15px;">
                     <i class='bx bx-arrow-back' style="margin-right: 5px;"></i> Voltar
                 </a>
-
+                
                 <div class="detail-container">
                     <div class="detail-gallery">
                         <div class="main-image-container">
                             <img id="p-detail-img" src="" alt="Produto">
                         </div>
                     </div>
-                </div>
 
-                <div class="detail-info">
-
-                    <div class="detail-condition" style="font-size: 0.85rem; color: #999; margin-bottom: 5px;">
-                        Novo | 0 vendidos
-                    </div>
-
-                    <h1 class="detail-title" id="p-detail-name">--</h1>
-
-                    <div class="detail-price-box">
-                        <div class="price-old" id="p-detail-old-price"
-                            style="display:none; font-size: 1rem; color: #999; text-decoration: line-through;">--</div>
-                        <div class="detail-price-real" id="p-detail-price">R$ --</div>
-                    </div>
-
-                    <span class="detail-savings" id="p-detail-savings" style="display:none;">
-                        Você economiza R$ 0,00
-                    </span>
-
-                    <div class="shipping-calc">
-                        <div class="shipping-label">
-                            <i class='bx bxs-truck'></i>
-                            <span id="shipping-status-text">Frete grátis, verifique o endereço</span>
+                    <div class="detail-info">
+                        
+                        <div class="detail-condition" style="font-size: 0.85rem; color: #999; margin-bottom: 5px;">
+                            Novo | <span id="p-detail-sold">0</span> vendidos
                         </div>
-                        <div class="shipping-input-group">
-                            <input type="tel" id="detail-cep" placeholder="Digite seu CEP" maxlength="9">
-                            <button class="btn-calc" onclick="calculateDetailShipping()">Calcular</button>
-                        </div>
-                        <div id="detail-shipping-result" class="shipping-result"></div>
-                    </div>
 
-                    <div class="stock-bar-container">
-                        <div class="stock-text"
-                            style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 5px;">
-                            <span style="color: #666;">Disponibilidade</span>
-                            <span style="color: #d32f2f; font-weight: 700;">Restam poucas unidades!</span>
-                        </div>
-                        <div class="progress-bg">
-                            <div class="progress-fill" style="width: 85%;"></div>
-                        </div>
-                    </div>
-
-                    <div class="detail-actions">
-                        <button class="btn-buy-now" id="btn-buy-now">Comprar Agora</button>
-                        <button class="btn-add-cart" id="btn-add-cart-detail">Adicionar ao carrinho</button>
-                    </div>
-
-                    <div class="policy-box">
-                        <div class="policy-item">
-                            <i class='bx bx-undo'></i>
-                            <div>
-                                <strong>Devolução Grátis</strong>
-                                <span>Você tem 7 dias a partir do recebimento.</span>
+                        <h1 class="detail-title" id="p-detail-name">--</h1>
+                        
+                        <div class="detail-price-box">
+                            <div class="price-old" id="p-detail-old-price" style="display:none; font-size: 1rem; color: #999; text-decoration: line-through;">--</div>
+                            <div class="detail-price-real" id="p-detail-price">R$ --</div>
+                            <div class="detail-installments" style="font-size: 0.9rem; margin-top: 8px; display: flex; align-items: center; gap: 5px;">
+                                <i class='bx bx-check-shield' style="color:#00a650"></i> 
+                                <span style="color:#333">Pagamento 100% seguro via <strong>Pix</strong></span>
                             </div>
                         </div>
-                        <div class="policy-item">
-                            <i class='bx bx-shield-check'></i>
-                            <div>
-                                <strong>Compra Garantida</strong>
-                                <span>Receba o produto que está esperando ou devolvemos seu dinheiro.</span>
+
+                        <span class="detail-savings" id="p-detail-savings" style="display:none;">
+                            Você economiza R$ 0,00
+                        </span>
+
+                        <div class="stock-bar-container">
+                            <div class="stock-text">
+                                <span style="color: #666; font-size: 0.85rem;">Disponibilidade</span>
+                                <span style="color: #db0038; font-weight: 700; font-size: 0.85rem;">Restam poucas unidades!</span>
+                            </div>
+                            <div class="progress-bg">
+                                <div class="progress-fill" style="width: 85%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="shipping-calc">
+                            <div class="shipping-label">
+                                <i class='bx bxs-truck'></i> 
+                                <span id="shipping-status-text">Calcular frete e prazo</span>
+                            </div>
+                            <div class="shipping-input-group">
+                                <input type="tel" id="detail-cep" placeholder="Digite seu CEP" maxlength="9">
+                                <button class="btn-calc" onclick="calculateDetailShipping()">Calcular</button>
+                            </div>
+                            <div id="detail-shipping-result" class="shipping-result"></div>
+                            <a href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" style="font-size: 0.75rem; color: #999; text-decoration: underline; margin-top: 5px; display: block;">Não sei meu CEP</a>
+                        </div>
+
+                        <div class="detail-actions">
+                            <button class="btn-buy-now" id="btn-buy-now">Comprar Agora</button>
+                            <button class="btn-add-cart" id="btn-add-cart-detail">Adicionar ao carrinho</button>
+                        </div>
+
+                        <div class="policy-box">
+                            <div class="policy-item">
+                                <i class='bx bx-undo'></i>
+                                <div><strong>Devolução Grátis</strong><br><span style="font-size:0.85rem;color:#666">Você tem 7 dias a partir do recebimento.</span></div>
+                            </div>
+                            <div class="policy-item">
+                                <i class='bx bx-shield-quarter'></i>
+                                <div><strong>Compra Garantida</strong><br><span style="font-size:0.85rem;color:#666">Receba o produto que está esperando ou devolvemos seu dinheiro.</span></div>
                             </div>
                         </div>
                     </div>
-
                 </div>
 
-
+                <div class="detail-description">
+                    <h2 class="desc-title">Descrição</h2>
+                    <div class="desc-content" id="p-detail-desc">--</div>
+                </div>
             </div>
-
-            <div class="detail-description">
-                <h2 class="desc-title">Descrição</h2>
-                <div class="desc-content" id="p-detail-desc">--</div>
-            </div>
-        </div>
         </div>
     </main>
 
     <nav class="bottom-navbar">
         <a href="index.html" class="nav-item active"><i class='bx bxs-home'></i><span>Início</span></a>
-        <a href="favoritos.html" class="nav-item"><i class='bx bx-heart'></i><span>Salvos</span></a>
-        <a href="carrinho.html" class="nav-item">
-            <i class='bx bx-cart'></i>
-            <span id="cart-badge" class="cart-badge">0</span>
-            <span>Carrinho</span>
-        </a>
+        <a href="carrinho.html" class="nav-item"><i class='bx bx-cart'></i><span id="cart-badge" class="cart-badge">0</span><span>Carrinho</span></a>
         <a href="pedidos.html" class="nav-item"><i class='bx bx-receipt'></i><span>Pedidos</span></a>
     </nav>
 
@@ -251,11 +201,11 @@
             </div>
             <div id="user-logged-out-view">
                 <h3>Login</h3>
-                <button class="google-login-button" id="google-login-button"><i class='bx bxl-google'></i> Entrar com
-                    Google</button>
+                <button class="google-login-button" id="google-login-button"><i class='bx bxl-google'></i> Entrar com Google</button>
             </div>
         </div>
     </div>
+    
     <div id="toast-notification" class="toast"></div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -264,34 +214,26 @@
 
     <script src="js/global.js"></script>
     <script src="js/index.js"></script>
-
+    
     <script>
+        // Scripts de Menu/Perfil Inline para garantir carregamento
         const menuTrigger = document.getElementById('desktop-menu-trigger');
         const desktopMenu = document.getElementById('desktop-menu');
-
-        if (menuTrigger) {
-            menuTrigger.addEventListener('click', (e) => {
-                e.stopPropagation();
-                desktopMenu.classList.toggle('active');
-            });
-            document.addEventListener('click', () => {
-                desktopMenu.classList.remove('active');
-            });
+        if(menuTrigger) {
+            menuTrigger.addEventListener('click', (e) => { e.stopPropagation(); desktopMenu.classList.toggle('active'); });
+            document.addEventListener('click', () => { desktopMenu.classList.remove('active'); });
         }
-
-        const profileTrigger = document.getElementById('desktop-profile-trigger');
-        if (profileTrigger) {
-            profileTrigger.addEventListener('click', () => {
-                document.getElementById('user-profile-modal').classList.add('show');
-            });
-        }
-        const profileMobile = document.getElementById('profile-button-mobile');
-        if (profileMobile) {
-            profileMobile.addEventListener('click', () => {
-                document.getElementById('user-profile-modal').classList.add('show');
-            });
-        }
+        
+        const setupProfileModal = (triggerId) => {
+            const trigger = document.getElementById(triggerId);
+            if(trigger) {
+                trigger.addEventListener('click', () => {
+                    document.getElementById('user-profile-modal').classList.add('show');
+                });
+            }
+        };
+        setupProfileModal('desktop-profile-trigger');
+        setupProfileModal('profile-button-mobile');
     </script>
 </body>
-
 </html>
