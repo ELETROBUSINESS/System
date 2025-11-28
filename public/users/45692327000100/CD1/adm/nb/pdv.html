@@ -4076,11 +4076,132 @@
             const applyDiscount = (requestedDiscount, isPercentage = false) => { const subtotal = getSubtotal(); if (subtotal === 0) { if (requestedDiscount !== 0) { showCustomAlert("Vazio", "Adicione itens."); } return; } let calculatedDiscount = isPercentage ? subtotal * (requestedDiscount / 100) : requestedDiscount; const newTotal = subtotal - calculatedDiscount; const roundedTotal = isSmartRoundingEnabled ? Math.round(newTotal * 2) / 2 : newTotal; const finalDiscount = subtotal - roundedTotal; discount = (finalDiscount > subtotal) ? subtotal : ((finalDiscount < 0) ? 0 : finalDiscount); discountInputR.value = discount > 0 ? discount.toFixed(2) : ''; updateSummary(); };
             const removeDiscount = () => { discount = 0; discountInputR.value = ''; updateSummary(); };
 
-            // --- Funções de API ---
-            async function carregarCacheDeProdutos() { barcodeInput.disabled = true; barcodeInput.placeholder = "Carregando..."; barcodeHint.textContent = "Carregando..."; localProductCache = null; try { const response = await fetch(SCRIPT_URL + "?action=listarProdutos"); if (!response.ok) throw new Error("Erro rede."); const result = await response.json(); if (result.status === 'success') { localProductCache = result.data; console.log(`Cache prod: ${localProductCache.length}`); barcodeHint.textContent = "F2 para focar"; } else { throw new Error(result.message || "Erro API."); } } catch (error) { console.error("Erro cache prod:", error); showCustomAlert("Erro Cache Prod", error.message); localProductCache = []; barcodeHint.textContent = "Erro. F5."; } finally { barcodeInput.disabled = false; barcodeInput.placeholder = "Ler código..."; if (verificarToken()) barcodeInput.focus(); } }
+
+            // --- Funções de API (ATUALIZADA: GOOGLE SHEETS + FIREBASE) ---
+
+            // Função auxiliar para buscar produtos do Firebase
+            async function fetchFirebaseProductsForCache() {
+                try {
+                    const productsRef = db.collection('artifacts').doc(FIREBASE_CONFIG_ID)
+                        .collection('users').doc(STORE_OWNER_UID)
+                        .collection('products');
+
+                    const snapshot = await productsRef.get();
+
+                    if (snapshot.empty) return [];
+
+                    return snapshot.docs.map(doc => {
+                        const data = doc.data();
+                        return {
+                            id: data.code || doc.id, // Usa o código de barras ou o ID do doc
+                            name: data.name,
+                            price: parseValueFirebase(data.price), // Garante que é número
+                            stock: data.stock || 0,
+                            isFirebase: true, // Flag para sabermos que veio do Firebase
+                            docId: doc.id // ID real do documento para poder dar baixa depois
+                        };
+                    }).filter(p => p.id); // Remove itens sem código
+                } catch (e) {
+                    console.error("Erro ao buscar Firebase:", e);
+                    return [];
+                }
+            }
+
+            // Função Principal de Carregamento (Híbrida)
+            async function carregarCacheDeProdutos() {
+                barcodeInput.disabled = true;
+                barcodeInput.placeholder = "Carregando sistema...";
+                barcodeHint.textContent = "Sincronizando estoques...";
+                localProductCache = [];
+
+                try {
+                    // 1. Busca Google Sheets e Firebase em paralelo
+                    const [sheetResponse, firebaseProducts] = await Promise.all([
+                        fetch(SCRIPT_URL + "?action=listarProdutos"),
+                        fetchFirebaseProductsForCache()
+                    ]);
+
+                    // 2. Processa Google Sheets
+                    if (!sheetResponse.ok) throw new Error("Erro rede Sheets.");
+                    const sheetResult = await sheetResponse.json();
+                    let sheetProducts = [];
+
+                    if (sheetResult.status === 'success') {
+                        sheetProducts = sheetResult.data.map(p => ({
+                            ...p,
+                            price: parseFloat(p.price) // Garante numérico
+                        }));
+                    }
+
+                    // 3. Lógica de Mesclagem (Firebase Sobrescreve Sheets)
+                    // Cria um mapa usando o ID (código de barras) como chave
+                    const productMap = new Map();
+
+                    // Adiciona produtos da Planilha primeiro
+                    sheetProducts.forEach(p => productMap.set(String(p.id).trim(), p));
+
+                    // Adiciona/Sobrescreve com produtos do Firebase
+                    firebaseProducts.forEach(p => {
+                        // Se já existe, o Firebase ganha (atualiza preço/nome)
+                        // Se não existe, é adicionado
+                        productMap.set(String(p.id).trim(), p);
+                    });
+
+                    // Converte de volta para array
+                    localProductCache = Array.from(productMap.values());
+
+                    console.log(`Cache unificado: ${localProductCache.length} produtos.`);
+                    barcodeHint.textContent = "F2 para focar";
+
+                } catch (error) {
+                    console.error("Erro cache prod:", error);
+                    showCustomAlert("Erro Sincronização", "Falha ao carregar produtos. Verifique a internet.");
+                    localProductCache = [];
+                    barcodeHint.textContent = "Erro. F5.";
+                } finally {
+                    barcodeInput.disabled = false;
+                    barcodeInput.placeholder = "Ler código...";
+                    if (verificarToken()) barcodeInput.focus();
+                }
+            }
+
+
             function buscarProdutoLocalmente(barcode) { if (localProductCache === null) { showCustomAlert("Aguarde", "Cache carregando."); return null; } return localProductCache.find(p => p.id === barcode) || null; }
             async function cadastrarProdutoNaAPI(product) { quickAddSubmitBtn.disabled = true; quickAddSubmitBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Cadastrando..."; try { const params = new URLSearchParams({ action: 'cadastrarProduto', codigo: product.id, nome: product.name, preco: product.price }); const response = await fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET' }); if (!response.ok) throw new Error("Erro rede."); const result = await response.json(); if (result.status === 'success') { if (localProductCache) { localProductCache.push(result.data); } return result.data; } else { throw new Error(result.message || "Erro API."); } } catch (error) { console.error("Erro cadastro prod:", error); showCustomAlert("Erro Cadastro Prod", error.message); return null; } finally { quickAddSubmitBtn.disabled = false; quickAddSubmitBtn.innerHTML = "Adicionar"; } }
             async function registrarVendaAtual(payments) { if (!lastSaleData) { throw new Error("Sem dados venda."); } if (!REGISTRO_VENDA_SCRIPT_URL || REGISTRO_VENDA_SCRIPT_URL.includes("COLE_A_URL")) { throw new Error("URL registro não config."); } const now = new Date(); const timestamp = formatTimestamp(now); const baseData = { formType: 'venda', seller: 'nubia', type: 'entrada', value: lastSaleData.subtotal.toFixed(2), desconto: lastSaleData.discount.toFixed(2), Timestamp: timestamp }; const fetchPromises = payments.map(payment => { const paymentData = { ...baseData, payment: payment.method || 'N/A', total: payment.value.toFixed(2) }; const formData = new URLSearchParams(paymentData); console.log("Enviando parte registro:", formData.toString()); return fetch(REGISTRO_VENDA_SCRIPT_URL, { redirect: "follow", method: "POST", body: formData.toString(), headers: { "Content-Type": "application/x-www-form-urlencoded" }, }); }); const responses = await Promise.all(fetchPromises); const allOk = responses.every(response => response.ok); if (allOk) { console.log("Registro OK!"); } else { const firstErrorResponse = responses.find(response => !response.ok); let errorText = `Falha registro. Status: ${firstErrorResponse?.status || '?'}`; try { if (firstErrorResponse) errorText = await firstErrorResponse.text(); } catch (readError) { } throw new Error(errorText); } }
+
+// Função para abater estoque no Firebase
+            async function abaterEstoqueFirebase(itensVendidos) {
+                const batch = db.batch();
+                let updatesCount = 0;
+
+                itensVendidos.forEach(item => {
+                    // Só abate se o produto veio do Firebase e tem um ID de documento válido
+                    if (item.isFirebase && item.docId) {
+                        const ref = db.collection('artifacts').doc(FIREBASE_CONFIG_ID)
+                            .collection('users').doc(STORE_OWNER_UID)
+                            .collection('products').doc(item.docId);
+                        
+                        // Decrementa a quantidade atômica (seguro contra concorrência)
+                        batch.update(ref, {
+                            stock: firebase.firestore.FieldValue.increment(-item.quantity),
+                            updatedAt: new Date().toISOString()
+                        });
+                        updatesCount++;
+                    }
+                });
+
+                if (updatesCount > 0) {
+                    try {
+                        await batch.commit();
+                        console.log(`Estoque atualizado: ${updatesCount} itens abatidos no Firebase.`);
+                    } catch (e) {
+                        console.error("Erro ao abater estoque:", e);
+                        // Não paramos a venda por erro de estoque, apenas logamos
+                    }
+                }
+            }
+
             async function carregarClientesDaAPI() { clientesListContainer.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px 0;"><i class="bx bx-loader-alt bx-spin"></i> Carregando...</p>'; localClientCache = null; try { const response = await fetch(SCRIPT_URL + "?action=listarClientes"); if (!response.ok) throw new Error("Erro rede."); const result = await response.json(); if (result.status === 'success') { localClientCache = result.data; console.log(`Cache cli: ${localClientCache.length}`); renderClientesPage(); } else { throw new Error(result.message || "Erro API."); } } catch (error) { console.error("Erro carregar cli:", error); clientesListContainer.innerHTML = `<p style="text-align: center; color: var(--warning-red); padding: 20px 0;">${error.message}</p>`; localClientCache = []; } }
             async function salvarClienteNaAPI(clienteData) { clienteSaveBtn.disabled = true; clienteSaveBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Salvando..."; try { const params = new URLSearchParams({ action: 'cadastrarCliente', ...clienteData }); const response = await fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET' }); if (!response.ok) throw new Error("Erro rede."); const result = await response.json(); if (result.status === 'success') { showCustomAlert("Sucesso!", result.message || "Cliente cadastrado!"); closeModal(addClienteModal); if (localClientCache !== null) { localClientCache.push(result.data); localClientCache.sort((a, b) => (a.apelido || a.nomeExibicao).localeCompare(b.apelido || b.nomeExibicao)); } renderClientesPage(); } else { throw new Error(result.message || "Erro API."); } } catch (error) { console.error("Erro salvar cli:", error); showCustomAlert("Erro Salvar", error.message); } finally { clienteSaveBtn.disabled = false; clienteSaveBtn.innerHTML = "<i class='bx bx-save'></i> Salvar"; } }
             async function abrirCaixaAPI(data) {
@@ -4355,6 +4476,11 @@
                     }
 
                     // 3. REGISTRAR VENDA (API FLUXO DE CAIXA)
+
+                    
+                    
+
+
                     // Esperamos a resposta (await) para garantir que salvou antes de imprimir
                     await registrarVendaAtual(paymentsToSend);
 
@@ -4369,6 +4495,29 @@
                         });
                         // Envia o log. Não precisamos esperar (await) a resposta do log para imprimir, 
                         // mas é bom garantir para evitar erros de validação depois.
+                        await fetch(`${SCRIPT_URL}?${paramsCliente.toString()}`, { method: 'GET' });
+                    }
+
+                    // ============================================================
+                    // NOVO: ABATER ESTOQUE NO FIREBASE (Executa em paralelo)
+                    // ============================================================
+                    const promiseEstoque = abaterEstoqueFirebase(cart);
+                    const promiseRegistro = registrarVendaAtual(paymentsToSend);
+
+                    // Aguarda o registro financeiro (obrigatório) e o estoque (desejável)
+                    await Promise.all([promiseRegistro, promiseEstoque]); 
+                    // ============================================================
+
+                    // 4. SE FOR CREDIÁRIO: REGISTRAR DÍVIDA (LOG)
+                    if (selectedPaymentMethod === 'Crediário') {
+                        // ... (código existente do crediário) ...
+                         const paramsCliente = new URLSearchParams({
+                            action: 'registrarTransacao',
+                            idCliente: selectedCrediarioClient.idCliente,
+                            tipo: 'Compra',
+                            valor: lastSaleData.total.toFixed(2),
+                            timestamp: timestamp
+                        });
                         await fetch(`${SCRIPT_URL}?${paramsCliente.toString()}`, { method: 'GET' });
                     }
 
