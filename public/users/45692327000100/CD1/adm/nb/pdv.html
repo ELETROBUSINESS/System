@@ -133,10 +133,10 @@
         };
 
         // Função de Polling (Escuta do Firebase)
+        // Função de Polling (Escuta do Firebase) - ATUALIZADA COM ENDEREÇO DE COLETA
         function startOrderPolling() {
             if (realtimeOrdersUnsubscribe) realtimeOrdersUnsubscribe();
 
-            // Usa 'db' global que já foi inicializado lá em cima
             const q = db.collection('orders').orderBy('createdAt', 'desc').limit(50);
 
             console.log("Iniciando monitoramento de pedidos...");
@@ -151,19 +151,34 @@
                     let itemsStr = "Sem itens";
                     if (data.items && Array.isArray(data.items)) itemsStr = data.items.map(i => `${i.quantity}x ${i.name}`).join(', ');
 
+                    // --- LÓGICA DO ENDEREÇO DE COLETA ---
+                    let addressDisplay = 'Endereço não informado';
+                    if (data.shipping) {
+                        if (data.shipping.mode === 'pickup') {
+                            // Se for retirada, mostra a loja
+                            // Extrai o nome da cidade ou loja da string salva ou usa fallback
+                            const storeName = data.shipping.address.replace('Retirada: ', '') || 'Loja';
+                            addressDisplay = `<i class='bx bxs-store' style="color:var(--info-blue)"></i> Coleta na loja de ${storeName}`;
+                        } else {
+                            // Se for entrega, mostra o endereço normal
+                            addressDisplay = `<i class='bx bxs-truck' style="color:#666"></i> ${data.shipping.address}`;
+                        }
+                    }
+                    // ------------------------------------
+
                     fetchedOrders.push({
                         id: doc.id,
                         displayId: data.orderId || doc.id.substring(0, 6),
                         time: formatTime(dateObj),
                         client: data.client ? data.client.name : 'Cliente Online',
-                        address: data.shipping?.address || 'Retirada',
+                        address: addressDisplay, // Usa a string formatada
                         status: mapStatusFirebaseToUI(data.status),
                         total: formatCurrency(data.total || 0),
-                        items: itemsStr
+                        items: itemsStr,
+                        shippingMode: data.shipping?.mode || 'delivery' // Guarda o modo para usar no modal
                     });
                 });
 
-                // Atualiza a variável GLOBAL
                 activeOrdersData = fetchedOrders;
                 renderDummyOrders();
 
@@ -1458,46 +1473,50 @@
             const updateNavbarHighlight = (activeItem) => { if (!activeItem) return; const itemRect = activeItem.getBoundingClientRect(); const navbarRect = mainNavbar.getBoundingClientRect(); navbarHighlight.style.width = `${itemRect.width}px`; navbarHighlight.style.left = `${itemRect.left - navbarRect.left}px`; };
 
             // --- CORREÇÃO DA NAVBAR (EVITA O ERRO RESOURCE EXHAUSTED) ---
-           // --- Navegação SPA e Lógica de Reset da Aba Pedidos ---
+            // --- Navegação SPA (Navbar) - CORRIGIDA ---
             navbarItems.forEach(item => {
                 item.addEventListener('click', (e) => {
                     e.preventDefault();
 
-                    // LÓGICA ESPECÍFICA DA ABA PEDIDOS
-                    if (item.dataset.page === 'pedidos') {
-                        // 1. Limpa notificações visuais
-                        item.classList.remove('notify-active');
-                        const badge = document.getElementById('pedidos-badge');
-                        if (badge) badge.classList.remove('active');
-
-                        // 2. RESETA O FILTRO PARA O PADRÃO ('pendente')
-                        currentOrderStatusFilter = 'pendente';
-
-                        // 3. ATUALIZA AS ABAS VISUAIS
-                        // Remove 'active' de todas as abas de filtro
-                        const orderTabs = document.querySelectorAll('#order-status-tabs .order-tab');
-                        orderTabs.forEach(t => t.classList.remove('active'));
-                        
-                        // Adiciona 'active' apenas na aba 'pendente'
-                        const defaultTab = document.querySelector('#order-status-tabs .order-tab[data-status="pendente"]');
-                        if (defaultTab) defaultTab.classList.add('active');
-
-                        // 4. Renderiza a lista novamente com o filtro resetado
-                        renderDummyOrders();
-                    }
-
-                    // Lógica Padrão de Troca de Página
+                    // 1. ATUALIZAÇÃO VISUAL DA NAVBAR
+                    const previouslyActive = document.querySelector('.navbar-item.active');
+                    if (previouslyActive === item && item.dataset.page !== 'pedidos') { return; }
+                    
                     navbarItems.forEach(navItem => navItem.classList.remove('active'));
                     item.classList.add('active');
                     updateNavbarHighlight(item);
 
+                    // 2. TROCA DE PÁGINA (VISIBILIDADE)
+                    // Fazemos isso ANTES de qualquer lógica específica para garantir que o elemento exista e esteja visível
                     allPages.forEach(page => page.style.display = 'none');
                     const pageId = item.dataset.page + '-page';
                     const targetPage = document.getElementById(pageId);
                     
                     if (targetPage) targetPage.style.display = 'block';
 
-                    // Carregamentos específicos de outras páginas
+                    // 3. LÓGICA ESPECÍFICA DE CADA PÁGINA
+                    
+                    // --- CORREÇÃO AQUI: RESET DA ABA PEDIDOS ---
+                    if (item.dataset.page === 'pedidos') {
+                        // Limpa notificações
+                        item.classList.remove('notify-active');
+                        const badge = document.getElementById('pedidos-badge');
+                        if (badge) badge.classList.remove('active');
+
+                        // Reseta Filtro
+                        currentOrderStatusFilter = 'pendente';
+
+                        // Reseta Abas Visuais
+                        const orderTabs = document.querySelectorAll('#order-status-tabs .order-tab');
+                        orderTabs.forEach(t => t.classList.remove('active'));
+                        const defaultTab = document.querySelector('#order-status-tabs .order-tab[data-status="pendente"]');
+                        if (defaultTab) defaultTab.classList.add('active');
+
+                        // Renderiza (Agora vai funcionar pois a página já está display: block)
+                        renderDummyOrders();
+                    }
+
+                    // Carregamentos das outras páginas
                     if (pageId === 'produtos-page' && !localProductCache) carregarCacheDeProdutos();
                     if (pageId === 'clientes-page' && !localClientCache) carregarClientesDaAPI();
                     if (pageId === 'historico-page') carregarHistorico();
@@ -2179,19 +2198,19 @@
             let currentOpenOrder = null; // Variável local para saber qual pedido está aberto
 
             // 1. Função para Abrir o Modal (Lógica de Navegação Corrigida)
+            // 1. Função para Abrir o Modal (ATUALIZADA COM STATUS DE RETIRADA)
         window.openOrderDetailModal = (orderId) => {
             const order = activeOrdersData.find(o => o.id === orderId);
             if (!order) return;
 
             currentOpenOrder = order;
 
-            // Preenche dados básicos
             document.getElementById('modal-order-id').textContent = `#${order.displayId}`;
             document.getElementById('modal-order-client').textContent = order.client;
-            document.getElementById('modal-order-address').textContent = order.address;
+            // O address já vem com o ícone HTML da função anterior, então usamos innerHTML
+            document.getElementById('modal-order-address').innerHTML = order.address;
             document.getElementById('modal-calc-total').textContent = order.total;
-            document.getElementById('modal-payment-method').textContent = "Pagamento: " + (order.paymentMethod || 'Pix');
-
+            
             // Preenche lista de itens
             const itemsContainer = document.getElementById('modal-order-items-list');
             itemsContainer.innerHTML = '';
@@ -2200,12 +2219,40 @@
             divItem.innerHTML = `<span class="item-info-text">${order.items}</span>`;
             itemsContainer.appendChild(divItem);
 
-            // --- LÓGICA DO STEPPER (TRAVAMENTO DE FUTURO) ---
-            const steps = ['pendente', 'preparando', 'enviado', 'finalizado'];
+            // --- LÓGICA DO STEPPER ADAPTÁVEL (ENTREGA vs RETIRADA) ---
             
-            // Normaliza o status atual (garante minúsculo para comparação)
-            // Se o status vier do banco como 'approved', mapeamos para 'pendente' antes
+            // 1. Ajusta os Textos e Ícones baseados no modo de envio
+            const stepEnviado = document.getElementById('step-enviado');
+            const stepFinalizado = document.getElementById('step-finalizado');
+            
+            if (order.shippingMode === 'pickup') {
+                // Modo Retirada
+                if(stepEnviado) {
+                    stepEnviado.querySelector('span').textContent = "Pronto p/ Retirada";
+                    stepEnviado.querySelector('.step-icon').innerHTML = "<i class='bx bxs-store'></i>";
+                    stepEnviado.title = "Mudar para Pronto p/ Retirada";
+                }
+                if(stepFinalizado) {
+                    stepFinalizado.querySelector('span').textContent = "Retirado";
+                    stepFinalizado.title = "Mudar para Retirado";
+                }
+            } else {
+                // Modo Entrega (Padrão)
+                if(stepEnviado) {
+                    stepEnviado.querySelector('span').textContent = "Enviado";
+                    stepEnviado.querySelector('.step-icon').innerHTML = "<i class='bx bx-car'></i>";
+                    stepEnviado.title = "Mudar para Enviado";
+                }
+                if(stepFinalizado) {
+                    stepFinalizado.querySelector('span').textContent = "Entregue";
+                    stepFinalizado.title = "Mudar para Entregue";
+                }
+            }
+
+            // 2. Aplica as classes Active/Completed/Locked
+            const steps = ['pendente', 'preparando', 'enviado', 'finalizado'];
             let currentStatus = order.status.toLowerCase();
+            // Normalização
             if (currentStatus === 'approved') currentStatus = 'pendente';
             if (currentStatus === 'preparation') currentStatus = 'preparando';
             if (currentStatus === 'shipped') currentStatus = 'enviado';
@@ -2216,28 +2263,19 @@
             steps.forEach((stepName, index) => {
                 const el = document.getElementById(`step-${stepName}`);
                 if (el) {
-                    // 1. Reseta classes e eventos
                     el.classList.remove('active', 'completed', 'locked');
-                    el.onclick = null; // Remove qualquer clique anterior
+                    el.onclick = null; 
 
-                    // 2. Aplica lógica baseada no índice
                     if (index < currentIndex) {
-                        // PASSADO: Pode voltar (Click Ativo)
                         el.classList.add('completed');
                         el.onclick = () => manualSetStatus(stepName);
-                        el.title = "Voltar para este status";
                     } 
                     else if (index === currentIndex) {
-                        // PRESENTE: Apenas visual (Sem Click)
                         el.classList.add('active');
                         el.style.cursor = 'default';
-                        el.title = "Status Atual";
                     } 
                     else {
-                        // FUTURO: Bloqueado (Sem Click)
-                        el.classList.add('locked'); // CSS deixa cinza e sem cursor
-                        el.title = "Avance pelo botão abaixo";
-                        // Não adicionamos onclick, então fica inerte
+                        el.classList.add('locked');
                     }
                 }
             });
