@@ -29,6 +29,38 @@ document.addEventListener("DOMContentLoaded", () => {
     setupPixEvents();
 });
 
+// --- FUNÇÃO VALIDADORA DE CPF (NOVO) ---
+function isValidCPF(cpf) {
+    if (typeof cpf !== 'string') return false;
+    
+    // Remove caracteres não numéricos
+    cpf = cpf.replace(/[^\d]+/g, '');
+    
+    // Verifica tamanho e se todos os dígitos são iguais
+    if (cpf.length !== 11 || !!cpf.match(/(\d)\1{10}/)) return false;
+    
+    // Validação do 1º Dígito
+    let soma = 0;
+    let resto;
+    for (let i = 1; i <= 9; i++) 
+        soma = soma + parseInt(cpf.substring(i-1, i)) * (11 - i);
+    
+    resto = (soma * 10) % 11;
+    if ((resto === 10) || (resto === 11)) resto = 0;
+    if (resto !== parseInt(cpf.substring(9, 10))) return false;
+    
+    // Validação do 2º Dígito
+    soma = 0;
+    for (let i = 1; i <= 10; i++) 
+        soma = soma + parseInt(cpf.substring(i-1, i)) * (12 - i);
+    
+    resto = (soma * 10) % 11;
+    if ((resto === 10) || (resto === 11)) resto = 0;
+    if (resto !== parseInt(cpf.substring(10, 11))) return false;
+    
+    return true;
+}
+
 async function loadUserData(uid) {
     try {
         const doc = await db.collection("users").doc(uid).get();
@@ -51,21 +83,36 @@ function setupStepNavigation() {
         const fname = document.getElementById("reg-first-name").value.trim();
         const lname = document.getElementById("reg-last-name").value.trim();
         const phone = document.getElementById("reg-phone").value.trim();
+        const cpfInput = document.getElementById("reg-cpf"); // Pega o elemento
+        const cpfVal = cpfInput ? cpfInput.value.trim() : "";
+        
         const emailInput = document.getElementById("reg-email").value;
 
         if(!emailInput && auth.currentUser) {
             document.getElementById("reg-email").value = auth.currentUser.email;
         }
 
-        if (!fname || !lname || !phone) {
-            showToast("Preencha todos os campos obrigatórios.", "error");
+        // 1. Validação de Campos Vazios
+        if (!fname || !lname || !phone || !cpfVal) {
+            showToast("Preencha todos os campos obrigatórios, incluindo CPF.", "error");
             return;
         }
 
-        // Salva dados parciais no perfil do usuário se estiver logado
+        // 2. Validação RIGOROSA de CPF (NOVO)
+        if (!isValidCPF(cpfVal)) {
+            showToast("CPF Inválido. Verifique os números digitados.", "error");
+            if(cpfInput) {
+                cpfInput.style.borderColor = "red";
+                cpfInput.focus();
+                // Reseta a cor depois de 3 segundos
+                setTimeout(() => cpfInput.style.borderColor = "#e0e0e0", 3000);
+            }
+            return; // PARA AQUI se o CPF for ruim
+        }
+
+        // Se chegou aqui, o CPF é válido matematicamente
         if (auth.currentUser) {
             try {
-                const cpfVal = document.getElementById("reg-cpf") ? document.getElementById("reg-cpf").value : "";
                 await db.collection("users").doc(auth.currentUser.uid).set({
                     firstName: fname,
                     lastName: lname,
@@ -79,7 +126,7 @@ function setupStepNavigation() {
     });
 
     document.getElementById("btn-go-payment").addEventListener("click", async () => {
-        // 1. Verificação de Segurança do Carrinho
+        // Verificação de Segurança do Carrinho
         const cart = CartManager.get();
         if (cart.length === 0) {
             showToast("Seu carrinho está vazio!", "error");
@@ -206,7 +253,6 @@ async function initPaymentBrick() {
     const cart = CartManager.get();
     const productsTotal = CartManager.total();
     
-    // Verificação extra de valor
     if (productsTotal <= 0) {
         document.getElementById("brick-loading-message").innerText = "Carrinho vazio ou valor inválido.";
         document.getElementById("brick-loading-message").style.color = "red";
@@ -215,12 +261,10 @@ async function initPaymentBrick() {
 
     const finalTotal = productsTotal + currentShippingCost;
 
-    // Atualiza resumo visual
     document.getElementById("payment-subtotal-display").innerText = `R$ ${productsTotal.toFixed(2).replace('.', ',')}`;
     document.getElementById("payment-shipping-display").innerText = currentShippingCost === 0 ? "Grátis" : `R$ ${currentShippingCost.toFixed(2).replace('.', ',')}`;
     document.getElementById("payment-total-display").innerText = `R$ ${finalTotal.toFixed(2).replace('.', ',')}`;
 
-    // Coleta dados do DOM
     const firstName = document.getElementById("reg-first-name").value;
     const lastName = document.getElementById("reg-last-name").value;
     const rawPhone = document.getElementById("reg-phone").value;
@@ -231,16 +275,14 @@ async function initPaymentBrick() {
     const number = document.getElementById("num").value || "S/N";
     const city = document.getElementById("city-select").value || "Cidade";
 
-    // GARANTIA DE E-MAIL (Evita erro de User Invalid)
     let email = document.getElementById("reg-email").value;
     if((!email || email.trim() === "") && auth.currentUser) email = auth.currentUser.email;
-    if(!email || email.trim() === "") email = "cliente@eletrobusiness.com.br"; // Fallback final
+    if(!email || email.trim() === "") email = "cliente@eletrobusiness.com.br"; 
 
     const user = auth.currentUser;
     const uid = user ? user.uid : 'guest';
 
     try {
-        // 1. Cria Preferência no Back-end (Gera ID do Pedido)
         const response = await fetch(API_URLS.CREATE_PREFERENCE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -262,12 +304,9 @@ async function initPaymentBrick() {
             const errData = await response.json();
             throw new Error("Erro ao criar preferência: " + (errData.error || "Desconhecido"));
         }
-        const data = await response.json(); // Recebe { preferenceId, orderId }
+        const data = await response.json(); 
         const currentOrderId = data.orderId; 
         
-        console.log("Preferência criada. Order ID:", currentOrderId);
-
-        // 2. Monta o Brick (APENAS PIX)
         if (paymentBrickController) paymentBrickController.unmount(); 
         
         const builder = mp.bricks();
@@ -286,7 +325,7 @@ async function initPaymentBrick() {
                     creditCard: [],      
                     debitCard: [],       
                     ticket: [],          
-                    bankTransfer: ['pix'] // Habilita APENAS Pix
+                    bankTransfer: ['pix'] 
                 },
                 visual: { 
                     style: { theme: 'light' },
@@ -298,17 +337,13 @@ async function initPaymentBrick() {
                     document.getElementById("brick-loading-message").style.display = 'none';
                 },
                 onSubmit: ({ formData }) => {
-                    // LIMPEZA DE DADOS (CRUCIAL PARA EVITAR ERRO DE USUÁRIO INVÁLIDO)
                     const cleanCpf = rawCpf.replace(/\D/g, '');
                     const cleanPhone = rawPhone.replace(/\D/g, '');
-                    
-                    // Formatação segura de telefone (DDD + Número)
                     const areaCode = cleanPhone.length >= 2 ? cleanPhone.substring(0, 2) : "11";
                     const phoneNumber = cleanPhone.length > 2 ? cleanPhone.substring(2) : "900000000";
 
-                    // Cria objeto Payer robusto
                     const customPayer = {
-                        email: email, // Usa o e-mail garantido (com fallback)
+                        email: email, 
                         first_name: firstName,
                         last_name: lastName,
                         identification: { type: "CPF", number: cleanCpf },
@@ -321,12 +356,11 @@ async function initPaymentBrick() {
                         }
                     };
 
-                    // --- SALVAMENTO GLOBAL DE DADOS (ADMIN) ---
                     const globalOrderData = {
                         orderId: currentOrderId,
                         userId: uid,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        status: 'pending_payment', // Status Inicial
+                        status: 'pending_payment', 
                         statusText: 'Aguardando Pagamento',
                         paymentMethod: 'pix',
                         total: finalTotal,
@@ -344,12 +378,10 @@ async function initPaymentBrick() {
                         }
                     };
 
-                    // Salva no Firestore ANTES de processar o pagamento
                     db.collection("orders").doc(currentOrderId).set(globalOrderData, { merge: true })
-                    .then(() => console.log("Dados do pedido salvos globalmente."))
-                    .catch(err => console.error("Erro ao salvar dados globais:", err));
+                    .then(() => console.log("Dados salvos."))
+                    .catch(err => console.error("Erro ao salvar:", err));
 
-                    // --- ENVIA PAGAMENTO PARA API ---
                     return new Promise((resolve, reject) => {
                         fetch(API_URLS.CREATE_PAYMENT, {
                             method: "POST",
@@ -359,7 +391,7 @@ async function initPaymentBrick() {
                                 orderId: currentOrderId,
                                 items: cart, 
                                 shippingCost: currentShippingCost,
-                                customPayer: customPayer // Envia o payer corrigido
+                                customPayer: customPayer 
                             })
                         })
                         .then(async res => {
@@ -370,15 +402,11 @@ async function initPaymentBrick() {
                             return res.json();
                         })
                         .then(paymentResult => {
-                            console.log("Status Pagamento:", paymentResult.status);
                             CartManager.clear();
-
-                            // Se for Pix pendente (normal)
                             if (paymentResult.status === 'pending' && paymentResult.point_of_interaction) {
                                 showPixScreen(paymentResult);
                                 resolve();
                             } else {
-                                // Caso aprove direto
                                 window.location.href = "pedidos.html"; 
                                 resolve();
                             }
