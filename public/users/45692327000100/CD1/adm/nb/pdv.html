@@ -134,6 +134,7 @@
 
         // Função de Polling (Escuta do Firebase)
         // Função de Polling (Escuta do Firebase) - ATUALIZADA COM ENDEREÇO DE COLETA
+        // Função de Polling (Escuta do Firebase) - ATUALIZADA
         function startOrderPolling() {
             if (realtimeOrdersUnsubscribe) realtimeOrdersUnsubscribe();
 
@@ -151,31 +152,35 @@
                     let itemsStr = "Sem itens";
                     if (data.items && Array.isArray(data.items)) itemsStr = data.items.map(i => `${i.quantity}x ${i.name}`).join(', ');
 
-                    // --- LÓGICA DO ENDEREÇO DE COLETA ---
+                    // --- LÓGICA DE EXIBIÇÃO DO ENDEREÇO ---
                     let addressDisplay = 'Endereço não informado';
+                    let shippingMode = data.shipping?.mode || 'delivery';
+
                     if (data.shipping) {
-                        if (data.shipping.mode === 'pickup') {
-                            // Se for retirada, mostra a loja
-                            // Extrai o nome da cidade ou loja da string salva ou usa fallback
-                            const storeName = data.shipping.address.replace('Retirada: ', '') || 'Loja';
+                        if (shippingMode === 'pickup') {
+                            // Limpa a string para pegar só o nome da cidade/loja
+                            // Ex: "Retirada: Ipixuna" vira "Ipixuna"
+                            const storeName = (data.shipping.address || '').replace('Retirada: ', '') || 'Loja';
                             addressDisplay = `<i class='bx bxs-store' style="color:var(--info-blue)"></i> Coleta na loja de ${storeName}`;
                         } else {
-                            // Se for entrega, mostra o endereço normal
+                            // Entrega normal
                             addressDisplay = `<i class='bx bxs-truck' style="color:#666"></i> ${data.shipping.address}`;
                         }
                     }
-                    // ------------------------------------
+                    // --------------------------------------
 
                     fetchedOrders.push({
                         id: doc.id,
                         displayId: data.orderId || doc.id.substring(0, 6),
                         time: formatTime(dateObj),
                         client: data.client ? data.client.name : 'Cliente Online',
-                        address: addressDisplay, // Usa a string formatada
+                        address: addressDisplay, // HTML formatado
+                        rawAddress: data.shipping?.address || '', // Endereço puro para lógica interna
                         status: mapStatusFirebaseToUI(data.status),
                         total: formatCurrency(data.total || 0),
                         items: itemsStr,
-                        shippingMode: data.shipping?.mode || 'delivery' // Guarda o modo para usar no modal
+                        shippingMode: shippingMode,
+                        paymentMethod: data.paymentMethod || 'Pix'
                     });
                 });
 
@@ -1481,7 +1486,7 @@
                     // 1. ATUALIZAÇÃO VISUAL DA NAVBAR
                     const previouslyActive = document.querySelector('.navbar-item.active');
                     if (previouslyActive === item && item.dataset.page !== 'pedidos') { return; }
-                    
+
                     navbarItems.forEach(navItem => navItem.classList.remove('active'));
                     item.classList.add('active');
                     updateNavbarHighlight(item);
@@ -1491,11 +1496,11 @@
                     allPages.forEach(page => page.style.display = 'none');
                     const pageId = item.dataset.page + '-page';
                     const targetPage = document.getElementById(pageId);
-                    
+
                     if (targetPage) targetPage.style.display = 'block';
 
                     // 3. LÓGICA ESPECÍFICA DE CADA PÁGINA
-                    
+
                     // --- CORREÇÃO AQUI: RESET DA ABA PEDIDOS ---
                     if (item.dataset.page === 'pedidos') {
                         // Limpa notificações
@@ -2199,89 +2204,93 @@
 
             // 1. Função para Abrir o Modal (Lógica de Navegação Corrigida)
             // 1. Função para Abrir o Modal (ATUALIZADA COM STATUS DE RETIRADA)
-        window.openOrderDetailModal = (orderId) => {
-            const order = activeOrdersData.find(o => o.id === orderId);
-            if (!order) return;
+            // 1. Função para Abrir o Modal (ATUALIZADA COM TAG DE ENTREGA)
+            window.openOrderDetailModal = (orderId) => {
+                const order = activeOrdersData.find(o => o.id === orderId);
+                if (!order) return;
 
-            currentOpenOrder = order;
+                currentOpenOrder = order;
 
-            document.getElementById('modal-order-id').textContent = `#${order.displayId}`;
-            document.getElementById('modal-order-client').textContent = order.client;
-            // O address já vem com o ícone HTML da função anterior, então usamos innerHTML
-            document.getElementById('modal-order-address').innerHTML = order.address;
-            document.getElementById('modal-calc-total').textContent = order.total;
-            
-            // Preenche lista de itens
-            const itemsContainer = document.getElementById('modal-order-items-list');
-            itemsContainer.innerHTML = '';
-            const divItem = document.createElement('div');
-            divItem.className = 'modal-order-item';
-            divItem.innerHTML = `<span class="item-info-text">${order.items}</span>`;
-            itemsContainer.appendChild(divItem);
+                document.getElementById('modal-order-id').textContent = `#${order.displayId}`;
+                document.getElementById('modal-order-client').textContent = order.client;
 
-            // --- LÓGICA DO STEPPER ADAPTÁVEL (ENTREGA vs RETIRADA) ---
-            
-            // 1. Ajusta os Textos e Ícones baseados no modo de envio
-            const stepEnviado = document.getElementById('step-enviado');
-            const stepFinalizado = document.getElementById('step-finalizado');
-            
-            if (order.shippingMode === 'pickup') {
-                // Modo Retirada
-                if(stepEnviado) {
-                    stepEnviado.querySelector('span').textContent = "Pronto p/ Retirada";
-                    stepEnviado.querySelector('.step-icon').innerHTML = "<i class='bx bxs-store'></i>";
-                    stepEnviado.title = "Mudar para Pronto p/ Retirada";
+                // --- DETALHE DA ENTREGA (NOVO) ---
+                let deliveryTag = '';
+
+                if (order.shippingMode === 'pickup') {
+                    // Se for retirada, a string order.address já diz "Coleta na loja..."
+                    // Adicionamos uma tag azul para reforçar
+                    deliveryTag = `<span style="display:inline-block; margin-top:4px; font-size:0.75rem; background:#e3f2fd; color:#0d47a1; padding:2px 8px; border-radius:4px; font-weight:600;">RETIRADA NA LOJA</span>`;
+                } else {
+                    // Se for entrega, adicionamos a tag verde "Receber em Casa"
+                    deliveryTag = `<span style="display:inline-block; margin-top:4px; font-size:0.75rem; background:#e6fffa; color:#00695c; padding:2px 8px; border-radius:4px; font-weight:600;">ENTREGA EM CASA</span>`;
                 }
-                if(stepFinalizado) {
-                    stepFinalizado.querySelector('span').textContent = "Retirado";
-                    stepFinalizado.title = "Mudar para Retirado";
-                }
-            } else {
-                // Modo Entrega (Padrão)
-                if(stepEnviado) {
-                    stepEnviado.querySelector('span').textContent = "Enviado";
-                    stepEnviado.querySelector('.step-icon').innerHTML = "<i class='bx bx-car'></i>";
-                    stepEnviado.title = "Mudar para Enviado";
-                }
-                if(stepFinalizado) {
-                    stepFinalizado.querySelector('span').textContent = "Entregue";
-                    stepFinalizado.title = "Mudar para Entregue";
-                }
-            }
 
-            // 2. Aplica as classes Active/Completed/Locked
-            const steps = ['pendente', 'preparando', 'enviado', 'finalizado'];
-            let currentStatus = order.status.toLowerCase();
-            // Normalização
-            if (currentStatus === 'approved') currentStatus = 'pendente';
-            if (currentStatus === 'preparation') currentStatus = 'preparando';
-            if (currentStatus === 'shipped') currentStatus = 'enviado';
-            if (currentStatus === 'delivered') currentStatus = 'finalizado';
+                // Injeta o endereço (com ícone) + a tag nova logo abaixo
+                document.getElementById('modal-order-address').innerHTML = `
+                ${order.address}<br>${deliveryTag}
+            `;
+                // --------------------------------
 
-            const currentIndex = steps.indexOf(currentStatus);
+                document.getElementById('modal-calc-total').textContent = order.total;
+                document.getElementById('modal-payment-method').textContent = "Pagamento: " + order.paymentMethod;
 
-            steps.forEach((stepName, index) => {
-                const el = document.getElementById(`step-${stepName}`);
-                if (el) {
-                    el.classList.remove('active', 'completed', 'locked');
-                    el.onclick = null; 
+                // Lista de Itens
+                const itemsContainer = document.getElementById('modal-order-items-list');
+                itemsContainer.innerHTML = '';
+                const divItem = document.createElement('div');
+                divItem.className = 'modal-order-item';
+                divItem.innerHTML = `<span class="item-info-text">${order.items}</span>`;
+                itemsContainer.appendChild(divItem);
 
-                    if (index < currentIndex) {
-                        el.classList.add('completed');
-                        el.onclick = () => manualSetStatus(stepName);
-                    } 
-                    else if (index === currentIndex) {
-                        el.classList.add('active');
-                        el.style.cursor = 'default';
-                    } 
-                    else {
-                        el.classList.add('locked');
+                // Stepper (Lógica Visual)
+                const steps = ['pendente', 'preparando', 'enviado', 'finalizado'];
+                let currentStatus = order.status.toLowerCase();
+                if (currentStatus === 'approved') currentStatus = 'pendente';
+                if (currentStatus === 'preparation') currentStatus = 'preparando';
+                if (currentStatus === 'shipped') currentStatus = 'enviado';
+                if (currentStatus === 'delivered') currentStatus = 'finalizado';
+
+                // Ajuste de Texto do Stepper para Retirada
+                const stepEnviado = document.getElementById('step-enviado');
+                const stepFinalizado = document.getElementById('step-finalizado');
+
+                if (order.shippingMode === 'pickup') {
+                    if (stepEnviado) {
+                        stepEnviado.querySelector('span').textContent = "Pronto p/ Retirada";
+                        stepEnviado.querySelector('.step-icon').innerHTML = "<i class='bx bxs-store'></i>";
                     }
+                    if (stepFinalizado) stepFinalizado.querySelector('span').textContent = "Retirado";
+                } else {
+                    if (stepEnviado) {
+                        stepEnviado.querySelector('span').textContent = "Enviado";
+                        stepEnviado.querySelector('.step-icon').innerHTML = "<i class='bx bx-car'></i>";
+                    }
+                    if (stepFinalizado) stepFinalizado.querySelector('span').textContent = "Entregue";
                 }
-            });
 
-            openModal(document.getElementById('order-details-modal'));
-        };
+                const currentIndex = steps.indexOf(currentStatus);
+
+                steps.forEach((stepName, index) => {
+                    const el = document.getElementById(`step-${stepName}`);
+                    if (el) {
+                        el.classList.remove('active', 'completed', 'locked');
+                        el.onclick = null;
+
+                        if (index < currentIndex) {
+                            el.classList.add('completed');
+                            el.onclick = () => manualSetStatus(stepName);
+                        } else if (index === currentIndex) {
+                            el.classList.add('active');
+                            el.style.cursor = 'default';
+                        } else {
+                            el.classList.add('locked');
+                        }
+                    }
+                });
+
+                openModal(document.getElementById('order-details-modal'));
+            };
 
             // 2. Função para Mudar Status Manualmente
             window.manualSetStatus = async (targetUiStatus) => {

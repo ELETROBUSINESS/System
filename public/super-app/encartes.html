@@ -11,6 +11,14 @@
     <!-- Ícones -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 
+    <!-- html2canvas para gerar PNG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <!-- JSZip para gerar ZIP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- FileSaver para salvar o arquivo -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -19,10 +27,10 @@
     <style>
         :root {
             /* Paleta Black Friday Dark Mode */
-            --bf-bg: #111111;       /* Fundo Preto */
-            --bf-text: #ffffff;     /* Texto Branco */
-            --bf-red: #cf0437;      /* Vermelho Destaque */
-            --bf-yellow: #ffca3a;   /* Amarelo (secundário, se necessário) */
+            --bf-bg: #111111;       
+            --bf-text: #ffffff;     
+            --bf-red: #cf0437;      
+            --bf-yellow: #ffca3a;   
             
             --paper-width: 210mm;
             --paper-height: 297mm;
@@ -69,10 +77,48 @@
             color: var(--bf-red);
             letter-spacing: 1px;
             text-transform: uppercase;
+            margin: 0 0 10px 0;
         }
 
-        /* Ajuste do título no modo P&B */
         body.bw-mode .controls-left h1 { color: black; }
+
+        .layout-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-layout {
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            padding: 5px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+        
+        .btn-layout.active {
+            background: var(--bf-red);
+            border-color: var(--bf-red);
+            font-weight: bold;
+        }
+        
+        body.bw-mode .btn-layout { background: #eee; color: black; border-color: #ccc; }
+        body.bw-mode .btn-layout.active { background: black; color: white; border-color: black; }
+
+        /* Botão ZIP (inicialmente oculto, aparece no modo poster) */
+        #btn-zip-all {
+            display: none;
+            background: #25D366; /* Verde destaque */
+            border-color: #25D366;
+            color: white;
+            font-weight: bold;
+        }
+        
+        #btn-zip-all:hover {
+            background: #1ebc57;
+        }
 
         .controls-right {
             display: flex;
@@ -139,55 +185,237 @@
             filter: brightness(1.1);
         }
         
-        body.bw-mode .btn-print {
-            background-color: black;
-        }
+        body.bw-mode .btn-print { background-color: black; }
 
-        /* --- ÁREA DE IMPRESSÃO (Folha A4) --- */
+        /* --- CONTAINER PRINCIPAL --- */
         .page-container {
             width: var(--paper-width);
-            min-height: var(--paper-height); /* Força altura exata A4 */
-            height: var(--paper-height);    /* Importante para cálculo percentual */
             background: white;
-            /* MUDANÇA AQUI: Padding zero e margem apenas para tela */
-            padding: 0;
-            margin: 30px auto; 
+            margin: 30px auto;
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
             display: flex;
-            flex-wrap: wrap; /* Permite quebra de linha para 2x2 */
+            flex-wrap: wrap;
             align-content: flex-start;
+            padding: 0;
+            min-height: var(--paper-height);
         }
 
-        /* --- CARD DO ENCARTE --- */
+        /* --- MODO GRADE (PADRÃO 4x4) --- */
+        .page-container.grid-mode {
+            height: var(--paper-height); 
+            overflow: hidden; 
+            padding: 10px;
+            gap: 10px; 
+        }
+        
+        .page-container.grid-mode .offer-card {
+            width: calc(50% - 5px); 
+            height: calc(50% - 5px); 
+            border: 3px solid var(--bf-black);
+            border-radius: 8px;
+        }
+        
+        .page-container.grid-mode .product-img-box {
+            display: none; 
+        }
+        
+        .page-container.grid-mode .poster-logo {
+            display: none;
+        }
+
+        /* --- MODO CARTAZ (1x1 - 1080x1920) --- */
+        .page-container.poster-mode {
+            height: auto;
+            background: transparent;
+            box-shadow: none;
+            gap: 50px;
+            flex-direction: column;
+            align-items: center;
+            width: 100%; 
+        }
+
+        .page-container.poster-mode .offer-card {
+            width: 1080px; 
+            height: 1920px;
+            transform-origin: top center; 
+            margin-bottom: 20px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            border: 20px solid var(--bf-red); 
+            border-radius: 0; 
+            background-color: var(--bf-bg);
+            page-break-after: always;
+        }
+
+        /* Reativa o Header (Faixa) no Modo Poster com estilo ajustado */
+        .page-container.poster-mode .card-header {
+            display: block; 
+            font-size: 5rem; /* Fonte Gigante */
+            padding: 30px 0;
+            border-bottom: 10px solid var(--bf-red);
+        }
+        
+        .page-container.poster-mode .poster-logo {
+            display: none; /* Desativa logo imagem */
+        }
+
+        /* CARD BODY NO MODO POSTER (Área Preta com Infos) */
+        .page-container.poster-mode .card-body {
+            padding: 30px 80px 80px 80px;
+            flex: 1; 
+            justify-content: flex-start;
+        }
+
+        .page-container.poster-mode .product-name {
+            font-size: 4.5rem;
+            margin-bottom: 30px;
+            line-height: 1.1;
+            margin-top: 30px;
+        }
+
+        .page-container.poster-mode .price-int {
+            font-size: 24rem; 
+            letter-spacing: -10px;
+        }
+        
+        .page-container.poster-mode .currency-symbol {
+            font-size: 8rem;
+            margin-top: 60px;
+            margin-right: 20px;
+        }
+        
+        .page-container.poster-mode .price-cents {
+            font-size: 9rem;
+            border-bottom-width: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .page-container.poster-mode .price-right-col {
+            margin-left: 20px;
+            margin-top: 40px;
+        }
+
+        .page-container.poster-mode .cash-label-small {
+            font-size: 1.8rem;
+            padding: 8px 25px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        /* IMAGEM DO PRODUTO (Maior Destaque e Transparente) */
+        .page-container.poster-mode .product-img-box {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Aumentado a altura para destaque */
+            height: 1000px; 
+            width: 100%;
+            padding: 0; 
+            /* Fundo Transparente */
+            background: transparent; 
+            overflow: hidden;
+            position: relative;
+            margin-top: 20px;
+        }
+        
+        .page-container.poster-mode .product-img {
+            width: 100%;
+            height: 100%;
+            /* Contain para não cortar a imagem */
+            object-fit: contain; 
+        }
+        
+        .page-container.poster-mode .price-from {
+            font-size: 2.8rem;
+            margin-bottom: 15px;
+        }
+        
+        .page-container.poster-mode .price-from::after {
+            height: 4px; 
+        }
+
+        .page-container.poster-mode .savings-box {
+            font-size: 2.5rem;
+            border-width: 4px;
+            padding: 10px 40px;
+            margin-top: 20px;
+        }
+
+        .page-container.poster-mode .credit-card-box {
+            margin-top: 40px;
+            padding: 20px;
+            border-width: 3px;
+            width: 90%; 
+        }
+
+        .page-container.poster-mode .credit-label {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+        
+        .page-container.poster-mode .installment-price {
+            font-size: 3rem;
+        }
+        
+        .page-container.poster-mode .installment-detail {
+            font-size: 1.8rem;
+        }
+        
+        .page-container.poster-mode .card-footer-date {
+            font-size: 1.3rem;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top-width: 3px;
+            margin-bottom: 20px; 
+        }
+
+        /* Botão de Download PNG */
+        .btn-download-png {
+            display: none; 
+        }
+        
+        .page-container.poster-mode .offer-card:hover .btn-download-png {
+            display: flex;
+        }
+        
+        .btn-download-png {
+            position: absolute;
+            top: 300px; 
+            right: 40px;
+            background: #25D366; 
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            border-radius: 60px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.2s;
+        }
+        
+        .btn-download-png:hover {
+            transform: scale(1.1);
+        }
+
+        /* --- CARD GERAL --- */
         .offer-card {
-            /* MUDANÇA AQUI: Tamanho exato 50% largura e altura */
-            width: 50%;
-            height: 50%;
-            
-            /* Borda interna para não somar ao tamanho total (box-sizing já está border-box) */
-            border: 4px solid var(--bf-red); 
-            border-radius: 0;
-            
             display: flex;
             flex-direction: column;
             background: var(--bf-bg); 
             color: var(--bf-text);
             position: relative;
             overflow: hidden;
-            page-break-inside: avoid;
-            
-            /* Pequeno ajuste para garantir que bordas não fiquem duplas demais visualmente na união, 
-               mas mantendo simples para corte */
-            margin: 0; 
         }
         
         body.bw-mode .offer-card {
-            border: 2px solid black;
+            border-color: black !important;
             background: white;
             color: black;
         }
 
-        /* Cabeçalho */
         .card-header {
             background-color: var(--bf-red);
             color: white;
@@ -206,7 +434,6 @@
             border-bottom: 2px solid black;
         }
 
-        /* Corpo */
         .card-body {
             flex: 1;
             padding: 15px;
@@ -227,7 +454,6 @@
             flex: 1;
         }
 
-        /* Produto */
         .product-name {
             font-family: 'Poppins', sans-serif;
             font-size: 1.3rem;
@@ -240,8 +466,9 @@
             overflow: hidden;
             width: 95%;
         }
+        
+        body.bw-mode .product-name { color: black; }
 
-        /* Preço "De" */
         .price-from {
             font-size: 1.1rem;
             color: #aaa; 
@@ -252,7 +479,6 @@
             height: 1.2em;
         }
         
-        /* Linha Vermelha cortando o preço */
         .price-from::after {
             content: '';
             position: absolute;
@@ -267,7 +493,6 @@
         body.bw-mode .price-from { color: #555; }
         body.bw-mode .price-from::after { background-color: black; }
 
-        /* NOVA ESTRUTURA DO PREÇO */
         .price-main-wrapper {
             display: flex;
             align-items: flex-start; 
@@ -280,10 +505,7 @@
             text-shadow: 2px 2px 0px rgba(0,0,0,0.5);
         }
         
-        body.bw-mode .price-main-wrapper { 
-            color: black; 
-            text-shadow: none;
-        }
+        body.bw-mode .price-main-wrapper { color: black; text-shadow: none; }
 
         .currency-symbol {
             font-size: 2rem;
@@ -292,24 +514,24 @@
             font-weight: 700;
             color: var(--bf-text);
         }
+        
+        body.bw-mode .currency-symbol { color: black; }
 
         .price-int {
             font-size: 7.5rem;
             letter-spacing: -4px;
         }
 
-        /* Coluna para Centavos e Label "À Vista" */
         .price-right-col {
             display: flex;
             flex-direction: column;
-            align-items: center; /* Centralizado */
+            align-items: center;
             margin-left: 5px;
             margin-top: 12px;
         }
 
         .price-cents {
             font-size: 3rem;
-            /* Sublinhado Vermelho */
             border-bottom: 4px solid var(--bf-red); 
             line-height: 0.9;
             padding-bottom: 2px;
@@ -318,7 +540,7 @@
         body.bw-mode .price-cents { border-bottom-color: black; }
 
         .cash-label-small {
-            background: var(--bf-red); /* Fundo Vermelho */
+            background: var(--bf-red);
             color: white;
             font-family: 'Poppins', sans-serif;
             font-size: 0.7rem;
@@ -326,16 +548,12 @@
             font-weight: 800;
             padding: 3px 10px;
             border-radius: 4px;
-            margin-top: 8px; /* Espaço entre barra e label */
+            margin-top: 8px;
             white-space: nowrap;
         }
         
-        body.bw-mode .cash-label-small {
-            background: black;
-            color: white;
-        }
+        body.bw-mode .cash-label-small { background: black; }
 
-        /* Badge de Economia */
         .savings-box {
             border: 2px solid var(--bf-red);
             color: var(--bf-red);
@@ -348,12 +566,8 @@
             text-transform: uppercase;
         }
         
-        body.bw-mode .savings-box {
-            border-color: black;
-            color: black;
-        }
+        body.bw-mode .savings-box { border-color: black; color: black; }
 
-        /* Seção Cartão de Crédito */
         .credit-card-box {
             width: 95%;
             padding: 8px;
@@ -366,9 +580,7 @@
             background: transparent;
         }
         
-        body.bw-mode .credit-card-box {
-            border-color: black;
-        }
+        body.bw-mode .credit-card-box { border-color: black; }
 
         .credit-label {
             font-size: 0.8rem;
@@ -386,6 +598,8 @@
             color: var(--bf-text);
             font-family: 'Roboto', sans-serif;
         }
+        
+        body.bw-mode .installment-price { color: black; }
 
         .installment-detail {
             font-size: 0.8rem;
@@ -394,12 +608,10 @@
         
         body.bw-mode .installment-detail { color: #555; }
 
-        /* Footer com Data */
         .card-footer-date {
             width: 100%;
             font-size: 0.75rem;
             color: #999;
-            /* Linha pontilhada vermelha */
             border-top: 2px dotted var(--bf-red); 
             padding-top: 8px;
             margin-top: 10px;
@@ -407,28 +619,10 @@
             text-transform: uppercase;
         }
         
-        body.bw-mode .card-footer-date {
-            color: #555;
-            border-top-color: black;
-        }
+        body.bw-mode .card-footer-date { color: #555; border-top-color: black; }
 
-        #loading {
-            width: 100%; /* Ocupa linha inteira */
-            text-align: center;
-            padding: 50px;
-            font-size: 1.2rem;
-            color: #666;
-        }
-
-        .error-box {
-            width: 100%;
-            background-color: #fee2e2;
-            border: 2px solid #ef4444;
-            color: #991b1b;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: left;
-        }
+        #loading { width: 100%; text-align: center; padding: 50px; color: #666; }
+        .error-box { width: 100%; background: #fee2e2; border: 2px solid #ef4444; color: #991b1b; padding: 20px; text-align: left; }
 
         @media print {
             @page {
@@ -442,24 +636,40 @@
                 margin: 0;
             }
             .screen-controls { display: none !important; }
+            /* Esconde botões de ação e download na impressão */
+            .btn-download-png { display: none !important; }
+            
             .page-container {
                 box-shadow: none;
                 margin: 0;
                 width: 100%;
-                min-height: 100vh;
-                height: 100vh; /* Garante altura total na impressão */
-                padding: 0; /* Padding Zero para impressão sangrada */
+                padding: 10mm; 
             }
-            .offer-card {
-                /* Força tamanho exato */
-                height: 50% !important; 
-                width: 50% !important;
-                border: 2px solid var(--bf-red); /* Borda um pouco menor na impressão para não somar 8px no meio */
+            
+            .page-container.grid-mode {
+                height: auto; 
+                gap: 5mm; 
             }
-            /* Ajuste específico para P&B na impressão */
-            body.bw-mode .offer-card {
-                border: 1px solid black;
+            .page-container.grid-mode .offer-card {
+                height: calc((297mm - 40mm) / 2) !important;
+                width: auto !important; 
+                border: 2px solid var(--bf-black); 
             }
+            
+            .page-container.poster-mode {
+                display: block;
+                padding: 0;
+            }
+            .page-container.poster-mode .offer-card {
+                width: 100%;
+                height: 100vh; 
+                border: none;
+                margin: 0;
+                page-break-after: always;
+                border-radius: 0;
+            }
+            
+            body.bw-mode .offer-card { border-color: black !important; }
         }
     </style>
 </head>
@@ -467,7 +677,14 @@
 
     <div class="screen-controls">
         <div class="controls-left">
-            <h1>🏷️ Encartes Black Friday</h1>
+            <h1>🏷️ Encartes BF</h1>
+            <div class="layout-buttons">
+                <button class="btn-layout active" id="btn-grid" onclick="setLayout('grid')">4 por Folha</button>
+                <button class="btn-layout" id="btn-poster" onclick="setLayout('poster')">Cartaz 1x1 (PNG)</button>
+                <button class="btn-layout" id="btn-zip-all" onclick="downloadAllZIP()">
+                    <i class='bx bxs-file-archive'></i> Baixar Todos (ZIP)
+                </button>
+            </div>
         </div>
         
         <div class="controls-right">
@@ -484,7 +701,8 @@
         </div>
     </div>
 
-    <div class="page-container" id="printable-area">
+    <!-- Container começa no modo grade -->
+    <div class="page-container grid-mode" id="printable-area">
         <div id="loading">Carregando ofertas...</div>
     </div>
 
@@ -519,6 +737,73 @@
             }
         }
 
+        // Função de troca de layout
+        function setLayout(mode) {
+            const container = document.getElementById('printable-area');
+            const btnGrid = document.getElementById('btn-grid');
+            const btnPoster = document.getElementById('btn-poster');
+            const btnZip = document.getElementById('btn-zip-all');
+
+            if (mode === 'grid') {
+                container.classList.remove('poster-mode');
+                container.classList.add('grid-mode');
+                btnGrid.classList.add('active');
+                btnPoster.classList.remove('active');
+                btnZip.style.display = 'none'; // Esconde ZIP no grid
+            } else {
+                container.classList.remove('grid-mode');
+                container.classList.add('poster-mode');
+                btnGrid.classList.remove('active');
+                btnPoster.classList.add('active');
+                btnZip.style.display = 'inline-flex'; // Mostra ZIP no poster
+            }
+        }
+
+        // Função para Baixar Todos em ZIP
+        async function downloadAllZIP() {
+            const btn = document.getElementById('btn-zip-all');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Gerando...";
+            btn.disabled = true;
+
+            const zip = new JSZip();
+            const cards = document.querySelectorAll('.offer-card');
+            
+            // Loop para processar cada card
+            // Usamos um loop sequencial para não travar o navegador
+            for (let i = 0; i < cards.length; i++) {
+                const card = cards[i];
+                // Pega nome do produto para nomear arquivo
+                const nameEl = card.querySelector('.product-name');
+                let fileName = `oferta-${i+1}.png`;
+                if(nameEl) {
+                    fileName = nameEl.innerText.replace(/[^a-z0-9]/gi, '_').toLowerCase().substring(0, 30) + '.png';
+                }
+
+                try {
+                    const canvas = await html2canvas(card, { 
+                        scale: 1, 
+                        useCORS: true, 
+                        backgroundColor: "#111111" 
+                    });
+                    
+                    // Converte para blob
+                    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                    zip.file(fileName, blob);
+                    
+                } catch (error) {
+                    console.error("Erro no card " + i, error);
+                }
+            }
+
+            // Gera o ZIP final
+            zip.generateAsync({type:"blob"}).then(function(content) {
+                saveAs(content, "encartes-blackfriday.zip");
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        }
+
         async function initApp() {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -550,7 +835,6 @@
                 let products = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    // Agora aceitamos produtos que tenham pelo menos o price
                     if (data.price) {
                         products.push({ id: doc.id, ...data });
                     }
@@ -574,66 +858,65 @@
                 const regularPrice = parseFloat(prod.price || 0);
                 const offerPrice = prod['price-oferta'] ? parseFloat(prod['price-oferta']) : 0;
                 
-                // Variáveis que vamos calcular
                 let mainPriceToDisplay = regularPrice;
                 let oldPriceHtml = '';
                 let savingsHtml = '';
                 let savingsValue = 0;
                 let creditCardHtml = '';
 
-                // --- 1. LÓGICA DE PREÇO (DE / POR) ---
                 if (offerPrice > 0 && offerPrice < regularPrice) {
-                    // Tem oferta
                     mainPriceToDisplay = offerPrice;
                     savingsValue = regularPrice - offerPrice;
-                    
-                    const fmtOld = formatMoney(regularPrice);
-                    const fmtSaved = formatMoney(savingsValue);
-                    
-                    oldPriceHtml = `<div class="price-from">De ${fmtOld}</div>`;
-                    savingsHtml = `<div class="savings-box">Economize ${fmtSaved}</div>`;
+                    oldPriceHtml = `<div class="price-from">De ${formatMoney(regularPrice)}</div>`;
+                    savingsHtml = `<div class="savings-box">Economize ${formatMoney(savingsValue)}</div>`;
                 } else {
-                    // Preço normal
                     mainPriceToDisplay = regularPrice;
                     oldPriceHtml = `<div class="price-from" style="visibility:hidden;">.</div>`;
                     savingsHtml = `<div class="savings-box" style="visibility:hidden;">.</div>`;
                 }
 
-                // --- 2. LÓGICA DE CARTÃO DE CRÉDITO ---
                 const dbParcelas = parseInt(prod['parcelas']);
                 const dbPcOferta = parseFloat(prod['pc-oferta']);
 
                 if (dbParcelas && dbPcOferta && dbPcOferta > 0) {
                     const valParcela = dbPcOferta / dbParcelas;
-                    const fmtParcela = formatMoney(valParcela);
-                    const fmtTotalPrazo = formatMoney(dbPcOferta);
-
                     creditCardHtml = `
                         <div class="credit-card-box">
                             <span class="credit-label">Ou a prazo no cartão</span>
-                            <span class="installment-price">${dbParcelas}x de ${fmtParcela}</span>
-                            <span class="installment-detail">Total a prazo: ${fmtTotalPrazo}</span>
+                            <span class="installment-price">${dbParcelas}x de ${formatMoney(valParcela)}</span>
+                            <span class="installment-detail">Total a prazo: ${formatMoney(dbPcOferta)}</span>
                         </div>
                     `;
                 } else {
                     const installments = 10;
                     const installmentValue = regularPrice / installments;
-                    const fmtInstallment = formatMoney(installmentValue);
-
                     creditCardHtml = `
                         <div class="credit-card-box">
                             <span class="credit-label">Parcelado no cartão</span>
-                            <span class="installment-price">${installments}x de ${fmtInstallment}</span>
+                            <span class="installment-price">${installments}x de ${formatMoney(installmentValue)}</span>
                         </div>
                     `;
                 }
 
                 const [intPart, decPart] = mainPriceToDisplay.toFixed(2).split('.');
+                const imgUrl = prod.imgUrl || 'https://placehold.co/800x800/222/fff?text=Produto';
 
                 const cardHtml = `
                     <div class="offer-card">
+                        <button class="btn-download-png" onclick="downloadPNG(this)">
+                            <i class='bx bxs-download'></i> Baixar PNG
+                        </button>
+
                         <div class="card-header">BLACK FRIDAY</div>
                         
+                        <div class="poster-logo">
+                            <!-- Logo imagem removido conforme pedido -->
+                        </div>
+                        
+                        <div class="product-img-box">
+                            <img src="${imgUrl}" alt="${prod.name}" class="product-img" crossorigin="anonymous">
+                        </div>
+
                         <div class="card-body">
                             <div class="card-content-center">
                                 <div class="product-name">${prod.name}</div>
