@@ -194,17 +194,58 @@ function calculateShipping() {
     }
 }
 
+document.getElementById("btn-go-payment").addEventListener("click", async () => {
+    // 1. Verificação de Segurança do Carrinho
+    const cart = CartManager.get();
+    if (cart.length === 0) {
+        showToast("Seu carrinho está vazio!", "error");
+        setTimeout(() => window.location.href = "index.html", 1500);
+        return;
+    }
+
+    if (deliveryMode === 'delivery') {
+        const cep = document.getElementById("cep").value;
+        const city = document.getElementById("city-select").value;
+        const address = document.getElementById("address").value;
+        const displayCost = document.getElementById("shipping-cost-display").innerText;
+        
+        if (!cep || !city || !address) {
+            showToast("Preencha o endereço completo.", "error");
+            return;
+        }
+        if (displayCost.includes("Não entregamos")) {
+            showToast("Não entregamos nesta região.", "error");
+            return;
+        }
+    } else {
+        if (!selectedStore) {
+            showToast("Selecione uma loja para retirada.", "error");
+            return;
+        }
+    }
+
+    changeStep(3);
+    await initPaymentBrick();
+});
+
+// SUBSTIUA A FUNÇÃO initPaymentBrick INTEIRA POR ESTA VERSÃO COM DEBUG:
 async function initPaymentBrick() {
     const cart = CartManager.get();
     const productsTotal = CartManager.total();
+    
+    // Proteção extra contra valor zero
+    if (productsTotal <= 0) {
+        document.getElementById("brick-loading-message").innerText = "Carrinho vazio. Adicione itens.";
+        document.getElementById("brick-loading-message").style.color = "red";
+        return;
+    }
+
     const finalTotal = productsTotal + currentShippingCost;
 
-    // Atualiza resumo visual
     document.getElementById("payment-subtotal-display").innerText = `R$ ${productsTotal.toFixed(2).replace('.', ',')}`;
     document.getElementById("payment-shipping-display").innerText = currentShippingCost === 0 ? "Grátis" : `R$ ${currentShippingCost.toFixed(2).replace('.', ',')}`;
     document.getElementById("payment-total-display").innerText = `R$ ${finalTotal.toFixed(2).replace('.', ',')}`;
 
-    // Coleta dados do DOM para uso no Brick e no Salvamento Global
     const firstName = document.getElementById("reg-first-name").value;
     const lastName = document.getElementById("reg-last-name").value;
     const rawPhone = document.getElementById("reg-phone").value;
@@ -217,13 +258,14 @@ async function initPaymentBrick() {
 
     let email = document.getElementById("reg-email").value;
     if((!email || email === "") && auth.currentUser) email = auth.currentUser.email;
-    if(!email) email = "cliente@eletrobusiness.com.br"; // Fallback
+    if(!email) email = "cliente@eletrobusiness.com.br";
 
     const user = auth.currentUser;
     const uid = user ? user.uid : 'guest';
 
     try {
-        // 1. Cria Preferência no Back-end (Gera ID do Pedido)
+        console.log("Iniciando criação de preferência...");
+        
         const response = await fetch(API_URLS.CREATE_PREFERENCE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -245,10 +287,15 @@ async function initPaymentBrick() {
             const errData = await response.json();
             throw new Error("Erro ao criar preferência: " + (errData.error || "Desconhecido"));
         }
-        const data = await response.json(); // Recebe { preferenceId, orderId }
-        const currentOrderId = data.orderId; // O ID único do pedido gerado
         
-        // 2. Monta o Brick (APENAS PIX)
+        const data = await response.json(); 
+        
+        // --- DEBUG CRÍTICO: Verifique isso no Console (F12) se der erro ---
+        console.log("✅ Preferência Criada. Order ID:", data.orderId);
+        
+        // Se o OrderID for sempre igual, o problema está no backend gerando IDs repetidos.
+        const currentOrderId = data.orderId; 
+        
         if (paymentBrickController) paymentBrickController.unmount(); 
         
         const builder = mp.bricks();
@@ -263,12 +310,11 @@ async function initPaymentBrick() {
                 },
             },
             customization: {
-                // CONFIGURAÇÃO DE PAGAMENTO EXCLUSIVO PIX
                 paymentMethods: {
-                    creditCard: [],      // Desabilita Cartão de Crédito
-                    debitCard: [],       // Desabilita Cartão de Débito
-                    ticket: [],          // Desabilita Boleto
-                    bankTransfer: ['pix'] // Habilita APENAS Pix
+                    creditCard: [],      
+                    debitCard: [],       
+                    ticket: [],          
+                    bankTransfer: ['pix'] 
                 },
                 visual: { 
                     style: { theme: 'light' },
@@ -280,7 +326,6 @@ async function initPaymentBrick() {
                     document.getElementById("brick-loading-message").style.display = 'none';
                 },
                 onSubmit: ({ formData }) => {
-                    // Prepara dados limpos
                     const cleanCpf = rawCpf.replace(/\D/g, '');
                     const cleanPhone = rawPhone.replace(/\D/g, '');
                     const areaCode = cleanPhone.length >= 2 ? cleanPhone.substring(0, 2) : "11";
@@ -300,14 +345,11 @@ async function initPaymentBrick() {
                         }
                     };
 
-                    // --- SALVAMENTO GLOBAL DE DADOS (CRUCIAL PARA ADM) ---
-                    // Antes de enviar o pagamento, garantimos que os dados completos estão no Firebase
-                    // na coleção 'orders' (acessível globalmente, não apenas dentro do usuário)
                     const globalOrderData = {
                         orderId: currentOrderId,
                         userId: uid,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        status: 'pending_payment', // Status Global Inicial
+                        status: 'pending_payment', 
                         statusText: 'Aguardando Pagamento',
                         paymentMethod: 'pix',
                         total: finalTotal,
@@ -325,13 +367,15 @@ async function initPaymentBrick() {
                         }
                     };
 
-                    // Salvamos no Firebase GLOBALMENTE
+                    // Salvamento Global no Firestore
+                    // Se o banco não aceitar, vai dar erro no console aqui
                     db.collection("orders").doc(currentOrderId).set(globalOrderData, { merge: true })
-                    .then(() => console.log("Dados do pedido salvos globalmente para ADM."))
-                    .catch(err => console.error("Erro ao salvar dados globais:", err));
+                    .then(() => console.log("Dados salvos no Firestore com sucesso."))
+                    .catch(err => {
+                        console.error("ERRO AO SALVAR NO BANCO:", err);
+                        showToast("Erro ao salvar pedido no banco.", "error");
+                    });
 
-
-                    // --- ENVIA PAGAMENTO PARA MERCADO PAGO VIA API ---
                     return new Promise((resolve, reject) => {
                         fetch(API_URLS.CREATE_PAYMENT, {
                             method: "POST",
@@ -353,14 +397,12 @@ async function initPaymentBrick() {
                         })
                         .then(paymentResult => {
                             console.log("Status Pagamento:", paymentResult.status);
-                            CartManager.clear();
+                            CartManager.clear(); // Limpa o carrinho após sucesso
 
-                            // Se for Pix pendente (normal)
                             if (paymentResult.status === 'pending' && paymentResult.point_of_interaction) {
                                 showPixScreen(paymentResult);
                                 resolve();
                             } else {
-                                // Caso seja aprovado automaticamente (raro em pix imediato sem webhook, mas possível)
                                 window.location.href = "pedidos.html"; 
                                 resolve();
                             }
@@ -384,6 +426,7 @@ async function initPaymentBrick() {
     } catch (e) {
         console.error("Erro fatal:", e);
         showToast("Erro ao iniciar sistema. Tente novamente.", "error");
+        document.getElementById("brick-loading-message").innerText = "Erro ao carregar: " + e.message;
     }
 }
 
