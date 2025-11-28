@@ -44,7 +44,7 @@ document.addEventListener('userReady', (e) => {
 });
 
 function renderOrderCard(order, container) {
-    // Tratamento de Imagem e Nome
+    // Tratamento de Imagem e Nome do Produto Principal
     const firstItem = order.items && order.items.length > 0 
         ? order.items[0] 
         : { name: 'Pedido Diversos', image: 'https://placehold.co/70' };
@@ -57,41 +57,81 @@ function renderOrderCard(order, container) {
         });
     }
 
+    // --- LÓGICA DE REEMBOLSO (NOVO) ---
+    let refundHtml = '';
+    let refundTotal = 0;
+    let missingNames = [];
+
+    if (order.missingIndices && Array.isArray(order.missingIndices) && order.missingIndices.length > 0) {
+        order.missingIndices.forEach(index => {
+            if (order.items && order.items[index]) {
+                const item = order.items[index];
+                // Tenta pegar o preço novo, senão o antigo, senão 0
+                const price = item.priceNew || item.price || 0;
+                // Multiplica pela quantidade (assumindo que falta tudo daquele item, 
+                // ou ajuste se sua lógica de falta for parcial)
+                const qty = item.quantity || 1; 
+                
+                refundTotal += (price * qty);
+                missingNames.push(`${qty}x ${item.name}`);
+            }
+        });
+
+        const refundFormatted = refundTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        
+        // Cria a lista de nomes para exibir (opcional, pode mostrar só "X itens")
+        const listHtml = missingNames.map(name => `<li>${name}</li>`).join('');
+
+        refundHtml = `
+            <div class="refund-alert-box">
+                <i class='bx bx-error-circle'></i>
+                <div>
+                    <strong>Item Indisponível</strong>
+                    <p>Infelizmente, alguns itens acabaram no estoque. O valor de <strong>${refundFormatted}</strong> será estornado ou ficará como crédito.</p>
+                    <ul class="refund-items-list">
+                        ${listHtml}
+                    </ul>
+                </div>
+            </div>
+        `;
+    }
+    // ----------------------------------
+
     let statusClass = 'status-pending'; 
     let statusLabel = 'Processando';
     let showPixButton = false;
     let showTracking = false;
     
-    // Variáveis para controlar qual etapa do rastreio está ativa
+    // Variáveis Rastreio
     let step1Active = false, step2Active = false, step3Active = false;
-    // Variável para a animação do caminhão
     let showTruckAnimation = false;
 
     // Lógica de Status
     switch(order.status) {
         case 'approved': 
+        case 'preparation': // Adicionado caso usem esse status interno
             statusClass = 'status-approved'; 
             statusLabel = 'Aprovado';
             showTracking = true;
-            step1Active = true; // Separando
+            step1Active = true; 
             break;
         
-        case 'shipped': // Novo status para "Saiu para entrega"
-            statusClass = 'status-approved'; // Visualmente verde
+        case 'shipped': 
+            statusClass = 'status-approved'; 
             statusLabel = 'Em Transporte';
             showTracking = true;
             step1Active = true; 
-            step2Active = true; // Caminhão
-            showTruckAnimation = true; // ATIVA O CAMINHÃO
+            step2Active = true; 
+            showTruckAnimation = true; 
             break;
 
-        case 'delivered': // Novo status para "Entregue"
+        case 'delivered': 
             statusClass = 'status-approved';
             statusLabel = 'Entregue';
             showTracking = true;
             step1Active = true;
             step2Active = true;
-            step3Active = true; // Entregue
+            step3Active = true; 
             break;
             
         case 'pending':
@@ -115,23 +155,20 @@ function renderOrderCard(order, container) {
             statusLabel = order.statusText || 'Verificando';
     }
 
-    // HTML do Botão Pix (se necessário)
+    // Botão Pix
     const pixActionHtml = showPixButton 
         ? `<button class="btn-pix-action" onclick="openPixModal('${order.id}')">
              <i class='bx bx-qr-scan'></i> Pagar com Pix
            </button>` 
         : ``; 
 
-    // HTML do Rastreamento (Só aparece se showTracking = true)
+    // HTML do Rastreamento
     let trackingHtml = '';
-    
     if (showTracking) {
-        // Define as classes para colorir os steps
         const s1Class = step1Active ? (step2Active ? 'completed' : 'active') : '';
         const s2Class = step2Active ? (step3Active ? 'completed' : 'active') : '';
         const s3Class = step3Active ? 'active' : '';
 
-        // Se o caminhão estiver ativo, adiciona o HTML dele
         const truckHtml = showTruckAnimation ? `
             <div class="truck-animation-container">
                 <div class="road-line"></div>
@@ -153,7 +190,6 @@ function renderOrderCard(order, container) {
                             <p>Seu pedido está sendo separado por nossos vendedores.</p>
                         </div>
                     </div>
-
                     <div class="step-item ${s2Class}">
                         <div class="step-icon"><i class='bx bxs-truck'></i></div>
                         <div class="step-content">
@@ -161,7 +197,6 @@ function renderOrderCard(order, container) {
                             <p>Seu pedido está chegando! O motorista está a caminho.</p>
                         </div>
                     </div>
-
                     <div class="step-item ${s3Class}">
                         <div class="step-icon"><i class='bx bx-home-smile'></i></div>
                         <div class="step-content">
@@ -190,6 +225,8 @@ function renderOrderCard(order, container) {
                 </div>
             </div>
             
+            ${refundHtml}
+
             ${trackingHtml}
 
             <div class="card-footer">
