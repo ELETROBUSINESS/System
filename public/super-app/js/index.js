@@ -385,6 +385,7 @@ async function loadProductDetail(id) {
 
                 <div class="detail-info">
                     <div class="detail-status">Novo | ${soldCount} vendidos</div>
+
                     <h1 class="detail-title">${prod.name}</h1>
                     
                     <div class="detail-rating-summary" id="detail-rating-box">
