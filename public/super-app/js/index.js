@@ -1,438 +1,780 @@
-// js/index.js - CÓDIGO COMPLETO E CORRIGIDO
+// js/index.js - CARD ATUALIZADO, LÓGICA DE BARRA (REF 8) E ANIMAÇÃO 60s
 
-const STORE_OWNER_UID = "3zYT9Y6hXWeJSuvmEYP4FMZa5gI2"; 
+const STORE_OWNER_UID = "3zYT9Y6hXWeJSuvmEYP4FMZa5gI2";
 const APP_ID = 'floralchic-loja';
+const CACHE_KEY = 'dtudo_products_cache';
+const CACHE_TIME_KEY = 'dtudo_cache_time';
+const CACHE_DURATION = 20 * 60 * 1000;
+const COMMENTS_CACHE_KEY = "dtudo_user_reviews";
+const REVIEWS_CACHE_DURATION = 20 * 60 * 60 * 1000; 
+const CART_KEY = 'app_cart';
 
-let allProductsCache = [];
+// Variáveis Globais
+let lastVisibleDoc = null;
+let productsBuffer = []; 
+let isLoading = false;
+let allProductsLoaded = false;
+let currentDetailImages = [];
+let selectedRating = 0;
+let selectedReviewImageBase64 = null;
+let currentUserReviewId = null;
 
-// --- 1. FUNÇÃO DE ATUALIZAÇÃO DO BALÃO (Centralizada) ---
-function updateCartBadges() {
-    let cart = [];
-    
-    // Tenta ler o CartManager (definido em global.js) de forma segura
+// ==================== 1. UTILITÁRIOS E CACHE ====================
+
+function getLocalUserReviews() {
+    const raw = localStorage.getItem(COMMENTS_CACHE_KEY);
+    if (!raw) return [];
     try {
-        if (typeof CartManager !== 'undefined' && CartManager.items) {
-            cart = CartManager.items; // Forma mais segura
-        } else {
-            // Fallback se CartManager não estiver totalmente inicializado.
-            // Nota: Se a chave 'dtudo_cart' for diferente no seu global.js, altere aqui.
-            const cartData = localStorage.getItem('dtudo_cart');
-            if (cartData) {
-                cart = JSON.parse(cartData);
-            }
+        const data = JSON.parse(raw);
+        const now = new Date().getTime();
+        if (!data.timestamp || (now - data.timestamp > REVIEWS_CACHE_DURATION)) {
+            localStorage.removeItem(COMMENTS_CACHE_KEY);
+            return [];
         }
-    } catch (e) {
-        console.error("Erro ao ler carrinho:", e);
-    }
-
-    // Soma a quantidade de todos os produtos
-    const totalItems = cart.reduce((total, item) => total + (item.quantity || 1), 0);
-
-    // Atualiza os elementos HTML
-    const badgeMobile = document.getElementById('cart-badge');
-    const badgeDesktop = document.getElementById('cart-badge-desktop');
-
-    const updateElement = (el) => {
-        if (el) {
-            el.innerText = totalItems;
-            // Se tiver 0 itens, esconde. Se tiver > 0, mostra.
-            el.style.display = totalItems > 0 ? 'flex' : 'none';
-            
-            // Animação para chamar atenção ao adicionar
-            el.classList.remove('pulse-animation');
-            void el.offsetWidth; 
-            if (totalItems > 0) el.classList.add('pulse-animation');
-        }
-    };
-
-    updateElement(badgeMobile);
-    updateElement(badgeDesktop);
+        return data.reviews || [];
+    } catch (e) { return []; }
 }
 
-// --- 2. FUNÇÃO DE ADIÇÃO AO CARRINHO (Unificada e Chamando a Atualização) ---
-// Usamos window. para garantir que esta seja a versão global acessível pelos botões HTML.
-window.addToCartDirect = function(id, name, price, image) {
-    if (typeof CartManager !== 'undefined') {
-        CartManager.add({ 
-            id: id, 
-            name: name, 
-            priceNew: parseFloat(price), 
-            priceOld: parseFloat(price), 
-            image: image, 
-            quantity: 1, 
-            description: "" 
-        });
-        
-        // CHAMA A ATUALIZAÇÃO IMEDIATAMENTE APÓS ADICIONAR
-        updateCartBadges(); 
-        
-        showToast(`+1 ${name} adicionado!`, "success");
+function saveLocalUserReviews(reviews) {
+    const data = { timestamp: new Date().getTime(), reviews: reviews };
+    localStorage.setItem(COMMENTS_CACHE_KEY, JSON.stringify(data));
+}
+
+window.addToCartDirect = function(id, name, price, img) {
+    let cart = JSON.parse(localStorage.getItem(CART_KEY)) || [];
+    const existingItem = cart.find(item => item.id === id);
+    if (existingItem) {
+        existingItem.quantity += 1;
     } else {
-        console.error("CartManager não encontrado. Carrinho não atualizado.");
+        cart.push({ id: id, name: name, priceNew: price, image: img, quantity: 1 });
     }
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    if(typeof updateCartBadge === 'function') updateCartBadge();
+    showToast(`${name} adicionado ao carrinho!`, "success");
 }
 
-// --- 3. FUNÇÕES UTILITÁRIAS ---
-
-function parseValue(val) {
-    if (!val) return 0;
-    if (typeof val === 'number') return val;
-    let str = String(val);
-    str = str.replace(/[^\d,.-]/g, '');
-    str = str.replace(',', '.');
-    return parseFloat(str) || 0;
-}
-
-window.goToProduct = function(id) {
-    window.location.href = `index.html?id=${id}`;
-}
-
-
-// --- 4. FUNÇÕES PRINCIPAIS DE CARREGAMENTO E INICIALIZAÇÃO ---
-
-function setupSearch() {
-    const searchInput = document.querySelector('.search-bar input');
-    const dropdown = document.getElementById('search-dropdown');
-    if (!searchInput || !dropdown) return;
-
-    searchInput.addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase().trim();
-        if (term.length === 0) {
-            dropdown.classList.remove('active');
-            dropdown.innerHTML = '';
-            return;
-        }
-        const filtered = allProductsCache.filter(prod => prod.name.toLowerCase().includes(term));
-        if (filtered.length === 0) {
-            dropdown.innerHTML = `<div style="padding:15px; color:#666; font-size:0.9rem;">Nenhum resultado.</div>`;
-            dropdown.classList.add('active');
-            return;
-        }
-        renderDropdownResults(filtered, dropdown);
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.classList.remove('active');
-        }
-    });
-}
-
-function renderDropdownResults(products, container) {
-    const suggestions = products.slice(0, 5);
-    const visuals = products.slice(0, 3);
-    let html = `<ul class="search-suggestions-list">`;
-    suggestions.forEach(prod => {
-        html += `<li class="search-suggestion-item" onclick="goToProduct('${prod.id}')"><i class='bx bx-search'></i>${prod.name}</li>`;
-    });
-    html += `</ul>`;
-    if (visuals.length > 0) {
-        html += `<div class="search-visual-title">Principais Resultados</div><div class="search-visual-grid">`;
-        visuals.forEach(prod => {
-            const imgUrl = prod.imgUrl || 'https://placehold.co/100x100/eee/999?text=Prod';
-            html += `<div class="search-mini-card" onclick="goToProduct('${prod.id}')"><img src="${imgUrl}" alt="${prod.name}"><span>${prod.name}</span></div>`;
-        });
-        html += `</div>`;
+function extractProductImages(prod) {
+    let images = [];
+    if (prod.imgUrl && prod.imgUrl.trim() !== "") images.push(prod.imgUrl.trim());
+    let i = 1;
+    while (true) {
+        const key = 'imgUrl' + i;
+        if (prod[key] && prod[key].trim() !== "") { images.push(prod[key].trim()); i++; } 
+        else { break; }
+        if (i > 20) break; 
     }
-    container.innerHTML = html;
-    container.classList.add('active');
+    if (images.length === 0) return ['https://placehold.co/500x500/EBEBEB/333?text=Sem+Foto'];
+    return images;
 }
 
-async function loadHomeProducts() {
+function getCachedData() {
+    const json = sessionStorage.getItem(CACHE_KEY);
+    const time = sessionStorage.getItem(CACHE_TIME_KEY);
+    if (!json || !time) return null;
+    if (new Date().getTime() - parseInt(time) > CACHE_DURATION) { clearCache(); return null; }
+    return JSON.parse(json);
+}
+
+function saveToCache(newProducts) {
+    const currentCache = getCachedData() || [];
+    const uniqueIds = new Set(currentCache.map(p => p.id));
+    const merged = [...currentCache];
+    newProducts.forEach(p => { if (!uniqueIds.has(p.id)) merged.push(p); });
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify(merged));
+    sessionStorage.setItem(CACHE_TIME_KEY, new Date().getTime().toString());
+}
+
+function clearCache() {
+    sessionStorage.removeItem(CACHE_KEY);
+    sessionStorage.removeItem(CACHE_TIME_KEY);
+}
+
+// ==================== 2. RENDERIZAÇÃO DA HOME (CARD NOVO) ====================
+
+function renderProductBatch(products) {
     const container = document.getElementById('firebase-products-container');
+    if (container.querySelector('.skeleton-card')) container.innerHTML = ''; 
+
+    products.forEach(prod => {
+        if(document.getElementById(`prod-${prod.id}`)) return;
+
+        let displayImg = prod.imgUrl || 'https://placehold.co/400x400/EBEBEB/333?text=Sem+Foto';
+        const valPrice = parseFloat(prod.price || 0);
+        const valOffer = parseFloat(prod['price-oferta'] || 0);
+        const hasOffer = (valOffer > 0 && valOffer < valPrice);
+        const finalPrice = hasOffer ? valOffer : valPrice;
+        
+        const fmtConfig = { style: 'currency', currency: 'BRL' };
+        const fmtNormal = new Intl.NumberFormat('pt-BR', fmtConfig).format(valPrice);
+        const fmtOffer = new Intl.NumberFormat('pt-BR', fmtConfig).format(valOffer);
+
+        // --- LAYOUT DE PREÇO (Ponto 2 e 3) ---
+        let priceHtml = '';
+        if (hasOffer) {
+            const savings = valPrice - valOffer;
+            const fmtSavings = new Intl.NumberFormat('pt-BR', fmtConfig).format(savings);
+            
+            priceHtml = `
+                <div class="price-container">
+                    <span class="price-old">${fmtNormal}</span>
+                    <span class="price-new">${fmtOffer}</span>
+                    <span class="card-savings">Economize ${fmtSavings}</span>
+                </div>`;
+        } else {
+            priceHtml = `
+                <div class="price-container">
+                    <span class="price-new">${fmtNormal}</span>
+                </div>`;
+        }
+
+        const stock = parseInt(prod.stock || 0);
+        const isSoldOut = stock <= 0;
+
+        // --- CARD SEM BOTÃO COMPRAR (Ponto 1) ---
+        const html = `
+            <div class="product-card ${isSoldOut ? 'sold-out' : ''}" id="prod-${prod.id}" onclick="window.location.href='index.html?id=${prod.id}'">
+                <div class="product-image">
+                    <img src="${displayImg}" alt="${prod.name}" loading="lazy" onload="this.classList.add('loaded')">
+                    ${isSoldOut ? '<div style="position:absolute; bottom:0; width:100%; background:#ccc; color:#555; text-align:center; font-size:0.8rem; font-weight:700;">Esgotado</div>' : ''}
+                </div>
+                <div class="product-info">
+                    <h4 class="product-name">${prod.name}</h4>
+                    ${priceHtml}
+                    <div class="free-shipping"><i class='bx bxs-truck'></i> Frete Grátis</div>
+                </div>
+            </div>`;
+        container.insertAdjacentHTML('beforeend', html);
+    });
+}
+
+// --- FUNÇÃO DE ANIMAÇÃO (10s, Filtro Visível e Log) ---
+function startSuggestionTimer() {
+    console.log("Iniciando sistema de sugestão...");
+
+    setInterval(() => {
+        // 1. Pega todos os cards carregados
+        const allCards = Array.from(document.querySelectorAll('.product-card:not(.skeleton-card)'));
+        if (allCards.length === 0) return;
+
+        // 2. Filtra APENAS os que estão visíveis na tela do usuário agora
+        const visibleCards = allCards.filter(card => {
+            const rect = card.getBoundingClientRect();
+            return (
+                rect.top >= 0 &&
+                rect.left >= 0 &&
+                rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+            );
+        });
+
+        // Se não tiver nenhum visível (usuário scrolou rápido demais), usa qualquer um para garantir
+        const targets = visibleCards.length > 0 ? visibleCards : allCards;
+        
+        // 3. Escolhe um aleatório
+        const randomIndex = Math.floor(Math.random() * targets.length);
+        const card = targets[randomIndex];
+
+        // 4. Log no Console (Agora vai aparecer sempre)
+        const name = card.querySelector('.product-name') ? card.querySelector('.product-name').innerText : 'Item sem nome';
+        console.log("Item destaque da vez:", name);
+
+        // 5. Aplica animação
+        card.classList.add('suggest-animation');
+
+        // 6. Remove depois de 6 segundos (Mais tempo)
+        setTimeout(() => {
+            card.classList.remove('suggest-animation');
+        }, 6000);
+
+    }, 60000); // Roda a cada 10 segundos
+}
+
+async function fetchMoreProducts() {
+    if (isLoading || allProductsLoaded) return;
+    const loader = document.getElementById('infinite-loader');
+
+    if (productsBuffer.length > 0) {
+        if(loader) loader.style.display = 'block';
+        setTimeout(() => {
+            renderProductBatch(productsBuffer);
+            productsBuffer = [];
+            if(loader) loader.style.display = 'none';
+        }, 300);
+        return; 
+    }
+
+    isLoading = true;
+    if(loader) loader.style.display = 'block';
+
     try {
-        const productsRef = db.collection('artifacts').doc(APP_ID)
-                              .collection('users').doc(STORE_OWNER_UID)
-                              .collection('products');
-        const snapshot = await productsRef.get();
-        if(container) container.innerHTML = ''; 
+        let query = db.collection('artifacts').doc(APP_ID)
+                      .collection('users').doc(STORE_OWNER_UID)
+                      .collection('products')
+                      .orderBy('createdAt', 'desc')
+                      .limit(30);
+
+        if (lastVisibleDoc) query = query.startAfter(lastVisibleDoc);
+        const snapshot = await query.get();
 
         if (snapshot.empty) {
-            if(container) container.innerHTML = "<p style='text-align:center; grid-column:1/-1;'>Nenhum produto encontrado.</p>";
+            allProductsLoaded = true;
+            if(loader) loader.style.display = 'none';
             return;
         }
-        allProductsCache = [];
-        snapshot.forEach(doc => {
-            const prod = doc.data();
-            prod.id = doc.id;
-            allProductsCache.push(prod);
-            if(container) renderProductCard(prod.id, prod, container);
-        });
-        startDetailTimer(); // Timer da Home
+
+        lastVisibleDoc = snapshot.docs[snapshot.docs.length - 1];
+        const products = [];
+        snapshot.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
+        saveToCache(products);
+
+        const toDisplay = products.slice(0, 20);
+        const toBuffer = products.slice(20);
+        renderProductBatch(toDisplay);
+        productsBuffer = toBuffer;
+
     } catch (error) {
-        console.error("Erro produtos:", error);
+        console.error("Erro busca:", error);
+    } finally {
+        isLoading = false;
+        if(loader) loader.style.display = 'none';
     }
 }
 
-function renderProductCard(id, prod, container) {
-    const imgUrl = prod.imgUrl || 'https://placehold.co/400x400/EBEBEB/333?text=Sem+Foto';
-    const valPriceNormal = parseValue(prod.price);
-    const valPriceOferta = parseValue(prod['price-oferta']);
-    const hasOffer = (valPriceOferta > 0 && valPriceOferta < valPriceNormal);
-    
-    // VERIFICAÇÃO DE ESTOQUE
-    const stock = prod.stock !== undefined ? parseInt(prod.stock) : 10; 
-    const isSoldOut = stock <= 0;
-
-    let priceHtml = '';
-    let finalPriceToCart = valPriceNormal;
-
-    if (hasOffer) {
-        finalPriceToCart = valPriceOferta;
-        const fmtOld = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valPriceNormal);
-        const fmtNew = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valPriceOferta);
-        const discountVal = valPriceNormal - valPriceOferta;
-        const discountFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(discountVal);
-        
-        priceHtml = `
-            <div class="price-container">
-                <span class="price-old">${fmtOld}</span>
-                <div class="price-wrapper"><span class="price-new">${fmtNew}</span></div>
-                <span class="economy-text">Economize ${discountFmt}</span>
-            </div>`;
+async function initProductFeed() {
+    const cached = getCachedData();
+    if (cached && cached.length > 0) {
+        renderProductBatch(cached);
     } else {
-        const fmtNormal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valPriceNormal);
-        priceHtml = `
-            <div class="price-container">
-                <span class="price-old" style="visibility:hidden">-</span>
-                <span class="price-new">${fmtNormal}</span>
-                <span class="economy-text" style="visibility:hidden">-</span>
-            </div>`;
+        await fetchMoreProducts();
     }
-
-    // Lógica Visual de Esgotado
-    const soldOutClass = isSoldOut ? 'sold-out' : '';
-    const soldOutTag = isSoldOut ? '<div class="sold-out-tag">Esgotado</div>' : '';
-    const buttonAttr = isSoldOut ? 'disabled style="background:#ccc; cursor:not-allowed;"' : `onclick="event.stopPropagation(); addToCartDirect('${id}', '${prod.name}', ${finalPriceToCart}, '${imgUrl}')"`;
-    const buttonText = isSoldOut ? 'Indisponível' : 'Comprar';
-
-    const cardHtml = `
-        <div class="product-card ${soldOutClass}" onclick="${isSoldOut ? '' : `window.location.href='index.html?id=${id}'`}">
-            ${soldOutTag}
-            <div class="product-image"><img src="${imgUrl}" alt="${prod.name}" loading="lazy"></div>
-            <div class="product-info">
-                <h4 class="product-name">${prod.name}</h4>
-                ${priceHtml}
-                <div class="free-shipping"><i class='bx bxs-truck'></i> Frete Grátis</div>
-                <button class="cta-button" ${buttonAttr}>${buttonText}</button>
-            </div>
-        </div>`;
-    container.innerHTML += cardHtml;
+    const sentinel = document.getElementById('scroll-sentinel');
+    if (sentinel) {
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) fetchMoreProducts();
+        }, { rootMargin: '200px' });
+        observer.observe(sentinel);
+    }
 }
+
+// ==================== 3. LÓGICA DE DETALHES (ATUALIZADA) ====================
 
 async function loadProductDetail(id) {
-    document.getElementById('home-view').style.display = 'none';
-    document.getElementById('product-detail-view').style.display = 'block';
-    window.scrollTo(0, 0);
+    document.querySelector('.home-offer-banner').style.display = 'none';
+    document.querySelector('.banner-slider').style.display = 'none';
+    document.querySelector('.categories-section').style.display = 'none';
+    document.getElementById('products').style.display = 'none';
+    
+    const detailView = document.getElementById('product-detail-view');
+    const content = document.getElementById('detail-content');
+    detailView.style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'auto' });
+
+    content.innerHTML = '<div style="text-align:center; padding:50px;"><div class="spinner"></div></div>';
 
     try {
-        const docRef = db.collection('artifacts').doc(APP_ID)
-                         .collection('users').doc(STORE_OWNER_UID)
-                         .collection('products').doc(id);
-        const docSnap = await docRef.get();
+        const doc = await db.collection('artifacts').doc(APP_ID)
+                            .collection('users').doc(STORE_OWNER_UID)
+                            .collection('products').doc(id).get();
 
-        if (!docSnap.exists) {
-            window.location.href = 'index.html';
+        if (!doc.exists) {
+            content.innerHTML = "<h3>Produto não encontrado.</h3>";
             return;
         }
 
-        const prod = docSnap.data();
-        const valPriceNormal = parseValue(prod.price);
-        const valPriceOferta = parseValue(prod['price-oferta']);
-        const hasOffer = (valPriceOferta > 0 && valPriceOferta < valPriceNormal);
+        const prod = doc.data();
+        currentDetailImages = extractProductImages(prod);
 
-        let finalPrice = valPriceNormal;
-        let displayPrice = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valPriceNormal);
-
-        const timerFixed = document.getElementById('fixed-offer-timer');
-        const oldPriceEl = document.getElementById('p-detail-old-price');
-        const savingsEl = document.getElementById('p-detail-savings');
+        const valPrice = parseFloat(prod.price || 0);
+        const valOffer = parseFloat(prod['price-oferta'] || 0);
+        const hasOffer = (valOffer > 0 && valOffer < valPrice);
+        const finalPrice = hasOffer ? valOffer : valPrice;
         
-        if(timerFixed) timerFixed.style.display = 'none';
-        if(oldPriceEl) oldPriceEl.style.display = 'none';
-        if(savingsEl) savingsEl.style.display = 'none';
+        const fmtConfig = { style: 'currency', currency: 'BRL' };
+        const fmtFinal = new Intl.NumberFormat('pt-BR', fmtConfig).format(finalPrice);
+        const fmtOld = new Intl.NumberFormat('pt-BR', fmtConfig).format(valPrice);
 
+        let priceBlock = '';
         if (hasOffer) {
-            finalPrice = valPriceOferta;
-            displayPrice = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valPriceOferta);
-            const oldDisplay = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valPriceNormal);
-            
-            if(oldPriceEl) { oldPriceEl.innerText = oldDisplay; oldPriceEl.style.display = 'block'; }
-
-            const savings = valPriceNormal - valPriceOferta;
-            const savingsFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(savings);
-            
-            if(savingsEl) { savingsEl.innerText = `Você economiza ${savingsFmt}`; savingsEl.style.display = 'block'; }
-
-            if(timerFixed) timerFixed.style.display = 'flex';
-            startDetailTimer();
-        }
-
-        document.getElementById('p-detail-img').src = prod.imgUrl || 'https://placehold.co/600x600/EBEBEB/333?text=Sem+Foto';
-        document.getElementById('p-detail-name').innerText = prod.name;
-        document.getElementById('p-detail-price').innerText = displayPrice;
-        document.getElementById('p-detail-sold').innerText = "0"; 
-        document.getElementById('p-detail-desc').innerText = prod.desc || "Sem descrição.";
-        document.title = `${prod.name} | Dtudo`;
-
-        const stock = prod.stock !== undefined ? parseInt(prod.stock) : 10;
-        const btnBuy = document.getElementById('btn-buy-now');
-        const btnCart = document.getElementById('btn-add-cart-detail');
-
-        if (stock <= 0) {
-            btnBuy.disabled = true;
-            btnBuy.innerText = "Esgotado";
-            btnBuy.style.backgroundColor = "#ccc";
-            btnBuy.style.cursor = "not-allowed";
-            btnBuy.onclick = null; 
-
-            btnCart.disabled = true;
-            btnCart.innerText = "Indisponível";
-            btnCart.style.borderColor = "#ccc";
-            btnCart.style.color = "#ccc";
-            btnCart.style.cursor = "not-allowed";
-            btnCart.onclick = null; 
+            const savings = valPrice - valOffer;
+            const fmtSavings = new Intl.NumberFormat('pt-BR', fmtConfig).format(savings);
+            priceBlock = `
+                <div class="detail-price-old">${fmtOld}</div>
+                <div class="detail-price-current">${fmtFinal}</div>
+                <span class="detail-savings-text">Você economiza ${fmtSavings}</span>
+                <div class="detail-payment-info"><i class='bx bx-check-shield'></i> Pagamento 100% seguro via Pix</div>
+            `;
         } else {
-            btnBuy.disabled = false;
-            btnBuy.innerText = "Comprar Agora";
-            btnBuy.style.backgroundColor = ""; 
-            btnBuy.style.cursor = "pointer";
-
-            btnCart.disabled = false;
-            btnCart.innerText = "Adicionar ao carrinho";
-            btnCart.style.borderColor = ""; 
-            btnCart.style.color = ""; 
-            btnCart.style.cursor = "pointer";
-
-            btnCart.onclick = () => { 
-                addToCartDirect(id, prod.name, finalPrice, prod.imgUrl); 
-                showToast("Adicionado ao carrinho!", "success");
-            };
-            btnBuy.onclick = () => {
-                addToCartDirect(id, prod.name, finalPrice, prod.imgUrl);
-                window.location.href = 'carrinho.html';
-            };
+            priceBlock = `
+                <div class="detail-price-current">${fmtFinal}</div>
+                <div class="detail-payment-info"><i class='bx bx-check-shield'></i> Pagamento 100% seguro via Pix</div>
+            `;
         }
+
+        // --- ESTOQUE E VENDAS (LÓGICA PONTO 4) ---
+        const stockCount = parseInt(prod.stock || 0); 
+        const soldCount = parseInt(prod.sold || 0);
+        
+        let stockHtml = '';
+        const maxRef = 8; // Referência solicitada
+
+        if (stockCount <= 0) {
+            stockHtml = `
+                <div class="stock-scarcity-container">
+                    <div class="stock-label">
+                        <strong style="color:#999">Esgotado</strong>
+                    </div>
+                    <div class="stock-track"><div class="stock-fill" style="width:0"></div></div>
+                </div>`;
+        } else if (stockCount <= maxRef) {
+            // Se menor ou igual a 8, mostra barra INVERTIDA (Quanto menos, maior a barra)
+            // 1 item = (1 - 1/8) = 0.875 * 100 = 87% (Barra grande)
+            // 8 itens = (1 - 8/8) = 0% (Barra vazia, ou pequena)
+            let scarcityRatio = 1 - (stockCount / maxRef);
+            if (stockCount === 1) scarcityRatio = 0.95; // Visual dramático para 1 item
+            if (scarcityRatio < 0.1) scarcityRatio = 0.1; // Mínimo visual
+            
+            const barWidth = scarcityRatio * 100;
+
+            stockHtml = `
+                <div class="stock-scarcity-container">
+                    <div class="stock-label">
+                        <span>Disponibilidade: ${stockCount} itens</span>
+                        <strong style="color:#db0038">Restam poucas unidades!</strong>
+                    </div>
+                    <div class="stock-track">
+                        <div class="stock-fill" style="width:${barWidth}%; background:#db0038"></div>
+                    </div>
+                </div>`;
+        } else {
+            // Se maior que 8, NÃO APARECE A BARRA (Conforme solicitado)
+            stockHtml = `
+                <div class="stock-scarcity-container">
+                    <div class="stock-label">
+                        <strong style="color:#00a650; display:flex; align-items:center; gap:5px;">
+                            <i class='bx bxs-check-circle'></i> Disponível em estoque
+                        </strong>
+                    </div>
+                </div>`;
+        }
+
+        let variantsHtml = '';
+        if (prod.variants) {
+            const vList = Array.isArray(prod.variants) ? prod.variants : prod.variants.split(';');
+            if (vList.length > 0) {
+                const btns = vList.map((v, i) => `<div class="variant-btn ${i===0?'selected':''}" onclick="selectVariant(this)">${v.trim()}</div>`).join('');
+                variantsHtml = `<div class="variants-section"><div class="variants-title">Opções:</div><div class="variants-list">${btns}</div></div>`;
+            }
+        }
+
+        const thumbsHtml = currentDetailImages.length > 1 ? `
+            <div class="thumbnails-scroll">
+                ${currentDetailImages.map((src, i) => `
+                    <img src="${src}" class="thumbnail-item ${i===0?'active':''}" onclick="swapDetailImage('${src}', this)">
+                `).join('')}
+            </div>` : '';
+
+        // Renderização HTML
+        content.innerHTML = `
+            <div class="detail-view-container">
+                <div class="detail-gallery-container">
+                    <div class="main-image-wrapper">
+                        <img id="main-detail-img" src="${currentDetailImages[0]}" alt="${prod.name}">
+                    </div>
+                    ${thumbsHtml}
+                </div>
+
+                <div class="detail-info">
+                    <div class="detail-status">Novo | ${soldCount} vendidos</div>
+                    <h1 class="detail-title">${prod.name}</h1>
+                    
+                    <div class="detail-rating-summary" id="detail-rating-box">
+                        <div class="review-stars-static">
+                            <i class='bx bx-star' style="color:#ddd"></i><i class='bx bx-star' style="color:#ddd"></i><i class='bx bx-star' style="color:#ddd"></i><i class='bx bx-star' style="color:#ddd"></i><i class='bx bx-star' style="color:#ddd"></i>
+                        </div>
+                        <span style="font-size:0.9rem; color:#666; font-weight:600;">(0)</span>
+                    </div>
+
+                    ${priceBlock}
+
+                    ${stockHtml}
+
+                    ${variantsHtml}
+
+                    <div class="action-buttons">
+                        <button class="btn-buy-now" 
+                             ${stockCount <= 0 ? 'disabled style="background:#ccc; cursor:not-allowed;"' : ''}
+                             onclick="addToCartDirect('${doc.id}', '${prod.name}', ${finalPrice}, '${currentDetailImages[0]}'); window.location.href='carrinho.html'">
+                             ${stockCount <= 0 ? 'Indisponível' : 'Comprar Agora'}
+                        </button>
+                        
+                        <button class="btn-add-cart" 
+                            ${stockCount <= 0 ? 'disabled style="border-color:#ccc!important; color:#999!important;"' : ''}
+                            onclick="addToCartDirect('${doc.id}', '${prod.name}', ${finalPrice}, '${currentDetailImages[0]}')">
+                            Adicionar ao carrinho
+                        </button>
+                    </div>
+
+                    <div class="trust-badges">
+                        <div class="trust-item">
+                            <i class='bx bx-undo'></i>
+                            <span><strong>Devolução Grátis.</strong> 7 dias a partir do recebimento.</span>
+                        </div>
+                        <div class="trust-item">
+                            <i class='bx bx-shield-quarter'></i>
+                            <span><strong>Compra Garantida.</strong> Receba o produto que está esperando ou devolvemos o dinheiro.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="comments-section">
+                <div class="comments-header">Opiniões sobre o produto</div>
+                <div id="review-form-container">
+                    <div style="text-align:center; padding: 20px; background:#f9f9f9; border-radius:8px;">
+                        <div class="spinner" style="margin:0 auto;"></div>
+                    </div>
+                </div>
+                <div id="reviews-list" class="comment-list">
+                    <div class="empty-reviews">
+                        <i class='bx bx-message-square-dots'></i>
+                        Carregando avaliações...
+                    </div>
+                </div>
+            </div>
+            
+            <div style="background:#fff; padding:20px; margin-top:20px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                <h3 style="font-size:1.2rem; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">Descrição</h3>
+                <p style="color:#666; line-height:1.6; white-space: pre-line;">${prod.description || 'Sem descrição detalhada.'}</p>
+            </div>
+        `;
+
+        fetchLiveRating(doc.id);
+        checkUserReviewStatus(doc.id);
+        loadReviews(doc.id);
 
     } catch (error) {
         console.error("Erro detalhes:", error);
+        content.innerHTML = "<p>Erro ao carregar.</p>";
     }
 }
 
-window.calculateDetailShipping = function() {
-    const cepInput = document.getElementById('detail-cep');
-    const resultDiv = document.getElementById('detail-shipping-result');
-    const statusText = document.getElementById('shipping-status-text');
+// ==================== 4. LÓGICA DE AVALIAÇÃO & PROTEÇÃO ====================
 
-    if (!cepInput || !resultDiv || !statusText) return;
+async function fetchLiveRating(productId) {
+    const ratingBox = document.getElementById('detail-rating-box');
+    try {
+        const snapshot = await db.collection('artifacts').doc(APP_ID)
+            .collection('comments')
+            .where('productId', '==', productId)
+            .where('status', '==', 'approved')
+            .get();
 
-    const cepVal = cepInput.value.replace(/\D/g, '');
+        if (snapshot.empty) return; 
 
-    if (cepVal.length !== 8) {
-        showToast('Digite um CEP válido (8 dígitos).', 'error');
+        let totalStars = 0;
+        let count = 0;
+
+        snapshot.forEach(doc => {
+            const r = doc.data();
+            totalStars += parseInt(r.rating || 0);
+            count++;
+        });
+
+        if (count > 0) {
+            const avg = totalStars / count;
+            let starsHtml = '';
+            for(let i=1; i<=5; i++) {
+                if (i <= Math.round(avg)) starsHtml += "<i class='bx bxs-star' style='color:#3483fa'></i>";
+                else starsHtml += "<i class='bx bx-star' style='color:#ddd'></i>";
+            }
+            if(ratingBox) {
+                ratingBox.innerHTML = `
+                    <div class="review-stars-static">${starsHtml}</div>
+                    <span style="font-size:0.9rem; color:#666; font-weight:600;">(${count})</span>
+                `;
+            }
+        }
+    } catch (e) {
+        console.error("Erro ao calcular média:", e);
+    }
+}
+
+async function checkUserReviewStatus(productId) {
+    const container = document.getElementById('review-form-container');
+    
+    if (!auth.currentUser) {
+        container.innerHTML = `
+            <div style="text-align:center; padding: 20px; background:#f9f9f9; border-radius:8px;">
+                <p style="color:#666; margin-bottom:10px;">Quer avaliar este produto?</p>
+                <button onclick="document.getElementById('user-profile-modal').classList.add('show')" class="btn-add-cart" style="width:auto; padding:10px 20px;">
+                    Fazer Login
+                </button>
+            </div>`;
         return;
     }
 
-    statusText.innerText = "Calculando...";
-    resultDiv.style.display = 'none';
-    
-    setTimeout(() => {
-        statusText.innerHTML = `<span style="color: #00a650;">Frete Grátis Disponível</span>`;
-        resultDiv.innerHTML = '';
+    try {
+        const snapshot = await db.collection('artifacts').doc(APP_ID)
+            .collection('comments')
+            .where('productId', '==', productId)
+            .where('userId', '==', auth.currentUser.uid)
+            .limit(1)
+            .get();
 
-        if (cepVal === '68637000') {
-            resultDiv.innerHTML = `
-                <div class="shipping-option"><i class='bx bxs-truck'></i><div class="shipping-info"><span class="shipping-title-opt">Receber em casa (Grátis)</span><span class="shipping-subtitle-opt">Chega hoje comprando agora ou em até 1 dia últil</span></div></div>
-                <div class="shipping-option"><i class='bx bxs-store'></i><div class="shipping-info"><span class="shipping-title-opt">Retirar na Loja (Grátis)</span><span class="shipping-subtitle-opt">Disponível em 1 hora</span></div></div>
-            `;
+        if (!snapshot.empty) {
+            const doc = snapshot.docs[0];
+            const data = doc.data();
+            currentUserReviewId = doc.id; 
+            renderReviewForm(true, data); 
         } else {
-            const randomPrice = (Math.random() * (45 - 20) + 20).toFixed(2).replace('.', ',');
-            resultDiv.innerHTML = `
-                <div class="shipping-option"><i class='bx bxs-truck' style="color:#333"></i><div class="shipping-info"><span class="shipping-title-opt" style="color:#333">Entrega Padrão: R$ ${randomPrice}</span><span class="shipping-subtitle-opt">Chega em 7 a 12 dias úteis</span></div></div>
-            `;
+            currentUserReviewId = null;
+            renderReviewForm(false, null);
         }
-        resultDiv.style.display = 'flex';
-    }, 600);
-}
-
-let timerInterval;
-function startDetailTimer() {
-    if (timerInterval) clearInterval(timerInterval);
-    const targetDate = new Date('2025-11-29T21:00:00').getTime();
-    
-    const displayHome = document.getElementById('home-timer-countdown'); 
-    const displayFixed = document.getElementById('p-timer-countdown-fixed'); 
-
-    function updateTimer() {
-        const now = new Date().getTime();
-        const distance = targetDate - now;
-
-        if (distance < 0) {
-            clearInterval(timerInterval);
-            if(displayFixed) displayFixed.innerText = "EXPIRADO";
-            if(displayHome) displayHome.innerText = "EXPIRADO";
-            const fixedBar = document.getElementById('fixed-offer-timer');
-            if(fixedBar) fixedBar.style.display = 'none';
-            return;
-        }
-
-        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-        const text = `${days > 0 ? days + 'd ' : ''}${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
-
-        if(displayFixed) displayFixed.innerText = text;
-        if(displayHome) displayHome.innerText = text;
+    } catch (e) {
+        console.warn("Erro ao verificar review:", e);
+        renderReviewForm(false, null);
     }
-    updateTimer();
-    timerInterval = setInterval(updateTimer, 1000);
 }
 
-function initSlider() {
-    const sliderWrapper = document.querySelector(".slider-wrapper");
-    if (!sliderWrapper) return;
-    const slides = document.querySelectorAll(".slide");
-    let slideIndex = 0;
-    setInterval(() => {
-        slideIndex = (slideIndex + 1) % slides.length;
-        sliderWrapper.style.transform = `translateX(-${slideIndex * 100}%)`;
-    }, 5000);
-}
-
-
-// --- 5. EVENTO PRINCIPAL DE INICIALIZAÇÃO ---
-document.addEventListener("DOMContentLoaded", () => {
-    initSlider();
-    setupSearch();
+function renderReviewForm(isEditing, data) {
+    const container = document.getElementById('review-form-container');
+    const title = isEditing ? "Edite sua avaliação" : "O que você achou deste produto?";
+    const btnText = isEditing ? "Atualizar Avaliação" : "Enviar Avaliação";
     
-    // --- DICA DE LOGIN ---
-    setTimeout(() => {
-        if (!auth.currentUser) {
-            const hintBox = document.getElementById('login-hint-box');
-            const mobileIcon = document.getElementById('profile-button-mobile');
-            if(hintBox && mobileIcon) {
-                hintBox.style.display = 'block';
-                mobileIcon.classList.add('login-attention');
-                
-                setTimeout(() => {
-                    hintBox.style.display = 'none';
-                    mobileIcon.classList.remove('login-attention');
-                }, 8000);
-            }
+    const existingText = data ? data.text : "";
+    const existingRating = data ? data.rating : 0;
+    const existingImg = data ? data.image : null;
+
+    selectedRating = existingRating;
+    selectedReviewImageBase64 = existingImg;
+
+    let starsHtml = "";
+    for(let i=1; i<=5; i++) {
+        const cls = (i <= selectedRating) ? 'bx bxs-star active' : 'bx bx-star';
+        const style = (i <= selectedRating) ? 'color:#3483fa' : 'color:#e0e0e0';
+        starsHtml += `<i class='${cls}' style='${style}' data-val="${i}" onclick="setRating(${i})"></i>`;
+    }
+
+    const imgPreviewStyle = existingImg ? "display:block;" : "display:none;";
+
+    container.innerHTML = `
+        <div class="comment-form">
+            <span class="rating-label">${title}</span>
+            <div class="rating-input" id="star-input-group">
+                ${starsHtml}
+            </div>
+
+            <textarea id="new-review-text" placeholder="Conte-nos mais sobre sua experiência...">${existingText}</textarea>
+            
+            <div class="review-upload-box">
+                <label for="review-file-input" class="review-upload-label">
+                    <i class='bx bx-camera'></i> ${isEditing ? "Alterar foto" : "Adicionar fotos"}
+                </label>
+                <input type="file" id="review-file-input" accept="image/*" style="display:none;" onchange="handleReviewImage(this)">
+                <img id="review-img-preview" src="${existingImg || ''}" style="${imgPreviewStyle}">
+            </div>
+
+            <div style="text-align: right;">
+                <button class="cta-button" style="width:auto; padding: 12px 30px;" onclick="submitReview('${isEditing ? 'UPDATE' : 'CREATE'}')">${btnText}</button>
+            </div>
+        </div>
+    `;
+}
+
+// --- FUNÇÕES DE SUPORTE ---
+
+window.swapDetailImage = function(src, el) {
+    document.getElementById('main-detail-img').src = src;
+    document.querySelectorAll('.thumbnail-item').forEach(img => img.classList.remove('active'));
+    el.classList.add('active');
+}
+
+window.selectVariant = function(el) {
+    document.querySelectorAll('.variant-btn').forEach(btn => btn.classList.remove('selected'));
+    el.classList.add('selected');
+}
+
+window.setRating = function(val) {
+    selectedRating = val;
+    const stars = document.querySelectorAll('#star-input-group i');
+    stars.forEach(s => {
+        const sVal = parseInt(s.dataset.val);
+        if (sVal <= val) {
+             s.className = 'bx bxs-star active';
+             s.style.color = "#3483fa";
+        } else {
+             s.className = 'bx bx-star';
+             s.style.color = "#e0e0e0";
         }
-    }, 2000); 
+    });
+}
+
+window.handleReviewImage = function(input) {
+    const file = input.files[0];
+    if (file) {
+        if (file.size > 2 * 1024 * 1024) return alert("Imagem muito grande! Máximo 2MB."); 
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            selectedReviewImageBase64 = e.target.result;
+            const prev = document.getElementById('review-img-preview');
+            prev.src = selectedReviewImageBase64;
+            prev.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+window.submitReview = async function(mode) {
+    if (!auth.currentUser) {
+        const loginModal = document.getElementById('user-profile-modal');
+        if (loginModal) loginModal.classList.add('show');
+        return;
+    }
+
+    const text = document.getElementById('new-review-text').value.trim();
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
     
+    if (selectedRating === 0) return alert("Selecione uma nota de 1 a 5 estrelas.");
+    if (!text) return alert("Escreva um comentário.");
+
+    const user = auth.currentUser;
+    const reviewData = {
+        productId: productId,
+        userId: user.uid,
+        userName: user.displayName || "Cliente",
+        text: text,
+        rating: selectedRating,
+        image: selectedReviewImageBase64,
+        status: 'pending', 
+        createdAt: new Date().toISOString() 
+    };
+
+    let localReviews = getLocalUserReviews();
+    localReviews = localReviews.filter(r => r.productId !== productId);
+    localReviews.unshift(reviewData);
+    saveLocalUserReviews(localReviews);
+
+    loadReviews(productId);
+    
+    try {
+        if (mode === 'UPDATE' && currentUserReviewId) {
+            await db.collection('artifacts').doc(APP_ID)
+                    .collection('comments').doc(currentUserReviewId)
+                    .update({
+                        ...reviewData,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+            showToast("Avaliação atualizada!", "success");
+        } else {
+            await db.collection('artifacts').doc(APP_ID).collection('comments').add({
+                ...reviewData,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast("Avaliação enviada!", "success");
+            checkUserReviewStatus(productId);
+        }
+    } catch (e) {
+        console.error("Erro review:", e);
+        alert("Erro ao salvar no servidor. Tente novamente.");
+    }
+}
+
+async function loadReviews(productId) {
+    const listEl = document.getElementById('reviews-list');
+    if(!listEl) return;
+    
+    let html = '';
+
+    let localReviews = getLocalUserReviews();
+    const myReview = localReviews.find(r => r.productId === productId);
+    if (myReview) {
+        html += renderReviewItem(myReview, true);
+    }
+
+    try {
+        const snapshot = await db.collection('artifacts').doc(APP_ID)
+            .collection('comments')
+            .where('productId', '==', productId)
+            .where('status', '==', 'approved')
+            .orderBy('createdAt', 'desc')
+            .limit(20)
+            .get();
+
+        snapshot.forEach(doc => {
+            const d = doc.data();
+            if (auth.currentUser && d.userId === auth.currentUser.uid) return;
+            html += renderReviewItem(d, false);
+        });
+
+        if (!html) {
+            html = `
+                <div class="empty-reviews">
+                    <i class='bx bx-star'></i>
+                    <p>Este produto ainda não tem avaliações.</p>
+                    <small>Seja o primeiro a contar sua experiência!</small>
+                </div>`;
+        }
+        listEl.innerHTML = html;
+
+    } catch (e) {
+        console.warn("Erro reviews (falta indice?):", e);
+        if(html) listEl.innerHTML = html;
+        else listEl.innerHTML = '<div class="empty-reviews"><p>Avaliações indisponíveis.</p></div>';
+    }
+}
+
+function renderReviewItem(data, isPending) {
+    let starsHtml = '';
+    for(let i=1; i<=5; i++) {
+        starsHtml += (i <= data.rating) 
+            ? "<i class='bx bxs-star'></i>" 
+            : "<i class='bx bx-star' style='color:#ddd'></i>";
+    }
+
+    let dateStr = "Recentemente";
+    if (data.createdAt) {
+        const d = new Date(data.createdAt);
+        dateStr = d.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    const initial = data.userName ? data.userName.charAt(0).toUpperCase() : "C";
+    const imgHtml = data.image ? `<img src="${data.image}" class="review-image-attachment" onclick="window.open('${data.image}')" title="Ver zoom">` : '';
+    
+    const style = isPending ? 'opacity:0.8;' : '';
+
+    return `
+        <div class="comment-item" style="${style}">
+            <div class="review-card-header">
+                <div class="review-avatar">${initial}</div>
+                <div>
+                    <div class="comment-user-name">${data.userName}</div>
+                    <div class="review-stars-static">${starsHtml}</div>
+                </div>
+                <div class="comment-date">${dateStr}</div>
+            </div>
+            
+            <div class="comment-text">${data.text}</div>
+            ${imgHtml}
+        </div>
+    `;
+}
+
+// ==================== 5. INICIALIZAÇÃO ====================
+document.addEventListener("DOMContentLoaded", () => {
+    if(typeof initSlider === 'function') initSlider();
+    if(typeof setupSearch === 'function') setupSearch();
+    if(typeof updateCartBadge === 'function') updateCartBadge();
+    if(typeof startSuggestionTimer === 'function') startSuggestionTimer(); // Inicia Animação
+
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
 
     if (productId) {
         loadProductDetail(productId);
     } else {
-        loadHomeProducts();
+        if (document.getElementById('firebase-products-container')) {
+            initProductFeed();
+        }
     }
-    
-    // CORREÇÃO CRÍTICA: Chama a atualização do carrinho ao carregar a página
-    updateCartBadges(); 
 });

@@ -1,0 +1,841 @@
+/* ==================== 1. VARIÁVEIS E RESET (Cópia Essencial) ==================== */
+:root {
+    --color-bg-main: #F5F5F5;
+    --color-bg-light: #FFFFFF;
+    --color-brand-red: #db0038;
+    --color-text-dark: #333333;
+    --color-text-muted: #666666;
+    --color-success: #00a650;
+    --header-height: 70px;
+    --navbar-height: 60px;
+    --container-width: 1200px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Roboto', sans-serif;
+    background: var(--color-bg-main);
+    color: var(--color-text-dark);
+    padding-top: var(--header-height);
+    padding-bottom: var(--navbar-height);
+}
+img { display: block; max-width: 100%; object-fit: cover; }
+button { font-family: inherit; cursor: pointer; border: none; }
+.container { width: 95%; max-width: var(--container-width); margin: 0 auto; }
+a { text-decoration: none; color: inherit; }
+
+/* ==================== 2. HEADER E NAV (Estrutura da Home) ==================== */
+.main-header {
+    background: var(--color-brand-red);
+    position: fixed;
+    top: 0; left: 0; width: 100%;
+    height: var(--header-height);
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    display: flex; align-items: center;
+}
+
+.header-container {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 15px; align-items: center;
+    width: 95%; max-width: var(--container-width); margin: 0 auto;
+}
+
+/* Logo */
+.logo { display: flex; align-items: center; gap: 8px; color: #fff; font-size: 1.5rem; font-weight: 900; letter-spacing: -0.5px; text-transform: uppercase; }
+.logo-img { height: 35px; width: auto; border-radius: 4px; }
+.logo-highlight { color: #fff; }
+
+/* Busca */
+.search-bar { position: relative; width: 100%; }
+.search-bar input {
+    width: 100%; padding: 10px 40px 10px 15px;
+    border-radius: 4px; border: none; outline: none;
+    font-size: 0.9rem;
+}
+.search-bar i { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #666; font-size: 1.2rem; }
+
+/* Header Actions */
+.header-actions-desktop { display: none; align-items: center; gap: 20px; color: #fff; }
+.header-icon-mobile { color: #fff; font-size: 1.6rem; background: none; }
+.header-user-greeting { font-size: 0.8rem; display: flex; flex-direction: column; cursor: pointer; }
+.nav-item-desktop { display: flex; flex-direction: column; align-items: center; color: #fff; position: relative; font-size: 0.8rem; }
+.nav-item-desktop i { font-size: 1.4rem; }
+
+/* Badge Carrinho Desktop */
+.header-cart-badge {
+    position: absolute; top: -5px; right: 0;
+    background: #000; color: #fff;
+    font-size: 0.7rem; font-weight: 700;
+    padding: 2px 5px; border-radius: 10px;
+}
+
+/* Navbar Mobile */
+.bottom-navbar {
+    position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%);
+    width: 95%; max-width: 500px; height: var(--navbar-height);
+    background: #fff; border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    display: flex; justify-content: space-around; align-items: center;
+    z-index: 1000;
+}
+.nav-item { display: flex; flex-direction: column; align-items: center; color: #666; font-size: 0.7rem; position: relative; }
+.nav-item.active { color: var(--color-brand-red); }
+.nav-item i { font-size: 1.5rem; margin-bottom: 2px; }
+.cart-badge {
+    position: absolute; top: -2px; right: 10px;
+    background: var(--color-brand-red); color: #fff;
+    width: 16px; height: 16px; border-radius: 50%;
+    font-size: 0.65rem; display: flex; align-items: center; justify-content: center;
+}
+
+/* ==================== 3. HOME SPECIFICS (Banner & Categorias) ==================== */
+.home-offer-banner {
+    background-color: #111; color: #fff;
+    text-align: center; padding: 8px;
+    font-size: 0.85rem; font-weight: 700;
+    display: flex; justify-content: center; align-items: center; gap: 8px;
+}
+.home-offer-banner i { color: #db0038; animation: pulse 2s infinite; }
+
+.banner-slider { width: 100%; overflow: hidden; background: #f0f0f0; margin-bottom: 20px; }
+.slider-wrapper { display: flex; transition: transform 0.5s ease-in-out; }
+.slide { min-width: 100%; }
+.slide img { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
+
+.categories-section { background: #fff; padding: 15px 0; margin-bottom: 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.categories-scroll { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+.categories-scroll::-webkit-scrollbar { display: none; }
+.category-item { display: flex; flex-direction: column; align-items: center; min-width: 70px; cursor: pointer; transition: transform 0.2s; }
+.category-item:active { transform: scale(0.95); }
+.category-icon {
+    width: 55px; height: 55px; background: #fff; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; color: #666; border: 1px solid #eee;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06); margin-bottom: 8px;
+}
+.category-item.fire .category-icon { color: var(--color-brand-red); border-color: #ffcdd2; }
+
+/* ==================== 4. PRODUTOS & GRID (CARD OTIMIZADO) ==================== */
+.section-title { font-size: 1.25rem; margin-bottom: 1rem; color: #333; font-weight: 700; }
+
+.product-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+    padding-bottom: 20px;
+}
+
+.product-card {
+    background: #fff; border-radius: 8px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    display: flex; flex-direction: column;
+    position: relative; cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+/* Hover simples */
+.product-card:hover { 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+    transform: translateY(-2px);
+}
+
+.product-image {
+    position: relative; width: 100%; padding-top: 100%;
+    background: #fff; overflow: hidden;
+    border-bottom: 1px solid #f5f5f5;
+}
+.product-image img {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    object-fit: contain; padding: 10px;
+    transition: opacity 0.5s ease, transform 0.3s ease;
+}
+.product-image img.loaded { opacity: 1; }
+
+.product-info { 
+    padding: 12px; 
+    flex-grow: 1; 
+    display: flex; 
+    flex-direction: column; 
+}
+
+.product-name {
+    font-size: 0.9rem; font-weight: 400; color: #666;
+    margin-bottom: 8px; height: 36px; overflow: hidden;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    line-height: 1.3;
+}
+
+/* NOVO: Layout de Preços em Lista */
+.price-container { 
+    display: flex; 
+    flex-direction: column; /* Um embaixo do outro */
+    gap: 2px;
+    margin-bottom: 5px;
+}
+
+.price-old { 
+    font-size: 0.8rem; 
+    color: #999; 
+    text-decoration: line-through; 
+}
+
+.price-new { 
+    font-size: 1.4rem; 
+    font-weight: 700; 
+    color: #333; 
+}
+
+/* NOVO: Texto de Economia no Card */
+.card-savings {
+    font-size: 0.75rem;
+    color: var(--color-success);
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+.free-shipping { 
+    font-size: 0.75rem; 
+    color: var(--color-success); 
+    font-weight: 700; 
+    margin-top: auto; /* Empurra para o final */
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Responsivo */
+@media (min-width: 768px) {
+    .product-grid { grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    .product-card:hover .product-image img { transform: scale(1.05); }
+    
+    /* Overlay "Ver Detalhes" (Mantido do anterior) */
+    .product-card::after {
+        content: 'Ver detalhes';
+        position: absolute; top: 40%; left: 50%;
+        transform: translate(-50%, -50%) scale(0.8);
+        background: rgba(0,0,0,0.8); color: #fff;
+        padding: 10px 20px; border-radius: 30px;
+        font-size: 0.9rem; font-weight: 600;
+        opacity: 0; transition: all 0.3s; pointer-events: none;
+    }
+    .product-card:hover::after { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* ==================== 5. LOADING & EXTRAS ==================== */
+/* Skeleton */
+.skeleton-card { pointer-events: none; }
+.skeleton {
+    background: linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%);
+    background-size: 200% 100%; animation: shine 1.5s infinite;
+}
+.skeleton-img { width: 100%; height: 100%; position: absolute; top:0; left:0; }
+.skeleton-text { height: 15px; width: 80%; background: #eee; margin-top: 10px; }
+
+/* Loader Infinito */
+#scroll-sentinel { height: 20px; width: 100%; }
+#infinite-loader { display: none; text-align: center; padding: 20px; }
+.spinner {
+    width: 30px; height: 30px; border: 3px solid #eee;
+    border-top-color: var(--color-brand-red); border-radius: 50%;
+    animation: spin 1s infinite linear; margin: 0 auto;
+}
+
+@keyframes spin { 100% { transform: rotate(360deg); } }
+@keyframes shine { to { background-position-x: -200%; } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+/* Login Hint & Modais */
+.login-hint-tooltip {
+    position: absolute; top: 60px; right: 20px;
+    background: var(--color-brand-red); color: white;
+    padding: 10px; border-radius: 8px; font-size: 0.8rem;
+    z-index: 2000; animation: float 2s infinite ease-in-out;
+}
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 2000;
+    display: none; justify-content: center; align-items: center;
+}
+.modal-overlay.show { display: flex; }
+.modal-content { background: #fff; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; position: relative; }
+.modal-close { position: absolute; top: 10px; right: 10px; font-size: 1.5rem; background: none; }
+.toast {
+    position: fixed; bottom: -50px; left: 50%; transform: translateX(-50%);
+    background: #333; color: #fff; padding: 10px 20px; border-radius: 20px;
+    transition: bottom 0.3s; z-index: 3000; display: flex; align-items: center; gap: 8px;
+}
+.toast.show { bottom: 80px; }
+
+/* ==================== 6. VISUALIZAÇÃO DE DETALHES (Estilo ML) ==================== */
+
+/* Container Principal Grid */
+.detail-view-container {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr; /* Imagem maior, Info menor */
+    gap: 30px;
+    align-items: start;
+}
+
+/* Coluna da Esquerda: Galeria */
+.detail-gallery {
+    position: relative;
+    border: 1px solid #f0f0f0;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+}
+.detail-gallery img {
+    max-width: 100%;
+    max-height: 500px;
+    object-fit: contain;
+}
+
+/* Coluna da Direita: Informações */
+.detail-info {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-status {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 10px;
+    border-left: 3px solid #db0038; /* Detalhe visual */
+    padding-left: 8px;
+}
+
+.detail-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #333;
+    line-height: 1.3;
+    margin-bottom: 15px;
+}
+
+/* Preços */
+.detail-price-old {
+    font-size: 1rem;
+    color: #999;
+    text-decoration: line-through;
+    margin-bottom: 5px;
+}
+.detail-price-current {
+    font-size: 2.2rem;
+    font-weight: 300; /* Fonte fina estilo ML */
+    color: #333;
+    line-height: 1;
+}
+.detail-payment-info {
+    font-size: 0.9rem;
+    color: #002b15; /* Verde */
+    margin-top: 5px;
+    font-weight: 500;
+}
+.detail-savings-tag {
+    font-size: 0.9rem;
+    color: var(--color-success);
+    font-weight: 600;
+    margin-top: 5px;
+    display: block;
+}
+
+/* Correção para alinhar Estrelas e Número na mesma linha */
+.detail-rating-summary {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Garante alinhamento à esquerda */
+    gap: 8px; /* Espaço entre estrelas e número */
+    color: #ffc107;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    width: 100%;
+}
+
+.detail-rating-summary span {
+    color: #666;
+    font-weight: 500;
+    white-space: nowrap; /* Impede que o número quebre linha */
+    margin: 0; /* Remove margens que possam empurrar para baixo */
+}
+
+.review-stars-static {
+    display: flex; /* Garante que as estrelas fiquem em linha */
+    align-items: center;
+}
+
+/* Barra de Estoque (Escassez) */
+.stock-scarcity-container {
+    margin: 25px 0;
+}
+.stock-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+    color: #666;
+}
+.stock-label strong { color: #db0038; } /* Vermelho */
+
+.stock-track {
+    width: 100%;
+    height: 6px;
+    background: #f0f0f0;
+    border-radius: 3px;
+    overflow: hidden;
+}
+.stock-fill {
+    height: 100%;
+    width: 85%; /* Simulação visual */
+    background: #db0038;
+    border-radius: 3px;
+}
+
+/* Frete */
+.shipping-calc-box {
+    margin-bottom: 25px;
+}
+.shipping-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.shipping-input-group {
+    display: flex;
+    gap: 10px;
+}
+.shipping-input-group input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+}
+.shipping-input-group button {
+    padding: 0 15px;
+    background: #f5f5f5;
+    color: #333;
+    font-weight: 600;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+}
+
+/* Botões de Ação */
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.btn-buy-now {
+    width: 100%;
+    padding: 16px;
+    background: #db0038; /* Vermelho principal */
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+.btn-buy-now:hover { background: #b71c1c; }
+
+.btn-add-cart {
+    background-color: #fff;
+    color: var(--color-brand-red);
+    border: 2px solid var(--color-brand-red);
+    border-radius: 6px;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    width: 100%;
+    cursor: pointer;
+}
+.btn-add-cart:hover {
+    background-color: rgba(219, 0, 56, 0.05);
+}
+
+
+/* 2. Galeria de Imagens (Miniaturas) */
+.detail-gallery-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+}
+
+.main-image-wrapper {
+    position: relative;
+    border: 1px solid #f0f0f0;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 350px;
+    background: #fff;
+}
+
+.main-image-wrapper img {
+    max-width: 100%;
+    max-height: 450px;
+    object-fit: contain;
+}
+
+.thumbnails-scroll {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 5px;
+}
+
+.thumbnail-item {
+    width: 60px;
+    height: 60px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: all 0.2s;
+    object-fit: contain;
+    padding: 2px;
+}
+
+.thumbnail-item:hover, .thumbnail-item.active {
+    border-color: var(--color-brand-red);
+    opacity: 1;
+}
+
+
+/* Badges de Garantia */
+.trust-badges {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+
+/* 4. Variantes (Modelos/Cores) */
+.variants-section {
+    margin: 15px 0;
+}
+.variants-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+}
+.variants-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.variant-btn {
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    background: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+.variant-btn.selected {
+    border-color: var(--color-brand-red);
+    color: var(--color-brand-red);
+    font-weight: 700;
+    background: #fff5f5;
+}
+
+/* 3. Preços e Economia (Sem Fundo) */
+.detail-savings-text {
+    font-size: 0.9rem;
+    color: var(--color-success);
+    font-weight: 600;
+    margin-top: 5px;
+    display: block;
+}
+
+/* ==================== SEÇÃO DE AVALIAÇÕES (MODERNA) ==================== */
+
+.comments-section {
+    background: #fff;
+    padding: 24px;
+    margin-top: 24px;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+
+.comments-header {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: var(--color-text-dark);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* --- Área de Input (Escrever Avaliação) --- */
+.comment-form {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    border: 1px solid #eee;
+}
+
+.rating-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Estrelas Grandes Interativas */
+.rating-input {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+.rating-input i {
+    font-size: 2rem; /* Maior para toque */
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: transform 0.2s, color 0.2s;
+}
+.rating-input i.active {
+    color: #3483fa; /* Azul estilo ML (ou use var(--color-brand-red) se preferir) */
+}
+.rating-input i:hover {
+    transform: scale(1.1);
+}
+
+/* Textarea Moderno */
+.comment-form textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    resize: none; /* Impede redimensionar feio */
+    min-height: 100px;
+    margin-bottom: 15px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    transition: border-color 0.3s;
+    background: #fff;
+}
+.comment-form textarea:focus {
+    border-color: #3483fa;
+    outline: none;
+}
+
+/* Botão Upload Estilo "Dropzone" */
+.review-upload-box {
+    margin-bottom: 20px;
+}
+.review-upload-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px;
+    border: 1px dashed #bbb;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #fff;
+    color: #3483fa;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+.review-upload-label:hover {
+    background: #f0f7ff;
+    border-color: #3483fa;
+}
+.review-upload-label i {
+    font-size: 1.2rem;
+}
+
+/* Preview da Imagem no Form */
+#review-img-preview {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 6px;
+    margin-top: 10px;
+    border: 1px solid #ddd;
+    display: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* --- Lista de Avaliações (Cards) --- */
+.comment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.comment-item {
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 20px;
+    animation: fadeIn 0.3s ease;
+}
+.comment-item:last-child {
+    border-bottom: none;
+}
+
+/* Cabeçalho do Card de Avaliação */
+.review-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+/* Avatar Simulado (Círculo com Inicial) */
+.review-avatar {
+    width: 32px;
+    height: 32px;
+    background-color: #eaeaea;
+    color: #666;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.review-stars-static {
+    color: #3483fa; /* Azul ML */
+    font-size: 0.85rem;
+    display: flex;
+    gap: 2px;
+}
+
+.comment-user-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #333;
+}
+.comment-date {
+    font-size: 0.75rem;
+    color: #999;
+    margin-left: auto; /* Empurra a data para a direita */
+}
+
+.comment-text {
+    font-size: 0.95rem;
+    color: #444;
+    line-height: 1.5;
+    margin-top: 5px;
+    margin-left: 44px; /* Alinha com o texto do header, pulando o avatar */
+}
+
+/* Imagem na Avaliação */
+.review-image-attachment {
+    margin-top: 10px;
+    margin-left: 44px;
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #eee;
+    cursor: zoom-in;
+    transition: transform 0.2s;
+}
+.review-image-attachment:hover {
+    transform: scale(1.05);
+}
+
+/* Tags de Status */
+.comment-pending-tag {
+    font-size: 0.7rem;
+    background: #fff3cd;
+    color: #856404;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 8px;
+    font-weight: normal;
+}
+
+/* Empty State Moderno */
+.empty-reviews {
+    text-align: center;
+    padding: 30px;
+    color: #999;
+    background: #fafafa;
+    border-radius: 8px;
+}
+.empty-reviews i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    display: block;
+    color: #ddd;
+}
+
+.trust-item { display: flex; gap: 10px; font-size: 0.9rem; color: #666; }
+.trust-item i { font-size: 1.2rem; color: #333; margin-top: 2px; }
+.trust-item span strong { color: #00a650; }
+
+/* Responsivo para Mobile */
+@media (max-width: 768px) {
+    .detail-view-container { grid-template-columns: 1fr; gap: 0; padding: 15px; }
+    .detail-gallery { border: none; padding: 0; margin-bottom: 20px; min-height: auto; }
+    .detail-price-current { font-size: 2rem; }
+    .main-image-wrapper { min-height: 300px; }
+    .thumbnail-item { width: 50px; height: 50px; }
+}
+
+/* ==================== ANIMAÇÃO DE SUGESTÃO (ATUALIZADA) ==================== */
+
+@keyframes suggestPulse {
+    0% { box-shadow: 0 0 0 0 rgba(219, 0, 56, 0.7); transform: scale(1); border-color: transparent; }
+    50% { box-shadow: 0 0 0 10px rgba(219, 0, 56, 0); transform: scale(1.02); border-color: var(--color-brand-red); }
+    100% { box-shadow: 0 0 0 0 rgba(219, 0, 56, 0); transform: scale(1); border-color: transparent; }
+}
+
+@keyframes handBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.suggest-animation {
+    animation: suggestPulse 2s infinite; /* Pulsa a cada 2s */
+    z-index: 20; /* Traz para frente */
+    position: relative; /* Necessário para o ponteiro absoluto */
+}
+
+/* O Ponteiro (Mãozinha + Texto) */
+.suggest-animation::before {
+    content: '👆 Ver mais';
+    position: absolute;
+    bottom: 10px; /* Posição sobre o card */
+    right: 10px;
+    background: #fff;
+    color: var(--color-brand-red);
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 5px 12px;
+    border-radius: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    border: 1px solid var(--color-brand-red);
+    animation: handBounce 1s infinite; /* Mãozinha pulando */
+    pointer-events: none; /* Permite clicar no card através do aviso */
+    z-index: 30;
+}
