@@ -610,19 +610,69 @@ window.setRating = function(val) {
     });
 }
 
+// --- Lógica de Imagem da Review (Com Compressão e Redimensionamento) ---
 window.handleReviewImage = function(input) {
     const file = input.files[0];
-    if (file) {
-        if (file.size > 2 * 1024 * 1024) return alert("Imagem muito grande! Máximo 2MB."); 
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            selectedReviewImageBase64 = e.target.result;
-            const prev = document.getElementById('review-img-preview');
-            prev.src = selectedReviewImageBase64;
-            prev.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
+    if (!file) return;
+
+    // 1. Novo Limite: 10MB
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+        alert("A imagem deve ter no máximo 10MB.");
+        input.value = ""; // Limpa o input
+        return;
     }
+
+    // Cria um objeto de imagem para processamento
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+
+    img.onload = function() {
+        // 2. Define dimensões máximas (Redução de Resolução)
+        const MAX_WIDTH = 800;
+        const MAX_HEIGHT = 800;
+        let width = img.width;
+        let height = img.height;
+
+        // Calcula nova proporção mantendo o aspecto
+        if (width > height) {
+            if (width > MAX_WIDTH) {
+                height *= MAX_WIDTH / width;
+                width = MAX_WIDTH;
+            }
+        } else {
+            if (height > MAX_HEIGHT) {
+                width *= MAX_HEIGHT / height;
+                height = MAX_HEIGHT;
+            }
+        }
+
+        // 3. Desenha no Canvas (Redimensionamento)
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // 4. Exporta comprimido (JPEG qualidade 70%)
+        // Isso transforma uma foto de 5MB em ~100kb
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+
+        // Atualiza variáveis globais e preview
+        selectedReviewImageBase64 = compressedBase64;
+        
+        const prev = document.getElementById('review-img-preview');
+        prev.src = compressedBase64;
+        prev.style.display = 'block';
+
+        // Libera memória
+        URL.revokeObjectURL(img.src);
+    };
+
+    img.onerror = function() {
+        alert("Erro ao processar a imagem. Tente outra.");
+        input.value = "";
+    };
 }
 
 window.submitReview = async function(mode) {
