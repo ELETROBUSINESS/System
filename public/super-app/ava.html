@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moderação de Avaliações - Dtudo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
+    <!-- Reutilizando variáveis globais e o novo CSS admin -->
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/admin-reviews.css">
+
+    <style>
+        /* css/admin-reviews.css */
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+}
+
+.btn-refresh {
+    background: #333;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+.btn-refresh:hover {
+    background: #555;
+}
+
+/* Grid de Cards */
+.reviews-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+@media (min-width: 768px) {
+    .reviews-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Card de Moderação */
+.mod-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow: hidden;
+    border: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+}
+
+.mod-header {
+    background: #f9f9f9;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mod-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    color: #333;
+}
+.mod-avatar {
+    width: 30px; 
+    height: 30px; 
+    background: #ddd; 
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem;
+}
+
+.mod-date {
+    font-size: 0.75rem;
+    color: #999;
+}
+
+.mod-body {
+    padding: 15px;
+    flex-grow: 1;
+}
+
+.mod-product-ref {
+    font-size: 0.8rem;
+    color: #3483fa;
+    margin-bottom: 10px;
+    display: block;
+    font-weight: 500;
+    text-decoration: none;
+}
+.mod-product-ref:hover { text-decoration: underline; }
+
+.mod-stars {
+    color: #ffc107;
+    margin-bottom: 8px;
+}
+
+.mod-text {
+    font-size: 0.95rem;
+    color: #444;
+    line-height: 1.5;
+    background: #fdfdfd;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #f0f0f0;
+}
+
+.mod-image {
+    margin-top: 10px;
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #eee;
+    cursor: zoom-in;
+}
+
+.mod-actions {
+    padding: 15px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    background: #fff;
+    border-top: 1px solid #eee;
+}
+
+.btn-approve {
+    background: #00a650;
+    color: white;
+    padding: 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    transition: opacity 0.2s;
+}
+.btn-reject {
+    background: #fff;
+    color: #db0038;
+    border: 1px solid #db0038;
+    padding: 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    transition: background 0.2s;
+}
+
+.btn-approve:hover { opacity: 0.9; }
+.btn-reject:hover { background: #fff5f5; }
+    </style>
+</head>
+
+<body>
+    <header class="main-header">
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <img src="dtudo.png" alt="Logo" class="logo-img">
+                <span>Painel <span class="logo-highlight">Admin</span></span>
+            </a>
+            <div style="color: white; font-weight: 600;">Moderação de Reviews</div>
+        </div>
+    </header>
+
+    <main class="container" style="padding-top: 40px;">
+        <div class="admin-header">
+            <h2>Avaliações Pendentes</h2>
+            <button onclick="loadPendingReviews()" class="btn-refresh"><i class='bx bx-refresh'></i> Atualizar</button>
+        </div>
+
+        <div id="loading-state" style="text-align: center; padding: 40px;">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #666;">Buscando avaliações...</p>
+        </div>
+
+        <div id="reviews-grid" class="reviews-grid">
+            <!-- Os cards serão injetados aqui via JS -->
+        </div>
+
+        <div id="empty-state" style="display: none; text-align: center; padding: 50px; color: #999;">
+            <i class='bx bx-check-double' style="font-size: 4rem; color: #00a650;"></i>
+            <h3>Tudo limpo!</h3>
+            <p>Nenhuma avaliação pendente no momento.</p>
+        </div>
+    </main>
+
+    <div id="toast-notification" class="toast"></div>
+
+    <!-- Scripts Firebase e Lógica -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <script src="js/global.js"></script>
+    
+    <script>
+        // js/admin-reviews.js
+
+const ADMIN_APP_ID = 'floralchic-loja'; // Mesmo ID
+const ADMIN_COLLECTION = 'comments';
+
+document.addEventListener("DOMContentLoaded", () => {
+    // Verifica Auth (Segurança Básica de Front)
+    firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+            loadPendingReviews();
+        } else {
+            // Se não estiver logado, manda para home ou pede login
+            alert("Acesso restrito. Faça login.");
+            window.location.href = "index.html"; 
+        }
+    });
+});
+
+async function loadPendingReviews() {
+    const grid = document.getElementById('reviews-grid');
+    const loading = document.getElementById('loading-state');
+    const empty = document.getElementById('empty-state');
+
+    grid.innerHTML = '';
+    loading.style.display = 'block';
+    empty.style.display = 'none';
+
+    try {
+        // Busca apenas Pendentes
+        const snapshot = await db.collection('artifacts').doc(ADMIN_APP_ID)
+            .collection(ADMIN_COLLECTION)
+            .where('status', '==', 'pending')
+            .orderBy('createdAt', 'desc')
+            .get();
+
+        loading.style.display = 'none';
+
+        if (snapshot.empty) {
+            empty.style.display = 'block';
+            return;
+        }
+
+        // Renderiza cada card
+        snapshot.forEach(async doc => {
+            const data = doc.data();
+            const card = await createReviewCard(doc.id, data);
+            grid.appendChild(card);
+        });
+
+    } catch (error) {
+        console.error("Erro ao buscar reviews:", error);
+        loading.innerHTML = `<p style="color:red">Erro: ${error.message}</p>`;
+    }
+}
+
+// Cria o elemento HTML do Card
+async function createReviewCard(reviewId, data) {
+    const div = document.createElement('div');
+    div.className = 'mod-card';
+    div.id = `card-${reviewId}`;
+
+    // Busca nome do produto para contexto
+    let productName = "Produto Carregando...";
+    try {
+        const prodDoc = await db.collection('artifacts').doc(ADMIN_APP_ID)
+            .collection('users').doc(STORE_OWNER_UID) // Variavel global do global.js ou index.js
+            .collection('products').doc(data.productId).get();
+        if (prodDoc.exists) productName = prodDoc.data().name;
+        else productName = "Produto Removido";
+    } catch (e) { productName = "Erro ao buscar produto"; }
+
+    // Formata data
+    const date = data.createdAt ? new Date(data.createdAt).toLocaleString() : 'Data desconhecida';
+    
+    // Estrelas
+    let stars = '';
+    for(let i=1; i<=5; i++) {
+        stars += (i <= data.rating) ? "<i class='bx bxs-star'></i>" : "<i class='bx bx-star'></i>";
+    }
+
+    // Imagem
+    const imgHtml = data.image ? 
+        `<img src="${data.image}" class="mod-image" onclick="window.open('${data.image}')" title="Clique para ampliar">` : '';
+
+    div.innerHTML = `
+        <div class="mod-header">
+            <div class="mod-user">
+                <div class="mod-avatar">${data.userName.charAt(0)}</div>
+                <span>${data.userName}</span>
+            </div>
+            <span class="mod-date">${date}</span>
+        </div>
+        <div class="mod-body">
+            <a href="index.html?id=${data.productId}" target="_blank" class="mod-product-ref">
+                <i class='bx bx-link-external'></i> ${productName}
+            </a>
+            <div class="mod-stars">${stars}</div>
+            <div class="mod-text">${data.text}</div>
+            ${imgHtml}
+        </div>
+        <div class="mod-actions">
+            <button class="btn-reject" onclick="processReview('${reviewId}', 'reject')">
+                <i class='bx bx-x'></i> Rejeitar
+            </button>
+            <button class="btn-approve" onclick="processReview('${reviewId}', 'approve')">
+                <i class='bx bx-check'></i> Aprovar
+            </button>
+        </div>
+    `;
+
+    return div;
+}
+
+// Ação de Aprovar ou Rejeitar
+window.processReview = async function(reviewId, action) {
+    const card = document.getElementById(`card-${reviewId}`);
+    if(card) card.style.opacity = '0.5';
+
+    try {
+        const ref = db.collection('artifacts').doc(ADMIN_APP_ID)
+                      .collection(ADMIN_COLLECTION).doc(reviewId);
+
+        if (action === 'approve') {
+            await ref.update({ 
+                status: 'approved',
+                approvedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast("Avaliação Aprovada!", "success");
+        } else {
+            // Opção A: Deletar Permanentemente
+            // await ref.delete(); 
+            
+            // Opção B: Marcar como rejeitado (Histórico) - Escolhida
+            await ref.update({ 
+                status: 'rejected',
+                rejectedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast("Avaliação Rejeitada.", "error");
+        }
+
+        // Remove da tela
+        if(card) {
+            card.style.transform = 'scale(0.9)';
+            setTimeout(() => card.remove(), 300);
+        }
+
+        // Verifica se ficou vazio
+        const grid = document.getElementById('reviews-grid');
+        if (grid.children.length <= 1) { // <= 1 porque o elemento atual ainda não foi removido do DOM no timing exato
+            setTimeout(() => {
+                if(grid.children.length === 0) document.getElementById('empty-state').style.display = 'block';
+            }, 350);
+        }
+
+    } catch (e) {
+        console.error("Erro na ação:", e);
+        alert("Erro ao processar. Veja o console.");
+        if(card) card.style.opacity = '1';
+    }
+}
+    </script>
+</body>
+</html>
