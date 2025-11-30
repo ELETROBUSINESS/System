@@ -1,4 +1,4 @@
-// js/index.js - CARD ATUALIZADO, LÓGICA DE BARRA (REF 8) E ANIMAÇÃO 60s
+// js/index.js
 
 const STORE_OWNER_UID = "3zYT9Y6hXWeJSuvmEYP4FMZa5gI2";
 const APP_ID = 'floralchic-loja';
@@ -18,8 +18,33 @@ let currentDetailImages = [];
 let selectedRating = 0;
 let selectedReviewImageBase64 = null;
 let currentUserReviewId = null;
+let searchDebounceTimeout = null;
 
 // ==================== 1. UTILITÁRIOS E CACHE ====================
+
+// --- NOVA REGRA DE PARCELAMENTO (MERCADO PAGO) ---
+function calculateInstallmentsRule(price) {
+    if (price >= 1000) return 12;
+    if (price >= 800) return 9;
+    if (price >= 625) return 8;
+    if (price >= 600) return 7;
+    if (price >= 300) return 6;
+    if (price >= 250) return 5;
+    return 4; // Até 4x padrão
+}
+
+// --- HELPER PARA OBTER A BASE DE CÁLCULO DA PARCELA ---
+function getInstallmentBasis(prod) {
+    // Verifica se existe "web_price" e se é um número válido > 0
+    const webPrice = parseFloat(prod.web_price);
+    
+    if (!isNaN(webPrice) && webPrice > 0) {
+        return webPrice;
+    }
+    
+    // Fallback para o preço original "price" caso web_price não exista
+    return parseFloat(prod.price || 0);
+}
 
 function getLocalUserReviews() {
     const raw = localStorage.getItem(COMMENTS_CACHE_KEY);
@@ -99,18 +124,26 @@ function renderProductBatch(products) {
         if(document.getElementById(`prod-${prod.id}`)) return;
 
         let displayImg = prod.imgUrl || 'https://placehold.co/400x400/EBEBEB/333?text=Sem+Foto';
-        const valPrice = parseFloat(prod.price || 0);
-        const valOffer = parseFloat(prod['price-oferta'] || 0);
+        
+        // Preços de exibição (Venda)
+        const valPrice = parseFloat(prod.price || 0); // Original
+        const valOffer = parseFloat(prod['price-oferta'] || 0); // Oferta Atual
         const hasOffer = (valOffer > 0 && valOffer < valPrice);
-        const finalPrice = hasOffer ? valOffer : valPrice;
         
         const fmtConfig = { style: 'currency', currency: 'BRL' };
         const fmtNormal = new Intl.NumberFormat('pt-BR', fmtConfig).format(valPrice);
         const fmtOffer = new Intl.NumberFormat('pt-BR', fmtConfig).format(valOffer);
 
-        // --- LAYOUT DE PREÇO ---
+        // Lógica de Parcelamento (Baseada em pc-oferta ou price)
+        const installmentBasis = getInstallmentBasis(prod);
+        const maxInst = calculateInstallmentsRule(installmentBasis);
+        const valInst = installmentBasis / maxInst;
+        const fmtInst = new Intl.NumberFormat('pt-BR', fmtConfig).format(valInst);
+
         let priceHtml = '';
+        
         if (hasOffer) {
+            // TEM OFERTA: Mostra economia
             const savings = valPrice - valOffer;
             const fmtSavings = new Intl.NumberFormat('pt-BR', fmtConfig).format(savings);
             
@@ -121,16 +154,17 @@ function renderProductBatch(products) {
                     <span class="card-savings">Economize ${fmtSavings}</span>
                 </div>`;
         } else {
+            // NÃO TEM OFERTA: Mostra parcelamento calculado com a base correta
             priceHtml = `
                 <div class="price-container">
                     <span class="price-new">${fmtNormal}</span>
+                    <span class="card-savings">${maxInst}x de ${fmtInst} sem juros</span>
                 </div>`;
         }
 
         const stock = parseInt(prod.stock || 0);
         const isSoldOut = stock <= 0;
 
-        // --- CARD SEM BOTÃO COMPRAR ---
         const html = `
             <div class="product-card ${isSoldOut ? 'sold-out' : ''}" id="prod-${prod.id}" onclick="window.location.href='index.html?id=${prod.id}'">
                 <div class="product-image">
@@ -147,34 +181,72 @@ function renderProductBatch(products) {
     });
 }
 
-// --- FUNÇÃO DE ANIMAÇÃO (10s, Filtro Visível e Log) ---
-function startSuggestionTimer() {
-    console.log("Iniciando sistema de sugestão...");
+// --- BUSCA COM SUGESTÕES ---
+function setupSearch() {
+    const input = document.querySelector('.search-bar input');
+    const dropdown = document.getElementById('search-dropdown');
+    
+    if(!input || !dropdown) return;
 
+    input.addEventListener('input', (e) => {
+        const term = e.target.value.trim().toLowerCase();
+        clearTimeout(searchDebounceTimeout);
+        
+        if(term.length < 2) {
+            dropdown.style.display = 'none';
+            dropdown.innerHTML = '';
+            return;
+        }
+
+        searchDebounceTimeout = setTimeout(async () => {
+            dropdown.innerHTML = '<div style="padding:10px; text-align:center; color:#666;">Buscando...</div>';
+            dropdown.style.display = 'block';
+
+            const cached = getCachedData() || [];
+            let results = cached.filter(p => p.name.toLowerCase().includes(term)).slice(0, 5);
+
+            if(results.length === 0) {
+                dropdown.innerHTML = '<div style="padding:10px; text-align:center; color:#666;">Nenhum produto encontrado.</div>';
+            } else {
+                let html = '';
+                results.forEach(p => {
+                    const price = parseFloat(p['price-oferta'] || p.price || 0);
+                    const fmtPrice = price.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+                    const img = p.imgUrl || 'https://placehold.co/50x50';
+                    
+                    html += `
+                        <div class="search-item" onclick="window.location.href='index.html?id=${p.id}'" style="display:flex; gap:10px; padding:10px; border-bottom:1px solid #eee; cursor:pointer; align-items:center;">
+                            <img src="${img}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;">
+                            <div>
+                                <div style="font-size:0.9rem; font-weight:500; color:#333;">${p.name}</div>
+                                <div style="font-size:0.8rem; color:#00a650; font-weight:700;">${fmtPrice}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                dropdown.innerHTML = html;
+            }
+        }, 300);
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+}
+
+function startSuggestionTimer() {
     setInterval(() => {
         const allCards = Array.from(document.querySelectorAll('.product-card:not(.skeleton-card)'));
         if (allCards.length === 0) return;
-
-        const visibleCards = allCards.filter(card => {
-            const rect = card.getBoundingClientRect();
-            return (
-                rect.top >= 0 &&
-                rect.left >= 0 &&
-                rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-                rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-            );
-        });
-
-        const targets = visibleCards.length > 0 ? visibleCards : allCards;
-        const randomIndex = Math.floor(Math.random() * targets.length);
-        const card = targets[randomIndex];
-
-        card.classList.add('suggest-animation');
-
-        setTimeout(() => {
-            card.classList.remove('suggest-animation');
-        }, 6000);
-
+        
+        const randomIndex = Math.floor(Math.random() * allCards.length);
+        const card = allCards[randomIndex];
+        if(card) {
+            card.classList.add('suggest-animation');
+            setTimeout(() => card.classList.remove('suggest-animation'), 6000);
+        }
     }, 60000); 
 }
 
@@ -245,7 +317,7 @@ async function initProductFeed() {
     }
 }
 
-// ==================== 3. LÓGICA DE DETALHES (ATUALIZADA) ====================
+// ==================== 3. LÓGICA DE DETALHES ====================
 
 async function loadProductDetail(id) {
     document.querySelector('.home-offer-banner').style.display = 'none';
@@ -258,7 +330,17 @@ async function loadProductDetail(id) {
     detailView.style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'auto' });
 
-    content.innerHTML = '<div style="text-align:center; padding:50px;"><div class="spinner"></div></div>';
+    content.innerHTML = `
+        <div class="detail-skeleton">
+            <div class="sk-img"></div>
+            <div class="sk-info">
+                <div class="sk-line" style="width:60%"></div>
+                <div class="sk-line" style="width:100%; height:30px; margin-bottom:20px;"></div>
+                <div class="sk-line" style="width:40%; height:40px;"></div>
+                <div class="sk-line" style="width:100%; height:50px; margin-top:30px;"></div>
+            </div>
+        </div>
+    `;
 
     try {
         const doc = await db.collection('artifacts').doc(APP_ID)
@@ -273,39 +355,32 @@ async function loadProductDetail(id) {
         const prod = doc.data();
         currentDetailImages = extractProductImages(prod);
 
+        // Preços de Exibição
         const valPrice = parseFloat(prod.price || 0);
         const valOffer = parseFloat(prod['price-oferta'] || 0);
         const hasOffer = (valOffer > 0 && valOffer < valPrice);
         const finalPrice = hasOffer ? valOffer : valPrice;
         
+        document.title = `${prod.name} | Dtudo`;
+        
         const fmtConfig = { style: 'currency', currency: 'BRL' };
         const fmtFinal = new Intl.NumberFormat('pt-BR', fmtConfig).format(finalPrice);
         const fmtOld = new Intl.NumberFormat('pt-BR', fmtConfig).format(valPrice);
 
-        // --- LÓGICA DE PARCELAMENTO (ATUALIZADA - DESIGN MINIMALISTA) ---
-        let installmentBlock = '';
-        if (prod.web_active) {
-            const maxInstallments = parseInt(prod.web_installments) || 12;
-            
-            // Define o preço base para o parcelamento
-            const baseInstallmentPrice = (prod.web_price && parseFloat(prod.web_price) > 0) 
-                                         ? parseFloat(prod.web_price) 
-                                         : finalPrice;
-            
-            const installmentValue = baseInstallmentPrice / maxInstallments;
-            const fmtInstallmentValue = new Intl.NumberFormat('pt-BR', fmtConfig).format(installmentValue);
+        // --- LÓGICA DE PARCELAMENTO (BASEADA EM pc-oferta OU price) ---
+        const installmentBasis = getInstallmentBasis(prod); // Usa pc-oferta se existir, senão usa price
+        const maxInstallments = calculateInstallmentsRule(installmentBasis);
+        const installmentValue = installmentBasis / maxInstallments;
+        const fmtInstallmentValue = new Intl.NumberFormat('pt-BR', fmtConfig).format(installmentValue);
 
-            // Novo Design Minimalista (Sem fundo, ícone verde, texto limpo)
-            // Removido o link "Ver meios de pagamento"
-            installmentBlock = `
-                <div class="installment-container">
-                    <div class="installment-main">
-                        <i class='bx bx-credit-card-front'></i>
-                        <span>Em até <strong>${maxInstallments}x</strong> de <strong>${fmtInstallmentValue}</strong> sem juros</span>
-                    </div>
+        const installmentBlock = `
+            <div class="installment-container">
+                <div class="installment-main">
+                    <i class='bx bx-credit-card-front'></i>
+                    <span>Em até <strong>${maxInstallments}x</strong> de <strong>${fmtInstallmentValue}</strong> sem juros</span>
                 </div>
-            `;
-        }
+            </div>
+        `;
 
         let priceBlock = '';
         if (hasOffer) {
@@ -324,7 +399,6 @@ async function loadProductDetail(id) {
             `;
         }
 
-        // --- ESTOQUE E VENDAS ---
         const stockCount = parseInt(prod.stock || 0); 
         const soldCount = parseInt(prod.sold || 0);
         
@@ -334,9 +408,7 @@ async function loadProductDetail(id) {
         if (stockCount <= 0) {
             stockHtml = `
                 <div class="stock-scarcity-container">
-                    <div class="stock-label">
-                        <strong style="color:#999">Esgotado</strong>
-                    </div>
+                    <div class="stock-label"><strong style="color:#999">Esgotado</strong></div>
                     <div class="stock-track"><div class="stock-fill" style="width:0"></div></div>
                 </div>`;
         } else if (stockCount <= maxRef) {
@@ -351,9 +423,7 @@ async function loadProductDetail(id) {
                         <span>Disponibilidade: ${stockCount} itens</span>
                         <strong style="color:#db0038">Restam poucas unidades!</strong>
                     </div>
-                    <div class="stock-track">
-                        <div class="stock-fill" style="width:${barWidth}%; background:#db0038"></div>
-                    </div>
+                    <div class="stock-track"><div class="stock-fill" style="width:${barWidth}%; background:#db0038"></div></div>
                 </div>`;
         } else {
             stockHtml = `
@@ -382,12 +452,12 @@ async function loadProductDetail(id) {
                 `).join('')}
             </div>` : '';
 
-        // Renderização HTML
         content.innerHTML = `
             <div class="detail-view-container">
                 <div class="detail-gallery-container">
                     <div class="main-image-wrapper">
-                        <img id="main-detail-img" src="${currentDetailImages[0]}" alt="${prod.name}">
+                        <img id="main-detail-img" src="${currentDetailImages[0]}" alt="${prod.name}" onclick="openZoom(this.src)">
+                        <div class="zoom-hint"><i class='bx bx-zoom-in'></i> Toque para ampliar</div>
                     </div>
                     ${thumbsHtml}
                 </div>
@@ -405,9 +475,7 @@ async function loadProductDetail(id) {
                     </div>
 
                     ${priceBlock}
-
                     ${stockHtml}
-
                     ${variantsHtml}
 
                     <div class="action-buttons">
@@ -466,6 +534,46 @@ async function loadProductDetail(id) {
         console.error("Erro detalhes:", error);
         content.innerHTML = "<p>Erro ao carregar.</p>";
     }
+}
+
+// --- ZOOM ---
+window.openZoom = function(src) {
+    const zoomModal = document.createElement('div');
+    zoomModal.id = 'zoom-modal';
+    zoomModal.style = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.95); z-index: 9999;
+        display: flex; justify-content: center; align-items: center;
+        overflow: hidden;
+    `;
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = "<i class='bx bx-x'></i>";
+    closeBtn.style = `
+        position: absolute; top: 20px; right: 20px;
+        background: rgba(255,255,255,0.2); color: #fff;
+        border: none; border-radius: 50%; width: 50px; height: 50px;
+        font-size: 2rem; cursor: pointer; z-index: 10000;
+    `;
+    closeBtn.onclick = () => document.body.removeChild(zoomModal);
+    
+    const img = document.createElement('img');
+    img.src = src;
+    img.style = "max-width: 100%; max-height: 100%; transition: transform 0.2s;";
+    
+    let zoomed = false;
+    img.onclick = (e) => {
+        e.stopPropagation();
+        zoomed = !zoomed;
+        img.style.transform = zoomed ? "scale(2.5)" : "scale(1)";
+        img.style.cursor = zoomed ? "zoom-out" : "zoom-in";
+    };
+
+    zoomModal.appendChild(closeBtn);
+    zoomModal.appendChild(img);
+    zoomModal.onclick = () => document.body.removeChild(zoomModal);
+    
+    document.body.appendChild(zoomModal);
 }
 
 // ==================== 4. LÓGICA DE AVALIAÇÃO & PROTEÇÃO ====================
@@ -815,7 +923,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if(typeof initSlider === 'function') initSlider();
     if(typeof setupSearch === 'function') setupSearch();
     if(typeof updateCartBadge === 'function') updateCartBadge();
-    if(typeof startSuggestionTimer === 'function') startSuggestionTimer(); // Inicia Animação
+    if(typeof startSuggestionTimer === 'function') startSuggestionTimer();
 
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
