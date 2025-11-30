@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="style.css">
 
     <style>
-        /* ==================== BARRA DE FRETE GRÁTIS (CARRINHO) ==================== */
+        /* ==================== BARRA DE FRETE GRÁTIS ==================== */
         .shipping-progress-container {
             background: #fff;
             padding: 15px;
@@ -17,6 +17,22 @@
             margin-bottom: 15px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
             border: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        
+        /* Animação Especial de Sucesso */
+        .shipping-progress-container.celebrate {
+            animation: popSuccess 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-color: #00a650;
+            background-color: #f0fdf4;
+            box-shadow: 0 4px 15px rgba(0, 166, 80, 0.2);
+        }
+
+        @keyframes popSuccess {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.98); }
+            100% { transform: scale(1); }
         }
 
         .shipping-progress-text {
@@ -30,7 +46,6 @@
 
         .shipping-progress-text strong {
             color: #00a650;
-            /* Verde */
         }
 
         .progress-track-cart {
@@ -45,95 +60,39 @@
             height: 100%;
             width: 0%;
             background-color: #00a650;
-            /* Verde do sucesso */
             border-radius: 4px;
-            transition: width 0.5s ease-in-out;
+            transition: width 0.5s ease-in-out, background-color 0.3s;
         }
 
-        /* Estado quando faltar valor (Vermelho/Laranja para incentivar) */
         .progress-fill-cart.incomplete {
             background-color: #db0038;
         }
 
-        /* ==================== CÁLCULO DE FRETE NO CARRINHO ==================== */
-        .cart-shipping-area {
-            margin-top: 20px;
-            background: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #eee;
-        }
-
-        .cart-shipping-title {
-            font-size: 1rem;
+        /* ==================== TEXTO DE ECONOMIA SIMPLES ==================== */
+        .pix-economy-text {
+            font-size: 0.85rem;
+            color: #00a650; /* Verde */
             font-weight: 600;
-            margin-bottom: 10px;
-            color: #333;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            margin-top: 4px;
+            text-align: right;
+            display: block;
         }
 
-        .cart-cep-group {
-            display: flex;
-            gap: 10px;
-        }
-
-        .cart-cep-input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-family: 'Roboto', sans-serif;
-        }
-
-        .btn-calc-cart {
-            background-color: #333;
-            color: #fff;
-            padding: 0 20px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .cart-shipping-result {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px dashed #eee;
-            display: none;
-            /* JS controla */
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .pickup-only-msg {
-            background-color: #fff3cd;
-            color: #856404;
-            padding: 10px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            border: 1px solid #ffeeba;
-        }
-
-        .store-suggestion {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            background: #fafafa;
+        /* AJUSTE DE FONTE DO HEADER */
+        .logo {
+            font-family: 'Roboto', sans-serif !important; /* Força a fonte padrão */
+            font-weight: 700 !important;
+            letter-spacing: 0 !important;
+            text-transform: none !important; /* Remove caixa alta forçada se houver */
         }
     </style>
 </head>
 
-<!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
 <script>
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
-
     gtag('config', 'G-BV6V3GTMR0');
 </script>
 
@@ -146,7 +105,7 @@
         </div>
     </header>
 
-    <div class="container" style="margin-top: 10px;">
+    <div class="container" style="margin-top: 20px;">
         <div class="shipping-progress-container" id="shipping-progress-box" style="display:none;">
             <div class="shipping-progress-text" id="shipping-progress-text">
                 Faltam <strong>R$ 10,00</strong> para Frete Grátis
@@ -156,25 +115,19 @@
             </div>
         </div>
     </div>
-    <div class="container">
-    <div class="cart-shipping-area">
-        <div class="cart-shipping-title"><i class='bx bxs-truck'></i> Opções de Entrega</div>
-        <div class="cart-cep-group">
-            <input type="tel" id="cart-cep-input" class="cart-cep-input" placeholder="Digite seu CEP" maxlength="9">
-            <button class="btn-calc-cart" onclick="calculateCartShipping()">Calcular</button>
-        </div>
-        
-        <div id="cart-shipping-result" class="cart-shipping-result">
-            </div>
-    </div>
-</div>
 
     <main class="container">
         <div id="cart-items-container"></div>
 
         <div id="cart-summary-box" class="cart-summary" style="display: none;">
             <h3>Resumo</h3>
-            <div class="summary-line"><span>Total</span><span id="summary-total-value">R$ 0,00</span></div>
+            <div class="summary-line total" style="margin-top: 0; border-top: none; padding-top: 0; align-items: flex-start;">
+                <span>Total</span>
+                <div style="text-align: right;">
+                    <span id="summary-total-value">R$ 0,00</span>
+                    <div id="summary-savings-text"></div>
+                </div>
+            </div>
             <button id="go-to-checkout" class="cta-button checkout-btn">Finalizar Compra</button>
         </div>
     </main>
@@ -195,8 +148,7 @@
             <div id="user-logged-out-view">
                 <h3>Login Necessário</h3>
                 <p>Faça login para finalizar sua compra.</p>
-                <button class="google-login-button" id="google-login-button"><i class='bx bxl-google'></i> Entrar com
-                    Google</button>
+                <button class="google-login-button" id="google-login-button"><i class='bx bxl-google'></i> Entrar com Google</button>
             </div>
             <div id="user-logged-in-view" style="display:none;"></div>
         </div>
@@ -210,5 +162,4 @@
     <script src="js/global.js"></script>
     <script src="js/cart.js"></script>
 </body>
-
 </html>

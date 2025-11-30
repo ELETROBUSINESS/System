@@ -374,6 +374,42 @@ a { text-decoration: none; color: inherit; }
     align-items: center;
 }
 
+/* ==================== PARCELAMENTO (Novo Estilo Minimalista) ==================== */
+
+/* Remove o estilo de caixa com fundo e borda */
+.installment-container {
+    margin-top: 15px;
+    /* padding: 10px; */ /* REMOVIDO */
+    /* background: #f0f7ff; */ /* REMOVIDO */
+    /* border-radius: 8px; */ /* REMOVIDO */
+    /* border: 1px solid #cce5ff; */ /* REMOVIDO */
+}
+
+/* Simplifica e destaca o texto principal */
+.installment-main {
+    font-size: 0.9rem;
+    color: var(--color-text-dark);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Ícone verde para destacar "sem juros" */
+.installment-main i {
+    color: var(--color-success);
+    font-size: 1.3rem;
+}
+
+/* Texto secundário alinhado e sutil */
+.installment-sub {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    /* margin-left: 34px; */ /* REMOVIDO: Remove o recuo */
+    margin-top: 4px;
+}
+
+/* =========================================================================== */
+
 /* Barra de Estoque (Escassez) */
 .stock-scarcity-container {
     margin: 25px 0;

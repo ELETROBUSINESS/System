@@ -108,7 +108,7 @@ function renderProductBatch(products) {
         const fmtNormal = new Intl.NumberFormat('pt-BR', fmtConfig).format(valPrice);
         const fmtOffer = new Intl.NumberFormat('pt-BR', fmtConfig).format(valOffer);
 
-        // --- LAYOUT DE PREÇO (Ponto 2 e 3) ---
+        // --- LAYOUT DE PREÇO ---
         let priceHtml = '';
         if (hasOffer) {
             const savings = valPrice - valOffer;
@@ -130,7 +130,7 @@ function renderProductBatch(products) {
         const stock = parseInt(prod.stock || 0);
         const isSoldOut = stock <= 0;
 
-        // --- CARD SEM BOTÃO COMPRAR (Ponto 1) ---
+        // --- CARD SEM BOTÃO COMPRAR ---
         const html = `
             <div class="product-card ${isSoldOut ? 'sold-out' : ''}" id="prod-${prod.id}" onclick="window.location.href='index.html?id=${prod.id}'">
                 <div class="product-image">
@@ -152,11 +152,9 @@ function startSuggestionTimer() {
     console.log("Iniciando sistema de sugestão...");
 
     setInterval(() => {
-        // 1. Pega todos os cards carregados
         const allCards = Array.from(document.querySelectorAll('.product-card:not(.skeleton-card)'));
         if (allCards.length === 0) return;
 
-        // 2. Filtra APENAS os que estão visíveis na tela do usuário agora
         const visibleCards = allCards.filter(card => {
             const rect = card.getBoundingClientRect();
             return (
@@ -167,26 +165,17 @@ function startSuggestionTimer() {
             );
         });
 
-        // Se não tiver nenhum visível (usuário scrolou rápido demais), usa qualquer um para garantir
         const targets = visibleCards.length > 0 ? visibleCards : allCards;
-        
-        // 3. Escolhe um aleatório
         const randomIndex = Math.floor(Math.random() * targets.length);
         const card = targets[randomIndex];
 
-        // 4. Log no Console (Agora vai aparecer sempre)
-        const name = card.querySelector('.product-name') ? card.querySelector('.product-name').innerText : 'Item sem nome';
-        console.log("Item destaque da vez:", name);
-
-        // 5. Aplica animação
         card.classList.add('suggest-animation');
 
-        // 6. Remove depois de 6 segundos (Mais tempo)
         setTimeout(() => {
             card.classList.remove('suggest-animation');
         }, 6000);
 
-    }, 60000); // Roda a cada 10 segundos
+    }, 60000); 
 }
 
 async function fetchMoreProducts() {
@@ -293,6 +282,31 @@ async function loadProductDetail(id) {
         const fmtFinal = new Intl.NumberFormat('pt-BR', fmtConfig).format(finalPrice);
         const fmtOld = new Intl.NumberFormat('pt-BR', fmtConfig).format(valPrice);
 
+        // --- LÓGICA DE PARCELAMENTO (ATUALIZADA - DESIGN MINIMALISTA) ---
+        let installmentBlock = '';
+        if (prod.web_active) {
+            const maxInstallments = parseInt(prod.web_installments) || 12;
+            
+            // Define o preço base para o parcelamento
+            const baseInstallmentPrice = (prod.web_price && parseFloat(prod.web_price) > 0) 
+                                         ? parseFloat(prod.web_price) 
+                                         : finalPrice;
+            
+            const installmentValue = baseInstallmentPrice / maxInstallments;
+            const fmtInstallmentValue = new Intl.NumberFormat('pt-BR', fmtConfig).format(installmentValue);
+
+            // Novo Design Minimalista (Sem fundo, ícone verde, texto limpo)
+            // Removido o link "Ver meios de pagamento"
+            installmentBlock = `
+                <div class="installment-container">
+                    <div class="installment-main">
+                        <i class='bx bx-credit-card-front'></i>
+                        <span>Em até <strong>${maxInstallments}x</strong> de <strong>${fmtInstallmentValue}</strong> sem juros</span>
+                    </div>
+                </div>
+            `;
+        }
+
         let priceBlock = '';
         if (hasOffer) {
             const savings = valPrice - valOffer;
@@ -301,21 +315,21 @@ async function loadProductDetail(id) {
                 <div class="detail-price-old">${fmtOld}</div>
                 <div class="detail-price-current">${fmtFinal}</div>
                 <span class="detail-savings-text">Você economiza ${fmtSavings}</span>
-                <div class="detail-payment-info"><i class='bx bx-check-shield'></i> Pagamento 100% seguro via Pix</div>
+                ${installmentBlock}
             `;
         } else {
             priceBlock = `
                 <div class="detail-price-current">${fmtFinal}</div>
-                <div class="detail-payment-info"><i class='bx bx-check-shield'></i> Pagamento 100% seguro via Pix</div>
+                ${installmentBlock}
             `;
         }
 
-        // --- ESTOQUE E VENDAS (LÓGICA PONTO 4) ---
+        // --- ESTOQUE E VENDAS ---
         const stockCount = parseInt(prod.stock || 0); 
         const soldCount = parseInt(prod.sold || 0);
         
         let stockHtml = '';
-        const maxRef = 8; // Referência solicitada
+        const maxRef = 8; 
 
         if (stockCount <= 0) {
             stockHtml = `
@@ -326,13 +340,9 @@ async function loadProductDetail(id) {
                     <div class="stock-track"><div class="stock-fill" style="width:0"></div></div>
                 </div>`;
         } else if (stockCount <= maxRef) {
-            // Se menor ou igual a 8, mostra barra INVERTIDA (Quanto menos, maior a barra)
-            // 1 item = (1 - 1/8) = 0.875 * 100 = 87% (Barra grande)
-            // 8 itens = (1 - 8/8) = 0% (Barra vazia, ou pequena)
             let scarcityRatio = 1 - (stockCount / maxRef);
-            if (stockCount === 1) scarcityRatio = 0.95; // Visual dramático para 1 item
-            if (scarcityRatio < 0.1) scarcityRatio = 0.1; // Mínimo visual
-            
+            if (stockCount === 1) scarcityRatio = 0.95; 
+            if (scarcityRatio < 0.1) scarcityRatio = 0.1; 
             const barWidth = scarcityRatio * 100;
 
             stockHtml = `
@@ -346,7 +356,6 @@ async function loadProductDetail(id) {
                     </div>
                 </div>`;
         } else {
-            // Se maior que 8, NÃO APARECE A BARRA (Conforme solicitado)
             stockHtml = `
                 <div class="stock-scarcity-container">
                     <div class="stock-label">
@@ -610,31 +619,26 @@ window.setRating = function(val) {
     });
 }
 
-// --- Lógica de Imagem da Review (Com Compressão e Redimensionamento) ---
 window.handleReviewImage = function(input) {
     const file = input.files[0];
     if (!file) return;
 
-    // 1. Novo Limite: 10MB
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
         alert("A imagem deve ter no máximo 10MB.");
-        input.value = ""; // Limpa o input
+        input.value = ""; 
         return;
     }
 
-    // Cria um objeto de imagem para processamento
     const img = new Image();
     img.src = URL.createObjectURL(file);
 
     img.onload = function() {
-        // 2. Define dimensões máximas (Redução de Resolução)
         const MAX_WIDTH = 800;
         const MAX_HEIGHT = 800;
         let width = img.width;
         let height = img.height;
 
-        // Calcula nova proporção mantendo o aspecto
         if (width > height) {
             if (width > MAX_WIDTH) {
                 height *= MAX_WIDTH / width;
@@ -647,25 +651,20 @@ window.handleReviewImage = function(input) {
             }
         }
 
-        // 3. Desenha no Canvas (Redimensionamento)
         const canvas = document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
 
-        // 4. Exporta comprimido (JPEG qualidade 70%)
-        // Isso transforma uma foto de 5MB em ~100kb
         const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
 
-        // Atualiza variáveis globais e preview
         selectedReviewImageBase64 = compressedBase64;
         
         const prev = document.getElementById('review-img-preview');
         prev.src = compressedBase64;
         prev.style.display = 'block';
 
-        // Libera memória
         URL.revokeObjectURL(img.src);
     };
 

@@ -1,33 +1,71 @@
 // js/cart.js
 
+const STORE_OWNER_UID = "3zYT9Y6hXWeJSuvmEYP4FMZa5gI2";
+const APP_ID = 'floralchic-loja';
+const FREE_SHIPPING_THRESHOLD = 29.99;
+
 document.addEventListener("DOMContentLoaded", () => {
     renderCartPage();
+    refreshCartData();
     setupCartEvents();
-    // A barra será inicializada pelo renderCartPage
 });
 
-// Expondo função global para o HTML acessar (onclick)
+// --- FUNÇÃO DE BUSCA NO BANCO ---
+async function refreshCartData() {
+    const localCart = CartManager.get();
+    if (localCart.length === 0) return;
+
+    // Loading discreto
+    const totalEl = document.getElementById("summary-total-value");
+    if(totalEl) totalEl.style.opacity = "0.5";
+
+    const verifiedCart = [];
+    let hasUpdates = false;
+
+    for (const item of localCart) {
+        try {
+            const docRef = db.collection('artifacts').doc(APP_ID)
+                .collection('users').doc(STORE_OWNER_UID)
+                .collection('products').doc(item.id);
+
+            const docSnap = await docRef.get();
+
+            if (docSnap.exists) {
+                const prod = docSnap.data();
+                const dbPriceOriginal = parseFloat(prod.price || 0); 
+                const dbPriceOffer = parseFloat(prod['price-oferta'] || 0); 
+                
+                const hasOffer = (dbPriceOffer > 0 && dbPriceOffer < dbPriceOriginal);
+                
+                item.priceOriginal = dbPriceOriginal; 
+                item.priceNew = hasOffer ? dbPriceOffer : dbPriceOriginal; 
+                
+                hasUpdates = true;
+            }
+            verifiedCart.push(item);
+        } catch (e) {
+            console.error("Erro update:", item.name, e);
+            verifiedCart.push(item);
+        }
+    }
+
+    if (hasUpdates) {
+        localStorage.setItem('app_cart', JSON.stringify(verifiedCart));
+        renderCartPage();
+    }
+}
+
 window.updateQty = function(id, change) {
     let cart = CartManager.get();
     const itemIndex = cart.findIndex(i => i.id === id);
     
     if (itemIndex > -1) {
-        // Atualiza quantidade
         cart[itemIndex].quantity += change;
+        if (cart[itemIndex].quantity < 1) cart[itemIndex].quantity = 1;
         
-        // Impede quantidade menor que 1
-        if (cart[itemIndex].quantity < 1) {
-            cart[itemIndex].quantity = 1;
-        }
-        
-        // Salva e Renderiza
         localStorage.setItem('app_cart', JSON.stringify(cart));
-        renderCartPage(); // Isso agora atualizará a barra automaticamente
-        
-        // Atualiza badge global (se a função existir no global.js)
-        if (typeof updateCartBadge === 'function') {
-            updateCartBadge();
-        }
+        renderCartPage(); 
+        if (typeof updateCartBadge === 'function') updateCartBadge();
     }
 }
 
@@ -38,11 +76,8 @@ function renderCartPage() {
     
     if (container) container.innerHTML = "";
     
-    // Estado Vazio
     if (items.length === 0) {
         if (summaryBox) summaryBox.style.display = 'none';
-        
-        // Esconde a barra se estiver vazia
         const progressBox = document.getElementById('shipping-progress-box');
         if(progressBox) progressBox.style.display = 'none';
 
@@ -52,35 +87,50 @@ function renderCartPage() {
                     <i class='bx bx-cart-alt' style="font-size: 4rem; color: #ccc;"></i>
                     <h3 style="margin-top: 1rem;">Seu carrinho está vazio</h3>
                     <p style="color: #666;">Navegue pela loja para adicionar produtos.</p>
-                    <a href="index.html" class="checkout-btn" style="display:inline-block; width:auto; padding: 10px 30px; margin-top:20px; text-decoration:none;">Ver Produtos</a>
+                    <a href="index.html" class="checkout-btn" style="display:inline-block; width:auto; padding: 10px 30px; margin-top:20px; text-decoration:none; background-color:#333; color:#fff; border-radius:6px;">Ver Produtos</a>
                 </div>`;
         }
         return;
     }
 
-    // Renderiza Itens
     if (summaryBox) summaryBox.style.display = 'block';
     
     items.forEach(item => {
-        // Formata preço
-        const price = parseFloat(item.priceNew);
-        const fmtPrice = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
+        // Preço Vigente (Pix/Oferta) vs Preço Cheio
+        const priceVigente = parseFloat(item.priceNew || 0);
+        const priceCheio = parseFloat(item.priceOriginal || item.priceNew || 0);
+        const hasDiscount = (priceCheio - priceVigente) > 0.05;
+
+        const fmtVigente = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(priceVigente);
+        const fmtCheio = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(priceCheio);
+
+        let priceHtml = '';
+
+        if (hasDiscount) {
+            priceHtml = `
+                <div style="display:flex; flex-direction:column; align-items:flex-start; margin: 5px 0;">
+                    <span style="font-size: 0.8rem; color: #999; text-decoration: line-through; margin-bottom: -2px;">${fmtCheio}</span>
+                    <span class="cart-item-price" style="color: #00a650; font-weight:700; font-size:1rem;">
+                        ${fmtVigente} <small style="color:#333; font-weight:400; font-size:0.75rem;">no Pix</small>
+                    </span>
+                </div>
+            `;
+        } else {
+            priceHtml = `<span class="cart-item-price" style="display:block; margin: 5px 0;">${fmtVigente}</span>`;
+        }
 
         const itemHTML = `
             <div class="cart-item" data-id="${item.id}">
                 <img src="${item.image}" alt="${item.name}" class="cart-item-image">
-                
                 <div class="cart-item-info">
-                    <h4>${item.name}</h4>
-                    <span class="cart-item-price">${fmtPrice}</span>
-                    
+                    <h4 style="margin:0; font-size:0.95rem;">${item.name}</h4>
+                    ${priceHtml}
                     <div class="quantity-control">
                         <button class="qty-btn" onclick="updateQty('${item.id}', -1)">-</button>
                         <span class="qty-val">${item.quantity}</span>
                         <button class="qty-btn" onclick="updateQty('${item.id}', 1)">+</button>
                     </div>
                 </div>
-                
                 <button class="cart-item-remove" aria-label="Remover item">
                     <i class='bx bx-trash'></i>
                 </button>
@@ -90,21 +140,93 @@ function renderCartPage() {
     });
     
     updateSummary();
-    
-    // ATUALIZAÇÃO AUTOMÁTICA DA BARRA DE FRETE
     updateShippingProgressBar();
 }
 
 function updateSummary() {
+    const items = CartManager.get();
+    let totalPix = 0;
+    let totalReal = 0; // Total "Cheio" (Cartão)
+
+    items.forEach(item => {
+        const qty = item.quantity || 1;
+        const pPix = parseFloat(item.priceNew || 0);
+        
+        let pCheio = parseFloat(item.priceOriginal || 0);
+        // Fallback: Se não tem original, assume que o original é igual ao Pix
+        if (pCheio === 0 || pCheio < pPix) pCheio = pPix;
+
+        totalPix += pPix * qty;
+        totalReal += pCheio * qty;
+    });
+
+    const savings = totalReal - totalPix;
+
+    // Atualiza Total Principal (Valor REAL/Cheio)
     const totalEl = document.getElementById("summary-total-value");
     if (totalEl) {
-        const total = CartManager.total();
-        totalEl.innerText = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total);
+        totalEl.style.opacity = "1";
+        totalEl.innerText = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalReal);
+    }
+
+    // Atualiza Texto de Economia Simples
+    const savingsContainer = document.getElementById("summary-savings-text");
+    if (savingsContainer) {
+        if (savings > 0.05) {
+            const savingsFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(savings);
+            savingsContainer.innerHTML = `<span class="pix-economy-text">Economize ${savingsFmt} no Pix</span>`;
+        } else {
+            savingsContainer.innerHTML = "";
+        }
+    }
+}
+
+function updateShippingProgressBar() {
+    const box = document.getElementById('shipping-progress-box');
+    const fill = document.getElementById('shipping-progress-fill');
+    const text = document.getElementById('shipping-progress-text');
+    
+    // Calcula baseado no valor Pix (regra de negócio comum) ou Real, dependendo da sua estratégia.
+    // Usaremos CartManager.total() que geralmente pega o priceNew (Pix)
+    const currentTotal = typeof CartManager !== 'undefined' ? CartManager.total() : 0;
+
+    if (currentTotal === 0) {
+        if(box) box.style.display = 'none';
+        return;
+    }
+
+    if(box) box.style.display = 'block';
+
+    // Lógica da Animação
+    const isFreeShipping = currentTotal >= FREE_SHIPPING_THRESHOLD;
+    const percentage = (currentTotal / FREE_SHIPPING_THRESHOLD) * 100;
+    const limitedPercent = percentage > 100 ? 100 : percentage;
+
+    if(fill) {
+        fill.style.width = `${limitedPercent}%`;
+        
+        if (isFreeShipping) {
+            // Se já não tiver a classe de celebração, adiciona para animar
+            if (!box.classList.contains('celebrate')) {
+                box.classList.add('celebrate');
+                // Remove a animação depois que ela rodar para poder rodar de novo se o valor mudar
+                setTimeout(() => box.classList.remove('celebrate'), 1000);
+            }
+
+            fill.classList.remove('incomplete');
+            fill.style.backgroundColor = '#00a650'; 
+            text.innerHTML = `<i class='bx bxs-check-circle' style='color:#00a650'></i> Parabéns! Você ganhou <strong>Frete Grátis</strong>`;
+        } else {
+            box.classList.remove('celebrate');
+            fill.classList.add('incomplete');
+            const remaining = FREE_SHIPPING_THRESHOLD - currentTotal;
+            const remainingFmt = remaining.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            text.innerHTML = `Faltam <strong>${remainingFmt}</strong> para Frete Grátis`;
+        }
     }
 }
 
 function setupCartEvents() {
-    // Evento de Remover Item (Lixeira)
     const container = document.getElementById("cart-items-container");
     if (container) {
         container.addEventListener("click", (e) => {
@@ -112,18 +234,16 @@ function setupCartEvents() {
             if (btn) {
                 const itemId = btn.closest(".cart-item").dataset.id;
                 CartManager.remove(itemId);
-                renderCartPage(); // Isso atualizará a lista, o total e a barra de progresso
+                renderCartPage(); 
             }
         });
     }
 
-    // Botão Finalizar Compra
     const checkoutBtn = document.getElementById("go-to-checkout");
     if (checkoutBtn) {
         checkoutBtn.addEventListener("click", () => {
             if (CartManager.get().length === 0) return;
             
-            // Verifica Login e Redireciona
             if (!auth || !auth.currentUser || auth.currentUser.isAnonymous) {
                 const modal = document.getElementById("user-profile-modal");
                 if(modal) {
@@ -135,118 +255,4 @@ function setupCartEvents() {
             }
         });
     }
-}
-
-
-// Configuração do Frete Grátis (R$ 29,99 conforme lógica anterior)
-const FREE_SHIPPING_THRESHOLD = 29.99;
-
-// --- 1. LÓGICA DA BARRA DE PROGRESSO ---
-function updateShippingProgressBar() {
-    const box = document.getElementById('shipping-progress-box');
-    const fill = document.getElementById('shipping-progress-fill');
-    const text = document.getElementById('shipping-progress-text');
-    
-    // Pega o total do CartManager (Global)
-    const currentTotal = typeof CartManager !== 'undefined' ? CartManager.total() : 0;
-
-    if (currentTotal === 0) {
-        if(box) box.style.display = 'none';
-        return;
-    }
-
-    if(box) box.style.display = 'block';
-
-    const percentage = (currentTotal / FREE_SHIPPING_THRESHOLD) * 100;
-    const limitedPercent = percentage > 100 ? 100 : percentage;
-
-    if(fill) {
-        fill.style.width = `${limitedPercent}%`;
-        
-        if (currentTotal >= FREE_SHIPPING_THRESHOLD) {
-            fill.classList.remove('incomplete');
-            fill.style.backgroundColor = '#00a650'; // Verde
-            text.innerHTML = `<i class='bx bxs-check-circle' style='color:#00a650'></i> Parabéns! Você ganhou <strong>Frete Grátis</strong>`;
-        } else {
-            fill.classList.add('incomplete');
-            const remaining = FREE_SHIPPING_THRESHOLD - currentTotal;
-            const remainingFmt = remaining.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            text.innerHTML = `Faltam <strong>${remainingFmt}</strong> para Frete Grátis`;
-        }
-    }
-}
-
-// --- 2. LÓGICA DO CEP NO CARRINHO (COM ENDEREÇOS ATUALIZADOS) ---
-function calculateCartShipping() {
-    const cepInput = document.getElementById('cart-cep-input');
-    const resultDiv = document.getElementById('cart-shipping-result');
-    
-    if (!cepInput || !resultDiv) return;
-
-    const cepVal = cepInput.value.replace(/\D/g, '');
-
-    if (cepVal.length !== 8) {
-        showToast('CEP inválido.', 'error');
-        return;
-    }
-
-    // Limpa e mostra loading simples
-    resultDiv.style.display = 'flex';
-    resultDiv.innerHTML = '<span style="color:#666; font-size:0.9rem;"><i class="bx bx-loader-alt bx-spin"></i> Consultando...</span>';
-
-    setTimeout(() => {
-        resultDiv.innerHTML = '';
-        const cartTotal = typeof CartManager !== 'undefined' ? CartManager.total() : 0;
-        const hasFreeShipping = cartTotal >= FREE_SHIPPING_THRESHOLD;
-
-        // LÓGICA DO CEP ESPECÍFICO
-        if (cepVal === '68637000') {
-            // Entrega Disponível (Ipixuna)
-            let priceHtml = '';
-            
-            if (hasFreeShipping) {
-                priceHtml = `<span style="color:#00a650; font-weight:700;">Grátis</span>`;
-            } else {
-                priceHtml = `<span>R$ 7,99</span>`;
-            }
-
-            resultDiv.innerHTML = `
-                <div class="shipping-option">
-                    <i class='bx bxs-truck' style="color:#333; font-size:1.4rem;"></i>
-                    <div class="shipping-info">
-                        <span class="shipping-title-opt" style="color:#333; font-weight:600;">Entrega Expressa</span>
-                        <span class="shipping-subtitle-opt">Receba hoje ou amanhã</span>
-                    </div>
-                    <div style="margin-left:auto;">${priceHtml}</div>
-                </div>
-                <div class="shipping-option" style="margin-top:10px;">
-                    <i class='bx bxs-store' style="color:#333; font-size:1.4rem;"></i>
-                    <div class="shipping-info">
-                        <span class="shipping-title-opt" style="color:#333; font-weight:600;">Retirar na Loja</span>
-                        <span class="shipping-subtitle-opt">D'Tudo Ipixuna - R. Jarbas Passarinho, Centro</span>
-                    </div>
-                    <div style="margin-left:auto; color:#00a650; font-weight:700;">Grátis</div>
-                </div>
-            `;
-        } else {
-            // Outro CEP -> Apenas Retirada com endereço novo
-            resultDiv.innerHTML = `
-                <div class="pickup-only-msg">
-                    <i class='bx bx-error-circle'></i> 
-                    Não realizamos entregas para este CEP no momento.
-                </div>
-                
-                <p style="font-size:0.9rem; font-weight:600; margin-bottom:5px; color:#333;">Opção disponível:</p>
-                
-                <div class="store-suggestion">
-                    <i class='bx bxs-map' style="font-size:1.5rem; color:#db0038;"></i>
-                    <div>
-                        <strong style="display:block; font-size:0.9rem;">D'Tudo Aurora</strong>
-                        <span style="font-size:0.8rem; color:#666;">Av. Bernardo Sayão, n° 10, centro, Aurora do Pará</span>
-                    </div>
-                    <span style="margin-left:auto; color:#00a650; font-weight:700; font-size:0.85rem;">Grátis</span>
-                </div>
-            `;
-        }
-    }, 600);
 }

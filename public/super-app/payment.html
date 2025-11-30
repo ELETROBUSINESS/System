@@ -361,7 +361,7 @@
         }
 
         /* =========================================
-   RESUMO DE VALORES
+   RESUMO DE VALORES E PRODUTOS (ATUALIZADO)
    ========================================= */
         .shipping-summary,
         .modal-section {
@@ -371,6 +371,69 @@
             border-radius: var(--radius-sm);
             margin-top: 10px;
             border: 1px dashed #ddd;
+        }
+
+        /* --- CSS DA LISTA DE PRODUTOS NO CHECKOUT (NOVO) --- */
+        .product-summary-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .product-summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .product-summary-img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: var(--radius-sm);
+            border: 1px solid #eee;
+            background-color: #fff;
+        }
+
+        .product-summary-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .product-summary-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--color-text-main);
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-summary-price {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+        }
+
+        /* Badge de Aviso de Parcelamento */
+        .installment-warning {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background-color: #fff3cd;
+            color: #856404;
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-top: 6px;
+            border: 1px solid #ffeeba;
+            width: fit-content;
+        }
+
+        .installment-warning i {
+            font-size: 1rem;
         }
 
         .shipping-row {
@@ -513,6 +576,119 @@
 
         .toast.error {
             border-left: 4px solid #d93025;
+        }
+
+        /* ==================== OVERLAY DE PROCESSAMENTO EMOCIONAL ==================== */
+        #processing-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            /* Acima de tudo */
+            display: none;
+            /* Oculto por padrão */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            animation: fadeInOverlay 0.3s ease-out;
+        }
+
+        @keyframes fadeInOverlay {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .processing-content {
+            max-width: 400px;
+        }
+
+        .processing-icon {
+            font-size: 4rem;
+            color: var(--color-primary);
+            /* Vermelho da marca */
+            margin-bottom: 20px;
+            animation: heartBeat 1.5s infinite;
+        }
+
+        @keyframes heartBeat {
+            0% {
+                transform: scale(1);
+            }
+
+            14% {
+                transform: scale(1.3);
+            }
+
+            28% {
+                transform: scale(1);
+            }
+
+            42% {
+                transform: scale(1.3);
+            }
+
+            70% {
+                transform: scale(1);
+            }
+        }
+
+        .processing-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .processing-subtitle {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .processing-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: #555;
+            opacity: 0.8;
+        }
+
+        .processing-step {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .spinner-mini {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ddd;
+            border-top: 2px solid var(--color-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         /* =========================================
@@ -685,6 +861,10 @@
         <div id="step-payment" class="checkout-step">
             <div class="modal-section">
                 <h4>Resumo da Compra</h4>
+
+                <!-- CONTAINER PARA LISTA DE PRODUTOS (Injetado via JS) -->
+                <div id="payment-product-list" style="margin-bottom: 20px;"></div>
+
                 <div class="shipping-row"><span>Produtos:</span> <span id="payment-subtotal-display">R$ 0,00</span>
                 </div>
                 <div class="shipping-row"><span>Frete:</span> <span id="payment-shipping-display">R$ 0,00</span></div>
@@ -712,6 +892,21 @@
             </div>
         </div>
     </main>
+
+    <div id="processing-overlay">
+        <div class="processing-content">
+            <i class='bx bxs-shopping-bag processing-icon'></i>
+            <h2 class="processing-title"></h2>
+            <p class="processing-subtitle">Essa compra já é quase sua...</p>
+            
+            <div class="processing-steps">
+                <div class="processing-step">
+                    <div class="spinner-mini"></div>
+                    <span>Confirmando estoque...</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div id="toast-notification" class="toast"></div>
 
