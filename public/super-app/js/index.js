@@ -6,12 +6,12 @@ const CACHE_KEY = 'dtudo_products_cache';
 const CACHE_TIME_KEY = 'dtudo_cache_time';
 const CACHE_DURATION = 20 * 60 * 1000;
 const COMMENTS_CACHE_KEY = "dtudo_user_reviews";
-const REVIEWS_CACHE_DURATION = 20 * 60 * 60 * 1000; 
+const REVIEWS_CACHE_DURATION = 20 * 60 * 60 * 1000;
 const CART_KEY = 'app_cart';
 
 // Variáveis Globais
 let lastVisibleDoc = null;
-let productsBuffer = []; 
+let productsBuffer = [];
 let isLoading = false;
 let allProductsLoaded = false;
 let currentDetailImages = [];
@@ -37,11 +37,11 @@ function calculateInstallmentsRule(price) {
 function getInstallmentBasis(prod) {
     // Verifica se existe "web_price" e se é um número válido > 0
     const webPrice = parseFloat(prod.web_price);
-    
+
     if (!isNaN(webPrice) && webPrice > 0) {
         return webPrice;
     }
-    
+
     // Fallback para o preço original "price" caso web_price não exista
     return parseFloat(prod.price || 0);
 }
@@ -65,7 +65,7 @@ function saveLocalUserReviews(reviews) {
     localStorage.setItem(COMMENTS_CACHE_KEY, JSON.stringify(data));
 }
 
-window.addToCartDirect = function(id, name, price, img) {
+window.addToCartDirect = function (id, name, price, img) {
     let cart = JSON.parse(localStorage.getItem(CART_KEY)) || [];
     const existingItem = cart.find(item => item.id === id);
     if (existingItem) {
@@ -74,7 +74,7 @@ window.addToCartDirect = function(id, name, price, img) {
         cart.push({ id: id, name: name, priceNew: price, image: img, quantity: 1 });
     }
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    if(typeof updateCartBadge === 'function') updateCartBadge();
+    if (typeof updateCartBadge === 'function') updateCartBadge();
     showToast(`${name} adicionado ao carrinho!`, "success");
 }
 
@@ -84,9 +84,9 @@ function extractProductImages(prod) {
     let i = 1;
     while (true) {
         const key = 'imgUrl' + i;
-        if (prod[key] && prod[key].trim() !== "") { images.push(prod[key].trim()); i++; } 
+        if (prod[key] && prod[key].trim() !== "") { images.push(prod[key].trim()); i++; }
         else { break; }
-        if (i > 20) break; 
+        if (i > 20) break;
     }
     if (images.length === 0) return ['https://placehold.co/500x500/EBEBEB/333?text=Sem+Foto'];
     return images;
@@ -118,18 +118,18 @@ function clearCache() {
 
 function renderProductBatch(products) {
     const container = document.getElementById('firebase-products-container');
-    if (container.querySelector('.skeleton-card')) container.innerHTML = ''; 
+    if (container.querySelector('.skeleton-card')) container.innerHTML = '';
 
     products.forEach(prod => {
-        if(document.getElementById(`prod-${prod.id}`)) return;
+        if (document.getElementById(`prod-${prod.id}`)) return;
 
         let displayImg = prod.imgUrl || 'https://placehold.co/400x400/EBEBEB/333?text=Sem+Foto';
-        
+
         // Preços de exibição (Venda)
         const valPrice = parseFloat(prod.price || 0); // Original
         const valOffer = parseFloat(prod['price-oferta'] || 0); // Oferta Atual
         const hasOffer = (valOffer > 0 && valOffer < valPrice);
-        
+
         const fmtConfig = { style: 'currency', currency: 'BRL' };
         const fmtNormal = new Intl.NumberFormat('pt-BR', fmtConfig).format(valPrice);
         const fmtOffer = new Intl.NumberFormat('pt-BR', fmtConfig).format(valOffer);
@@ -141,12 +141,12 @@ function renderProductBatch(products) {
         const fmtInst = new Intl.NumberFormat('pt-BR', fmtConfig).format(valInst);
 
         let priceHtml = '';
-        
+
         if (hasOffer) {
             // TEM OFERTA: Mostra economia
             const savings = valPrice - valOffer;
             const fmtSavings = new Intl.NumberFormat('pt-BR', fmtConfig).format(savings);
-            
+
             priceHtml = `
                 <div class="price-container">
                     <span class="price-old">${fmtNormal}</span>
@@ -185,14 +185,14 @@ function renderProductBatch(products) {
 function setupSearch() {
     const input = document.querySelector('.search-bar input');
     const dropdown = document.getElementById('search-dropdown');
-    
-    if(!input || !dropdown) return;
+
+    if (!input || !dropdown) return;
 
     input.addEventListener('input', (e) => {
         const term = e.target.value.trim().toLowerCase();
         clearTimeout(searchDebounceTimeout);
-        
-        if(term.length < 2) {
+
+        if (term.length < 2) {
             dropdown.style.display = 'none';
             dropdown.innerHTML = '';
             return;
@@ -205,15 +205,15 @@ function setupSearch() {
             const cached = getCachedData() || [];
             let results = cached.filter(p => p.name.toLowerCase().includes(term)).slice(0, 5);
 
-            if(results.length === 0) {
+            if (results.length === 0) {
                 dropdown.innerHTML = '<div style="padding:10px; text-align:center; color:#666;">Nenhum produto encontrado.</div>';
             } else {
                 let html = '';
                 results.forEach(p => {
                     const price = parseFloat(p['price-oferta'] || p.price || 0);
-                    const fmtPrice = price.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+                    const fmtPrice = price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                     const img = p.imgUrl || 'https://placehold.co/50x50';
-                    
+
                     html += `
                         <div class="search-item" onclick="window.location.href='index.html?id=${p.id}'" style="display:flex; gap:10px; padding:10px; border-bottom:1px solid #eee; cursor:pointer; align-items:center;">
                             <img src="${img}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;">
@@ -240,14 +240,14 @@ function startSuggestionTimer() {
     setInterval(() => {
         const allCards = Array.from(document.querySelectorAll('.product-card:not(.skeleton-card)'));
         if (allCards.length === 0) return;
-        
+
         const randomIndex = Math.floor(Math.random() * allCards.length);
         const card = allCards[randomIndex];
-        if(card) {
+        if (card) {
             card.classList.add('suggest-animation');
             setTimeout(() => card.classList.remove('suggest-animation'), 6000);
         }
-    }, 60000); 
+    }, 60000);
 }
 
 async function fetchMoreProducts() {
@@ -255,31 +255,31 @@ async function fetchMoreProducts() {
     const loader = document.getElementById('infinite-loader');
 
     if (productsBuffer.length > 0) {
-        if(loader) loader.style.display = 'block';
+        if (loader) loader.style.display = 'block';
         setTimeout(() => {
             renderProductBatch(productsBuffer);
             productsBuffer = [];
-            if(loader) loader.style.display = 'none';
+            if (loader) loader.style.display = 'none';
         }, 300);
-        return; 
+        return;
     }
 
     isLoading = true;
-    if(loader) loader.style.display = 'block';
+    if (loader) loader.style.display = 'block';
 
     try {
         let query = db.collection('artifacts').doc(APP_ID)
-                      .collection('users').doc(STORE_OWNER_UID)
-                      .collection('products')
-                      .orderBy('createdAt', 'desc')
-                      .limit(30);
+            .collection('users').doc(STORE_OWNER_UID)
+            .collection('products')
+            .orderBy('createdAt', 'desc')
+            .limit(30);
 
         if (lastVisibleDoc) query = query.startAfter(lastVisibleDoc);
         const snapshot = await query.get();
 
         if (snapshot.empty) {
             allProductsLoaded = true;
-            if(loader) loader.style.display = 'none';
+            if (loader) loader.style.display = 'none';
             return;
         }
 
@@ -297,7 +297,7 @@ async function fetchMoreProducts() {
         console.error("Erro busca:", error);
     } finally {
         isLoading = false;
-        if(loader) loader.style.display = 'none';
+        if (loader) loader.style.display = 'none';
     }
 }
 
@@ -324,7 +324,7 @@ async function loadProductDetail(id) {
     document.querySelector('.banner-slider').style.display = 'none';
     document.querySelector('.categories-section').style.display = 'none';
     document.getElementById('products').style.display = 'none';
-    
+
     const detailView = document.getElementById('product-detail-view');
     const content = document.getElementById('detail-content');
     detailView.style.display = 'block';
@@ -344,8 +344,8 @@ async function loadProductDetail(id) {
 
     try {
         const doc = await db.collection('artifacts').doc(APP_ID)
-                            .collection('users').doc(STORE_OWNER_UID)
-                            .collection('products').doc(id).get();
+            .collection('users').doc(STORE_OWNER_UID)
+            .collection('products').doc(id).get();
 
         if (!doc.exists) {
             content.innerHTML = "<h3>Produto não encontrado.</h3>";
@@ -360,12 +360,36 @@ async function loadProductDetail(id) {
         const valOffer = parseFloat(prod['price-oferta'] || 0);
         const hasOffer = (valOffer > 0 && valOffer < valPrice);
         const finalPrice = hasOffer ? valOffer : valPrice;
-        
+
         document.title = `${prod.name} | Dtudo`;
-        
+
         const fmtConfig = { style: 'currency', currency: 'BRL' };
         const fmtFinal = new Intl.NumberFormat('pt-BR', fmtConfig).format(finalPrice);
         const fmtOld = new Intl.NumberFormat('pt-BR', fmtConfig).format(valPrice);
+
+        // 1. Disparar evento de E-commerce (Preenche relatórios de Monetização/Itens)
+        if (typeof gtag === 'function') {
+            gtag('event', 'view_item', {
+                currency: 'BRL',
+                value: finalPrice,
+                items: [
+                    {
+                        item_id: doc.id,
+                        item_name: prod.name,
+                        price: finalPrice,
+                        quantity: 1
+                    }
+                ]
+            });
+
+            // 2. Disparar PageView Virtual (Corrige o relatório "Páginas e Telas" da sua imagem)
+            // Isso faz o GA4 pensar que o usuário mudou de URL para /produto/nome-do-produto
+            gtag('event', 'page_view', {
+                page_title: prod.name,
+                page_location: window.location.href,
+                page_path: `/produto/${prod.id}` // Cria um caminho virtual legível no relatório
+            });
+        }
 
         // --- LÓGICA DE PARCELAMENTO (BASEADA EM pc-oferta OU price) ---
         const installmentBasis = getInstallmentBasis(prod); // Usa pc-oferta se existir, senão usa price
@@ -399,11 +423,11 @@ async function loadProductDetail(id) {
             `;
         }
 
-        const stockCount = parseInt(prod.stock || 0); 
+        const stockCount = parseInt(prod.stock || 0);
         const soldCount = parseInt(prod.sold || 0);
-        
+
         let stockHtml = '';
-        const maxRef = 8; 
+        const maxRef = 8;
 
         if (stockCount <= 0) {
             stockHtml = `
@@ -413,8 +437,8 @@ async function loadProductDetail(id) {
                 </div>`;
         } else if (stockCount <= maxRef) {
             let scarcityRatio = 1 - (stockCount / maxRef);
-            if (stockCount === 1) scarcityRatio = 0.95; 
-            if (scarcityRatio < 0.1) scarcityRatio = 0.1; 
+            if (stockCount === 1) scarcityRatio = 0.95;
+            if (scarcityRatio < 0.1) scarcityRatio = 0.1;
             const barWidth = scarcityRatio * 100;
 
             stockHtml = `
@@ -440,7 +464,7 @@ async function loadProductDetail(id) {
         if (prod.variants) {
             const vList = Array.isArray(prod.variants) ? prod.variants : prod.variants.split(';');
             if (vList.length > 0) {
-                const btns = vList.map((v, i) => `<div class="variant-btn ${i===0?'selected':''}" onclick="selectVariant(this)">${v.trim()}</div>`).join('');
+                const btns = vList.map((v, i) => `<div class="variant-btn ${i === 0 ? 'selected' : ''}" onclick="selectVariant(this)">${v.trim()}</div>`).join('');
                 variantsHtml = `<div class="variants-section"><div class="variants-title">Opções:</div><div class="variants-list">${btns}</div></div>`;
             }
         }
@@ -448,7 +472,7 @@ async function loadProductDetail(id) {
         const thumbsHtml = currentDetailImages.length > 1 ? `
             <div class="thumbnails-scroll">
                 ${currentDetailImages.map((src, i) => `
-                    <img src="${src}" class="thumbnail-item ${i===0?'active':''}" onclick="swapDetailImage('${src}', this)">
+                    <img src="${src}" class="thumbnail-item ${i === 0 ? 'active' : ''}" onclick="swapDetailImage('${src}', this)">
                 `).join('')}
             </div>` : '';
 
@@ -537,7 +561,7 @@ async function loadProductDetail(id) {
 }
 
 // --- ZOOM ---
-window.openZoom = function(src) {
+window.openZoom = function (src) {
     const zoomModal = document.createElement('div');
     zoomModal.id = 'zoom-modal';
     zoomModal.style = `
@@ -546,7 +570,7 @@ window.openZoom = function(src) {
         display: flex; justify-content: center; align-items: center;
         overflow: hidden;
     `;
-    
+
     const closeBtn = document.createElement('button');
     closeBtn.innerHTML = "<i class='bx bx-x'></i>";
     closeBtn.style = `
@@ -556,11 +580,11 @@ window.openZoom = function(src) {
         font-size: 2rem; cursor: pointer; z-index: 10000;
     `;
     closeBtn.onclick = () => document.body.removeChild(zoomModal);
-    
+
     const img = document.createElement('img');
     img.src = src;
     img.style = "max-width: 100%; max-height: 100%; transition: transform 0.2s;";
-    
+
     let zoomed = false;
     img.onclick = (e) => {
         e.stopPropagation();
@@ -572,7 +596,7 @@ window.openZoom = function(src) {
     zoomModal.appendChild(closeBtn);
     zoomModal.appendChild(img);
     zoomModal.onclick = () => document.body.removeChild(zoomModal);
-    
+
     document.body.appendChild(zoomModal);
 }
 
@@ -587,7 +611,7 @@ async function fetchLiveRating(productId) {
             .where('status', '==', 'approved')
             .get();
 
-        if (snapshot.empty) return; 
+        if (snapshot.empty) return;
 
         let totalStars = 0;
         let count = 0;
@@ -601,11 +625,11 @@ async function fetchLiveRating(productId) {
         if (count > 0) {
             const avg = totalStars / count;
             let starsHtml = '';
-            for(let i=1; i<=5; i++) {
+            for (let i = 1; i <= 5; i++) {
                 if (i <= Math.round(avg)) starsHtml += "<i class='bx bxs-star' style='color:#3483fa'></i>";
                 else starsHtml += "<i class='bx bx-star' style='color:#ddd'></i>";
             }
-            if(ratingBox) {
+            if (ratingBox) {
                 ratingBox.innerHTML = `
                     <div class="review-stars-static">${starsHtml}</div>
                     <span style="font-size:0.9rem; color:#666; font-weight:600;">(${count})</span>
@@ -619,7 +643,7 @@ async function fetchLiveRating(productId) {
 
 async function checkUserReviewStatus(productId) {
     const container = document.getElementById('review-form-container');
-    
+
     if (!auth.currentUser) {
         container.innerHTML = `
             <div style="text-align:center; padding: 20px; background:#f9f9f9; border-radius:8px;">
@@ -642,8 +666,8 @@ async function checkUserReviewStatus(productId) {
         if (!snapshot.empty) {
             const doc = snapshot.docs[0];
             const data = doc.data();
-            currentUserReviewId = doc.id; 
-            renderReviewForm(true, data); 
+            currentUserReviewId = doc.id;
+            renderReviewForm(true, data);
         } else {
             currentUserReviewId = null;
             renderReviewForm(false, null);
@@ -658,7 +682,7 @@ function renderReviewForm(isEditing, data) {
     const container = document.getElementById('review-form-container');
     const title = isEditing ? "Edite sua avaliação" : "O que você achou deste produto?";
     const btnText = isEditing ? "Atualizar Avaliação" : "Enviar Avaliação";
-    
+
     const existingText = data ? data.text : "";
     const existingRating = data ? data.rating : 0;
     const existingImg = data ? data.image : null;
@@ -667,7 +691,7 @@ function renderReviewForm(isEditing, data) {
     selectedReviewImageBase64 = existingImg;
 
     let starsHtml = "";
-    for(let i=1; i<=5; i++) {
+    for (let i = 1; i <= 5; i++) {
         const cls = (i <= selectedRating) ? 'bx bxs-star active' : 'bx bx-star';
         const style = (i <= selectedRating) ? 'color:#3483fa' : 'color:#e0e0e0';
         starsHtml += `<i class='${cls}' style='${style}' data-val="${i}" onclick="setRating(${i})"></i>`;
@@ -701,47 +725,47 @@ function renderReviewForm(isEditing, data) {
 
 // --- FUNÇÕES DE SUPORTE ---
 
-window.swapDetailImage = function(src, el) {
+window.swapDetailImage = function (src, el) {
     document.getElementById('main-detail-img').src = src;
     document.querySelectorAll('.thumbnail-item').forEach(img => img.classList.remove('active'));
     el.classList.add('active');
 }
 
-window.selectVariant = function(el) {
+window.selectVariant = function (el) {
     document.querySelectorAll('.variant-btn').forEach(btn => btn.classList.remove('selected'));
     el.classList.add('selected');
 }
 
-window.setRating = function(val) {
+window.setRating = function (val) {
     selectedRating = val;
     const stars = document.querySelectorAll('#star-input-group i');
     stars.forEach(s => {
         const sVal = parseInt(s.dataset.val);
         if (sVal <= val) {
-             s.className = 'bx bxs-star active';
-             s.style.color = "#3483fa";
+            s.className = 'bx bxs-star active';
+            s.style.color = "#3483fa";
         } else {
-             s.className = 'bx bx-star';
-             s.style.color = "#e0e0e0";
+            s.className = 'bx bx-star';
+            s.style.color = "#e0e0e0";
         }
     });
 }
 
-window.handleReviewImage = function(input) {
+window.handleReviewImage = function (input) {
     const file = input.files[0];
     if (!file) return;
 
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
         alert("A imagem deve ter no máximo 10MB.");
-        input.value = ""; 
+        input.value = "";
         return;
     }
 
     const img = new Image();
     img.src = URL.createObjectURL(file);
 
-    img.onload = function() {
+    img.onload = function () {
         const MAX_WIDTH = 800;
         const MAX_HEIGHT = 800;
         let width = img.width;
@@ -768,7 +792,7 @@ window.handleReviewImage = function(input) {
         const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
 
         selectedReviewImageBase64 = compressedBase64;
-        
+
         const prev = document.getElementById('review-img-preview');
         prev.src = compressedBase64;
         prev.style.display = 'block';
@@ -776,13 +800,13 @@ window.handleReviewImage = function(input) {
         URL.revokeObjectURL(img.src);
     };
 
-    img.onerror = function() {
+    img.onerror = function () {
         alert("Erro ao processar a imagem. Tente outra.");
         input.value = "";
     };
 }
 
-window.submitReview = async function(mode) {
+window.submitReview = async function (mode) {
     if (!auth.currentUser) {
         const loginModal = document.getElementById('user-profile-modal');
         if (loginModal) loginModal.classList.add('show');
@@ -792,7 +816,7 @@ window.submitReview = async function(mode) {
     const text = document.getElementById('new-review-text').value.trim();
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
-    
+
     if (selectedRating === 0) return alert("Selecione uma nota de 1 a 5 estrelas.");
     if (!text) return alert("Escreva um comentário.");
 
@@ -804,8 +828,8 @@ window.submitReview = async function(mode) {
         text: text,
         rating: selectedRating,
         image: selectedReviewImageBase64,
-        status: 'pending', 
-        createdAt: new Date().toISOString() 
+        status: 'pending',
+        createdAt: new Date().toISOString()
     };
 
     let localReviews = getLocalUserReviews();
@@ -814,15 +838,15 @@ window.submitReview = async function(mode) {
     saveLocalUserReviews(localReviews);
 
     loadReviews(productId);
-    
+
     try {
         if (mode === 'UPDATE' && currentUserReviewId) {
             await db.collection('artifacts').doc(APP_ID)
-                    .collection('comments').doc(currentUserReviewId)
-                    .update({
-                        ...reviewData,
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                .collection('comments').doc(currentUserReviewId)
+                .update({
+                    ...reviewData,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
             showToast("Avaliação atualizada!", "success");
         } else {
             await db.collection('artifacts').doc(APP_ID).collection('comments').add({
@@ -840,8 +864,8 @@ window.submitReview = async function(mode) {
 
 async function loadReviews(productId) {
     const listEl = document.getElementById('reviews-list');
-    if(!listEl) return;
-    
+    if (!listEl) return;
+
     let html = '';
 
     let localReviews = getLocalUserReviews();
@@ -877,16 +901,16 @@ async function loadReviews(productId) {
 
     } catch (e) {
         console.warn("Erro reviews (falta indice?):", e);
-        if(html) listEl.innerHTML = html;
+        if (html) listEl.innerHTML = html;
         else listEl.innerHTML = '<div class="empty-reviews"><p>Avaliações indisponíveis.</p></div>';
     }
 }
 
 function renderReviewItem(data, isPending) {
     let starsHtml = '';
-    for(let i=1; i<=5; i++) {
-        starsHtml += (i <= data.rating) 
-            ? "<i class='bx bxs-star'></i>" 
+    for (let i = 1; i <= 5; i++) {
+        starsHtml += (i <= data.rating)
+            ? "<i class='bx bxs-star'></i>"
             : "<i class='bx bx-star' style='color:#ddd'></i>";
     }
 
@@ -898,7 +922,7 @@ function renderReviewItem(data, isPending) {
 
     const initial = data.userName ? data.userName.charAt(0).toUpperCase() : "C";
     const imgHtml = data.image ? `<img src="${data.image}" class="review-image-attachment" onclick="window.open('${data.image}')" title="Ver zoom">` : '';
-    
+
     const style = isPending ? 'opacity:0.8;' : '';
 
     return `
@@ -920,10 +944,10 @@ function renderReviewItem(data, isPending) {
 
 // ==================== 5. INICIALIZAÇÃO ====================
 document.addEventListener("DOMContentLoaded", () => {
-    if(typeof initSlider === 'function') initSlider();
-    if(typeof setupSearch === 'function') setupSearch();
-    if(typeof updateCartBadge === 'function') updateCartBadge();
-    if(typeof startSuggestionTimer === 'function') startSuggestionTimer();
+    if (typeof initSlider === 'function') initSlider();
+    if (typeof setupSearch === 'function') setupSearch();
+    if (typeof updateCartBadge === 'function') updateCartBadge();
+    if (typeof startSuggestionTimer === 'function') startSuggestionTimer();
 
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
