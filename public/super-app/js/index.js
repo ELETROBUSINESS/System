@@ -942,6 +942,33 @@ function renderReviewItem(data, isPending) {
     `;
 }
 
+// Adicione esta função ao seu arquivo index.js (pode ser antes do DOMContentLoaded)
+
+function initSlider() {
+    const wrapper = document.querySelector('.slider-wrapper');
+    const slides = document.querySelectorAll('.slide');
+    
+    // Se não houver slider ou slides, cancela para evitar erros
+    if (!wrapper || slides.length === 0) return;
+
+    let currentIndex = 0;
+    const totalSlides = slides.length;
+    const intervalTime = 4000; // Tempo em milissegundos (4 segundos)
+
+    setInterval(() => {
+        currentIndex++;
+        
+        // Se chegar no fim, volta para o primeiro
+        if (currentIndex >= totalSlides) {
+            currentIndex = 0;
+        }
+
+        // Move o wrapper para a esquerda baseado no índice atual
+        // Ex: Index 1 move -100%, Index 2 move -200%
+        wrapper.style.transform = `translateX(-${currentIndex * 100}%)`;
+    }, intervalTime);
+}
+
 // ==================== 5. INICIALIZAÇÃO ====================
 document.addEventListener("DOMContentLoaded", () => {
     if (typeof initSlider === 'function') initSlider();

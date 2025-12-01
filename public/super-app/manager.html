@@ -1,641 +1,957 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/1554/1554591.png">
     <title>Gerenciador | Dtudo</title>
 
-    <!-- Fontes e Ícones -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    
-    <!-- Scanner Barcode -->
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 
     <style>
         :root {
-            --color-primary: #db0038; /* Vermelho Dtudo */
+            --color-primary: #db0038;
             --color-primary-dark: #b71c1c;
-            --color-bg: #f5f5f5;
+            --color-bg: #f4f6f8;
             --color-white: #ffffff;
-            --color-text: #333333;
-            --color-text-light: #666666;
-            --color-border: #e0e0e0;
-            --color-offer: #7c3aed; /* Roxo Oferta */
-            --color-mp-blue: #009ee3; /* Azul Mercado Pago */
-            --shadow-sm: 0 2px 8px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+            --color-text: #1f2937;
+            --color-text-light: #6b7280;
+            --color-border: #e5e7eb;
+            --color-offer: #7c3aed;
             --radius: 12px;
+            --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Roboto', sans-serif; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-        body { background-color: var(--color-bg); padding-bottom: 90px; color: var(--color-text); }
+        body {
+            background-color: var(--color-bg);
+            padding-bottom: 90px;
+            color: var(--color-text);
+        }
 
-        /* --- LOGIN OVERLAY (BLOQUEIO) --- */
+        /* --- LOGIN --- */
         #login-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 20px; text-align: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
         }
-        
+
         .login-card {
-            background: white; padding: 40px 30px; border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 400px; width: 100%;
+            background: white;
+            padding: 40px 30px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-card);
+            max-width: 400px;
+            width: 100%;
         }
-        
-        .login-logo { width: 80px; margin-bottom: 20px; border-radius: 10px; }
-        
+
         .google-btn {
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 30px;
-            background: white; color: #555; font-weight: 500; font-size: 1rem;
-            cursor: pointer; transition: all 0.2s; margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 30px;
+            background: white;
+            color: #555;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: 0.2s;
         }
-        .google-btn:hover { background: #f8f9fa; border-color: #ccc; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .google-btn i { font-size: 1.4rem; color: #db0038; }
 
-        /* CONTEÚDO PRINCIPAL (Oculto até login) */
-        #app-content { display: none; }
+        .google-btn:hover {
+            background: #f9f9f9;
+        }
 
-        /* HEADER */
+        /* --- HEADER --- */
+        #app-content {
+            display: none;
+        }
+
         .admin-header {
             background: var(--color-primary);
             color: white;
-            padding: 20px 20px 60px 20px;
+            padding: 20px 20px 80px 20px;
             border-bottom-left-radius: 30px;
             border-bottom-right-radius: 30px;
-            box-shadow: var(--shadow-md);
-            position: relative;
+            box-shadow: var(--shadow-card);
         }
 
-        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
         .btn-icon-header {
-            background: rgba(255,255,255,0.2); border-radius: 50%; width: 40px; height: 40px;
-            display: flex; align-items: center; justify-content: center; color: white; text-decoration: none;
-            backdrop-filter: blur(4px); transition: 0.2s; cursor: pointer; border: none;
-        }
-        .btn-icon-header:hover { background: rgba(255,255,255,0.3); }
-
-        .header-title h1 { font-size: 1.2rem; font-weight: 700; }
-        .header-title span { font-size: 0.8rem; opacity: 0.9; font-weight: 400; }
-
-        /* DASHBOARD OFERTAS (Chamativo) */
-        .offer-dashboard {
-            background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%);
-            color: white;
-            border-radius: var(--radius);
-            margin: -40px 20px 20px 20px;
-            padding: 15px;
-            position: relative;
-            z-index: 10;
-            box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
-            display: flex; flex-direction: column; gap: 10px;
-        }
-
-        .offer-dash-row { display: flex; justify-content: space-between; align-items: center; }
-        .offer-dash-label { font-size: 0.8rem; opacity: 0.9; }
-        .offer-dash-value { font-size: 1.5rem; font-weight: 900; letter-spacing: -0.5px; }
-        
-        .btn-reset-offers {
             background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: white;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
             cursor: pointer;
-            transition: 0.2s;
-            display: flex; align-items: center; gap: 5px;
         }
-        .btn-reset-offers:hover { background: rgba(255, 255, 255, 0.3); }
 
-        /* SEARCH BAR */
-        .search-container { margin: 0 20px 20px 20px; }
+        /* --- DASHBOARD --- */
+        .offer-dashboard {
+            background: white;
+            border-radius: var(--radius);
+            margin: -60px auto 20px auto;
+            padding: 20px;
+            box-shadow: var(--shadow-card);
+            max-width: 1000px;
+            width: 90%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .dash-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dash-label {
+            font-size: 0.8rem;
+            color: var(--color-text-light);
+            font-weight: 500;
+        }
+
+        .dash-value {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--color-text);
+        }
+
+        .dash-actions {
+            grid-column: 1 / -1;
+            border-top: 1px solid var(--color-border);
+            padding-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* --- SEARCH & LIST --- */
+        .search-container {
+            max-width: 1000px;
+            margin: 0 auto 20px auto;
+            padding: 0 20px;
+        }
+
         .search-box {
-            background: white; border-radius: var(--radius); height: 50px;
-            display: flex; align-items: center; padding: 0 15px;
-            box-shadow: var(--shadow-sm); border: 1px solid var(--color-border);
-        }
-        .search-box i { color: #999; font-size: 1.2rem; margin-right: 10px; }
-        .search-box input {
-            border: none; outline: none; width: 100%; font-size: 0.95rem; color: var(--color-text);
+            background: white;
+            border-radius: var(--radius);
+            height: 50px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--color-border);
         }
 
-        /* PRODUCT LIST */
-        .product-list { padding: 0 20px; display: grid; gap: 12px; }
+        .search-box input {
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 1rem;
+            color: var(--color-text);
+        }
+
+        .product-list {
+            padding: 0 20px;
+            display: grid;
+            gap: 15px;
+            max-width: 1000px;
+            margin: 0 auto;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        }
 
         .prod-item {
-            background: white; border-radius: var(--radius); padding: 12px;
-            display: flex; gap: 12px; align-items: center;
-            box-shadow: var(--shadow-sm); transition: transform 0.2s;
-            cursor: pointer; border: 1px solid transparent; position: relative;
+            background: white;
+            border-radius: var(--radius);
+            padding: 12px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: 0.2s;
+            position: relative;
         }
-        .prod-item:active { transform: scale(0.98); }
+
+        .prod-item:hover {
+            transform: translateY(-2px);
+            border-color: var(--color-primary);
+        }
 
         .prod-thumb {
-            width: 70px; height: 70px; border-radius: 8px; background: #eee;
-            object-fit: cover; flex-shrink: 0;
+            width: 70px;
+            height: 70px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: #eee;
+            flex-shrink: 0;
         }
-        
-        .prod-info { flex: 1; min-width: 0; }
-        .prod-name { font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .prod-meta { font-size: 0.75rem; color: var(--color-text-light); display: flex; gap: 10px; margin-bottom: 4px; }
-        
-        .prod-prices { display: flex; align-items: baseline; gap: 8px; }
-        .price-current { color: var(--color-primary); font-weight: 700; font-size: 1rem; }
-        .price-old { color: #aaa; text-decoration: line-through; font-size: 0.8rem; }
-        
+
+        .prod-info {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .prod-name {
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 4px;
+        }
+
+        /* Garante que o container da linha meta alinhe os itens corretamente */
+        .prod-meta-row {
+            display: flex;
+            align-items: flex-end;
+            /* Alinha o estoque com a parte de baixo */
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        /* Ajuste do container de preços para COLUNA */
+        .prod-prices {
+            display: flex;
+            flex-direction: column;
+            /* Itens um abaixo do outro */
+            gap: 0px;
+            align-items: flex-start;
+            /* Alinha tudo à esquerda */
+            justify-content: center;
+        }
+
+        .price-current {
+            color: var(--color-primary);
+            font-weight: 900;
+            font-size: 1rem;
+            line-height: 1.2;
+        }
+
+        .price-old {
+            text-decoration: line-through;
+            color: #999;
+            font-size: 0.75rem;
+            margin-bottom: 2px;
+            /* Pequeno espaço antes do preço novo */
+        }
+
+        /* TAGS ESTOQUE E DESCONTO */
         .stock-tag {
-            font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: #e0f2f1; color: #00695c; font-weight: 600;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            margin-left: auto;
         }
-        .stock-tag.low { background: #ffebee; color: #c62828; }
 
-        /* OFFER BUTTON IN LIST (Estilo FAB Mini) */
+        .stock-ok {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .stock-low {
+            background: #ffedd5;
+            color: #9a3412;
+        }
+
+        .stock-out {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Badge de Desconto ajustada para ficar abaixo */
+        .discount-badge {
+            background: #f1f1f1;
+            color: var(--color-offer);
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 0;
+            /* Remove margem lateral */
+            margin-top: 4px;
+            /* Espaço acima da badge */
+            display: inline-block;
+        }
+
+        /* BOTÃO OFERTA RÁPIDA (LISTA) */
         .btn-quick-offer {
-            width: 40px; height: 40px; border-radius: 50%; 
-            background: white; color: var(--color-offer);
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 1.4rem; border: 1px solid #f3e8ff;
-            cursor: pointer; transition: 0.2s; margin-left: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid #f3e8ff;
+            background: white;
+            color: #d8b4fe;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            cursor: pointer;
+            margin-left: 10px;
+            z-index: 5;
+            transition: 0.2s;
         }
-        .btn-quick-offer:hover { background: #f3e8ff; transform: scale(1.05); }
-        .btn-quick-offer.active { 
-            background: var(--color-offer); color: white; 
+
+        .btn-quick-offer:hover {
+            background: #f3e8ff;
+            transform: scale(1.1);
+        }
+
+        .btn-quick-offer.active {
+            background: var(--color-offer);
+            color: white;
             border-color: var(--color-offer);
-            box-shadow: 0 4px 10px rgba(124, 58, 237, 0.4);
+            box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3);
         }
 
-        /* FAB ADD BUTTON */
-        .fab {
-            position: fixed; bottom: 20px; right: 20px;
-            width: 60px; height: 60px; background: var(--color-primary); color: white;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 2rem; box-shadow: 0 4px 15px rgba(219, 0, 56, 0.4);
-            cursor: pointer; z-index: 100; transition: transform 0.2s;
-        }
-        .fab:active { transform: scale(0.9); }
-
-        /* MODAL */
+        /* --- MODAL PRINCIPAL --- */
         .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 2000;
-            display: flex; align-items: flex-end; opacity: 0; pointer-events: none;
-            transition: opacity 0.3s; backdrop-filter: blur(2px);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            backdrop-filter: blur(4px);
         }
-        .modal-overlay.open { opacity: 1; pointer-events: all; }
-        
-        @media (min-width: 768px) {
-            .modal-overlay { align-items: center; justify-content: center; }
-            .modal-sheet { width: 500px !important; border-radius: 20px !important; height: auto !important; max-height: 90vh; }
-            .admin-header { border-radius: 0 0 30px 30px; padding-bottom: 80px; }
-            .offer-dashboard { max-width: 800px; margin: -50px auto 20px auto; }
-            .search-container { max-width: 800px; margin: 0 auto 20px auto; }
-            .product-list { max-width: 800px; margin: 0 auto; }
-            .fab { right: calc(50% - 400px + 20px); }
+
+        .modal-overlay.open {
+            display: flex;
         }
 
         .modal-sheet {
-            background: white; width: 100%; border-top-left-radius: 25px; border-top-right-radius: 25px;
-            padding: 25px; max-height: 95vh; overflow-y: auto; display: flex; flex-direction: column;
-            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            background: white;
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            border-top-left-radius: 24px;
+            border-top-right-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: slideUp 0.3s ease-out;
         }
-        .modal-overlay.open .modal-sheet { transform: translateY(0); }
 
-        .sheet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .sheet-title { font-size: 1.1rem; font-weight: 700; color: var(--color-text); }
-        
-        /* FORMS */
-        .form-section { margin-bottom: 20px; border-bottom: 1px dashed #eee; padding-bottom: 15px; }
-        .form-section:last-child { border-bottom: none; }
-        .section-label { font-size: 0.8rem; font-weight: 700; color: var(--color-primary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        @media (min-width: 768px) {
+            .modal-overlay {
+                align-items: center;
+            }
 
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 0.8rem; color: #666; margin-bottom: 5px; font-weight: 500; }
-        
-        .input-wrapper { position: relative; }
-        .input-wrapper input, .input-wrapper textarea, .input-wrapper select {
-            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px;
-            font-size: 0.9rem; background: #fafafa; transition: border 0.2s;
+            .modal-sheet {
+                height: auto;
+                max-height: 90vh;
+                border-radius: 24px;
+            }
         }
-        .input-wrapper input:focus { border-color: var(--color-primary); background: white; outline: none; }
-        
-        /* SWITCH TOGGLE */
-        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; }
-        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; }
-        input:checked + .slider { background-color: var(--color-primary); }
-        .slider.purple input:checked + .slider { background-color: var(--color-offer); }
-        
-        input:focus + .slider { box-shadow: 0 0 1px var(--color-primary); }
-        input:checked + .slider:before { transform: translateX(22px); }
-        .slider.round { border-radius: 34px; }
-        .slider.round:before { border-radius: 50%; }
 
-        /* WEBSITE SECTION STYLES (NEW) */
-        .mp-fee-box {
-            background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 12px; padding: 15px;
-            margin-top: 10px; position: relative;
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+
+            to {
+                transform: translateY(0);
+            }
         }
-        .mp-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; color: #0369a1; font-weight: 700; font-size: 0.9rem; }
-        .mp-fee-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.85rem; color: #555; }
-        .mp-total-fee { border-top: 1px dashed #bae6fd; padding-top: 8px; margin-top: 8px; font-weight: 700; color: #0284c7; display: flex; justify-content: space-between; }
-        
-        /* OFFER MODAL STYLES */
-        .offer-prod-header { display: flex; gap: 15px; align-items: center; margin-bottom: 20px; background: #f9f9f9; padding: 15px; border-radius: 12px; }
-        .offer-prod-thumb { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; background: #eee; }
-        .offer-prod-info h3 { font-size: 1rem; margin-bottom: 5px; }
-        .offer-prod-info p { color: #666; font-size: 0.9rem; }
-        
-        .offer-control-row { 
-            display: flex; justify-content: space-between; align-items: center; 
-            margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px dashed #eee; 
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .offer-status-label { font-weight: 700; font-size: 0.9rem; }
-        .status-on { color: var(--color-offer); }
-        .status-off { color: #999; }
 
-        .offer-input-container { transition: opacity 0.3s; }
-        .offer-input-container.disabled { opacity: 0.5; pointer-events: none; }
+        .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f9fafb;
+        }
 
-        /* IMAGES UPLOAD */
-        .images-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
+        .modal-footer {
+            padding: 15px 20px;
+            background: white;
+            border-top: 1px solid var(--color-border);
+            display: flex;
+            gap: 10px;
+        }
+
+        /* TABS */
+        .tab-nav {
+            display: flex;
+            background: white;
+            padding: 0 20px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .tab-btn {
+            padding: 15px;
+            font-weight: 600;
+            color: var(--color-text-light);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: 0.2s;
+        }
+
+        .tab-btn.active {
+            color: var(--color-primary);
+            border-bottom-color: var(--color-primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* FORMS & INPUTS */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        @media (min-width: 600px) {
+            .form-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #4b5563;
+            margin-bottom: 5px;
+        }
+
+        .input-box {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background: white;
+            transition: 0.2s;
+        }
+
+        .input-box:focus {
+            border-color: var(--color-primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(219, 0, 56, 0.1);
+        }
+
+        /* IMAGES */
+        .images-scroll {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 5px;
+        }
+
         .img-slot {
-            width: 80px; height: 80px; border-radius: 8px; border: 2px dashed #ccc;
-            display: flex; align-items: center; justify-content: center;
-            background: #fafafa; cursor: pointer; position: relative; flex-shrink: 0; overflow: hidden;
-        }
-        .img-slot img { width: 100%; height: 100%; object-fit: cover; }
-        .img-slot i { font-size: 1.5rem; color: #ccc; }
-        .img-slot .remove-btn {
-            position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.5); color: white;
-            border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px;
+            width: 100px;
+            height: 100px;
+            flex-shrink: 0;
+            border-radius: 8px;
+            border: 2px dashed #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            background: white;
         }
 
-        /* SCANNER */
-        .scan-btn {
-            position: absolute; right: 8px; top: 8px; bottom: 8px;
-            background: #eef2ff; color: #4f46e5; border: none; padding: 0 10px;
-            border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 0.8rem; font-weight: 600;
+        .img-slot img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
-        #scanner-viewport {
-            width: 100%; height: 200px; background: black; margin-bottom: 15px;
-            display: none; position: relative; border-radius: 8px; overflow: hidden;
-        }
-        #scanner-viewport video { width: 100%; height: 100%; object-fit: cover; }
 
-        /* BUTTONS */
+        .img-remove {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* VARIANT SEARCH */
+        .variant-search-box {
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .variant-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: white;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: var(--shadow-card);
+            display: none;
+        }
+
+        .variant-result-item {
+            padding: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+
+        .variant-result-item:hover {
+            background: #f3f4f6;
+        }
+
+        .added-variants-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .added-variant {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--color-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* INSTALLMENT BOX */
+        .installment-info-box {
+            background: #eef2ff;
+            border: 1px solid #c7d2fe;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            color: #374151;
+        }
+
+        .info-row.highlight {
+            font-weight: 700;
+            color: #4338ca;
+            border-top: 1px solid #c7d2fe;
+            padding-top: 8px;
+            margin-top: 8px;
+        }
+
+        /* SWITCH TOGGLE (MODAL OFERTA) */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: var(--color-offer);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(22px);
+        }
+
+        /* BUTTONS & FAB */
+        .btn {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            font-size: 0.95rem;
+        }
+
         .btn-primary {
-            width: 100%; padding: 15px; background: var(--color-primary); color: white;
-            border: none; border-radius: var(--radius); font-size: 1rem; font-weight: 700; cursor: pointer;
-            box-shadow: 0 4px 10px rgba(219, 0, 56, 0.3);
+            background: var(--color-primary);
+            color: white;
+            flex: 2;
         }
-        .btn-save-offer {
-            width: 100%; padding: 15px; background: var(--color-offer); color: white;
-            border: none; border-radius: var(--radius); font-size: 1rem; font-weight: 700; cursor: pointer;
-        }
-        .btn-secondary {
-            background: #f0f0f0; color: #333; padding: 12px; border-radius: var(--radius); border: none; font-weight: 600; cursor: pointer; flex: 1;
-        }
-        .btn-danger {
-            background: #fee2e2; color: #ef4444; padding: 12px; border-radius: var(--radius); border: none; font-weight: 600; cursor: pointer; flex: 1;
-        }
-        
-        /* PROFIT BOX */
-        .profit-box {
-            background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px;
-            display: flex; justify-content: space-between; align-items: center; margin-top: -5px; margin-bottom: 15px;
-        }
-        .profit-val { font-weight: 700; color: #16a34a; }
-        
-        /* LOADER */
-        .loader-container { text-align: center; padding: 40px; }
-        .spinner {
-            width: 30px; height: 30px; border: 3px solid #eee; border-top-color: var(--color-primary);
-            border-radius: 50%; animation: spin 1s infinite linear; margin: 0 auto;
-        }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
 
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #374151;
+            flex: 1;
+        }
+
+        .btn-danger {
+            background: #fee2e2;
+            color: #ef4444;
+            flex: 1;
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            background: var(--color-primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            box-shadow: 0 4px 15px rgba(219, 0, 56, 0.4);
+            cursor: pointer;
+            z-index: 90;
+        }
+
+        .loader-center {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
     </style>
 </head>
+
 <body>
 
-    <!-- TELA DE LOGIN (BLOQUEIO) -->
     <div id="login-overlay">
         <div class="login-card">
-            <img src="https://cdn-icons-png.flaticon.com/512/1554/1554591.png" alt="Logo" class="login-logo">
-            <h2 style="color: #333; margin-bottom: 10px;">Painel Admin</h2>
-            <p style="color: #666; font-size: 0.9rem; margin-bottom: 30px;">Acesso restrito a administradores autorizados.</p>
-            
-            <button class="google-btn" onclick="loginWithGoogle()">
-                <i class='bx bxl-google'></i>
-                Entrar com Google
-            </button>
-            <p id="login-msg" style="color: #db0038; font-size: 0.8rem; margin-top: 15px; display: none;"></p>
+            <h2 style="margin-bottom: 10px;">Administração</h2>
+            <p style="color: #666;">Acesso restrito ao gerenciador.</p>
+            <button class="google-btn" onclick="loginWithGoogle()"><i class='bx bxl-google'></i> Entrar com
+                Google</button>
+            <p id="login-msg" style="color: var(--color-primary); font-size: 0.8rem; margin-top: 15px; display: none;">
+            </p>
         </div>
     </div>
 
-    <!-- CONTEÚDO PRINCIPAL (Protegido) -->
     <div id="app-content">
-        <!-- CABEÇALHO -->
         <div class="admin-header">
             <div class="header-top">
-                <a href="conta.html" class="btn-icon-header"><i class='bx bx-chevron-left' style="font-size: 24px;"></i></a>
-                
-                <div class="header-title" style="text-align: right;">
-                    <h1>Gerenciador</h1>
-                    <span>Floralchic / Dtudo</span>
-                </div>
-
-                <button class="btn-icon-header" onclick="handleLogout()" title="Sair" style="margin-left: 10px;">
-                    <i class='bx bx-log-out' style="font-size: 20px;"></i>
-                </button>
+                <a href="index.html" class="btn-icon-header"><i class='bx bx-home-alt'></i></a>
+                <h1 style="font-size: 1.2rem;">Gerenciador Dtudo</h1>
+                <button class="btn-icon-header" onclick="handleLogout()"><i class='bx bx-log-out'></i></button>
             </div>
         </div>
 
-        <!-- DASHBOARD DE OFERTAS (Calculadora) -->
         <div class="offer-dashboard">
-            <!-- Row 1: Investimento em Descontos -->
-            <div class="offer-dash-row" style="border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px; margin-bottom: 10px;">
-                <div>
-                    <span class="offer-dash-label">Investimento em Descontos</span>
-                    <div class="offer-dash-value" id="total-discount-value">R$ 0,00</div>
-                </div>
-                <div style="font-size: 2rem;"><i class='bx bxs-offer'></i></div>
+            <div class="dash-item">
+                <span class="dash-label">Investimento em Descontos</span>
+                <span class="dash-value" id="dash-discount">R$ 0,00</span>
             </div>
-            
-            <!-- Row 2: Receita Bruta (Novo) -->
-            <div class="offer-dash-row">
-                <div>
-                    <span class="offer-dash-label">Receita Bruta Potencial (Estoque)</span>
-                    <div class="offer-dash-value" id="total-revenue-value">R$ 0,00</div>
-                </div>
-                <div style="font-size: 2rem;"><i class='bx bx-money'></i></div>
+            <div class="dash-item">
+                <span class="dash-label">Receita Potencial (Estoque)</span>
+                <span class="dash-value" id="dash-revenue">R$ 0,00</span>
             </div>
-
-            <!-- Row 3: Controls -->
-            <div class="offer-dash-row" style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px;">
-                <span class="offer-dash-label" id="products-with-offer-count">0 produtos em oferta</span>
-                <button class="btn-reset-offers" onclick="deactivateAllOffers()">
-                    <i class='bx bx-trash'></i> Desativar Todas
+            <div class="dash-actions">
+                <span id="dash-count" style="font-size: 0.8rem; color: #666;">0 ofertas ativas</span>
+                <button onclick="deactivateAllOffers()"
+                    style="background:none; border:none; color:var(--color-primary); font-weight:600; cursor:pointer;">
+                    Limpar Ofertas
                 </button>
             </div>
         </div>
 
-        <!-- BUSCA -->
         <div class="search-container">
             <div class="search-box">
-                <i class='bx bx-search'></i>
-                <input type="text" id="search-input" placeholder="Buscar por nome, SKU ou marca...">
+                <i class='bx bx-search' style="color: #999; margin-right: 10px;"></i>
+                <input type="text" id="search-input" placeholder="Buscar produtos...">
             </div>
         </div>
 
-        <!-- LISTA DE PRODUTOS -->
         <div id="products-list" class="product-list">
-            <div class="loader-container"><div class="spinner"></div></div>
+            <div class="loader-center">Carregando...</div>
         </div>
 
-        <!-- BOTÃO ADICIONAR -->
-        <div class="fab" onclick="openModal()">
-            <i class='bx bx-plus'></i>
+        <div class="fab" onclick="openProductModal()"><i class='bx bx-plus'></i></div>
+    </div>
+
+    <div class="modal-overlay" id="productModal">
+        <div class="modal-sheet">
+            <div class="modal-header">
+                <h3 id="modal-title">Novo Produto</h3>
+                <i class='bx bx-x' onclick="closeProductModal()" style="font-size: 1.5rem; cursor: pointer;"></i>
+            </div>
+
+            <div class="tab-nav">
+                <div class="tab-btn active" onclick="switchTab('tab-details')">Detalhes</div>
+                <div class="tab-btn" onclick="switchTab('tab-prices')">Preços & Taxas</div>
+                <div class="tab-btn" onclick="switchTab('tab-variants')">Variações</div>
+            </div>
+
+            <div class="modal-body">
+                <form id="productForm">
+                    <input type="hidden" id="prod-id">
+
+                    <div id="tab-details" class="tab-content active">
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label>Imagens do Produto</label>
+                            <div class="images-scroll" id="images-container">
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label>Nome do Produto *</label>
+                            <input type="text" id="prod-name" class="input-box" required
+                                placeholder="Ex: Tênis Esportivo">
+                        </div>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Código (SKU)</label>
+                                <div style="display: flex; gap: 5px;">
+                                    <input type="text" id="prod-code" class="input-box" placeholder="Scan ou Digite">
+                                    <button type="button" onclick="startScanner()"
+                                        style="padding: 0 15px; background: #eee; border: 1px solid #ccc; border-radius: 8px;"><i
+                                            class='bx bx-scan'></i></button>
+                                </div>
+                                <div id="scanner-viewport"
+                                    style="display:none; height: 150px; background:black; margin-top:5px;"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Estoque Atual</label>
+                                <input type="number" id="prod-stock" class="input-box" value="1">
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label>Descrição</label>
+                            <textarea id="prod-desc" class="input-box" rows="4"
+                                placeholder="Detalhes técnicos..."></textarea>
+                        </div>
+                    </div>
+
+                    <div id="tab-prices" class="tab-content">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Custo (R$)</label>
+                                <input type="number" id="prod-cost" class="input-box" step="0.01"
+                                    oninput="calculateFinancials()">
+                            </div>
+                            <div class="form-group">
+                                <label>Venda (R$)</label>
+                                <input type="number" id="prod-price" class="input-box" step="0.01" required
+                                    oninput="calculateFinancials()">
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label style="color: var(--color-offer);">Preço Promocional (Opcional)</label>
+                            <input type="number" id="prod-offer" class="input-box" step="0.01"
+                                placeholder="Vazio se não houver" style="border-color: var(--color-offer);"
+                                oninput="calculateFinancials()">
+                        </div>
+
+                        <div class="installment-info-box">
+                            <h4
+                                style="margin-bottom: 10px; font-size: 0.9rem; display: flex; align-items: center; gap: 5px;">
+                                <i class='bx bxs-credit-card'></i> Simulação Web
+                            </h4>
+                            <div class="info-row">
+                                <span>Regra de Parcelamento:</span>
+                                <strong id="sim-rule">Até 12x</strong>
+                            </div>
+                            <div class="info-row">
+                                <span>Taxa Total (Aprox):</span>
+                                <span style="color: #ef4444;" id="sim-fee-percent">0%</span>
+                            </div>
+                            <div class="info-row">
+                                <span>Desconto Taxas:</span>
+                                <span style="color: #ef4444;" id="sim-fee-val">- R$ 0,00</span>
+                            </div>
+                            <div class="info-row highlight">
+                                <span>Você Recebe (Líquido):</span>
+                                <span id="sim-net">R$ 0,00</span>
+                            </div>
+                            <p style="font-size: 0.7rem; color: #666; margin-top: 8px;">
+                                *Baseado em tabela: >=1000 (12x), >=800 (9x), >=625 (8x), >=600 (7x), >=300 (6x), >=250
+                                (5x), <250 (4x). Inclui taxa "Receber na hora" . </p>
+                        </div>
+                    </div>
+
+                    <div id="tab-variants" class="tab-content">
+                        <div class="form-group">
+                            <label>Adicionar Variação (Buscar Produto Existente)</label>
+                            <div class="variant-search-box">
+                                <input type="text" id="variant-search" class="input-box"
+                                    placeholder="Digite o nome do produto..." oninput="searchForVariants(this.value)">
+                                <div id="variant-results" class="variant-results"></div>
+                            </div>
+                        </div>
+
+                        <label style="margin-bottom: 10px; display: block; font-size: 0.85rem;">Variações
+                            Vinculadas:</label>
+                        <div id="added-variants-list" class="added-variants-list">
+                            <div style="text-align: center; color: #999; padding: 20px;">Nenhuma variação adicionada.
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeProductModal()">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btn-delete" style="display:none;"
+                    onclick="deleteProduct()">Excluir</button>
+                <button type="button" class="btn btn-primary" id="btn-save"
+                    onclick="submitProductForm()">Salvar</button>
+            </div>
         </div>
     </div>
 
-    <!-- MODAL DE OFERTA RÁPIDA -->
     <div class="modal-overlay" id="offerModal">
-        <div class="modal-sheet" style="height: auto;">
-            <div class="sheet-header">
-                <h2 class="sheet-title">Gerenciar Oferta</h2>
-                <div onclick="closeOfferModal()" style="cursor: pointer; padding: 5px;"><i class='bx bx-x' style="font-size: 24px;"></i></div>
+        <div class="modal-sheet" style="height: auto; max-width: 500px;">
+            <div class="modal-header">
+                <h3>Gerenciar Oferta</h3>
+                <i class='bx bx-x' onclick="closeOfferModal()" style="font-size: 1.5rem; cursor: pointer;"></i>
             </div>
 
-            <div id="offer-modal-content">
-                <div class="offer-prod-header">
-                    <img id="quick-offer-img" class="offer-prod-thumb" src="">
-                    <div class="offer-prod-info">
-                        <h3 id="quick-offer-name">Nome do Produto</h3>
-                        <p>Preço Original: <strong id="quick-offer-original">R$ 0,00</strong></p>
+            <div class="modal-body">
+                <div
+                    style="display: flex; gap: 15px; align-items: center; margin-bottom: 20px; background: #f9f9f9; padding: 10px; border-radius: 12px;">
+                    <img id="qo-img" src="" style="width: 50px; height: 50px; border-radius: 8px; object-fit: cover;">
+                    <div>
+                        <div id="qo-name" style="font-weight: 600; font-size: 0.9rem;">Nome do Produto</div>
+                        <div style="font-size: 0.8rem; color: #666;">Original: <strong id="qo-original">R$ 0,00</strong>
+                        </div>
                     </div>
                 </div>
 
-                <div class="offer-control-row">
-                    <div>
-                        <div class="offer-status-label" id="offer-status-label">Oferta Desativada</div>
-                        <small style="color: #666;">Ative para definir um preço promocional</small>
-                    </div>
-                    <label class="switch purple">
-                        <input type="checkbox" id="offer-toggle" onchange="toggleOfferInputs()">
-                        <span class="slider round"></span>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <span style="font-weight: 600;">Ativar Preço de Oferta?</span>
+                    <label class="switch">
+                        <input type="checkbox" id="qo-toggle" onchange="toggleQuickOfferInputs()">
+                        <span class="slider"></span>
                     </label>
                 </div>
 
-                <div class="form-group offer-input-container" id="offer-input-box">
-                    <label style="color: var(--color-offer); font-weight: 700;">Preço de Oferta (R$)</label>
-                    <div class="input-wrapper" style="border-color: var(--color-offer);">
-                        <input type="number" id="quick-offer-price" step="0.01" placeholder="0.00">
-                    </div>
-                    <p id="last-offer-info" style="font-size: 0.75rem; color: #999; margin-top: 5px; display: none;">
-                        Última oferta: R$ <span id="last-offer-val">--</span>
-                    </p>
+                <div id="qo-input-container" style="opacity: 0.5; pointer-events: none; transition: 0.3s;">
+                    <label style="font-size: 0.8rem; font-weight: 700; color: var(--color-offer);">Novo Preço
+                        (R$)</label>
+                    <input type="number" id="qo-price" class="input-box" step="0.01"
+                        style="border-color: var(--color-offer); font-weight: 700;">
                 </div>
+            </div>
 
-                <input type="hidden" id="quick-offer-id">
-                <button class="btn-save-offer" onclick="saveQuickOffer()">Salvar Alterações</button>
-                <div style="height: 20px;"></div>
+            <div class="modal-footer">
+                <input type="hidden" id="qo-id">
+                <button class="btn btn-secondary" onclick="closeOfferModal()">Cancelar</button>
+                <button class="btn btn-primary" style="background: var(--color-offer);"
+                    onclick="saveQuickOffer()">Salvar Oferta</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL DE CADASTRO/EDIÇÃO -->
-    <div class="modal-overlay" id="productModal">
-        <div class="modal-sheet">
-            <div class="sheet-header">
-                <h2 class="sheet-title" id="modal-title">Novo Produto</h2>
-                <div onclick="closeModal()" style="cursor: pointer; padding: 5px;"><i class='bx bx-x' style="font-size: 24px;"></i></div>
-            </div>
-
-            <form id="productForm">
-                <input type="hidden" id="prod-id">
-                
-                <!-- SEÇÃO IMAGENS -->
-                <div class="form-section">
-                    <div class="section-label">Imagens (Max 5)</div>
-                    <div class="images-grid" id="images-container">
-                        <!-- Slots gerados via JS -->
-                    </div>
-                    <p style="font-size: 0.7rem; color: #999; margin-top: 5px;">A primeira imagem será a capa.</p>
-                </div>
-
-                <!-- SEÇÃO DADOS BÁSICOS -->
-                <div class="form-section">
-                    <div class="section-label">Informações Básicas</div>
-                    
-                    <!-- Scanner View -->
-                    <div id="scanner-viewport">
-                        <button type="button" onclick="stopScanner()" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); color: white; border: none; padding: 5px 10px; border-radius: 4px; z-index: 20;">Fechar</button>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Código SKU / Barras</label>
-                        <div class="input-wrapper">
-                            <input type="text" id="prod-code" placeholder="Ex: 78910...">
-                            <button type="button" class="scan-btn" onclick="startScanner()">
-                                <i class='bx bx-scan'></i> Scan
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Nome do Produto *</label>
-                        <div class="input-wrapper"><input type="text" id="prod-name" required placeholder="Ex: Tênis Esportivo Casual"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Variantes (Opções)</label>
-                        <div class="input-wrapper">
-                            <input type="text" id="prod-variants" placeholder="Separe por ponto e vírgula. Ex: P; M; G; GG">
-                        </div>
-                        <p style="font-size: 0.7rem; color: #999; margin-top: 2px;">Usado para criar botões de seleção na loja.</p>
-                    </div>
-                </div>
-
-                <!-- SEÇÃO PREÇOS -->
-                <div class="form-section">
-                    <div class="section-label">Preços e Lucro</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Custo (R$)</label>
-                            <div class="input-wrapper"><input type="number" id="prod-cost" step="0.01" oninput="calculateMargin()"></div>
-                        </div>
-                        <div class="form-group">
-                            <label>Venda (R$)</label>
-                            <div class="input-wrapper"><input type="number" id="prod-price" step="0.01" required oninput="calculateMargin(); syncWebPrice();"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label style="color: var(--color-primary);">Preço Oferta (Opcional)</label>
-                        <div class="input-wrapper"><input type="number" id="prod-offer" step="0.01" placeholder="Vazio se não houver" oninput="calculateMargin()"></div>
-                    </div>
-
-                    <div class="profit-box">
-                        <span style="font-size: 0.85rem;">Lucro Estimado:</span>
-                        <div style="text-align: right;">
-                            <div class="profit-val" id="profit-val">R$ 0,00</div>
-                            <small id="margin-val" style="color: #666;">0% margem</small>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- NOVA SEÇÃO: CONFIGURAÇÕES WEB (PARCELAMENTO) -->
-                <div class="form-section" style="background: #fdfdfd; padding: 15px; border-radius: 12px; border: 1px solid #eee;">
-                    <div class="section-label" style="color: var(--color-mp-blue); display:flex; align-items:center; gap:5px;">
-                        <i class='bx bxs-credit-card'></i> Web Site: Parcelamento
-                    </div>
-                    
-                    <div class="offer-control-row" style="margin-bottom: 10px; border-bottom: none;">
-                        <span style="font-size: 0.9rem; font-weight: 500;">Vender Parcelado no Site</span>
-                        <label class="switch">
-                            <input type="checkbox" id="web-installments-active" onchange="toggleWebFields()">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-
-                    <div id="web-fields-container" style="display:none;">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Preço Parcelado (R$)</label>
-                                <div class="input-wrapper">
-                                    <input type="number" id="web-price" step="0.01" placeholder="Igual ao original" oninput="calcMpFees()">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Máx. Parcelas</label>
-                                <div class="input-wrapper">
-                                    <select id="web-max-installments" onchange="calcMpFees()" style="width:100%; padding:12px; border-radius:8px; border:1px solid #ddd;">
-                                        <option value="1">1x (À vista)</option>
-                                        <option value="2">2x</option>
-                                        <option value="3">3x</option>
-                                        <option value="4">4x</option>
-                                        <option value="5">5x</option>
-                                        <option value="6">6x</option>
-                                        <option value="9">9x</option>
-                                        <option value="10">10x</option>
-                                        <option value="12" selected>12x</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- SIMULADOR DE TAXAS MP (RECEBER NA HORA) -->
-                        <div class="mp-fee-box">
-                            <div class="mp-header"><i class='bx bxs-calculator'></i> Simulação de Taxas (Na Hora)</div>
-                            <div class="mp-fee-row">
-                                <span>Preço de Venda:</span>
-                                <strong id="mp-sim-price">R$ 0,00</strong>
-                            </div>
-                            <div class="mp-fee-row">
-                                <span>Taxa Aprox. (<span id="mp-rate-display">0%</span>):</span>
-                                <span style="color: #ef4444;">- <span id="mp-fee-val">R$ 0,00</span></span>
-                            </div>
-                            <div class="mp-total-fee">
-                                <span>Você Recebe (Líquido):</span>
-                                <span style="color: #16a34a; font-size: 1.1rem;" id="mp-net-val">R$ 0,00</span>
-                            </div>
-                            <p style="font-size: 0.7rem; color: #999; margin-top: 5px; text-align: center;">
-                                *Estimativa baseada nas taxas de "Receber na hora" (4.99% base + tarifa de parcelamento).
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SEÇÃO ESTOQUE -->
-                <div class="form-section">
-                    <div class="section-label">Estoque</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Qtd. Atual</label>
-                            <div class="input-wrapper"><input type="number" id="prod-stock" required value="1"></div>
-                        </div>
-                        <div class="form-group">
-                            <label>Estoque Mínimo</label>
-                            <div class="input-wrapper"><input type="number" id="prod-min-stock" value="5"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Descrição Detalhada</label>
-                    <div class="input-wrapper">
-                        <textarea id="prod-desc" rows="4" placeholder="Detalhes técnicos, material, medidas..."></textarea>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-primary" id="btn-save">Salvar Produto</button>
-                
-                <div id="edit-actions" style="display:none; gap: 10px; margin-top: 15px;">
-                    <button type="button" class="btn-danger" onclick="deleteProduct()">Excluir</button>
-                    <button type="button" class="btn-secondary" onclick="closeModal()">Cancelar</button>
-                </div>
-                <div style="height: 20px;"></div>
-            </form>
-        </div>
-    </div>
-
-    <!-- LÓGICA DO SISTEMA -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 
-        // Configuração Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAVQ3tf6Qu4_9PajpJclZAJjVvRgB4ZE2I",
             authDomain: "super-app25.firebaseapp.com",
@@ -649,657 +965,466 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = 'floralchic-loja';
-        const ADMIN_EMAIL = 'eletroresponde@gmail.com'; // EMAIL DO ADM
+        const ADMIN_EMAIL = 'eletroresponde@gmail.com';
 
         let currentUser = null;
         let productsData = [];
-        let scannerIsRunning = false;
-        const MAX_IMAGES = 5;
+        let currentVariants = [];
 
-        // AUTH & LOGIN LOGIC
-        window.loginWithGoogle = async function() {
-            const provider = new GoogleAuthProvider();
-            try {
-                await signInWithPopup(auth, provider);
-            } catch (error) {
-                console.error("Erro login:", error);
-                document.getElementById('login-msg').textContent = "Erro ao fazer login. Tente novamente.";
+        // --- AUTH ---
+        window.loginWithGoogle = async () => {
+            try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+            catch (e) { alert("Erro ao logar: " + e.message); }
+        }
+
+        window.handleLogout = async () => { await signOut(auth); window.location.reload(); }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user && user.email === ADMIN_EMAIL) {
+                currentUser = user;
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('app-content').style.display = 'block';
+                loadProducts();
+            } else if (user) {
                 document.getElementById('login-msg').style.display = 'block';
-            }
-        }
-
-        window.handleLogout = async function() {
-            try {
-                await signOut(auth);
-                window.location.reload();
-            } catch (error) {
-                console.error("Erro logout:", error);
-            }
-        }
-
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // VERIFICAÇÃO DE EMAIL ADMIN
-                if (user.email === ADMIN_EMAIL) {
-                    currentUser = user;
-                    document.getElementById('login-overlay').style.display = 'none';
-                    document.getElementById('app-content').style.display = 'block';
-                    initProductsListener();
-                } else {
-                    document.getElementById('login-msg').textContent = `Acesso negado para ${user.email}. Use a conta administrativa.`;
-                    document.getElementById('login-msg').style.display = 'block';
-                    await signOut(auth);
-                }
+                document.getElementById('login-msg').textContent = "Acesso não autorizado.";
+                signOut(auth);
             } else {
                 document.getElementById('login-overlay').style.display = 'flex';
-                document.getElementById('app-content').style.display = 'none';
-                currentUser = null;
             }
         });
 
-        // LEITURA EM TEMPO REAL
-        function initProductsListener() {
-            const colRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'products');
-            
-            onSnapshot(colRef, (snapshot) => {
+        // --- PRODUTOS ---
+        function loadProducts() {
+            onSnapshot(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'products'), (snap) => {
                 productsData = [];
-                snapshot.forEach(doc => {
-                    productsData.push({ id: doc.id, ...doc.data() });
-                });
-                productsData.sort((a,b) => a.name.localeCompare(b.name));
-                renderProducts(productsData);
-                calculateTotalOffers();
+                snap.forEach(d => productsData.push({ id: d.id, ...d.data() }));
+                productsData.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+                renderList(productsData);
+                updateDashboard();
             });
         }
 
-        // RENDERIZAÇÃO DA LISTA
-        function renderProducts(list) {
-            const container = document.getElementById('products-list');
-            container.innerHTML = '';
+        function renderList(list) {
+            const el = document.getElementById('products-list');
+            el.innerHTML = '';
 
             if (list.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align:center; padding:50px; color:#999;">
-                        <i class='bx bx-package' style="font-size: 3rem;"></i>
-                        <p>Nenhum produto encontrado.</p>
-                    </div>`;
+                el.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">Nenhum produto encontrado.</div>';
                 return;
             }
 
-            list.forEach(prod => {
-                const thumb = prod.imgUrl || 'https://placehold.co/100x100/eee/999?text=Sem+Foto';
-                
-                const price = parseFloat(prod.price || 0);
-                const offer = parseFloat(prod['price-oferta'] || 0);
+            list.forEach(p => {
+                const price = parseFloat(p.price || 0);
+                const offer = parseFloat(p['price-oferta'] || 0);
                 const hasOffer = (offer > 0 && offer < price);
-                
-                const fmtPrice = price.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-                const fmtOffer = offer.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+                const displayPrice = hasOffer ? offer : price;
+                const stock = parseInt(p.stock || 0);
 
-                const stockClass = (prod.stock <= (prod.minStock || 3)) ? 'low' : '';
-                
-                const offerBtnClass = hasOffer ? 'btn-quick-offer active' : 'btn-quick-offer';
-                
-                const html = `
-                    <div class="prod-item" onclick="editProduct('${prod.id}')">
-                        <img src="${thumb}" class="prod-thumb" loading="lazy">
-                        <div class="prod-info">
-                            <div class="prod-name">${prod.name}</div>
-                            <div class="prod-meta">
-                                <span>SKU: ${prod.code || '-'}</span>
-                                <span class="stock-tag ${stockClass}">${prod.stock} un</span>
-                            </div>
-                            <div class="prod-prices">
-                                ${hasOffer ? 
-                                    `<span class="price-current">${fmtOffer}</span> <span class="price-old">${fmtPrice}</span>` : 
-                                    `<span class="price-current">${fmtPrice}</span>`
-                                }
-                            </div>
+                // Lógica de Estoque
+                let stockHtml = '';
+                if (stock <= 0) stockHtml = `<span class="stock-tag stock-out">Esgotado</span>`;
+                else if (stock <= 5) stockHtml = `<span class="stock-tag stock-low">Baixo: ${stock}</span>`;
+                else stockHtml = `<span class="stock-tag stock-ok">Estoque: ${stock}</span>`;
+
+                // Montagem dos Preços em Lista
+                let priceBlockHtml = '';
+
+                if (hasOffer) {
+                    const pct = Math.round(((price - offer) / price) * 100);
+                    // ORDEM: Preço Antigo -> Preço Novo -> Desconto
+                    priceBlockHtml = `
+                <span class="price-old">${price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                <span class="price-current">${displayPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                <span class="discount-badge">${pct}% OFF</span>
+            `;
+                } else {
+                    // Apenas preço normal
+                    priceBlockHtml = `
+                <span class="price-current">${price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+            `;
+                }
+
+                const btnClass = hasOffer ? 'btn-quick-offer active' : 'btn-quick-offer';
+
+                el.innerHTML += `
+            <div class="prod-item" onclick="editProduct('${p.id}')">
+                <img src="${p.imgUrl || 'https://placehold.co/100'}" class="prod-thumb">
+                <div class="prod-info">
+                    <div class="prod-name">${p.name}</div>
+                    <div class="prod-meta-row">
+                        <div class="prod-prices">
+                            ${priceBlockHtml}
                         </div>
-                        <button class="${offerBtnClass}" onclick="openOfferModal(event, '${prod.id}')" title="Gerenciar Oferta">
-                            <i class='bx bx-plus'></i>
-                        </button>
+                        ${stockHtml}
+                    </div>
+                </div>
+                <button class="${btnClass}" onclick="openOfferModal(event, '${p.id}')">
+                    <i class='bx bxs-offer'></i>
+                </button>
+            </div>
+        `;
+            });
+        }
+
+        function updateDashboard() {
+            let totalDisc = 0, totalRev = 0, count = 0;
+            productsData.forEach(p => {
+                const stock = parseInt(p.stock || 0);
+                if (stock > 0) {
+                    const price = parseFloat(p.price || 0);
+                    const offer = parseFloat(p['price-oferta'] || 0);
+                    const activePrice = (offer > 0 && offer < price) ? offer : price;
+
+                    totalRev += (activePrice * stock);
+                    if (offer > 0 && offer < price) {
+                        totalDisc += ((price - offer) * stock);
+                        count++;
+                    }
+                }
+            });
+            document.getElementById('dash-discount').textContent = totalDisc.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('dash-revenue').textContent = totalRev.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('dash-count').textContent = `${count} produtos em oferta`;
+        }
+
+        window.deactivateAllOffers = async () => {
+            if (!confirm("Desativar TODAS as ofertas?")) return;
+            const batch = productsData.filter(p => parseFloat(p['price-oferta']) > 0);
+            for (const p of batch) {
+                await updateDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'products', p.id), { 'price-oferta': 0 });
+            }
+        }
+
+        // --- MODAL PRINCIPAL LÓGICA ---
+        window.switchTab = (tabId) => {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            // Encontra o botão clicado ou pelo ID
+            const buttons = document.querySelectorAll('.tab-btn');
+            if (tabId === 'tab-details') buttons[0].classList.add('active');
+            if (tabId === 'tab-prices') buttons[1].classList.add('active');
+            if (tabId === 'tab-variants') buttons[2].classList.add('active');
+        }
+
+        window.openProductModal = () => {
+            resetModal();
+            document.getElementById('modal-title').textContent = "Novo Produto";
+            document.getElementById('btn-delete').style.display = 'none';
+            document.getElementById('productModal').classList.add('open');
+        }
+
+        window.closeProductModal = () => {
+            document.getElementById('productModal').classList.remove('open');
+        }
+
+        window.editProduct = (id) => {
+            const p = productsData.find(x => x.id === id);
+            if (!p) return;
+            resetModal();
+
+            document.getElementById('prod-id').value = p.id;
+            document.getElementById('prod-name').value = p.name;
+            document.getElementById('prod-code').value = p.code || '';
+            document.getElementById('prod-stock').value = p.stock || 0;
+            document.getElementById('prod-desc').value = p.desc || '';
+            document.getElementById('prod-cost').value = p.cost || '';
+            document.getElementById('prod-price').value = p.price || '';
+            document.getElementById('prod-offer').value = p['price-oferta'] || '';
+
+            // Imagens
+            const container = document.getElementById('images-container');
+            container.innerHTML = '';
+            let imgs = [];
+            if (p.imgUrl) imgs.push(p.imgUrl);
+            for (let i = 1; i < 5; i++) if (p[`imgUrl${i}`]) imgs.push(p[`imgUrl${i}`]);
+
+            imgs.forEach((url, idx) => createImgSlot(url, idx));
+            createImgSlot(null, imgs.length);
+
+            // Variantes (Linked)
+            currentVariants = p.linkedVariants || [];
+            renderAddedVariants();
+
+            calculateFinancials();
+
+            document.getElementById('modal-title').textContent = "Editar Produto";
+            document.getElementById('btn-delete').style.display = 'block';
+            document.getElementById('productModal').classList.add('open');
+        }
+
+        function resetModal() {
+            document.getElementById('productForm').reset();
+            document.getElementById('prod-id').value = '';
+            document.getElementById('images-container').innerHTML = '';
+            createImgSlot(null, 0);
+            currentVariants = [];
+            renderAddedVariants();
+
+            // FORÇAR ABA DETALHES ATIVA
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-details').classList.add('active');
+            document.querySelector('.tab-btn:first-child').classList.add('active');
+
+            calculateFinancials();
+        }
+
+        // --- IMAGENS ---
+        function createImgSlot(url, idx) {
+            const div = document.createElement('div');
+            div.className = 'img-slot';
+            if (url) {
+                div.innerHTML = `<img src="${url}"><div class="img-remove" onclick="removeImg(this)">x</div><input type="hidden" class="img-val" value="${url}">`;
+            } else {
+                div.innerHTML = `<i class='bx bx-camera' style="font-size:24px; color:#ccc;"></i><input type="file" style="display:none" accept="image/*" onchange="handleFile(this)">`;
+                div.onclick = function (e) { if (e.target.tagName !== 'INPUT') this.querySelector('input').click(); }
+            }
+            document.getElementById('images-container').appendChild(div);
+        }
+
+        window.handleFile = (input) => {
+            if (!input.files[0]) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const slot = input.parentElement;
+                slot.innerHTML = `<img src="${e.target.result}"><div class="img-remove" onclick="removeImg(this)">x</div><input type="hidden" class="img-val" value="${e.target.result}">`;
+                slot.onclick = null;
+                if (document.querySelectorAll('.img-slot').length < 5) createImgSlot(null, 0);
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+        window.removeImg = (el) => { el.parentElement.remove(); if (!document.querySelector('.img-slot input[type=file]')) createImgSlot(null, 0); }
+
+        // --- CÁLCULO FINANCEIRO & PARCELAS ---
+        window.calculateFinancials = () => {
+            const price = parseFloat(document.getElementById('prod-price').value) || 0;
+            const offer = parseFloat(document.getElementById('prod-offer').value) || 0;
+            const finalPrice = (offer > 0 && offer < price) ? offer : price;
+
+            // Regra de Parcelas
+            let maxInst = 4;
+            if (finalPrice >= 1000) maxInst = 12;
+            else if (finalPrice >= 800) maxInst = 9;
+            else if (finalPrice >= 625) maxInst = 8;
+            else if (finalPrice >= 600) maxInst = 7;
+            else if (finalPrice >= 300) maxInst = 6;
+            else if (finalPrice >= 250) maxInst = 5;
+
+            // Taxas Estimadas MP
+            const rates = { 1: 0, 4: 7.33, 5: 8.66, 6: 9.96, 7: 11.5, 8: 12.8, 9: 13.6, 12: 16.9 };
+            let instRate = rates[maxInst] || (maxInst * 1.4);
+            let totalRate = 4.99 + instRate;
+
+            let feeVal = finalPrice * (totalRate / 100);
+            let net = finalPrice - feeVal;
+
+            document.getElementById('sim-rule').textContent = `Até ${maxInst}x Sem Juros`;
+            document.getElementById('sim-fee-percent').textContent = totalRate.toFixed(2) + '%';
+            document.getElementById('sim-fee-val').textContent = `- ${feeVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+            document.getElementById('sim-net').textContent = net.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        // --- VARIAÇÕES (BUSCA) ---
+        window.searchForVariants = (term) => {
+            const resBox = document.getElementById('variant-results');
+            if (term.length < 2) { resBox.style.display = 'none'; return; }
+
+            const currentId = document.getElementById('prod-id').value;
+            const matches = productsData.filter(p =>
+                p.id !== currentId &&
+                p.name.toLowerCase().includes(term.toLowerCase()) &&
+                !currentVariants.some(v => v.id === p.id)
+            );
+
+            if (matches.length === 0) { resBox.style.display = 'none'; return; }
+
+            resBox.innerHTML = '';
+            matches.forEach(m => {
+                const div = document.createElement('div');
+                div.className = 'variant-result-item';
+                div.innerHTML = `<img src="${m.imgUrl || ''}" style="width:30px;height:30px;border-radius:4px;"> <span>${m.name}</span>`;
+                div.onclick = () => addVariant(m);
+                resBox.appendChild(div);
+            });
+            resBox.style.display = 'block';
+        }
+
+        function addVariant(prod) {
+            currentVariants.push({ id: prod.id, name: prod.name, img: prod.imgUrl });
+            document.getElementById('variant-search').value = '';
+            document.getElementById('variant-results').style.display = 'none';
+            renderAddedVariants();
+        }
+
+        window.removeVariant = (idx) => {
+            currentVariants.splice(idx, 1);
+            renderAddedVariants();
+        }
+
+        function renderAddedVariants() {
+            const list = document.getElementById('added-variants-list');
+            list.innerHTML = '';
+            if (currentVariants.length === 0) {
+                list.innerHTML = '<div style="text-align:center; color:#999; padding:20px;">Nenhuma variação adicionada.</div>';
+                return;
+            }
+            currentVariants.forEach((v, idx) => {
+                list.innerHTML += `
+                    <div class="added-variant">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <img src="${v.img || ''}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;">
+                            <span style="font-size:0.9rem; font-weight:500;">${v.name}</span>
+                        </div>
+                        <i class='bx bx-trash' style="color:red; cursor:pointer;" onclick="removeVariant(${idx})"></i>
                     </div>
                 `;
-                container.innerHTML += html;
             });
         }
 
-        // --- DASHBOARD DE OFERTAS ---
-        function calculateTotalOffers() {
-            let totalDiscount = 0;
-            let totalRevenue = 0; // Nova variável
-            let count = 0;
+        // --- OFERTA RÁPIDA ---
+        window.openOfferModal = function (e, id) {
+            e.stopPropagation();
+            const p = productsData.find(x => x.id === id);
+            if (!p) return;
 
-            productsData.forEach(p => {
-                const price = parseFloat(p.price || 0);
-                const offer = parseFloat(p['price-oferta'] || 0);
-                const stock = parseInt(p.stock || 0);
-                
-                // Determina preço efetivo para cálculo de receita
-                let effectivePrice = price;
-                if (offer > 0 && offer < price) {
-                    effectivePrice = offer;
-                }
+            document.getElementById('qo-id').value = p.id;
+            document.getElementById('qo-name').textContent = p.name;
+            document.getElementById('qo-img').src = p.imgUrl || 'https://placehold.co/50';
+            document.getElementById('qo-original').textContent = parseFloat(p.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-                // Cálculo de Receita (Potencial total baseado no estoque)
-                if (stock > 0) {
-                    totalRevenue += (effectivePrice * stock);
-                }
+            const currentOffer = parseFloat(p['price-oferta'] || 0);
+            const toggle = document.getElementById('qo-toggle');
+            const input = document.getElementById('qo-price');
 
-                // Cálculo de Desconto
-                if (offer > 0 && offer < price && stock > 0) {
-                    const discountPerUnit = price - offer;
-                    totalDiscount += (discountPerUnit * stock);
-                    count++;
-                }
-            });
-
-            document.getElementById('total-discount-value').textContent = totalDiscount.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-            document.getElementById('total-revenue-value').textContent = totalRevenue.toLocaleString('pt-BR', {style:'currency', currency:'BRL'}); // Atualiza novo elemento
-            document.getElementById('products-with-offer-count').textContent = `${count} produtos em oferta`;
-        }
-
-        window.deactivateAllOffers = async function() {
-            const activeOffers = productsData.filter(p => {
-                const price = parseFloat(p.price || 0);
-                const offer = parseFloat(p['price-oferta'] || 0);
-                return (offer > 0 && offer < price);
-            });
-
-            if(activeOffers.length === 0) return alert("Não há ofertas ativas.");
-            
-            if(!confirm(`Deseja realmente desativar TODAS as ${activeOffers.length} ofertas ativas?`)) return;
-
-            const btn = document.querySelector('.btn-reset-offers');
-            const oldText = btn.innerHTML;
-            btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Processando...";
-
-            try {
-                const promises = activeOffers.map(p => {
-                    const updates = { 
-                        'price-oferta': 0, 
-                        'lastOffer': p['price-oferta'], 
-                        updatedAt: new Date().toISOString() 
-                    };
-                    return updateDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'products', p.id), updates);
-                });
-                
-                await Promise.all(promises);
-                alert("Todas as ofertas foram desativadas com sucesso!");
-            } catch(e) {
-                console.error(e);
-                alert("Erro ao desativar ofertas.");
-            } finally {
-                btn.innerHTML = oldText;
-            }
-        }
-
-        // --- WEB SITE LOGIC (PARCELAMENTO) ---
-        
-        window.toggleWebFields = function() {
-            const active = document.getElementById('web-installments-active').checked;
-            const container = document.getElementById('web-fields-container');
-            container.style.display = active ? 'block' : 'none';
-            
-            if(active) {
-                // Se ativou e o campo de preço tá vazio, preenche com o original
-                const webPrice = document.getElementById('web-price');
-                if(!webPrice.value) {
-                    webPrice.value = document.getElementById('prod-price').value;
-                }
-                calcMpFees();
-            }
-        }
-
-        window.syncWebPrice = function() {
-            // Se parcelamento ainda não foi modificado, sugere o preço original
-            const webPrice = document.getElementById('web-price');
-            if(!document.getElementById('web-installments-active').checked) {
-                webPrice.value = document.getElementById('prod-price').value;
-            }
-        }
-
-        window.calcMpFees = function() {
-            // TAXAS ESTIMADAS CHECKOUT TRANSPARENTE - PLANO RECEBER NA HORA
-            // Crédito à vista (Na Hora): ~4.99% (Taxa Liberação)
-            // Parcelado: 4.99% + Tarifa de Parcelamento (Assumindo Sem Juros para o cliente)
-            // Exemplo Tarifa Parcelamento (Aprox. - pode variar por conta):
-            
-            const installmentRates = {
-                1: 0,       // À vista (só paga taxa liberação)
-                2: 4.59,
-                3: 5.97,
-                4: 7.33,
-                5: 8.66,
-                6: 9.96,
-                9: 13.6,
-                10: 14.7,
-                12: 16.90 // Aprox 17%
-            };
-            
-            const releaseFee = 4.99; // Taxa fixa de liberação "Na Hora"
-
-            const price = parseFloat(document.getElementById('web-price').value) || 0;
-            const parcelas = parseInt(document.getElementById('web-max-installments').value) || 1;
-
-            const instRate = installmentRates[parcelas] || (parcelas * 1.4); // Fallback
-            const totalRate = releaseFee + instRate;
-
-            const feeAmount = price * (totalRate / 100);
-            const netAmount = price - feeAmount;
-
-            document.getElementById('mp-sim-price').textContent = price.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-            document.getElementById('mp-rate-display').textContent = totalRate.toFixed(2) + '%';
-            document.getElementById('mp-fee-val').textContent = feeAmount.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-            document.getElementById('mp-net-val').textContent = netAmount.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-        }
-
-        // --- GESTÃO RÁPIDA DE OFERTAS ---
-
-        window.openOfferModal = function(e, id) {
-            e.stopPropagation(); 
-            const prod = productsData.find(p => p.id === id);
-            if(!prod) return;
-
-            document.getElementById('quick-offer-id').value = prod.id;
-            document.getElementById('quick-offer-name').textContent = prod.name;
-            document.getElementById('quick-offer-img').src = prod.imgUrl || 'https://placehold.co/100x100/eee/999?text=Sem+Foto';
-            
-            const originalPrice = parseFloat(prod.price || 0);
-            document.getElementById('quick-offer-original').textContent = originalPrice.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-
-            const currentOffer = parseFloat(prod['price-oferta'] || 0);
-            const lastOffer = parseFloat(prod['lastOffer'] || 0);
-            const toggle = document.getElementById('offer-toggle');
-            const input = document.getElementById('quick-offer-price');
-
-            if (currentOffer > 0 && currentOffer < originalPrice) {
+            if (currentOffer > 0 && currentOffer < parseFloat(p.price)) {
                 toggle.checked = true;
                 input.value = currentOffer;
             } else {
                 toggle.checked = false;
-                if (lastOffer > 0) {
-                    input.value = lastOffer;
-                    document.getElementById('last-offer-val').textContent = lastOffer.toFixed(2);
-                    document.getElementById('last-offer-info').style.display = 'block';
-                } else {
-                    input.value = '';
-                    document.getElementById('last-offer-info').style.display = 'none';
-                }
+                input.value = '';
             }
 
-            toggleOfferInputs(); 
+            toggleQuickOfferInputs();
             document.getElementById('offerModal').classList.add('open');
         }
 
-        window.closeOfferModal = function() {
+        window.closeOfferModal = function () {
             document.getElementById('offerModal').classList.remove('open');
         }
 
-        window.toggleOfferInputs = function() {
-            const toggle = document.getElementById('offer-toggle');
-            const inputBox = document.getElementById('offer-input-box');
-            const label = document.getElementById('offer-status-label');
-
-            if (toggle.checked) {
-                inputBox.classList.remove('disabled');
-                label.textContent = "Oferta Ativada";
-                label.className = "offer-status-label status-on";
+        window.toggleQuickOfferInputs = function () {
+            const checked = document.getElementById('qo-toggle').checked;
+            const container = document.getElementById('qo-input-container');
+            if (checked) {
+                container.style.opacity = '1';
+                container.style.pointerEvents = 'all';
             } else {
-                inputBox.classList.add('disabled');
-                label.textContent = "Oferta Desativada";
-                label.className = "offer-status-label status-off";
+                container.style.opacity = '0.5';
+                container.style.pointerEvents = 'none';
             }
         }
 
-        window.saveQuickOffer = async function() {
-            const id = document.getElementById('quick-offer-id').value;
-            const toggle = document.getElementById('offer-toggle');
-            const inputVal = parseFloat(document.getElementById('quick-offer-price').value);
-            const prod = productsData.find(p => p.id === id);
+        window.saveQuickOffer = async function () {
+            const id = document.getElementById('qo-id').value;
+            const active = document.getElementById('qo-toggle').checked;
+            const val = parseFloat(document.getElementById('qo-price').value);
 
-            const updates = { updatedAt: new Date().toISOString() };
-            
-            if (toggle.checked) {
-                if (!inputVal || inputVal <= 0) {
-                    alert("Por favor, insira um preço de oferta válido.");
-                    return;
-                }
-                if (inputVal >= parseFloat(prod.price)) {
-                    alert("O preço de oferta deve ser menor que o preço original.");
-                    return;
-                }
-                updates['price-oferta'] = inputVal;
-                updates['lastOffer'] = inputVal; 
-            } else {
-                updates['price-oferta'] = 0; 
-                if(inputVal > 0) {
-                    updates['lastOffer'] = inputVal;
-                }
+            const p = productsData.find(x => x.id === id);
+            if (active) {
+                if (!val || val <= 0) return alert("Digite um valor válido");
+                if (val >= parseFloat(p.price)) return alert("O valor da oferta deve ser menor que o original");
             }
 
+            const newVal = active ? val : 0;
+
             try {
-                const btn = document.querySelector('.btn-save-offer');
-                const oldText = btn.textContent;
-                btn.textContent = "Salvando...";
-                await updateDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'products', id), updates);
+                await updateDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'products', id), {
+                    'price-oferta': newVal,
+                    updatedAt: new Date().toISOString()
+                });
                 closeOfferModal();
-                btn.textContent = oldText;
             } catch (e) {
                 console.error(e);
                 alert("Erro ao salvar oferta.");
             }
         }
 
-        // --- CRUD PRINCIPAL ---
-
-        window.openModal = function() {
-            resetForm();
-            document.getElementById('modal-title').textContent = "Novo Produto";
-            document.getElementById('edit-actions').style.display = 'none';
-            document.getElementById('btn-save').style.display = 'block';
-            document.getElementById('productModal').classList.add('open');
-            renderImageSlots(); 
-        }
-
-        window.closeModal = function() {
-            document.getElementById('productModal').classList.remove('open');
-            stopScanner();
-        }
-
-        window.editProduct = function(id) {
-            const prod = productsData.find(p => p.id === id);
-            if(!prod) return;
-
-            document.getElementById('prod-id').value = prod.id;
-            document.getElementById('prod-name').value = prod.name;
-            document.getElementById('prod-code').value = prod.code || '';
-            document.getElementById('prod-variants').value = prod.variants || '';
-            
-            document.getElementById('prod-cost').value = prod.cost || '';
-            document.getElementById('prod-price').value = prod.price || '';
-            document.getElementById('prod-offer').value = prod['price-oferta'] || '';
-            
-            // WEB FIELDS (Novos)
-            document.getElementById('web-installments-active').checked = !!prod.web_active;
-            document.getElementById('web-price').value = prod.web_price || prod.price || '';
-            document.getElementById('web-max-installments').value = prod.web_installments || 12;
-            
-            toggleWebFields(); // Atualiza visual e cálculo
-
-            document.getElementById('prod-stock').value = prod.stock || 0;
-            document.getElementById('prod-min-stock').value = prod.minStock || 5;
-            document.getElementById('prod-desc').value = prod.desc || '';
-
-            renderImageSlots(prod);
-            calculateMargin();
-
-            document.getElementById('modal-title').textContent = "Editar Produto";
-            document.getElementById('btn-save').textContent = "Atualizar Produto";
-            document.getElementById('edit-actions').style.display = 'flex';
-            document.getElementById('productModal').classList.add('open');
-        }
-
-        function renderImageSlots(prod = {}) {
-            const container = document.getElementById('images-container');
-            container.innerHTML = '';
-
-            let existingImages = [];
-            if(prod.imgUrl) existingImages.push(prod.imgUrl);
-            for(let i=1; i<MAX_IMAGES; i++) {
-                if(prod[`imgUrl${i}`]) existingImages.push(prod[`imgUrl${i}`]);
-            }
-
-            const totalSlots = Math.min(existingImages.length + 1, MAX_IMAGES);
-            
-            for(let i=0; i < MAX_IMAGES; i++) {
-                if(i < existingImages.length) {
-                    createSlot(container, i, existingImages[i], true);
-                } else if (i === existingImages.length) {
-                    createSlot(container, i, null, false);
-                }
-            }
-        }
-
-        function createSlot(container, index, src, hasImage) {
-            const div = document.createElement('div');
-            div.className = 'img-slot';
-            
-            if(hasImage) {
-                div.innerHTML = `
-                    <img src="${src}">
-                    <div class="remove-btn" onclick="removeImage(${index}); event.stopPropagation();">x</div>
-                    <input type="hidden" class="img-base64" id="img-input-${index}" value="${src}">
-                `;
-            } else {
-                div.innerHTML = `
-                    <i class='bx bx-camera'></i>
-                    <input type="file" style="display:none" accept="image/*" onchange="handleImage(this, ${index})">
-                    <input type="hidden" class="img-base64" id="img-input-${index}">
-                `;
-                div.onclick = function() { this.querySelector('input[type=file]').click(); }
-            }
-            container.appendChild(div);
-        }
-
-        window.triggerImageUpload = function(idx) { }
-
-        window.handleImage = function(input, index) {
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                const reader = new FileReader();
-
-                reader.onload = function(e) {
-                    const img = new Image();
-                    img.src = e.target.result;
-                    img.onload = function() {
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        const MAX_DIM = 800; 
-                        
-                        let w = img.width, h = img.height;
-                        if (w > h) {
-                            if (w > MAX_DIM) { h *= MAX_DIM / w; w = MAX_DIM; }
-                        } else {
-                            if (h > MAX_DIM) { w *= MAX_DIM / h; h = MAX_DIM; }
-                        }
-                        
-                        canvas.width = w; canvas.height = h;
-                        ctx.drawImage(img, 0, 0, w, h);
-                        
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                        
-                        const slot = input.parentElement;
-                        slot.onclick = null; 
-                        slot.innerHTML = `
-                            <img src="${dataUrl}">
-                            <div class="remove-btn" onclick="removeImage(${index}); event.stopPropagation();">x</div>
-                            <input type="hidden" class="img-base64" id="img-input-${index}" value="${dataUrl}">
-                        `;
-                        
-                        const container = document.getElementById('images-container');
-                        if (container.children.length < MAX_IMAGES) {
-                            createSlot(container, container.children.length, null, false);
-                        }
-                    }
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-
-        window.removeImage = function(index) {
-            const slot = document.getElementById(`img-input-${index}`).parentElement;
-            slot.remove();
-            
-            const container = document.getElementById('images-container');
-            const slots = container.querySelectorAll('.img-slot');
-            let hasEmpty = false;
-            slots.forEach(s => {
-                if(!s.querySelector('img')) hasEmpty = true;
-            });
-
-            if(!hasEmpty && slots.length < MAX_IMAGES) {
-                createSlot(container, slots.length, null, false);
-            }
-        }
-
-        window.calculateMargin = function() {
-            const cost = parseFloat(document.getElementById('prod-cost').value) || 0;
-            const price = parseFloat(document.getElementById('prod-price').value) || 0;
-            const offer = parseFloat(document.getElementById('prod-offer').value) || 0;
-
-            const finalPrice = (offer > 0 && offer < price) ? offer : price;
-            const profit = finalPrice - cost;
-            let margin = 0;
-            if (finalPrice > 0) margin = (profit / finalPrice) * 100;
-
-            const box = document.querySelector('.profit-box');
-            const valEl = document.getElementById('profit-val');
-            const marginEl = document.getElementById('margin-val');
-
-            valEl.textContent = profit.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-            marginEl.textContent = margin.toFixed(1) + '% de margem';
-
-            if(profit < 0) {
-                box.style.background = '#fef2f2';
-                box.style.borderColor = '#fecaca';
-                valEl.style.color = '#dc2626';
-            } else {
-                box.style.background = '#f0fdf4';
-                box.style.borderColor = '#bbf7d0';
-                valEl.style.color = '#16a34a';
-            }
-        }
-
-        document.getElementById('productForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        // --- SALVAR PRINCIPAL ---
+        window.submitProductForm = async () => {
             const btn = document.getElementById('btn-save');
-            const originalText = btn.textContent;
             btn.textContent = "Salvando...";
             btn.disabled = true;
 
             try {
-                const imgInputs = document.querySelectorAll('.img-base64');
-                let images = [];
-                imgInputs.forEach(inp => {
-                    if(inp.value) images.push(inp.value);
-                });
+                const imgElements = document.querySelectorAll('.img-val');
+                const images = Array.from(imgElements).map(el => el.value);
 
                 const data = {
                     name: document.getElementById('prod-name').value,
                     code: document.getElementById('prod-code').value,
-                    variants: document.getElementById('prod-variants').value,
-                    
+                    stock: parseInt(document.getElementById('prod-stock').value) || 0,
+                    desc: document.getElementById('prod-desc').value,
                     cost: parseFloat(document.getElementById('prod-cost').value) || 0,
                     price: parseFloat(document.getElementById('prod-price').value) || 0,
                     'price-oferta': parseFloat(document.getElementById('prod-offer').value) || 0,
-                    
-                    // NOVOS CAMPOS WEB SITE
-                    web_active: document.getElementById('web-installments-active').checked,
-                    web_price: parseFloat(document.getElementById('web-price').value) || 0,
-                    web_installments: parseInt(document.getElementById('web-max-installments').value) || 12,
-                    
-                    stock: parseInt(document.getElementById('prod-stock').value) || 0,
-                    minStock: parseInt(document.getElementById('prod-min-stock').value) || 5,
-                    desc: document.getElementById('prod-desc').value,
-                    
+                    imgUrl: images[0] || '',
+                    linkedVariants: currentVariants,
                     updatedAt: new Date().toISOString()
                 };
 
-                if(images.length > 0) data.imgUrl = images[0];
-                else data.imgUrl = ''; 
-
-                for(let i=1; i<MAX_IMAGES; i++) {
-                    data[`imgUrl${i}`] = '';
-                }
-                for(let i=1; i<images.length; i++) {
-                    data[`imgUrl${i}`] = images[i];
-                }
+                for (let i = 1; i < 5; i++) data[`imgUrl${i}`] = images[i] || '';
 
                 const id = document.getElementById('prod-id').value;
-                const colRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'products');
+                const col = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'products');
 
-                if (id) {
-                    await updateDoc(doc(colRef, id), data);
-                } else {
+                if (id) await updateDoc(doc(col, id), data);
+                else {
                     data.createdAt = new Date().toISOString();
-                    await addDoc(colRef, data);
+                    await addDoc(col, data);
                 }
 
-                closeModal();
-                alert('Produto salvo com sucesso!');
-
-            } catch (error) {
-                console.error(error);
-                alert('Erro ao salvar. Verifique se as imagens não são muito pesadas.');
+                closeProductModal();
+                alert("Salvo com sucesso!");
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao salvar.");
             } finally {
-                btn.textContent = originalText;
+                btn.textContent = "Salvar";
                 btn.disabled = false;
             }
-        });
+        }
 
-        window.deleteProduct = async function() {
+        window.deleteProduct = async () => {
             const id = document.getElementById('prod-id').value;
-            if(!id) return;
-            if(confirm("Tem certeza que deseja excluir este produto?")) {
+            if (confirm("Excluir permanentemente?")) {
                 await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'products', id));
-                closeModal();
+                closeProductModal();
             }
         }
 
-        function resetForm() {
-            document.getElementById('productForm').reset();
-            document.getElementById('prod-id').value = '';
-            document.getElementById('images-container').innerHTML = '';
-            document.getElementById('profit-val').textContent = 'R$ 0,00';
-            document.getElementById('margin-val').textContent = '0%';
-            
-            // Reset Web Fields
-            document.getElementById('web-installments-active').checked = false;
-            toggleWebFields();
-        }
-
-        window.startScanner = function() {
+        // --- SCANNER ---
+        window.startScanner = () => {
             const vp = document.getElementById('scanner-viewport');
             vp.style.display = 'block';
-            
-            Quagga.init({
-                inputStream: { name: "Live", type: "LiveStream", target: vp, constraints: { facingMode: "environment" } },
-                decoder: { readers: ["ean_reader", "code_128_reader"] }
-            }, function(err) {
-                if(err) { console.error(err); alert("Erro na câmera"); return; }
-                Quagga.start();
-                scannerIsRunning = true;
+            Quagga.init({ inputStream: { name: "Live", type: "LiveStream", target: vp }, decoder: { readers: ["ean_reader"] } }, (err) => {
+                if (!err) Quagga.start();
             });
-
-            Quagga.onDetected(function(result) {
-                const code = result.codeResult.code;
-                if(code) {
-                    document.getElementById('prod-code').value = code;
-                    stopScanner();
-                    if(navigator.vibrate) navigator.vibrate(200);
-                }
-            });
-        }
-
-        window.stopScanner = function() {
-            if(scannerIsRunning) {
+            Quagga.onDetected((res) => {
+                document.getElementById('prod-code').value = res.codeResult.code;
                 Quagga.stop();
-                scannerIsRunning = false;
-            }
-            document.getElementById('scanner-viewport').style.display = 'none';
+                vp.style.display = 'none';
+            });
         }
 
         document.getElementById('search-input').addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase();
-            const filtered = productsData.filter(p => 
-                p.name.toLowerCase().includes(term) || 
-                (p.code && p.code.includes(term))
-            );
-            renderProducts(filtered);
+            const filtered = productsData.filter(p => p.name.toLowerCase().includes(term) || (p.code && p.code.includes(term)));
+            renderList(filtered);
         });
 
     </script>
 </body>
+
 </html>
