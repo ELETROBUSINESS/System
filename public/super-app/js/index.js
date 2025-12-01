@@ -320,16 +320,19 @@ async function initProductFeed() {
 // ==================== 3. LÓGICA DE DETALHES ====================
 
 async function loadProductDetail(id) {
+    // Esconde elementos da home
     document.querySelector('.home-offer-banner').style.display = 'none';
     document.querySelector('.banner-slider').style.display = 'none';
     document.querySelector('.categories-section').style.display = 'none';
     document.getElementById('products').style.display = 'none';
 
+    // Mostra view de detalhe
     const detailView = document.getElementById('product-detail-view');
     const content = document.getElementById('detail-content');
     detailView.style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'auto' });
 
+    // Skeleton Screen (Carregamento)
     content.innerHTML = `
         <div class="detail-skeleton">
             <div class="sk-img"></div>
@@ -355,7 +358,7 @@ async function loadProductDetail(id) {
         const prod = doc.data();
         currentDetailImages = extractProductImages(prod);
 
-        // Preços de Exibição
+        // --- PREÇOS ---
         const valPrice = parseFloat(prod.price || 0);
         const valOffer = parseFloat(prod['price-oferta'] || 0);
         const hasOffer = (valOffer > 0 && valOffer < valPrice);
@@ -367,32 +370,17 @@ async function loadProductDetail(id) {
         const fmtFinal = new Intl.NumberFormat('pt-BR', fmtConfig).format(finalPrice);
         const fmtOld = new Intl.NumberFormat('pt-BR', fmtConfig).format(valPrice);
 
-        // 1. Disparar evento de E-commerce (Preenche relatórios de Monetização/Itens)
+        // Analytics
         if (typeof gtag === 'function') {
             gtag('event', 'view_item', {
-                currency: 'BRL',
-                value: finalPrice,
-                items: [
-                    {
-                        item_id: doc.id,
-                        item_name: prod.name,
-                        price: finalPrice,
-                        quantity: 1
-                    }
-                ]
+                currency: 'BRL', value: finalPrice,
+                items: [{ item_id: doc.id, item_name: prod.name, price: finalPrice, quantity: 1 }]
             });
-
-            // 2. Disparar PageView Virtual (Corrige o relatório "Páginas e Telas" da sua imagem)
-            // Isso faz o GA4 pensar que o usuário mudou de URL para /produto/nome-do-produto
-            gtag('event', 'page_view', {
-                page_title: prod.name,
-                page_location: window.location.href,
-                page_path: `/produto/${prod.id}` // Cria um caminho virtual legível no relatório
-            });
+            gtag('event', 'page_view', { page_title: prod.name, page_location: window.location.href, page_path: `/produto/${prod.id}` });
         }
 
-        // --- LÓGICA DE PARCELAMENTO (BASEADA EM pc-oferta OU price) ---
-        const installmentBasis = getInstallmentBasis(prod); // Usa pc-oferta se existir, senão usa price
+        // --- PARCELAMENTO ---
+        const installmentBasis = getInstallmentBasis(prod);
         const maxInstallments = calculateInstallmentsRule(installmentBasis);
         const installmentValue = installmentBasis / maxInstallments;
         const fmtInstallmentValue = new Intl.NumberFormat('pt-BR', fmtConfig).format(installmentValue);
@@ -406,6 +394,7 @@ async function loadProductDetail(id) {
             </div>
         `;
 
+        // Bloco de Preço
         let priceBlock = '';
         if (hasOffer) {
             const savings = valPrice - valOffer;
@@ -423,9 +412,9 @@ async function loadProductDetail(id) {
             `;
         }
 
+        // --- ESTOQUE ---
         const stockCount = parseInt(prod.stock || 0);
         const soldCount = parseInt(prod.sold || 0);
-
         let stockHtml = '';
         const maxRef = 8;
 
@@ -440,7 +429,6 @@ async function loadProductDetail(id) {
             if (stockCount === 1) scarcityRatio = 0.95;
             if (scarcityRatio < 0.1) scarcityRatio = 0.1;
             const barWidth = scarcityRatio * 100;
-
             stockHtml = `
                 <div class="stock-scarcity-container">
                     <div class="stock-label">
@@ -460,6 +448,39 @@ async function loadProductDetail(id) {
                 </div>`;
         }
 
+        // --- VARIAÇÕES (LINKED VARIANTS - VISUAL) ---
+        let linkedVariantsHtml = '';
+        if (prod.linkedVariants && Array.isArray(prod.linkedVariants) && prod.linkedVariants.length > 0) {
+            
+            // Renderiza as outras opções
+            const othersHtml = prod.linkedVariants.map(v => `
+                <div class="variant-option" onclick="window.location.href='index.html?id=${v.id}'" title="${v.name}">
+                    <img src="${v.img || 'https://placehold.co/60'}" alt="${v.name}">
+                    <span>${v.name}</span>
+                </div>
+            `).join('');
+
+            // Renderiza a opção atual (Ativa)
+            const currentHtml = `
+                <div class="variant-option current" title="Selecionado: ${prod.name}">
+                    <img src="${currentDetailImages[0]}" alt="${prod.name}">
+                    <span>${prod.name}</span>
+                </div>
+            `;
+
+            linkedVariantsHtml = `
+                <div class="linked-variants-section">
+                    <div class="linked-variants-title">Variações disponíveis:</div>
+                    <div class="linked-variants-list">
+                        ${currentHtml}
+                        ${othersHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- VARIAÇÕES (TEXTO SIMPLES - LEGADO) ---
+        // Mantemos isso caso você use variações simples como "Tamanho: P;M;G" dentro do mesmo produto ID
         let variantsHtml = '';
         if (prod.variants) {
             const vList = Array.isArray(prod.variants) ? prod.variants : prod.variants.split(';');
@@ -469,6 +490,7 @@ async function loadProductDetail(id) {
             }
         }
 
+        // --- GALERIA THUMBNAILS ---
         const thumbsHtml = currentDetailImages.length > 1 ? `
             <div class="thumbnails-scroll">
                 ${currentDetailImages.map((src, i) => `
@@ -476,6 +498,7 @@ async function loadProductDetail(id) {
                 `).join('')}
             </div>` : '';
 
+        // --- MONTAGEM FINAL DO HTML ---
         content.innerHTML = `
             <div class="detail-view-container">
                 <div class="detail-gallery-container">
@@ -500,6 +523,9 @@ async function loadProductDetail(id) {
 
                     ${priceBlock}
                     ${stockHtml}
+                    
+                    ${linkedVariantsHtml}
+                    
                     ${variantsHtml}
 
                     <div class="action-buttons">

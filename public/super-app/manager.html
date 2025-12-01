@@ -951,6 +951,9 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import {
+            getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, writeBatch
+        } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyAVQ3tf6Qu4_9PajpJclZAJjVvRgB4ZE2I",
@@ -1352,6 +1355,7 @@
         }
 
         // --- SALVAR PRINCIPAL ---
+        // --- SALVAR PRINCIPAL COM SINCRONIZAÇÃO DE VARIANTES ---
         window.submitProductForm = async () => {
             const btn = document.getElementById('btn-save');
             btn.textContent = "Salvando...";
@@ -1360,7 +1364,9 @@
             try {
                 const imgElements = document.querySelectorAll('.img-val');
                 const images = Array.from(imgElements).map(el => el.value);
+                const mainId = document.getElementById('prod-id').value; // ID se for edição
 
+                // Dados básicos do produto principal
                 const data = {
                     name: document.getElementById('prod-name').value,
                     code: document.getElementById('prod-code').value,
@@ -1370,30 +1376,69 @@
                     price: parseFloat(document.getElementById('prod-price').value) || 0,
                     'price-oferta': parseFloat(document.getElementById('prod-offer').value) || 0,
                     imgUrl: images[0] || '',
+                    // Note: linkedVariants será atualizado pela função de sync, mas mantemos aqui para o registro inicial
                     linkedVariants: currentVariants,
                     updatedAt: new Date().toISOString()
                 };
 
                 for (let i = 1; i < 5; i++) data[`imgUrl${i}`] = images[i] || '';
 
-                const id = document.getElementById('prod-id').value;
                 const col = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'products');
+                let finalDocId = mainId;
 
-                if (id) await updateDoc(doc(col, id), data);
-                else {
+                // 1. Salva/Cria o Produto Principal
+                if (mainId) {
+                    await updateDoc(doc(col, mainId), data);
+                } else {
                     data.createdAt = new Date().toISOString();
-                    await addDoc(col, data);
+                    const docRef = await addDoc(col, data);
+                    finalDocId = docRef.id;
+                }
+
+                // 2. Sincronização Bidirecional de Variantes
+                // Se houver variantes selecionadas, atualizamos TODOS os envolvidos
+                if (currentVariants.length > 0) {
+                    await syncVariantsGroup(finalDocId, data.name, data.imgUrl, currentVariants);
                 }
 
                 closeProductModal();
-                alert("Salvo com sucesso!");
+                alert("Salvo e variantes sincronizadas com sucesso!");
+
             } catch (e) {
                 console.error(e);
-                alert("Erro ao salvar.");
+                alert("Erro ao salvar: " + e.message);
             } finally {
                 btn.textContent = "Salvar";
                 btn.disabled = false;
             }
+        }
+
+        // Nova Função: Sincroniza todos os produtos do grupo
+        async function syncVariantsGroup(mainId, mainName, mainImg, variantsList) {
+            const batch = writeBatch(db);
+
+            // 1. Cria o "Grupo Completo" (Produto Principal + Variantes Selecionadas)
+            // Estrutura do objeto: { id, name, img }
+            const fullGroup = [
+                { id: mainId, name: mainName, img: mainImg },
+                ...variantsList
+            ];
+
+            // 2. Para cada item do grupo, definimos que suas variantes são "todos os outros menos ele mesmo"
+            fullGroup.forEach(targetItem => {
+                const variantsForTarget = fullGroup.filter(item => item.id !== targetItem.id);
+
+                const ref = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'products', targetItem.id);
+
+                // Adiciona a atualização ao lote (Batch)
+                batch.update(ref, {
+                    linkedVariants: variantsForTarget,
+                    updatedAt: new Date().toISOString() // Opcional: atualiza data de modificação de todos
+                });
+            });
+
+            // 3. Executa todas as atualizações de uma vez
+            await batch.commit();
         }
 
         window.deleteProduct = async () => {

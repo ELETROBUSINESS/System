@@ -933,6 +933,82 @@ a { text-decoration: none; color: inherit; }
 .trust-item i { font-size: 1.2rem; color: #333; margin-top: 2px; }
 .trust-item span strong { color: #00a650; }
 
+
+/* ==================== VARIAÇÕES VISUAIS (LINKED VARIANTS) ==================== */
+
+.linked-variants-section {
+    margin: 20px 0;
+    padding-top: 15px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.linked-variants-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.linked-variants-list {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.variant-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 70px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: all 0.2s;
+}
+
+.variant-option:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+}
+
+.variant-option img {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    object-fit: cover;
+    background: #fff;
+}
+
+.variant-option span {
+    font-size: 0.7rem;
+    text-align: center;
+    color: #666;
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    max-width: 100%;
+}
+
+/* Estado Ativo (Produto Atual) */
+.variant-option.current {
+    opacity: 1;
+    pointer-events: none; /* Não clicável */
+}
+
+.variant-option.current img {
+    border: 2px solid var(--color-brand-red);
+    box-shadow: 0 0 0 2px rgba(219, 0, 56, 0.1);
+}
+
+.variant-option.current span {
+    color: var(--color-brand-red);
+    font-weight: 700;
+}
+
+
 /* Responsivo para Mobile */
 @media (max-width: 768px) {
     .detail-view-container { grid-template-columns: 1fr; gap: 0; padding: 15px; }
