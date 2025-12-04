@@ -61,12 +61,13 @@
             const btnImportCsv = document.getElementById('btn-import-csv');
             const csvFileInput = document.getElementById('csv-file-input');
             const firebaseListContainer = document.getElementById('firebase-products-list');
+            const updatedListContainer = document.getElementById('updated-products-list');
+            const btnDeleteAll = document.getElementById('btn-delete-all');
 
-            // --- FUNÇÕES PRINCIPAIS DEFINIDAS PRIMEIRO ---
+            // --- FUNÇÕES DE BUSCA ---
 
-            // Função para carregar produtos do Firebase
+            // 1. Carregar Pendências (Status = Pendencia55)
             window.loadPendenciaProducts = async () => {
-                console.log("Iniciando busca de produtos...");
                 if(!firebaseListContainer) return;
                 
                 firebaseListContainer.innerHTML = '<p style="text-align: center; padding: 20px;"><i class="bx bx-loader-alt bx-spin"></i> Buscando pendências...</p>';
@@ -76,7 +77,6 @@
                                     .collection('users').doc(STORE_OWNER_UID)
                                     .collection('products');
                     
-                    // Busca exata pela string salva
                     const snapshot = await productsRef.where('status', '==', 'Pendencia55').get();
 
                     if (snapshot.empty) {
@@ -85,34 +85,77 @@
                                 <i class='bx bx-check-circle' style="font-size: 48px; color: var(--success-green); margin-bottom: 10px;"></i>
                                 <p>Tudo limpo! Nenhum produto pendente de cadastro.</p>
                             </div>`;
-                        return;
+                    } else {
+                        firebaseListContainer.innerHTML = '';
+                        snapshot.forEach(doc => { 
+                            renderPricingRow(doc.id, doc.data(), firebaseListContainer, true); 
+                        });
                     }
 
-                    firebaseListContainer.innerHTML = '';
-                    console.log(`Encontrados ${snapshot.size} produtos.`);
-
-                    snapshot.forEach(doc => { 
-                        renderPricingRow(doc.id, doc.data()); 
-                    });
-
                 } catch (error) {
-                    console.error("Erro ao buscar:", error);
+                    console.error("Erro ao buscar pendências:", error);
                     firebaseListContainer.innerHTML = `<p style="text-align: center; color: var(--warning-red);">Erro de conexão: ${error.message}</p>`;
                 }
             };
 
-            // Função para desenhar a linha do produto
-            function renderPricingRow(docId, prod) {
+            // 2. Carregar Atualizados (Status = Concluido55)
+            // REGRA: Mostra APENAS os produtos que eram Pendencia55 e foram concluídos
+            window.loadUpdatedProducts = async () => {
+                if(!updatedListContainer) return;
+
+                if(updatedListContainer.children.length === 0) {
+                     updatedListContainer.innerHTML = '<p style="text-align: center; padding: 20px; color: #aaa;">Carregando...</p>';
+                }
+
+                try {
+                    const productsRef = db.collection('artifacts').doc(FIREBASE_CONFIG_ID)
+                                    .collection('users').doc(STORE_OWNER_UID)
+                                    .collection('products');
+                    
+                    // Busca APENAS os marcados como 'Concluido55'
+                    const snapshot = await productsRef.where('status', '==', 'Concluido55').get();
+
+                    if (snapshot.empty) {
+                        updatedListContainer.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--text-light);">Nenhum produto concluído recentemente.</p>';
+                        return;
+                    }
+
+                    // Ordenação manual por data (desc) para evitar erro de índice composto no Firestore
+                    const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    docs.sort((a, b) => {
+                        const dateA = a.updatedAt ? new Date(a.updatedAt) : new Date(0);
+                        const dateB = b.updatedAt ? new Date(b.updatedAt) : new Date(0);
+                        return dateB - dateA;
+                    });
+
+                    updatedListContainer.innerHTML = '';
+                    
+                    docs.forEach(prod => {
+                        renderPricingRow(prod.id, prod, updatedListContainer, false);
+                    });
+
+                } catch (error) {
+                    console.error("Erro ao buscar atualizados:", error);
+                    updatedListContainer.innerHTML = `<p style="text-align: center; color: var(--warning-red);">Erro: ${error.message}</p>`;
+                }
+            };
+
+            // --- RENDERIZAÇÃO ---
+
+            function renderPricingRow(docId, prod, container, isPending) {
                 const row = document.createElement('div');
                 row.className = 'firebase-item-row';
                 // Grid: Ref | Nome | Custo | Margem | Venda (Input) | Code (Input) | Salvar
                 row.style.gridTemplateColumns = "0.8fr 2fr 1fr 0.8fr 1.2fr 1.5fr 60px";
 
-                // Proteção contra valores nulos
+                if (!isPending) {
+                    row.classList.add('updated-row');
+                }
+
                 const cost = prod.cost || 0;
                 const price = prod.price || 0;
-                const margin = prod.margin || 0;
-
+                const margin = price > 0 ? ((price - cost) / price) * 100 : 0;
+                
                 const marginColor = margin < 30 ? 'var(--warning-red)' : 'var(--success-green)';
 
                 row.innerHTML = `
@@ -141,21 +184,23 @@
                         <input type="text" class="fb-input-code" id="input-code-${docId}" 
                             value="${prod.code || ''}" 
                             placeholder="Ler código..."
-                            style="border: 2px solid var(--primary-red); background:#fff0f3;">
+                            style="border: 2px solid ${isPending ? 'var(--primary-red)' : '#ddd'}; background:${isPending ? '#fff0f3' : '#fff'};">
                     </div>
 
                     <div style="text-align: center;">
-                        <button class="btn btn-primary" onclick="saveNewProductCode('${docId}')" 
+                        <button class="btn ${isPending ? 'btn-primary' : 'btn-secondary'}" onclick="saveNewProductCode('${docId}')" 
                             style="width: 40px; height: 40px; padding: 0; display: inline-flex; align-items: center; justify-content: center;" 
-                            title="Salvar e Finalizar">
+                            title="${isPending ? 'Salvar e Mover' : 'Atualizar'}">
                             <i class='bx bx-save'></i>
                         </button>
                     </div>
                 `;
-                firebaseListContainer.appendChild(row);
+                container.appendChild(row);
             }
 
-            // Função para Salvar
+            // --- AÇÕES ---
+
+            // Salvar Produto (Move de Pendencia55 para Concluido55)
             window.saveNewProductCode = async (docId) => {
                 const inputCode = document.getElementById(`input-code-${docId}`);
                 const inputPrice = document.getElementById(`input-price-${docId}`);
@@ -168,6 +213,7 @@
                 if(isNaN(finalPrice) || finalPrice <= 0) { showCustomAlert("Atenção", "Preço inválido."); inputPrice.focus(); return; }
 
                 btn.disabled = true;
+                const originalContent = btn.innerHTML;
                 btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i>";
 
                 try {
@@ -175,26 +221,23 @@
                                     .collection('users').doc(STORE_OWNER_UID)
                                     .collection('products').doc(docId);
 
+                    // REGRA CRÍTICA: Muda o status para 'Concluido55'
+                    // Isso remove da lista de cima e faz aparecer na lista de baixo
                     await productRef.update({
                         code: newCode,
                         price: finalPrice,
-                        status: firebase.firestore.FieldValue.delete(), // Remove da lista de pendências
+                        status: 'Concluido55', 
                         updatedAt: new Date().toISOString()
                     });
 
                     btn.innerHTML = "<i class='bx bx-check'></i>";
+                    btn.classList.remove('btn-primary', 'btn-secondary');
                     btn.classList.add('btn-success');
                     
-                    // Remove visualmente da lista
+                    // Atualiza as listas após breve delay
                     setTimeout(() => {
-                        const row = btn.closest('.firebase-item-row');
-                        row.style.opacity = '0';
-                        setTimeout(() => row.remove(), 500);
-                        
-                        // Se não houver mais itens, mostra mensagem de vazio
-                        if(firebaseListContainer.children.length <= 1) { // 1 pq o row ainda existe no DOM durante a animação
-                             window.loadPendenciaProducts();
-                        }
+                        window.loadPendenciaProducts();
+                        window.loadUpdatedProducts();
                     }, 500);
 
                 } catch (error) {
@@ -202,10 +245,10 @@
                     btn.innerHTML = "<i class='bx bx-error'></i>";
                     showCustomAlert("Erro", "Falha ao salvar no banco de dados.");
                     btn.disabled = false;
+                    setTimeout(() => { btn.innerHTML = originalContent; }, 2000);
                 }
             };
 
-            // Função de Recálculo (Global para o oninput funcionar)
             window.recalcMargin = (docId, cost) => {
                 const inputPrice = document.getElementById(`input-price-${docId}`);
                 const marginEl = document.getElementById(`margin-display-${docId}`);
@@ -220,7 +263,7 @@
                 marginEl.style.color = margin < 30 ? 'var(--warning-red)' : 'var(--success-green)';
             };
 
-            // Função de Processamento CSV
+            // Processar CSV (Cria como Pendencia55)
             async function processCSVAndUpload(csvText) {
                 const lines = csvText.split('\n');
                 const productsRef = db.collection('artifacts').doc(FIREBASE_CONFIG_ID)
@@ -255,7 +298,6 @@
                         const priceVal = cleanMoney(columns[map.price]);
                         const marginVal = cleanMoney(columns[map.margin]);
 
-                        // ID Único baseado na Referência
                         const docId = 'PENDING_' + String(refCode).replace(/[^a-zA-Z0-9]/g, '');
                         const newDocRef = productsRef.doc(docId);
                         
@@ -267,7 +309,7 @@
                             margin: marginVal,
                             code: "",
                             stock: 0,
-                            status: "Pendencia55", // Tag crucial para aparecer na lista
+                            status: "Pendencia55", // Marca como pendente
                             createdAt: new Date().toISOString()
                         });
 
@@ -277,11 +319,67 @@
                     }
                 }
                 if (operationCount > 0) await batch.commit();
-                showCustomAlert("Sucesso", `${importedCount} produtos processados/atualizados.`);
+                showCustomAlert("Sucesso", `${importedCount} produtos processados.`);
                 window.loadPendenciaProducts();
             }
 
-            // Listeners
+            // --- APAGAR TUDO (APENAS PENDENCIA55 e CONCLUIDO55) ---
+            if (btnDeleteAll) {
+                btnDeleteAll.addEventListener('click', () => {
+                    const confirm1 = confirm("ATENÇÃO: Você tem certeza que deseja APAGAR TODOS os produtos desse processo (Pendência e Concluídos)?");
+                    if (confirm1) {
+                        const confirm2 = confirm("Isso removerá apenas os itens da tag 'Pendencia55' e 'Concluido55'. Confirmar limpeza?");
+                        if (confirm2) {
+                            deleteAllProducts();
+                        }
+                    }
+                });
+            }
+
+            async function deleteAllProducts() {
+                btnDeleteAll.disabled = true;
+                btnDeleteAll.textContent = "Filtrando e Apagando...";
+                
+                try {
+                    const productsRef = db.collection('artifacts').doc(FIREBASE_CONFIG_ID)
+                                    .collection('users').doc(STORE_OWNER_UID)
+                                    .collection('products');
+                    
+                    // SEGURANÇA: Apaga apenas os statuses específicos
+                    // Firestore 'in' query suporta até 10 valores
+                    const snapshot = await productsRef.where('status', 'in', ['Pendencia55', 'Concluido55']).get();
+                    
+                    if (snapshot.empty) {
+                        showCustomAlert("Vazio", "Nenhum produto com tag Pendencia55 ou Concluido55 encontrado.");
+                        btnDeleteAll.disabled = false;
+                        btnDeleteAll.innerHTML = "<i class='bx bx-trash'></i> Zerar Banco de Dados (Deste Processo)";
+                        return;
+                    }
+
+                    const batch = db.batch();
+                    let count = 0;
+                    
+                    snapshot.forEach(doc => {
+                        batch.delete(doc.ref);
+                        count++;
+                    });
+
+                    await batch.commit();
+                    showCustomAlert("Limpeza Concluída", `${count} produtos (deste fluxo) removidos.`);
+                    window.loadPendenciaProducts();
+                    window.loadUpdatedProducts();
+
+                } catch (error) {
+                    console.error(error);
+                    showCustomAlert("Erro", "Falha ao apagar produtos: " + error.message);
+                } finally {
+                    btnDeleteAll.disabled = false;
+                    btnDeleteAll.innerHTML = "<i class='bx bx-trash'></i> Zerar Banco de Dados";
+                }
+            }
+
+
+            // Listeners Arquivo
             if (btnImportCsv) btnImportCsv.addEventListener('click', () => csvFileInput.click());
             if (csvFileInput) csvFileInput.addEventListener('change', async (e) => {
                 const file = e.target.files[0];
@@ -293,16 +391,16 @@
                     catch (error) { 
                         console.error(error); 
                         showCustomAlert("Erro", "Falha ao processar arquivo."); 
-                        window.loadPendenciaProducts(); // Restaura lista
+                        window.loadPendenciaProducts(); 
                     }
                     csvFileInput.value = '';
                 };
                 reader.readAsText(file);
             });
 
-            // --- EXECUÇÃO IMEDIATA ---
-            // Agora que tudo foi definido, chamamos a função.
+            // EXECUÇÃO INICIAL
             window.loadPendenciaProducts();
+            window.loadUpdatedProducts();
 
         });
 
@@ -344,6 +442,7 @@
         .btn-primary { background-color: var(--primary-red); color: white; }
         .btn-secondary { background-color: #fff; border: 1px solid #ddd; color: #333; }
         .btn-success { background-color: var(--success-green); color: white; }
+        .btn-danger { background-color: var(--warning-red); color: white; }
 
         /* Grid da Tabela */
         .firebase-list-header {
@@ -366,7 +465,8 @@
             background: #fff;
             transition: opacity 0.5s ease;
         }
-        .firebase-item-row:hover { background-color: #f9f9f9; }
+        .firebase-item-row.updated-row { background-color: #f9fcf9; } /* Leve verde para atualizados */
+        .firebase-item-row:hover { background-color: #f0f0f0; }
         .fb-input-code { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; }
         .fb-input-code:focus { outline: none; border-color: var(--primary-red); box-shadow: 0 0 0 3px rgba(219,0,56,0.1); }
 
@@ -388,6 +488,9 @@
 
     <div class="app-header">
         <h1><i class='bx bx-edit'></i> Pré-Cadastro de Produtos</h1>
+        <button class="btn btn-danger" id="btn-delete-all" title="Cuidado: Apaga tudo">
+            <i class='bx bx-trash'></i> Zerar Banco de Dados
+        </button>
     </div>
 
     <!-- PÁGINA ÚNICA: PRODUTOS -->
@@ -402,7 +505,7 @@
             </div>
             
             <p style="color: var(--text-light); margin-top: -16px; margin-bottom: 24px;">
-                Produtos marcados como <strong>Pendencia55</strong> aparecerão abaixo. Bipe o código de barras para finalizar o cadastro.
+                Produtos marcados como <strong>Pendencia55</strong> aparecerão abaixo. Bipe o código de barras para salvar.
             </p>
 
             <div class="firebase-list-header">
@@ -420,6 +523,30 @@
                     <i class='bx bx-loader-alt bx-spin' style="font-size: 48px; margin-bottom: 10px; opacity: 0.5;"></i>
                     <span>Carregando dados do banco...</span>
                 </div>
+            </div>
+        </div>
+
+        <!-- SEÇÃO NOVA: PRODUTOS ATUALIZADOS -->
+        <div class="card" style="max-width: 1000px; margin: 0 auto;">
+            <div class="page-header">
+                <h2><i class='bx bx-check-circle'></i> Produtos Atualizados (Concluídos)</h2>
+            </div>
+            <p style="color: var(--text-light); margin-top: -16px; margin-bottom: 24px;">
+                Itens que já foram processados (tag Concluido55).
+            </p>
+
+            <div class="firebase-list-header">
+                <span>Ref.</span>
+                <span>Produto</span>
+                <span style="text-align: right;">Custo</span>
+                <span style="text-align: center;">Margem</span>
+                <span style="text-align: center;">Venda</span>
+                <span>Código de Barras</span>
+                <span style="text-align: center;">Atualizar</span>
+            </div>
+
+            <div id="updated-products-list">
+                <!-- Itens atualizados aparecerão aqui -->
             </div>
         </div>
     </div>
