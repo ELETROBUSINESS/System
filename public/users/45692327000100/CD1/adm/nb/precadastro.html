@@ -14,12 +14,13 @@
     <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
     <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
 
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <script>
         // ============================================================
-        // 1. ESCOPO GLOBAL (VARIÁVEIS E BANCO DE DADOS)
+        // 1. ESCOPO GLOBAL E CONFIGURAÇÃO
         // ============================================================
 
         let db;
@@ -33,6 +34,7 @@
             appId: "1:810900166273:web:24b8f055a68c9f0a6b5f80"
         };
 
+        // Inicializa Firebase imediatamente
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         } else {
@@ -45,49 +47,180 @@
         const FIREBASE_CONFIG_ID = 'floralchic-loja';
         const STORE_OWNER_UID = "3zYT9Y6hXWeJSuvmEYP4FMZa5gI2";
         
-        const formatCurrency = (value) => { const n = Number(value); if (isNaN(n)) return 'R$ 0,00'; return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); };
+        const formatCurrency = (value) => { 
+            const n = Number(value); 
+            if (isNaN(n)) return 'R$ 0,00'; 
+            return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); 
+        };
 
         // ============================================================
-        // 2. INÍCIO DO DOMContentLoaded
+        // 2. LÓGICA DO SISTEMA
         // ============================================================
         document.addEventListener('DOMContentLoaded', () => {
             
-            // Inicia carregando as pendências automaticamente
-            if (window.loadPendenciaProducts) window.loadPendenciaProducts();
-
-            // --- Lógica de Importação CSV e Precificação ---
             const btnImportCsv = document.getElementById('btn-import-csv');
             const csvFileInput = document.getElementById('csv-file-input');
             const firebaseListContainer = document.getElementById('firebase-products-list');
 
-            if (btnImportCsv) {
-                btnImportCsv.addEventListener('click', () => {
-                    csvFileInput.click();
-                });
+            // --- FUNÇÕES PRINCIPAIS DEFINIDAS PRIMEIRO ---
+
+            // Função para carregar produtos do Firebase
+            window.loadPendenciaProducts = async () => {
+                console.log("Iniciando busca de produtos...");
+                if(!firebaseListContainer) return;
+                
+                firebaseListContainer.innerHTML = '<p style="text-align: center; padding: 20px;"><i class="bx bx-loader-alt bx-spin"></i> Buscando pendências...</p>';
+                
+                try {
+                    const productsRef = db.collection('artifacts').doc(FIREBASE_CONFIG_ID)
+                                    .collection('users').doc(STORE_OWNER_UID)
+                                    .collection('products');
+                    
+                    // Busca exata pela string salva
+                    const snapshot = await productsRef.where('status', '==', 'Pendencia55').get();
+
+                    if (snapshot.empty) {
+                        firebaseListContainer.innerHTML = `
+                            <div style="text-align: center; padding: 40px; color: var(--text-light);">
+                                <i class='bx bx-check-circle' style="font-size: 48px; color: var(--success-green); margin-bottom: 10px;"></i>
+                                <p>Tudo limpo! Nenhum produto pendente de cadastro.</p>
+                            </div>`;
+                        return;
+                    }
+
+                    firebaseListContainer.innerHTML = '';
+                    console.log(`Encontrados ${snapshot.size} produtos.`);
+
+                    snapshot.forEach(doc => { 
+                        renderPricingRow(doc.id, doc.data()); 
+                    });
+
+                } catch (error) {
+                    console.error("Erro ao buscar:", error);
+                    firebaseListContainer.innerHTML = `<p style="text-align: center; color: var(--warning-red);">Erro de conexão: ${error.message}</p>`;
+                }
+            };
+
+            // Função para desenhar a linha do produto
+            function renderPricingRow(docId, prod) {
+                const row = document.createElement('div');
+                row.className = 'firebase-item-row';
+                // Grid: Ref | Nome | Custo | Margem | Venda (Input) | Code (Input) | Salvar
+                row.style.gridTemplateColumns = "0.8fr 2fr 1fr 0.8fr 1.2fr 1.5fr 60px";
+
+                // Proteção contra valores nulos
+                const cost = prod.cost || 0;
+                const price = prod.price || 0;
+                const margin = prod.margin || 0;
+
+                const marginColor = margin < 30 ? 'var(--warning-red)' : 'var(--success-green)';
+
+                row.innerHTML = `
+                    <div style="font-weight:600; color:#555; font-size:0.85rem;">${prod.ref || '-'}</div>
+                    
+                    <div class="fb-prod-info">
+                        <span class="fb-prod-name">${prod.name || 'Sem nome'}</span>
+                    </div>
+                    
+                    <div style="text-align:right; font-size:0.9rem; color:#777;">
+                        ${formatCurrency(cost)}
+                    </div>
+
+                    <div style="text-align:center; font-weight:bold; color:${marginColor};" id="margin-display-${docId}">
+                        ${margin.toFixed(2)}%
+                    </div>
+
+                    <div>
+                        <input type="number" class="fb-input-code" id="input-price-${docId}" 
+                            value="${price}" step="0.01"
+                            oninput="window.recalcMargin('${docId}', ${cost})"
+                            style="text-align:right; color:#000; font-weight:bold;">
+                    </div>
+
+                    <div>
+                        <input type="text" class="fb-input-code" id="input-code-${docId}" 
+                            value="${prod.code || ''}" 
+                            placeholder="Ler código..."
+                            style="border: 2px solid var(--primary-red); background:#fff0f3;">
+                    </div>
+
+                    <div style="text-align: center;">
+                        <button class="btn btn-primary" onclick="saveNewProductCode('${docId}')" 
+                            style="width: 40px; height: 40px; padding: 0; display: inline-flex; align-items: center; justify-content: center;" 
+                            title="Salvar e Finalizar">
+                            <i class='bx bx-save'></i>
+                        </button>
+                    </div>
+                `;
+                firebaseListContainer.appendChild(row);
             }
 
-            if (csvFileInput) {
-                csvFileInput.addEventListener('change', async (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
+            // Função para Salvar
+            window.saveNewProductCode = async (docId) => {
+                const inputCode = document.getElementById(`input-code-${docId}`);
+                const inputPrice = document.getElementById(`input-price-${docId}`);
+                const btn = inputCode.parentElement.nextElementSibling.querySelector('button');
+                
+                const newCode = inputCode.value.trim();
+                const finalPrice = parseFloat(inputPrice.value);
 
-                    firebaseListContainer.innerHTML = '<p style="text-align: center; padding: 20px;"><i class="bx bx-loader-alt bx-spin"></i> Processando CSV e enviando...</p>';
-                    const reader = new FileReader();
-                    reader.onload = async (event) => {
-                        const text = event.target.result;
-                        try {
-                            await processCSVAndUpload(text);
-                        } catch (error) {
-                            console.error("Erro CSV:", error);
-                            showCustomAlert("Erro na Importação", error.message);
-                            firebaseListContainer.innerHTML = '<p style="text-align: center; color: var(--warning-red);">Falha ao processar arquivo.</p>';
+                if(!newCode) { showCustomAlert("Atenção", "Bipe o código de barras."); inputCode.focus(); return; }
+                if(isNaN(finalPrice) || finalPrice <= 0) { showCustomAlert("Atenção", "Preço inválido."); inputPrice.focus(); return; }
+
+                btn.disabled = true;
+                btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i>";
+
+                try {
+                    const productRef = db.collection('artifacts').doc(FIREBASE_CONFIG_ID)
+                                    .collection('users').doc(STORE_OWNER_UID)
+                                    .collection('products').doc(docId);
+
+                    await productRef.update({
+                        code: newCode,
+                        price: finalPrice,
+                        status: firebase.firestore.FieldValue.delete(), // Remove da lista de pendências
+                        updatedAt: new Date().toISOString()
+                    });
+
+                    btn.innerHTML = "<i class='bx bx-check'></i>";
+                    btn.classList.add('btn-success');
+                    
+                    // Remove visualmente da lista
+                    setTimeout(() => {
+                        const row = btn.closest('.firebase-item-row');
+                        row.style.opacity = '0';
+                        setTimeout(() => row.remove(), 500);
+                        
+                        // Se não houver mais itens, mostra mensagem de vazio
+                        if(firebaseListContainer.children.length <= 1) { // 1 pq o row ainda existe no DOM durante a animação
+                             window.loadPendenciaProducts();
                         }
-                        csvFileInput.value = '';
-                    };
-                    reader.readAsText(file);
-                });
-            }
+                    }, 500);
 
+                } catch (error) {
+                    console.error("Erro ao salvar:", error);
+                    btn.innerHTML = "<i class='bx bx-error'></i>";
+                    showCustomAlert("Erro", "Falha ao salvar no banco de dados.");
+                    btn.disabled = false;
+                }
+            };
+
+            // Função de Recálculo (Global para o oninput funcionar)
+            window.recalcMargin = (docId, cost) => {
+                const inputPrice = document.getElementById(`input-price-${docId}`);
+                const marginEl = document.getElementById(`margin-display-${docId}`);
+                const newPrice = parseFloat(inputPrice.value);
+
+                if (isNaN(newPrice) || newPrice === 0) {
+                    marginEl.textContent = "0.00%";
+                    return;
+                }
+                const margin = ((newPrice - cost) / newPrice) * 100;
+                marginEl.textContent = margin.toFixed(2) + "%";
+                marginEl.style.color = margin < 30 ? 'var(--warning-red)' : 'var(--success-green)';
+            };
+
+            // Função de Processamento CSV
             async function processCSVAndUpload(csvText) {
                 const lines = csvText.split('\n');
                 const productsRef = db.collection('artifacts').doc(FIREBASE_CONFIG_ID)
@@ -122,7 +255,7 @@
                         const priceVal = cleanMoney(columns[map.price]);
                         const marginVal = cleanMoney(columns[map.margin]);
 
-                        // ID Determinístico para evitar duplicatas
+                        // ID Único baseado na Referência
                         const docId = 'PENDING_' + String(refCode).replace(/[^a-zA-Z0-9]/g, '');
                         const newDocRef = productsRef.doc(docId);
                         
@@ -134,7 +267,7 @@
                             margin: marginVal,
                             code: "",
                             stock: 0,
-                            status: "Pendencia55",
+                            status: "Pendencia55", // Tag crucial para aparecer na lista
                             createdAt: new Date().toISOString()
                         });
 
@@ -144,146 +277,35 @@
                     }
                 }
                 if (operationCount > 0) await batch.commit();
-                showCustomAlert("Sucesso", `${importedCount} produtos processados.`);
+                showCustomAlert("Sucesso", `${importedCount} produtos processados/atualizados.`);
                 window.loadPendenciaProducts();
             }
 
-            // Função Global para Recarregar Pendências
-            window.loadPendenciaProducts = async () => {
-                const container = document.getElementById('firebase-products-list');
-                if(!container) return;
-                
-                container.innerHTML = '<p style="text-align: center; padding: 20px;"><i class="bx bx-loader-alt bx-spin"></i> Buscando pendências...</p>';
-                try {
-                    const productsRef = db.collection('artifacts').doc(FIREBASE_CONFIG_ID)
-                                    .collection('users').doc(STORE_OWNER_UID)
-                                    .collection('products');
-                    
-                    const snapshot = await productsRef.where('status', '==', 'Pendencia55').get();
-
-                    if (snapshot.empty) {
-                        container.innerHTML = '<p style="text-align: center; padding: 20px;">Nenhum produto pendente de código de barras.</p>';
-                        return;
+            // Listeners
+            if (btnImportCsv) btnImportCsv.addEventListener('click', () => csvFileInput.click());
+            if (csvFileInput) csvFileInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                firebaseListContainer.innerHTML = '<p style="text-align: center; padding: 20px;"><i class="bx bx-loader-alt bx-spin"></i> Processando CSV...</p>';
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    try { await processCSVAndUpload(event.target.result); }
+                    catch (error) { 
+                        console.error(error); 
+                        showCustomAlert("Erro", "Falha ao processar arquivo."); 
+                        window.loadPendenciaProducts(); // Restaura lista
                     }
-                    container.innerHTML = '';
-                    snapshot.forEach(doc => { renderPricingRow(doc.id, doc.data()); });
-                } catch (error) {
-                    console.error(error);
-                    container.innerHTML = `<p style="text-align: center; color: var(--warning-red);">Erro: ${error.message}</p>`;
-                }
-            };
+                    csvFileInput.value = '';
+                };
+                reader.readAsText(file);
+            });
 
-            // Função de Recálculo de Margem
-            window.recalcMargin = (docId, cost) => {
-                const inputPrice = document.getElementById(`input-price-${docId}`);
-                const marginEl = document.getElementById(`margin-display-${docId}`);
-                const newPrice = parseFloat(inputPrice.value);
+            // --- EXECUÇÃO IMEDIATA ---
+            // Agora que tudo foi definido, chamamos a função.
+            window.loadPendenciaProducts();
 
-                if (isNaN(newPrice) || newPrice === 0) {
-                    marginEl.textContent = "0.00%";
-                    return;
-                }
-
-                const margin = ((newPrice - cost) / newPrice) * 100;
-                
-                marginEl.textContent = margin.toFixed(2) + "%";
-                
-                if (margin < 30) {
-                    marginEl.style.color = 'var(--warning-red)';
-                } else {
-                    marginEl.style.color = 'var(--success-green)';
-                }
-            };
-
-            function renderPricingRow(docId, prod) {
-                const row = document.createElement('div');
-                row.className = 'firebase-item-row';
-                row.style.gridTemplateColumns = "0.8fr 2fr 1fr 0.8fr 1.2fr 1.5fr 60px";
-
-                const marginColor = prod.margin < 30 ? 'var(--warning-red)' : 'var(--success-green)';
-
-                row.innerHTML = `
-                    <div style="font-weight:600; color:#555; font-size:0.85rem;">${prod.ref || '-'}</div>
-                    
-                    <div class="fb-prod-info">
-                        <span class="fb-prod-name">${prod.name}</span>
-                    </div>
-                    
-                    <div style="text-align:right; font-size:0.9rem; color:#777;">
-                        ${formatCurrency(prod.cost)}
-                    </div>
-
-                    <div style="text-align:center; font-weight:bold; color:${marginColor};" id="margin-display-${docId}">
-                        ${prod.margin.toFixed(2)}%
-                    </div>
-
-                    <div>
-                        <input type="number" class="fb-input-code" id="input-price-${docId}" 
-                            value="${prod.price}" step="0.01"
-                            oninput="window.recalcMargin('${docId}', ${prod.cost})"
-                            style="text-align:right; color:#000; font-weight:bold;">
-                    </div>
-
-                    <div>
-                        <input type="text" class="fb-input-code" id="input-code-${docId}" 
-                            value="${prod.code || ''}" 
-                            placeholder="Ler código..."
-                            style="border: 2px solid var(--primary-red); background:#fff0f3;">
-                    </div>
-
-                    <div style="text-align: center;">
-                        <button class="btn btn-primary" onclick="saveNewProductCode('${docId}')" 
-                            style="width: 40px; height: 40px; padding: 0; display: inline-flex; align-items: center; justify-content: center;" 
-                            title="Salvar">
-                            <i class='bx bx-save'></i>
-                        </button>
-                    </div>
-                `;
-                document.getElementById('firebase-products-list').appendChild(row);
-            }
-
-            window.saveNewProductCode = async (docId) => {
-                const inputCode = document.getElementById(`input-code-${docId}`);
-                const inputPrice = document.getElementById(`input-price-${docId}`);
-                const btn = inputCode.parentElement.nextElementSibling.querySelector('button');
-                
-                const newCode = inputCode.value.trim();
-                const finalPrice = parseFloat(inputPrice.value);
-
-                if(!newCode) { showCustomAlert("Atenção", "Bipe o código de barras."); inputCode.focus(); return; }
-                if(isNaN(finalPrice) || finalPrice <= 0) { showCustomAlert("Atenção", "Preço inválido."); inputPrice.focus(); return; }
-
-                btn.disabled = true;
-                btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i>";
-
-                try {
-                    const productRef = db.collection('artifacts').doc(FIREBASE_CONFIG_ID)
-                                    .collection('users').doc(STORE_OWNER_UID)
-                                    .collection('products').doc(docId);
-
-                    await productRef.update({
-                        code: newCode,
-                        price: finalPrice,
-                        status: firebase.firestore.FieldValue.delete(), 
-                        updatedAt: new Date().toISOString()
-                    });
-
-                    btn.innerHTML = "<i class='bx bx-check'></i>";
-                    btn.classList.add('btn-success');
-                    setTimeout(() => {
-                        const row = btn.closest('.firebase-item-row');
-                        row.style.opacity = '0';
-                        setTimeout(() => row.remove(), 500);
-                    }, 1000);
-                } catch (error) {
-                    console.error("Erro ao salvar:", error);
-                    btn.innerHTML = "<i class='bx bx-error'></i>";
-                    alert("Erro: " + error.message);
-                    btn.disabled = false;
-                }
-            };
         });
-        
+
         function showCustomAlert(title, message) {
             const alertTitle = document.getElementById('alert-title');
             const alertMessage = document.getElementById('alert-message');
@@ -309,19 +331,21 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-light); color: var(--text-dark); display: block; min-height: 100vh; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-light); color: var(--text-dark); display: block; min-height: 100vh; padding: 32px; }
 
         .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid #eee; padding-bottom: 16px; }
-        .app-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-dark); }
+        .app-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-dark); display: flex; align-items: center; gap: 10px; }
 
-        .card { background-color: var(--card-white); border-radius: 16px; border: 1px solid var(--border-color); padding: 24px; margin-bottom: 24px; }
+        .card { background-color: var(--card-white); border-radius: 16px; border: 1px solid var(--border-color); padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .page-header h2 { font-size: 1.5rem; font-weight: 700; }
-        .btn { padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; display: flex; align-items: center; gap: 8px; }
+        .page-header h2 { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .btn { padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .btn:hover { opacity: 0.9; }
         .btn-primary { background-color: var(--primary-red); color: white; }
         .btn-secondary { background-color: #fff; border: 1px solid #ddd; color: #333; }
         .btn-success { background-color: var(--success-green); color: white; }
 
+        /* Grid da Tabela */
         .firebase-list-header {
             display: grid;
             grid-template-columns: 0.8fr 2fr 1fr 0.8fr 1.2fr 1.5fr 60px;
@@ -342,15 +366,18 @@
             background: #fff;
             transition: opacity 0.5s ease;
         }
+        .firebase-item-row:hover { background-color: #f9f9f9; }
         .fb-input-code { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; }
-        
+        .fb-input-code:focus { outline: none; border-color: var(--primary-red); box-shadow: 0 0 0 3px rgba(219,0,56,0.1); }
+
+        /* Modal */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: grid; place-items: center; visibility: hidden; opacity: 0; z-index: 2000; transition: 0.3s; }
         .modal-overlay.active { visibility: visible; opacity: 1; }
         .modal-content { background: #fff; padding: 24px; border-radius: 16px; width: 100%; max-width: 400px; text-align: center; }
         .modal-icon { font-size: 40px; margin-bottom: 16px; }
         .modal-icon.info { color: var(--info-blue); }
 
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             .firebase-list-header { display: none; }
             .firebase-item-row { grid-template-columns: 1fr !important; gap: 8px; padding: 16px; border: 1px solid #eee; margin-bottom: 12px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         }
@@ -359,49 +386,42 @@
 
 <body>
 
-    <div class="main-content" id="main-content" style="padding: 32px; display: block;">
+    <div class="app-header">
+        <h1><i class='bx bx-edit'></i> Pré-Cadastro de Produtos</h1>
+    </div>
 
-        <div class="app-header">
-            <h1><i class='bx bx-edit'></i> Pré-Cadastro de produtos</h1>
-            <div>
-                 <!-- Espaço para botões de ação futuros se necessário -->
+    <!-- PÁGINA ÚNICA: PRODUTOS -->
+    <div id="produtos-page" class="page-content">
+        <div class="card" style="max-width: 1000px; margin: 0 auto 24px auto;">
+            <div class="page-header">
+                <h2><i class='bx bx-purchase-tag-alt'></i> Precificação e Entrada</h2>
+                <input type="file" id="csv-file-input" accept=".csv" style="display: none;">
+                <button class="btn btn-secondary" id="btn-import-csv">
+                    <i class='bx bx-import'></i> Importar Planilha (.csv)
+                </button>
             </div>
-        </div>
+            
+            <p style="color: var(--text-light); margin-top: -16px; margin-bottom: 24px;">
+                Produtos marcados como <strong>Pendencia55</strong> aparecerão abaixo. Bipe o código de barras para finalizar o cadastro.
+            </p>
 
-        <!-- PÁGINA ÚNICA: PRODUTOS -->
-        <div id="produtos-page" class="page-content">
-            <div class="card" style="max-width: 1000px; margin: 0 auto 24px auto;">
-                <div class="page-header">
-                    <h2><i class='bx bx-purchase-tag-alt'></i> Precificação e Entrada</h2>
-                    <input type="file" id="csv-file-input" accept=".csv" style="display: none;">
-                    <button class="btn btn-secondary" id="btn-import-csv">
-                        <i class='bx bx-import'></i> Anexar CSV (.csv)
-                    </button>
-                </div>
-                
-                <p style="color: var(--text-light); margin-top: -16px; margin-bottom: 24px;">
-                    Importe a planilha de chegada. Produtos repetidos (mesmo Ref) serão atualizados. Defina o preço final e o código de barras.
-                </p>
+            <div class="firebase-list-header">
+                <span>Ref.</span>
+                <span>Produto</span>
+                <span style="text-align: right;">Custo</span>
+                <span style="text-align: center;">Margem</span>
+                <span style="text-align: center;">Venda</span>
+                <span>Código de Barras</span>
+                <span style="text-align: center;">Salvar</span>
+            </div>
 
-                <div class="firebase-list-header">
-                    <span>Ref.</span>
-                    <span>Produto</span>
-                    <span style="text-align: right;">Custo</span>
-                    <span style="text-align: center;">Margem</span>
-                    <span style="text-align: center;">Venda</span>
-                    <span>Código de Barras</span>
-                    <span style="text-align: center;">Salvar</span>
-                </div>
-
-                <div id="firebase-products-list" class="firebase-products-container">
-                    <div style="display: flex; flex-direction: column; align-items: center; padding: 40px; color: var(--text-light);">
-                        <i class='bx bx-cloud-upload' style="font-size: 48px; margin-bottom: 10px; opacity: 0.5;"></i>
-                        <span>Anexe o arquivo .csv para começar.</span>
-                    </div>
+            <div id="firebase-products-list" class="firebase-products-container">
+                <div style="display: flex; flex-direction: column; align-items: center; padding: 40px; color: var(--text-light);">
+                    <i class='bx bx-loader-alt bx-spin' style="font-size: 48px; margin-bottom: 10px; opacity: 0.5;"></i>
+                    <span>Carregando dados do banco...</span>
                 </div>
             </div>
         </div>
-
     </div>
 
     <!-- Alert Modal -->
