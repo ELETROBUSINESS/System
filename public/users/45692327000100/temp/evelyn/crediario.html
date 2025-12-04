@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Crédiario</title>
+   <link rel="icon" href="/assets/img/iconWeb.png">
+    
+    <!-- Link To CSS -->
+    <link rel="stylesheet" href="/assets/CSS/main.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+</head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script> <script> window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-BV6V3GTMR0'); </script>
+
+<body onload="AnimationLoading();">
+    <header> <div class="loading"><div class="efect-loading"></div></div></header>
+    <div class="generatedReceipt" id="generatedReceipt">
+        <div class="container-comprovante">
+            <div class="comprovante">
+                <div class="date-info">
+                    <i class='bx bx-cart'></i>
+                    <p id="hrInfo">11:30:11</p>
+                </div>
+                <div class="TypeMov">
+                    <h1 id="paymentInfo">Pix - QRCODE</h1>
+                    <p>Venda</p>
+                    <span id="valueInfo">R$0,00</span>
+                </div>
+                <div class="Resumo">
+                    <div class="quest1">
+                        <p>Operadora</p>
+                        <span id="sellerInfo">*</span>
+                    </div>
+                    <div class="quest1">
+                        <p>Desconto</p>
+                        <span id="desInfo">R$0,00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="infoAdd">
+                <a href="#" class="b-function">
+                    <i class='bx bxs-cart-add'></i>
+                    Nova venda
+                </a>
+                <a href="#" class="b-function">
+                    <i class='bx bx-copy-alt'></i>
+                    Ver extrato
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="new_nav main-container">
+        <main id="form_container">
+            <div id="form_header">
+                <h1 id="form_title">Crédiario</h1>
+                <a class="btn-default" href="#" target="_self">
+                    <i class='bx bxs-left-arrow-circle'></i>
+                </a>
+            </div>
+            
+            <form action="" id="form-sell-adm">
+                <input type="hidden" name="formType" value="venda">
+                <div id="input_container">
+                    <div class="input-box">
+                        <label 
+                            for="value"
+                            class="form-label">
+                            Valor da compra
+                        </label>
+                        <div class="input-field">
+                            <input
+                            type="number"
+                            name="value"
+                            id="value"
+                            class="form-control"
+                            placeholder="R$0,00"
+                            autocomplete="off"
+                            step="0.01"
+                            >
+                        </div>
+                        <span class="error"></span>
+                    </div>
+                    <div id="desconto"></div>
+                    <div id="total">
+                    </div>
+
+                    <div class="radio-container">
+                        <label class="form-label">Forma de pagamento</label>
+
+                        <div id="payment_inputs">
+                            <div class="radio-box">
+                                <input type="radio"
+                                name="payment"
+                                id="paymentModal"
+                                class="form-control"
+                                value="crediario"
+                                checked="on"
+                                >
+                                <label for="crediario" class="form-label">Crédiario</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="radio-container">
+                        <label class="form-label">Operadora</label>
+
+                        <div id="payment_inputs">
+                            <div class="radio-box">
+                                <input type="radio"
+                                name="seller"
+                                id="seller"
+                                class="form-control"
+                                value="evelyn"
+                                checked="on"
+                                >
+                                <label for="evelyn" class="form-label">Evelyn</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="radio-container">
+                        <label class="form-label">Type</label>
+
+                        <div id="payment_inputs">
+                            <div class="radio-box">
+                                <input type="radio"
+                                name="type"
+                                id="entrada"
+                                class="form-control"
+                                value="entrada"
+                                checked="on"
+                                >
+                                <label for="entrada" class="form-label">Entrada</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-box">
+                        <label 
+                            for="description"
+                            class="form-label">
+                            Nome do cliente
+                        </label>
+                        <div class="input-field">
+                            <input
+                            type="text"
+                            name="description"
+                            id="description"
+                            class="form-control"
+                            placeholder="Descreva o nome do cliente"
+                            autocomplete="off"
+                            >
+                            <ion-icon name="reader-sharp"></ion-icon>
+                        </div>
+                    </div>
+                    <br>
+                </div>
+
+                <div class="radio-box">
+                    <button onclick="" type="submit" class="btn-default" id="submit-button-ADM">
+                        <div class="icon">
+                            <i class='bx bxs-receipt'></i>
+                        </div>
+                        Registrar
+                    </button>
+                </div>
+            </form>
+        </main>
+        <audio id="songSell" src="/assets/audio/Sell.MP3"></audio>
+        <div id="pushBox"></div>
+        </div>
+        <div class="pn">
+            <div class="pn-hr">
+                <div class="loading1"><div class="efect-loading1"></div></div>
+                <p class="horario" id="horario">00:00:00</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/assets/js/loading.js"></script>
+    <script src="/assets/js/new-mov-ADM.js"></script>
+    <script src="/assets/js/time.js"></script>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="320;/disconnected.html"></meta>
+    <meta name="google-adsense-account" content="ca-pub-9060080612658200">
+
+    <link rel="icon" href="/assets/img/icons/favicon.ico">
+    <title>Gerenciador | João</title>
+
+    <!-- Link To CSS -->
+    <link rel="stylesheet" href="/assets/CSS/main.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script> <script> window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-BV6V3GTMR0'); </script>
+
+<body class="painel-adm1" onload="AnimationLoading();">
+    <div class="mensagerLocal">
+        <div class="mensager">
+            <img src="/assets/eFriend.png">
+            <div>
+                <h1>Bom dia <span>João</span>,</h1>
+                <p>Tenha um ótimo dia de vendas colega!</p>
+            </div>
+            <div class="progress-bar"></div> <!-- Barra adicionada aqui -->
+        </div>
+    </div>
+    <script>
+        const MENSAGEM_KEY = 'ultimaMensagemEletro';
+        const INTERVALO_HORAS = 20;
+        const INTERVALO_MS = INTERVALO_HORAS * 60 * 60 * 1000;
+    
+        const agora = new Date().getTime();
+        const ultimaVisualizacao = localStorage.getItem(MENSAGEM_KEY);
+    
+        const mensagemEl = document.querySelector('.mensagerLocal');
+    
+        // Se nunca viu ou já passou 20 horas
+        if (!ultimaVisualizacao || (agora - parseInt(ultimaVisualizacao)) > INTERVALO_MS) {
+            mensagemEl.style.display = 'flex';
+    
+            // Começa animação de desaparecimento após 10s
+            setTimeout(() => {
+                mensagemEl.style.transition = "opacity 0.5s ease";
+                mensagemEl.style.opacity = 0;
+    
+                setTimeout(() => {
+                    mensagemEl.style.display = "none";
+                }, 500);
+            }, 6200);
+    
+            // Salva data/hora da visualização
+            localStorage.setItem(MENSAGEM_KEY, agora);
+        } else {
+            mensagemEl.style.display = 'none'; // Oculta imediatamente
+        }
+    </script>
+
+    <header> <div class="loading"><div class="efect-loading"></div></div></header>
+    <div class="info">
+        <div class="photo-profile">
+            <img src="/users/45692327000100/CD1/colaborador/jbv27/img/profile.png">
+            <div class="detals">
+                <h1>Olá, João!</h1>
+                <p>Colaborador administrativo</p>
+            </div>
+        </div>
+        <div class="balance">
+            <p>Ticket-Médio</p>
+            <iframe width="329" height="91" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRdib-qEAVOO0SyQckpeps2kH7vsTKR7_UUNm6UcBQafjSUxNjjiHDrW0TpoyiMAzC7878JFmq0F2Tj/pubchart?oid=420619332&amp;format=interactive"></iframe>
+        </div>
+    </div>
+
+    <div class="new_nav">
+        <div class="conta-info">
+            <p>Eu, João</p>
+            <div class="option">
+                <div class="card-option">
+                    <a href="/users/45692327000100/CD1/colaborador/jbv27/formsPush.html">
+                        <i class='bx bx-cart-add'></i>
+                        <h3>Vender</h3>
+                    </a>
+                </div>
+                <div class="card-option">
+                    <a href="/users/45692327000100/CD1/colaborador/jbv27/metricas.html">
+                        <i class='bx bx-circle-three-quarter'></i>
+                        <h3>Métricas</h3>
+                    </a>
+                </div>
+                <div class="card-option">
+                    <a href="/users/45692327000100/CD1/colaborador/jbv27/extrato.html">
+                        <i class='bx bx-copy-alt'></i>
+                        <h3>Extrato</h3>
+                    </a>
+                </div>
+                <div class="card-option">
+                    <a href="https://docs.google.com/spreadsheets/d/1i77FrIfeG-JgyCthpvf7S_0t05h54Kbau9XTJj88JeM/edit?gid=988712884#gid=988712884">
+                        <i class='bx bx-message-alt-add'></i>
+                        <h3>Registrar Boleto</h3>
+                    </a>
+                </div>
+                <div class="card-option">
+                    <a href="#">
+                        <i class='bx bxs-lock-alt'></i>
+                        <h3>Carteira</h3>
+                    </a>
+                </div>
+                <div class="card-option">
+                    <a href="#">
+                        <i class='bx bxs-lock-alt'></i>
+                        <h3>Resultado</h3>
+                    </a>
+                </div>
+                <div class="card-option">
+                    <a href="/news/public/index.html">
+                        <i class='bx bx-news'></i>
+                        <h3>News</h3>
+                    </a>
+                </div>
+            </div>
+
+            <div class="banners-advertising">
+                <div class="banners-ads">
+                    <input type="radio" name="radio-btn" id="radio1">
+                    <input type="radio" name="radio-btn" id="radio2">
+
+                    <div class="b-ads first">
+                        <a href="#">
+                            <img src="/assets/img/banner1.png" alt="ShockNews: seu portal de noticias confiaveis!">
+                        </a>
+                    </div>
+                    <div class="b-ads">
+                        <a href="#">
+                            <img src="/assets/img/banner2.png" alt="ELETRO: Gerencie seu négocio com a pauma da mão">
+                        </a>
+                    </div>
+
+                    <div class="navgation-auto">
+                        <div class="auto-btn1"></div>
+                        <div class="auto-btn2"></div>
+                    </div>
+                </div>
+                <div class="manual-navgation">
+                    <label for="radio1" class="manual-btn"></label>
+                    <label for="radio2" class="manual-btn"></label>
+                </div>
+            </div>
+        </div>
+
+    <div class="navigation">
+        <ul>
+            <li class="list active">
+                <a href="#">
+                    <span class="icon">
+                        <i class='bx bxs-user'></i>
+                    </span>
+                    <span class="text">Conta</span>
+                </a>
+            </li>
+
+            <li class="list">
+                <a href="/users/45692327000100/CD1/colaborador/jbv27/metricas.html">
+                    <span class="icon">
+                        <i class='bx bxs-circle-three-quarter'></i>
+                    </span>
+                    <span class="text">Métricas</span>
+                </a>
+            </li>
+
+            <li class="list">
+                <a href="/users/45692327000100/CD1/colaborador/jbv27/push.html">
+                    <span class="icon">
+                        <i class='bx bxs-cart-add'></i>
+                    </span>
+                    <span class="text">Venda</span>
+                </a>
+            </li>
+
+            <li class="list">
+                <a href="/users/45692327000100/CD1/colaborador/jbv27/extrato.html">
+                    <span class="icon">
+                        <i class='bx bxs-copy-alt'></i>
+                    </span>
+                    <span class="text">Extrato</span>
+                </a>
+            </li>
+
+            <li class="list">
+                <a href="/index.html">
+                    <span class="icon">
+                        <i class='bx bxs-log-out'></i>
+                    </span>
+                    <span class="text">Sair</span>
+                </a>
+            </li>
+            <div class="indicator color11"></div>
+        </ul>
+    </div>
+
+        <!-- Link To JS -->
+        <script src="/javascript/loading.js"></script>
+        <script src="/javascript/recurses.js"></script>
+</body>

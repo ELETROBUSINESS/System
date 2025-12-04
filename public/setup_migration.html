@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Ferramenta de Migração de Usuários</title>
+    <style>
+        body { font-family: monospace; background: #111; color: #0f0; padding: 20px; }
+        .log { background: #222; padding: 10px; border: 1px solid #444; margin-bottom: 5px; }
+        .success { color: #0f0; }
+        .error { color: #f00; }
+        .warning { color: orange; }
+        button { padding: 15px 30px; font-size: 1.2rem; cursor: pointer; background: #fff; border: none; font-weight: bold; }
+    </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body>
+
+    <h1>Ferramenta de Migração: Array -> Firebase</h1>
+    <p>Este script cria usuários no Auth e salva seus dados no Firestore.</p>
+    <button onclick="iniciarMigracao()">INICIAR MIGRAÇÃO</button>
+    
+    <div id="console-output" style="margin-top: 20px;"></div>
+
+    <script>
+        // 1. Configuração do Firebase (Copiada do seu pdv.html)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAVQ3tf6Qu4_9PajpJclZAJjVvRgB4ZE2I",
+            authDomain: "super-app25.firebaseapp.com",
+            projectId: "super-app25",
+            storageBucket: "super-app25.firebasestorage.app",
+            messagingSenderId: "810900166273",
+            appId: "1:810900166273:web:24b8f055a68c9f0a6b5f80"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // 2. Seus Usuários Atuais (Dados extraídos do login.html)
+        // ADICIONEI o campo 'role' (função) baseado na pasta de redirecionamento original
+        const usuariosParaMigrar = [
+            { 
+                username: "DTUDOVARIEDADES", 
+                password: "251914", 
+                role: "admin", // Baseado em /adm/
+                nome: "Administrador Geral",
+                imgTemp: "/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg"
+            },
+            { 
+                username: "Tarcisio", 
+                password: "202025", 
+                role: "admin", 
+                nome: "Tarcisio",
+                imgTemp: "https://placehold.co/150/ff104f/ffffff?text=T"
+            },
+            { 
+                username: "evelyn", 
+                password: "152510", 
+                role: "colaborador", // Baseado em /colaborador/
+                nome: "Evelyn",
+                imgTemp: "https://placehold.co/150/ff104f/ffffff?text=E"
+            },
+            { 
+                username: "ryan", 
+                password: "182011", 
+                role: "colaborador", // Baseado em /colaborador/
+                nome: "Ryan",
+                imgTemp: "https://placehold.co/150/2a1a45/ffffff?text=R"
+            }
+        ];
+
+        // Função para logar na tela
+        function log(msg, type = 'normal') {
+            const div = document.createElement('div');
+            div.className = `log ${type}`;
+            div.innerText = msg;
+            document.getElementById('console-output').appendChild(div);
+        }
+
+        async function iniciarMigracao() {
+            log("Iniciando processo...", "warning");
+
+            for (const user of usuariosParaMigrar) {
+                // Truque: Como o Auth exige email, vamos criar um email interno falso
+                const emailFake = `${user.username.toLowerCase()}@eletrosystem.com`;
+                
+                try {
+                    log(`----------------------------------`);
+                    log(`Processando: ${user.username}...`);
+
+                    let uid;
+                    let userCredential;
+
+                    // 1. Tentar Criar Usuário no Auth
+                    try {
+                        userCredential = await auth.createUserWithEmailAndPassword(emailFake, user.password);
+                        uid = userCredential.user.uid;
+                        log(`[AUTH] Criado com sucesso! UID: ${uid}`, "success");
+                    } catch (authError) {
+                        if (authError.code === 'auth/email-already-in-use') {
+                            log(`[AUTH] Usuário já existe. Tentando login para pegar UID...`, "warning");
+                            // Se já existe, logamos para pegar o UID e atualizar o Firestore
+                            userCredential = await auth.signInWithEmailAndPassword(emailFake, user.password);
+                            uid = userCredential.user.uid;
+                        } else {
+                            throw authError;
+                        }
+                    }
+
+                    // 2. Salvar Dados no Firestore
+                    // Aqui definimos a estrutura centralizada que o dashboard e PDV vão ler
+                    await db.collection('users').doc(uid).set({
+                        username: user.username,
+                        email: emailFake,
+                        nome: user.nome,
+                        funcao: user.role, // admin ou colaborador
+                        photoUrl: user.imgTemp, // Link temporário até você subir pro Storage
+                        saldo: 0.00,       // Valor inicial
+                        pontos: 0.00,
+                        ticketMedio: 0.00,
+                        lojaId: "CD1",     // Fixo por enquanto
+                        criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true }); // merge: true evita apagar dados se já existirem
+
+                    log(`[FIRESTORE] Dados salvos na coleção 'users'.`, "success");
+
+                } catch (error) {
+                    log(`ERRO ao processar ${user.username}: ${error.message}`, "error");
+                }
+            }
+            
+            log(`----------------------------------`);
+            log("MIGRAÇÃO CONCLUÍDA!", "success");
+            alert("Processo finalizado. Verifique o log.");
+        }
+    </script>
+</body>
+</html>

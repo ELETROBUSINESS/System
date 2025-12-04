@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carteira | ELETRO</title>
+    <link rel="icon" href="/assets/img/iconWeb.png">
+
+    <link rel="stylesheet" href="/assets/css/main.css">
+    
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <style>
+        /* Loading inicial */
+        body.loading-auth .main-content, body.loading-auth .navigation {
+            opacity: 0; pointer-events: none;
+        }
+
+        /* --- 1. LÓGICA RESPONSIVA (PC vs MOBILE) --- */
+        
+        /* Padrão (Mobile): Navbar escondida */
+        .navigation { display: none; } 
+        
+        /* BOTÃO VOLTAR (Novo Estilo: Abaixo do Banner) */
+        .mobile-back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #fff;
+            color: #555;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 30px; /* Formato Pílula */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08); /* Sombra suave */
+            margin-bottom: 15px; /* Espaço antes do Ticket Médio */
+            transition: transform 0.2s, color 0.2s;
+        }
+        
+        .mobile-back-btn i { font-size: 1.2rem; color: #db0038; } /* Seta vermelha */
+        .mobile-back-btn:active { transform: scale(0.95); background-color: #f9f9f9; }
+
+        /* Ajuste do Dashboard para acomodar o botão */
+        .dashboard {
+            padding-top: 10px; /* Espaço extra no topo da área branca */
+        }
+
+        /* Desktop (Telas grandes): Mostra Navbar, Esconde Botão Voltar */
+        @media (min-width: 1024px) {
+            .navigation { display: block; }
+            .mobile-back-btn { display: none !important; }
+            .main-content { margin-left: 80px; }
+        }
+
+        /* --- FIM LÓGICA RESPONSIVA --- */
+
+        /* Animação Ticket Médio */
+        .skeleton { 
+            color: transparent !important; 
+            background: rgba(224, 224, 224, 0.5); /* Cinza claro para fundo branco */
+            border-radius: 4px; 
+            position: relative; 
+            overflow: hidden;   
+            display: inline-block; 
+            min-width: 80px;
+        }
+        .skeleton::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+            transform: translateX(-100%); animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer { 100% { transform: translateX(100%); } }
+
+        /* Estilos Lançamentos */
+        .containerCard { margin-bottom: 15px; }
+        .card-optionSize {
+            display: flex; align-items: center; gap: 15px; padding: 15px;
+            background: #fff; border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        }
+        .card-optionSize i { font-size: 1.5rem; }
+        .lEntrada i { color: #28a745; background: rgba(40, 167, 69, 0.1); padding: 8px; border-radius: 50%; }
+        .lSaida i { color: #db0038; background: rgba(219, 0, 56, 0.1); padding: 8px; border-radius: 50%; }
+        
+        .l2 { margin-left: auto; font-size: 0.8rem; color: #999; }
+        .empty-wallet { text-align: center; color: #777; padding: 30px; }
+    </style>
+</head>
+
+<body class="painel-adm1 loading-auth">
+
+    <main class="main-content">
+        <div class="info">
+            <div class="photo-profile">
+                <img id="user-photo" src="https://placehold.co/150/db0038/FFFFFF?text=..." alt="Perfil">
+                <div class="detals">
+                    <h1 id="user-greeting">Olá!</h1>
+                    <p id="user-role">Carregando...</p>
+                </div>
+            </div>
+            <div class="balance">
+                <div class="pending">
+                    <p>A receber</p>
+                    <span id="wallet-balance" class="skeleton">R$ 0,00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard">
+            <a href="conta.html" class="mobile-back-btn">
+                <i class='bx bx-left-arrow-alt'></i> Voltar
+            </a>
+
+            <div class="invoicing">
+                <i class="fi fi-rr-user-salary"></i>
+                <div class="detals">
+                    <h1>Ticket-Médio</h1>
+                    <span id="ticket-medio-display" class="skeleton">Carregando...</span>
+                </div>
+            </div>
+            
+            <br>
+            <p style="font-weight: 600; color: #555; margin-bottom: 10px;">Lançamentos Recentes</p>
+
+            <div id="lancamentos-container">
+                <p style="text-align:center; padding: 20px; color: #777;">Carregando...</p>
+            </div>
+        </div>
+    </main>
+
+    <div class="navigation">
+        <ul>
+            <li class="list">
+                <a href="conta.html">
+                    <span class="icon"><i class='bx bx-home'></i></span>
+                    <span class="text">Home</span>
+                </a>
+            </li>
+            <li class="list">
+                <a href="quest.html">
+                    <span class="icon"><i class='bx bx-radar'></i></span>
+                    <span class="text">Missões</span>
+                </a>
+            </li>
+            <li class="list">
+                <a href="pdv.html">
+                    <span class="icon"><i class='bxr bx-plus-circle'></i></span>
+                    <span class="text">Venda</span>
+                </a>
+            </li>
+            <li class="list active">
+                <a href="wallet.html">
+                    <span class="icon"><i class='bx bx-user-circle'></i></span>
+                    <span class="text">Conta</span>
+                </a>
+            </li>
+            <li class="list">
+                <a href="extrato.html">
+                    <span class="icon"><i class='bx bx-copy-alt'></i></span>
+                    <span class="text">Extrato</span>
+                </a>
+            </li>
+            <li class="list">
+                <a href="#" id="logout-btn">
+                    <span class="icon"><i class='bx bx-log-out'></i></span>
+                    <span class="text">Sair</span>
+                </a>
+            </li>
+            <div class="indicator color11"></div>
+        </ul>
+    </div>
+
+    <script src="js/app-core.js"></script>
+
+    <script>
+        const TICKET_MEDIO_MAP = { "ryan": "ID1", "evelyn": "ID2" };
+        const APPSCRIPT_BASE = "https://script.google.com/macros/s/AKfycbw4AyWVzzxfnwxgtUSR7p1ehjG62ufEPYQv8M3_tm9gTwGhRJ-lNhfI5QoIBLAV2x1gSA/exec"; 
+
+        document.addEventListener("DOMContentLoaded", () => {
+            firebase.auth().onAuthStateChanged(async (user) => {
+                if (user) {
+                    const uid = user.uid;
+                    loadWalletBalance(uid);
+                    loadLancamentos(uid);
+
+                    const userDoc = await db.collection('users').doc(uid).get();
+                    if(userDoc.exists) {
+                        const usernameClean = (userDoc.data().username || "").trim().toLowerCase();
+                        loadTicketMedio(usernameClean);
+                    }
+                }
+            });
+        });
+
+        async function loadWalletBalance(uid) {
+            const el = document.getElementById('wallet-balance');
+            try {
+                const doc = await db.collection('users').doc(uid).get();
+                if (doc.exists) {
+                    const val = doc.data().saldo || 0; 
+                    el.innerText = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+                    el.classList.remove('skeleton');
+                    el.style.color = "#fff";
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function loadLancamentos(uid) {
+            const container = document.getElementById('lancamentos-container');
+            
+            db.collection('users').doc(uid).collection('lancamentos')
+                .orderBy('data', 'desc')
+                .limit(10)
+                .get()
+                .then((snapshot) => {
+                    container.innerHTML = '';
+                    
+                    if (snapshot.empty) {
+                        container.innerHTML = '<div class="empty-wallet"><i class="bx bx-sleepy" style="font-size:2rem"></i><p>Sem lançamentos.</p></div>';
+                        return;
+                    }
+
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const isEntrada = data.tipo === 'entrada';
+                        const cssClass = isEntrada ? 'lEntrada' : 'lSaida';
+                        const icon = isEntrada ? 'bx-up-arrow-alt' : 'bx-down-arrow-alt'; 
+                        
+                        let dataDisplay = "--/--";
+                        if(data.data && data.data.toDate) {
+                            dataDisplay = data.data.toDate().toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'});
+                        }
+
+                        const html = `
+                        <div class="containerCard">
+                            <div class="card-optionSize ${cssClass}">
+                                <i class='bx ${icon}'></i>
+                                <div style="flex-grow: 1;">
+                                    <h1 style="font-size: 1rem; margin:0;">${data.descricao || 'Movimentação'}</h1>
+                                    <span style="font-weight:600; font-size: 0.9rem;">
+                                        ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.valor)}
+                                    </span>
+                                </div>
+                                <span class="l2">${dataDisplay}</span>
+                            </div>
+                        </div>`;
+                        container.insertAdjacentHTML('beforeend', html);
+                    });
+                })
+                .catch(err => {
+                    console.error("Erro lançamentos:", err);
+                    container.innerHTML = '<p style="text-align:center;">Erro ao carregar dados.</p>';
+                });
+        }
+
+        async function loadTicketMedio(username) {
+            const el = document.getElementById('ticket-medio-display');
+            const mapId = TICKET_MEDIO_MAP[username]; 
+
+            if (!mapId) {
+                el.innerText = "N/A";
+                el.classList.remove('skeleton');
+                el.style.color = "#777";
+                return;
+            }
+
+            const url = `${APPSCRIPT_BASE}?tipo=${mapId}&mode=ticket`; 
+
+            try {
+                const response = await fetch(url);
+                const text = await response.text();
+
+                try {
+                    const data = JSON.parse(text);
+                    const valor = data.valor || data.ticket || 0; 
+                    el.innerText = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+                    el.classList.remove('skeleton');
+                    el.style.color = "var(--text-dark)";
+                } catch (jsonError) {
+                    console.warn(`Resposta inválida para ${username}:`, text);
+                    el.innerText = "Indisponível"; 
+                    el.classList.remove('skeleton');
+                    el.style.color = "var(--warning-red)";
+                    el.style.fontSize = "0.8rem";
+                }
+
+            } catch (networkError) {
+                el.innerText = "Offline"; 
+                el.classList.remove('skeleton');
+            }
+        }
+    </script>
+</body>
+</html>

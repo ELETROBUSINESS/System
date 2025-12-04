@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso | ELETRO</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+        :root {
+            --primary-color: #db0038;
+            --secondary-color: #ff104f;
+            --bg-color: #111827;
+            --text-color: #ffffff;
+            --input-bg: rgba(255, 255, 255, 0.1);
+            --border-radius: 1rem;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-image: linear-gradient(45deg, var(--bg-color) 0%, #2a1a45 100%);
+            overflow: hidden;
+        }
+
+        #particle-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
+        }
+
+        .screen1 {
+            position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; width: 100%; padding: 20px;
+        }
+
+        .form-login {
+            background: rgba(20, 10, 35, 0.6);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .section-title {
+            text-align: center; margin-bottom: 2rem; font-size: 1.8rem; font-weight: 700;
+        }
+
+        .input-box { position: relative; margin-bottom: 1.5rem; }
+
+        .input-box input {
+            width: 100%; padding: 1rem 3.5rem 1rem 3rem;
+            background: var(--input-bg); border: 1px solid transparent; border-radius: 0.5rem;
+            color: var(--text-color); font-size: 1rem;
+            transition: 0.3s;
+        }
+
+        .input-box input:focus {
+            outline: none; background: rgba(255, 255, 255, 0.15); border-color: var(--secondary-color);
+        }
+
+        .input-icon {
+            position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
+            font-size: 1.25rem; color: rgba(255, 255, 255, 0.7);
+        }
+
+        .password-toggle-icon {
+            position: absolute; right: 1rem; top: 50%; transform: translateY(-50%);
+            cursor: pointer; color: rgba(255, 255, 255, 0.7); font-size: 1.4rem;
+        }
+
+        .btn_form {
+            width: 100%; padding: 1rem; border-radius: 0.5rem; border: none;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            color: var(--text-color); font-size: 1.1rem; font-weight: 600; cursor: pointer;
+            transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+        }
+
+        .btn_form:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(255, 16, 79, 0.4); }
+        .btn_form:disabled { background: #555; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .hidden { display: none; }
+
+        .user-info {
+            display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding: 15px;
+            background: var(--input-bg); border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .user-avatar {
+            width: 50px; height: 50px; border-radius: 50%; object-fit: cover;
+            border: 2px solid var(--secondary-color);
+        }
+
+        .user-details { display: flex; flex-direction: column; flex-grow: 1; }
+        .user-name { font-size: 1.1rem; font-weight: 600; text-transform: capitalize; }
+        
+        .change-user {
+            background: none; border: none; color: rgba(255, 255, 255, 0.6); cursor: pointer;
+            font-size: 0.85rem; padding: 0; text-align: left; display: flex; align-items: center; gap: 0.25rem;
+        }
+        .change-user:hover { color: var(--text-color); text-decoration: underline; }
+
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color); z-index: 9999;
+            display: flex; justify-content: center; align-items: center;
+            transition: opacity 0.5s ease;
+        }
+        .spinner {
+            width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1);
+            border-top-color: var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Mensagem de Erro */
+        .error-msg {
+            color: #ff4d4d; font-size: 0.9rem; text-align: center; margin-top: 10px; min-height: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="particle-canvas"></canvas>
+    
+    <div class="loading-overlay" id="global-loader">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="screen1">
+        <div class="form-login">
+            <form id="login-form">
+                <h2 class="section-title">ELETRO SYSTEM</h2>
+
+                <div id="username-step">
+                    <p style="text-align:center; color:#aaa; margin-bottom:15px; font-size:0.9rem;">Digite seu usuário para continuar</p>
+                    <div class="input-box">
+                        <input type="text" placeholder="Ex: evelyn" id="login-username" autocomplete="username" required>
+                        <i class="bx bxs-user input-icon"></i>
+                    </div>
+                    <button class="btn_form" type="button" id="continue-btn">
+                        <span>Continuar</span>
+                        <i class='bx bx-right-arrow-alt'></i>
+                    </button>
+                </div>
+
+                <div id="password-step" class="hidden">
+                    <div class="user-info">
+                        <img src="" alt="Avatar" class="user-avatar" id="user-avatar">
+                        <div class="user-details">
+                            <span class="user-name" id="user-name">Usuário</span>
+                            <button type="button" class="change-user" id="change-user-btn">
+                                <i class='bx bx-arrow-back'></i> Trocar conta
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="input-box">
+                        <input type="password" placeholder="Sua senha" id="login-password" autocomplete="current-password">
+                        <i class="bx bxs-lock-alt input-icon"></i>
+                        <i class='bx bx-show password-toggle-icon' id="password-toggle"></i>
+                    </div>
+                    
+                    <button class="btn_form" type="submit" id="submit-login-btn">
+                        <span>Entrar</span>
+                        <i class='bx bx-log-in-circle'></i>
+                    </button>
+                </div>
+
+                <div class="error-msg" id="error-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 1. Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAVQ3tf6Qu4_9PajpJclZAJjVvRgB4ZE2I",
+            authDomain: "super-app25.firebaseapp.com",
+            projectId: "super-app25",
+            storageBucket: "super-app25.firebasestorage.app",
+            messagingSenderId: "810900166273",
+            appId: "1:810900166273:web:24b8f055a68c9f0a6b5f80"
+        };
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // 2. Variáveis de Controle
+        const DOM = {
+            loader: document.getElementById("global-loader"),
+            form: document.getElementById("login-form"),
+            stepUser: document.getElementById("username-step"),
+            stepPass: document.getElementById("password-step"),
+            inputUser: document.getElementById("login-username"),
+            inputPass: document.getElementById("login-password"),
+            btnContinue: document.getElementById("continue-btn"),
+            btnLogin: document.getElementById("submit-login-btn"),
+            displayAvatar: document.getElementById("user-avatar"),
+            displayName: document.getElementById("user-name"),
+            btnChange: document.getElementById("change-user-btn"),
+            btnTogglePass: document.getElementById("password-toggle"),
+            msgError: document.getElementById("error-message")
+        };
+
+        // Rota Centralizada (Onde todos os usuários irão cair)
+        // Ajuste este caminho se sua pasta 'app' estiver em outro lugar
+        const CENTRAL_DASHBOARD_URL = "/users/45692327000100/CD1/app/index.html";
+
+        document.addEventListener("DOMContentLoaded", () => {
+            // Remove Loader inicial
+            setTimeout(() => {
+                DOM.loader.style.opacity = "0";
+                setTimeout(() => DOM.loader.style.display = "none", 500);
+            }, 800);
+
+            // Verifica se tem parametro na URL (ex: ?type=admin)
+            // Apenas para lógica futura, por enquanto não bloqueia nada
+            const urlParams = new URLSearchParams(window.location.search);
+            const loginType = urlParams.get('type'); 
+            if(loginType) console.log("Modo de login:", loginType);
+
+            initParticles();
+        });
+
+        // --- LÓGICA DO PASSO 1 (USUÁRIO) ---
+        DOM.btnContinue.addEventListener("click", handleContinue);
+        DOM.inputUser.addEventListener("keydown", (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); handleContinue(); }
+        });
+
+        function handleContinue() {
+            const username = DOM.inputUser.value.trim();
+            
+            if (username.length < 2) {
+                showError("Digite um usuário válido.");
+                return;
+            }
+
+            // Limpa erro anterior
+            showError("");
+
+            // Gera Avatar com a Inicial (API placehold.co)
+            // Cor de fundo: #db0038 (Sua cor primária), Texto: Branco
+            const initial = username.charAt(0).toUpperCase();
+            const avatarUrl = `https://placehold.co/150/db0038/FFFFFF?text=${initial}`;
+
+            // Atualiza UI para o Passo 2
+            DOM.displayAvatar.src = avatarUrl;
+            DOM.displayName.textContent = username;
+            
+            // Troca de tela com animação simples
+            DOM.stepUser.classList.add("hidden");
+            DOM.stepPass.classList.remove("hidden");
+            
+            // Foca na senha
+            setTimeout(() => DOM.inputPass.focus(), 100);
+        }
+
+        // --- LÓGICA DO PASSO 2 (LOGIN REAL) ---
+        DOM.form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            
+            // Se estiver no passo 1 e apertar enter, o evento de submit dispara
+            // Precisamos garantir que estamos no passo 2
+            if (!DOM.stepUser.classList.contains("hidden")) {
+                handleContinue();
+                return;
+            }
+
+            const username = DOM.inputUser.value.trim();
+            const password = DOM.inputPass.value;
+
+            if (!password) {
+                showError("Digite sua senha.");
+                return;
+            }
+
+            setLoading(true);
+
+            // "Truque" do email interno
+            const emailFake = `${username.toLowerCase()}@eletrosystem.com`;
+
+            try {
+                // 1. Autentica no Firebase Auth
+                const userCredential = await auth.signInWithEmailAndPassword(emailFake, password);
+                const uid = userCredential.user.uid;
+
+                // 2. Busca dados no Firestore (para cachear nome completo, permissões, etc)
+                const userDoc = await db.collection('users').doc(uid).get();
+
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    
+                    // 3. Salva Cache para o PDV/Dashboard usarem imediatamente
+                    localStorage.setItem('user_cache', JSON.stringify({
+                        uid: uid,
+                        username: userData.username,
+                        name: userData.nome || username,
+                        role: userData.funcao || 'colaborador',
+                        photoUrl: userData.photoUrl || DOM.displayAvatar.src, // Usa a do banco ou a gerada
+                        lojaId: userData.lojaId || 'CD1'
+                    }));
+
+                    // 4. Redireciona para a pasta centralizada
+                    window.location.href = CENTRAL_DASHBOARD_URL;
+                } else {
+                    // Usuário autenticou mas não tem doc no banco (caso raro de erro na migração)
+                    // Cria cache básico e deixa entrar
+                    localStorage.setItem('user_cache', JSON.stringify({
+                        uid: uid,
+                        username: username,
+                        name: username,
+                        role: 'colaborador'
+                    }));
+                    window.location.href = CENTRAL_DASHBOARD_URL;
+                }
+
+            } catch (error) {
+                console.error("Erro Login:", error);
+                setLoading(false);
+                
+                if (error.code === 'auth/wrong-password') {
+                    showError("Senha incorreta.");
+                    DOM.inputPass.value = "";
+                    DOM.inputPass.focus();
+                } else if (error.code === 'auth/user-not-found') {
+                    showError("Usuário não cadastrado.");
+                    // Volta para o passo 1 após um tempo ou deixa o usuário voltar
+                } else if (error.code === 'auth/too-many-requests') {
+                    showError("Muitas tentativas. Aguarde.");
+                } else {
+                    showError("Erro ao acessar. Tente novamente.");
+                }
+            }
+        });
+
+        // --- UTILITÁRIOS ---
+        
+        // Voltar para trocar usuário
+        DOM.btnChange.addEventListener("click", () => {
+            DOM.stepPass.classList.add("hidden");
+            DOM.stepUser.classList.remove("hidden");
+            DOM.inputPass.value = "";
+            DOM.inputUser.focus();
+            showError("");
+        });
+
+        // Mostrar/Ocultar Senha
+        DOM.btnTogglePass.addEventListener("click", () => {
+            const type = DOM.inputPass.type === "password" ? "text" : "password";
+            DOM.inputPass.type = type;
+            DOM.btnTogglePass.classList.toggle("bx-show");
+            DOM.btnTogglePass.classList.toggle("bx-hide");
+        });
+
+        function showError(msg) {
+            DOM.msgError.textContent = msg;
+            if(msg) {
+                // Efeito de tremor se houver erro
+                DOM.form.animate([
+                    { transform: 'translateX(0)' },
+                    { transform: 'translateX(-5px)' },
+                    { transform: 'translateX(5px)' },
+                    { transform: 'translateX(0)' }
+                ], { duration: 300 });
+            }
+        }
+
+        function setLoading(state) {
+            const btn = DOM.btnLogin;
+            if (state) {
+                btn.disabled = true;
+                btn.innerHTML = "<div class='spinner' style='width:20px;height:20px;border-width:2px;'></div> Entrando...";
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = "<span>Entrar</span><i class='bx bx-log-in-circle'></i>";
+            }
+        }
+
+        // --- ANIMAÇÃO DE FUNDO (Particles) ---
+        function initParticles() {
+            const canvas = document.getElementById('particle-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            
+            const setSize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+            setSize();
+
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.vx = (Math.random() - 0.5) * 0.5;
+                    this.vy = (Math.random() - 0.5) * 0.5;
+                    this.size = Math.random() * 2 + 1;
+                    this.color = 'rgba(255, 255, 255, 0.15)';
+                }
+                update() {
+                    this.x += this.vx; this.y += this.vy;
+                    if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                    if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+                }
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.fill();
+                }
+            }
+
+            const init = () => {
+                particles = [];
+                const numParticles = Math.floor((canvas.width * canvas.height) / 15000);
+                for (let i = 0; i < numParticles; i++) particles.push(new Particle());
+            };
+
+            const animate = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => { p.update(); p.draw(); });
+                // Linhas de conexão
+                particles.forEach((a, index) => {
+                    for (let bIndex = index + 1; bIndex < particles.length; bIndex++) {
+                        const b = particles[bIndex];
+                        const dist = (a.x - b.x)**2 + (a.y - b.y)**2;
+                        if (dist < 10000) {
+                            ctx.beginPath();
+                            ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 - dist/100000})`;
+                            ctx.moveTo(a.x, a.y);
+                            ctx.lineTo(b.x, b.y);
+                            ctx.stroke();
+                        }
+                    }
+                });
+                requestAnimationFrame(animate);
+            };
+
+            init();
+            animate();
+            window.addEventListener('resize', () => { setSize(); init(); });
+        }
+    </script>
+</body>
+</html>

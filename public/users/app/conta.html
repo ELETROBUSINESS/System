@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Conta | ELETRO</title>
+
+    <link rel="icon" href="/assets/img/iconWeb.png">
+    
+    <link rel="stylesheet" href="/assets/css/main.css">
+    
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <style>
+        /* Oculta conteúdo enquanto carrega auth para não piscar */
+        body.loading-auth .info, 
+        body.loading-auth .new_nav,
+        body.loading-auth .navigation {
+            opacity: 0;
+            pointer-events: none;
+        }
+        /* Estilos de carregamento (Skeleton) */
+        .skeleton { color: transparent; background: #ccc; border-radius: 4px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+    </style>
+</head>
+
+<body class="painel-adm1 loading-auth">
+    
+    <div class="mensagerLocal" style="display: none;">
+        <div class="mensager">
+            <img src="/assets/img/business-goal.png">
+            <div>
+                <h1>Missões</h1>
+                <p>Ganhe pontos ao completar as missões!</p>
+            </div>
+            <div class="progress-bar"></div>
+        </div>
+    </div>
+
+    <main class="main-content">
+        <div class="info">
+            <div class="photo-profile">
+                <img id="user-photo" src="https://placehold.co/150/db0038/FFFFFF?text=..." alt="Perfil">
+                <div class="detals">
+                    <h1 id="user-greeting">Olá, ...</h1>
+                    <p id="user-role">Carregando...</p>
+                </div>
+            </div>
+            
+            <div class="balance">
+                <p>Pontos</p>
+                <div class="saldo">
+                    <span id="user-points" class="skeleton">0,00</span>
+                </div>
+                <div class="pending">
+                    <p>Ticket-Médio: </p>
+                    <span id="user-ticket" class="skeleton">R$ 0,00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="new_nav">
+            <div class="conta-info">
+                
+                <div class="containerCard">
+                    <a href="quest.html" style="text-decoration: none;">
+                        <div class="card-optionSize" style="align-items: center; display: flex; gap: 10px; padding: 15px;">
+                            <img src="/assets/img/business-goal.png" style="width: 40px;">
+                            <div>
+                                <span style="font-weight: 600; color: #333;">Ganhe pontos realizando missões!</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <p id="user-name-display" style="margin-top: 20px; color: #777; text-align: center;">Eu</p>
+
+                <div class="option">
+                    <div class="card-option">
+                        <a href="pdv.html">
+                            <i class='bxr bx-plus-circle'></i> 
+                            <h3>Registrar</h3>
+                        </a>
+                    </div>
+                    
+                    <div class="card-option">
+                        <a href="quest.html">
+                            <i class='bx bx-radar'></i>
+                            <h3>Missão</h3>
+                        </a>
+                    </div>
+                    
+                    <div class="card-option">
+                        <a href="metricas.html">
+                            <i class='bx bx-bar-chart-square'></i> 
+                            <h3>Métricas</h3>
+                        </a>
+                    </div>
+                    
+                    <div class="card-option">
+                        <a href="wallet.html">
+                            <i class='bx bx-user-circle'></i>
+                            <h3>Conta</h3>
+                        </a>
+                    </div>
+                    
+                    <div class="card-option">
+                        <a href="extrato.html">
+                            <i class='bx bx-copy-alt'></i>
+                            <h3>Extrato</h3>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="navigation">
+        <ul>
+            <li class="list active">
+                <a href="conta.html">
+                    <span class="icon"><i class='bx bxs-home'></i></span>
+                    <span class="text">Home</span>
+                </a>
+            </li>
+
+            <li class="list">
+                <a href="pdv.html">
+                    <span class="icon"><i class='bx bx-cart-minus'></i></span>
+                    <span class="text">PDV</span>
+                </a>
+            </li>
+
+            <li class="list">
+                <a href="quest.html">
+                    <span class="icon"><i class='bx bx-radar'></i></span>
+                    <span class="text">Missões</span>
+                </a>
+            </li>
+
+            <li class="list">
+                <a href="pdv.html">
+                    <span class="icon"><i class='bxr bx-plus-circle'></i></span>
+                    <span class="text">Venda</span>
+                </a>
+            </li>
+
+            <li class="list">
+                <a href="extrato.html">
+                    <span class="icon"><i class='bx bx-copy-alt'></i></span>
+                    <span class="text">Extrato</span>
+                </a>
+            </li>
+
+            <li class="list">
+                <a href="#" id="logout-btn">
+                    <span class="icon"><i class='bx bx-log-out'></i></span>
+                    <span class="text">Sair</span>
+                </a>
+            </li>
+            <div class="indicator color11"></div>
+        </ul>
+    </div>
+
+    <script src="js/app-core.js"></script>
+</body>
+</html>

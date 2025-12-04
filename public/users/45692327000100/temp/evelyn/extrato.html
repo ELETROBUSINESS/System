@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-adsense-account" content="ca-pub-9060080612658200">
+
+    <link rel="icon" href="/assets/img/iconWeb.png">
+    <title>Extrato | Evelyn</title>
+
+    <!-- Link To CSS -->
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
+<script> window.dataLayer = window.dataLayer || []; function gtag() { dataLayer.push(arguments); } gtag('js', new Date()); gtag('config', 'G-BV6V3GTMR0'); </script>
+
+<body>
+
+    <body class="painel-adm1" onload="AnimationLoading();">
+        <header>
+            <div class="loading">
+                <div class="efect-loading"></div>
+            </div>
+        </header>
+        <div class="info">
+            <div class="photo-profile">
+                <img src="/users/45692327000100/CD1/colaborador/evelyn/img/profile.png">
+                <div class="detals">
+                    <h1>Olá, Evelyn!</h1>
+                    <p>Colaboradora</p>
+                    <br>
+                </div>
+            </div>
+        </div>
+
+        <div class="new_nav">
+
+            <div class="conta-info">
+                <div class="shop  container">
+                    <p>Últimas vendas(8)</p>
+                    <div class="shop  container">
+                        <div class="mainContainer">
+                            <div class="boletosContainer">
+                                <div class="boletos-vencer" id="boletosContainer"></div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <script>
+                        document.addEventListener('DOMContentLoaded', () => {
+                            const container = document.getElementById('boletosContainer');
+
+                            // Loader antes do carregamento
+                            container.innerHTML = `
+      <div class="loader">
+        <div class="spinner"></div>
+      </div>
+    `;
+
+                            const url = "https://script.google.com/macros/s/AKfycbw4AyWVzzxfnwxgtUSR7p1ehjG62ufEPYQv8M3_tm9gTwGhRJ-lNhfI5QoIBLAV2x1gSA/exec?tipo=extratoID2";
+
+                            fetch(url)
+                                .then(res => res.json())
+                                .then(data => {
+                                    container.innerHTML = '';
+
+                                    data.forEach(boleto => {
+                                        const div = document.createElement('div');
+                                        div.classList.add('boleto-item');
+
+                                        div.innerHTML = `
+            <i class='bx  bx-shopping-bag'></i> 
+            <span class="data">${boleto.data}</span>
+            <span class="payment">${boleto.formaPagamento}</span>
+            <span class="valor">R$ ${boleto.valor}</span>
+          `;
+
+                                        container.appendChild(div);
+                                    });
+                                })
+                                .catch(err => {
+                                    container.innerHTML = '<p style="text-align:center;color:red;">Erro ao carregar boletos.</p>';
+                                    console.error('Erro ao carregar extrato:', err);
+                                });
+                        });
+                    </script>
+                </div>
+            </div>
+        </div>
+
+        <div class="navigation">
+            <ul>
+                <li class="list">
+                    <a href="/users/45692327000100/CD1/colaborador/evelyn/conta.html">
+                        <span class="icon"><i class='bx bx-home'></i></span>
+                        <span class="text">Home</span>
+                    </a>
+                </li>
+
+                <li class="list">
+                    <a href="/users/45692327000100/CD1/colaborador/evelyn/quest.html">
+                        <span class="icon"><i class='bx  bx-radar'></i></span>
+                        <span class="text">Missões</span>
+                    </a>
+                </li>
+
+                <li class="list">
+                    <a href="/users/45692327000100/CD1/colaborador/evelyn/push.html">
+                        <span class="icon"><i class='bxr  bx-plus-circle'></i></span>
+                        <span class="text">Venda</span>
+                    </a>
+                </li>
+
+                <li class="list active">
+                    <a href="#">
+                        <span class="icon"><i class='bx bxs-copy-alt'></i></span>
+                        <span class="text">Extrato</span>
+                    </a>
+                </li>
+
+                <li class="list">
+                    <a href="#" id="logout-btn">
+                        <span class="icon"><i class='bx bx-log-out'></i></span>
+                        <span class="text">Sair</span>
+                    </a>
+                </li>
+                <div class="indicator color11"></div>
+            </ul>
+        </div>
+
+        <script>
+            // Seleciona o botão "Sair" que acabamos de modificar
+            const logoutButton = document.getElementById('logout-btn');
+
+            // Verifica se o botão realmente existe na página antes de adicionar o evento
+            if (logoutButton) {
+                // Adiciona um "ouvinte" que espera por um clique no botão
+                logoutButton.addEventListener('click', (event) => {
+                    // 1. Impede que o link 'href' faça sua ação padrão (que seria navegar para '#')
+                    event.preventDefault();
+
+                    console.log("Botão de logout clicado.");
+
+                    // 2. Remove APENAS o token de sessão (acesso) do armazenamento do navegador
+                    localStorage.removeItem('session_token');
+                    console.log("Token de sessão removido. O token 'Lembrar-me' foi mantido.");
+
+                    // 3. Redireciona o usuário de volta para a página de login
+                    //    Ajuste o caminho se o seu arquivo de login tiver outro nome ou local.
+                    window.location.href = '/users/e-finance.html';
+                });
+            }
+        </script>
+
+        <!-- Link To JS -->
+        <script src="/assets/js/loading.js"></script>
+    </body>
+
+</html>
+</body>
+
+</html>

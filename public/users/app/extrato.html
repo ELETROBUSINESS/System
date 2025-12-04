@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extrato | ELETRO</title>
+    <link rel="icon" href="/assets/img/iconWeb.png">
+
+    <link rel="stylesheet" href="/assets/css/main.css">
+    
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <style>
+        /* Loading Suave */
+        body.loading-auth .main-content, body.loading-auth .navigation {
+            opacity: 0; pointer-events: none;
+        }
+        .skeleton { color: transparent; background: #ccc; border-radius: 4px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
+        /* Loader Interno */
+        .loader-internal { display: flex; justify-content: center; padding: 20px; }
+        .spinner-internal { width: 30px; height: 30px; border: 3px solid #eee; border-top-color: #db0038; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+
+<body class="painel-adm1 loading-auth">
+
+    <main class="main-content">
+        <div class="info">
+            <div class="photo-profile">
+                <img id="user-photo" src="https://placehold.co/150/db0038/FFFFFF?text=..." alt="Perfil">
+                <div class="detals">
+                    <h1 id="user-greeting">Olá!</h1>
+                    <p id="user-role">Carregando...</p>
+                </div>
+            </div>
+            <div class="balance">
+                <div class="pending">
+                    <p>Pontos</p>
+                    <span id="user-points" class="skeleton">0,00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="new_nav">
+            <div class="conta-info">
+                <div class="shop container">
+                    <p style="margin-bottom: 15px; font-weight: 600; color: #555;">Últimas vendas</p>
+                    <div class="mainContainer">
+                        <div class="boletosContainer">
+                            <div class="boletos-vencer" id="boletosContainer"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="navigation">
+        <ul>
+            <li class="list">
+                <a href="conta.html">
+                    <span class="icon"><i class='bx bx-home'></i></span>
+                    <span class="text">Home</span>
+                </a>
+            </li>
+            <li class="list">
+                <a href="quest.html">
+                    <span class="icon"><i class='bx bx-radar'></i></span>
+                    <span class="text">Missões</span>
+                </a>
+            </li>
+            <li class="list">
+                <a href="pdv.html">
+                    <span class="icon"><i class='bxr bx-plus-circle'></i></span>
+                    <span class="text">Venda</span>
+                </a>
+            </li>
+            <li class="list active">
+                <a href="extrato.html">
+                    <span class="icon"><i class='bx bxs-copy-alt'></i></span>
+                    <span class="text">Extrato</span>
+                </a>
+            </li>
+            <li class="list">
+                <a href="#" id="logout-btn">
+                    <span class="icon"><i class='bx bx-log-out'></i></span>
+                    <span class="text">Sair</span>
+                </a>
+            </li>
+            <div class="indicator color11"></div>
+        </ul>
+    </div>
+
+    <script src="js/app-core.js"></script>
+
+    <script>
+        // 1. Mapa de Usuários -> IDs de Extrato
+        const USER_EXTRATO_MAP = {
+            "ryan": "extratoID1",
+            "evelyn": "extratoID2",
+            // Adicione novos usuários aqui conforme necessário
+            // "novo_usuario": "extratoID3"
+        };
+
+        const EXTRATO_BASE_URL = "https://script.google.com/macros/s/AKfycbw4AyWVzzxfnwxgtUSR7p1ehjG62ufEPYQv8M3_tm9gTwGhRJ-lNhfI5QoIBLAV2x1gSA/exec";
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('boletosContainer');
+            
+            // Loader Inicial
+            container.innerHTML = `<div class="loader-internal"><div class="spinner-internal"></div></div>`;
+
+            // Aguarda o Firebase confirmar quem é o usuário
+            firebase.auth().onAuthStateChanged(async (user) => {
+                if (user) {
+                    try {
+                        // Busca o documento do usuário para ter certeza do 'username' correto
+                        const doc = await firebase.firestore().collection('users').doc(user.uid).get();
+                        
+                        if (doc.exists) {
+                            const userData = doc.data();
+                            // Pega o username (ex: "Evelyn") e normaliza para minúsculo ("evelyn")
+                            const usernameKey = (userData.username || "").toLowerCase().trim();
+                            
+                            // Verifica no mapa qual ID usar. Se não achar, usa um padrão ou exibe erro.
+                            const extratoID = USER_EXTRATO_MAP[usernameKey];
+
+                            if (extratoID) {
+                                carregarExtrato(extratoID, container);
+                            } else {
+                                container.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">Usuário sem extrato vinculado.</p>';
+                                console.warn(`Sem ID de extrato mapeado para: ${usernameKey}`);
+                            }
+                        }
+                    } catch (error) {
+                        console.error("Erro ao identificar usuário para extrato:", error);
+                        container.innerHTML = '<p style="text-align:center;color:red;">Erro de identificação.</p>';
+                    }
+                }
+            });
+        });
+
+        function carregarExtrato(tipoID, container) {
+            const finalUrl = `${EXTRATO_BASE_URL}?tipo=${tipoID}`;
+            console.log("Carregando extrato:", finalUrl);
+
+            fetch(finalUrl)
+                .then(res => res.json())
+                .then(data => {
+                    container.innerHTML = ''; // Remove loader
+
+                    if (!data || data.length === 0) {
+                        container.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">Nenhuma movimentação recente.</p>';
+                        return;
+                    }
+
+                    data.forEach(boleto => {
+                        const div = document.createElement('div');
+                        div.classList.add('boleto-item');
+                        
+                        // Formatação de valor simples se vier numérico
+                        let valorFormatado = boleto.valor;
+                        if (!String(boleto.valor).includes('R$')) {
+                             valorFormatado = `R$ ${boleto.valor}`;
+                        }
+
+                        div.innerHTML = `
+                            <i class='bx bx-shopping-bag'></i> 
+                            <span class="data">${boleto.data}</span>
+                            <span class="payment">${boleto.formaPagamento}</span>
+                            <span class="valor">${valorFormatado}</span>
+                        `;
+                        container.appendChild(div);
+                    });
+                })
+                .catch(err => {
+                    container.innerHTML = '<p style="text-align:center;color:var(--warning-red); padding:20px;">Erro ao carregar dados.</p>';
+                    console.error('Erro fetch extrato:', err);
+                });
+        }
+    </script>
+</body>
+</html>
