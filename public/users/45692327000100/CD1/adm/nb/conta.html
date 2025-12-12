@@ -14,6 +14,456 @@
         href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
     <link rel='stylesheet'
         href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+
+
+    <style>
+        /* --- Widget Premium --- */
+        :root {
+            --card-bg: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --brand-accent: #e11d48;
+            /* Rosa/Vermelho forte */
+            --success-green: #10b981;
+            --chart-track: #f1f5f9;
+        }
+
+        .credit-card-premium {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            position: relative;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        /* Header */
+        .premium-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .header-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .header-label i {
+            color: var(--brand-accent);
+            font-size: 1.1rem;
+        }
+
+        /* Tooltip Ícone */
+        .tooltip-container {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .info-icon {
+            font-size: 1.2rem;
+            color: #cbd5e1;
+            transition: color 0.3s;
+        }
+
+        .info-icon:hover {
+            color: var(--brand-accent);
+        }
+
+        .tooltip-content {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 200px;
+            background: #1e293b;
+            color: #fff;
+            font-size: 0.75rem;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-top: 8px;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .tooltip-container:hover .tooltip-content {
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Corpo Layout */
+        .premium-body {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            /* Alinha o gráfico com os números */
+            margin-bottom: 20px;
+        }
+
+        /* Coluna Dados */
+        .data-column {
+            flex: 1;
+            padding-right: 15px;
+        }
+
+        .sub-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .balance-group h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin: 0 0 15px 0;
+            line-height: 1;
+        }
+
+        .mini-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .stat-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .dot-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .dot-indicator.used {
+            background: var(--brand-accent);
+        }
+
+        .stat-val {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-left: auto;
+            /* Empurra valor pra direita */
+        }
+
+        /* Barra Micro */
+        .progress-track-micro {
+            width: 100%;
+            height: 4px;
+            background: var(--chart-track);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--brand-accent);
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        /* Coluna Gráfico */
+        .chart-column {
+            width: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .donut-chart-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .circular-chart {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+            max-height: 250px;
+        }
+
+        .circle-bg {
+            fill: none;
+            stroke: var(--chart-track);
+            stroke-width: 3.8;
+        }
+
+        .circle {
+            fill: none;
+            stroke: var(--brand-accent);
+            /* Cor da inadimplência */
+            stroke-width: 2.8;
+            stroke-linecap: round;
+            transition: stroke-dasharray 1s ease-out;
+        }
+
+        .percentage {
+            fill: var(--text-primary);
+            font-family: sans-serif;
+            font-weight: bold;
+            font-size: 0.5em;
+            text-anchor: middle;
+        }
+
+        .chart-label {
+            font-size: 0.6rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+            text-align: center;
+            display: block;
+        }
+
+        /* Footer Chips */
+        .premium-footer {
+            display: flex;
+            gap: 10px;
+            padding-top: 15px;
+            border-top: 1px solid var(--chart-track);
+        }
+
+        .risk-pill {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #f8fafc;
+            padding: 6px;
+            border-radius: 10px;
+            border: 1px solid transparent;
+        }
+
+        .risk-pill span {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+
+        .risk-pill strong {
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        /* Cores de Risco */
+        .risk-pill.low {
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .risk-pill.low strong {
+            color: #10b981;
+        }
+
+        .risk-pill.mid {
+            border-color: rgba(245, 158, 11, 0.2);
+        }
+
+        .risk-pill.mid strong {
+            color: #f59e0b;
+        }
+
+        .risk-pill.high {
+            border-color: rgba(225, 29, 72, 0.2);
+        }
+
+        .risk-pill.high strong {
+            color: #e11d48;
+        }
+
+        /* --- Animação Skeleton Loading --- */
+        .skeleton-text {
+            color: transparent !important;
+            /* Esconde o texto base (R$ 0,00) */
+            background: linear-gradient(90deg, #f1f5f9 25%, #cbd5e1 50%, #f1f5f9 75%);
+            /* Gradiente Cinza */
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 6px;
+            display: inline-block;
+            /* Garante que a barra apareça */
+            min-width: 40px;
+            /* Tamanho mínimo visual */
+        }
+
+        /* Ajuste específico para o texto grande do saldo */
+        h2.skeleton-text {
+            min-width: 120px;
+            border-radius: 8px;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        /* --- CSS Adicional: Abas e Faturamento --- */
+
+        /* Navegação Toggle */
+        .toggle-header {
+            display: flex;
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .toggle-btn.active {
+            background: #fff;
+            color: var(--text-primary);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .toggle-btn i {
+            font-size: 1.1rem;
+        }
+
+        /* Animação de Troca */
+        .view-content {
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Estilos Específicos do Faturamento */
+        .store-selector-premium {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .store-pill {
+            border: 1px solid var(--chart-track);
+            background: transparent;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .store-pill.active {
+            background: var(--text-primary);
+            /* Preto/Escuro */
+            color: #fff;
+            border-color: var(--text-primary);
+        }
+
+        .faturamento-display-premium {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .faturamento-display-premium h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin: 5px 0 10px 0;
+        }
+
+        .action-link {
+            font-size: 0.8rem;
+            color: var(--brand-accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        /* Barra de Meta (Decorativa para Faturamento) */
+        .daily-goal-bar {
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .goal-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .goal-track {
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .goal-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #34d399);
+            width: 65%;
+            /* Valor de exemplo */
+        }
+
+        /* Correção de Layout: Cabeçalho interno do Crediário */
+        .premium-header-inner {
+            display: flex;
+            justify-content: space-between;
+            /* Empurra o ícone para a direita */
+            align-items: center;
+            /* Centraliza verticalmente */
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        /* Ajuste fino para o ícone não colar no teto */
+        .premium-header-inner .tooltip-container {
+            display: flex;
+            align-items: center;
+        }
+    </style>
 </head>
 
 <body class="painel-adm1" onload="AnimationLoading()">
@@ -246,64 +696,269 @@
                     });
                 </script>
 
-                <div class="faturamento-section">
-                    <div class="faturamento-container">
-                        <div class="loja-selector">
-                            <button class="loja-btn active" data-loja="dtudo">
-                                <i class='bx bxs-store-alt'></i> D'Tudo Variedades
+
+                <div class="containerCard">
+                    <div class="credit-card-premium">
+
+                        <div class="toggle-header">
+                            <button class="toggle-btn active" onclick="switchView('crediario')" id="btn-crediario">
+                                <i class='bx bx-pie-chart-alt-2'></i> Crediário
                             </button>
-                            <button class="loja-btn" data-loja="dupao">
-                                <i class='bx bxs-store-alt'></i> Dupão
+                            <button class="toggle-btn" onclick="switchView('faturamento')" id="btn-faturamento">
+                                <i class='bx bx-bar-chart-alt-2'></i> Faturamento
                             </button>
                         </div>
-                        <div class="faturamento-display">
-                            <div class="valor-principal">
-                                <h1 id="faturamento-valor" class="skeleton shimmer"></h1>
-                                <a href="/users/45692327000100/CD1/adm/nb/metricas.html" class="metricas-link">Métricas
-                                    <i class='bx bx-chevron-right'></i></a>
+
+                        <div id="view-crediario" class="view-content active-view">
+                            <div class="premium-header-inner">
+                                <span class="sub-label">Visão Geral de Risco</span>
+                                <div class="tooltip-container">
+                                    <i class='bx bx-info-circle info-icon'></i>
+                                    <div class="tooltip-content" id="dynamic-tip">Analisando carteira...</div>
+                                </div>
                             </div>
-                            <p id="faturamento-hoje">Faturamento de hoje</p>
+
+                            <div class="premium-body">
+                                <div class="data-column">
+                                    <div class="balance-group">
+                                        <span class="sub-label">Disponível para Emprestar</span>
+                                        <h2 id="available-amount" class="skeleton-text">R$ --,--</h2>
+                                    </div>
+                                    <div class="mini-stats">
+                                        <div class="stat-row">
+                                            <span class="dot-indicator used"></span>
+                                            <span class="stat-label">Em uso:</span>
+                                            <span class="stat-val skeleton-text" id="used-amount">R$ --,--</span>
+                                        </div>
+                                        <div class="progress-track-micro">
+                                            <div class="progress-fill" id="limit-bar" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="chart-column">
+                                    <div class="donut-chart-container">
+                                        <svg viewBox="0 0 36 36" class="circular-chart">
+                                            <path class="circle-bg"
+                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                            <path class="circle" id="risk-circle" stroke-dasharray="0, 100"
+                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                            <text x="18" y="20.35" class="percentage skeleton-text"
+                                                id="general-risk-percent">--%</text>
+                                        </svg>
+                                        <span class="chart-label">Inadimplência</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="premium-footer">
+                                <div class="risk-pill low"><span>14d</span><strong id="risk-14d"
+                                        class="skeleton-text">--%</strong></div>
+                                <div class="risk-pill mid"><span>30d</span><strong id="risk-30d"
+                                        class="skeleton-text">--%</strong></div>
+                                <div class="risk-pill high"><span>90d+</span><strong id="risk-90d"
+                                        class="skeleton-text">--%</strong></div>
+                            </div>
                         </div>
+
+                        <div id="view-faturamento" class="view-content" style="display: none;">
+
+                            <div class="store-selector-premium">
+                                <button class="store-pill active" data-loja="dtudo"
+                                    onclick="selectStore('dtudo')">D'Tudo</button>
+                                <button class="store-pill" data-loja="dupao"
+                                    onclick="selectStore('dupao')">Dupão</button>
+                            </div>
+
+                            <div class="faturamento-display-premium">
+                                <span class="sub-label">Vendas de Hoje</span>
+                                <h1 id="faturamento-valor" class="skeleton-text">R$ --,--</h1>
+
+                                <div class="faturamento-actions">
+                                    <a href="/users/45692327000100/CD1/adm/nb/metricas.html" class="action-link">
+                                        Ver detalhes <i class='bx bx-chevron-right'></i>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="daily-goal-bar">
+                                <div class="goal-info">
+                                    <span>Meta Diária</span>
+                                    <span id="meta-percent">Calculando...</span>
+                                </div>
+                                <div class="goal-track">
+                                    <div class="goal-fill" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
+
                 <script>
-                    document.addEventListener('DOMContentLoaded', () => {
-                        const btnsLoja = document.querySelectorAll('.loja-btn');
-                        const valorFaturamentoEl = document.getElementById('faturamento-valor');
-                        const FATURAMENTO_URL = 'https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=2';
-                        let faturamentoDtudo = 'R$ 0,00';
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- CONFIGURAÇÕES ---
+        const API_BASE = 'https://script.google.com/macros/s/AKfycbzvd0BBLEEQlu-ksnIbsmnYcjQNQuZcTrsCmXMKHGM5g7DPEk3Nj95X47LKbj7rRSAT/exec';
+        
+        // URLs Exatas
+        const URL_CREDIARIO = `${API_BASE}?action=metricasCrediario`;
+        const URL_FATURAMENTO = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=2`; // Endpoint original que funciona
+        
+        const META_DIARIA_DTUDO = 1450.00;
 
-                        function updateDisplay(lojaId) {
-                            if (document.querySelector(`.loja-btn[data-loja="${lojaId}"]`).classList.contains('active')) return;
+        // Elementos Globais
+        const views = {
+            crediario: document.getElementById('view-crediario'),
+            faturamento: document.getElementById('view-faturamento')
+        };
+        const btns = {
+            crediario: document.getElementById('btn-crediario'),
+            faturamento: document.getElementById('btn-faturamento')
+        };
+        
+        // Cache visual
+        let cacheFaturamento = { dtudo: 'R$ --,--', dupao: 'R$ 0,00' };
 
-                            valorFaturamentoEl.classList.add('valor-faturamento-animando');
+        // --- FUNÇÕES DE UI ---
+        
+        // 1. Troca de Abas
+        window.switchView = function(viewName) {
+            Object.values(btns).forEach(b => b.classList.remove('active'));
+            btns[viewName].classList.add('active');
 
-                            setTimeout(() => {
-                                valorFaturamentoEl.textContent = (lojaId === 'dtudo') ? faturamentoDtudo : 'R$ 0,00';
-                                valorFaturamentoEl.classList.remove('valor-faturamento-animando');
-                            }, 200);
+            Object.values(views).forEach(v => v.style.display = 'none');
+            views[viewName].style.display = 'block';
+        };
 
-                            btnsLoja.forEach(btn => btn.classList.toggle('active', btn.dataset.loja === lojaId));
-                        }
+        // 2. Seletor de Loja (Faturamento)
+        window.selectStore = function(loja) {
+            document.querySelectorAll('.store-pill').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.loja === loja);
+            });
 
-                        fetch(FATURAMENTO_URL)
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data && data.faturamentoDate) {
-                                    faturamentoDtudo = data.faturamentoDate;
-                                    if (document.querySelector('.loja-btn.active').dataset.loja === 'dtudo') {
-                                        valorFaturamentoEl.textContent = faturamentoDtudo;
-                                        valorFaturamentoEl.classList.remove('skeleton', 'shimmer');
-                                    }
-                                }
-                            }).catch(error => {
-                                console.error('Erro ao buscar faturamento:', error);
-                                valorFaturamentoEl.textContent = 'Erro';
-                            });
+            const display = document.getElementById('faturamento-valor');
+            
+            // Se for Dupão, zera (ou implemente lógica futura). Se for D'Tudo, mostra o valor real.
+            const valorParaMostrar = (loja === 'dtudo') ? cacheFaturamento.dtudo : 'R$ 0,00';
+            
+            display.style.opacity = 0.5;
+            setTimeout(() => {
+                display.textContent = valorParaMostrar;
+                display.style.opacity = 1;
+                
+                // Recalcula meta visualmente se mudar de loja (opcional: zerar meta para dupão)
+                if(loja === 'dupao') updateMetaBar(0);
+                else updateMetaBar(parseMoney(valorParaMostrar));
+                
+            }, 150);
+        };
 
-                        btnsLoja.forEach(btn => btn.addEventListener('click', () => updateDisplay(btn.dataset.loja)));
-                    });
-                </script>
+        // Auxiliar: Converte "R$ 1.200,50" para float 1200.50
+        function parseMoney(moneyStr) {
+            if(!moneyStr || moneyStr === 'Erro') return 0;
+            return parseFloat(moneyStr.replace('R$', '').replace(/\./g, '').replace(',', '.').trim());
+        }
+
+        // Auxiliar: Atualiza a barra de meta
+        function updateMetaBar(valorAtual) {
+            let percent = (valorAtual / META_DIARIA_DTUDO) * 100;
+            if (percent > 100) percent = 100;
+            
+            const fill = document.querySelector('.goal-fill');
+            const text = document.getElementById('meta-percent');
+            
+            if(fill) fill.style.width = `${percent}%`;
+            
+            if(text) {
+                if(valorAtual >= META_DIARIA_DTUDO) {
+                    text.textContent = "Meta Batida! 🚀";
+                    text.style.color = "#10b981"; // Verde
+                } else {
+                    text.textContent = `${percent.toFixed(0)}% da meta`;
+                    text.style.color = "var(--text-secondary)";
+                }
+            }
+        }
+
+        // --- FETCH DADOS ---
+
+        // 1. CREDIÁRIO
+        fetch(URL_CREDIARIO)
+            .then(res => res.json())
+            .then(data => {
+                if(data.error) return;
+                
+                const format = val => parseFloat(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                
+                // Valores
+                document.getElementById('used-amount').textContent = format(data.used);
+                const limit = data.limit || 1;
+                document.getElementById('available-amount').textContent = format(limit - data.used);
+                
+                // Risco
+                document.getElementById('risk-14d').textContent = data.risk14 + '%';
+                document.getElementById('risk-30d').textContent = data.risk30 + '%';
+                document.getElementById('risk-90d').textContent = data.risk90 + '%';
+
+                // Gráfico
+                let riskTotal = parseFloat(data.risk14) + parseFloat(data.risk30) + parseFloat(data.risk90);
+                if(riskTotal > 100) riskTotal = 100;
+                
+                setTimeout(() => {
+                    const circle = document.getElementById('risk-circle');
+                    const bar = document.getElementById('limit-bar');
+                    
+                    if(circle) {
+                        circle.setAttribute('stroke-dasharray', `${riskTotal}, 100`);
+                        if(riskTotal < 5) circle.style.stroke = '#10b981';
+                        else if(riskTotal < 15) circle.style.stroke = '#f59e0b';
+                        else circle.style.stroke = '#e11d48';
+                    }
+                    
+                    if(bar) bar.style.width = `${Math.min((data.used/limit)*100, 100)}%`;
+                }, 100);
+
+                const riskText = document.getElementById('general-risk-percent');
+                if(riskText) riskText.textContent = riskTotal.toFixed(1) + '%';
+                
+                const tip = document.getElementById('dynamic-tip');
+                if(tip) tip.textContent = (parseFloat(data.risk90) > 0) ? "Atenção: Perdas detectadas." : "Carteira Saudável.";
+
+                // Limpa Skeletons
+                document.querySelectorAll('#view-crediario .skeleton-text').forEach(el => el.classList.remove('skeleton-text'));
+            });
+
+        // 2. FATURAMENTO (Conceito Antigo Restaurado)
+        fetch(URL_FATURAMENTO)
+            .then(res => res.json())
+            .then(data => {
+                // O script antigo retornava: { "valor1": "R$ XXX", "valor2": ..., "faturamentoDate": "R$ XXX" }
+                if (data && (data.faturamentoDate || data.valor1)) {
+                    // Tenta pegar faturamentoDate, se não tiver, pega valor1 (fallback)
+                    const valorRecebido = data.faturamentoDate || data.valor1 || 'R$ 0,00';
+                    
+                    cacheFaturamento.dtudo = valorRecebido;
+
+                    // Se a aba ativa for D'Tudo, atualiza a tela
+                    if(document.querySelector('.store-pill.active').dataset.loja === 'dtudo') {
+                        const display = document.getElementById('faturamento-valor');
+                        display.textContent = valorRecebido;
+                        display.classList.remove('skeleton-text');
+                        
+                        // Atualiza Meta
+                        updateMetaBar(parseMoney(valorRecebido));
+                    }
+                }
+            })
+            .catch(err => {
+                console.error("Erro Faturamento:", err);
+                const display = document.getElementById('faturamento-valor');
+                display.textContent = "Erro";
+                display.classList.remove('skeleton-text');
+            });
+    });
+</script>
+
 
                 <!-- BOTÕES DE OPÇÕES PARA MOBILE -->
                 <div class="option">
@@ -406,24 +1061,24 @@
     </div>
 
     <script>
-    // Script para ativar a animação da Navbar e abrir o Menu Lateral
-    const list = document.querySelectorAll('.list');
-    
-    function activeLink() {
-        list.forEach((item) => item.classList.remove('active'));
-        this.classList.add('active');
-        
-        // Se clicar no botão "Menu", abre a sidebar lateral
-        if (this.id === 'mobile-menu-btn') {
-            document.body.classList.toggle('sidebar-collapsed'); // Ou a classe que abre seu menu
-            // Se você usa o logic do sidebarToggle antigo:
-            const toggleBtn = document.getElementById('sidebarToggle');
-            if(toggleBtn) toggleBtn.click(); 
+        // Script para ativar a animação da Navbar e abrir o Menu Lateral
+        const list = document.querySelectorAll('.list');
+
+        function activeLink() {
+            list.forEach((item) => item.classList.remove('active'));
+            this.classList.add('active');
+
+            // Se clicar no botão "Menu", abre a sidebar lateral
+            if (this.id === 'mobile-menu-btn') {
+                document.body.classList.toggle('sidebar-collapsed'); // Ou a classe que abre seu menu
+                // Se você usa o logic do sidebarToggle antigo:
+                const toggleBtn = document.getElementById('sidebarToggle');
+                if (toggleBtn) toggleBtn.click();
+            }
         }
-    }
-    
-    list.forEach((item) => item.addEventListener('click', activeLink));
-</script>
+
+        list.forEach((item) => item.addEventListener('click', activeLink));
+    </script>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {

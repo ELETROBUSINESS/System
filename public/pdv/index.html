@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="assets/img/iconWeb.png">
+    <title>Ponto de Venda | ELETRO</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/pdv.css">
+</head>
+
+<body>
+
+    <div id="pdv-page-identifier" style="display:none;"></div>
+
+    <div class="bf-top-bar">
+        <div class="bf-track">
+            <span class="bf-content">
+                BLACK FRIDAY • OFERTAS IMPERDÍVEIS • DESCONTOS REAIS • BLACK FRIDAY • 22/11 DIVULGAÇÃO •
+                BLACK FRIDAY • OFERTAS IMPERDÍVEIS • DESCONTOS REAIS • BLACK FRIDAY • 22/11 DIVULGAÇÃO •
+            </span>
+        </div>
+    </div>
+
+    <div id="loading-overlay">
+        <i class='bx bx-loader-alt bx-spin'></i>
+        <p id="loading-message">Verificando caixa...</p>
+    </div>
+
+    <div class="main-content" id="main-content" style="display: none;">
+        
+        <div class="app-header">
+            <h1>Ponto de Venda</h1>
+            <button class="btn btn-danger" id="header-close-caixa-btn" style="width: auto;">
+                <i class='bx bx-stop-circle'></i> Fechar Caixa (F8)
+            </button>
+        </div>
+
+        <nav class="navbar" id="main-navbar">
+            <a href="index.html" class="navbar-item active" data-page="pdv">PDV</a>
+            <a href="pedidos.html" class="navbar-item" data-page="pedidos">
+                Pedidos <span class="nav-badge" id="pedidos-badge">0</span>
+            </a>
+            <a href="produtos.html" class="navbar-item" data-page="produtos">Produtos</a>
+            <a href="clientes.html" class="navbar-item" data-page="clientes">Clientes</a>
+            <a href="historico.html" class="navbar-item" data-page="historico">Histórico</a>
+            <a href="configuracoes.html" class="navbar-item" data-page="configuracoes">Configurações</a>
+            <div class="navbar-highlight" id="navbar-highlight"></div>
+        </nav>
+
+        <div class="pdv-layout">
+            
+            <div class="pdv-main">
+                <div class="tooltip" style="display:block;">
+                    <div class="barcode-scanner">
+                        <i class='bx bx-barcode-reader'></i>
+                        <input type="text" id="barcode-input" placeholder="Carregando produtos..." disabled>
+                    </div>
+                    <span class="tooltip-text">F2 para focar</span>
+                </div>
+                <p class="shortcut-hint" id="barcode-hint">Carregando produtos...</p>
+
+                <div class="item-list-container" id="item-list-container">
+                    <div class="empty-state" id="empty-state">
+                        <span>Nenhum item na venda</span>
+                    </div>
+                    <table class="item-list-table" id="item-list-table" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Qtd.</th>
+                                <th>Preço Unit.</th>
+                                <th style="text-align: center;">Oferta %</th>
+                                <th>Total</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="cart-items-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <aside class="pdv-summary">
+                <div class="card">
+                    <div class="summary-client-card" id="summary-client-card" style="display: none;">
+                        <div class="summary-client-header">
+                            <span class="summary-client-name">
+                                <i class='bx bx-user'></i> <span id="summary-client-name-text">Cliente</span>
+                            </span>
+                            <button class="btn-change-client" id="btn-change-summary-client">Alterar</button>
+                        </div>
+                        <div class="summary-limit-bar">
+                            <div class="summary-limit-fill" id="summary-limit-fill"></div>
+                        </div>
+                        <div class="summary-limit-text">
+                            <span id="summary-limit-label">Limite Disp.</span>
+                            <span id="summary-limit-value">R$ 0,00</span>
+                        </div>
+                    </div>
+
+                    <h2>Resumo da Venda</h2>
+                    
+                    <div class="summary-row"> 
+                        <span class="label">Subtotal (<span id="item-count">0</span> itens)</span> 
+                        <span class="value" id="summary-subtotal">R$ 0,00</span> 
+                    </div>
+                    
+                    <div class="summary-row summary-row-interactive" id="discount-toggle-row" title="Adicionar desconto"> 
+                        <span class="label"><i class='bx bx-purchase-tag'></i> Descontos (F3)</span> 
+                        <span class="value editable" id="summary-discount">- R$ 0,00</span> 
+                    </div>
+                    
+                    <div class="discount-popover" id="discount-popover">
+                        <div class="form-group"> 
+                            <label for="discount-input-r">Valor (R$)</label> 
+                            <input type="number" id="discount-input-r" placeholder="0,00" step="0.01"> 
+                        </div> 
+                        <span class="discount-popover-label">Desconto Rápido (%)</span>
+                        <div class="discount-perc-buttons" id="perc-btn-container"> 
+                            <button class="perc-btn" data-perc="1">1%</button> 
+                            <button class="perc-btn" data-perc="3">3%</button> 
+                            <button class="perc-btn" data-perc="5">5%</button> 
+                            <button class="perc-btn" data-perc="8">8%</button> 
+                        </div>
+                        <div class="effective-discount-display" id="effective-discount-display" style="display:none;"> 
+                            <i class='bx bx-badge-percent'></i><span id="discount-percentage-text"></span> 
+                        </div>
+                        <button class="btn-remove-discount" id="remove-discount-btn"> 
+                            <i class='bx bx-x'></i> Remover Desconto
+                        </button>
+                    </div>
+
+                    <div class="summary-row summary-row-interactive" id="payment-toggle-row" title="Selecionar forma de pagamento"> 
+                        <span class="label"><i class='bx bx-credit-card'></i> Pagamento (F4)</span> 
+                        <span class="value editable" id="summary-payment-method">Não selecionado</span> 
+                    </div>
+
+                    <div class="summary-row summary-row-interactive" id="seller-toggle-row" title="Selecionar Vendedor">
+                        <span class="label"><i class='bx bx-id-card'></i> Vendedor</span>
+                        <span class="value editable" id="summary-seller-name">Não informado</span>
+                    </div>
+                    <div class="discount-popover" id="seller-popover">
+                        <span class="discount-popover-label">Quem está vendendo?</span>
+                        <div class="seller-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px;">
+                            <button class="perc-btn seller-btn" data-name="Nubia">Nubia</button>
+                            <button class="perc-btn seller-btn" data-name="Evelyn">Evelyn</button>
+                            <button class="perc-btn seller-btn" data-name="Ryan">Ryan</button>
+                        </div>
+                    </div>
+
+                    <div class="summary-total">
+                        <div class="summary-row"> 
+                            <span class="label">Total</span> 
+                            <span class="value" id="summary-total">R$ 0,00</span> 
+                        </div>
+                    </div>
+                    
+                    <div class="tooltip" style="display:block;">
+                        <button class="btn btn-primary" id="finish-sale-btn">
+                            <i class='bx bx-check-circle'></i> Finalizar Venda (F9)
+                        </button>
+                        <span class="tooltip-text">Registra a venda e abre opções de recibo</span>
+                    </div>
+                    <div class="tooltip" style="display:block;">
+                        <button class="btn btn-secondary" id="cancel-sale-btn">
+                            <i class='bx bx-x-circle'></i> Cancelar Venda (F10)
+                        </button>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div> <div class="modal-overlay" id="open-caixa-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Abrir Caixa</h3>
+            </div>
+            <form id="open-caixa-form">
+                <div class="modal-body">
+                    <p style="margin-bottom:15px; color:var(--text-light);">Informe o fundo de troco inicial.</p>
+                    <div class="form-group">
+                        <label for="open-caixa-notas">Valor em Notas (R$)</label>
+                        <input type="number" id="open-caixa-notas" step="0.01" min="0" placeholder="0,00">
+                    </div>
+                    <div class="form-group">
+                        <label for="open-caixa-moedas">Valor em Moedas (R$)</label>
+                        <input type="number" id="open-caixa-moedas" step="0.01" min="0" placeholder="0,00">
+                    </div>
+                    <div class="toggle-switch-group">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="open-caixa-sem-valor">
+                            <span class="slider"></span>
+                        </label>
+                        <label for="open-caixa-sem-valor" style="margin-bottom:0;">Abrir sem valor inicial</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary" id="open-caixa-save-btn">
+                        <i class='bx bx-check'></i> Confirmar Abertura
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="payment-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Forma de Pagamento</h3>
+                <button class="close-modal-btn"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <p>Valor total: <strong id="payment-total" style="color:var(--primary-red); font-size:1.2rem;">R$ 0,00</strong></p>
+                <div class="payment-options" id="single-payment-options">
+                    <div class="payment-option" data-method="Dinheiro"> <i class='bx bx-dollar-circle' style="font-size: 32px;"></i> <span>Dinheiro (F6)</span> </div>
+                    <div class="payment-option" data-method="PIX"> <i class='bx bx-scan' style="font-size: 32px;"></i> <span>PIX (F7)</span> </div>
+                    <div class="payment-option" data-method="Cartão"> <i class='bx bx-credit-card' style="font-size: 32px;"></i> <span>Cartão (F8)</span> </div>
+                    <div class="payment-option" data-method="Crediário"> <i class='bx bx-user-check' style="font-size: 32px;"></i> <span>Crediário</span> </div>
+                </div>
+                
+                <button class="btn btn-secondary" id="split-payment-toggle-btn" style="margin-top: 20px;">
+                    <i class='bx bx-columns'></i> Dividir Pagamento
+                </button>
+
+                <div class="split-payment-area" id="split-payment-area" style="display: none; margin-top:20px; border-top:1px dashed #ddd; padding-top:20px;">
+                    <h4 style="margin-bottom:10px;">Dividir Pagamento</h4>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+                        <div class="form-group"> <select id="split-method-1"><option>Dinheiro</option><option>PIX</option><option>Cartão</option></select> </div>
+                        <div class="form-group"> <input type="number" id="split-value-1" step="0.01" placeholder="Valor 1"> </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div class="form-group"> <select id="split-method-2"><option>Dinheiro</option><option>PIX</option><option>Cartão</option></select> </div>
+                        <div class="form-group"> <input type="number" id="split-value-2" step="0.01" placeholder="Valor 2"> </div>
+                    </div>
+                    <div class="split-payment-remaining" id="split-payment-remaining" style="text-align:right; margin-top:10px; font-weight:bold; color:var(--primary-red);">Restante: R$ 0,00</div>
+                    <button class="btn btn-primary" id="confirm-split-payment-btn" style="margin-top:10px;" disabled>Confirmar Divisão</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="client-selection-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Selecionar Cliente</h3>
+                <button class="close-modal-btn"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <div style="position:relative; flex-grow:1;">
+                        <i class='bx bx-search' style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#999;"></i>
+                        <input type="text" id="client-selection-input" placeholder="Busque por nome..." style="width:100%; padding:10px 10px 10px 35px; border-radius:8px; border:1px solid #ddd;">
+                    </div>
+                    <button class="btn btn-primary" id="btn-new-client-modal" style="width: auto; padding:0 15px;"><i class='bx bx-plus'></i></button>
+                </div>
+                <div class="client-results-list" id="client-selection-results" style="max-height:250px; overflow-y:auto; border:1px solid #eee; border-radius:8px;"></div>
+                <p id="client-search-hint" style="text-align:center; color:#777; margin-top:10px; font-size:0.9rem;">Digite para buscar...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="print-selection-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Imprimir Comprovante</h3>
+                <button class="close-modal-btn"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div id="btn-print-thermal" class="print-option-card">
+                    <i class='bx bx-receipt' style="font-size:40px; color:var(--text-dark); margin-bottom:10px;"></i> 
+                    <h4>Térmica (80mm)</h4>
+                </div>
+                <div id="btn-print-a4" class="print-option-card">
+                    <i class='bx bx-file-blank' style="font-size:40px; color:var(--primary-red); margin-bottom:10px;"></i> 
+                    <h4>Folha A4</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="receipt-modal">
+        <div class="modal-content">
+            <div class="modal-body" style="text-align: center; padding:40px 24px;">
+                <div style="width:80px; height:80px; background:rgba(40,167,69,0.1); border-radius:50%; color:var(--success-green); display:grid; place-items:center; margin:0 auto 20px auto;">
+                    <i class='bx bx-check' style="font-size:48px;"></i>
+                </div>
+                <h3 style="font-size:1.5rem; margin-bottom:10px;">Venda Finalizada!</h3>
+                <p>Valor total: <strong id="receipt-total">R$ 0,00</strong></p>
+                <div class="modal-footer" style="flex-direction: column; background:transparent; border:none; padding-bottom:0;">
+                    <button class="btn btn-primary" id="print-receipt-btn"><i class='bx bx-printer'></i> Imprimir Recibo</button>
+                    <button class="btn btn-secondary" id="new-sale-btn" style="margin-top:10px;"><i class='bx bx-rotate-left'></i> Nova Venda</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="crediario-flow-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Finalizar Crediário</h3>
+                <button class="close-modal-btn"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="cred-step-1">
+                    <p style="text-align:center; margin-bottom:20px;">Cliente: <strong id="cred-flow-client-name">...</strong></p>
+                    <div style="background:#f9f9f9; padding:20px; border-radius:10px; text-align:center; margin-bottom:20px;">
+                        <i class='bx bx-printer' style="font-size:40px; color:#555;"></i>
+                        <p>Imprima o comprovante para assinatura.</p>
+                    </div>
+                    <button class="btn btn-primary" id="btn-force-print"><i class='bx bx-printer'></i> Imprimir Comprovante</button>
+                </div>
+                <div id="cred-step-2" style="display:none;">
+                    <p style="text-align:center;">Escaneie o QR Code abaixo para anexar a foto do comprovante assinado:</p>
+                    <div class="qr-img-wrapper" style="text-align:center; margin:20px 0;">
+                        <img src="" alt="QR" id="cred-qr-code" style="width:150px; height:150px; object-fit:contain;">
+                    </div>
+                    <button class="btn btn-success" id="btn-finish-crediario-final"><i class='bx bx-check-double'></i> Concluir e Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="quick-add-modal">
+        <div class="modal-content">
+            <div class="modal-header"><h3>Produto Novo</h3><button class="close-modal-btn"><i class='bx bx-x'></i></button></div>
+            <div class="modal-body">
+                <p>O código <strong id="scanned-barcode"></strong> não foi encontrado.</p>
+                <form id="quick-add-form">
+                    <div class="form-group"><label>Nome do Produto</label><input type="text" id="quick-product-name" required></div>
+                    <div class="form-group"><label>Preço (R$)</label><input type="number" id="quick-product-price" step="0.01" required></div>
+                    <button type="submit" class="btn btn-primary" id="quick-add-submit-btn" style="margin-top:10px;">Cadastrar e Adicionar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="close-caixa-modal">
+        <div class="modal-content">
+            <div class="modal-header"><h3>Fechar Caixa</h3><button class="close-modal-btn"><i class='bx bx-x'></i></button></div>
+            <form id="close-caixa-form">
+                <div class="modal-body">
+                    <div class="form-group"><label>Dinheiro em Caixa (Total)</label><input type="number" id="close-caixa-notas" required></div>
+                    <div class="form-group"><label>Valor Cartão (Maquininha)</label><input type="number" id="close-caixa-cartao" required></div>
+                    <div class="form-group"><label>Destino Depósito</label><input type="number" id="close-caixa-deposito" required></div>
+                    <div class="form-group"><label>Responsável</label><input type="text" id="close-caixa-assinatura" required></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-danger" id="close-caixa-save-btn">Confirmar Fechamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="confirm-modal">
+        <div class="modal-content">
+            <div class="modal-body" style="text-align:center;">
+                <i class='bx bx-error-alt' style="font-size:50px; color:var(--warning-red); margin-bottom:15px;"></i>
+                <h3 id="confirm-title" style="margin-bottom:10px;">Tem certeza?</h3>
+                <p id="confirm-message" style="margin-bottom:20px;">...</p>
+                <div style="display:flex; gap:10px; justify-content:center;">
+                    <button class="btn btn-secondary close-modal-btn">Cancelar</button>
+                    <button class="btn btn-danger" id="confirm-action-btn">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="alert-modal">
+        <div class="modal-content">
+            <div class="modal-body" style="text-align:center;">
+                <i class='bx bx-info-circle' style="font-size:50px; color:var(--info-blue); margin-bottom:15px;"></i>
+                <h3 id="alert-title" style="margin-bottom:10px;">Atenção</h3>
+                <p id="alert-message" style="margin-bottom:20px;">...</p>
+                <button class="btn btn-primary close-modal-btn">Entendi</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="pn">
+        <div class="pn-hr">
+            <div class="loading1"></div>
+            <p class="horario" id="horario">00:00:00</p>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <script src="assets/js/firebase-config.js"></script>
+    <script src="assets/js/utils.js"></script>
+    
+    <script src="assets/js/main.js"></script>
+    
+    <script src="assets/js/pdv.js"></script>
+
+</body>
+</html>

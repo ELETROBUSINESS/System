@@ -1,0 +1,29 @@
+<link rel="stylesheet" href="assets/css/pedidos.css">
+
+<body>
+    <div class="main-content">
+        <nav class="navbar">
+             <a href="index.html" class="navbar-item" data-page="pdv">PDV</a>
+             <a href="pedidos.html" class="navbar-item active" data-page="pedidos">Pedidos</a>
+             </nav>
+
+        <div class="card">
+            <div class="page-header">
+                <h2>Pedidos Online</h2>
+                <button onclick="startOrderPolling()" class="btn btn-secondary"><i class='bx bx-refresh'></i></button>
+            </div>
+            
+            <div class="orders-tabs" id="order-status-tabs">
+                </div>
+
+            <div id="orders-grid-container" class="orders-grid">
+                </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="order-details-modal">...</div>
+
+    <script src="assets/js/firebase-config.js"></script>
+    <script src="assets/js/utils.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/pedidos.js"></script> </body>

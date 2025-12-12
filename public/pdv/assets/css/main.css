@@ -1,0 +1,182 @@
+:root {
+    --primary-red: #db0038;
+    --bg-light: #FAFAFA;
+    --card-white: #FFFFFF;
+    --text-dark: #222222;
+    --text-light: #777777;
+    --border-color: #F0F0F0;
+    --success-green: #28a745;
+    --warning-red: #E53935;
+}
+
+/* Reset Básico */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', sans-serif; background-color: var(--bg-light); color: var(--text-dark); overflow-x: hidden; }
+
+/* ======================================== */
+/* == OVERLAY DE LOADING / BLOQUEIO      == */
+/* ======================================== */
+#loading-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(255, 255, 255, 0.95); /* Fundo quase sólido para esconder o sistema */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000; /* Acima de tudo */
+    text-align: center;
+    color: var(--text-dark);
+    transition: opacity 0.3s ease, visibility 0.3s;
+}
+
+#loading-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+#loading-overlay i {
+    font-size: 48px;
+    color: var(--primary-red);
+    margin-bottom: 16px;
+}
+
+#loading-overlay p {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+/* Ocultar conteúdo principal quando bloqueado */
+#main-content {
+    display: none; /* JS controla isso */
+}
+
+/* ======================================== */
+/* == MODAIS (ESTILO ORIGINAL)           == */
+/* ======================================== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: grid;
+    place-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background-color: var(--card-white);
+    border-radius: 16px;
+    padding: 0;
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    transform: scale(0.95) translateY(10px);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-overlay.active .modal-content {
+    transform: scale(1) translateY(0);
+}
+
+.modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h3 { margin: 0; font-size: 1.25rem; }
+
+.modal-body { padding: 24px; }
+
+.modal-footer {
+    padding: 20px 24px;
+    background-color: #f9f9f9;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    border-radius: 0 0 16px 16px;
+}
+
+/* Inputs do Modal */
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-weight: 500; margin-bottom: 8px; font-size: 0.9rem; }
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-red);
+    box-shadow: 0 0 0 3px rgba(219, 0, 56, 0.1);
+}
+
+/* Botões */
+.btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: 0.2s;
+    width: 100%;
+}
+.btn-primary { background-color: var(--primary-red); color: white; }
+.btn-primary:hover { background-color: #c00030; }
+
+/* Toggle Switch do Modal Caixa */
+.toggle-switch-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    cursor: pointer;
+}
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px; width: 18px;
+    left: 3px; bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+input:checked + .slider { background-color: var(--primary-red); }
+input:checked + .slider:before { transform: translateX(20px); }
+
+
+#open-caixa-modal {
+    z-index: 2005 !important;}
+
+#open-caixa-modal.active {
+    background-color: rgba(0, 0, 0, 0.8);
+}
