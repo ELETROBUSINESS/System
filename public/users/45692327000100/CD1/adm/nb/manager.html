@@ -3,667 +3,547 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>A N F da Silva LTDA | Gerenciamento</title>
-  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-  <link rel="stylesheet" href="/assets/css/main.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Financeiro | Gestão</title>
 
-  <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-  <link rel='stylesheet'
-    href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+
   <style>
-    /* O CSS permanece o mesmo da versão anterior, com um pequeno acréscimo para o novo campo de seleção */
     :root {
-      --cor-primaria: #c50037;
-      --cor-secundaria: #8f2d56;
-      --cor-fundo: #f8f9fa;
-      --cor-card: #ffffff;
-      --cor-texto-principal: #212529;
-      --cor-texto-secundario: #6c757d;
-      --cor-sombra: rgba(0, 0, 0, 0.08);
-      --cor-sucesso: #28a745;
-      --cor-borda: #dee2e6;
+      /* Cores do Projeto */
+      --primary: #c50037;       /* Vermelho (Usado para 'Já utilizado') */
+      --primary-dark: #9e002c;
+      --accent: #2c3e50;
+      
+      --bg-body: #f8fafc;
+      --bg-card: #ffffff;
+      
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      
+      --success: #10b981;
+      --warning: #f59e0b;       /* Amarelo (Usado para 'Vence Hoje') */
+      --danger: #ef4444;
+      
+      --shadow-card: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+      --radius: 20px;
     }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-body);
+      color: var(--text-main);
       margin: 0;
-      background-color: var(--cor-fundo);
-      color: var(--cor-texto-principal);
+      padding-bottom: 100px;
     }
 
+    /* --- HEADER --- */
     header {
-      background-color: var(--cor-primaria);
-      color: white;
-      padding: 15px 20px;
+      padding: 20px 20px 10px 20px;
       display: flex;
       align-items: center;
-      box-shadow: 0 2px 5px var(--cor-sombra);
-      border-bottom-left-radius: 20px;
-      border-bottom-right-radius: 20px;
+      justify-content: space-between;
     }
 
     header .back-button {
-      color: white;
-      font-size: 1.8em;
+      color: var(--text-main);
+      font-size: 24px;
       text-decoration: none;
-      margin-right: 15px;
+      padding: 8px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      display: flex;
     }
 
     header h1 {
       margin: 0;
-      font-size: 1.4em;
-    }
-
-    main {
-      padding: 20px 15px;
-    }
-
-    .section-title {
-      font-size: 1em;
-      font-weight: 500;
-      color: var(--cor-texto-secundario);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 15px;
-      padding-left: 5px;
-    }
-
-    #contas-container {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .conta-card {
-      background-color: #e8e9eb;
-      border-radius: 12px;
-      padding: 15px;
-      display: flex;
-      align-items: center;
-      box-shadow: 0 4px 12px var(--cor-sombra);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .conta-card .icon-container {
-      background-color: #fff;
-      border-radius: 50%;
-      width: 45px;
-      height: 45px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-right: 15px;
-    }
-
-    .conta-card .icon-container i {
-      color: var(--cor-primaria);
-      font-size: 1.8em;
-    }
-
-    .conta-detalhes {
-      flex-grow: 1;
-    }
-
-    .conta-detalhes .descricao {
-      font-weight: 600;
-      font-size: 1.1em;
-      margin-bottom: 2px;
-    }
-
-    .conta-detalhes .valor {
-      font-size: 1em;
-      color: var(--cor-texto-principal);
-    }
-
-    .conta-card .vencimento {
-      font-weight: 500;
-      color: var(--cor-texto-secundario);
-      font-size: 0.9em;
-      align-self: flex-start;
-    }
-
-    .btn-pagar {
-      background-color: var(--cor-primaria);
-      color: white;
-      border: none;
-      padding: 6px 14px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 0.8em;
-      margin-top: 8px;
-    }
-
-    .option {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
-    }
-
-    .card-opcao {
-      background-color: var(--cor-card);
-      border-radius: 12px;
-      box-shadow: 0 4px 12px var(--cor-sombra);
-      cursor: pointer;
-    }
-
-    .card-opcao a {
-      text-decoration: none;
-      color: var(--cor-texto-principal);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 20px 10px;
-    }
-
-    .card-opcao i {
-      font-size: 2.2em;
-      color: var(--cor-primaria);
-    }
-
-    .card-opcao h3 {
-      margin: 8px 0 0 0;
-      font-size: 0.9em;
-      font-weight: 500;
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.6);
-      justify-content: center;
-      align-items: center;
-      animation: fadeIn 0.3s;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-
-      to {
-        opacity: 1;
-      }
-    }
-
-    .modal-content {
-      background-color: var(--cor-card);
-      border-radius: 16px;
-      width: 90%;
-      max-width: 400px;
-      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-    }
-
-    #modalNovaConta .modal-content {
-      padding: 20px;
-    }
-
-    #modalNovaConta .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 25px;
-    }
-
-    #modalNovaConta .modal-header h2 {
-      margin: 0;
-      font-size: 1.8em;
+      font-size: 1.1rem;
       font-weight: 700;
     }
 
-    #modalNovaConta .modal-header h2 span {
-      border-bottom: 3px solid var(--cor-primaria);
+    /* --- DASHBOARD & BARRA DE LIMITE --- */
+    .dashboard-wrapper { padding: 10px 20px 20px 20px; }
+
+    .finance-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 24px;
+        box-shadow: var(--shadow-card);
     }
 
-    #modalNovaConta .modal-header .icon-wrapper {
-      background-color: var(--cor-primaria);
-      color: white;
-      border-radius: 8px;
-      width: 30px;
-      height: 30px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 1.4em;
+    /* Navegação Mês */
+    .month-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .month-nav button {
+        background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 10px;
+        color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .month-label { font-size: 0.9rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); }
+
+    /* Total */
+    .total-display { text-align: center; margin-bottom: 25px; }
+    .total-display span { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; }
+    .total-display strong { display: block; font-size: 2rem; font-weight: 800; color: var(--primary); letter-spacing: -1px; }
+
+    /* BARRA SEGMENTADA (Lógica Nova) */
+    .limit-container { margin-top: 10px; }
+    
+    .limit-labels {
+        display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 8px; font-weight: 600; color: var(--text-muted);
     }
 
-    #formNovaConta .form-group {
-      margin-bottom: 20px;
+    /* O Container da barra */
+    .segmented-bar {
+        display: flex;
+        height: 14px;
+        border-radius: 7px;
+        overflow: hidden;
+        background-color: #e2e8f0; /* Cor do fundo (Cinza - Disponível) */
+        position: relative;
     }
 
-    #formNovaConta .form-group label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      color: var(--cor-texto-secundario);
-      font-size: 0.9em;
+    /* Segmentos */
+    .seg-used { background-color: var(--primary); height: 100%; transition: width 0.6s ease; }
+    .seg-today { background-color: var(--warning); height: 100%; transition: width 0.6s ease; }
+    
+    /* Legenda da Barra */
+    .bar-legend {
+        display: flex; gap: 15px; justify-content: center; margin-top: 12px;
     }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: var(--text-muted); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
 
-    #formNovaConta .form-group input[type="text"],
-    #formNovaConta .form-group input[type="number"] {
-      width: 100%;
-      padding: 14px;
-      border: none;
-      background-color: #f0f2f5;
-      border-radius: 10px;
-      box-sizing: border-box;
-      font-size: 1em;
-    }
 
-    #formNovaConta .form-group-icon {
+    /* --- LISTA DE CARTÕES (Estilo Preferido) --- */
+    main { padding: 0 20px; }
+    .section-title { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 15px; }
+
+    #contas-container { display: flex; flex-direction: column; gap: 12px; }
+
+    .conta-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.03); /* Sombra suave */
+      display: flex; align-items: center; gap: 15px;
       position: relative;
+      border: 1px solid transparent;
+      transition: transform 0.1s;
     }
-
-    #formNovaConta .form-group-icon i {
-      position: absolute;
-      right: 15px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--cor-texto-secundario);
+    .conta-card:active { transform: scale(0.98); }
+    
+    /* Box da Data */
+    .date-box {
+        background: #f1f5f9;
+        min-width: 52px; height: 52px; border-radius: 12px;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        color: var(--text-muted); font-weight: 700;
     }
+    .date-box .d { font-size: 1.1rem; line-height: 1; }
+    .date-box .m { font-size: 0.65rem; text-transform: uppercase; margin-top: 2px; }
 
-    #formNovaConta .btn-submit {
-      background-color: var(--cor-primaria);
-      color: white;
-      padding: 14px 20px;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      width: 100%;
-      font-size: 1.1em;
-      font-weight: bold;
-      transition: background-color 0.2s;
+    /* Detalhes */
+    .conta-info { flex: 1; overflow: hidden; }
+    .conta-info h3 { margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .conta-info p { margin: 0; font-size: 0.9rem; font-weight: 500; color: var(--text-muted); }
+    
+    /* Destaques visuais para Hoje/Vencido */
+    .conta-card.status-hoje { border: 1px solid var(--warning); background: #fffbeb; }
+    .status-hoje .date-box { background: rgba(245, 158, 11, 0.2); color: #d97706; }
+    
+    .conta-card.status-vencido { border: 1px solid var(--danger); background: #fef2f2; }
+    .status-vencido .date-box { background: rgba(239, 68, 68, 0.15); color: #dc2626; }
+
+
+    /* --- SKELETON LOADING (Estilo Penúltima Versão) --- */
+    .skeleton-card {
+        background: white; border-radius: 16px; padding: 16px; display: flex; align-items: center; gap: 15px; margin-bottom: 12px;
     }
-
-    #formNovaConta .btn-submit:disabled {
-      background-color: #cccccc;
-      cursor: not-allowed;
+    .sk-box { width: 52px; height: 52px; border-radius: 12px; background: #e2e8f0; }
+    .sk-lines { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+    .sk-line { height: 12px; border-radius: 4px; background: #e2e8f0; }
+    
+    .shimmer {
+        animation: shimmer 1.5s infinite linear;
+        background: linear-gradient(to right, #eff1f3 4%, #e2e2e2 25%, #eff1f3 36%);
+        background-size: 1000px 100%;
     }
+    @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
 
-    #modalPagarConta .modal-content {
-      padding: 25px;
+
+    /* --- FAB (SPEED DIAL) --- */
+    .fab-container {
+        position: fixed; bottom: 30px; right: 25px; z-index: 900;
+        display: flex; flex-direction: column-reverse; align-items: center; gap: 15px;
     }
-
-    #modalPagarConta .modal-header h2 {
-      margin: 0 0 15px 0;
-      font-size: 1.4em;
+    .fab-main {
+        width: 60px; height: 60px; background: var(--primary); color: white; border-radius: 50%;
+        border: none; box-shadow: 0 8px 20px rgba(197, 0, 55, 0.3); font-size: 2rem;
+        display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.3s;
     }
-
-    .info-pagamento {
-      margin-bottom: 20px;
+    .fab-option {
+        width: 0; height: 0; opacity: 0; border-radius: 50%; border: none; color: white;
+        display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer;
+        transition: all 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.1); position: relative;
     }
-
-    .info-pagamento p {
-      margin: 8px 0;
-      color: var(--cor-texto-secundario);
+    .fab-option::after {
+        content: attr(data-label); position: absolute; right: 60px; background: white; color: var(--text-main);
+        padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; white-space: nowrap;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1); opacity: 0; pointer-events: none; transition: opacity 0.2s;
     }
+    .fab-container.active .fab-main { transform: rotate(45deg); background: var(--text-main); }
+    .fab-container.active .fab-option { width: 50px; height: 50px; opacity: 1; }
+    .fab-container.active .fab-option::after { opacity: 1; }
+    #btnOpcaoNova { background: var(--success); }
+    #btnOpcaoSaida { background: var(--accent); }
 
-    .info-pagamento span {
-      font-weight: 600;
-      color: var(--cor-texto-principal);
-    }
+    /* --- MODAIS --- */
+    .modal { display: none; position: fixed; z-index: 2000; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); justify-content: center; align-items: flex-end; }
+    .modal-content { background: white; width: 100%; max-width: 500px; padding: 30px 25px; border-radius: 25px 25px 0 0; animation: slideUp 0.3s; }
+    @keyframes slideUp { from {transform: translateY(100%);} to {transform: translateY(0);} }
+    
+    input, select { width: 100%; padding: 16px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 1rem; margin-top: 8px; outline: none; background: #f8fafc; }
+    input:focus { border-color: var(--primary); background: white; }
+    .btn-submit { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; margin-top: 20px; font-size: 1rem; }
 
-    /* Estilo para o novo campo de seleção */
-    .info-pagamento select {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid var(--cor-borda);
-      border-radius: 8px;
-      box-sizing: border-box;
-      font-size: 1em;
-      margin-top: 5px;
-    }
-
-    .modal-buttons {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    .modal-buttons button {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      font-size: 1em;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    #btnConfirmarPagamento {
-      background-color: var(--cor-sucesso);
-      color: white;
-    }
-
-    #btnCancelarPagamento {
-      background-color: #e9ecef;
-      color: var(--cor-texto-principal);
-    }
-
-    #feedback {
-      text-align: center;
-      margin: 10px 0;
-      font-weight: bold;
-    }
-
-    .loading-spinner {
-      border: 4px solid rgba(0, 0, 0, 0.1);
-      border-top: 4px solid var(--cor-primaria);
-      border-radius: 50%;
-      width: 30px;
-      height: 30px;
-      animation: spin 1s linear infinite;
-      margin: 20px auto;
-    }
-
-    @keyframes spin {
-      0% {
-        transform: rotate(0deg);
-      }
-
-      100% {
-        transform: rotate(360deg);
-      }
-    }
-
-
-    /* NOVOS ESTILOS PARA A MÁSCARA DE PAGAMENTO */
-    .payment-mask {
-      display: none;
-      /* Começa escondido */
-      position: fixed;
-      z-index: 2000;
-      /* Z-index alto para ficar sobre todos os elementos */
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(255, 255, 255, 0.85);
-      /* Fundo branco semitransparente */
-      backdrop-filter: blur(4px);
-      /* Efeito de desfoque (para navegadores modernos) */
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      animation: fadeIn 0.3s;
-    }
-
-    .payment-mask .spinner {
-      border: 5px solid rgba(0, 0, 0, 0.1);
-      border-top: 5px solid var(--cor-primaria);
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      animation: spin 1s linear infinite;
-    }
-
-    .payment-mask p {
-      margin-top: 20px;
-      font-size: 1.1em;
-      font-weight: 500;
-      color: var(--cor-texto-principal);
-    }
   </style>
 </head>
 
 <body>
-  <div id="payment-mask" class="payment-mask">
-    <div class="payment-mask-content">
-      <div class="spinner"></div>
-      <p>Processando pagamento...</p>
-    </div>
-  </div>
 
   <header>
-    <a href="/users/45692327000100/CD1/adm/nb/conta.html" class="back-button"><i class='bx bx-arrow-back'></i></a>
-    <h1>Contas a Pagar</h1>
+    <a href="/users/45692327000100/CD1/adm/nb/conta.html" class="back-button"><i class='bx bx-chevron-left'></i></a>
+    <h1>Gestão Financeira</h1>
+    <div style="width: 40px;"></div>
   </header>
+
+  <div class="dashboard-wrapper">
+      <div class="finance-card">
+          <div class="month-nav">
+              <button id="prevMonth"><i class='bx bx-chevron-left'></i></button>
+              <span class="month-label" id="currentMonthLabel">...</span>
+              <button id="nextMonth"><i class='bx bx-chevron-right'></i></button>
+          </div>
+
+          <div class="total-display">
+              <span>Total a Pagar</span>
+              <strong id="monthTotal">R$ 0,00</strong>
+          </div>
+
+          <div class="limit-container">
+              <div class="limit-labels">
+                  <span id="labelUtilizado">Utilizado: R$ 0</span>
+                  <span>Teto: R$ 15.000</span>
+              </div>
+              
+              <div class="segmented-bar">
+                  <div class="seg-used" id="barUsed" style="width: 0%"></div>
+                  <div class="seg-today" id="barToday" style="width: 0%"></div>
+              </div>
+
+              <div class="bar-legend">
+                  <div class="legend-item"><div class="dot" style="background:var(--primary)"></div>Já Utilizado</div>
+                  <div class="legend-item"><div class="dot" style="background:var(--warning)"></div>Vence Hoje</div>
+                  <div class="legend-item"><div class="dot" style="background:#e2e8f0"></div>Disponível</div>
+              </div>
+          </div>
+      </div>
+  </div>
+
   <main>
-    <br><br>
-    <h2 class="section-title">Prestes a vencer</h2>
-    <div id="feedback"></div>
-    <div id="contas-container"></div>
-    <h2 class="section-title" style="margin-top: 30px;">Opções</h2>
-    <div class="option">
-      <div class="card-opcao">
-        <a href="/users/45692327000100/CD1/adm/nb/pushBuy.html">
-          <i class='bx bx-dollar-circle'></i>
-          <h3>Saída</h3>
-        </a>
-      </div>
-      <div class="card-opcao">
-        <a id="btnNovaConta">
-          <i class='bx bx-form'></i>
-          <h3>Nova conta</h3>
-        </a>
-      </div>
-    </div>
+    <div class="section-title">Lançamentos do Mês</div>
+    <div id="contas-container">
+        </div>
+    <div style="height: 40px;"></div>
   </main>
+
+  <div class="fab-container" id="fabMenu">
+      <button class="fab-option" id="btnOpcaoSaida" data-label="Registrar Saída"><i class='bx bx-trending-down'></i></button>
+      <button class="fab-option" id="btnOpcaoNova" data-label="Nova Conta"><i class='bx bx-plus'></i></button>
+      <button class="fab-main" id="fabTrigger"><i class='bx bx-plus'></i></button>
+  </div>
 
   <div id="modalNovaConta" class="modal">
     <div class="modal-content">
-      <div class="modal-header">
-        <h2><span>Nova</span> conta</h2>
-        <div class="icon-wrapper"><i class='bx bx-plus'></i></div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+          <h2 style="margin:0;">Nova Conta</h2>
+          <i class='bx bx-x' style="font-size:1.5rem; padding:10px;" onclick="document.getElementById('modalNovaConta').style.display='none'"></i>
       </div>
-      <form id="formNovaConta">
-        <div class="form-group">
-          <label for="beneficiario">Pessoa/Empresa beneficiária</label>
-          <input type="text" id="beneficiario" placeholder="Digite o nome" required>
-        </div>
-        <div class="form-group">
-          <label for="valor">Valor da conta</label>
-          <input type="text" id="valor" placeholder="R$ 0,00" required>
-        </div>
-        <div class="form-group form-group-icon">
-          <label for="vencimento">Data de Vencimento</label>
-          <input type="text" id="vencimento" placeholder="DD/MM/AAAA" maxlength="10" required>
-          <i class='bx bx-calendar'></i>
-        </div>
-        <button type="submit" class="btn-submit">Registrar</button>
+      <form id="formNovaConta" style="margin-top:20px;">
+          <label>Beneficiário</label>
+          <input type="text" id="beneficiario" required placeholder="Nome do favorecido">
+          <label style="display:block; margin-top:15px;">Valor</label>
+          <input type="tel" id="valor" required placeholder="R$ 0,00" inputmode="numeric">
+          <label style="display:block; margin-top:15px;">Vencimento</label>
+          <input type="text" id="vencimento" required placeholder="DD/MM/AAAA" maxlength="10" inputmode="numeric">
+          <button type="submit" class="btn-submit">Registrar</button>
       </form>
     </div>
   </div>
 
   <div id="modalPagarConta" class="modal">
     <div class="modal-content">
-      <div class="modal-header">
-        <h2>Confirmar Pagamento</h2>
-      </div>
-      <div class="info-pagamento">
-        <p>Descrição: <span id="pagar-descricao"></span></p>
-        <p>Valor: <span id="pagar-valor"></span></p>
-        <p>Vencimento: <span id="pagar-vencimento"></span></p>
-
-        <div class="form-group" style="margin-top:15px;">
-          <label for="forma-pagamento" style="font-weight:600;">Forma de Pagamento</label>
-          <select id="forma-pagamento" required>
-            <option value="Boleto">Boleto</option>
-            <option value="Dinheiro">Dinheiro</option>
-            <option value="Pix">Pix</option>
-            <option value="Cartão de Crédito">Cartão de Crédito</option>
-            <option value="Cartão de Débito">Cartão de Débito</option>
-          </select>
-        </div>
-      </div>
-      <div class="modal-buttons">
-        <button id="btnCancelarPagamento">Cancelar</button>
-        <button id="btnConfirmarPagamento">Confirmar</button>
+      <h2 style="margin:0 0 5px 0;">Baixar Conta</h2>
+      <p style="color:#64748b; margin:0 0 15px 0;">Confirmar pagamento de:</p>
+      <h3 id="pagar-descricao">...</h3>
+      <h2 id="pagar-valor" style="color:var(--primary); margin:5px 0 20px 0;">...</h2>
+      <label>Forma de Pagamento</label>
+      <select id="forma-pagamento">
+          <option value="Pix">Pix</option>
+          <option value="Boleto">Boleto</option>
+          <option value="Dinheiro">Dinheiro</option>
+          <option value="Cartão">Cartão</option>
+      </select>
+      <div style="display:flex; gap:10px; margin-top:20px;">
+          <button style="flex:1; padding:15px; border-radius:12px; border:none; background:#f1f5f9; font-weight:600;" onclick="document.getElementById('modalPagarConta').style.display='none'">Cancelar</button>
+          <button id="btnConfirmarPagamento" style="flex:1; padding:15px; border-radius:12px; border:none; background:var(--success); color:white; font-weight:700;">Confirmar</button>
       </div>
     </div>
   </div>
 
   <script>
-    // *** SUA URL DO APPS SCRIPT ***
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzkAs8dsJMepkQBhdL--XwO3wUQuQgvA-DFPEwraiz8ijiX9gkPMBuAeM5udQjzmJvzqQ/exec";
+    const LIMITE_SUGERIDO = 15000.00;
 
-    // Seletores de Elementos
-    // Adicione esta linha junto com os outros 'const' no topo do script
-    const paymentMask = document.getElementById('payment-mask');
+    let todasContas = [];
+    let currentDate = new Date();
+
     const contasContainer = document.getElementById('contas-container');
-    const feedbackEl = document.getElementById('feedback');
-    const modalNovaConta = document.getElementById('modalNovaConta');
-    const btnNovaConta = document.getElementById('btnNovaConta');
-    const formNovaConta = document.getElementById('formNovaConta');
-    const modalPagarConta = document.getElementById('modalPagarConta');
-    const btnConfirmarPagamento = document.getElementById('btnConfirmarPagamento');
-    const btnCancelarPagamento = document.getElementById('btnCancelarPagamento');
-    const inputVencimento = document.getElementById('vencimento');
-    const inputValor = document.getElementById('valor');
+    const labelMonth = document.getElementById('currentMonthLabel');
+    const labelTotal = document.getElementById('monthTotal');
+    const barUsed = document.getElementById('barUsed');
+    const barToday = document.getElementById('barToday');
+    const labelUtilizado = document.getElementById('labelUtilizado');
 
-    // LÓGICA DO MODAL
-    btnNovaConta.onclick = () => { formNovaConta.reset(); modalNovaConta.style.display = 'flex'; };
-    window.onclick = (event) => {
-      if (event.target == modalNovaConta) modalNovaConta.style.display = 'none';
-      if (event.target == modalPagarConta) modalPagarConta.style.display = 'none';
+    // --- INICIALIZAÇÃO ---
+    document.addEventListener('DOMContentLoaded', () => {
+        renderSkeleton(); // Começa com o skeleton
+        carregarContas();
+        updateDateLabel();
+    });
+
+    // --- NAVEGAÇÃO E DATAS ---
+    document.getElementById('prevMonth').onclick = () => changeMonth(-1);
+    document.getElementById('nextMonth').onclick = () => changeMonth(1);
+
+    function changeMonth(delta) {
+        currentDate.setMonth(currentDate.getMonth() + delta);
+        updateDateLabel();
+        renderSkeleton();
+        // Simula um delay pequeno para transição suave se os dados já estiverem em memória
+        setTimeout(renderizarPainel, 300); 
+    }
+
+    function updateDateLabel() {
+        const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        labelMonth.textContent = `${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+    }
+
+    // --- SKELETON UI (CARREGAMENTO ANTIGO) ---
+    function renderSkeleton() {
+        let html = '';
+        for(let i=0; i<4; i++) {
+            html += `
+            <div class="skeleton-card">
+                <div class="sk-box shimmer"></div>
+                <div class="sk-lines">
+                    <div class="sk-line shimmer" style="width: 70%"></div>
+                    <div class="sk-line shimmer" style="width: 40%"></div>
+                </div>
+            </div>`;
+        }
+        contasContainer.innerHTML = html;
+        // Zera a barra enquanto carrega
+        barUsed.style.width = '0%';
+        barToday.style.width = '0%';
+        labelTotal.textContent = '...';
+    }
+
+    // --- LÓGICA DE DADOS ---
+    async function carregarContas() {
+        try {
+            const response = await fetch(`${SCRIPT_URL}?action=getContas`);
+            const data = await response.json();
+            todasContas = data.error ? [] : data;
+            renderizarPainel();
+        } catch (error) {
+            contasContainer.innerHTML = `<p style="text-align:center; padding:20px;">Erro de conexão.</p>`;
+        }
+    }
+
+    function renderizarPainel() {
+        const mesFiltro = currentDate.getMonth() + 1;
+        const anoFiltro = currentDate.getFullYear();
+        const hoje = new Date(); 
+        hoje.setHours(0,0,0,0);
+
+        // Filtra contas do mês
+        const contasDoMes = todasContas.filter(c => {
+            const [d, m, a] = c.vencimento.split('/');
+            return parseInt(m) === mesFiltro && parseInt(a) === anoFiltro;
+        });
+
+        // 1. CÁLCULO DA BARRA DE LIMITE (LÓGICA PEDIDA)
+        let totalGeral = 0;
+        let totalVenceHoje = 0;
+        let totalOutros = 0;
+
+        contasDoMes.forEach(c => {
+            const valor = parseFloat(c.valor);
+            totalGeral += valor;
+            
+            const [d, m, a] = c.vencimento.split('/');
+            const dataConta = new Date(a, m-1, d);
+            
+            if(dataConta.getTime() === hoje.getTime()) {
+                totalVenceHoje += valor;
+            } else {
+                totalOutros += valor;
+            }
+        });
+
+        // Atualiza Texto Total
+        labelTotal.textContent = 'R$ ' + totalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+        labelUtilizado.textContent = `Utilizado: R$ ${totalGeral.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
+
+        // Atualiza Largura da Barra
+        // A barra cinza (fundo) é 100%. As divs internas ocupam % relativas ao LIMITE TOTAL.
+        const pctOutros = (totalOutros / LIMITE_SUGERIDO) * 100;
+        const pctHoje = (totalVenceHoje / LIMITE_SUGERIDO) * 100;
+
+        // Trava visualmente em 100% pra não quebrar layout se estourar o limite
+        const totalPct = pctOutros + pctHoje;
+        const fatorAjuste = totalPct > 100 ? (100 / totalPct) : 1;
+
+        barUsed.style.width = `${pctOutros * fatorAjuste}%`;
+        barToday.style.width = `${pctHoje * fatorAjuste}%`;
+
+
+        // 2. RENDERIZAR LISTA (CARD ESTILO ANTIGO)
+        contasContainer.innerHTML = '';
+        if (contasDoMes.length === 0) {
+            contasContainer.innerHTML = `<div style="text-align:center; padding:30px; color:#94a3b8;">Mês livre de contas.</div>`;
+            return;
+        }
+
+        // Ordenar por data
+        contasDoMes.sort((a,b) => {
+             const [da, ma, aa] = a.vencimento.split('/');
+             const [db, mb, ab] = b.vencimento.split('/');
+             return new Date(aa,ma-1,da) - new Date(ab,mb-1,db);
+        });
+
+        contasDoMes.forEach(conta => {
+            const [dia, mes, ano] = conta.vencimento.split('/');
+            const dataConta = new Date(ano, mes - 1, dia);
+            const mesTexto = dataConta.toLocaleString('pt-BR', { month: 'short' }).replace('.', '');
+            
+            let statusClass = '';
+            if (dataConta.getTime() === hoje.getTime()) statusClass = 'status-hoje';
+            else if (dataConta < hoje) statusClass = 'status-vencido';
+
+            const card = document.createElement('div');
+            card.className = `conta-card ${statusClass}`;
+            card.onclick = () => abrirModalPagar(conta);
+            
+            card.innerHTML = `
+                <div class="date-box">
+                    <span class="d">${dia}</span>
+                    <span class="m">${mesTexto}</span>
+                </div>
+                <div class="conta-info">
+                    <h3>${conta.descricao}</h3>
+                    <p>R$ ${parseFloat(conta.valor).toFixed(2).replace('.', ',')}</p>
+                </div>
+                <div style="color:#cbd5e1;"><i class='bx bx-chevron-right' style="font-size:1.5rem"></i></div>
+            `;
+            contasContainer.appendChild(card);
+        });
+    }
+
+    // --- INTERAÇÕES DO FAB ---
+    const fabTrigger = document.getElementById('fabTrigger');
+    const fabMenu = document.getElementById('fabMenu');
+    
+    fabTrigger.addEventListener('click', () => fabMenu.classList.toggle('active'));
+    document.addEventListener('click', (e) => { if (!fabMenu.contains(e.target)) fabMenu.classList.remove('active'); });
+
+    document.getElementById('btnOpcaoNova').onclick = () => {
+        fabMenu.classList.remove('active');
+        document.getElementById('formNovaConta').reset();
+        document.getElementById('modalNovaConta').style.display = 'flex';
+    };
+    document.getElementById('btnOpcaoSaida').onclick = () => {
+        window.location.href = "/users/45692327000100/CD1/adm/nb/pushBuy.html";
     };
 
-    // FORMATAÇÃO AUTOMÁTICA DE INPUTS
-    inputVencimento.addEventListener('input', (e) => {
-      let value = e.target.value.replace(/\D/g, '');
-      if (value.length > 2) value = value.slice(0, 2) + '/' + value.slice(2);
-      if (value.length > 5) value = value.slice(0, 5) + '/' + value.slice(5, 9);
-      e.target.value = value;
-    });
-    inputValor.addEventListener('input', (e) => {
-      let value = e.target.value.replace(/\D/g, '');
-      value = (parseInt(value, 10) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-      if (value === 'NaN') value = '';
-      e.target.value = 'R$ ' + value;
-    });
+    // --- MODAIS ---
+    window.abrirModalPagar = (conta) => {
+        document.getElementById('pagar-descricao').textContent = conta.descricao;
+        document.getElementById('pagar-valor').textContent = 'R$ ' + parseFloat(conta.valor).toFixed(2).replace('.', ',');
+        document.getElementById('btnConfirmarPagamento').dataset.id = conta.id;
+        document.getElementById('modalPagarConta').style.display = 'flex';
+    };
 
-    // CARREGAR CONTAS
-    document.addEventListener('DOMContentLoaded', carregarContas);
-    async function carregarContas() {
-      setLoading(true, 'Carregando contas...');
-      try {
-        const response = await fetch(`${SCRIPT_URL}?action=getContas`);
-        if (!response.ok) throw new Error(`Erro de comunicação com o servidor.`);
-        const contas = await response.json();
-        renderizarContas(contas);
-      } catch (error) {
-        mostrarErro(error);
-      }
-    }
-
-    function renderizarContas(contas) {
-      setLoading(false);
-      contasContainer.innerHTML = '';
-      if (contas.error) return mostrarErro({ message: contas.message });
-      if (contas.length === 0) {
-        contasContainer.innerHTML = '<p>Nenhuma conta a pagar encontrada. ✨</p>';
-        return;
-      }
-      contas.forEach(conta => {
-        const card = document.createElement('div');
-        card.className = 'conta-card';
-        card.innerHTML = `
-                    <div class="icon-container"><i class='bx bx-dollar'></i></div>
-                    <div class="conta-detalhes">
-                        <span class="descricao">${conta.descricao}</span>
-                        <span class="valor">R$ ${parseFloat(conta.valor).toFixed(2).replace('.', ',')}</span>
-                        <button class="btn-pagar" data-id="${conta.id}" data-descricao="${conta.descricao}" data-valor="R$ ${parseFloat(conta.valor).toFixed(2).replace('.', ',')}" data-vencimento="${conta.vencimento}">Pagar</button>
-                    </div>
-                    <span class="vencimento">${conta.vencimento}</span>`;
-        contasContainer.appendChild(card);
-      });
-      document.querySelectorAll('.btn-pagar').forEach(button => button.addEventListener('click', handleAbrirModalPagar));
-    }
-
-    // ADICIONAR NOVA CONTA
-    formNovaConta.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const submitButton = formNovaConta.querySelector('.btn-submit');
-      submitButton.disabled = true;
-      submitButton.textContent = 'Salvando...';
-      modalNovaConta.style.display = 'none';
-      setLoading(true, 'Registrando...');
-      try {
-        const now = new Date();
-        const pad = (num) => num.toString().padStart(2, '0');
-        const id = `${pad(now.getDate())}${pad(now.getMonth() + 1)}${now.getFullYear()}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-        const [dia, mes, ano] = inputVencimento.value.split('/');
-        const dataFormatada = `${ano}-${mes}-${dia}`;
-        const valorNumerico = inputValor.value.replace(/\D/g, '') / 100;
-        const dadosConta = { id, descricao: document.getElementById('beneficiario').value, valor: valorNumerico, vencimento: dataFormatada };
-        const response = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'adicionarConta', data: dadosConta }) });
-        const result = await response.json();
-        if (!result.success) throw new Error(result.message);
-        await carregarContas();
-      } catch (error) {
-        mostrarErro(error);
-      } finally {
-        submitButton.disabled = false;
-        submitButton.textContent = 'Registrar';
-      }
+    document.getElementById('formNovaConta').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button');
+        const txt = btn.innerText; btn.innerText = '...'; btn.disabled = true;
+        try {
+            const [d, m, a] = document.getElementById('vencimento').value.split('/');
+            const payload = {
+                id: Date.now().toString(),
+                descricao: document.getElementById('beneficiario').value,
+                valor: document.getElementById('valor').value.replace(/\D/g,'') / 100,
+                vencimento: `${a}-${m}-${d}`
+            };
+            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'adicionarConta', data: payload }) });
+            document.getElementById('modalNovaConta').style.display = 'none';
+            carregarContas();
+        } catch (err) { alert('Erro'); }
+        btn.innerText = txt; btn.disabled = false;
     });
 
-    // LÓGICA DO PAGAMENTO COM MODAL
-    function handleAbrirModalPagar(event) {
-      const button = event.target;
-      document.getElementById('pagar-descricao').textContent = button.dataset.descricao;
-      document.getElementById('pagar-valor').textContent = button.dataset.valor;
-      document.getElementById('pagar-vencimento').textContent = button.dataset.vencimento;
-      btnConfirmarPagamento.dataset.id = button.dataset.id;
-      modalPagarConta.style.display = 'flex';
-    }
+    document.getElementById('btnConfirmarPagamento').onclick = async (e) => {
+        const btn = e.target; btn.innerText = '...';
+        try {
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'pagarConta',
+                    id: btn.dataset.id,
+                    paymentMethod: document.getElementById('forma-pagamento').value
+                })
+            });
+            document.getElementById('modalPagarConta').style.display = 'none';
+            carregarContas();
+        } catch (err) { alert('Erro'); }
+        btn.innerText = 'Confirmar';
+    };
 
-    btnCancelarPagamento.onclick = () => modalPagarConta.style.display = 'none';
-
-    // SUBSTITUA A VERSÃO ANTIGA DESTA FUNÇÃO PELA NOVA
-    btnConfirmarPagamento.addEventListener('click', async (event) => {
-      const idConta = event.target.dataset.id;
-      const formaPagamento = document.getElementById('forma-pagamento').value;
-
-      modalPagarConta.style.display = 'none'; // Esconde o modal de confirmação
-      paymentMask.style.display = 'flex';     // MOSTRA a máscara de processamento
-
-      try {
-        // Envia o ID e a forma de pagamento para o script
-        const response = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          body: JSON.stringify({
-            action: 'pagarConta',
-            id: idConta,
-            paymentMethod: formaPagamento
-          })
-        });
-        const result = await response.json();
-        if (!result.success) throw new Error(result.message);
-
-        // Espera a lista de contas ser atualizada
-        await carregarContas();
-
-      } catch (error) {
-        // Se der erro, mostra a mensagem de erro
-        mostrarErro(error);
-      } finally {
-        // O bloco 'finally' garante que a máscara será escondida
-        // tanto em caso de sucesso quanto em caso de erro.
-        paymentMask.style.display = 'none'; // ESCONDE a máscara
-      }
+    // Máscaras Input
+    document.getElementById('valor').addEventListener('input', (e) => {
+        let v = e.target.value.replace(/\D/g, '');
+        v = (parseInt(v || 0, 10) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+        e.target.value = 'R$ ' + v;
+    });
+    document.getElementById('vencimento').addEventListener('input', (e) => {
+        let v = e.target.value.replace(/\D/g, '');
+        if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2);
+        if (v.length > 5) v = v.slice(0, 5) + '/' + v.slice(5, 9);
+        e.target.value = v;
     });
 
-    // FUNÇÕES AUXILIARES
-    function setLoading(isLoading, message = '') {
-      feedbackEl.innerHTML = isLoading ? `<div class="loading-spinner"></div><p>${message}</p>` : '';
-      if (isLoading) feedbackEl.style.color = 'var(--cor-texto)';
-    }
-    function mostrarErro(error) {
-      setLoading(false);
-      feedbackEl.textContent = `Erro: ${error.message}`;
-      feedbackEl.style.color = 'var(--cor-primaria)';
-    }
   </script>
 </body>
-
 </html>
