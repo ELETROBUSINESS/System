@@ -202,10 +202,9 @@
             font-weight: 800;
         }
 
-        /* GRÁFICO (Aumentado) */
+        /* --- GRÁFICO ATUALIZADO (DONUT) --- */
         .chart-column {
-            width: 140px;
-            /* Aumentado */
+            width: 150px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -214,8 +213,8 @@
 
         .donut-chart-container {
             position: relative;
-            width: 130px;
-            height: 130px;
+            width: 140px;
+            height: 140px;
         }
 
         /* Aumentado */
@@ -230,19 +229,70 @@
         .circle-bg {
             fill: none;
             stroke: var(--chart-track);
-            stroke-width: 2.8;
+            stroke-width: 3;
         }
 
         .circle-interactive {
             fill: none;
-            stroke-width: 2.8;
+            stroke-width: 3;
             stroke-linecap: round;
-            transition: stroke-dasharray 1s ease-out, stroke-width 0.2s;
+            transition: stroke-dasharray 1s ease-out;
             cursor: pointer;
         }
 
         .circle-interactive:hover {
             stroke-width: 4.5;
+        }
+
+        /* Cores */
+        .circle-risk {
+            stroke: var(--brand-accent);
+        }
+
+        /* --- NOVO: TEXTO NO CENTRO DO GRÁFICO --- */
+        .chart-center-info {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .center-percent {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+
+        .center-label {
+            font-size: 0.6rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        /* Tooltip Flutuante */
+        .chart-float-tooltip {
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30, 41, 59, 0.95);
+            color: #fff;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            width: max-content;
+            text-align: center;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 50;
         }
 
         /* Highlight */
@@ -253,27 +303,6 @@
 
         .circle-inner {
             stroke: var(--brand-accent);
-        }
-
-        /* Tooltip Flutuante do Gráfico */
-        .chart-float-tooltip {
-            position: absolute;
-            bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(30, 41, 59, 0.95);
-            color: #fff;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 0.7rem;
-            width: 180px;
-            text-align: center;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.2s;
-            z-index: 50;
-            line-height: 1.3;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
         .chart-float-tooltip.visible {
@@ -829,20 +858,23 @@
                                         <svg viewBox="0 0 36 36" class="circular-chart">
                                             <path class="circle-bg"
                                                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                            <path class="circle-interactive circle-outer" id="paying-circle"
+                                            
+                                            <path class="circle-interactive circle-risk" id="risk-circle"
                                                 stroke-dasharray="0, 100"
-                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                                data-type="pagou" />
-
-                                            <path class="circle-bg"
-                                                d="M18 5.0845 a 12.9155 12.9155 0 0 1 0 25.831 a 12.9155 12.9155 0 0 1 0 -25.831"
-                                                stroke-width="2.8" />
-                                            <path class="circle-interactive circle-inner" id="risk-circle"
-                                                stroke-dasharray="0, 100" stroke-width="2.8"
-                                                d="M18 5.0845 a 12.9155 12.9155 0 0 1 0 25.831 a 12.9155 12.9155 0 0 1 0 -25.831"
-                                                data-type="atrasou" />
+                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                                         </svg>
+
+                                        <div class="chart-center-info">
+                                            <span class="center-percent" id="center-percent-text">0%</span>
+                                            <span class="center-label">Inadimplência</span>
+                                        </div>
+                                        
                                         <div class="chart-float-tooltip" id="chart-tooltip">Info</div>
+                                    </div>
+                                    <div class="chart-legend">
+                                        <div class="l-item">
+                                            <div class="dot" style="background:#db0038"></div>Atrasou
+                                        </div>
                                     </div>
                                     <div class="chart-legend">
                                         <div class="l-item">
@@ -887,15 +919,19 @@
 
                 <script>
                     document.addEventListener('DOMContentLoaded', () => {
-                        // CONFIG
+                        // --- CONFIGURAÇÕES ---
                         const API_BASE = 'https://script.google.com/macros/s/AKfycbzvd0BBLEEQlu-ksnIbsmnYcjQNQuZcTrsCmXMKHGM5g7DPEk3Nj95X47LKbj7rRSAT/exec';
                         const URL_CREDIARIO = `${API_BASE}?action=metricasCrediario`;
                         const URL_FATURAMENTO = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=2`;
 
-                        // UI HELPERS
+                        // --- FUNÇÕES DE UI (TROCA DE ABAS) ---
                         window.switchView = function (viewName) {
+                            // Esconde todas as views
                             document.querySelectorAll('.view-content').forEach(v => v.style.display = 'none');
+                            // Mostra a selecionada
                             document.getElementById(`view-${viewName}`).style.display = 'block';
+
+                            // Atualiza botões
                             document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
                             document.getElementById(`btn-${viewName}`).classList.add('active');
                         }
@@ -903,6 +939,7 @@
                         window.toggleRiskArea = function () {
                             const area = document.getElementById('risk-area');
                             const icon = document.getElementById('risk-arrow');
+
                             if (area.style.display === 'block') {
                                 area.style.display = 'none';
                                 icon.className = 'bx bx-chevron-down';
@@ -912,103 +949,121 @@
                             }
                         }
 
-                        function formatMoney(val) { return parseFloat(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+                        function formatMoney(val) {
+                            return parseFloat(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                        }
 
-                        // Variáveis Gráfico
+                        // Variável para Tooltips
                         let chartData = { pay: 0, late: 0 };
 
-                        // FETCH CREDIÁRIO
+                        // --- FETCH DADOS DE RISCO (CREDIÁRIO) ---
                         fetch(URL_CREDIARIO)
                             .then(res => res.json())
                             .then(data => {
-                                if (data.error) return;
+                                if (data.error) {
+                                    console.error("Erro API:", data.message);
+                                    return;
+                                }
 
-                                // 1. DADOS FINANCEIROS (CORRIGIDO)
-                                const limitTotal = parseFloat(data.limit || 0); // Soma dos limites
-                                const usedTotal = parseFloat(data.used || 0);   // Soma das dívidas
-                                const available = limitTotal - usedTotal;       // Quanto ainda pode emprestar
+                                // 1. DADOS FINANCEIROS
+                                const limitTotal = parseFloat(data.limit || 0);
+                                const usedTotal = parseFloat(data.used || 0);
+                                const available = limitTotal - usedTotal;
 
-                                // Exibe Limite Total como Principal
                                 document.getElementById('total-limit-display').textContent = formatMoney(limitTotal);
-
-                                // Exibe Disponível como Secundário
                                 document.getElementById('available-amount').textContent = formatMoney(available);
-
-                                // Exibe Recebido no Mês
                                 document.getElementById('received-month').textContent = formatMoney(data.receivedMonth || 0);
 
-                                // Barra Lateral (Uso vs Total)
-                                // Se limitTotal for 0, evita divisão por zero
+                                // Barra de Progresso
                                 const pctUsed = limitTotal > 0 ? Math.min((usedTotal / limitTotal) * 100, 100) : 0;
                                 document.getElementById('limit-bar').style.width = `${pctUsed}%`;
 
-                                // 2. DADOS DO GRÁFICO
+                                // 2. GRÁFICO DONUT
+                                // A API agora retorna 'payingPercent' (% em dia) e 'totalRiskPercent' (% atrasado)
                                 let payPct = parseFloat(data.payingPercent || 0);
+                                let latePct = parseFloat(data.totalRiskPercent || 0);
+
+                                // Correção visual para soma 100%
+                                if (limitTotal > 0 && (payPct + latePct) !== 100) {
+                                    latePct = 100 - payPct; // Força soma 100%
+                                }
+
                                 chartData.pay = payPct.toFixed(1);
+                                chartData.late = latePct.toFixed(1);
 
-                                let lateTotal = parseFloat(data.risk14) + parseFloat(data.risk30) + parseFloat(data.risk90);
-                                if (lateTotal > 100) lateTotal = 100;
-                                chartData.late = lateTotal.toFixed(1);
+                                // Atualiza Texto Central
+                                const centerText = document.getElementById('center-percent-text');
+                                if (centerText) {
+                                    centerText.textContent = `${latePct.toFixed(0)}%`;
+                                    centerText.style.color = latePct > 0 ? 'var(--brand-accent)' : 'var(--success-green)';
+                                }
 
+                                // Animação dos Círculos
                                 setTimeout(() => {
-                                    const outer = document.getElementById('paying-circle');
-                                    const inner = document.getElementById('risk-circle');
-                                    if (outer) outer.setAttribute('stroke-dasharray', `${payPct}, 100`);
-                                    if (inner) inner.setAttribute('stroke-dasharray', `${lateTotal}, 100`);
+                                    // O círculo de risco deve preencher a porcentagem de atraso
+                                    const riskCircle = document.getElementById('risk-circle');
+                                    if (riskCircle) {
+                                        riskCircle.setAttribute('stroke-dasharray', `${latePct}, 100`);
+
+                                        // Se for 0%, muda cor para verde para indicar sucesso total
+                                        if (latePct === 0) riskCircle.style.stroke = 'var(--success-green)';
+                                    }
                                 }, 100);
 
-                                // 3. DADOS DE RISCO (Footer)
+                                // 3. DETALHES DE RISCO
                                 document.getElementById('risk-14d').textContent = data.risk14 + '%';
                                 document.getElementById('risk-30d').textContent = data.risk30 + '%';
                                 document.getElementById('risk-90d').textContent = data.risk90 + '%';
 
-                                // 4. DICA DE HEADER
+                                // 4. DICA INTELIGENTE
                                 const tipEl = document.getElementById('dynamic-tip');
-                                let tipText = "Sua gestão está estável.";
-                                if (parseFloat(data.risk90) > 0) tipText = "Atenção: Há valores vencidos há mais de 90 dias.";
-                                else if (lateTotal > 20) tipText = "Cuidado: A taxa de inadimplência está subindo.";
-                                else if (payPct > 50) tipText = "Ótimo! A maioria dos clientes está pagando em dia.";
-                                tipEl.textContent = tipText;
+                                let tipText = "Gestão Saudável.";
+                                if (parseFloat(data.risk90) > 0) tipText = "Atenção: Valores vencidos há +90 dias.";
+                                else if (latePct > 20) tipText = "Cuidado: Inadimplência subindo.";
+                                else if (payPct > 50) tipText = "Ótimo! Carteira em dia.";
 
-                                // Limpeza
+                                if (tipEl) tipEl.textContent = tipText;
+
+                                // Remove Skeleton Loaders
                                 document.querySelectorAll('.skeleton-text').forEach(el => el.classList.remove('skeleton-text'));
-                            });
+                            })
+                            .catch(err => console.error("Erro Fetch Crediário:", err));
 
-                        // FETCH FATURAMENTO
-                        fetch(URL_FATURAMENTO).then(r => r.json()).then(d => {
-                            const val = d.faturamentoDate || d.valor1 || 'R$ 0,00';
-                            const el = document.getElementById('faturamento-valor');
-                            if (el) { el.textContent = val; el.classList.remove('skeleton-text'); }
-                        });
+                        // --- FETCH DADOS DE FATURAMENTO ---
+                        fetch(URL_FATURAMENTO)
+                            .then(r => r.json())
+                            .then(d => {
+                                const val = d.faturamentoDate || d.valor1 || 'R$ 0,00';
+                                const el = document.getElementById('faturamento-valor');
+                                if (el) {
+                                    el.textContent = val;
+                                    el.classList.remove('skeleton-text');
+                                }
+                            })
+                            .catch(err => console.error("Erro Fetch Faturamento:", err));
 
-                        // --- INTERAÇÃO TOOLTIP GRÁFICO ---
+                        // --- INTERAÇÃO TOOLTIP ---
                         const tooltip = document.getElementById('chart-tooltip');
                         const paths = document.querySelectorAll('.circle-interactive');
 
-                        paths.forEach(path => {
-                            const showTip = (e) => {
-                                const type = path.getAttribute('data-type');
-                                let text = '';
+                        if (tooltip && paths.length > 0) {
+                            paths.forEach(path => {
+                                const showTip = () => {
+                                    // Como só temos o círculo de risco interativo agora, mostramos sempre o atraso
+                                    tooltip.innerHTML = `<strong>${chartData.late}% Inadimplente</strong><br>Atraso > 1 dia`;
+                                    tooltip.classList.add('visible');
+                                };
 
-                                if (type === 'pagou') {
-                                    text = `<strong>${chartData.pay}% Pagou</strong>Pagou ao menos o valor mínimo.`;
-                                } else {
-                                    text = `<strong>${chartData.late}% Atrasou</strong>Atraso mínimo de 1 dia.`;
-                                }
+                                const hideTip = () => {
+                                    tooltip.classList.remove('visible');
+                                };
 
-                                tooltip.innerHTML = text;
-                                tooltip.classList.add('visible');
-                            };
-
-                            const hideTip = () => {
-                                tooltip.classList.remove('visible');
-                            };
-
-                            path.addEventListener('mouseenter', showTip);
-                            path.addEventListener('mouseleave', hideTip);
-                            path.addEventListener('touchstart', (e) => { e.preventDefault(); showTip(); });
-                            path.addEventListener('touchend', () => setTimeout(hideTip, 3000));
-                        });
+                                path.addEventListener('mouseenter', showTip);
+                                path.addEventListener('mouseleave', hideTip);
+                                path.addEventListener('touchstart', (e) => { e.preventDefault(); showTip(); });
+                                path.addEventListener('touchend', () => setTimeout(hideTip, 2000));
+                            });
+                        }
                     });
                 </script>
 
