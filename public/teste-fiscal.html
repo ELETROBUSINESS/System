@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard Fiscal | Eletro Business</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
+    <style>
+        :root {
+            /* Branding Eletro Business / Fiscal */
+            --brand: #db0038;
+            --brand-hover: #b0002d;
+            --brand-light: #fff0f3;
+            
+            /* UI System */
+            --bg-body: #f8fafc;
+            --bg-surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            
+            /* Status Colors */
+            --success: #10b981;
+            --success-bg: #ecfdf5;
+            --error: #ef4444;
+            --error-bg: #fef2f2;
+            
+            /* Spacing & Radius */
+            --radius: 16px;
+            --header-height: 64px;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- 1. NAVBAR (Topo) --- */
+        .navbar {
+            height: var(--header-height);
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+        }
+
+        .nav-brand {
+            display: flex; align-items: center; gap: 10px;
+            font-weight: 700; font-size: 18px; color: var(--text-main);
+            letter-spacing: -0.5px;
+        }
+        
+        .nav-brand i { color: var(--brand); font-size: 24px; }
+
+        .nav-links {
+            display: flex; gap: 24px;
+        }
+
+        .nav-item {
+            font-size: 14px; font-weight: 500; color: var(--text-muted);
+            text-decoration: none; transition: color 0.2s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        
+        .nav-item:hover, .nav-item.active { color: var(--brand); }
+        .nav-item.active { font-weight: 600; }
+
+        .user-profile {
+            display: flex; align-items: center; gap: 12px;
+        }
+        .user-avatar {
+            width: 32px; height: 32px; background: var(--brand-light); color: var(--brand);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: 600; font-size: 12px;
+        }
+
+        /* --- 2. LAYOUT DE PÁGINA --- */
+        .page-wrapper {
+            margin-top: var(--header-height);
+            padding: 32px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .page-header {
+            width: 100%; max-width: 600px;
+            margin-bottom: 24px;
+            display: flex; justify-content: space-between; align-items: end;
+        }
+
+        .breadcrumbs { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+        .page-title { font-size: 24px; font-weight: 700; margin: 0; letter-spacing: -0.5px; }
+
+        /* --- 3. CARD PRINCIPAL (Dashboard) --- */
+        .main-card {
+            width: 100%; max-width: 600px;
+            background: var(--bg-surface);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        /* Header do Card */
+        .card-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        .authority-info { display: flex; align-items: center; gap: 16px; }
+        .logo-box {
+            width: 48px; height: 48px; border: 1px solid var(--border); border-radius: 10px;
+            padding: 4px; display: flex; align-items: center; justify-content: center;
+        }
+        .logo-box img { max-width: 100%; border-radius: 6px; }
+        
+        .authority-text h2 { font-size: 16px; font-weight: 700; margin: 0; }
+        .authority-text p { font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0; }
+
+        /* Botão de Privacidade */
+        .privacy-toggle {
+            background: transparent; border: 1px solid var(--border);
+            color: var(--text-muted); border-radius: 8px;
+            width: 36px; height: 36px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .privacy-toggle:hover { background: var(--bg-body); color: var(--brand); border-color: var(--brand); }
+        .privacy-toggle.active { background: var(--brand-light); color: var(--brand); border-color: var(--brand); }
+
+        /* Corpo do Card */
+        .card-body { padding: 24px; }
+
+        /* Status Box */
+        .status-box {
+            background: var(--bg-body); border-radius: 12px; padding: 20px;
+            text-align: center; border: 1px dashed var(--border);
+            transition: all 0.3s; margin-bottom: 24px;
+        }
+        .status-box.success { background: var(--success-bg); border-color: var(--success); border-style: solid; }
+        .status-box h3 { font-size: 16px; font-weight: 600; margin: 8px 0 4px 0; }
+        .status-box p { font-size: 13px; color: var(--text-muted); margin: 0; }
+        .status-icon { font-size: 28px; color: var(--text-muted); }
+        .status-box.success .status-icon { color: var(--success); }
+
+        /* Timeline */
+        .timeline { 
+            padding-left: 20px; border-left: 2px solid var(--border); 
+            display: flex; flex-direction: column; gap: 20px; margin-bottom: 24px;
+        }
+        .t-item { position: relative; opacity: 0.4; transition: opacity 0.3s; }
+        .t-item.active { opacity: 1; }
+        .t-dot {
+            position: absolute; left: -27px; top: 0; width: 12px; height: 12px;
+            background: var(--bg-surface); border: 2px solid var(--text-muted); border-radius: 50%;
+            transition: all 0.3s;
+        }
+        .t-item.active .t-dot { border-color: var(--brand); background: var(--brand); box-shadow: 0 0 0 4px var(--brand-light); }
+        .t-item.done .t-dot { border-color: var(--success); background: var(--success); box-shadow: none; }
+        
+        .t-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+        .t-sub { font-size: 12px; color: var(--text-muted); font-family: 'Fira Code', monospace; }
+
+        /* Grid de Dados */
+        .data-grid { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; 
+            opacity: 0; transform: translateY(10px); transition: all 0.5s;
+        }
+        .data-grid.visible { opacity: 1; transform: translateY(0); }
+        
+        .data-card { background: var(--bg-body); padding: 12px; border-radius: 8px; border: 1px solid var(--border); }
+        .d-label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 4px; }
+        .d-val { font-size: 13px; font-weight: 600; color: var(--text-main); font-family: 'Fira Code', monospace; word-break: break-all; }
+
+        /* Footer */
+        .card-footer { padding: 24px; border-top: 1px solid var(--border); }
+        .btn-main {
+            width: 100%; padding: 14px; border: none; border-radius: 10px;
+            background: var(--brand); color: white; font-weight: 600; font-size: 15px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: background 0.2s;
+        }
+        .btn-main:hover { background: var(--brand-hover); }
+        .btn-main:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* --- CLASSE MÁGICA DE PRIVACIDADE --- */
+        .blur-text {
+            color: transparent !important;
+            text-shadow: 0 0 8px rgba(0,0,0,0.5);
+            user-select: none;
+        }
+        /* Alternativa com asteriscos (controlado via JS é melhor para não selecionar texto, mas CSS filter é visualmente legal) */
+
+        /* Responsividade */
+        @media (max-width: 600px) {
+            .navbar { padding: 0 16px; }
+            .nav-links span { display: none; } /* Esconde texto do menu no mobile */
+            .page-wrapper { padding: 20px 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-brand">
+            <i class='bx bxs-zap'></i>
+            <span>ELETRO BUSINESS</span>
+        </div>
+        <div class="nav-links">
+            <a href="#" class="nav-item active">
+                <i class='bx bxs-dashboard'></i> <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class='bx bxs-file-doc'></i> <span>Notas</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class='bx bxs-cog'></i> <span>Config</span>
+            </a>
+        </div>
+        <div class="user-profile">
+            <div class="user-avatar">EB</div>
+        </div>
+    </nav>
+
+    <div class="page-wrapper">
+        
+        <header class="page-header">
+            <div>
+                <div class="breadcrumbs">Fiscal > Emissão > Homologação</div>
+                <h1 class="page-title">Teste de Comunicação</h1>
+            </div>
+            </header>
+
+        <main class="main-card">
+            
+            <div class="card-header">
+                <div class="authority-info">
+                    <div class="logo-box">
+                        <img src="https://assets.infra.grancursosonline.com.br/projeto/sefa-pa-secretaria-de-estado-da-fazenda-do-para-1640204974.jpg" alt="SEFA PA">
+                    </div>
+                    <div class="authority-text">
+                        <h2>SEFA-PA</h2>
+                        <p>Secretaria de Estado da Fazenda</p>
+                    </div>
+                </div>
+                <button class="privacy-toggle" id="btn-privacy" onclick="togglePrivacy()" title="Ocultar dados sensíveis">
+                    <i class='bx bx-show'></i>
+                </button>
+            </div>
+
+            <div class="card-body">
+                
+                <div class="status-box" id="status-display">
+                    <div class="status-icon"><i class='bx bx-server'></i></div>
+                    <h3>Aguardando Conexão</h3>
+                    <p>Ambiente de Homologação (NFC-e 4.00)</p>
+                </div>
+
+                <div class="timeline">
+                    <div class="t-item" id="step1">
+                        <div class="t-dot"></div>
+                        <div class="t-title">Assinatura Digital (A1)</div>
+                        <div class="t-sub">RSA-SHA1 • XMLDSIG</div>
+                    </div>
+                    <div class="t-item" id="step2">
+                        <div class="t-dot"></div>
+                        <div class="t-title">Processamento SVRS</div>
+                        <div class="t-sub">Sefaz Virtual Rio Grande do Sul</div>
+                    </div>
+                    <div class="t-item" id="step3">
+                        <div class="t-dot"></div>
+                        <div class="t-title">Autorização de Uso</div>
+                        <div class="t-sub">Validação SEFA-PA</div>
+                    </div>
+                </div>
+
+                <div class="data-grid" id="result-grid">
+                    <div class="data-card">
+                        <div class="d-label">Código Status</div>
+                        <div class="d-val" style="color: var(--success);">103 - Recebido</div>
+                    </div>
+                    <div class="data-card">
+                        <div class="d-label">Latência</div>
+                        <div class="d-val" id="val-latency">--</div>
+                    </div>
+                    <div class="data-card" style="grid-column: span 2;">
+                        <div class="d-label">Protocolo de Autorização</div>
+                        <div class="d-val sensitive" id="val-protocol">AGUARDANDO...</div>
+                    </div>
+                    <div class="data-card" style="grid-column: span 2;">
+                        <div class="d-label">Digest Value (Hash)</div>
+                        <div class="d-val sensitive" id="val-hash">--</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="card-footer">
+                <button class="btn-main" id="btn-start" onclick="runProcess()">
+                    <i class='bx bx-play-circle'></i> Iniciar Transmissão
+                </button>
+            </div>
+
+        </main>
+    </div>
+
+    <input type="hidden" id="url" value="https://emitirnfce-xsy57wqb6q-uc.a.run.app/">
+
+    <script>
+        let isPrivacyMode = false;
+        const btnPrivacy = document.getElementById('btn-privacy');
+        const sensitiveElements = document.querySelectorAll('.sensitive');
+        
+        // Dados REAIS simulados (para demonstrar o toggle)
+        const fakeProtocol = "315250000021548"; 
+        const fakeHash = "L9/s8d7fS9d8f7s9+d8f7S9d8f7=";
+
+        // --- Lógica de Privacidade ---
+        function togglePrivacy() {
+            isPrivacyMode = !isPrivacyMode;
+            const icon = btnPrivacy.querySelector('i');
+            
+            if (isPrivacyMode) {
+                // Ativar modo oculto
+                btnPrivacy.classList.add('active');
+                icon.className = 'bx bx-hide';
+                sensitiveElements.forEach(el => {
+                    // Guarda o valor original se ainda não tiver
+                    if(!el.dataset.original) el.dataset.original = el.innerText;
+                    el.innerText = "•••••••••••••••••";
+                    el.style.opacity = "0.5";
+                });
+            } else {
+                // Desativar modo oculto
+                btnPrivacy.classList.remove('active');
+                icon.className = 'bx bx-show';
+                sensitiveElements.forEach(el => {
+                    if(el.dataset.original) el.innerText = el.dataset.original;
+                    el.style.opacity = "1";
+                });
+            }
+        }
+
+        // --- Lógica de Processamento ---
+        const btnStart = document.getElementById('btn-start');
+        const statusDisplay = document.getElementById('status-display');
+        const resultGrid = document.getElementById('result-grid');
+        const steps = [document.getElementById('step1'), document.getElementById('step2'), document.getElementById('step3')];
+        const urlInput = document.getElementById('url');
+
+        async function runProcess() {
+            btnStart.disabled = true;
+            btnStart.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> Processando...`;
+            
+            // Etapa 1
+            activateStep(0);
+            updateStatus('bx-lock-alt', 'Assinando XML...', 'Criptografia Local');
+            await delay(800);
+            finishStep(0);
+
+            // Etapa 2
+            activateStep(1);
+            updateStatus('bx-cloud-upload', 'Enviando para SVRS...', 'Conexão TLS 1.2');
+            
+            const start = Date.now();
+
+            try {
+                const res = await fetch(urlInput.value, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ teste: true })
+                });
+                
+                const data = await res.json();
+                const latency = Date.now() - start;
+
+                await delay(600);
+                finishStep(1);
+
+                // Etapa 3
+                activateStep(2);
+                
+                if (res.ok) {
+                    finishStep(2);
+                    showSuccess(data, latency);
+                } else {
+                    throw new Error(data.message || "Erro desconhecido");
+                }
+
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                btnStart.disabled = false;
+                if(btnStart.innerText !== 'Nova Transmissão') btnStart.innerHTML = `<i class='bx bx-refresh'></i> Tentar Novamente`;
+            }
+        }
+
+        function showSuccess(data, latency) {
+            const icon = statusDisplay.querySelector('.status-icon');
+            const h3 = statusDisplay.querySelector('h3');
+            const p = statusDisplay.querySelector('p');
+
+            statusDisplay.className = 'status-box success';
+            icon.innerHTML = `<i class='bx bx-check-circle'></i>`;
+            h3.innerText = "Autorizado o uso da NF-e";
+            p.innerText = "Protocolo concedido pela SEFA-PA";
+
+            // Popula dados
+            document.getElementById('val-latency').innerText = latency + 'ms';
+            
+            const elProt = document.getElementById('val-protocol');
+            const elHash = document.getElementById('val-hash');
+
+            // Atualiza os valores reais nos atributos data-original (para a privacidade funcionar)
+            elProt.dataset.original = fakeProtocol; 
+            elHash.dataset.original = fakeHash;
+
+            // Define o texto visível baseado no estado atual da privacidade
+            if(!isPrivacyMode) {
+                elProt.innerText = fakeProtocol;
+                elHash.innerText = fakeHash;
+            } else {
+                elProt.innerText = "•••••••••••••••••";
+                elHash.innerText = "•••••••••••••••••";
+            }
+
+            resultGrid.classList.add('visible');
+            btnStart.innerHTML = `<i class='bx bx-plus'></i> Nova Transmissão`;
+        }
+
+        function showError(msg) {
+            statusDisplay.style.background = '#fef2f2';
+            statusDisplay.style.borderColor = '#ef4444';
+            statusDisplay.querySelector('h3').innerText = "Falha na Transmissão";
+            statusDisplay.querySelector('p').innerText = msg;
+            statusDisplay.querySelector('.status-icon').innerHTML = `<i class='bx bx-x-circle' style='color:#ef4444'></i>`;
+        }
+
+        function updateStatus(icon, title, sub) {
+            statusDisplay.querySelector('.status-icon').innerHTML = `<i class='bx ${icon}'></i>`;
+            statusDisplay.querySelector('h3').innerText = title;
+            statusDisplay.querySelector('p').innerText = sub;
+        }
+
+        function activateStep(i) { steps[i].classList.add('active'); }
+        function finishStep(i) { steps[i].classList.add('done'); }
+        function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+    </script>
+</body>
+</html>
