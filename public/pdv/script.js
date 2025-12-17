@@ -759,21 +759,26 @@ document.addEventListener('DOMContentLoaded', () => {
             const tr = document.createElement('tr');
             const blurClass = areValuesHidden ? 'blur-value' : '';
 
-            // --- CÁLCULO DE DATA E EMBLEMAS ---
+
+            // --- CÁLCULO DE DATA E EMBLEMAS CORRIGIDO ---
             let diffDays = 0;
-            // O backend agora manda 'Quitado' ou uma data 'dd/MM/yyyy' calculada corretamente
             let dataObj = parseDataSegura(cliente.proximoVencimento);
             let temData = (dataObj instanceof Date && !isNaN(dataObj.getTime()));
 
+            // CALCULA A DIFERENÇA DE DIAS REAL
+            if (temData) {
+                const hoje = new Date();
+                hoje.setHours(0, 0, 0, 0);
+                const dataVenc = new Date(dataObj);
+                dataVenc.setHours(0, 0, 0, 0);
+
+                const diffTime = dataVenc - hoje;
+                diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            }
+            // --------------------------------------------
+
             // Se o saldo for quase zero, força status quitado independente da data
             const isQuitado = parseFloat(cliente.saldoDevedor) <= 0.01;
-
-            if (temData) {
-                // Renderiza a data normalmente
-            } else {
-                // Se o sistema retornar nulo ou data inválida, exibe "Em dia" ou "OK"
-                badgeHtml = `<div class="status-badge badge-quitado"><span>OK</span></div>`;
-            }
 
             let badgeHtml = '';
 
@@ -2384,21 +2389,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const dataObj = parseDataSegura(cliente.proximoVencimento);
         let textoVencimento = "Sem vencimento";
 
-        if (dataObj) {
-            // Formata para DD/MM/AAAA
+        // Localize em openClienteDetails (por volta da linha 1107)
+        if (dataObj && !isNaN(dataObj.getTime())) {
             const dia = String(dataObj.getDate()).padStart(2, '0');
             const mes = String(dataObj.getMonth() + 1).padStart(2, '0');
             const ano = dataObj.getFullYear();
             textoVencimento = `${dia}/${mes}/${ano}`;
 
-            // Se estiver atrasado, pinta de vermelho
-            const hoje = new Date();
-            hoje.setHours(0, 0, 0, 0);
-            if (dataObj < hoje && cliente.saldoDevedor > 0.01) {
+            // Alerta de atraso
+            if (diffDays < 0 && cliente.saldoDevedor > 0.01) {
                 document.getElementById('detail-cliente-vencimento').style.color = 'var(--warning-red)';
                 textoVencimento += " (Atrasado)";
-            } else {
-                document.getElementById('detail-cliente-vencimento').style.color = 'var(--text-dark)';
             }
         }
 
