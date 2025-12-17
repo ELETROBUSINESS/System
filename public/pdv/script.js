@@ -34,7 +34,7 @@ console.log("Firebase inicializado globalmente!");
 // Credenciais e URLs
 const FIREBASE_CONFIG_ID = 'floralchic-loja';
 const STORE_OWNER_UID = "3zYT9Y6hXWeJSuvmEYP4FMZa5gI2";
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzvd0BBLEEQlu-ksnIbsmnYcjQNQuZcTrsCmXMKHGM5g7DPEk3Nj95X47LKbj7rRSAT/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx3EKgVWGJs68pPkeok9NTWFeWNTdl5C0cgPHXute6f5Iydxr1Ca0i27OAuCc9iUbvj/exec";
 const REGISTRO_VENDA_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCCaxdYdC6J_QKsaoWTDquH915MHUnM9BykD39ZUujR2LB3lx9d9n5vAsHdJZJByaa7w/exec";
 
 // Funções Auxiliares Globais (Necessárias para as funções abaixo)
@@ -663,30 +663,20 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
 
-    // Função para converter "dd/MM/yyyy" em objeto Date do JS corretamente
     function parseDataSegura(dataStr) {
-        if (!dataStr || dataStr === "Quitado" || dataStr === "Verificar") return null;
+        if (!dataStr || typeof dataStr !== 'string' || dataStr === "Quitado") return null;
 
-        try {
-            // Se já for uma string ISO (YYYY-MM-DDTHH:mm...), o Date entende direto
-            let d = new Date(dataStr);
-
-            // Se a data for inválida (NaN), tenta o fallback do formato brasileiro
-            if (isNaN(d.getTime())) {
-                const partes = dataStr.split('/');
-                if (partes.length === 3) {
-                    const dia = parseInt(partes[0]);
-                    const mes = parseInt(partes[1]) - 1;
-                    const ano = parseInt(partes[2]);
-                    d = new Date(ano, mes, dia, 12, 0, 0); // Meio-dia para evitar fuso
-                }
-            }
-
-            return isNaN(d.getTime()) ? null : d;
-        } catch (e) {
-            console.error("Erro ao processar data:", dataStr);
-            return null;
+        // Prioridade total ao formato brasileiro DD/MM/YYYY
+        const partes = dataStr.split('/');
+        if (partes.length === 3) {
+            const dia = parseInt(partes[0]);
+            const mes = parseInt(partes[1]) - 1;
+            const ano = parseInt(partes[2]);
+            return new Date(ano, mes, dia, 12, 0, 0);
         }
+
+        const d = new Date(dataStr);
+        return isNaN(d.getTime()) ? null : d;
     }
 
     const renderProdutosPage = () => { produtosTableContainer.innerHTML = ''; if (!localProductCache) { produtosTableContainer.innerHTML = '<p style="text-align: center; color: var(--text-light);"><i class="bx bx-loader-alt bx-spin"></i> Carregando...</p>'; if (localProductCache === null) carregarCacheDeProdutos(); return; } if (localProductCache.length === 0) { produtosTableContainer.innerHTML = '<p style="text-align: center; color: var(--text-light);">Nenhum produto.</p>'; return; } const table = document.createElement('table'); table.className = 'data-table products-table'; table.innerHTML = `<thead><tr><th>Nome</th><th>Código</th><th>Preço</th></tr></thead><tbody></tbody>`; const tbody = table.querySelector('tbody'); localProductCache.forEach(product => { const tr = document.createElement('tr'); tr.innerHTML = `<td>${product.name}</td><td>${product.id}</td><td class="currency">${formatCurrency(product.price)}</td>`; tbody.appendChild(tr); }); produtosTableContainer.appendChild(table); };
@@ -2370,62 +2360,66 @@ document.addEventListener('DOMContentLoaded', () => {
     const detailLimitPercent = document.getElementById('detail-cliente-percentual');
     const btnAlterarLimite = document.getElementById('btn-alterar-limite');
 
-    // --- Função Lógica de Abrir Modal de Detalhes (CORRIGIDA) ---
-    // --- SUBSTITUA A FUNÇÃO openClienteDetails POR ESTA ---
     const openClienteDetails = async (id) => {
         const cliente = localClientCache.find(c => c.idCliente == id);
         if (!cliente) return;
 
-        // 1. Preencher Dados Básicos
+        // 1. Preenchimento de Cabeçalho e Dados Básicos
         document.getElementById('detail-cliente-nome').textContent = cliente.nomeCompleto || cliente.nomeExibicao;
         document.getElementById('detail-cliente-apelido').textContent = cliente.apelido ? `(${cliente.apelido})` : '';
 
-        // Saldo Devedor
         const saldoEl = document.getElementById('detail-cliente-saldo');
         saldoEl.textContent = formatCurrency(cliente.saldoDevedor);
         saldoEl.style.color = cliente.saldoDevedor > 0 ? 'var(--warning-red)' : 'var(--success-green)';
 
-        // --- CORREÇÃO DA DATA NO MODAL ---
+        // 2. Cálculo de Data e Diferença de Dias (Proteção contra erro getMonth)
         const dataObj = parseDataSegura(cliente.proximoVencimento);
+        let diffDays = 0;
         let textoVencimento = "Sem vencimento";
+        const vencimentoEl = document.getElementById('detail-cliente-vencimento');
 
-        // Localize em openClienteDetails (por volta da linha 1107)
         if (dataObj && !isNaN(dataObj.getTime())) {
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            const dataVenc = new Date(dataObj);
+            dataVenc.setHours(0, 0, 0, 0);
+
+            // Calcula a diferença real de dias para os alertas visuais
+            const diffTime = dataVenc - hoje;
+            diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
             const dia = String(dataObj.getDate()).padStart(2, '0');
             const mes = String(dataObj.getMonth() + 1).padStart(2, '0');
             const ano = dataObj.getFullYear();
             textoVencimento = `${dia}/${mes}/${ano}`;
 
-            // Alerta de atraso
+            // Alerta visual de atraso
             if (diffDays < 0 && cliente.saldoDevedor > 0.01) {
-                document.getElementById('detail-cliente-vencimento').style.color = 'var(--warning-red)';
+                vencimentoEl.style.color = 'var(--warning-red)';
                 textoVencimento += " (Atrasado)";
+            } else {
+                vencimentoEl.style.color = 'var(--text-dark)';
             }
         }
+        vencimentoEl.textContent = textoVencimento;
 
-        document.getElementById('detail-cliente-vencimento').textContent = textoVencimento;
-
-        // Contato
         document.getElementById('detail-cliente-telefone').textContent = cliente.telefone || 'Não informado';
         document.getElementById('detail-cliente-endereco').textContent = cliente.endereco || 'Não informado';
 
-        // 2. Lógica da Barra de Limite (Mantida igual)
+        // 3. Lógica da Barra de Limite
+        const limite = parseFloat(cliente.limite) || 0;
+        const saldo = parseFloat(cliente.saldoDevedor) || 0;
         const detailLimitTotal = document.getElementById('detail-cliente-limite-total');
         const detailProgressBar = document.getElementById('detail-cliente-progress');
         const detailLimitAvailable = document.getElementById('detail-cliente-disponivel');
         const detailLimitPercent = document.getElementById('detail-cliente-percentual');
-
-        const limite = parseFloat(cliente.limite) || 0;
-        const saldo = parseFloat(cliente.saldoDevedor) || 0;
 
         detailLimitTotal.textContent = formatCurrency(limite);
 
         if (limite > 0) {
             const disponivel = limite - saldo;
             let percentualUso = (saldo / limite) * 100;
-            let visualWidth = percentualUso;
-            if (visualWidth < 0) visualWidth = 0;
-            if (visualWidth > 100) visualWidth = 100;
+            let visualWidth = percentualUso > 100 ? 100 : (percentualUso < 0 ? 0 : percentualUso);
 
             detailLimitAvailable.textContent = `Disponível: ${formatCurrency(disponivel)}`;
             detailLimitPercent.textContent = `${percentualUso.toFixed(1)}% usado`;
@@ -2437,9 +2431,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 detailLimitAvailable.style.color = 'var(--warning-red)';
             } else if (percentualUso > 80) {
                 detailProgressBar.classList.add('warning');
-                detailLimitAvailable.style.color = 'var(--text-light)';
-            } else {
-                detailLimitAvailable.style.color = 'var(--text-light)';
             }
         } else {
             detailProgressBar.style.width = '0%';
@@ -2447,45 +2438,62 @@ document.addEventListener('DOMContentLoaded', () => {
             detailLimitPercent.textContent = "-";
         }
 
+        // Exibe o modal
         openModal(document.getElementById('cliente-details-modal'));
 
-        // 3. Carrega o Histórico
+        // 4. Carregar Histórico com Nova Lógica de Classificação (Renegociação)
         const historyContainer = document.getElementById('detail-history-container');
-        historyContainer.innerHTML = '<p style="text-align:center; padding:20px; color:#777;"><i class="bx bx-loader-alt bx-spin"></i> Buscando histórico...</p>';
+        historyContainer.innerHTML = '<p style="text-align:center; padding:20px;"><i class="bx bx-loader-alt bx-spin"></i> Carregando extrato...</p>';
 
         try {
             const response = await fetch(`${SCRIPT_URL}?action=obterHistorico&idCliente=${id}`);
             const result = await response.json();
 
             if (result.status === 'success' && result.data.length > 0) {
-                let html = '<table class="history-table"><thead><tr><th>Data</th><th>Tipo</th><th>Valor</th><th>Anexo</th></tr></thead><tbody>';
+                let html = '<table class="history-table"><thead><tr><th>Data</th><th>Tipo</th><th>Valor</th><th>Doc</th></tr></thead><tbody>';
+
                 result.data.forEach(item => {
-                    const isCompra = String(item.tipo).toLowerCase().includes('compra') && item.valor > 0;
-                    const tipoClass = isCompra ? 'type-compra' : 'type-pagamento';
-                    const valorColor = isCompra ? 'var(--warning-red)' : 'var(--success-green)';
+                    const tipoLower = String(item.tipo).toLowerCase();
+                    let tipoTexto = 'PAGTO';
+                    let tipoClass = 'type-pagamento';
+                    let valorColor = 'var(--success-green)';
+
+                    // --- NOVA LÓGICA DE CLASSIFICAÇÃO ---
+                    if (tipoLower.includes('compra')) {
+                        tipoTexto = 'COMPRA';
+                        tipoClass = 'type-compra';
+                        valorColor = 'var(--warning-red)';
+                    } else if (tipoLower.includes('renegociação (baixa)')) {
+                        tipoTexto = 'RENEG. BAIXA';
+                        tipoClass = 'type-reneg-baixa'; // Azul/Informativo
+                        valorColor = '#2196F3';
+                    } else if (tipoLower.includes('renegociação (nova)')) {
+                        tipoTexto = 'PARCELA';
+                        tipoClass = 'type-reneg-nova'; // Laranja/Dívida
+                        valorColor = 'var(--warning-red)';
+                    }
 
                     let anexoHtml = '-';
                     if (item.anexo && item.anexo.startsWith('http')) {
-                        anexoHtml = `<button class="btn-link-receipt" onclick="window.open('${item.anexo}', '_blank')" style="background:none; border:none; font-family:inherit; font-size:inherit; cursor:pointer;" title="Ver Comprovante"><i class='bx bx-show'></i> Ver</button>`;
+                        anexoHtml = `<button class="btn-link-receipt" onclick="window.open('${item.anexo}', '_blank')"><i class='bx bx-show'></i></button>`;
                     }
 
                     html += `
-                    <tr>
-                        <td>${item.data}<br><small style="color:#999">${item.obs || ''}</small></td>
-                        <td><span class="history-type-tag ${tipoClass}">${isCompra ? 'COMPRA' : 'PAGTO'}</span></td>
-                        <td style="color:${valorColor}; font-weight:600;">${formatCurrency(Math.abs(item.valor))}</td>
-                        <td>${anexoHtml}</td>
-                    </tr>
-                `;
+                <tr>
+                    <td>${item.data}<br><small style="color:#999">${item.obs || ''}</small></td>
+                    <td><span class="history-type-tag ${tipoClass}">${tipoTexto}</span></td>
+                    <td style="color:${valorColor}; font-weight:600;">${formatCurrency(Math.abs(item.valor))}</td>
+                    <td>${anexoHtml}</td>
+                </tr>`;
                 });
                 html += '</tbody></table>';
                 historyContainer.innerHTML = html;
             } else {
-                historyContainer.innerHTML = '<p style="text-align:center; padding:20px; color:#999;">Nenhum histórico encontrado.</p>';
+                historyContainer.innerHTML = '<p style="text-align:center; padding:20px; color:#999;">Nenhuma movimentação encontrada.</p>';
             }
         } catch (error) {
-            console.error("Erro histórico:", error);
-            historyContainer.innerHTML = '<p style="text-align:center; padding:20px; color:var(--warning-red);">Erro ao carregar.</p>';
+            console.error("Erro no histórico:", error);
+            historyContainer.innerHTML = '<p style="text-align:center; padding:20px; color:red;">Erro ao carregar dados.</p>';
         }
     };
 

@@ -858,7 +858,7 @@
                                         <svg viewBox="0 0 36 36" class="circular-chart">
                                             <path class="circle-bg"
                                                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                            
+
                                             <path class="circle-interactive circle-risk" id="risk-circle"
                                                 stroke-dasharray="0, 100"
                                                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
@@ -868,7 +868,7 @@
                                             <span class="center-percent" id="center-percent-text">0%</span>
                                             <span class="center-label">Inadimplência</span>
                                         </div>
-                                        
+
                                         <div class="chart-float-tooltip" id="chart-tooltip">Info</div>
                                     </div>
                                     <div class="chart-legend">
@@ -918,9 +918,18 @@
                 </div>
 
                 <script>
+                    function parseDataSegura(dataStr) {
+                        if (!dataStr || dataStr === "Quitado" || dataStr === "Verificar") return null;
+                        const partes = dataStr.split('/');
+                        if (partes.length === 3) {
+                            return new Date(parseInt(partes[2]), parseInt(partes[1]) - 1, parseInt(partes[0]), 12, 0, 0);
+                        }
+                        return null;
+                    }
+
                     document.addEventListener('DOMContentLoaded', () => {
                         // --- CONFIGURAÇÕES ---
-                        const API_BASE = 'https://script.google.com/macros/s/AKfycbzvd0BBLEEQlu-ksnIbsmnYcjQNQuZcTrsCmXMKHGM5g7DPEk3Nj95X47LKbj7rRSAT/exec';
+                        const API_BASE = 'https://script.google.com/macros/s/AKfycbx3EKgVWGJs68pPkeok9NTWFeWNTdl5C0cgPHXute6f5Iydxr1Ca0i27OAuCc9iUbvj/exec';
                         const URL_CREDIARIO = `${API_BASE}?action=metricasCrediario`;
                         const URL_FATURAMENTO = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=2`;
 
@@ -956,79 +965,44 @@
                         // Variável para Tooltips
                         let chartData = { pay: 0, late: 0 };
 
-                        // --- FETCH DADOS DE RISCO (CREDIÁRIO) ---
                         fetch(URL_CREDIARIO)
                             .then(res => res.json())
                             .then(data => {
-                                if (data.error) {
-                                    console.error("Erro API:", data.message);
-                                    return;
-                                }
+                                console.log("📊 Dados Recebidos:", data); // Este log agora DEVE aparecer
 
-                                // 1. DADOS FINANCEIROS
-                                const limitTotal = parseFloat(data.limit || 0);
-                                const usedTotal = parseFloat(data.used || 0);
-                                const available = limitTotal - usedTotal;
+                                if (data.status === "success") {
+                                    // 1. DADOS FINANCEIROS (Cards)
+                                    document.getElementById('total-limit-display').textContent = formatMoney(data.limit);
+                                    document.getElementById('available-amount').textContent = formatMoney(data.limit - data.used);
+                                    document.getElementById('received-month').textContent = formatMoney(data.receivedMonth);
 
-                                document.getElementById('total-limit-display').textContent = formatMoney(limitTotal);
-                                document.getElementById('available-amount').textContent = formatMoney(available);
-                                document.getElementById('received-month').textContent = formatMoney(data.receivedMonth || 0);
-
-                                // Barra de Progresso
-                                const pctUsed = limitTotal > 0 ? Math.min((usedTotal / limitTotal) * 100, 100) : 0;
-                                document.getElementById('limit-bar').style.width = `${pctUsed}%`;
-
-                                // 2. GRÁFICO DONUT
-                                // A API agora retorna 'payingPercent' (% em dia) e 'totalRiskPercent' (% atrasado)
-                                let payPct = parseFloat(data.payingPercent || 0);
-                                let latePct = parseFloat(data.totalRiskPercent || 0);
-
-                                // Correção visual para soma 100%
-                                if (limitTotal > 0 && (payPct + latePct) !== 100) {
-                                    latePct = 100 - payPct; // Força soma 100%
-                                }
-
-                                chartData.pay = payPct.toFixed(1);
-                                chartData.late = latePct.toFixed(1);
-
-                                // Atualiza Texto Central
-                                const centerText = document.getElementById('center-percent-text');
-                                if (centerText) {
-                                    centerText.textContent = `${latePct.toFixed(0)}%`;
-                                    centerText.style.color = latePct > 0 ? 'var(--brand-accent)' : 'var(--success-green)';
-                                }
-
-                                // Animação dos Círculos
-                                setTimeout(() => {
-                                    // O círculo de risco deve preencher a porcentagem de atraso
-                                    const riskCircle = document.getElementById('risk-circle');
-                                    if (riskCircle) {
-                                        riskCircle.setAttribute('stroke-dasharray', `${latePct}, 100`);
-
-                                        // Se for 0%, muda cor para verde para indicar sucesso total
-                                        if (latePct === 0) riskCircle.style.stroke = 'var(--success-green)';
+                                    // 2. BARRA DE LIMITE (A barra que tinha sumido)
+                                    const pctUsed = data.limit > 0 ? Math.min((data.used / data.limit) * 100, 100) : 0;
+                                    const bar = document.getElementById('limit-bar');
+                                    if (bar) {
+                                        bar.style.width = `${pctUsed}%`;
                                     }
-                                }, 100);
 
-                                // 3. DETALHES DE RISCO
-                                document.getElementById('risk-14d').textContent = data.risk14 + '%';
-                                document.getElementById('risk-30d').textContent = data.risk30 + '%';
-                                document.getElementById('risk-90d').textContent = data.risk90 + '%';
+                                    // 3. GRÁFICO DONUT (SVG)
+                                    const latePct = parseFloat(data.totalRiskPercent);
+                                    const riskCircle = document.getElementById('risk-circle');
+                                    const centerText = document.getElementById('center-percent-text');
 
-                                // 4. DICA INTELIGENTE
-                                const tipEl = document.getElementById('dynamic-tip');
-                                let tipText = "Gestão Saudável.";
-                                if (parseFloat(data.risk90) > 0) tipText = "Atenção: Valores vencidos há +90 dias.";
-                                else if (latePct > 20) tipText = "Cuidado: Inadimplência subindo.";
-                                else if (payPct > 50) tipText = "Ótimo! Carteira em dia.";
+                                    if (centerText) centerText.textContent = `${latePct.toFixed(0)}%`;
+                                    if (riskCircle) {
+                                        riskCircle.style.strokeDasharray = `${latePct}, 100`;
+                                        riskCircle.style.stroke = latePct > 0 ? 'var(--brand-accent)' : 'var(--success-green)';
+                                    }
 
-                                if (tipEl) tipEl.textContent = tipText;
+                                    // 4. RISK PILLS (%)
+                                    document.getElementById('risk-14d').textContent = data.risk14 + '%';
+                                    document.getElementById('risk-30d').textContent = data.risk30 + '%';
+                                    document.getElementById('risk-90d').textContent = data.risk90 + '%';
 
-                                // Remove Skeleton Loaders
-                                document.querySelectorAll('.skeleton-text').forEach(el => el.classList.remove('skeleton-text'));
+                                    console.table(data); // Exibe uma tabela limpa no console
+                                }
                             })
-                            .catch(err => console.error("Erro Fetch Crediário:", err));
-
+                            .catch(err => console.error("❌ Erro no Fetch do Crediário:", err));
                         // --- FETCH DADOS DE FATURAMENTO ---
                         fetch(URL_FATURAMENTO)
                             .then(r => r.json())

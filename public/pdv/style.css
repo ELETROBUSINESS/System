@@ -2872,3 +2872,21 @@ input:checked+.slider:before {
 #modal-renegociar .modal-content {
     box-shadow: 0 20px 50px rgba(0,0,0,0.5); /* Sombra mais forte para destacar */
 }
+
+/* Cores para os novos status de renegociação */
+.history-type-tag.type-reneg-baixa {
+    background-color: #e3f2fd;
+    color: #1976d2;
+    border: 1px solid #bbdefb;
+}
+
+.history-type-tag.type-reneg-nova {
+    background-color: #fff3e0;
+    color: #e65100;
+    border: 1px solid #ffe0b2;
+}
+
+/* Garante que o valor da parcela (dívida) seja visível como negativo/alerta */
+.history-type-tag.type-reneg-nova {
+    font-weight: bold;
+}
