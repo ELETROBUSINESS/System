@@ -665,27 +665,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Função para converter "dd/MM/yyyy" em objeto Date do JS corretamente
     function parseDataSegura(dataStr) {
-        if (!dataStr || dataStr === "Quitado" || dataStr === "Sem fatura") return null;
+        if (!dataStr || dataStr === "Quitado" || dataStr === "Verificar") return null;
 
-        // Se já vier como ISO (yyyy-mm-dd), aceita
-        if (dataStr.includes("-")) {
-            const d = new Date(dataStr);
-            // Corrige fuso horário adicionando horas
-            d.setHours(12, 0, 0, 0);
-            return isNaN(d) ? null : d;
-        }
+        try {
+            // Se já for uma string ISO (YYYY-MM-DDTHH:mm...), o Date entende direto
+            let d = new Date(dataStr);
 
-        // Processa formato BR (dd/mm/yyyy)
-        const partes = dataStr.split('/');
-        if (partes.length === 3) {
-            const dia = parseInt(partes[0]);
-            const mes = parseInt(partes[1]) - 1; // Meses no JS são 0-11
-            const ano = parseInt(partes[2]);
-            const d = new Date(ano, mes, dia);
-            d.setHours(12, 0, 0, 0); // Define meio-dia para evitar problemas de fuso
-            return d;
+            // Se a data for inválida (NaN), tenta o fallback do formato brasileiro
+            if (isNaN(d.getTime())) {
+                const partes = dataStr.split('/');
+                if (partes.length === 3) {
+                    const dia = parseInt(partes[0]);
+                    const mes = parseInt(partes[1]) - 1;
+                    const ano = parseInt(partes[2]);
+                    d = new Date(ano, mes, dia, 12, 0, 0); // Meio-dia para evitar fuso
+                }
+            }
+
+            return isNaN(d.getTime()) ? null : d;
+        } catch (e) {
+            console.error("Erro ao processar data:", dataStr);
+            return null;
         }
-        return null;
     }
 
     const renderProdutosPage = () => { produtosTableContainer.innerHTML = ''; if (!localProductCache) { produtosTableContainer.innerHTML = '<p style="text-align: center; color: var(--text-light);"><i class="bx bx-loader-alt bx-spin"></i> Carregando...</p>'; if (localProductCache === null) carregarCacheDeProdutos(); return; } if (localProductCache.length === 0) { produtosTableContainer.innerHTML = '<p style="text-align: center; color: var(--text-light);">Nenhum produto.</p>'; return; } const table = document.createElement('table'); table.className = 'data-table products-table'; table.innerHTML = `<thead><tr><th>Nome</th><th>Código</th><th>Preço</th></tr></thead><tbody></tbody>`; const tbody = table.querySelector('tbody'); localProductCache.forEach(product => { const tr = document.createElement('tr'); tr.innerHTML = `<td>${product.name}</td><td>${product.id}</td><td class="currency">${formatCurrency(product.price)}</td>`; tbody.appendChild(tr); }); produtosTableContainer.appendChild(table); };
@@ -762,14 +763,16 @@ document.addEventListener('DOMContentLoaded', () => {
             let diffDays = 0;
             // O backend agora manda 'Quitado' ou uma data 'dd/MM/yyyy' calculada corretamente
             let dataObj = parseDataSegura(cliente.proximoVencimento);
-            let temData = !!dataObj;
+            let temData = (dataObj instanceof Date && !isNaN(dataObj.getTime()));
 
             // Se o saldo for quase zero, força status quitado independente da data
             const isQuitado = parseFloat(cliente.saldoDevedor) <= 0.01;
 
-            if (temData && !isQuitado) {
-                const diffTime = dataObj - hoje;
-                diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            if (temData) {
+                // Renderiza a data normalmente
+            } else {
+                // Se o sistema retornar nulo ou data inválida, exibe "Em dia" ou "OK"
+                badgeHtml = `<div class="status-badge badge-quitado"><span>OK</span></div>`;
             }
 
             let badgeHtml = '';
@@ -2842,7 +2845,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // LÓGICA DE ADMINISTRADOR (CORRIGIDA E CONSOLIDADA)
 // =======================================================
 
-const ADMIN_PASS = "ADM25-PASS"; 
+const ADMIN_PASS = "ADM25-PASS";
 let acaoPendenteAposSenha = null; // Variável global para guardar o callback
 
 // --- 1. FUNÇÕES DO MODAL DE SENHA ---
@@ -2851,23 +2854,23 @@ function solicitarAcessoAdm(callbackSucesso) {
     const modalAuth = document.getElementById('modal-admin-auth');
     const inputSenha = document.getElementById('admin-password-input');
     const msgErro = document.getElementById('auth-error-msg');
-    
+
     if (!modalAuth) {
         alert("ERRO: Modal de autenticação não encontrado no HTML.");
         return;
     }
-    
+
     // Reseta estado do modal
     inputSenha.value = "";
     msgErro.style.display = "none";
-    
+
     // GUARDA A FUNÇÃO (CALLBACK) PARA SER EXECUTADA DEPOIS
-    acaoPendenteAposSenha = callbackSucesso; 
-    
+    acaoPendenteAposSenha = callbackSucesso;
+
     // Abre modal (adiciona classe active se usar css de transição ou display flex)
     modalAuth.style.display = "flex";
     modalAuth.classList.add('active'); // Garante compatibilidade
-    
+
     setTimeout(() => inputSenha.focus(), 100);
 }
 
@@ -2883,18 +2886,18 @@ function fecharModalAuth() {
 function verificarSenhaAdm() {
     const inputSenha = document.getElementById('admin-password-input');
     const msgErro = document.getElementById('auth-error-msg');
-    
+
     if (inputSenha.value === ADMIN_PASS) {
         // --- CORREÇÃO DE ORDEM ---
         // 1. Salva a ação numa variável local antes de fechar o modal
         const acaoParaExecutar = acaoPendenteAposSenha;
-        
+
         // 2. Fecha o modal (isso vai limpar a variável global acaoPendenteAposSenha)
         fecharModalAuth();
-        
+
         // 3. Executa a ação salva (se existir)
         if (acaoParaExecutar && typeof acaoParaExecutar === 'function') {
-            acaoParaExecutar(); 
+            acaoParaExecutar();
         }
     } else {
         msgErro.style.display = "block";
@@ -2906,14 +2909,14 @@ function verificarSenhaAdm() {
 // --- 2. LISTENERS GLOBAIS UNIFICADOS ---
 
 // Eventos de clique (Delegação para evitar conflitos)
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
     const target = e.target;
-    
+
     // Identifica botões principais (suporta clique no ícone interno)
     const btnLapis = target.closest('#btn-admin-edit');
     const btnQrCode = target.closest('#btn-gerar-acesso');
     const btnCloseReneg = target.closest('#close-renegociar');
-    
+
     // Identifica botões do modal de senha
     const btnConfirmAuth = target.closest('#btn-confirm-auth');
     const btnCancelAuth = target.closest('#btn-cancel-auth');
@@ -2921,17 +2924,17 @@ document.addEventListener('click', function(e) {
     // >>> CLIQUE NO LÁPIS (RENEGOCIAR) <<<
     if (btnLapis) {
         e.preventDefault();
-        
-        solicitarAcessoAdm(function() {
+
+        solicitarAcessoAdm(function () {
             // Esta função roda SÓ DEPOIS da senha correta
             const modalReneg = document.getElementById('modal-renegociar');
             const nomeEl = document.getElementById('detail-cliente-nome');
             const saldoEl = document.getElementById('detail-cliente-saldo');
             const vencEl = document.getElementById('detail-cliente-vencimento');
-            
+
             // Pega o nome visível AGORA
             const nomeAtual = nomeEl ? nomeEl.innerText.trim() : "";
-            
+
             if (!nomeAtual || nomeAtual === "Carregando...") {
                 alert("Erro: O nome do cliente ainda não carregou.");
                 return;
@@ -2943,13 +2946,13 @@ document.addEventListener('click', function(e) {
             // Preenche visualmente
             document.getElementById('reneg-saldo-atual').innerText = saldoEl ? saldoEl.innerText : "R$ 0,00";
             document.getElementById('reneg-vencimento-atual').value = vencEl ? vencEl.innerText : "";
-            
+
             // Data sugerida (Hoje + 30 dias)
-            try { 
+            try {
                 const hoje = new Date();
                 hoje.setDate(hoje.getDate() + 30);
-                document.getElementById('reneg-nova-data').valueAsDate = hoje; 
-            } catch(e){}
+                document.getElementById('reneg-nova-data').valueAsDate = hoje;
+            } catch (e) { }
 
             // Abre o modal de renegociação
             modalReneg.style.display = 'flex';
@@ -2961,29 +2964,29 @@ document.addEventListener('click', function(e) {
     if (btnQrCode) {
         e.preventDefault();
 
-        solicitarAcessoAdm(function() {
+        solicitarAcessoAdm(function () {
             const nomeElement = document.getElementById('detail-cliente-nome');
             const nomeCompleto = nomeElement ? nomeElement.innerText : "";
-            
+
             if (!nomeCompleto || nomeCompleto === "Carregando...") return;
 
             const nomeParam = nomeCompleto.toLowerCase()
-                                .normalize('NFD').replace(/[\u0300-\u036f]/g, "")
-                                .replace(/[^a-z0-9]/g, "");
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]/g, "");
 
             const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/')) + "/meuacesso.html";
             const linkCompleto = `${baseUrl}?q=${nomeParam}`;
 
             const qrContainer = document.getElementById('qrcode-container');
             const linkText = document.getElementById('link-acesso-text');
-            
-            if(qrContainer) {
-                qrContainer.innerHTML = ""; 
+
+            if (qrContainer) {
+                qrContainer.innerHTML = "";
                 qrContainer.style.display = "flex";
                 new QRCode(qrContainer, { text: linkCompleto, width: 150, height: 150 });
             }
-            
-            if(linkText) {
+
+            if (linkText) {
                 linkText.style.display = "block";
                 linkText.innerHTML = `<a href="${linkCompleto}" target="_blank">ABRIR LINK</a>`;
             }
@@ -3005,7 +3008,7 @@ document.addEventListener('click', function(e) {
 // Listener de Tecla Enter no Input de Senha
 const inputAuth = document.getElementById('admin-password-input');
 if (inputAuth) {
-    inputAuth.addEventListener('keydown', function(e) {
+    inputAuth.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') verificarSenhaAdm();
     });
 }
@@ -3014,7 +3017,7 @@ if (inputAuth) {
 const btnConfirmarReneg = document.getElementById('btn-confirmar-renegociacao');
 
 if (btnConfirmarReneg) {
-    btnConfirmarReneg.onclick = async function() {
+    btnConfirmarReneg.onclick = async function () {
         const novaData = document.getElementById('reneg-nova-data').value;
         const modalReneg = document.getElementById('modal-renegociar');
         const parcelasEl = document.getElementById('reneg-parcelas');
@@ -3023,13 +3026,13 @@ if (btnConfirmarReneg) {
         // RECUPERA O NOME GUARDADO NO ATRIBUTO
         const nomeParaBuscar = modalReneg.getAttribute('data-cliente-nome');
 
-        if (!novaData) { 
-            alert("Selecione uma nova data de vencimento."); 
-            return; 
+        if (!novaData) {
+            alert("Selecione uma nova data de vencimento.");
+            return;
         }
-        if (!nomeParaBuscar) { 
-            alert("Erro Técnico: Nome do cliente se perdeu. Feche e abra a ficha novamente."); 
-            return; 
+        if (!nomeParaBuscar) {
+            alert("Erro Técnico: Nome do cliente se perdeu. Feche e abra a ficha novamente.");
+            return;
         }
 
         const btn = this;
@@ -3038,8 +3041,8 @@ if (btnConfirmarReneg) {
         btn.disabled = true;
 
         try {
-            const API_URL_ADM = "https://script.google.com/macros/s/AKfycbzvd0BBLEEQlu-ksnIbsmnYcjQNQuZcTrsCmXMKHGM5g7DPEk3Nj95X47LKbj7rRSAT/exec"; 
-            
+            const API_URL_ADM = "https://script.google.com/macros/s/AKfycbzvd0BBLEEQlu-ksnIbsmnYcjQNQuZcTrsCmXMKHGM5g7DPEk3Nj95X47LKbj7rRSAT/exec";
+
             // Envia o NOME na variavel idCliente (o backend já sabe lidar com isso)
             const response = await fetch(`${API_URL_ADM}?action=renegociarSaldo&idCliente=${encodeURIComponent(nomeParaBuscar)}&novaData=${novaData}&parcelas=${qtdParcelas}`);
             const json = await response.json();
@@ -3048,18 +3051,18 @@ if (btnConfirmarReneg) {
                 alert("✅ Renegociação realizada com sucesso!");
                 modalReneg.style.display = 'none';
                 modalReneg.classList.remove('active');
-                
+
                 // Fecha a ficha do cliente para forçar atualização visual
                 const ficha = document.getElementById('cliente-details-modal');
-                if(ficha) {
+                if (ficha) {
                     ficha.classList.remove('active');
                     ficha.style.display = 'none';
                 }
-                
+
                 // Recarrega lista
                 if (typeof renderClientesPage === 'function') {
-                    if(typeof localClientCache !== 'undefined') localClientCache = null; // Limpa cache
-                    renderClientesPage(); 
+                    if (typeof localClientCache !== 'undefined') localClientCache = null; // Limpa cache
+                    renderClientesPage();
                 } else {
                     location.reload();
                 }
