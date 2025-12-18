@@ -34,7 +34,7 @@ console.log("Firebase inicializado globalmente!");
 // Credenciais e URLs
 const FIREBASE_CONFIG_ID = 'floralchic-loja';
 const STORE_OWNER_UID = "3zYT9Y6hXWeJSuvmEYP4FMZa5gI2";
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx3EKgVWGJs68pPkeok9NTWFeWNTdl5C0cgPHXute6f5Iydxr1Ca0i27OAuCc9iUbvj/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
 const REGISTRO_VENDA_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCCaxdYdC6J_QKsaoWTDquH915MHUnM9BykD39ZUujR2LB3lx9d9n5vAsHdJZJByaa7w/exec";
 
 // Funções Auxiliares Globais (Necessárias para as funções abaixo)
@@ -545,73 +545,84 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Funções de Renderização ---
 
+    // --- Função Renderizar Carrinho (Versão Limpa - Apenas API Apps Script) ---
     const renderCart = () => {
         cartItemsBody.innerHTML = '';
 
-        // Bloqueio de Desconto Global se houver itens do Firebase
-        const hasFirebaseItems = cart.some(i => i.isFirebase);
-        if (hasFirebaseItems) {
-            discountInputR.disabled = true;
-            discountInputR.placeholder = "Bloqueado (Ofertas)";
-            document.querySelectorAll('.perc-btn').forEach(b => b.disabled = true);
-            if (discount > 0) { discount = 0; discountInputR.value = ''; updateSummary(); }
-        } else {
+        // 1. Resetar controles globais (sempre permitidos agora)
+        if (cart.length > 0) {
             discountInputR.disabled = false;
             discountInputR.placeholder = "0,00";
             document.querySelectorAll('.perc-btn').forEach(b => b.disabled = false);
-        }
-
-        if (cart.length === 0) {
-            emptyState.style.display = 'flex';
-            itemListTable.style.display = 'none';
-            itemListContainer.classList.add('empty');
-        } else {
+            
             emptyState.style.display = 'none';
             itemListTable.style.display = 'table';
             itemListContainer.classList.remove('empty');
-
-            cart.forEach(item => {
-                const tr = document.createElement('tr');
-                tr.dataset.id = item.id;
-                if (item.isNew) { tr.classList.add('new-item-flash'); delete item.isNew; setTimeout(() => tr.classList.remove('new-item-flash'), 500); }
-
-                // Visual do Input de Desconto
-                let discountInputHtml = '';
-                if (item.isFirebase) {
-                    const colorStyle = item.discountPercent > 0 ? 'color:var(--success-green);font-weight:bold' : 'color:#999';
-                    discountInputHtml = `<span style="${colorStyle}">${item.discountPercent.toFixed(0)}%</span>`;
-                } else {
-                    discountInputHtml = `<input type="number" style="width:50px;padding:4px;border:1px solid #ddd;border-radius:4px;text-align:center;" value="${item.discountPercent}" min="0" max="100" onchange="updateCartItem('${item.id}', 'discountPercent', this.value)"> %`;
-                }
-
-                tr.innerHTML = `
-                        <td>
-                            <div class="product-info">
-                                <div class="product-image"><i class='bx bx-package'></i></div>
-                                <div class="product-details">
-                                    <span class="name">${item.name}</span>
-                                    <span class="barcode">#${item.id}</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="quantity-control">
-                                <button class="qty-btn" onclick="updateCartItem('${item.id}', 'quantity', 'decrease')"><i class='bx bx-minus'></i></button>
-                                <span class="qty-display">${item.quantity}</span>
-                                <button class="qty-btn" onclick="updateCartItem('${item.id}', 'quantity', 'increase')"><i class='bx bx-plus'></i></button>
-                            </div>
-                        </td>
-                        <td class="item-price">${formatCurrency(item.originalPrice)}</td>
-                        
-                        <td class="item-offer" style="text-align:center;">${discountInputHtml}</td>
-                        
-                        <td class="item-total">${formatCurrency(item.price * item.quantity)}</td>
-                        
-                        <td><button class="remove-btn" onclick="removeFromCart('${item.id}')" title="Remover"><i class='bx bx-trash'></i></button></td>
-                    `;
-                cartItemsBody.appendChild(tr);
-            });
+        } else {
+            // Estado vazio
+            discountInputR.disabled = true;
+            emptyState.style.display = 'flex';
+            itemListTable.style.display = 'none';
+            itemListContainer.classList.add('empty');
+            updateSummary(); // Zera os totais
+            return; // Encerra aqui se estiver vazio
         }
+
+        // 2. Loop para desenhar os itens
+        cart.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.dataset.id = item.id;
+            
+            // Animação visual de item novo (opcional, mantido para UX)
+            if (item.isNew) { 
+                tr.classList.add('new-item-flash'); 
+                delete item.isNew; 
+                setTimeout(() => tr.classList.remove('new-item-flash'), 500); 
+            }
+
+            // HTML do Input de Desconto (Padronizado para todos os itens)
+            const discountInputHtml = `
+                <div class="discount-wrapper" onclick="this.querySelector('input').focus()">
+                    <input type="number" 
+                           class="discount-input" 
+                           value="${item.discountPercent}" 
+                           min="0" 
+                           max="100" 
+                           placeholder="0"
+                           onchange="updateCartItem('${item.id}', 'discountPercent', this.value)"
+                           onkeypress="return event.charCode >= 48 && event.charCode <= 57"> 
+                    <span class="discount-symbol">%</span>
+                </div>`;
+
+            tr.innerHTML = `
+                    <td>
+                        <div class="product-info">
+                            <div class="product-image"><i class='bx bx-package'></i></div>
+                            <div class="product-details">
+                                <span class="name">${item.name}</span>
+                                <span class="barcode">#${item.id}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="quantity-control">
+                            <button class="qty-btn" data-action="decrease" data-id="${item.id}"><i class='bx bx-minus'></i></button>
+                            <span class="qty-display">${item.quantity}</span>
+                            <button class="qty-btn" data-action="increase" data-id="${item.id}"><i class='bx bx-plus'></i></button>
+                        </div>
+                    </td>
+                    <td class="item-price">${formatCurrency(item.originalPrice)}</td>
+                    
+                    <td class="item-offer">${discountInputHtml}</td>
+                    
+                    <td class="item-total">${formatCurrency(item.price * item.quantity)}</td>
+                    
+                    <td><button class="remove-btn" data-id="${item.id}" title="Remover"><i class='bx bx-trash'></i></button></td>
+                `;
+            cartItemsBody.appendChild(tr);
+        });
+
+        // 3. Atualiza os totais gerais
         updateSummary();
     };
 
@@ -679,7 +690,164 @@ document.addEventListener('DOMContentLoaded', () => {
         return isNaN(d.getTime()) ? null : d;
     }
 
-    const renderProdutosPage = () => { produtosTableContainer.innerHTML = ''; if (!localProductCache) { produtosTableContainer.innerHTML = '<p style="text-align: center; color: var(--text-light);"><i class="bx bx-loader-alt bx-spin"></i> Carregando...</p>'; if (localProductCache === null) carregarCacheDeProdutos(); return; } if (localProductCache.length === 0) { produtosTableContainer.innerHTML = '<p style="text-align: center; color: var(--text-light);">Nenhum produto.</p>'; return; } const table = document.createElement('table'); table.className = 'data-table products-table'; table.innerHTML = `<thead><tr><th>Nome</th><th>Código</th><th>Preço</th></tr></thead><tbody></tbody>`; const tbody = table.querySelector('tbody'); localProductCache.forEach(product => { const tr = document.createElement('tr'); tr.innerHTML = `<td>${product.name}</td><td>${product.id}</td><td class="currency">${formatCurrency(product.price)}</td>`; tbody.appendChild(tr); }); produtosTableContainer.appendChild(table); };
+    // --- VARIÁVEIS GLOBAIS NOVAS ---
+    let currentProductFilter = 'all'; // all, fiscal_ok, fiscal_pending
+    let editingProductId = null;      // ID do produto sendo editado
+
+    // =======================================================
+    // LÓGICA DE PRODUTOS (PESQUISA, FILTROS E EDIÇÃO)
+    // =======================================================
+
+    // 2. Atualizar Contadores dos Filtros (Corrigido)
+    const updateProductCounters = () => {
+        if (!localProductCache) return;
+
+        const total = localProductCache.length;
+
+        // Verifica convertendo para String para evitar erro se vier como número
+        const ok = localProductCache.filter(p =>
+            p.ncm && String(p.ncm).trim().length >= 2 && p.cfop
+        ).length;
+
+        const pending = total - ok;
+
+        document.getElementById('count-all').textContent = total;
+        document.getElementById('count-ok').textContent = ok;
+        document.getElementById('count-pending').textContent = pending;
+    };
+
+    // 1. Função Renderizar (SUBSTITUA a renderProdutosPage antiga)
+    const renderProdutosPage = () => {
+        const container = document.getElementById('produtos-table-container');
+        const searchInput = document.getElementById('products-search-input');
+
+        // Atualiza contadores
+        if (typeof updateProductCounters === 'function') updateProductCounters();
+
+        // Verificação de segurança se o cache está vazio
+        if (!localProductCache || localProductCache.length === 0) {
+            container.innerHTML = '<div class="empty-state"><i class="bx bx-package"></i><p>Nenhum produto cadastrado.</p></div>';
+            return;
+        }
+
+        const term = searchInput ? searchInput.value.toLowerCase().trim() : "";
+
+        const produtosFiltrados = localProductCache.filter(p => {
+            // Segurança: Garante que tudo é string antes de buscar
+            const safeName = (p.name || "").toString().toLowerCase();
+            const safeBrand = (p.brand || "").toString().toLowerCase();
+            const safeId = (p.id || "").toString().toLowerCase();
+            const safeNcm = (p.ncm || "").toString().toLowerCase();
+
+            const matchesSearch =
+                safeName.includes(term) ||
+                safeId.includes(term) ||
+                safeNcm.includes(term) ||
+                safeBrand.includes(term);
+
+            if (!matchesSearch) return false;
+
+            // --- LÓGICA DE STATUS FISCAL (CORREÇÃO DA FALHA) ---
+            // Converte para String() explicitamente antes de checar .length
+            // Isso resolve o problema de números vindos da planilha
+            const hasNcm = p.ncm && String(p.ncm).trim().length >= 2;
+            const hasCfop = p.cfop && String(p.cfop).trim().length >= 3;
+
+            const isFiscalOk = (hasNcm && hasCfop);
+
+            if (currentProductFilter === 'fiscal_ok' && !isFiscalOk) return false;
+            if (currentProductFilter === 'fiscal_pending' && isFiscalOk) return false;
+
+            return true;
+        });
+
+        // Se a busca não retornou nada
+        if (produtosFiltrados.length === 0) {
+            container.innerHTML = `
+        <div class="empty-state" style="padding: 40px; text-align: center; color: var(--text-light);">
+            <i class='bx bx-search-alt' style="font-size: 3rem; margin-bottom: 10px;"></i>
+            <p>Nada encontrado para "${term}".</p>
+        </div>`;
+            return;
+        }
+
+        // --- TABELA ---
+        const table = document.createElement('table');
+        table.className = 'products-table';
+
+        table.innerHTML = `
+    <thead>
+        <tr>
+            <th width="45%">Produto / Marca</th>
+            <th width="15%">Preço</th>
+            <th width="25%">Situação Fiscal</th>
+            <th width="10%" class="text-center">Ações</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+    `;
+
+        const tbody = table.querySelector('tbody');
+
+        // Renderiza os produtos (limite de 50 para performance)
+        produtosFiltrados.slice(0, 50).forEach(prod => {
+            const tr = document.createElement('tr');
+
+            // Lógica de Status Fiscal
+            const isFiscalOk = (prod.ncm && prod.cfop);
+            const statusHtml = isFiscalOk
+                ? `<span class="fiscal-status ok" title="NCM: ${prod.ncm}"><i class='bx bx-check'></i> OK</span>`
+                : `<span class="fiscal-status pending"><i class='bx bx-error'></i> Pendente</span>`;
+
+            // Imagem ou Placeholder
+            const imgHtml = prod.imgUrl && prod.imgUrl.length > 10
+                ? `<img src="${prod.imgUrl}" class="product-thumb-sm" alt="Foto">`
+                : `<div class="product-thumb-placeholder"><i class='bx bx-box'></i></div>`;
+
+            const brandHtml = prod.brand ? `<span class="brand-tag">${prod.brand}</span>` : '';
+
+            tr.innerHTML = `
+        <td>
+            <div class="product-cell-wrapper">
+                ${imgHtml}
+                <div style="display:flex; flex-direction:column;">
+                    <strong style="color:var(--text-dark); font-size: 0.95rem;">${prod.name}</strong>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <span style="font-size:0.75rem; color:var(--text-light);">#${prod.id}</span>
+                        ${brandHtml}
+                    </div>
+                </div>
+            </div>
+        </td>
+        <td>
+            <div style="font-weight:600; color:var(--text-dark);">${formatCurrency(prod.price)}</div>
+            ${prod.costPrice > 0 ? `<small style="color:var(--text-light); font-size:0.7rem;">Custo: ${formatCurrency(prod.costPrice)}</small>` : ''}
+        </td>
+        <td>
+            ${statusHtml}
+            <div style="font-size:0.7rem; color:var(--text-light); margin-top:2px;">
+                ${prod.ncm ? 'NCM: ' + prod.ncm : 'Sem NCM'}
+            </div>
+        </td>
+        <td class="text-center">
+            <button class="btn btn-sm btn-secondary" onclick="openProductEdit('${prod.id}')" title="Editar">
+                <i class='bx bx-edit-alt'></i>
+            </button>
+        </td>
+        `;
+            tbody.appendChild(tr);
+        });
+
+        if (produtosFiltrados.length > 50) {
+            const warningRow = document.createElement('tr');
+            warningRow.innerHTML = `<td colspan="4" class="text-center text-light p-3"><small>Exibindo 50 de ${produtosFiltrados.length} resultados. Use a busca para ver mais.</small></td>`;
+            tbody.appendChild(warningRow);
+        }
+
+        // === A CORREÇÃO PRINCIPAL ESTÁ AQUI ===
+        container.innerHTML = ''; // Limpa o "Carregando..." ou "Empty State" antigo
+        container.appendChild(table); // Adiciona a tabela nova
+    };
 
     // --- FUNÇÃO RENDERIZAR CLIENTES (VERSÃO EMBLEMAS + CORREÇÃO DATA) ---
     // --- SUBSTITUA A FUNÇÃO renderClientesPage POR ESTA ---
@@ -891,6 +1059,264 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // Mockup de Marcas para teste (Depois virá do banco)
+    let brandsCache = ["Samsung", "Apple", "Xiaomi", "Motorola", "Dell", "Logitech", "TP-Link", "Multilaser"];
+
+    // 1. LISTENER DO NOVO BOTÃO ADICIONAR
+    const btnAddProduct = document.getElementById('btn-add-product');
+    if (btnAddProduct) {
+        btnAddProduct.addEventListener('click', () => {
+            // Chama a função de edição passando NULL, indicando que é um NOVO produto
+            openProductEdit(null);
+        });
+    }
+
+    // 3. Abrir Modal de Edição
+    window.openProductEdit = (id) => {
+        // Reseta visual (Tamanho e Ícone)
+        modalContent.classList.remove('modal-expanded');
+        const maxIcon = btnMaximize.querySelector('i');
+        if (maxIcon) maxIcon.classList.replace('bx-collapse', 'bx-expand');
+
+        // Limpa Preview de Imagem
+        updateImagePreview('');
+
+        if (id) {
+            // --- MODO EDIÇÃO ---
+            const prod = localProductCache.find(p => String(p.id) === String(id));
+            if (!prod) return;
+
+            editingProductId = id; // Define ID Global
+
+            // Preenche Campos
+            inputCode.value = prod.id;
+            document.getElementById('edit-prod-name').value = prod.name;
+            document.getElementById('edit-prod-price').value = prod.price;
+            document.getElementById('edit-prod-cost').value = prod.costPrice || '';
+            document.getElementById('edit-prod-brand').value = prod.brand || '';
+            document.getElementById('edit-prod-img-url').value = prod.imgUrl || '';
+            document.getElementById('edit-prod-stock').value = prod.stock || 0;
+            updateImagePreview(prod.imgUrl);
+
+            // Trava o Código
+            inputCode.disabled = true;
+            inputCode.classList.add('bg-locked');
+            if (btnUnlockCode) {
+                btnUnlockCode.innerHTML = "<i class='bx bx-lock-alt'></i>";
+                btnUnlockCode.classList.remove('unlocked');
+            }
+
+            // Fiscais
+            document.getElementById('edit-prod-ncm').value = prod.ncm || '';
+            document.getElementById('edit-prod-cest').value = prod.cest || '';
+            document.getElementById('edit-prod-cfop').value = prod.cfop || '5102';
+            document.getElementById('edit-prod-unit').value = prod.unit || 'UN';
+            document.getElementById('edit-prod-csosn').value = prod.csosn || '102';
+            document.getElementById('edit-prod-origem').value = prod.origem || '0';
+
+        } else {
+            // --- MODO NOVO PRODUTO ---
+            editingProductId = null; // Nenhum ID sendo editado
+
+            // Limpa tudo
+            document.getElementById('edit-product-form').reset();
+
+            // Destrava Código (Obrigatório digitar)
+            inputCode.disabled = false;
+            inputCode.classList.remove('bg-locked');
+            inputCode.value = "";
+            inputCode.placeholder = "Digite ou Escaneie o Código";
+            if (btnUnlockCode) {
+                btnUnlockCode.style.display = 'none'; // Esconde cadeado pois já está livre
+            }
+
+            // Valores Padrão
+            document.getElementById('edit-prod-cfop').value = '5102';
+            document.getElementById('edit-prod-unit').value = 'UN';
+            document.getElementById('edit-prod-csosn').value = '102';
+            document.getElementById('edit-prod-origem').value = '0';
+
+            // Foca no código
+            setTimeout(() => inputCode.focus(), 200);
+        }
+
+        // Recalcula lucros (zerados ou preenchidos)
+        const event = new Event('input');
+        document.getElementById('edit-prod-cost').dispatchEvent(event);
+
+        openModal(document.getElementById('edit-product-modal'));
+    };
+
+    // --- Funções Auxiliares Novas (Adicionar no escopo global ou dentro do DOMContentLoaded) ---
+
+    // Auxiliar: Atualiza Preview da Imagem
+    window.updateImagePreview = (url) => {
+        const container = document.getElementById('edit-img-preview');
+        if (url && url.length > 10) {
+            container.innerHTML = `<img src="${url}" onerror="this.src='https://placehold.co/100x100?text=Erro'">`;
+        } else {
+            container.innerHTML = `<i class='bx bx-image-add'></i>`;
+        }
+    };
+
+    // Auxiliar: Seleciona Marca
+    window.selectBrand = (brandName, isNew = false) => {
+        const brandInput = document.getElementById('edit-prod-brand');
+        brandInput.value = brandName; // Formata bonito (Primeira letra maiúscula se quiser tratar)
+        document.getElementById('brand-suggestions-list').style.display = 'none';
+
+        if (isNew) {
+            // Adiciona temporariamente ao cache local para funcionar na sessão
+            brandsCache.push(brandName);
+            console.log("Nova marca registrada temporariamente:", brandName);
+        }
+    };
+
+    // 4. Salvar Edição (Localmente por enquanto)
+    const handleSaveProductEdit = (e) => {
+        e.preventDefault();
+
+        // Pega os valores do form
+        const newCode = document.getElementById('edit-prod-code').value.trim();
+        const newName = document.getElementById('edit-prod-name').value.trim();
+
+        if (!newCode || !newName) {
+            showCustomAlert("Erro", "Código e Nome são obrigatórios.");
+            return;
+        }
+
+        // Objeto base do produto
+        const prodData = {
+            id: newCode,
+            name: newName,
+            price: parseFloat(document.getElementById('edit-prod-price').value) || 0,
+            costPrice: parseFloat(document.getElementById('edit-prod-cost').value) || 0,
+            brand: document.getElementById('edit-prod-brand').value.trim(),
+            imgUrl: document.getElementById('edit-prod-img-url').value.trim(),
+            stock: editingProductId ? parseInt(document.getElementById('edit-prod-stock').value) : 0, // Mantém estoque se editar, 0 se novo
+
+            // Fiscais
+            ncm: document.getElementById('edit-prod-ncm').value.trim(),
+            cest: document.getElementById('edit-prod-cest').value.trim(),
+            cfop: document.getElementById('edit-prod-cfop').value,
+            unit: document.getElementById('edit-prod-unit').value,
+            csosn: document.getElementById('edit-prod-csosn').value,
+            origem: document.getElementById('edit-prod-origem').value,
+        };
+
+        if (editingProductId) {
+            // --- ATUALIZAR EXISTENTE ---
+            const prodIndex = localProductCache.findIndex(p => String(p.id) === String(editingProductId));
+            if (prodIndex === -1) return;
+
+            // Verifica se mudou o código e se já existe outro igual
+            if (newCode !== String(editingProductId)) {
+                const exists = localProductCache.some(p => String(p.id) === newCode);
+                if (exists) {
+                    showCustomAlert("Erro", "Este código de barras já existe!");
+                    return;
+                }
+            }
+
+            localProductCache[prodIndex] = prodData;
+            showCustomAlert("Sucesso", "Produto atualizado!");
+
+        } else {
+            // --- CRIAR NOVO ---
+            // Verifica duplicidade
+            const exists = localProductCache.some(p => String(p.id) === newCode);
+            if (exists) {
+                showCustomAlert("Erro", "Já existe um produto com este código!");
+                return;
+            }
+
+            localProductCache.push(prodData);
+            showCustomAlert("Sucesso", "Novo produto cadastrado!");
+        }
+
+        closeModal(document.getElementById('edit-product-modal'));
+        renderProdutosPage();
+
+        // Restaura botão de cadeado se foi escondido no modo novo
+        if (btnUnlockCode) btnUnlockCode.style.display = 'block';
+    };
+
+    // --- LÓGICA DE MAXIMIZAR MODAL ---
+    const btnMaximize = document.getElementById('btn-maximize-modal');
+    const modalContent = document.querySelector('#edit-product-modal .modal-content');
+
+    if (btnMaximize && modalContent) {
+        btnMaximize.addEventListener('click', () => {
+            modalContent.classList.toggle('modal-expanded');
+
+            // Troca o ícone
+            const icon = btnMaximize.querySelector('i');
+            if (modalContent.classList.contains('modal-expanded')) {
+                icon.classList.replace('bx-expand', 'bx-collapse');
+                btnMaximize.title = "Restaurar tamanho";
+            } else {
+                icon.classList.replace('bx-collapse', 'bx-expand');
+                btnMaximize.title = "Expandir janela";
+            }
+        });
+    }
+
+    // --- LÓGICA DE DESBLOQUEIO DE CÓDIGO ---
+    const btnUnlockCode = document.getElementById('btn-unlock-code');
+    const inputCode = document.getElementById('edit-prod-code');
+
+    if (btnUnlockCode) {
+        btnUnlockCode.addEventListener('click', () => {
+            // Se já estiver desbloqueado, não faz nada
+            if (!inputCode.disabled) return;
+
+            showCustomConfirm(
+                "Alterar Código de Barras?",
+                "Isso pode afetar o histórico se o código for usado como identificador. Tem certeza?",
+                () => {
+                    inputCode.disabled = false;
+                    inputCode.classList.remove('bg-locked');
+                    inputCode.focus();
+
+                    // Visual do botão muda
+                    btnUnlockCode.innerHTML = "<i class='bx bx-lock-open-alt'></i>";
+                    btnUnlockCode.classList.add('unlocked');
+
+                    closeModal(document.getElementById('confirm-modal'));
+                }
+            );
+        });
+    }
+
+    // 1. Pesquisa
+    const prodSearchInput = document.getElementById('products-search-input');
+    if (prodSearchInput) {
+        prodSearchInput.addEventListener('input', () => renderProdutosPage());
+    }
+
+    // 2. Filtros
+    document.querySelectorAll('.filter-cap').forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Visual
+            document.querySelectorAll('.filter-cap').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Lógica
+            currentProductFilter = btn.dataset.filter;
+            renderProdutosPage();
+        });
+    });
+
+    // 3. Form Submit Edição
+    const editForm = document.getElementById('edit-product-form');
+    if (editForm) {
+        editForm.addEventListener('submit', handleSaveProductEdit);
+    }
+
+    // 4. Botão Recarregar
+    document.getElementById('btn-reload-products')?.addEventListener('click', () => {
+        carregarCacheDeProdutos();
+    });
 
     // --- PEDIDO 2: SALVAR CLIENTE (Lógica Simplificada) ---
     const formAddCliente = document.getElementById('add-cliente-form');
@@ -1105,7 +1531,46 @@ document.addEventListener('DOMContentLoaded', () => {
     // Funções de Modal com Acessibilidade
     const openModal = (modalEl) => { elementToRestoreFocus = document.activeElement; modalEl.classList.add('active'); const primaryFocus = modalEl.querySelector('[data-primary-focus="true"]'); if (primaryFocus) { setTimeout(() => primaryFocus.focus(), 100); } };
     const closeModal = (modalEl) => { modalEl.classList.remove('active'); if (elementToRestoreFocus && elementToRestoreFocus.focus) { try { elementToRestoreFocus.focus(); } catch (e) { console.warn("Não foi possível restaurar o foco:", e); } } elementToRestoreFocus = null; };
-    const showCustomAlert = (title, message) => { alertTitle.textContent = title; alertMessage.textContent = message; openModal(alertModal); };
+    const showCustomAlert = (title, message) => {
+        alertTitle.textContent = title; alertMessage.textContent = message; openModal(alertModal);
+    };
+    const showCustomToast = (message) => {
+        // Cria o elemento
+        const toast = document.createElement('div');
+        toast.textContent = message;
+
+        // Estilo inline para garantir que funcione sem mexer no CSS
+        Object.assign(toast.style, {
+            position: 'fixed',
+            bottom: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: '#333',
+            color: '#fff',
+            padding: '12px 24px',
+            borderRadius: '8px',
+            zIndex: '9999',
+            opacity: '0',
+            transition: 'opacity 0.3s ease'
+        });
+
+        document.body.appendChild(toast);
+
+        // Animação de entrada
+        requestAnimationFrame(() => {
+            toast.style.opacity = '1';
+        });
+
+        // Remove após 3 segundos
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 300);
+        }, 3000);
+    };
     const showCustomConfirm = (title, message, onConfirm) => { confirmTitle.textContent = title; confirmMessage.textContent = message; confirmCallback = onConfirm; openModal(confirmModal); };
     const resetPaymentMethod = () => { selectedPaymentMethod = null; summaryPaymentMethod.textContent = "Não selecionado"; summaryPaymentMethod.style.fontWeight = '500'; summaryPaymentMethod.style.color = 'var(--text-light)'; updateSummary(); };
 
@@ -1144,97 +1609,109 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- Função Global para Atualizar Itens (Descontos) ---
     window.updateCartItem = (id, field, value) => {
-        const item = cart.find(i => i.id === id);
+        // Converte para String para garantir que encontre o ID certo (Texto ou Número)
+        const item = cart.find(i => String(i.id) === String(id));
+        
         if (!item) return;
 
-        if (field === 'quantity') {
-            if (value === 'increase') item.quantity++;
-            else if (value === 'decrease') {
-                item.quantity--;
-                if (item.quantity === 0) return removeFromCart(id);
-            }
-        } else if (field === 'discountPercent') {
-            // Só permite editar se NÃO for produto Firebase (oferta fixa)
-            if (!item.isFirebase) {
-                let percent = parseFloat(value) || 0;
-                // Travas de segurança
-                if (percent < 0) percent = 0;
-                if (percent > 100) percent = 100;
+        if (field === 'discountPercent') {
+            let percent = parseFloat(value);
 
-                item.discountPercent = percent;
+            // Validações de limite (0 a 100)
+            if (isNaN(percent) || percent < 0) percent = 0;
+            if (percent > 100) percent = 100;
 
-                // CÁLCULO: Preço Final = Preço Original * (1 - %)
-                // O 'originalPrice' continua sendo o preço cheio.
-                item.price = item.originalPrice * (1 - (percent / 100));
-            }
+            // 1. Define a porcentagem de desconto
+            item.discountPercent = percent;
+
+            // 2. Recalcula o Preço de Venda
+            // Fórmula: Preço Original - (Valor do Desconto)
+            // Mantemos o preço original intacto e alteramos apenas o preço final (item.price)
+            item.price = item.originalPrice * (1 - (percent / 100));
         }
+
+        // Renderiza novamente para atualizar a linha e o total do pedido
         renderCart();
     };
 
     // Função Principal de Carregamento (Híbrida)
-    async function carregarCacheDeProdutos() {
-        barcodeInput.disabled = true;
-        barcodeInput.placeholder = "Carregando sistema...";
-        barcodeHint.textContent = "Sincronizando estoques...";
-        localProductCache = [];
+    // --- CORREÇÃO 2: Desbloqueio do PDV após carregar ---
+    window.carregarCacheDeProdutos = async () => {
+        const container = document.getElementById('produtos-table-container');
+        const pdvInput = document.getElementById('barcode-input'); // Seleciona o input do PDV
+        const pdvHint = document.getElementById('barcode-hint');   // Seleciona o texto de ajuda
+
+        // Feedback visual na tela de produtos
+        if (container) {
+            container.innerHTML = '<div class="empty-state"><i class="bx bx-loader-alt bx-spin" style="font-size:2rem"></i><p class="mt-2">Sincronizando Dados...</p></div>';
+        }
 
         try {
-            // 1. Busca Google Sheets e Firebase em paralelo
-            const [sheetResponse, firebaseProducts] = await Promise.all([
-                fetch(SCRIPT_URL + "?action=listarProdutos"),
-                fetchFirebaseProductsForCache()
-            ]);
+            // Busca os dados do Backend
+            const response = await fetch(SCRIPT_URL + "?action=getProducts");
+            const json = await response.json();
 
-            // 2. Processa Google Sheets
-            if (!sheetResponse.ok) throw new Error("Erro rede Sheets.");
-            const sheetResult = await sheetResponse.json();
-            let sheetProducts = [];
+            localProductCache = json; // Salva na memória
 
-            if (sheetResult.status === 'success') {
-                sheetProducts = sheetResult.data.map(p => ({
-                    ...p,
-                    price: parseFloat(p.price) // Garante numérico
-                }));
+            // Popula o Cache de Marcas
+            const marcasExistentes = [...new Set(localProductCache.map(p => p.brand).filter(b => b && b.trim() !== ""))];
+            if (marcasExistentes.length > 0) {
+                brandsCache = marcasExistentes.sort();
             }
 
-            // 3. Lógica de Mesclagem (Firebase Sobrescreve Sheets)
-            // Cria um mapa usando o ID (código de barras) como chave
-            const productMap = new Map();
+            renderProdutosPage(); // Renderiza a tabela
 
-            // Adiciona produtos da Planilha primeiro
-            sheetProducts.forEach(p => productMap.set(String(p.id).trim(), p));
-
-            // Adiciona/Sobrescreve com produtos do Firebase
-            firebaseProducts.forEach(p => {
-                // Se já existe, o Firebase ganha (atualiza preço/nome)
-                // Se não existe, é adicionado
-                productMap.set(String(p.id).trim(), p);
-            });
-
-            // Converte de volta para array
-            localProductCache = Array.from(productMap.values());
-            if (document.getElementById('produtos-table-container')) {
-                renderProdutosPage(); // <--- Essa função pega os dados da memória e cria as linhas da tabela (<tr>)
+            // === A CORREÇÃO DO PDV ESTÁ AQUI ===
+            // Destrava o campo de busca do PDV e muda o texto
+            if (pdvInput) {
+                pdvInput.disabled = false;
+                pdvInput.placeholder = "Digite o código ou nome...";
+                // Se estiver na página do PDV, foca
+                if (document.getElementById('pdv-page').style.display !== 'none') {
+                    pdvInput.focus();
+                }
+            }
+            if (pdvHint) {
+                pdvHint.textContent = "Digite para buscar ou use o leitor";
             }
 
-            console.log(`Cache unificado: ${localProductCache.length} produtos.`);
-            barcodeHint.textContent = "F2 para focar";
+            // Verifica se a função toast existe antes de chamar (para evitar aquele erro anterior)
+            if (typeof showCustomToast === 'function') {
+                showCustomToast("Sistema Carregado!");
+            } else {
+                console.log("Produtos carregados.");
+            }
 
         } catch (error) {
-            console.error("Erro cache prod:", error);
-            showCustomAlert("Erro Sincronização", "Falha ao carregar produtos. Verifique a internet.");
-            localProductCache = [];
-            barcodeHint.textContent = "Erro. F5.";
-        } finally {
-            barcodeInput.disabled = false;
-            barcodeInput.placeholder = "Ler código...";
-            if (verificarToken()) barcodeInput.focus();
+            console.error("Erro ao carregar produtos:", error);
+
+            // Exibe erro na tela de produtos
+            if (container) {
+                container.innerHTML = `<div class="empty-state text-danger"><i class='bx bx-error'></i><p>Erro ao sincronizar. Verifique a conexão.</p><button class="btn btn-sm btn-secondary mt-2" onclick="carregarCacheDeProdutos()">Tentar Novamente</button></div>`;
+            }
+
+            // Avisa no PDV que deu erro
+            if (pdvHint) {
+                pdvHint.innerHTML = "<span style='color:red'>Erro ao carregar produtos. Recarregue a página.</span>";
+            }
         }
+    };
+
+
+    function buscarProdutoLocalmente(barcode) {
+        if (localProductCache === null) {
+            showCustomAlert("Aguarde", "Cache carregando.");
+            return null;
+        }
+
+        // CORREÇÃO: Converte ambos para String e remove espaços antes de comparar
+        // Isso resolve o problema de Número vs Texto
+        const barcodeLimpo = String(barcode).trim();
+
+        return localProductCache.find(p => String(p.id).trim() === barcodeLimpo) || null;
     }
-
-
-    function buscarProdutoLocalmente(barcode) { if (localProductCache === null) { showCustomAlert("Aguarde", "Cache carregando."); return null; } return localProductCache.find(p => p.id === barcode) || null; }
     async function cadastrarProdutoNaAPI(product) { quickAddSubmitBtn.disabled = true; quickAddSubmitBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Cadastrando..."; try { const params = new URLSearchParams({ action: 'cadastrarProduto', codigo: product.id, nome: product.name, preco: product.price }); const response = await fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET' }); if (!response.ok) throw new Error("Erro rede."); const result = await response.json(); if (result.status === 'success') { if (localProductCache) { localProductCache.push(result.data); } return result.data; } else { throw new Error(result.message || "Erro API."); } } catch (error) { console.error("Erro cadastro prod:", error); showCustomAlert("Erro Cadastro Prod", error.message); return null; } finally { quickAddSubmitBtn.disabled = false; quickAddSubmitBtn.innerHTML = "Adicionar"; } }
     async function registrarVendaAtual(payments) { if (!lastSaleData) { throw new Error("Sem dados venda."); } if (!REGISTRO_VENDA_SCRIPT_URL || REGISTRO_VENDA_SCRIPT_URL.includes("COLE_A_URL")) { throw new Error("URL registro não config."); } const now = new Date(); const timestamp = formatTimestamp(now); const baseData = { formType: 'venda', seller: 'nubia', type: 'entrada', value: lastSaleData.subtotal.toFixed(2), desconto: lastSaleData.discount.toFixed(2), Timestamp: timestamp }; const fetchPromises = payments.map(payment => { const paymentData = { ...baseData, payment: payment.method || 'N/A', total: payment.value.toFixed(2) }; const formData = new URLSearchParams(paymentData); console.log("Enviando parte registro:", formData.toString()); return fetch(REGISTRO_VENDA_SCRIPT_URL, { redirect: "follow", method: "POST", body: formData.toString(), headers: { "Content-Type": "application/x-www-form-urlencoded" }, }); }); const responses = await Promise.all(fetchPromises); const allOk = responses.every(response => response.ok); if (allOk) { console.log("Registro OK!"); } else { const firstErrorResponse = responses.find(response => !response.ok); let errorText = `Falha registro. Status: ${firstErrorResponse?.status || '?'}`; try { if (firstErrorResponse) errorText = await firstErrorResponse.text(); } catch (readError) { } throw new Error(errorText); } }
 
@@ -1301,9 +1778,16 @@ document.addEventListener('DOMContentLoaded', () => {
         mainContent.style.display = 'block';
         headerCloseCaixaBtn.style.display = 'inline-flex';
 
-        if (localProductCache === null) carregarCacheDeProdutos();
-        const activePage = document.querySelector('.navbar-item.active')?.dataset.page;
-        if (activePage === 'clientes' && localClientCache === null) carregarClientesDaAPI();
+        // 1. Dispara o carregamento de Produtos (se não tiver)
+        if (localProductCache === null) {
+            carregarCacheDeProdutos();
+        }
+
+        // 2. Dispara o carregamento de Clientes (AGORA SEMPRE, independentemente da aba)
+        if (localClientCache === null) {
+            console.log("Pré-carregando clientes...");
+            carregarClientesDaAPI();
+        }
 
         const activeItem = document.querySelector('.navbar-item.active');
         if (activeItem) updateNavbarHighlight(activeItem);
@@ -1370,146 +1854,143 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- FUNÇÃO DE IMPRESSÃO A4 (CORRIGIDA E BLINDADA) ---
     // --- FUNÇÃO DE IMPRESSÃO A4 (CORRIGIDA) ---
-    function printA4(vendaData = null, clienteData = null, parcelas = 1) {
-        console.log("Iniciando impressão A4...");
+    function printA4(nomeClienteParams = null) {
+    console.log("Gerando A4...");
 
-        // 1. DADOS DA VENDA
-        // Tenta pegar de parâmetros, depois da última venda salva, depois calcula na hora
-        let dadosVenda = vendaData;
+    // 1. RECALCULAR TOTAIS BASEADO NO CARRINHO (Mais seguro que ler o HTML)
+    // Se o carrinho estiver vazio (venda já finalizada e limpa), tentamos usar o lastSaleData
+    let itensParaImprimir = cart;
+    let dadosFinanceiros = null;
 
-        if (!dadosVenda && window.lastSaleData) {
-            dadosVenda = {
-                id: "V-" + Date.now().toString().slice(-6),
-                total: window.lastSaleData.total,
-                discount: window.lastSaleData.discount || 0,
-                pagamento: window.lastSaleData.paymentMethod || document.getElementById('summary-payment-method').textContent
-            };
-        }
+    if (cart.length > 0) {
+        // Calcula na hora
+        const subtotalBruto = cart.reduce((acc, item) => acc + (item.originalPrice * item.quantity), 0);
+        const totalLiquido = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+        
+        // Se houver desconto global aplicado
+        let descontoGlobal = (typeof discount !== 'undefined') ? discount : 0;
+        
+        // O desconto total é a soma dos descontos por item + desconto global
+        const descontoItens = subtotalBruto - totalLiquido;
+        const totalDesconto = descontoItens + descontoGlobal;
+        const totalFinal = subtotalBruto - totalDesconto;
 
-        // Fallback final: Pega os textos da tela se não tiver dados na memória
-        if (!dadosVenda) {
-            const totalText = document.getElementById('summary-total').innerText.replace('R$', '').replace('.', '').replace(',', '.');
-            const descText = document.getElementById('summary-discount').innerText.replace('- R$', '').replace('.', '').replace(',', '.');
+        dadosFinanceiros = {
+            subtotal: subtotalBruto,
+            desconto: totalDesconto,
+            total: totalFinal,
+            pagamento: selectedPaymentMethod || "Dinheiro" // Pega a variável global correta
+        };
+    } else if (lastSaleData) {
+        // Fallback se o carrinho já foi limpo mas temos o backup da última venda
+        dadosFinanceiros = {
+            subtotal: lastSaleData.subtotal,
+            desconto: lastSaleData.discount,
+            total: lastSaleData.total,
+            pagamento: lastSaleData.paymentMethod || "Dinheiro"
+        };
+        // Nota: se o carrinho estiver vazio, a tabela de itens ficará vazia. 
+        // O ideal é imprimir ANTES de limpar o carrinho (clearCart).
+    } else {
+        showCustomAlert("Erro", "Nenhum dado de venda para imprimir.");
+        return;
+    }
 
-            dadosVenda = {
-                id: "BALCAO-" + new Date().getHours() + new Date().getMinutes(),
-                total: parseFloat(totalText) || 0,
-                discount: parseFloat(descText) || 0,
-                pagamento: document.getElementById('summary-payment-method').textContent
-            };
-        }
+    // 2. DADOS DO CLIENTE
+    let clienteNome = "CONSUMIDOR FINAL";
+    let clienteEnd = "Endereço não informado";
+    
+    // Prioridade: 1. Parâmetro passado, 2. Cliente Crediário Selecionado, 3. Texto da tela
+    if (nomeClienteParams) {
+        clienteNome = nomeClienteParams;
+    } else if (selectedCrediarioClient) {
+        clienteNome = selectedCrediarioClient.nomeExibicao;
+        clienteEnd = selectedCrediarioClient.endereco || clienteEnd;
+    } else {
+        const nomeTela = document.getElementById('summary-client-name-text').textContent;
+        if (nomeTela && nomeTela !== "Nome do Cliente") clienteNome = nomeTela;
+    }
 
-        // 2. DADOS DO CLIENTE
-        let dadosCliente = clienteData || window.selectedCrediarioClient;
+    // --- PREENCHIMENTO DO DOM DE IMPRESSÃO ---
 
-        // Se não veio objeto de cliente, tenta ler o nome da tela
-        if (!dadosCliente) {
-            const nomeTela = document.getElementById('summary-client-name-text').textContent;
-            if (nomeTela && nomeTela !== "Nome do Cliente") {
-                dadosCliente = { nomeExibicao: nomeTela, cpf: "", endereco: "" };
-            }
-        }
+    // Cabeçalho
+    const now = new Date();
+    document.getElementById('print-sale-id').textContent = "V-" + now.getTime().toString().slice(-6);
+    document.getElementById('print-sale-date').textContent = now.toLocaleDateString('pt-BR') + " " + now.toLocaleTimeString('pt-BR');
+    
+    // Cliente
+    document.getElementById('print-client-name').textContent = clienteNome.toUpperCase();
+    document.getElementById('print-client-address').textContent = clienteEnd;
 
-        // --- PREENCHIMENTO DO DOCUMENTO ---
-
-        // Cabeçalho
-        document.getElementById('print-sale-id').textContent = dadosVenda.id;
-        document.getElementById('print-sale-date').textContent = new Date().toLocaleDateString('pt-BR');
-        document.getElementById('print-timestamp').textContent = new Date().toLocaleString('pt-BR');
-
-        // Dados do Cliente
-        if (dadosCliente) {
-            document.getElementById('print-client-name').textContent = (dadosCliente.nomeExibicao || dadosCliente.nomeCompleto || "").toUpperCase();
-            document.getElementById('print-client-doc').textContent = dadosCliente.cpf || "---";
-            document.getElementById('print-client-address').textContent = dadosCliente.endereco || "Endereço não informado";
-            document.getElementById('print-signature-name').textContent = (dadosCliente.nomeExibicao || "CLIENTE").toUpperCase();
-        } else {
-            document.getElementById('print-client-name').textContent = "CONSUMIDOR FINAL";
-            document.getElementById('print-client-doc').textContent = "---";
-            document.getElementById('print-client-address').textContent = "---";
-            document.getElementById('print-signature-name').textContent = "CLIENTE";
-        }
-
-        // 3. ITENS (CORREÇÃO CRÍTICA: USAR ARRAY GLOBAL 'cart')
-        const tbody = document.getElementById('print-items-body');
-        tbody.innerHTML = '';
-
-        // Verifica se existe carrinho global e se tem itens
-        if (typeof cart !== 'undefined' && cart.length > 0) {
-            cart.forEach(item => {
-                // Calcula o total do item na hora (Preço unitário * Quantidade)
-                const itemTotal = item.price * item.quantity;
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
+    // Tabela de Itens
+    const tbody = document.getElementById('print-items-body');
+    tbody.innerHTML = '';
+    
+    // Usa a variável global 'cart' se tiver itens, senão tenta recuperar de algum lugar ou avisa
+    if (itensParaImprimir.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">Itens já processados. Reimpressão de itens indisponível.</td></tr>';
+    } else {
+        itensParaImprimir.forEach(item => {
+            const totalItem = item.price * item.quantity; // Preço unitário (já com desconto) * qtd
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
                 <td>${(item.id || "000").toString().slice(-4)}</td>
                 <td>${item.name}</td>
                 <td class="text-center">${item.quantity}</td>
                 <td class="text-right">${formatCurrency(item.price)}</td>
-                <td class="text-right"><strong>${formatCurrency(itemTotal)}</strong></td>
+                <td class="text-right"><strong>${formatCurrency(totalItem)}</strong></td>
             `;
-                tbody.appendChild(tr);
-            });
-        } else {
-            // Caso raro onde o carrinho foi limpo antes de imprimir
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center" style="padding: 15px;">Itens indisponíveis ou venda já finalizada.</td></tr>';
-        }
-
-        // 4. TOTAIS
-        const total = parseFloat(dadosVenda.total) || 0;
-        const desconto = Math.abs(parseFloat(dadosVenda.discount) || 0);
-        const subtotal = total + desconto;
-
-        document.getElementById('print-subtotal').textContent = formatCurrency(subtotal);
-        document.getElementById('print-discount').textContent = "- " + formatCurrency(desconto);
-        document.getElementById('print-total').textContent = formatCurrency(total);
-
-        // Método de pagamento
-        let textoPagamento = dadosVenda.pagamento || "Dinheiro";
-        document.getElementById('print-obs-text').textContent = textoPagamento;
-
-        // 5. PARCELAMENTO (Se for crediário)
-        const instArea = document.getElementById('print-installments-area');
-        const instList = document.getElementById('print-installments-list');
-        instList.innerHTML = '';
-
-        if (textoPagamento && textoPagamento.toLowerCase().includes("crediário")) {
-            instArea.style.display = 'block';
-
-            // Tenta detectar número de parcelas pelo texto "(3x)" se não vier por parâmetro
-            if (parcelas === 1) {
-                const match = textoPagamento.match(/\((\d+)x\)/);
-                if (match) parcelas = parseInt(match[1]);
-            }
-
-            // Garante que é pelo menos 1
-            if (parcelas < 1) parcelas = 1;
-
-            const diaVenc = (dadosCliente && dadosCliente.diaVencimento) ? parseInt(dadosCliente.diaVencimento) : 10;
-            const valorParcela = total / parcelas;
-            const hoje = new Date();
-
-            let dataBase = new Date(hoje.getFullYear(), hoje.getMonth(), diaVenc);
-            if (hoje.getDate() >= (diaVenc - 10)) {
-                dataBase.setMonth(dataBase.getMonth() + 1);
-            }
-
-            for (let i = 0; i < parcelas; i++) {
-                let d = new Date(dataBase);
-                d.setMonth(dataBase.getMonth() + i);
-
-                const div = document.createElement('div');
-                div.className = 'inst-badge';
-                div.innerHTML = `<b>${i + 1}/${parcelas}</b> ${d.toLocaleDateString('pt-BR').slice(0, 5)}<br>${formatCurrency(valorParcela)}`;
-                instList.appendChild(div);
-            }
-        } else {
-            instArea.style.display = 'none';
-        }
-
-        // 6. IMPRIMIR
-        setTimeout(() => window.print(), 300);
+            tbody.appendChild(tr);
+        });
     }
+
+    // Totais (Correção dos Zeros e Formatação)
+    document.getElementById('print-subtotal').textContent = formatCurrency(dadosFinanceiros.subtotal);
+    
+    // Formatação do Desconto: Se for 0, mostra R$ 0,00. Se for maior, mostra - R$ X,XX
+    const valDesconto = dadosFinanceiros.desconto;
+    if (valDesconto > 0.01) {
+        document.getElementById('print-discount').textContent = "- " + formatCurrency(valDesconto);
+    } else {
+        document.getElementById('print-discount').textContent = formatCurrency(0);
+    }
+    
+    document.getElementById('print-total').textContent = formatCurrency(dadosFinanceiros.total);
+    document.getElementById('print-obs-text').textContent = dadosFinanceiros.pagamento;
+
+    // 3. PARCELAS (Lógica corrigida)
+    const areaParcelas = document.getElementById('print-installments-area');
+    const listaParcelas = document.getElementById('print-installments-list');
+    listaParcelas.innerHTML = '';
+
+    // Verifica se é crediário (case insensitive)
+    if (String(dadosFinanceiros.pagamento).toLowerCase().includes('crediário') || selectedPaymentMethod === 'Crediário') {
+        areaParcelas.style.display = 'block';
+        
+        // Tenta pegar o número de parcelas da variável temporária ou deduzir
+        let numParcelas = window.tempInstallments || 1; 
+        
+        // Cálculo das datas
+        const hoje = new Date();
+        const diaVencimento = (selectedCrediarioClient && selectedCrediarioClient.diaVencimento) ? parseInt(selectedCrediarioClient.diaVencimento) : 10;
+        const valorParcela = dadosFinanceiros.total / numParcelas;
+
+        for (let i = 1; i <= numParcelas; i++) {
+            // Lógica simples de vencimento: Próximo mês no dia X
+            let dataParcela = new Date(hoje.getFullYear(), hoje.getMonth() + i, diaVencimento);
+            
+            const div = document.createElement('div');
+            div.className = 'inst-badge';
+            div.innerHTML = `<b>${i}/${numParcelas}</b> ${dataParcela.toLocaleDateString('pt-BR')}<br>${formatCurrency(valorParcela)}`;
+            listaParcelas.appendChild(div);
+        }
+    } else {
+        areaParcelas.style.display = 'none';
+    }
+
+    // Imprimir
+    setTimeout(() => window.print(), 300);
+}
 
     const executePrint = (html) => {
         const iframe = document.createElement('iframe');
@@ -1567,7 +2048,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     barcodeInput.addEventListener('input', () => { debounce(handleScan, 300); });
-    cartItemsBody.addEventListener('click', (e) => { const button = e.target.closest('button'); if (!button) return; const { action, id } = button.dataset; if (action === 'increase' || action === 'decrease') { updateQuantity(id, action); } else if (button.classList.contains('remove-btn')) { showCustomConfirm("Remover Item", "Tem certeza?", () => { removeFromCart(id); closeModal(confirmModal); }); } });
     discountToggleRow.addEventListener('click', () => { discountPopover.classList.toggle('active'); });
     percBtnContainer.addEventListener('click', (e) => { const button = e.target.closest('.perc-btn'); if (button && button.dataset.perc) { applyDiscount(parseFloat(button.dataset.perc), true); } });
     discountInputR.addEventListener('input', (e) => { applyDiscount(parseFloat(e.target.value) || 0, false); });
@@ -1581,7 +2061,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedPrintFormat = 'thermal'; // 'thermal' ou 'a4'
 
     // --- 1. BOTÃO FINALIZAR VENDA (F9) ---
-    // Agora ele apenas abre a seleção de impressão. Nada é registrado ainda.
     finishSaleBtn.addEventListener('click', () => {
         if (cart.length === 0) {
             showCustomAlert("Vazio", "Adicione itens.");
@@ -1594,14 +2073,20 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Validação extra para Crediário
-        if (selectedPaymentMethod === 'Crediário' && !selectedCrediarioClient) {
-            showCustomAlert("Atenção", "Selecione o cliente para o Crediário.");
-            openModal(clientSelectionModal);
-            return;
+        // LÓGICA ALTERADA: Se for Crediário, pula a pergunta e imprime A4 direto
+        if (selectedPaymentMethod === 'Crediário') {
+            if (!selectedCrediarioClient) {
+                showCustomAlert("Atenção", "Selecione o cliente para o Crediário.");
+                openModal(clientSelectionModal);
+                return;
+            }
+            
+            // Chama direto a função de processamento com o formato A4
+            processFinalSale('a4');
+            return; 
         }
 
-        // Abre escolha de impressão
+        // Para os outros métodos (Dinheiro, PIX, Cartão), continua perguntando
         openModal(document.getElementById('print-selection-modal'));
     });
 
@@ -1698,28 +2183,39 @@ document.addEventListener('DOMContentLoaded', () => {
             finishSaleBtn.innerHTML = "<i class='bx bx-check-circle'></i> Finalizar Venda (F9)";
 
             // LÓGICA DE NAVEGAÇÃO:
+            // LÓGICA DE NAVEGAÇÃO:
             if (selectedPaymentMethod === 'Crediário') {
-                // Se for Crediário, já imprimimos no passo 5.
-                // Então abrimos o modal DIRETO no Passo 2 (Validação), pulando o botão de imprimir.
-
+                // Configura o nome do cliente
                 credFlowClientName.textContent = selectedCrediarioClient.nomeExibicao;
 
                 // Esconde Passo 1 (Impressão)
                 document.getElementById('cred-step-1').style.display = 'none';
 
-                // Mostra Passo 2 (Validação)
+                // Mostra Passo 2 (Validação e QR Code)
                 const step2 = document.getElementById('cred-step-2');
-                step2.style.display = 'block';
+                step2.style.display = 'flex'; 
                 step2.style.opacity = '1';
                 step2.classList.remove('locked-step');
 
-                // Atualiza QR Code (caso use) ou apenas prepara a tela
-                const qrImg = document.querySelector('#cred-step-2 .qr-img-wrapper img');
-                if (qrImg) {
-                    const baseUrl = "http://eletrobusiness.com.br/comprovante/buy/valid55102.html";
+                // --- LÓGICA DO QR CODE ATUALIZADA ---
+                const qrImg = document.getElementById('cred-qrcode-img');
+                
+                if (qrImg && selectedCrediarioClient) {
+                    // 1. Define a URL base para o valid55102.html
+                    // window.location.href pega o endereço atual do navegador para garantir que funcione em qualquer domínio
+                    const currentPath = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
+                    const baseUrl = `${currentPath}/valid55102.html`;
+
+                    // 2. Adiciona o ID do cliente (idCliente) na URL
+                    // Isso permite que o valid55102.html saiba quem é o cliente
                     const finalUrl = `${baseUrl}?id=${selectedCrediarioClient.idCliente}`;
-                    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(finalUrl)}`;
+
+                    console.log("QR Code gerado para:", finalUrl); // Log para conferência
+
+                    // 3. Gera a imagem visual do QR Code apontando para essa URL
+                    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=5&data=${encodeURIComponent(finalUrl)}`;
                 }
+                // ------------------------------------
 
                 openModal(crediarioFlowModal);
             } else {
@@ -1841,52 +2337,80 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- CORREÇÃO DA NAVBAR (EVITA O ERRO RESOURCE EXHAUSTED) ---
     // --- Navegação SPA (Navbar) - CORRIGIDA ---
-    navbarItems.forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
+    // --- NOVO SISTEMA DE NAVEGAÇÃO OTIMIZADO ---
 
-            // 1. ATUALIZAÇÃO VISUAL DA NAVBAR
-            const previouslyActive = document.querySelector('.navbar-item.active');
-            if (previouslyActive === item && item.dataset.page !== 'pedidos') { return; }
+    // Certifique-se de que estas linhas estão no topo do seu escopo de UI
+    const moreMenuBtn = document.getElementById('more-menu-btn');
+    const moreMenuModal = document.getElementById('more-menu-modal');
+    const moreMenuIcon = document.getElementById('more-menu-icon'); // Verifique esta linha
 
-            navbarItems.forEach(navItem => navItem.classList.remove('active'));
-            item.classList.add('active');
-            updateNavbarHighlight(item);
+    // 1. Lógica do Dropdown (Abre/Fecha) corrigida
+    if (moreMenuBtn && moreMenuModal) {
+        moreMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isShowing = moreMenuModal.classList.toggle('show');
 
-            // 2. TROCA DE PÁGINA (VISIBILIDADE)
-            // Fazemos isso ANTES de qualquer lógica específica para garantir que o elemento exista e esteja visível
-            allPages.forEach(page => page.style.display = 'none');
-            const pageId = item.dataset.page + '-page';
-            const targetPage = document.getElementById(pageId);
+            // O uso de ?. evita o erro se o ícone for nulo
+            if (moreMenuIcon) {
+                moreMenuIcon.style.transform = isShowing ? 'rotate(180deg)' : 'rotate(0deg)';
+            }
+        });
+    }
 
-            if (targetPage) targetPage.style.display = 'block';
+    // Fechar ao clicar em qualquer lugar da tela
+    document.addEventListener('click', () => {
+        moreMenuModal.classList.remove('show');
+        moreMenuIcon.style.transform = 'rotate(0deg)';
+    });
 
-            // 3. LÓGICA ESPECÍFICA DE CADA PÁGINA
+    // 2. Lógica de Troca de Páginas (Unificada)
+    // Selecionamos todos os itens da navbar E os itens de dentro do modal
+    const allNavTriggers = document.querySelectorAll('.navbar-item:not(#more-menu-btn), .more-menu-item');
 
-            // --- CORREÇÃO AQUI: RESET DA ABA PEDIDOS ---
-            if (item.dataset.page === 'pedidos') {
-                // Limpa notificações
-                item.classList.remove('notify-active');
-                const badge = document.getElementById('pedidos-badge');
-                if (badge) badge.classList.remove('active');
+    allNavTriggers.forEach(trigger => {
+        trigger.addEventListener('click', (e) => {
+            const page = trigger.dataset.page;
+            if (!page) return;
 
-                // Reseta Filtro
-                currentOrderStatusFilter = 'pendente';
+            // --- Limpeza Visual ---
+            // Remove 'active' de todos os itens principais
+            document.querySelectorAll('.navbar-item').forEach(el => el.classList.remove('active', 'active-parent'));
+            // Remove 'active' de itens do modal
+            document.querySelectorAll('.more-menu-item').forEach(el => el.classList.remove('active'));
 
-                // Reseta Abas Visuais
-                const orderTabs = document.querySelectorAll('#order-status-tabs .order-tab');
-                orderTabs.forEach(t => t.classList.remove('active'));
-                const defaultTab = document.querySelector('#order-status-tabs .order-tab[data-status="pendente"]');
-                if (defaultTab) defaultTab.classList.add('active');
-
-                // Renderiza (Agora vai funcionar pois a página já está display: block)
-                renderDummyOrders();
+            // --- Lógica de Destaque ---
+            if (trigger.classList.contains('more-menu-item')) {
+                // Se clicou no modal, ativa o item e destaca o pai (Gerenciamento)
+                trigger.classList.add('active');
+                moreMenuBtn.classList.add('active-parent');
+                updateNavbarHighlight(moreMenuBtn); // A linha vermelha corre para o botão "Gerenciamento"
+            } else {
+                // Se clicou na navbar principal
+                trigger.classList.add('active');
+                updateNavbarHighlight(trigger);
             }
 
-            // Carregamentos das outras páginas
+            // --- Troca de Conteúdo (Sua lógica original) ---
+            const pageId = page + '-page';
+            const targetPage = document.getElementById(pageId);
+
+            if (targetPage) {
+                allPages.forEach(p => p.style.display = 'none');
+                targetPage.style.display = 'block';
+            }
+
+            // --- Gatilhos de Carregamento (Sua lógica original) ---
+            if (page === 'pedidos') {
+                // Reseta abas de pedidos... (seu código atual)
+                renderDummyOrders();
+            }
             if (pageId === 'produtos-page' && !localProductCache) carregarCacheDeProdutos();
             if (pageId === 'clientes-page' && !localClientCache) carregarClientesDaAPI();
             if (pageId === 'historico-page') carregarHistorico();
+
+            // Fecha o modal após o clique
+            moreMenuModal.classList.remove('show');
+            moreMenuIcon.style.transform = 'rotate(0deg)';
         });
     });
 
@@ -2123,10 +2647,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DO GERENCIADOR FIREBASE ---
 
-    // Seletores
-    const btnLoadFirebase = document.getElementById('btn-load-firebase');
-    const firebaseListContainer = document.getElementById('firebase-products-list');
-
     // Função Auxiliar de Limpeza de Valor (igual ao seu index.js)
     function parseValueFirebase(val) {
         if (!val) return 0;
@@ -2136,215 +2656,6 @@ document.addEventListener('DOMContentLoaded', () => {
         str = str.replace(',', '.');
         return parseFloat(str) || 0;
     }
-
-    // Carregar Produtos
-    btnLoadFirebase.addEventListener('click', async () => {
-        firebaseListContainer.innerHTML = '<p style="text-align: center; padding: 20px;"><i class="bx bx-loader-alt bx-spin"></i> Conectando ao Firebase...</p>';
-
-        try {
-            // Verifica se o objeto 'db' existe (SDK Firebase carregado)
-            if (typeof db === 'undefined') {
-                throw new Error("SDK do Firebase não encontrado. Verifique os scripts no <head>.");
-            }
-
-            const productsRef = db.collection('artifacts').doc(FIREBASE_CONFIG_ID)
-                .collection('users').doc(STORE_OWNER_UID)
-                .collection('products');
-
-            const snapshot = await productsRef.get();
-
-            if (snapshot.empty) {
-                firebaseListContainer.innerHTML = '<p style="text-align: center; padding: 20px;">Nenhum produto encontrado no banco de dados.</p>';
-                return;
-            }
-
-            firebaseListContainer.innerHTML = ''; // Limpa lista
-
-            snapshot.forEach(doc => {
-                const prod = doc.data();
-                const id = doc.id;
-                renderFirebaseRow(id, prod);
-            });
-
-        } catch (error) {
-            console.error("Erro Firebase:", error);
-            firebaseListContainer.innerHTML = `<p style="text-align: center; color: var(--warning-red); padding: 20px;">Erro: ${error.message}</p>`;
-        }
-    });
-
-    // Renderizar Linha
-    // --- Renderizar Linha (Atualizado: Estoque + Design Novo) ---
-    function renderFirebaseRow(id, prod) {
-        // Dados Básicos
-        const imgUrl = prod.imgUrl || 'https://placehold.co/100x100/f5f5f5/999?text=IMG';
-        const name = prod.name || 'Produto sem nome';
-        const currentCode = prod.code || '';
-        // Pega o estoque atual (se não existir, assume 0)
-        const currentStock = prod.stock !== undefined ? prod.stock : 0;
-
-        // Cálculos de Preço
-        const valNormal = parseValueFirebase(prod.price);
-        const valOferta = parseValueFirebase(prod['price-oferta']);
-        const hasOffer = (valOferta > 0 && valOferta < valNormal);
-
-        let priceHtml = '';
-
-        if (hasOffer) {
-            // Cálculo da Porcentagem
-            const percent = ((valNormal - valOferta) / valNormal) * 100;
-
-            // Design: Preço preto e tag limpa "-XX%"
-            priceHtml = `
-            <div class="fb-old-price">${formatCurrency(valNormal)}</div>
-            <div class="fb-new-price">
-                ${formatCurrency(valOferta)}
-                <span class="fb-discount-tag">-${Math.round(percent)}%</span>
-            </div>
-        `;
-        } else {
-            priceHtml = `<div class="fb-new-price">${formatCurrency(valNormal)}</div>`;
-        }
-
-        // Criação do Elemento HTML
-        const row = document.createElement('div');
-        row.className = 'firebase-item-row';
-
-        // Estrutura Grid: Produto | Preço | Estoque | Código | Botão
-        row.innerHTML = `
-        <div class="fb-prod-info">
-            <img src="${imgUrl}" class="fb-prod-img" alt="Prod">
-            <span class="fb-prod-name">${name}</span>
-        </div>
-        
-        <div class="fb-price-box">
-            ${priceHtml}
-        </div>
-
-        <div>
-            <input type="number" class="fb-input-stock" id="input-stock-${id}" value="${currentStock}" min="0" placeholder="0">
-        </div>
-
-        <div>
-            <input type="text" class="fb-input-code" id="input-code-${id}" value="${currentCode}" placeholder="Digite o código...">
-        </div>
-
-        <div style="text-align: center;">
-            <button class="btn btn-primary" onclick="saveFirebaseProduct('${id}')" style="width: 40px; height: 40px; padding: 0; display: inline-flex; align-items: center; justify-content: center;" title="Salvar Alterações">
-                <i class='bx bx-save'></i>
-            </button>
-        </div>
-    `;
-
-        firebaseListContainer.appendChild(row);
-    }
-
-    // --- Função para Salvar Código E Estoque ---
-    window.saveFirebaseProduct = async (docId) => {
-        // Seleciona os inputs baseados no ID do documento
-        const codeInput = document.getElementById(`input-code-${docId}`);
-        const stockInput = document.getElementById(`input-stock-${docId}`);
-        const btn = codeInput.parentElement.nextElementSibling.querySelector('button');
-
-        const newCode = codeInput.value.trim();
-        const newStock = parseInt(stockInput.value) || 0; // Garante que é número
-
-        // Feedback Visual (Loading)
-        btn.disabled = true;
-        btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i>";
-
-        try {
-            const productRef = db.collection('artifacts').doc(FIREBASE_CONFIG_ID)
-                .collection('users').doc(STORE_OWNER_UID)
-                .collection('products').doc(docId);
-
-            // Atualiza Código, Estoque e Data
-            await productRef.update({
-                code: newCode,
-                stock: newStock,
-                updatedAt: new Date().toISOString()
-            });
-
-            // Sucesso
-            btn.innerHTML = "<i class='bx bx-check'></i>";
-            btn.classList.remove('btn-primary');
-            btn.classList.add('btn-success');
-
-            showToastFirebase("Produto atualizado!");
-
-            // Reseta botão após 2 segundos
-            setTimeout(() => {
-                btn.innerHTML = "<i class='bx bx-save'></i>";
-                btn.classList.remove('btn-success');
-                btn.classList.add('btn-primary');
-                btn.disabled = false;
-            }, 2000);
-
-        } catch (error) {
-            console.error("Erro ao salvar:", error);
-            btn.innerHTML = "<i class='bx bx-error'></i>";
-            btn.classList.add('btn-danger');
-            alert("Erro ao salvar: " + error.message);
-            btn.disabled = false;
-        }
-    };
-
-    // Função Global para Salvar (chamada pelo botão HTML acima)
-    window.saveBarcodeToFirebase = async (docId) => {
-        const input = document.getElementById(`input-code-${docId}`);
-        const btn = input.parentElement.nextElementSibling.querySelector('button');
-        const newCode = input.value.trim();
-        const originalIcon = btn.innerHTML;
-
-        // Feedback Visual (Loading)
-        btn.disabled = true;
-        btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i>";
-
-        try {
-            const productRef = db.collection('artifacts').doc(FIREBASE_CONFIG_ID)
-                .collection('users').doc(STORE_OWNER_UID)
-                .collection('products').doc(docId);
-
-            // Atualiza apenas o campo 'code' e o 'updatedAt'
-            await productRef.update({
-                code: newCode,
-                updatedAt: new Date().toISOString()
-            });
-
-            // Sucesso
-            btn.innerHTML = "<i class='bx bx-check'></i>";
-            btn.classList.remove('btn-primary');
-            btn.classList.add('btn-success');
-
-            // Toca um som ou mostra notificação (opcional)
-            showToastFirebase("Código atualizado com sucesso!");
-
-            // Reseta botão após 2 segundos
-            setTimeout(() => {
-                btn.innerHTML = "<i class='bx bx-save'></i>";
-                btn.classList.remove('btn-success');
-                btn.classList.add('btn-primary');
-                btn.disabled = false;
-            }, 2000);
-
-        } catch (error) {
-            console.error("Erro ao salvar:", error);
-            btn.innerHTML = "<i class='bx bx-error'></i>";
-            btn.classList.add('btn-danger');
-            alert("Erro ao salvar no Firebase: " + error.message);
-            btn.disabled = false;
-        }
-    };
-
-    // Pequeno Toast para feedback (opcional, pode usar o seu showCustomAlert)
-    function showToastFirebase(msg) {
-        // Se você já tiver uma função de toast, use ela. Senão, cria uma simples:
-        const div = document.createElement('div');
-        div.style.cssText = "position:fixed; bottom:20px; right:20px; background:#333; color:#fff; padding:12px 24px; border-radius:8px; z-index:9999; animation: slideInUp 0.3s;";
-        div.textContent = msg;
-        document.body.appendChild(div);
-        setTimeout(() => div.remove(), 3000);
-    }
-
 
     let currentSelectedClientId = null;
 
@@ -2848,6 +3159,69 @@ document.addEventListener('DOMContentLoaded', () => {
             openModal(clientSelectionModal);
         });
     }
+
+    // --- LÓGICA DE CÁLCULO DE LUCRO (Adicionar no script.js) ---
+    const inputCusto = document.getElementById('edit-prod-cost');
+    const inputVenda = document.getElementById('edit-prod-price');
+
+    const realizarCalculos = () => {
+        const custo = parseFloat(inputCusto.value) || 0;
+        const venda = parseFloat(inputVenda.value) || 0;
+
+        const lucro = venda - custo;
+
+        // Cálculo da Margem (Lucro / Venda)
+        let margem = 0;
+        if (venda > 0) margem = (lucro / venda) * 100;
+
+        // Cálculo do Markup (Venda / Custo) - ou (Lucro / Custo), depende da sua regra. 
+        // Geralmente Markup é um índice multiplicador sobre o custo.
+        let markup = 0;
+        if (custo > 0) markup = ((venda - custo) / custo) * 100;
+
+        // Atualiza na tela
+        document.getElementById('calc-profit').textContent = formatCurrency(lucro);
+        document.getElementById('calc-margin').textContent = margem.toFixed(1) + '%';
+        document.getElementById('calc-markup').textContent = markup.toFixed(1) + '%';
+
+        // Cores
+        const profitEl = document.getElementById('calc-profit');
+        if (lucro > 0) profitEl.style.color = 'var(--success-green)';
+        else if (lucro < 0) profitEl.style.color = 'var(--warning-red)';
+        else profitEl.style.color = '#666';
+    };
+
+    // Adiciona os ouvintes de evento para calcular enquanto digita
+    if (inputCusto && inputVenda) {
+        inputCusto.addEventListener('input', realizarCalculos);
+        inputVenda.addEventListener('input', realizarCalculos);
+    }
+
+    // --- Listener de Cliques na Tabela do Carrinho ---
+    cartItemsBody.addEventListener('click', (e) => {
+        // Pega o botão mais próximo (para funcionar mesmo clicando no ícone <i>)
+        const button = e.target.closest('button');
+        if (!button) return;
+
+        const { action, id } = button.dataset;
+
+        // Se for botão de Quantidade (+ ou -)
+        if (action === 'increase' || action === 'decrease') {
+            // Garante que o ID seja string para encontrar no array
+            const item = cart.find(i => String(i.id) === String(id));
+            if (item) updateQuantity(item.id, action);
+        }
+        // Se for botão de Lixeira
+        else if (button.classList.contains('remove-btn')) {
+            showCustomConfirm("Remover Item", "Tem certeza?", () => {
+                // Converte ID para garantir que remova o item certo
+                const idParaRemover = cart.find(i => String(i.id) === String(id))?.id;
+                if (idParaRemover) removeFromCart(idParaRemover);
+
+                closeModal(confirmModal);
+            });
+        }
+    });
 });
 
 // =======================================================

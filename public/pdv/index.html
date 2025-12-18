@@ -34,26 +34,27 @@
 
 <body>
 
+
     <div class="modal-overlay" id="print-selection-modal">
         <div class="modal-content modal-md">
             <div class="modal-header">
-                <h3>Imprimir Comprovante</h3>
+                <h3>Como deseja o comprovante?</h3>
                 <button class="close-modal-btn" data-target="print-selection-modal"><i class='bx bx-x'></i></button>
             </div>
             <div class="modal-body">
-                <p class="text-center mb-20 text-dark">Selecione o formato de impressão:</p>
+                <p class="text-center mb-16 text-light">Escolha o formato ideal para o cliente.</p>
 
                 <div class="print-options-grid">
                     <div id="btn-print-thermal" class="print-option-card">
                         <i class='bx bx-receipt print-icon'></i>
-                        <h4>Cupom (Térmica)</h4>
-                        <p class="text-sm text-light">Formato pequeno (80mm)</p>
+                        <h4>Cupom Fiscal</h4>
+                        <p class="text-sm text-light text-center">Térmica (80mm)<br>Compacto</p>
                     </div>
 
                     <div id="btn-print-a4" class="print-option-card">
-                        <i class='bx bx-file-blank print-icon red'></i>
-                        <h4>Nota Auxiliar (A4)</h4>
-                        <p class="text-sm text-light">Folha inteira com detalhes</p>
+                        <i class='bx bx-file-blank print-icon' style="color: #4f46e5;"></i>
+                        <h4>Folha A4</h4>
+                        <p class="text-sm text-light text-center">Impressora Comum<br>Detalhado</p>
                     </div>
                 </div>
             </div>
@@ -66,31 +67,32 @@
     </div>
 
     <div class="modal-overlay" id="client-selection-modal">
-        <div class="modal-content modal-md">
-            <div class="modal-header">
-                <h3>Selecionar Cliente</h3>
-                <button class="close-modal-btn" data-target="client-selection-modal"><i class='bx bx-x'></i></button>
-            </div>
-            <div class="modal-body">
-                <div class="search-box-wrapper">
-                    <div class="search-icon-input">
-                        <i class='bx bx-search'></i>
-                        <input type="text" id="client-selection-input" placeholder="Busque por nome ou apelido..."
-                            autocomplete="off" data-primary-focus="true">
-                    </div>
-                    <button class="btn btn-primary btn-auto" id="btn-new-client-modal" title="Novo Cliente">
-                        <i class='bx bx-plus'></i>
-                    </button>
+    <div class="modal-content modal-md">
+        <div class="modal-header">
+            <h3>Identificar Cliente</h3>
+            <button class="close-modal-btn" data-target="client-selection-modal"><i class='bx bx-x'></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="search-row-modern">
+                <div class="input-modern-wrapper">
+                    <i class='bx bx-search' style="color: #9ca3af; font-size: 1.2rem;"></i>
+                    <input type="text" id="client-selection-input" class="input-modern" 
+                           placeholder="Busque por nome..." autocomplete="off" data-primary-focus="true">
                 </div>
-
-                <div class="client-results-list" id="client-selection-results"></div>
-
-                <p class="text-center text-light mt-20 text-sm" id="client-search-hint">
-                    Digite para buscar...
-                </p>
+                
+                <button class="btn-square-add" id="btn-new-client-modal" title="Novo Cliente">
+                    <i class='bx bx-plus'></i>
+                </button>
             </div>
+
+            <div class="client-results-modern" id="client-selection-results" style="display:none;"></div>
+
+            <p class="text-center text-light mt-20 text-sm" id="client-search-hint">
+                Digite para buscar...
+            </p>
         </div>
     </div>
+</div>
 
     <div class="modal-overlay z-high" id="image-viewer-modal">
         <div class="modal-content modal-fullscreen">
@@ -313,18 +315,53 @@
             </button>
         </div>
 
+
         <nav class="navbar" id="main-navbar">
             <span class="navbar-item active" data-page="pdv">PDV</span>
-            <span class="navbar-item" data-page="pedidos">
-                Pedidos
-                <span class="nav-badge" id="pedidos-badge">0</span>
-            </span>
-            <span class="navbar-item" data-page="produtos">Produtos</span>
-            <span class="navbar-item" data-page="clientes">Clientes</span>
+            <span class="navbar-item" data-page="pedidos">Pedidos</span>
             <span class="navbar-item" data-page="historico">Histórico</span>
-            <span class="navbar-item" data-page="configuracoes">Configurações</span>
+
+            <div class="navbar-more-container">
+                <div class="navbar-item" id="more-menu-btn">
+                    Gerenciamento
+                    <i class='bx bx-chevron-down' id="more-menu-icon"></i>
+                </div>
+
+                <div class="more-menu-modal" id="more-menu-modal">
+                    <div class="more-menu-item" data-page="produtos">
+                        <div class="item-icon-box"><i class='bx bx-package'></i></div>
+                        <div class="item-content">
+                            <strong>Produtos</strong>
+                            <span>Estoque e fiscal</span>
+                        </div>
+                    </div>
+
+                    <div class="more-menu-item" data-page="clientes">
+                        <div class="item-icon-box pro-icon"><i class='bx bx-group'></i></div>
+                        <div class="item-content">
+                            <div class="title-row">
+                                <strong>Crediário Digital</strong>
+                                <span class="pro-tag">PRO</span>
+                            </div>
+                            <span>Carteira de crédito</span>
+                        </div>
+                    </div>
+
+                    <div class="menu-divider"></div>
+
+                    <div class="more-menu-item" data-page="configuracoes">
+                        <div class="item-icon-box"><i class='bx bx-cog'></i></div>
+                        <div class="item-content">
+                            <strong>Configurações</strong>
+                            <span>Ajustes do Sistema</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="navbar-highlight" id="navbar-highlight"></div>
         </nav>
+
+
 
         <div id="pdv-page" class="page-content">
             <div class="pdv-layout">
@@ -495,41 +532,43 @@
         </div>
 
         <div id="produtos-page" class="page-content" style="display: none;">
-            <div class="card container-md mb-24">
-                <div class="page-header">
-                    <h2><i class='bx bx-discount'></i> Black Friday Produtos</h2>
-                    <button class="btn btn-secondary btn-auto" id="btn-load-firebase">
-                        <i class='bx bx-cloud-download'></i> Carregar Produtos
-                    </button>
-                </div>
-                <p class="text-light mt-neg-16 mb-24">
-                    Sincronize os códigos de barras da loja online com o sistema local.
-                </p>
-
-                <div class="firebase-list-header">
-                    <span>Produto</span>
-                    <span>Preço</span>
-                    <span class="text-center">Estoque</span>
-                    <span>Código de Barras</span>
-                    <span class="text-center">Salvar</span>
-                </div>
-
-                <div id="firebase-products-list" class="firebase-products-container">
-                    <div class="empty-placeholder">
-                        <i class='bx bx-cloud'></i>
-                        <span>Clique em "Carregar Produtos" para iniciar.</span>
-                    </div>
-                </div>
-            </div>
-
             <div class="card container-md">
                 <div class="page-header">
-                    <h2>Produtos Cadastrados</h2>
+                    <div>
+                        <h2>Gerenciador de Produtos</h2>
+                        <p class="text-light mt-4 mb-0 text-sm">Controle de estoque e definições fiscais.</p>
+                    </div>
+                    <button class="btn btn-primary btn-auto" id="btn-add-product" title="Cadastrar Novo Item">
+                        <i class='bx bx-plus'></i> Adicionar
+                    </button>
                 </div>
-                <p class="text-light mt-neg-16 mb-16">
-                    Novos produtos adicionados pelo "Cadastro Rápido" do PDV aparecerão aqui.
-                </p>
-                <div id="produtos-table-container"></div>
+
+                <div class="toolbar-products mb-24">
+                    <div class="search-box-wrapper" style="flex: 1;">
+                        <div class="client-search-container">
+                            <i class='bx bx-search client-search-icon'></i>
+                            <input type="text" id="products-search-input" class="client-search-input"
+                                placeholder="Buscar por nome, código ou NCM..." autocomplete="off">
+                        </div>
+                    </div>
+
+                    <div class="filter-capsules" id="product-filters">
+                        <button class="filter-cap active" data-filter="all">
+                            Todos <span class="badge-count" id="count-all">0</span>
+                        </button>
+                        <button class="filter-cap" data-filter="fiscal_ok">
+                            <i class='bx bx-check-circle'></i> Fiscal OK <span class="badge-count"
+                                id="count-ok">0</span>
+                        </button>
+                        <button class="filter-cap" data-filter="fiscal_pending">
+                            <i class='bx bx-error-circle'></i> Pendente <span class="badge-count"
+                                id="count-pending">0</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="produtos-table-container" class="products-list-wrapper">
+                </div>
             </div>
         </div>
 
@@ -537,7 +576,10 @@
             <div class="card">
                 <div class="page-header">
                     <div>
-                        <h2>Crediário Digital</h2>
+                        <div class="title-page">
+                            <h2>Crediário Digital</h2>
+                            <span class="pro-badge-main pro-tag">PRO</span>
+                        </div>
                         <p class="text-light mt-4 mb-0 text-sm">Gerencie pagamentos e inadimplência.</p>
                     </div>
                     <button class="btn btn-primary btn-auto" id="add-cliente-btn">
@@ -603,6 +645,153 @@
         </div>
 
     </div>
+    <div class="modal-overlay" id="edit-product-modal">
+        <div class="modal-content modal-lg transition-all">
+            <div class="modal-header">
+                <h3><i class='bx bx-edit'></i> Editar Produto</h3>
+                <div class="header-actions">
+                    <button class="window-control-btn" id="btn-maximize-modal" title="Expandir/Restaurar">
+                        <i class='bx bx-expand'></i>
+                    </button>
+                    <button class="window-control-btn close-modal-btn" data-target="edit-product-modal" title="Fechar">
+                        <i class='bx bx-x'></i>
+                    </button>
+                </div>
+            </div>
+            <form id="edit-product-form">
+                <div class="modal-body product-edit-layout">
+
+                    <div class="edit-col-left">
+                        <div class="image-upload-wrapper">
+                            <div class="product-img-preview" id="edit-img-preview">
+                                <i class='bx bx-image-add'></i>
+                            </div>
+                            <label class="url-input-label">URL da Imagem</label>
+                            <input type="text" id="edit-prod-img-url" placeholder="https://..." class="sm-input">
+                        </div>
+                    </div>
+
+                    <div class="edit-col-right">
+
+                        <div class="form-grid">
+                            <div class="form-group" style="flex: 1;">
+                                <label>Código (Barcode)</label>
+                                <div class="input-group-lock">
+                                    <input type="text" id="edit-prod-code" disabled class="bg-locked"
+                                        style="font-weight:700;">
+                                    <button type="button" class="btn-unlock" id="btn-unlock-code"
+                                        title="Alterar Código">
+                                        <i class='bx bx-lock-alt'></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="form-group" style="flex: 2.5;">
+                                <label>Nome do Produto *</label>
+                                <input type="text" id="edit-prod-name" required placeholder="Ex: Cabo USB Tipo C">
+                            </div>
+                        </div>
+
+                        <div class="form-group relative-container">
+                            <label>Marca / Fabricante</label>
+                            <div class="input-with-icon">
+                                <input type="text" id="edit-prod-brand" placeholder="Digite para buscar..."
+                                    autocomplete="off">
+                                <i class='bx bx-search'></i>
+                            </div>
+                            <div id="brand-suggestions-list" class="suggestions-dropdown"></div>
+                        </div>
+
+                        <div class="pricing-card">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Preço de Custo (R$)</label>
+                                    <input type="number" id="edit-prod-cost" step="0.01" placeholder="0,00">
+                                </div>
+                                <div class="form-group">
+                                    <label>Preço de Venda (R$)</label>
+                                    <input type="number" id="edit-prod-price" step="0.01" required placeholder="0,00">
+                                </div>
+                                <div class="form-group">
+                                    <label>Estoque Atual</label>
+                                    <input type="number" id="edit-prod-stock" disabled class="bg-locked"
+                                        title="Use Entrada de Nota">
+                                </div>
+                            </div>
+                            <div class="profit-stats">
+                                <div class="stat-item"><span class="lbl">Margem:</span><span class="val"
+                                        id="calc-margin">0%</span></div>
+                                <div class="stat-item"><span class="lbl">Markup:</span><span class="val"
+                                        id="calc-markup">0%</span></div>
+                                <div class="stat-item"><span class="lbl">Lucro:</span><span class="val text-success"
+                                        id="calc-profit">R$ 0,00</span></div>
+                            </div>
+                        </div>
+
+                        <div class="fiscal-section-clean">
+                            <div class="fiscal-header">
+                                <i class='bx bx-file'></i>
+                                <span>Dados Fiscais (Simples Nacional)</span>
+                            </div>
+
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>NCM</label>
+                                    <input type="text" id="edit-prod-ncm" placeholder="0000.00.00" maxlength="10">
+                                </div>
+                                <div class="form-group">
+                                    <label>CEST <small class="text-light">(Subst. Trib.)</small></label>
+                                    <input type="text" id="edit-prod-cest" placeholder="00.000.00" maxlength="9">
+                                </div>
+                                <div class="form-group">
+                                    <label>CFOP</label>
+                                    <input type="text" id="edit-prod-cfop" value="5102">
+                                </div>
+                            </div>
+
+                            <div class="form-grid mt-10">
+                                <div class="form-group" style="flex:1;">
+                                    <label>Unidade</label>
+                                    <select id="edit-prod-unit">
+                                        <option value="UN">UN</option>
+                                        <option value="KG">KG</option>
+                                        <option value="CX">CX</option>
+                                        <option value="L">L</option>
+                                        <option value="M">M</option>
+                                        <option value="PC">PC (Peça)</option>
+                                        <option value="PCT">PCT (Pacote)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="flex:2;">
+                                    <label>Origem</label>
+                                    <select id="edit-prod-origem">
+                                        <option value="0">0 - Nacional</option>
+                                        <option value="1">1 - Importação Direta</option>
+                                        <option value="2">2 - Estrangeira (Adq. Interno)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="flex:3;">
+                                    <label>CSOSN</label>
+                                    <select id="edit-prod-csosn">
+                                        <option value="102">102 - Tributada s/ cred.</option>
+                                        <option value="500">500 - Subst. Tributária</option>
+                                        <option value="101">101 - Com permissão de cred.</option>
+                                        <option value="900">900 - Outros</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary close-modal-btn"
+                        data-target="edit-product-modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"><i class='bx bx-save'></i> Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="quick-add-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -631,40 +820,46 @@
     </div>
 
     <div class="modal-overlay" id="crediario-flow-modal">
-        <div class="modal-content modal-md">
-            <div class="modal-header">
-                <h3>Finalizar Crediário</h3>
-                <button class="close-modal-btn" data-target="crediario-flow-modal"><i class='bx bx-x'></i></button>
+    <div class="modal-content modal-md">
+        <div class="modal-header">
+            <h3>Finalizar Crediário</h3>
+            <button class="close-modal-btn" data-target="crediario-flow-modal"><i class='bx bx-x'></i></button>
+        </div>
+        <div class="modal-body centered-flow">
+            
+            <div id="cred-step-1" class="qr-step-container">
+                <div class="modal-icon info" style="margin-bottom: 20px;">
+                    <i class='bx bx-printer font-40'></i>
+                </div>
+                <p class="step-instruction">1. Imprima o comprovante</p>
+                <p class="step-subtext">Cliente: <strong id="cred-flow-client-name" style="color:var(--text-dark)">...</strong></p>
+                
+                <button id="btn-force-print">
+                    <i class='bx bx-printer'></i> Imprimir Agora
+                </button>
             </div>
-            <div class="modal-body">
-                <div id="cred-step-1" class="qr-step-container">
-                    <div class="modal-icon info"><i class='bx bx-printer font-40'></i></div>
-                    <p class="step-instruction">Imprima o comprovante para assinatura do cliente.</p>
-                    <p class="step-subtext">Cliente: <strong id="cred-flow-client-name">...</strong></p>
-                    <button class="btn btn-primary" id="btn-force-print">
-                        <i class='bx bx-printer'></i> Imprimir Comprovante
+
+            <div id="cred-step-2" class="qr-step-container" style="display:none;">
+                <p class="step-instruction">2. Anexar Comprovante</p>
+                <p class="step-subtext">Escaneie para enviar a foto assinada:</p>
+
+                <div class="qr-code-box">
+                    <img id="cred-qrcode-img" src="" alt="Gerando QR Code...">
+                </div>
+                <p class="text-xs text-light mt-10" style="font-size: 0.75rem;">
+                    Link seguro: eletrobusiness.com.br/comprovante...
+                </p>
+                
+                <div class="mt-24">
+                    <button id="btn-finish-crediario-final" class="btn-success-flow">
+                        <i class='bx bx-check'></i> Concluir Processo
                     </button>
                 </div>
-
-                <div id="cred-step-2" class="qr-step-container locked-step hidden-transition" style="display:none;">
-                    <p class="step-instruction">Anexar Comprovante Assinado</p>
-                    <p class="step-subtext mb-10">Escaneie para enviar a foto:</p>
-
-                    <div class="qr-img-wrapper">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://eletrobusiness.com.br/comprovante/buy/valid55102.html"
-                            alt="QR Code Comprovante">
-                    </div>
-                    <p class="text-xs text-light">Link: eletrobusiness.com.br/comprovante...</p>
-
-                    <div class="mt-24">
-                        <button class="btn btn-success" id="btn-finish-crediario-final">
-                            <i class='bx bx-check-double'></i> Concluir Conta e Salvar
-                        </button>
-                    </div>
-                </div>
             </div>
+
         </div>
     </div>
+</div>
 
     <div class="modal-overlay" id="payment-modal">
         <div class="modal-content">
@@ -915,72 +1110,79 @@
     <div class="modal-overlay" id="add-cliente-modal">
         <div class="modal-content modal-md">
             <div class="modal-header">
-                <h3>Novo Cliente</h3>
+                <h3>Cadastrar Novo Cliente</h3>
                 <button class="close-modal-btn" data-target="add-cliente-modal"><i class='bx bx-x'></i></button>
             </div>
             <form id="add-cliente-form">
                 <div class="modal-body">
-                    <h4 class="mb-16 font-md text-dark">Dados Pessoais</h4>
+                    <h4
+                        style="font-size: 0.9rem; color: var(--primary-red); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; font-weight: 700;">
+                        <i class='bx bx-id-card'></i> Dados Pessoais
+                    </h4>
 
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="cliente-apelido">Apelido (Como é conhecido) *</label>
+                            <label>Apelido / Como prefere ser chamado *</label>
                             <input type="text" id="cliente-apelido" required data-primary-focus="true"
-                                placeholder="Ex: Maria Manicure">
+                                placeholder="Ex: João da Padaria">
                         </div>
                         <div class="form-group">
-                            <label for="cliente-telefone">Telefone</label>
-                            <input type="tel" id="cliente-telefone" placeholder="(XX) 9XXXX-XXXX">
+                            <label>Nome Completo (Civil)</label>
+                            <input type="text" id="cliente-nome" placeholder="Nome completo para contrato">
                         </div>
                     </div>
 
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="cliente-nome">Nome Completo</label>
-                            <input type="text" id="cliente-nome" placeholder="Nome Civil">
+                            <label>WhatsApp / Telefone</label>
+                            <input type="tel" id="cliente-telefone" placeholder="(XX) 9XXXX-XXXX">
                         </div>
                         <div class="form-group">
-                            <label for="cliente-cpf">CPF (Opcional)</label>
+                            <label>CPF (Apenas números)</label>
                             <input type="text" id="cliente-cpf" placeholder="000.000.000-00">
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="cliente-endereco">Endereço</label>
-                        <textarea id="cliente-endereco" rows="2" placeholder="Rua, Número, Bairro..."></textarea>
+                        <label>Endereço Completo</label>
+                        <textarea id="cliente-endereco" rows="2" placeholder="Rua, Número, Bairro e Referência..."
+                            style="resize: none;"></textarea>
                     </div>
 
                     <hr class="separator my-16">
 
-                    <h4 class="mb-16 font-md text-dark">Compra Inicial (Opcional)</h4>
+                    <h4
+                        style="font-size: 0.9rem; color: var(--primary-red); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; font-weight: 700;">
+                        <i class='bx bx-wallet'></i> Configuração de Crédito
+                    </h4>
+
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="compra-valor">Valor (R$)</label>
-                            <input type="number" id="compra-valor" step="0.01" min="0" placeholder="0,00">
-                        </div>
-                        <div class="form-group">
-                            <label for="cliente-dia-vencimento">Dia de Vencimento da Fatura</label>
-                            <select id="cliente-dia-vencimento" required>
+                            <label>Dia de Vencimento</label>
+                            <select id="cliente-dia-vencimento" required
+                                style="background-color: #fff1f2; border-color: #fda4af; color: #881337; font-weight: 600;">
                                 <option value="5">Dia 05</option>
-                                <option value="10" selected>Dia 10</option>
+                                <option value="10" selected>Dia 10 (Padrão)</option>
                                 <option value="15">Dia 15</option>
                                 <option value="20">Dia 20</option>
                                 <option value="25">Dia 25</option>
                                 <option value="30">Dia 30</option>
                             </select>
-                            <small class="text-light">A fatura fecha 10 dias antes desta data.</small>
                         </div>
                         <div class="form-group">
-                            <label for="cliente-limite">Limite de Crédito (R$)</label>
-                            <input type="number" id="cliente-limite" placeholder="Ex: 500.00">
+                            <label>Limite de Crédito (R$)</label>
+                            <input type="number" id="cliente-limite" placeholder="0.00" step="50.00">
                         </div>
                     </div>
+
+                    <input type="hidden" id="compra-valor" value="">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary close-modal-btn"
-                        data-target="add-cliente-modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" id="cliente-save-btn">
-                        <i class='bx bx-save'></i> Salvar Cliente
+                    <button type="button" class="btn btn-secondary close-modal-btn" data-target="add-cliente-modal"
+                        style="width: auto; padding: 0 24px;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="cliente-save-btn"
+                        style="width: auto; padding: 0 32px;">
+                        <i class='bx bx-check'></i> Salvar Cadastro
                     </button>
                 </div>
             </form>
@@ -1024,88 +1226,99 @@
     </div>
 
     <div class="modal-overlay" id="close-caixa-modal">
-        <div class="modal-content modal-md">
-            <div class="modal-header">
-                <h3>Fechar Caixa</h3>
-                <button class="close-modal-btn" data-target="close-caixa-modal"><i class='bx bx-x'></i></button>
+    <div class="modal-content modal-md">
+        <div class="modal-header">
+            <h3>Fechamento de Caixa</h3>
+            <button class="close-modal-btn" data-target="close-caixa-modal"><i class='bx bx-x'></i></button>
+        </div>
+        <div class="modal-body">
+            
+            <div class="step-progress-container">
+                <div class="step-progress-fill" id="close-caixa-progress" style="width: 25%;"></div>
             </div>
-            <div class="modal-body">
-                <div class="modal-progress-bar">
-                    <div class="progress" id="close-caixa-progress" style="width: 25%;"></div>
-                </div>
-                <form id="close-caixa-form" class="multi-step-form">
 
-                    <div id="close-caixa-step-1" class="form-step active">
-                        <h4>Etapa 1: Valores Contados</h4> <br>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="close-caixa-notas">Notas (R$) *</label>
-                                <input type="number" id="close-caixa-notas" step="0.01" min="0" placeholder="0,00"
-                                    required data-primary-focus="true">
-                            </div>
-                            <div class="form-group">
-                                <label for="close-caixa-moedas">Moedas (R$) *</label>
-                                <input type="number" id="close-caixa-moedas" step="0.01" min="0" placeholder="0,00"
-                                    required>
-                            </div>
-                        </div>
+            <form id="close-caixa-form" class="multi-step-form">
+
+                <div id="close-caixa-step-1" class="form-step active">
+                    <div class="text-center mb-16">
+                        <div class="modal-icon info" style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 10px;"><i class='bx bx-money'></i></div>
+                        <h4>Contagem de Espécie</h4>
+                        <p class="text-sm">Conte o dinheiro físico na gaveta.</p>
                     </div>
-
-                    <div id="close-caixa-step-2" class="form-step">
-                        <h4>Etapa 2: Outras Entradas</h4> <br>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="close-caixa-cartao">Maquininha Cartão (R$) *</label>
-                                <input type="number" id="close-caixa-cartao" step="0.01" min="0" placeholder="0,00"
-                                    required>
-                            </div>
-                            <div class="form-group">
-                                <label for="close-caixa-pix">Pix Fixo QR Code (R$)</label>
-                                <input type="number" id="close-caixa-pix" step="0.01" min="0" placeholder="0,00">
-                                <small class="shortcut-hint">Opcional.</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="close-caixa-step-3" class="form-step">
-                        <h4>Etapa 3: Destino do Dinheiro Contado</h4> <br>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="close-caixa-deposito">Valor p/ Depósito (R$) *</label>
-                                <input type="number" id="close-caixa-deposito" step="0.01" min="0" placeholder="0,00"
-                                    required>
-                            </div>
-                            <div class="form-group">
-                                <label for="close-caixa-fica">Valor Fica Caixa (R$) *</label>
-                                <input type="number" id="close-caixa-fica" step="0.01" min="0" placeholder="0,00"
-                                    required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="close-caixa-step-4" class="form-step">
-                        <h4>Etapa 4: Responsável</h4> <br>
+                    <div class="form-grid">
                         <div class="form-group">
-                            <label for="close-caixa-assinatura">Assinatura (Nome do Responsável) *</label>
-                            <input type="text" id="close-caixa-assinatura" required>
+                            <label>Total em Notas (R$)</label>
+                            <input type="number" id="close-caixa-notas" step="0.01" min="0" placeholder="0,00" required data-primary-focus="true" style="font-size: 1.2rem; font-weight: 700;">
+                        </div>
+                        <div class="form-group">
+                            <label>Total em Moedas (R$)</label>
+                            <input type="number" id="close-caixa-moedas" step="0.01" min="0" placeholder="0,00" required style="font-size: 1.2rem; font-weight: 700;">
                         </div>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer modal-footer-multi-step">
-                <button class="btn btn-secondary" id="close-caixa-prev-btn" style="display: none;">
-                    <i class='bx bx-chevron-left'></i> Anterior
-                </button>
-                <button class="btn btn-primary" id="close-caixa-next-btn">
-                    Próximo <i class='bx bx-chevron-right'></i>
-                </button>
-                <button type="submit" form="close-caixa-form" class="btn btn-danger" id="close-caixa-save-btn"
-                    style="display: none;">
-                    <i class='bx bx-lock-alt'></i> Confirmar Fechamento
-                </button>
-            </div>
+                </div>
+
+                <div id="close-caixa-step-2" class="form-step">
+                    <div class="text-center mb-16">
+                        <div class="modal-icon info" style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 10px;"><i class='bx bx-credit-card'></i></div>
+                        <h4>Conferência Digital</h4>
+                        <p class="text-sm">Consulte o relatório da maquininha.</p>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Vendas no Cartão (R$)</label>
+                            <input type="number" id="close-caixa-cartao" step="0.01" min="0" placeholder="0,00" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Pix QR Code (Se houver)</label>
+                            <input type="number" id="close-caixa-pix" step="0.01" min="0" placeholder="0,00">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="close-caixa-step-3" class="form-step">
+                    <div class="text-center mb-16">
+                        <div class="modal-icon info" style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 10px;"><i class='bx bx-safe'></i></div>
+                        <h4>Destino do Dinheiro</h4>
+                        <p class="text-sm">Onde o dinheiro contado será guardado?</p>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Vai para Sangria/Depósito</label>
+                            <input type="number" id="close-caixa-deposito" step="0.01" min="0" placeholder="0,00" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Fica no Caixa (Troco)</label>
+                            <input type="number" id="close-caixa-fica" step="0.01" min="0" placeholder="0,00" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="close-caixa-step-4" class="form-step">
+                    <div class="text-center mb-16">
+                        <div class="modal-icon danger" style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 10px;"><i class='bx bx-lock-alt'></i></div>
+                        <h4>Finalizar e Bloquear</h4>
+                        <p class="text-sm">Assine para confirmar o fechamento.</p>
+                    </div>
+                    <div class="form-group">
+                        <label>Responsável pelo Fechamento</label>
+                        <input type="text" id="close-caixa-assinatura" required placeholder="Digite seu nome..." style="text-align: center;">
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer modal-footer-multi-step">
+            <button class="btn btn-secondary" id="close-caixa-prev-btn" style="display: none; width: auto;">
+                <i class='bx bx-chevron-left'></i> Voltar
+            </button>
+            <button class="btn btn-primary" id="close-caixa-next-btn" style="width: auto;">
+                Próximo <i class='bx bx-chevron-right'></i>
+            </button>
+            <button type="submit" form="close-caixa-form" class="btn btn-danger" id="close-caixa-save-btn" style="display: none; width: auto;">
+                <i class='bx bx-lock-alt'></i> Encerrar Dia
+            </button>
         </div>
     </div>
+</div>
 
 
 

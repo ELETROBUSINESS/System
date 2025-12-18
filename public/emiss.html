@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migrador Inteligente Sebrae -> Sistema</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 30px; background: #f0f2f5; color: #333; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; margin-top: 0; font-size: 1.5rem; border-bottom: 2px solid #eee; padding-bottom: 15px; }
+        
+        .step-box { background: #f8f9fa; border: 1px solid #e9ecef; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .step-title { font-weight: 700; color: #0d6efd; display: block; margin-bottom: 10px; font-size: 1.1rem; }
+        
+        /* Grid de Mapeamento */
+        .mapping-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 10px; align-items: center; margin-bottom: 10px; padding: 10px; border-bottom: 1px dashed #ddd; }
+        .field-label { font-weight: 600; font-size: 0.9rem; }
+        select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100%; background: white; }
+        
+        /* Botões */
+        .btn { border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: 0.2s; }
+        .btn-primary { background: #0d6efd; color: white; width: 100%; }
+        .btn-primary:hover { background: #0b5ed7; }
+        .btn-success { background: #198754; color: white; }
+        
+        /* Resultado */
+        .result-area { display: none; margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; }
+        .preview-box { max-height: 300px; overflow: auto; border: 1px solid #ddd; margin: 15px 0; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #212529; color: white; padding: 8px; position: sticky; top: 0; }
+        td { border: 1px solid #ddd; padding: 5px; white-space: nowrap; }
+        
+        .alert { padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 0.9rem; }
+        .alert-info { background: #cff4fc; color: #055160; border: 1px solid #b6effb; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Migrador de Produtos (Sebrae)</h1>
+    
+    <div class="step-box">
+        <span class="step-title">1. Carregar Arquivo</span>
+        <p style="font-size: 0.9rem; color: #666;">Selecione o arquivo <code>Produtos.xlsx - Plan 1.csv</code> que você baixou.</p>
+        <input type="file" id="csvFile" accept=".csv, .txt">
+    </div>
+
+    <div class="step-box" id="mappingStep" style="display:none;">
+        <span class="step-title">2. Conferir Colunas</span>
+        <p style="font-size:0.85rem; color:#666;">O sistema tentou identificar as colunas automaticamente. Ajuste se necessário.</p>
+        
+        <div id="mappingContainer"></div>
+
+        <button class="btn btn-primary" onclick="processarDados()">Processar e Limpar Dados</button>
+    </div>
+
+    <div class="result-area" id="resultArea">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span class="step-title" style="margin:0;">3. Resultado Pronto</span>
+            <button class="btn btn-success" onclick="copiarTabela()">Copiar Tabela</button>
+        </div>
+        
+        <div class="alert alert-info" id="statusMsg"></div>
+
+        <div class="preview-box">
+            <table id="finalTable">
+                <thead>
+                    <tr>
+                        <th>codigo</th>
+                        <th>nome</th>
+                        <th>preco</th>
+                        <th>custo</th>
+                        <th>ncm</th>
+                        <th>cest</th>
+                        <th>cfop</th>
+                        <th>unidade</th>
+                        <th>origem</th>
+                        <th>csosn</th>
+                        <th>brand</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <p style="font-size:0.8rem; color:#888;">* Linhas sem código de barras foram ignoradas automaticamente.</p>
+    </div>
+</div>
+
+<script>
+    let csvData = [];
+    let headers = [];
+
+    // Definição das colunas do sistema e prováveis nomes no CSV do Sebrae
+    const mapaSistema = [
+        { id: 'codigo', label: 'Código de Barras', keywords: ['código de barras', 'ean', 'gtin'] },
+        { id: 'nome', label: 'Nome/Descrição', keywords: ['descrição', 'produto', 'nome'] },
+        { id: 'preco', label: 'Preço Venda', keywords: ['preço venda varejo', 'valor venda'] },
+        { id: 'custo', label: 'Preço Custo', keywords: ['preço de custo'] },
+        { id: 'ncm', label: 'NCM', keywords: ['ncm'] },
+        { id: 'cest', label: 'CEST', keywords: ['cest'] },
+        { id: 'cfop', label: 'CFOP', keywords: ['cfop'] },
+        { id: 'unidade', label: 'Unidade', keywords: ['unidade', 'medida'] },
+        { id: 'origem', label: 'Origem', keywords: ['origem'] },
+        { id: 'csosn', label: 'CSOSN (ou Tipo)', keywords: ['csosn', 'cst'] }, // Pode não ter no CSV, deixaremos manual
+        { id: 'brand', label: 'Marca', keywords: ['marca', 'fabricante'] }
+    ];
+
+    document.getElementById('csvFile').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            encoding: "ISO-8859-1", // Importante para Excel brasileiro antigo
+            complete: function(results) {
+                csvData = results.data;
+                headers = results.meta.fields;
+                gerarInterfaceMapeamento();
+            }
+        });
+    });
+
+    function gerarInterfaceMapeamento() {
+        const container = document.getElementById('mappingContainer');
+        container.innerHTML = '';
+
+        mapaSistema.forEach(campo => {
+            const row = document.createElement('div');
+            row.className = 'mapping-grid';
+
+            const label = document.createElement('div');
+            label.className = 'field-label';
+            label.innerText = campo.label;
+
+            const select = document.createElement('select');
+            select.id = `select-${campo.id}`;
+            
+            // Opção Padrão
+            let optionDefault = document.createElement('option');
+            optionDefault.value = "";
+            optionDefault.text = "(Ignorar / Vazio)";
+            select.appendChild(optionDefault);
+
+            // Popula com colunas do CSV
+            let matchFound = false;
+            headers.forEach(header => {
+                const option = document.createElement('option');
+                option.value = header;
+                option.text = header;
+                select.appendChild(option);
+
+                // Tentativa de Auto-seleção
+                if (!matchFound && campo.keywords.some(k => header.toLowerCase().includes(k))) {
+                    select.value = header;
+                    matchFound = true;
+                }
+            });
+
+            row.appendChild(label);
+            row.appendChild(select);
+            container.appendChild(row);
+        });
+
+        document.getElementById('mappingStep').style.display = 'block';
+    }
+
+    function processarDados() {
+        const tbody = document.querySelector('#finalTable tbody');
+        tbody.innerHTML = '';
+        
+        // Pega o mapeamento atual escolhido pelo usuário
+        const map = {};
+        mapaSistema.forEach(c => {
+            map[c.id] = document.getElementById(`select-${c.id}`).value;
+        });
+
+        if (!map.codigo || !map.nome) {
+            alert("Atenção: É obrigatório selecionar ao menos as colunas 'Código de Barras' e 'Nome'.");
+            return;
+        }
+
+        let processados = 0;
+        let ignorados = 0;
+        const codigosVistos = new Set();
+
+        csvData.forEach(row => {
+            // 1. Limpeza do Código
+            let cod = row[map.codigo];
+            if (!cod) return; // Pula linha vazia
+            cod = String(cod).trim().replace(/'/g, ""); // Remove aspas simples se houver
+
+            // Regra: Ignorar códigos inválidos ou curtos demais (ex: "0", "SEM GTIN")
+            if (cod.length < 3 || cod === "SEM GTIN") {
+                ignorados++;
+                return;
+            }
+
+            // Regra: Anti-duplicidade no arquivo
+            if (codigosVistos.has(cod)) {
+                return; // Já processamos esse produto nesta importação
+            }
+            codigosVistos.add(cod);
+
+
+            // 2. Limpeza de Valores (Moeda) - VERSÃO CORRIGIDA
+            const cleanMoney = (val) => {
+                if (!val) return "0";
+                let v = String(val).replace(/[R$\s]/g, ''); // Remove R$ e espaços
+
+                // Verifica se é formato Brasileiro (tem vírgula para decimais)
+                if (v.includes(',')) {
+                    // Ex: "1.200,50" -> Remove ponto de milhar -> "1200,50" -> Troca vírgula por ponto -> "1200.50"
+                    v = v.replace(/\./g, '').replace(',', '.');
+                } 
+                // Se NÃO tem vírgula (Ex: "13.00" ou "7.70"), mantém o número como está.
+                // O código antigo removia o ponto aqui, transformando 13.00 em 1300.
+                
+                return v;
+            };
+
+            // 3. Limpeza Fiscal (Apenas números)
+            const cleanFiscal = (val) => {
+                if (!val) return "";
+                return String(val).replace(/[^0-9]/g, ''); // Remove pontos do NCM/CEST
+            };
+
+            const tr = document.createElement('tr');
+            
+            // Monta linha
+            tr.innerHTML = `
+                <td>${cod}</td>
+                <td>${(row[map.nome] || "").toUpperCase()}</td>
+                <td>${cleanMoney(row[map.preco])}</td>
+                <td>${cleanMoney(row[map.custo])}</td>
+                <td>${cleanFiscal(row[map.ncm])}</td>
+                <td>${cleanFiscal(row[map.cest])}</td>
+                <td>${cleanFiscal(row[map.cfop])}</td>
+                <td>${(row[map.unidade] || "UN").toUpperCase()}</td>
+                <td>${cleanFiscal(row[map.origem]) || "0"}</td>
+                <td>${cleanFiscal(row[map.csosn]) || "102"}</td>
+                <td>${(row[map.brand] || "").toUpperCase()}</td>
+            `;
+
+            tbody.appendChild(tr);
+            processados++;
+        });
+
+        document.getElementById('resultArea').style.display = 'block';
+        document.getElementById('statusMsg').innerText = `Processamento concluído! ${processados} produtos válidos encontrados.`;
+    }
+
+    function copiarTabela() {
+        const range = document.createRange();
+        range.selectNode(document.getElementById("finalTable"));
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+        document.execCommand("copy");
+        window.getSelection().removeAllRanges();
+        alert("Tabela copiada com sucesso! \n\nAgora vá na sua planilha, aba 'importar_temp', clique na célula A1 e dê Ctrl+V.");
+    }
+</script>
+
+</body>
+</html>

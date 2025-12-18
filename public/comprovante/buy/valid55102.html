@@ -2,228 +2,435 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Validar Comprovante - Eletro Business</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="icon" href="/assets/img/iconWeb.png">
+    <title>Validação Doc | ELETRO</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    
     <style>
         :root { 
-            --primary: #db0038; 
-            --bg: #f4f4f9; 
-            --card: #ffffff; 
-            --text: #333; 
-            --scan-color: #0f0; /* Verde Laser */
+            --brand-color: #db0038; 
+            --brand-dark: #b0002a;
+            --dark: #1e293b;
+            --bg: #f8fafc; 
+            --card-bg: #ffffff; 
+            --text-gray: #64748b;
+            --success: #10b981;
+            --radius: 24px;
         }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .container { background: var(--card); width: 100%; max-width: 450px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; position: relative; z-index: 1; transition: all 0.3s ease; }
-        .logo { color: var(--primary); font-size: 2rem; margin-bottom: 10px; }
-        h2 { margin-bottom: 8px; font-size: 1.2rem; }
-        p { color: #666; font-size: 0.9rem; margin-bottom: 24px; line-height: 1.5; }
         
-        /* Opções de Tipo */
-        .doc-type-options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .doc-type-card { border: 2px solid #eee; border-radius: 12px; padding: 15px; cursor: pointer; transition: all 0.2s; }
-        .doc-type-card:hover { border-color: var(--primary); background-color: #fff0f3; }
-        .doc-type-card i { font-size: 40px; color: #555; margin-bottom: 10px; display: block; }
-        .doc-type-card span { font-weight: 600; font-size: 0.9rem; display: block; }
-
-        /* Instruções (Restaurado) */
-        .instruction-box { background: #fff0f3; border: 1px dashed var(--primary); border-radius: 8px; padding: 15px; text-align: left; margin-bottom: 20px; }
-        .instruction-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 0.85rem; }
-        .instruction-item i { color: var(--primary); font-size: 1.2rem; }
-
-        /* Botões */
-        .btn { border: 2px solid var(--primary); color: white; background-color: var(--primary); padding: 14px 20px; border-radius: 8px; font-size: 1rem; font-weight: bold; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        .btn-outline { background-color: transparent; color: var(--primary); border: 2px solid var(--primary); }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Inter', sans-serif; }
         
-        .upload-btn-wrapper { position: relative; width: 100%; margin-bottom: 15px; }
-        .upload-btn-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
-
-        /* Preview e Scanner (Restaurado) */
-        #preview-container { position: relative; width: 100%; overflow: hidden; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px; }
-        #preview-img { display: block; width: 100%; height: auto; }
-        
-        .scanner-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(to bottom, rgba(0, 255, 0, 0), rgba(0, 255, 0, 0.2), rgba(0, 255, 0, 0));
-            border-bottom: 2px solid var(--scan-color);
-            transform: translateY(-100%); opacity: 0; z-index: 10; pointer-events: none;
+        body { 
+            background-color: var(--bg); 
+            color: var(--dark); 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            min-height: 100vh; 
+            padding: 25px 20px;
         }
-        .preview-container.scanning .scanner-overlay { opacity: 1; animation: scan-animation 1.5s linear infinite; }
-        .preview-container.scanning #preview-img { filter: brightness(0.8) contrast(1.2) grayscale(1); transition: filter 0.3s; }
-        @keyframes scan-animation { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
 
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* --- HEADER --- */
+        header {
+            width: 100%; max-width: 440px;
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 35px; /* Mais espaço abaixo do header */
+        }
+        .brand { font-weight: 800; font-size: 1.4rem; color: var(--dark); letter-spacing: -0.5px; }
+        .brand span { color: var(--brand-color); }
+        
+        .status-badge {
+            background: #dcfce7; color: #15803d;
+            font-size: 0.75rem; font-weight: 700;
+            padding: 6px 12px; border-radius: 30px;
+            display: flex; align-items: center; gap: 6px;
+            box-shadow: 0 2px 10px rgba(22, 163, 74, 0.1);
+        }
+        .dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 0 2px #dcfce7; }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 9999; opacity: 0; visibility: hidden; transition: 0.3s; padding: 20px; }
-        .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-box { background: white; padding: 30px; border-radius: 16px; text-align: center; max-width: 350px; }
+        /* --- CONTAINER PRINCIPAL --- */
+        .container { 
+            width: 100%; max-width: 440px; 
+            display: flex; flex-direction: column; 
+            gap: 30px; /* Aumentado o espaço entre os cartões */
+            flex: 1; 
+            padding-bottom: 80px; /* Espaço para o botão de suporte */
+        }
+
+        /* --- CARTÃO DE INFORMAÇÃO (UI LIMPA) --- */
+        .info-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.06);
+            overflow: hidden;
+            position: relative;
+            animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        /* Detalhe estético no topo */
+        .card-accent { height: 6px; width: 100%; background: linear-gradient(90deg, var(--brand-color), #f43f5e); }
+
+        .card-body { padding: 40px 30px; text-align: center; } /* Mais padding interno */
+        
+        .client-section { margin-bottom: 35px; }
+        .client-label { 
+            font-size: 0.7rem; color: var(--text-gray); 
+            text-transform: uppercase; letter-spacing: 2px; 
+            font-weight: 700; margin-bottom: 12px; 
+        }
+        .client-name { font-size: 2rem; font-weight: 800; color: var(--dark); margin: 0; line-height: 1.1; }
+
+        /* GRID DE DADOS (Valor e Parcelas) */
+        .data-grid {
+            display: grid;
+            grid-template-columns: 1fr 1px 1fr;
+            gap: 0;
+            align-items: center;
+        }
+        .divider { width: 1px; height: 50px; background: #e2e8f0; }
+        
+        .data-item { display: flex; flex-direction: column; gap: 6px; }
+        .data-value { font-size: 1.3rem; font-weight: 700; color: var(--brand-color); }
+        .data-value-dark { font-size: 1.3rem; font-weight: 700; color: var(--dark); }
+        .data-sub { font-size: 0.8rem; color: var(--text-gray); font-weight: 500; }
+
+        /* --- SEÇÃO DE INSTRUÇÕES (MELHORADA) --- */
+        .instructions-container {
+            padding: 10px 15px;
+        }
+        .instructions-header {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.9rem; font-weight: 700; color: var(--dark);
+            margin-bottom: 15px;
+        }
+        .instructions-text {
+            font-size: 0.85rem; color: var(--text-gray); line-height: 1.6;
+            margin-bottom: 20px;
+            background: #fff; border-radius: 12px; padding: 15px;
+            border: 1px solid #f1f5f9;
+        }
+        
+        .steps-visual { display: flex; justify-content: space-between; gap: 10px; }
+        .step { display: flex; flex-direction: column; align-items: center; gap: 10px; flex: 1; }
+        .icon-box {
+            width: 55px; height: 55px;
+            background: #ffffff;
+            border: 2px solid #f1f5f9;
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem; color: var(--dark);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            transition: all 0.3s;
+        }
+        .step span { font-size: 0.7rem; color: var(--text-gray); font-weight: 600; text-align: center; }
+
+        /* --- BOTÃO DE AÇÃO (CAMERA) --- */
+        .action-wrapper { position: relative; width: 100%; margin-top: 10px; }
+        .btn-main {
+            width: 100%;
+            background: var(--dark);
+            color: white;
+            border: none;
+            padding: 20px;
+            border-radius: 20px;
+            font-size: 1.05rem; font-weight: 600;
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            cursor: pointer;
+            box-shadow: 0 15px 30px rgba(30, 41, 59, 0.25);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-main:active { transform: scale(0.98); box-shadow: 0 5px 15px rgba(30, 41, 59, 0.2); }
+        #file-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; }
+
+        /* --- BOTÃO DE SUPORTE (NOVO) --- */
+        .btn-support {
+            margin-top: auto;
+            align-self: center;
+            background: transparent;
+            border: 1px solid #e2e8f0;
+            padding: 10px 20px;
+            border-radius: 30px;
+            color: var(--text-gray);
+            font-size: 0.85rem; font-weight: 600;
+            display: flex; align-items: center; gap: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: 0.3s;
+            margin-top: 1rem;
+        }
+        .btn-support:hover { background: #fff; border-color: var(--brand-color); color: var(--brand-color); }
+
+        /* --- TELAS DE ESTADO (Loading, Preview, Erro) --- */
+        .state-fullscreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg); z-index: 50;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 30px; text-align: center;
+        }
+        
+        /* Preview Scanner */
+        .scanner-container {
+            width: 100%; max-width: 360px; border-radius: 24px; overflow: hidden;
+            border: 5px solid white; box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            position: relative; margin-bottom: 30px; aspect-ratio: 3/4; background: #000;
+        }
+        .scanner-container img { width: 100%; height: 100%; object-fit: contain; }
+        .scan-beam {
+            position: absolute; top: 0; left: 0; width: 100%; height: 3px;
+            background: #22c55e; box-shadow: 0 0 15px #22c55e;
+            animation: scanMove 2.5s infinite ease-in-out;
+        }
+        
+        /* Utilitários e Animações */
         .hidden { display: none !important; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes scanMove { 0% { top: 5%; opacity: 0; } 10% { opacity: 1; } 90% { top: 95%; opacity: 1; } 100% { top: 95%; opacity: 0; } }
+        
+        .loader { width: 45px; height: 45px; border: 4px solid #cbd5e1; border-top-color: var(--brand-color); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* MODAL ALERTA */
+        .modal-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(5px);
+            z-index: 100; display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: 0.3s;
+        }
+        .modal-bg.active { opacity: 1; pointer-events: auto; }
+        .modal-card { background: white; width: 85%; max-width: 320px; padding: 30px; border-radius: 24px; text-align: center; }
+
     </style>
 </head>
 <body>
 
+    <header>
+        <div class="brand">ELETRO<span>BUSINESS</span></div>
+        <div class="status-badge"><div class="dot"></div> Online</div>
+    </header>
+
     <div class="container">
-        <div id="state-loading">
-            <div class="loader"></div>
-            <h3>Buscando Venda...</h3>
-            <p>Aguarde um momento.</p>
-        </div>
-
-        <div id="state-select-type" class="hidden">
-            <div class="logo"><i class='bx bx-printer'></i></div>
-            <h2>Tipo de Documento</h2>
-            <p>Qual formato você imprimiu?</p>
-            <div class="doc-type-options">
-                <div class="doc-type-card" onclick="selectType('cupom')">
-                    <i class='bx bx-receipt'></i>
-                    <span>Cupom<br>Térmico</span>
-                </div>
-                <div class="doc-type-card" onclick="selectType('a4')">
-                    <i class='bx bx-file-blank'></i>
-                    <span>Nota Auxiliar<br>(Folha A4)</span>
-                </div>
-            </div>
-        </div>
-
-        <div id="state-upload" class="hidden">
-            <div class="logo"><i class='bx bxs-camera'></i></div>
-            <h2 id="upload-title">Fotografar Documento</h2>
-            <p>Cliente: <strong id="venda-data">...</strong></p>
+        
+        <div id="state-main" class="hidden">
             
-            <div class="instruction-box">
-                <div class="instruction-item">
-                    <i class='bx bx-expand'></i>
-                    <span id="instruction-text">Enquadre todo o documento.</span>
-                </div>
-                <div class="instruction-item">
-                    <i class='bx bx-sun'></i>
-                    <span>Use um local bem iluminado.</span>
-                </div>
-                <div class="instruction-item">
-                    <i class='bx bx-text'></i>
-                    <span>O texto deve estar legível.</span>
+            <div class="info-card">
+                <div class="card-accent"></div>
+                <div class="card-body">
+                    <div class="client-section">
+                        <div class="client-label">Cliente Identificado</div>
+                        <h1 class="client-name" id="display-nome">...</h1>
+                    </div>
+
+                    <div class="data-grid">
+                        <div class="data-item">
+                            <span class="data-value" id="display-valor">...</span>
+                            <span class="data-sub">Valor da parcela</span>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="data-item">
+                            <span class="data-value-dark" id="display-parcelas">...</span>
+                            <span class="data-sub">Parcelas</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="upload-btn-wrapper">
-                <button class="btn"><i class='bx bx-camera'></i> Tirar Foto</button>
+            <div class="instructions-container">
+                <div class="instructions-header">
+                    <i class='bx bx-info-circle'></i> Como Validar
+                </div>
+                <div class="instructions-text">
+                    Fotografe o cupom fiscal ou a folha A4 inteira. Certifique-se que o nome da loja e os valores estejam legíveis e bem iluminados.
+                </div>
+                
+                <div class="steps-visual">
+                    <div class="step">
+                        <div class="icon-box"><i class='bx bx-receipt'></i></div>
+                        <span>Documento</span>
+                    </div>
+                    <div class="step">
+                        <div class="icon-box"><i class='bx bx-sun'></i></div>
+                        <span>Iluminação</span>
+                    </div>
+                    <div class="step">
+                        <div class="icon-box"><i class='bx bx-scan'></i></div>
+                        <span>Foco</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-wrapper">
+                <button class="btn-main">
+                    <i class='bx bx-camera' style="font-size: 1.4rem;"></i> Validar Comprovante
+                </button>
                 <input type="file" id="file-input" accept="image/*" capture="environment">
             </div>
+
+            <a href="https://wa.me/91986341760?text=Olá,%20estou%20enfrentando%20dificuldades%20com%20a%20leitura%20do%20documento%20de%20compra%20do%20crediário%20digital." target="_blank" class="btn-support">
+                <i class='bx bx-support'></i> Precisa de ajuda?
+            </a>
+
         </div>
 
-        <div id="state-preview" class="hidden">
-            <div class="preview-container" id="preview-container">
-                <img id="preview-img" src="" alt="Preview">
-                <div class="scanner-overlay"></div>
+        <div id="state-loading" class="state-fullscreen">
+            <div class="loader"></div>
+            <p style="color:var(--text-gray); font-weight:500;">Sincronizando venda...</p>
+        </div>
+
+        <div id="state-preview" class="hidden state-fullscreen">
+            <div class="scanner-container">
+                <img id="preview-img" src="">
+                <div class="scan-beam"></div>
             </div>
-            <button class="btn" id="confirm-btn"><i class='bx bx-check-circle'></i> Validar e Enviar</button>
-            <button class="btn btn-outline" onclick="resetUpload()" style="margin-top: 10px;">Cancelar</button>
+            <h3 style="margin:0 0 10px 0;">Analisando Documento</h3>
+            <p style="color:var(--text-gray); font-size:0.9rem; margin-bottom:30px;">Isso pode levar alguns segundos.</p>
+            <button class="btn-support" onclick="resetApp()">Cancelar</button>
         </div>
 
-        <div id="state-success" class="hidden">
-            <i class='bx bx-check-circle' style="font-size: 50px; color: #28a745;"></i>
-            <h3>Sucesso!</h3>
-            <p id="success-msg">Comprovante arquivado.</p>
-            <a href="#" id="link-exists" target="_blank" class="btn hidden" style="text-decoration:none; margin-top:15px;">Ver Arquivo</a>
+        <div id="state-success" class="hidden state-fullscreen">
+            <div style="width:90px; height:90px; background:#dcfce7; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:25px;">
+                <i class='bx bx-check' style="font-size:3.5rem; color:var(--success);"></i>
+            </div>
+            <h2 style="margin-bottom:15px; color:var(--dark);">Validado com Sucesso!</h2>
+            <p style="color:var(--text-gray); margin-bottom:40px; line-height:1.5; max-width:300px;">
+                O comprovante foi arquivado corretamente no sistema da empresa.
+            </p>
+            <button class="btn-main" onclick="location.reload()" style="width: auto; padding: 15px 40px;">Nova Validação</button>
         </div>
+
+        <div id="state-error" class="hidden state-fullscreen">
+            <i class='bx bx-error-circle' style="font-size:4rem; color:#cbd5e1; margin-bottom:20px;"></i>
+            <h3>Não Encontrado</h3>
+            <p id="msg-erro-fatal" style="color:var(--text-gray); margin-bottom:30px; max-width: 280px;">...</p>
+            <button class="btn-main" onclick="location.reload()">Tentar Novamente</button>
+        </div>
+
     </div>
 
-    <div class="modal-overlay" id="error-modal">
-        <div class="modal-box">
-            <i class='bx bx-error' style="font-size: 40px; color: #d32f2f;"></i>
-            <h3 style="margin:10px 0;">Não Identificado</h3>
-            <p id="modal-msg" style="font-size:0.9rem; color:#666;">...</p>
-            <button class="btn" onclick="closeModal()">Tentar Novamente</button>
+    <div class="modal-bg" id="alert-modal">
+        <div class="modal-card">
+            <i class='bx bx-info-circle' style="font-size:3rem; color:#f59e0b; margin-bottom:15px;"></i>
+            <h3 style="margin: 0 0 10px 0;">Atenção</h3>
+            <p id="alert-msg" style="color:var(--text-gray); font-size:0.95rem; line-height:1.5;">...</p>
+            <button class="btn-main" style="margin-top:25px; padding:12px;" onclick="closeAlert()">Entendido</button>
         </div>
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzvd0BBLEEQlu-ksnIbsmnYcjQNQuZcTrsCmXMKHGM5g7DPEk3Nj95X47LKbj7rRSAT/exec"; 
+        // URL ATUALIZADA
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
         
         let currentId = null;
         let currentIndex = null;
-        let currentDocType = 'cupom'; // 'cupom' ou 'a4'
         let fileBase64 = null;
 
-        // Inicialização
         document.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
             let id = params.get('id');
             if(!id) { const k=Array.from(params.keys()); if(k.length>0) id=k[0]; }
-            
-            if(!id) { showError("ID não fornecido."); return; }
-            currentId = id;
-            
-            // Passo 1: Verificar Log no Backend
-            verificarLog(id);
+            currentId = id || null;
+            carregarDadosVenda(currentId);
         });
 
-        async function verificarLog(id) {
+        async function carregarDadosVenda(id) {
             try {
-                const res = await fetch(`${SCRIPT_URL}?action=verificarUltimoLog&idCliente=${id}`);
+                const param = id ? `&idCliente=${id}` : "";
+                const res = await fetch(`${SCRIPT_URL}?action=verificarUltimoLog${param}`);
                 const json = await res.json();
                 
                 document.getElementById('state-loading').classList.add('hidden');
-                
+
                 if(json.status === 'success') {
+                    document.getElementById('display-nome').textContent = json.data.nome || "Consumidor";
+                    document.getElementById('display-valor').textContent = json.data.valor || "R$ 0,00";
+                    document.getElementById('display-parcelas').textContent = json.data.parcelas || "-";
+                    
                     currentIndex = json.data.rowIndex;
-                    document.getElementById('venda-data').textContent = json.data.timestamp;
-                    // Vai para seleção de tipo
-                    document.getElementById('state-select-type').classList.remove('hidden');
-                } else if (json.status === 'existente') {
-                    showSuccess("Comprovante já enviado.", json.link);
+                    currentId = json.data.idCliente;
+                    document.getElementById('state-main').classList.remove('hidden');
+
+                } else if(json.status === 'existente') {
+                    mostrarSucesso();
                 } else {
-                    showError(json.message);
+                    mostrarErroFatal(json.message);
                 }
-            } catch(e) { showError("Erro de conexão."); }
+            } catch(e) {
+                mostrarErroFatal("Erro de conexão. Verifique sua internet.");
+            }
         }
 
-        // Seleção do Tipo
-        window.selectType = (type) => {
-            currentDocType = type;
-            document.getElementById('state-select-type').classList.add('hidden');
-            document.getElementById('state-upload').classList.remove('hidden');
-            
-            const instructionTitle = document.getElementById('upload-title');
-            const instructionText = document.getElementById('instruction-text');
-            
-            // Texto genérico para o usuário
-            if(type === 'cupom') {
-                instructionTitle.textContent = "Fotografar Cupom";
-                instructionText.textContent = "Enquadre o cupom inteiro.";
-            } else {
-                instructionTitle.textContent = "Fotografar Nota A4";
-                instructionText.textContent = "Enquadre a folha A4 inteira.";
-            }
-        };
-
-        // Upload e Compressão
+        // --- LÓGICA DE UPLOAD E OCR ---
         document.getElementById('file-input').addEventListener('change', async (e) => {
             if(!e.target.files[0]) return;
-            const file = e.target.files[0];
             
-            // Oculta upload, mostra preview
-            document.getElementById('state-upload').classList.add('hidden');
+            // Troca tela
+            document.getElementById('state-main').classList.add('hidden');
             document.getElementById('state-preview').classList.remove('hidden');
-            document.getElementById('confirm-btn').innerHTML = "Processando...";
-            document.getElementById('confirm-btn').disabled = true;
 
             try {
-                fileBase64 = await compressImage(file);
+                fileBase64 = await compressImage(e.target.files[0]);
                 document.getElementById('preview-img').src = fileBase64;
-                document.getElementById('confirm-btn').innerHTML = "<i class='bx bx-check-circle'></i> Validar e Enviar";
-                document.getElementById('confirm-btn').disabled = false;
-            } catch(err) {
-                showModal("Erro ao processar imagem.");
-                resetUpload();
+
+                const worker = await Tesseract.createWorker('por');
+                
+                // Tentativa 1: Normal
+                let ret = await worker.recognize(fileBase64);
+                let text = ret.data.text.toUpperCase();
+                let valid = validarTexto(text);
+
+                // Tentativa 2: Rotacionada
+                if(!valid) {
+                    const rotated = await rotateImage(fileBase64);
+                    ret = await worker.recognize(rotated);
+                    text = ret.data.text.toUpperCase();
+                    if(validarTexto(text)) {
+                        fileBase64 = rotated;
+                        valid = true;
+                    }
+                }
+                
+                await worker.terminate();
+
+                if(!valid) {
+                    resetApp();
+                    mostrarAlerta("Não foi possível ler o documento. Verifique se o cabeçalho 'ELETRO' ou 'DTUDO' aparece na foto e está focado.");
+                    return;
+                }
+
+                // Envia
+                const res = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'uploadComprovante',
+                        idCliente: currentId,
+                        rowIndex: currentIndex,
+                        imageBase64: fileBase64
+                    })
+                });
+                const json = await res.json();
+
+                if(json.status === 'success') {
+                    mostrarSucesso();
+                } else {
+                    resetApp();
+                    mostrarAlerta("Erro ao salvar: " + json.message);
+                }
+
+            } catch(e) {
+                resetApp();
+                mostrarAlerta("Erro técnico: " + e.message);
             }
         });
 
-        // Lógica de Compressão (Escala de Cinza Suave)
+        function validarTexto(text) {
+            const keywords = ["COMPROVANTE", "45692327", "DTUDO", "ELETRO", "VENDA", "NOTA AUXILIAR", "V-"];
+            return keywords.some(k => text.includes(k));
+        }
+
         const compressImage = (file) => {
             return new Promise((resolve) => {
                 const reader = new FileReader();
@@ -234,29 +441,24 @@
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
                         let w = img.width, h = img.height;
-                        const max = 1500;
+                        const max = 1200; 
                         if(w > max) { h = Math.round(h*(max/w)); w = max; }
-                        
                         canvas.width = w; canvas.height = h;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, w, h);
-                        
-                        // Escala de cinza
                         const idata = ctx.getImageData(0,0,w,h);
                         const d = idata.data;
                         for(let i=0; i<d.length; i+=4) {
-                            const v = (d[i]+d[i+1]+d[i+2])/3;
+                            const v = (d[i]*0.3 + d[i+1]*0.59 + d[i+2]*0.11);
                             d[i]=d[i+1]=d[i+2]=v;
                         }
                         ctx.putImageData(idata,0,0);
-                        
-                        resolve(canvas.toDataURL('image/jpeg', 0.7));
+                        resolve(canvas.toDataURL('image/jpeg', 0.6));
                     };
                 };
             });
         };
 
-        // Rotação
         const rotateImage = (base64) => {
             return new Promise((resolve) => {
                 const img = new Image();
@@ -268,122 +470,34 @@
                     ctx.translate(c.width, 0);
                     ctx.rotate(90 * Math.PI / 180);
                     ctx.drawImage(img, 0, 0);
-                    resolve(c.toDataURL('image/jpeg', 0.7));
+                    resolve(c.toDataURL('image/jpeg', 0.6));
                 }
             });
         };
 
-        // OCR e Envio
-        document.getElementById('confirm-btn').addEventListener('click', async () => {
-            const btn = document.getElementById('confirm-btn');
-            const scannerContainer = document.getElementById('preview-container'); // SELETOR CORRIGIDO
-            
-            btn.disabled = true;
-            btn.innerHTML = "<i class='bx bx-scan'></i> Analisando...";
-            
-            // Adiciona classe de animação (Laser Verde)
-            scannerContainer.classList.add('scanning');
-
-            try {
-                const worker = await Tesseract.createWorker('por');
-                
-                // Tentativa 1
-                let ret = await worker.recognize(fileBase64);
-                let text = ret.data.text.toUpperCase();
-                let valid = checkText(text);
-
-                // Tentativa 2 (Rotação) se falhar
-                if(!valid) {
-                    console.log("Tentando rotação...");
-                    const rotated = await rotateImage(fileBase64);
-                    ret = await worker.recognize(rotated);
-                    text = ret.data.text.toUpperCase();
-                    if(checkText(text)) {
-                        fileBase64 = rotated; // Usa a girada
-                        valid = true;
-                    }
-                }
-                
-                await worker.terminate();
-
-                if(!valid) {
-                    scannerContainer.classList.remove('scanning');
-                    let msg = "Documento não identificado. Verifique se a foto está nítida.";
-                    showModal(msg);
-                    btn.disabled = false; btn.innerHTML = "Tentar Novamente";
-                    return;
-                }
-
-                // Envio
-                btn.innerHTML = "<i class='bx bx-cloud-upload'></i> Enviando...";
-                const res = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'uploadComprovante',
-                        idCliente: currentId,
-                        rowIndex: currentIndex,
-                        imageBase64: fileBase64
-                    })
-                });
-                const json = await res.json();
-                
-                scannerContainer.classList.remove('scanning');
-                
-                if(json.status === 'success') {
-                    showSuccess("Salvo com sucesso!");
-                } else {
-                    showModal("Erro no servidor: " + json.message);
-                    btn.disabled = false; btn.innerHTML = "Tentar Novamente";
-                }
-
-            } catch(e) {
-                scannerContainer.classList.remove('scanning');
-                showModal("Erro técnico: " + e.message);
-                btn.disabled = false; btn.innerHTML = "Tentar Novamente";
-            }
-        });
-
-        // Função de Validação de Texto (O Cérebro Oculto)
-        function checkText(text) {
-            // Lógica interna: O usuário não sabe, mas procuramos palavras-chave
-            if(currentDocType === 'cupom') {
-                if(text.includes("COMPROVANTE") || text.includes("45692327")) return true;
-            } else {
-                if(text.includes("COMPROVANTE DE COMPRA") || text.includes("NOTA AUXILIAR")) return true;
-            }
-            return false;
-        }
-
-        // UI Helpers
-        window.resetUpload = () => {
-            document.getElementById('state-preview').classList.add('hidden');
-            document.getElementById('state-upload').classList.remove('hidden');
-            document.getElementById('file-input').value = '';
-            document.getElementById('preview-container').classList.remove('scanning');
-        };
-
-        function showModal(msg) {
-            document.getElementById('modal-msg').textContent = msg;
-            document.getElementById('error-modal').classList.add('active');
-        }
-        window.closeModal = () => document.getElementById('error-modal').classList.remove('active');
-
-        function showError(msg) {
-            document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
-            document.getElementById('state-error').classList.remove('hidden');
-            document.getElementById('error-text').textContent = msg;
-        }
-
-        function showSuccess(msg, link) {
-            document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
+        // CONTROLES DE TELA
+        function mostrarSucesso() {
+            document.querySelectorAll('.state-fullscreen, #state-main').forEach(d => d.classList.add('hidden'));
             document.getElementById('state-success').classList.remove('hidden');
-            document.getElementById('success-msg').textContent = msg;
-            if(link) {
-                const btn = document.getElementById('link-exists');
-                btn.href = link;
-                btn.classList.remove('hidden');
-            }
         }
+
+        function mostrarErroFatal(msg) {
+            document.querySelectorAll('.state-fullscreen, #state-main').forEach(d => d.classList.add('hidden'));
+            document.getElementById('state-error').classList.remove('hidden');
+            document.getElementById('msg-erro-fatal').textContent = msg;
+        }
+
+        function mostrarAlerta(msg) {
+            document.getElementById('alert-msg').textContent = msg;
+            document.getElementById('alert-modal').classList.add('active');
+        }
+        window.closeAlert = () => document.getElementById('alert-modal').classList.remove('active');
+
+        window.resetApp = () => {
+            document.getElementById('state-preview').classList.add('hidden');
+            document.getElementById('state-main').classList.remove('hidden');
+            document.getElementById('file-input').value = '';
+        };
     </script>
 </body>
 </html>
