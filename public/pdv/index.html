@@ -349,6 +349,15 @@
 
                     <div class="menu-divider"></div>
 
+                    <div class="more-menu-item" data-page="notas">
+                        <div class="item-icon-box" style="background: #e0f2fe; color: #0284c7;"><i
+                                class='bx bx-file'></i></div>
+                        <div class="item-content">
+                            <strong>Notas Fiscais</strong>
+                            <span>Emitidas e Pendentes</span>
+                        </div>
+                    </div>
+
                     <div class="more-menu-item" data-page="configuracoes">
                         <div class="item-icon-box"><i class='bx bx-cog'></i></div>
                         <div class="item-content">
@@ -639,6 +648,90 @@
                         <tbody id="sales-history-list">
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="notas-page" class="page-content" style="display: none;">
+            <div class="card container-md">
+                <div class="page-header header-styled">
+                    <div>
+                        <h2><i class='bx bx-receipt'></i> Notas Fiscais</h2>
+                        <p class="text-light mt-4 mb-0 text-sm">Histórico de emissões e regularização de produtos.</p>
+                    </div>
+                    <div class="header-actions">
+                        <span class="badge warning"><i class='bx bx-test-tube'></i> Ambiente Homologação</span>
+                    </div>
+                </div>
+
+                <div class="orders-tabs" id="notas-tabs">
+                    <div class="order-tab active" data-view="emitidas">Emitidas</div>
+                    <div class="order-tab" data-view="pendentes">Itens Pendentes</div>
+                </div>
+
+                <div id="view-notas-emitidas" class="mt-20">
+                    <table class="products-table">
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>ID Venda</th>
+                                <th>Data</th>
+                                <th>Itens</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-notas-emitidas">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="view-notas-pendentes" class="mt-20" style="display: none;">
+                    <div class="status-box warning" style="text-align: left; padding: 15px; margin-bottom: 20px;">
+                        <i class='bx bx-info-circle'></i>
+                        <span>Estes itens foram vendidos mas removidos da nota fiscal por falta de cadastro completo.
+                            Complete o cadastro em "Produtos" para futuras vendas.</span>
+                    </div>
+                    <table class="products-table">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Venda Origem</th>
+                                <th>Motivo</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-itens-pendentes">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="modal-ver-nota">
+            <div class="modal-content modal-md">
+                <div class="modal-header">
+                    <h3>DANFE NFC-e (Homologação)</h3>
+                    <button class="close-modal-btn" data-target="modal-ver-nota"><i class='bx bx-x'></i></button>
+                </div>
+                <div class="modal-body"
+                    style="background: #fff8dc; color: #5d4037; font-family: 'Courier New', monospace; padding: 20px; border: 1px dashed #333;">
+                    <div
+                        style="text-align: center; border-bottom: 1px dashed #333; padding-bottom: 10px; margin-bottom: 10px;">
+                        <h4>A N F DA SILVA LTDA</h4>
+                        <p>CNPJ: 45.692.327/0001-00</p>
+                        <p><strong>AMBIENTE DE HOMOLOGAÇÃO - SEM VALOR FISCAL</strong></p>
+                    </div>
+                    <div id="danfe-itens-list"></div>
+                    <div
+                        style="border-top: 1px dashed #333; margin-top: 10px; padding-top: 10px; display: flex; justify-content: space-between; font-weight: bold;">
+                        <span>TOTAL R$</span>
+                        <span id="danfe-total-valor">0,00</span>
+                    </div>
+                    <div style="text-align: center; margin-top: 20px; font-size: 0.8rem;">
+                        <p>EMISSÃO NORMAL</p>
+                        <p id="danfe-chave">1525 1245 6923 ...</p>
+                        <p>Consulte pela Chave de Acesso em<br>www.sefaz.pa.gov.br</p>
+                    </div>
                 </div>
             </div>
         </div>

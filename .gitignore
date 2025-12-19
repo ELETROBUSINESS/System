@@ -67,3 +67,18 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# --- SEGURANÇA E BACKEND ---
+# Ignorar pasta de funções (Backend)
+functions/
+
+# Ignorar chaves de serviço e credenciais JSON
+*.json
+!package.json
+!firebase.json
+# (Mantemos package.json e firebase.json pois são configurações gerais inofensivas)
+
+# Ignorar configurações de IDE (opcional, mas recomendado)
+.vscode/
+.idea/
+*.DS_Store

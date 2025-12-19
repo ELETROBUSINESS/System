@@ -8,6 +8,9 @@ let db; // Variável do Banco de Dados
 let realtimeOrdersUnsubscribe = null;
 let areValuesHidden = false;
 
+let fiscalHistory = []; // Armazena { idVenda, data, status, xml, itensEmitidos, itensPendentes }
+const FISCAL_API_URL = "https://us-central1-super-app25.cloudfunctions.net/emitirNfce"; // URL da sua Cloud Function
+
 // Variáveis de Pedidos Online (Globais para evitar o erro ReferenceError)
 let activeOrdersData = [];
 let currentOrderStatusFilter = 'pendente';
@@ -344,6 +347,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const credStep2 = document.getElementById('cred-step-2');
     const credFlowClientName = document.getElementById('cred-flow-client-name');
 
+
+    const validateProductFiscal = (prod) => {
+        // Regra: Precisa ter NCM, CFOP e Unidade definidos e não estar vazio
+        // O 'quick add' geralmente não tem NCM
+        if (!prod.ncm || prod.ncm.length < 2) return { valid: false, reason: "Sem NCM" };
+        if (!prod.cfop) return { valid: false, reason: "Sem CFOP" };
+        if (!prod.csosn) return { valid: false, reason: "Sem CSOSN" };
+        return { valid: true };
+    };
 
     // Função para animar os números (Efeito de contagem)
     const animateTaxValue = (start, end, duration) => {
@@ -1307,100 +1319,100 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 4. Salvar Edição (Localmente por enquanto)
     // 4. Salvar Edição (Localmente + API Google Sheets)
-const handleSaveProductEdit = async (e) => {
-    e.preventDefault();
+    const handleSaveProductEdit = async (e) => {
+        e.preventDefault();
 
-    // Referência ao botão para dar feedback visual
-    const submitBtn = document.querySelector('#edit-product-form button[type="submit"]');
-    const originalBtnText = submitBtn.innerHTML;
+        // Referência ao botão para dar feedback visual
+        const submitBtn = document.querySelector('#edit-product-form button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
 
-    // Pega os valores do form
-    const newCode = document.getElementById('edit-prod-code').value.trim();
-    const newName = document.getElementById('edit-prod-name').value.trim();
+        // Pega os valores do form
+        const newCode = document.getElementById('edit-prod-code').value.trim();
+        const newName = document.getElementById('edit-prod-name').value.trim();
 
-    if (!newCode || !newName) {
-        showCustomAlert("Erro", "Código e Nome são obrigatórios.");
-        return;
-    }
-
-    // Objeto base do produto (Estrutura compatível com Code.js > saveProduct)
-    const prodData = {
-        id: newCode,
-        name: newName,
-        price: parseFloat(document.getElementById('edit-prod-price').value) || 0,
-        costPrice: parseFloat(document.getElementById('edit-prod-cost').value) || 0,
-        brand: document.getElementById('edit-prod-brand').value.trim(),
-        imgUrl: document.getElementById('edit-prod-img-url').value.trim(),
-        // Se for edição, mantém o estoque que estava no cache, se for novo começa com 0
-        // (O Google Sheets não deve sobrescrever estoque com 0 se já existir, mas enviamos por segurança)
-        stock: editingProductId ? parseInt(document.getElementById('edit-prod-stock').value) : 0,
-
-        // Dados Fiscais
-        ncm: document.getElementById('edit-prod-ncm').value.trim(),
-        cest: document.getElementById('edit-prod-cest').value.trim(),
-        cfop: document.getElementById('edit-prod-cfop').value,
-        unit: document.getElementById('edit-prod-unit').value,
-        csosn: document.getElementById('edit-prod-csosn').value,
-        origem: document.getElementById('edit-prod-origem').value,
-        
-        // Categoria (opcional, se não tiver no form, enviamos string vazia ou Geral)
-        category: 'Geral' 
-    };
-
-    // Bloqueia o botão
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Salvando...";
-
-    try {
-        // --- ENVIA PARA A API ---
-        const apiResult = await salvarProdutoNaAPI(prodData);
-
-        if (apiResult.status !== 'success') {
-            throw new Error(apiResult.message || "Erro desconhecido na API.");
+        if (!newCode || !newName) {
+            showCustomAlert("Erro", "Código e Nome são obrigatórios.");
+            return;
         }
 
-        // --- SUCESSO: ATUALIZA O CACHE LOCAL ---
-        if (editingProductId) {
-            // --- ATUALIZAR EXISTENTE ---
-            const prodIndex = localProductCache.findIndex(p => String(p.id) === String(editingProductId));
-            
-            if (prodIndex !== -1) {
-                // Verifica troca de código
-                if (newCode !== String(editingProductId)) {
-                    // Se mudou o código, verifica se já existe outro igual
-                    const exists = localProductCache.some(p => String(p.id) === newCode);
-                    if (exists) {
-                        throw new Error("Este novo código de barras já existe em outro produto!");
+        // Objeto base do produto (Estrutura compatível com Code.js > saveProduct)
+        const prodData = {
+            id: newCode,
+            name: newName,
+            price: parseFloat(document.getElementById('edit-prod-price').value) || 0,
+            costPrice: parseFloat(document.getElementById('edit-prod-cost').value) || 0,
+            brand: document.getElementById('edit-prod-brand').value.trim(),
+            imgUrl: document.getElementById('edit-prod-img-url').value.trim(),
+            // Se for edição, mantém o estoque que estava no cache, se for novo começa com 0
+            // (O Google Sheets não deve sobrescrever estoque com 0 se já existir, mas enviamos por segurança)
+            stock: editingProductId ? parseInt(document.getElementById('edit-prod-stock').value) : 0,
+
+            // Dados Fiscais
+            ncm: document.getElementById('edit-prod-ncm').value.trim(),
+            cest: document.getElementById('edit-prod-cest').value.trim(),
+            cfop: document.getElementById('edit-prod-cfop').value,
+            unit: document.getElementById('edit-prod-unit').value,
+            csosn: document.getElementById('edit-prod-csosn').value,
+            origem: document.getElementById('edit-prod-origem').value,
+
+            // Categoria (opcional, se não tiver no form, enviamos string vazia ou Geral)
+            category: 'Geral'
+        };
+
+        // Bloqueia o botão
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Salvando...";
+
+        try {
+            // --- ENVIA PARA A API ---
+            const apiResult = await salvarProdutoNaAPI(prodData);
+
+            if (apiResult.status !== 'success') {
+                throw new Error(apiResult.message || "Erro desconhecido na API.");
+            }
+
+            // --- SUCESSO: ATUALIZA O CACHE LOCAL ---
+            if (editingProductId) {
+                // --- ATUALIZAR EXISTENTE ---
+                const prodIndex = localProductCache.findIndex(p => String(p.id) === String(editingProductId));
+
+                if (prodIndex !== -1) {
+                    // Verifica troca de código
+                    if (newCode !== String(editingProductId)) {
+                        // Se mudou o código, verifica se já existe outro igual
+                        const exists = localProductCache.some(p => String(p.id) === newCode);
+                        if (exists) {
+                            throw new Error("Este novo código de barras já existe em outro produto!");
+                        }
                     }
+                    localProductCache[prodIndex] = prodData;
                 }
-                localProductCache[prodIndex] = prodData;
+            } else {
+                // --- CRIAR NOVO ---
+                const exists = localProductCache.some(p => String(p.id) === newCode);
+                if (exists) {
+                    throw new Error("Já existe um produto com este código!");
+                }
+                localProductCache.push(prodData);
             }
-        } else {
-            // --- CRIAR NOVO ---
-            const exists = localProductCache.some(p => String(p.id) === newCode);
-            if (exists) {
-                throw new Error("Já existe um produto com este código!");
-            }
-            localProductCache.push(prodData);
+
+            // Sucesso final
+            showCustomAlert("Sucesso", "Produto salvo na nuvem e localmente!");
+            closeModal(document.getElementById('edit-product-modal'));
+            renderProdutosPage();
+
+            // Restaura botão de cadeado
+            if (btnUnlockCode) btnUnlockCode.style.display = 'block';
+
+        } catch (error) {
+            console.error("Erro ao salvar produto:", error);
+            showCustomAlert("Erro ao Salvar", error.message);
+        } finally {
+            // Restaura o botão
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
         }
-
-        // Sucesso final
-        showCustomAlert("Sucesso", "Produto salvo na nuvem e localmente!");
-        closeModal(document.getElementById('edit-product-modal'));
-        renderProdutosPage();
-
-        // Restaura botão de cadeado
-        if (btnUnlockCode) btnUnlockCode.style.display = 'block';
-
-    } catch (error) {
-        console.error("Erro ao salvar produto:", error);
-        showCustomAlert("Erro ao Salvar", error.message);
-    } finally {
-        // Restaura o botão
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalBtnText;
-    }
-};
+    };
 
     // --- LÓGICA DE MAXIMIZAR MODAL ---
     const btnMaximize = document.getElementById('btn-maximize-modal');
@@ -2413,6 +2425,79 @@ const handleSaveProductEdit = async (e) => {
                 id: timestamp
             };
 
+            // 1. Separa o Joio do Trigo
+            const itensAptos = [];
+            const itensPendentes = [];
+
+            cart.forEach(item => {
+                const check = validateProductFiscal(item);
+                if (check.valid) {
+                    itensAptos.push(item);
+                } else {
+                    itensPendentes.push({ ...item, reason: check.reason });
+                }
+            });
+
+            let fiscalResult = { status: 'skipped', message: 'Nenhum item apto' };
+
+            // 2. Se houver itens aptos, chama a API
+            if (itensAptos.length > 0) {
+                // Não usamos await aqui para não travar a UI da venda (User Experience)
+                // O processamento acontece em background e atualiza o histórico depois
+                fetch(FISCAL_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        items: itensAptos,
+                        totalPagamento: lastSaleData.total
+                    })
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        // Salva no histórico local da sessão
+                        fiscalHistory.unshift({
+                            idVenda: timestamp, // Usando o timestamp como ID de venda
+                            data: new Date(),
+                            status: data.status === 'success' ? 'Autorizada' : 'Rejeitada',
+                            itensEmitidos: itensAptos,
+                            itensPendentes: itensPendentes,
+                            xml: data.xml_enviado,
+                            sefazMsg: data.message
+                        });
+
+                        // Feedback discreto (Toast)
+                        if (data.status === 'success') {
+                            showCustomToast(`NFC-e emitida para ${itensAptos.length} itens.`);
+                        } else {
+                            showCustomToast(`Erro na SEFAZ: ${data.message}`);
+                        }
+
+                        // Atualiza a tela de notas se estiver aberta
+                        renderNotasPage();
+                    })
+                    .catch(err => {
+                        console.error("Erro Fiscal:", err);
+                        fiscalHistory.unshift({
+                            idVenda: timestamp,
+                            data: new Date(),
+                            status: 'Erro Conexão',
+                            itensEmitidos: itensAptos,
+                            itensPendentes: itensPendentes,
+                            xml: null
+                        });
+                    });
+            } else {
+                // Se tudo for pendente, registra apenas como pendente no histórico fiscal
+                fiscalHistory.unshift({
+                    idVenda: timestamp,
+                    data: new Date(),
+                    status: 'Não Emitida (Dados Incompletos)',
+                    itensEmitidos: [],
+                    itensPendentes: itensPendentes,
+                    xml: null
+                });
+            }
+
             // Chama a função que envia para a planilha 'historic' (sem await para não travar a impressão)
             salvarVendaNoHistorico(dadosParaHistorico);
             // -------------------------------------------------------
@@ -2579,6 +2664,126 @@ const handleSaveProductEdit = async (e) => {
             }
         });
     });
+
+    // Listener para as abas da página de Notas
+    document.querySelectorAll('#notas-tabs .order-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('#notas-tabs .order-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            const view = tab.dataset.view;
+            if (view === 'emitidas') {
+                document.getElementById('view-notas-emitidas').style.display = 'block';
+                document.getElementById('view-notas-pendentes').style.display = 'none';
+            } else {
+                document.getElementById('view-notas-emitidas').style.display = 'none';
+                document.getElementById('view-notas-pendentes').style.display = 'block';
+            }
+        });
+    });
+
+    const renderNotasPage = () => {
+        // 1. Renderiza Emitidas
+        const tbodyEmitidas = document.getElementById('lista-notas-emitidas');
+        tbodyEmitidas.innerHTML = '';
+
+        fiscalHistory.forEach(reg => {
+            const tr = document.createElement('tr');
+
+            let statusBadge = '';
+            if (reg.status === 'Autorizada') statusBadge = `<span class="badge-status ok"><i class='bx bx-check'></i> Autorizada</span>`;
+            else if (reg.status.includes('Erro') || reg.status === 'Rejeitada') statusBadge = `<span class="badge-status error"><i class='bx bx-x'></i> ${reg.status}</span>`;
+            else statusBadge = `<span class="badge-status warning"> Ignorada</span>`;
+
+            tr.innerHTML = `
+            <td>${statusBadge}</td>
+            <td>#${reg.idVenda.slice(-6)}</td>
+            <td>${formatTime(reg.data)}</td>
+            <td>
+                <div style="font-size: 0.8rem;">
+                    <span class="text-success">${reg.itensEmitidos.length} ok</span> / 
+                    <span class="text-danger">${reg.itensPendentes.length} pend</span>
+                </div>
+            </td>
+            <td>
+                ${reg.status === 'Autorizada' ? `<button class="btn btn-sm btn-secondary" onclick="verDanfe('${reg.idVenda}')"><i class='bx bx-show'></i> Ver</button>` : ''}
+            </td>
+        `;
+            tbodyEmitidas.appendChild(tr);
+        });
+
+        // 2. Renderiza Pendentes (Agrupado por produto)
+        const tbodyPendentes = document.getElementById('lista-itens-pendentes');
+        tbodyPendentes.innerHTML = '';
+
+        // Flatten a lista de pendentes
+        let allPending = [];
+        fiscalHistory.forEach(reg => {
+            reg.itensPendentes.forEach(item => {
+                allPending.push({ ...item, idVenda: reg.idVenda });
+            });
+        });
+
+        if (allPending.length === 0) {
+            tbodyPendentes.innerHTML = '<tr><td colspan="4" class="text-center text-light pad-20">Nenhuma pendência cadastral recente.</td></tr>';
+        } else {
+            allPending.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                <td>
+                    <strong>${item.name}</strong><br>
+                    <small class="text-light">Cod: ${item.id}</small>
+                </td>
+                <td>#${item.idVenda.slice(-6)}</td>
+                <td class="text-danger">${item.reason || 'Dados incompletos'}</td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="corrigirProduto('${item.id}')">
+                        <i class='bx bx-edit'></i> Corrigir
+                    </button>
+                </td>
+            `;
+                tbodyPendentes.appendChild(tr);
+            });
+        }
+    };
+
+    // Função para abrir o modal DANFE
+    window.verDanfe = (idVenda) => {
+        const reg = fiscalHistory.find(r => r.idVenda === idVenda);
+        if (!reg) return;
+
+        const container = document.getElementById('danfe-itens-list');
+        container.innerHTML = '';
+        let total = 0;
+
+        reg.itensEmitidos.forEach(item => {
+            const val = item.price * item.quantity;
+            total += val;
+            const row = document.createElement('div');
+            row.style.display = 'flex';
+            row.style.justifyContent = 'space-between';
+            row.style.marginBottom = '5px';
+            row.innerHTML = `
+            <span>${item.name.substring(0, 15)}... <small>x${item.quantity}</small></span>
+            <span>${formatCurrency(val)}</span>
+        `;
+            container.appendChild(row);
+        });
+
+        document.getElementById('danfe-total-valor').textContent = formatCurrency(total);
+        openModal(document.getElementById('modal-ver-nota'));
+    };
+
+    // Atalho para ir editar o produto direto
+    window.corrigirProduto = (idProd) => {
+        // Fecha página de notas
+        // Vai para página de produtos
+        document.querySelector('.navbar-item[data-page="produtos"]').click(); // Simula clique
+        // Abre modal de edição
+        setTimeout(() => {
+            openProductEdit(idProd);
+        }, 500);
+    };
 
     // Função auxiliar para mostrar a tela de parcelas (Limpeza de código)
     function showCrediarioScreen() {
