@@ -67,32 +67,32 @@
     </div>
 
     <div class="modal-overlay" id="client-selection-modal">
-    <div class="modal-content modal-md">
-        <div class="modal-header">
-            <h3>Identificar Cliente</h3>
-            <button class="close-modal-btn" data-target="client-selection-modal"><i class='bx bx-x'></i></button>
-        </div>
-        <div class="modal-body">
-            <div class="search-row-modern">
-                <div class="input-modern-wrapper">
-                    <i class='bx bx-search' style="color: #9ca3af; font-size: 1.2rem;"></i>
-                    <input type="text" id="client-selection-input" class="input-modern" 
-                           placeholder="Busque por nome..." autocomplete="off" data-primary-focus="true">
-                </div>
-                
-                <button class="btn-square-add" id="btn-new-client-modal" title="Novo Cliente">
-                    <i class='bx bx-plus'></i>
-                </button>
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h3>Identificar Cliente</h3>
+                <button class="close-modal-btn" data-target="client-selection-modal"><i class='bx bx-x'></i></button>
             </div>
+            <div class="modal-body">
+                <div class="search-row-modern">
+                    <div class="input-modern-wrapper">
+                        <i class='bx bx-search' style="color: #9ca3af; font-size: 1.2rem;"></i>
+                        <input type="text" id="client-selection-input" class="input-modern"
+                            placeholder="Busque por nome..." autocomplete="off" data-primary-focus="true">
+                    </div>
 
-            <div class="client-results-modern" id="client-selection-results" style="display:none;"></div>
+                    <button class="btn-square-add" id="btn-new-client-modal" title="Novo Cliente">
+                        <i class='bx bx-plus'></i>
+                    </button>
+                </div>
 
-            <p class="text-center text-light mt-20 text-sm" id="client-search-hint">
-                Digite para buscar...
-            </p>
+                <div class="client-results-modern" id="client-selection-results" style="display:none;"></div>
+
+                <p class="text-center text-light mt-20 text-sm" id="client-search-hint">
+                    Digite para buscar...
+                </p>
+            </div>
         </div>
     </div>
-</div>
 
     <div class="modal-overlay z-high" id="image-viewer-modal">
         <div class="modal-content modal-fullscreen">
@@ -477,6 +477,18 @@
                             </div>
                         </div>
 
+                        <div class="tax-transparency-card" id="open-tax-modal">
+                            <div class="tax-header">
+                                <span><i class='bx bx-line-chart'></i> Impostos Estimados 2026</span>
+                                <i class='bx bx-help-circle'></i>
+                            </div>
+                            <div class="tax-amount-main">
+                                <span class="currency">R$</span>
+                                <span id="tax-counter-val" class="counter">0,00</span>
+                            </div>
+                            <p class="tax-legal-hint">Simples Nacional: Alíquota Efetiva 4,00%</p>
+                        </div>
+
                         <div class="tooltip">
                             <button class="btn btn-primary" id="finish-sale-btn">
                                 <i class='bx bx-check-circle'></i> Finalizar Venda (F9)
@@ -602,16 +614,76 @@
         <div id="caixa-page" class="page-content" style="display: none;"></div>
 
         <div id="historico-page" class="page-content" style="display: none;">
-            <div class="card">
-                <div class="page-header">
-                    <h2>Histórico de Vendas (Dia)</h2>
+            <div class="card container-md">
+                <div class="page-header header-styled">
+                    <div>
+                        <h2><i class='bx bx-history'></i> Vendas de Hoje</h2>
+                        <p class="text-light mt-4 mb-0 text-sm">Resumo das movimentações do caixa atual.</p>
+                    </div>
                     <button class="btn btn-secondary btn-auto" id="btn-refresh-history">
                         <i class='bx bx-refresh'></i> Atualizar
                     </button>
                 </div>
 
-                <div id="sales-history-list" class="flex-col gap-12">
-                    <p class="text-center text-muted pad-20">Carregando...</p>
+                <div class="table-responsive">
+                    <table class="products-table" id="history-table">
+                        <thead>
+                            <tr>
+                                <th>Hora</th>
+                                <th>Cliente</th>
+                                <th>Pagamento</th>
+                                <th>Valor</th>
+                                <th class="text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sales-history-list">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="sale-details-modal">
+            <div class="modal-content modal-md">
+                <div class="modal-header">
+                    <h3>Detalhes da Venda</h3>
+                    <button class="close-modal-btn" data-target="sale-details-modal"><i class='bx bx-x'></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="receipt-preview-box">
+                        <div class="receipt-header">
+                            <h2 id="hist-det-valor">R$ 0,00</h2>
+                            <span class="badge-bg" id="hist-det-pagamento">Dinheiro</span>
+                        </div>
+
+                        <div class="receipt-info-grid">
+                            <div>
+                                <small>Cliente</small>
+                                <strong id="hist-det-cliente">...</strong>
+                            </div>
+                            <div>
+                                <small>Vendedor</small>
+                                <strong id="hist-det-vendedor">...</strong>
+                            </div>
+                            <div>
+                                <small>Hora</small>
+                                <strong id="hist-det-hora">--:--</strong>
+                            </div>
+                        </div>
+
+                        <hr class="dashed-line">
+
+                        <div class="receipt-items-list" id="hist-det-itens">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer flex-col">
+                    <button class="btn btn-primary" id="btn-reprint-history">
+                        <i class='bx bx-printer'></i> Reimprimir Comprovante
+                    </button>
+                    <button class="btn btn-secondary close-modal-btn" data-target="sale-details-modal">
+                        Fechar
+                    </button>
                 </div>
             </div>
         </div>
@@ -645,6 +717,39 @@
         </div>
 
     </div>
+
+    <div class="modal-overlay" id="tax-details-modal">
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h3>Transparência Tributária 2026</h3>
+                <button class="close-modal-btn" data-target="tax-details-modal"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="tax-breakdown-header">
+                    <p>Com base na Reforma Tributária, veja a composição do que será recolhido nesta venda:</p>
+                </div>
+
+                <table class="tax-table">
+                    <thead>
+                        <tr>
+                            <th>Tributo</th>
+                            <th>% Part.</th>
+                            <th>Valor (R$)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tax-breakdown-body">
+                    </tbody>
+                </table>
+
+                <div class="tax-footer-info">
+                    <p><i class='bx bx-info-circle'></i> <strong>Nota:</strong> Em 2026, as empresas do Simples Nacional
+                        estão em fase de transição. O valor acima é uma estimativa da repartição tributária dentro da
+                        guia DAS.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="edit-product-modal">
         <div class="modal-content modal-lg transition-all">
             <div class="modal-header">
@@ -820,46 +925,47 @@
     </div>
 
     <div class="modal-overlay" id="crediario-flow-modal">
-    <div class="modal-content modal-md">
-        <div class="modal-header">
-            <h3>Finalizar Crediário</h3>
-            <button class="close-modal-btn" data-target="crediario-flow-modal"><i class='bx bx-x'></i></button>
-        </div>
-        <div class="modal-body centered-flow">
-            
-            <div id="cred-step-1" class="qr-step-container">
-                <div class="modal-icon info" style="margin-bottom: 20px;">
-                    <i class='bx bx-printer font-40'></i>
-                </div>
-                <p class="step-instruction">1. Imprima o comprovante</p>
-                <p class="step-subtext">Cliente: <strong id="cred-flow-client-name" style="color:var(--text-dark)">...</strong></p>
-                
-                <button id="btn-force-print">
-                    <i class='bx bx-printer'></i> Imprimir Agora
-                </button>
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h3>Finalizar Crediário</h3>
+                <button class="close-modal-btn" data-target="crediario-flow-modal"><i class='bx bx-x'></i></button>
             </div>
+            <div class="modal-body centered-flow">
 
-            <div id="cred-step-2" class="qr-step-container" style="display:none;">
-                <p class="step-instruction">2. Anexar Comprovante</p>
-                <p class="step-subtext">Escaneie para enviar a foto assinada:</p>
+                <div id="cred-step-1" class="qr-step-container">
+                    <div class="modal-icon info" style="margin-bottom: 20px;">
+                        <i class='bx bx-printer font-40'></i>
+                    </div>
+                    <p class="step-instruction">1. Imprima o comprovante</p>
+                    <p class="step-subtext">Cliente: <strong id="cred-flow-client-name"
+                            style="color:var(--text-dark)">...</strong></p>
 
-                <div class="qr-code-box">
-                    <img id="cred-qrcode-img" src="" alt="Gerando QR Code...">
-                </div>
-                <p class="text-xs text-light mt-10" style="font-size: 0.75rem;">
-                    Link seguro: eletrobusiness.com.br/comprovante...
-                </p>
-                
-                <div class="mt-24">
-                    <button id="btn-finish-crediario-final" class="btn-success-flow">
-                        <i class='bx bx-check'></i> Concluir Processo
+                    <button id="btn-force-print">
+                        <i class='bx bx-printer'></i> Imprimir Agora
                     </button>
                 </div>
-            </div>
 
+                <div id="cred-step-2" class="qr-step-container" style="display:none;">
+                    <p class="step-instruction">2. Anexar Comprovante</p>
+                    <p class="step-subtext">Escaneie para enviar a foto assinada:</p>
+
+                    <div class="qr-code-box">
+                        <img id="cred-qrcode-img" src="" alt="Gerando QR Code...">
+                    </div>
+                    <p class="text-xs text-light mt-10" style="font-size: 0.75rem;">
+                        Link seguro: eletrobusiness.com.br/comprovante...
+                    </p>
+
+                    <div class="mt-24">
+                        <button id="btn-finish-crediario-final" class="btn-success-flow">
+                            <i class='bx bx-check'></i> Concluir Processo
+                        </button>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
-</div>
 
     <div class="modal-overlay" id="payment-modal">
         <div class="modal-content">
@@ -1226,99 +1332,114 @@
     </div>
 
     <div class="modal-overlay" id="close-caixa-modal">
-    <div class="modal-content modal-md">
-        <div class="modal-header">
-            <h3>Fechamento de Caixa</h3>
-            <button class="close-modal-btn" data-target="close-caixa-modal"><i class='bx bx-x'></i></button>
-        </div>
-        <div class="modal-body">
-            
-            <div class="step-progress-container">
-                <div class="step-progress-fill" id="close-caixa-progress" style="width: 25%;"></div>
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h3>Fechamento de Caixa</h3>
+                <button class="close-modal-btn" data-target="close-caixa-modal"><i class='bx bx-x'></i></button>
             </div>
+            <div class="modal-body">
 
-            <form id="close-caixa-form" class="multi-step-form">
-
-                <div id="close-caixa-step-1" class="form-step active">
-                    <div class="text-center mb-16">
-                        <div class="modal-icon info" style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 10px;"><i class='bx bx-money'></i></div>
-                        <h4>Contagem de Espécie</h4>
-                        <p class="text-sm">Conte o dinheiro físico na gaveta.</p>
-                    </div>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Total em Notas (R$)</label>
-                            <input type="number" id="close-caixa-notas" step="0.01" min="0" placeholder="0,00" required data-primary-focus="true" style="font-size: 1.2rem; font-weight: 700;">
-                        </div>
-                        <div class="form-group">
-                            <label>Total em Moedas (R$)</label>
-                            <input type="number" id="close-caixa-moedas" step="0.01" min="0" placeholder="0,00" required style="font-size: 1.2rem; font-weight: 700;">
-                        </div>
-                    </div>
+                <div class="step-progress-container">
+                    <div class="step-progress-fill" id="close-caixa-progress" style="width: 25%;"></div>
                 </div>
 
-                <div id="close-caixa-step-2" class="form-step">
-                    <div class="text-center mb-16">
-                        <div class="modal-icon info" style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 10px;"><i class='bx bx-credit-card'></i></div>
-                        <h4>Conferência Digital</h4>
-                        <p class="text-sm">Consulte o relatório da maquininha.</p>
-                    </div>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Vendas no Cartão (R$)</label>
-                            <input type="number" id="close-caixa-cartao" step="0.01" min="0" placeholder="0,00" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Pix QR Code (Se houver)</label>
-                            <input type="number" id="close-caixa-pix" step="0.01" min="0" placeholder="0,00">
-                        </div>
-                    </div>
-                </div>
+                <form id="close-caixa-form" class="multi-step-form">
 
-                <div id="close-caixa-step-3" class="form-step">
-                    <div class="text-center mb-16">
-                        <div class="modal-icon info" style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 10px;"><i class='bx bx-safe'></i></div>
-                        <h4>Destino do Dinheiro</h4>
-                        <p class="text-sm">Onde o dinheiro contado será guardado?</p>
-                    </div>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Vai para Sangria/Depósito</label>
-                            <input type="number" id="close-caixa-deposito" step="0.01" min="0" placeholder="0,00" required>
+                    <div id="close-caixa-step-1" class="form-step active">
+                        <div class="text-center mb-16">
+                            <div class="modal-icon info"
+                                style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 10px;"><i
+                                    class='bx bx-money'></i></div>
+                            <h4>Contagem de Espécie</h4>
+                            <p class="text-sm">Conte o dinheiro físico na gaveta.</p>
                         </div>
-                        <div class="form-group">
-                            <label>Fica no Caixa (Troco)</label>
-                            <input type="number" id="close-caixa-fica" step="0.01" min="0" placeholder="0,00" required>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Total em Notas (R$)</label>
+                                <input type="number" id="close-caixa-notas" step="0.01" min="0" placeholder="0,00"
+                                    required data-primary-focus="true" style="font-size: 1.2rem; font-weight: 700;">
+                            </div>
+                            <div class="form-group">
+                                <label>Total em Moedas (R$)</label>
+                                <input type="number" id="close-caixa-moedas" step="0.01" min="0" placeholder="0,00"
+                                    required style="font-size: 1.2rem; font-weight: 700;">
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div id="close-caixa-step-4" class="form-step">
-                    <div class="text-center mb-16">
-                        <div class="modal-icon danger" style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 10px;"><i class='bx bx-lock-alt'></i></div>
-                        <h4>Finalizar e Bloquear</h4>
-                        <p class="text-sm">Assine para confirmar o fechamento.</p>
+                    <div id="close-caixa-step-2" class="form-step">
+                        <div class="text-center mb-16">
+                            <div class="modal-icon info"
+                                style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 10px;"><i
+                                    class='bx bx-credit-card'></i></div>
+                            <h4>Conferência Digital</h4>
+                            <p class="text-sm">Consulte o relatório da maquininha.</p>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Vendas no Cartão (R$)</label>
+                                <input type="number" id="close-caixa-cartao" step="0.01" min="0" placeholder="0,00"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label>Pix QR Code (Se houver)</label>
+                                <input type="number" id="close-caixa-pix" step="0.01" min="0" placeholder="0,00">
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Responsável pelo Fechamento</label>
-                        <input type="text" id="close-caixa-assinatura" required placeholder="Digite seu nome..." style="text-align: center;">
+
+                    <div id="close-caixa-step-3" class="form-step">
+                        <div class="text-center mb-16">
+                            <div class="modal-icon info"
+                                style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 10px;"><i
+                                    class='bx bx-safe'></i></div>
+                            <h4>Destino do Dinheiro</h4>
+                            <p class="text-sm">Onde o dinheiro contado será guardado?</p>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Vai para Sangria/Depósito</label>
+                                <input type="number" id="close-caixa-deposito" step="0.01" min="0" placeholder="0,00"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label>Fica no Caixa (Troco)</label>
+                                <input type="number" id="close-caixa-fica" step="0.01" min="0" placeholder="0,00"
+                                    required>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </form>
-        </div>
-        <div class="modal-footer modal-footer-multi-step">
-            <button class="btn btn-secondary" id="close-caixa-prev-btn" style="display: none; width: auto;">
-                <i class='bx bx-chevron-left'></i> Voltar
-            </button>
-            <button class="btn btn-primary" id="close-caixa-next-btn" style="width: auto;">
-                Próximo <i class='bx bx-chevron-right'></i>
-            </button>
-            <button type="submit" form="close-caixa-form" class="btn btn-danger" id="close-caixa-save-btn" style="display: none; width: auto;">
-                <i class='bx bx-lock-alt'></i> Encerrar Dia
-            </button>
+
+                    <div id="close-caixa-step-4" class="form-step">
+                        <div class="text-center mb-16">
+                            <div class="modal-icon danger"
+                                style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 10px;"><i
+                                    class='bx bx-lock-alt'></i></div>
+                            <h4>Finalizar e Bloquear</h4>
+                            <p class="text-sm">Assine para confirmar o fechamento.</p>
+                        </div>
+                        <div class="form-group">
+                            <label>Responsável pelo Fechamento</label>
+                            <input type="text" id="close-caixa-assinatura" required placeholder="Digite seu nome..."
+                                style="text-align: center;">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer modal-footer-multi-step">
+                <button class="btn btn-secondary" id="close-caixa-prev-btn" style="display: none; width: auto;">
+                    <i class='bx bx-chevron-left'></i> Voltar
+                </button>
+                <button class="btn btn-primary" id="close-caixa-next-btn" style="width: auto;">
+                    Próximo <i class='bx bx-chevron-right'></i>
+                </button>
+                <button type="submit" form="close-caixa-form" class="btn btn-danger" id="close-caixa-save-btn"
+                    style="display: none; width: auto;">
+                    <i class='bx bx-lock-alt'></i> Encerrar Dia
+                </button>
+            </div>
         </div>
     </div>
-</div>
 
 
 

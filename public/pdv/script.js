@@ -22,6 +22,17 @@ const firebaseConfig = {
     appId: "1:810900166273:web:24b8f055a68c9f0a6b5f80"
 };
 
+// Configuração da Composição 2026 (Simples Nacional 1ª Faixa - 4%)
+const TAX_COMPOSITION_2026 = [
+    { label: 'CPP (Previdência)', perc: 1.66 }, // 41.5% de 4.0%
+    { label: 'ICMS (Estado)', perc: 1.36 },    // 34.0% de 4.0%
+    { label: 'COFINS (Federal)', perc: 0.51 }, // 12.74% de 4.0%
+    { label: 'IRPJ', perc: 0.22 },             // 5.5% de 4.0%
+    { label: 'CSLL', perc: 0.14 },             // 3.5% de 4.0%
+    { label: 'PIS/Pasep', perc: 0.11 }         // 2.76% de 4.0%
+];
+let currentTaxDisplay = 0; // Armazena o valor atual para a animação de contagem
+
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 } else {
@@ -334,6 +345,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const credFlowClientName = document.getElementById('cred-flow-client-name');
 
 
+    // Função para animar os números (Efeito de contagem)
+    const animateTaxValue = (start, end, duration) => {
+        const obj = document.getElementById('tax-counter-val');
+        if (!obj) return;
+
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const current = progress * (end - start) + start;
+            obj.innerHTML = current.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            if (progress < 1) window.requestAnimationFrame(step);
+        };
+        window.requestAnimationFrame(step);
+    };
+
+    // Função para processar a estimativa de impostos 2026
+    const updateTaxEstimate = (totalVenda) => {
+        const totalTax = totalVenda * 0.04; // Alíquota nominal de 4%
+
+        // Dispara a animação
+        animateTaxValue(currentTaxDisplay, totalTax, 400);
+        currentTaxDisplay = totalTax;
+
+        // Preenche o Modal de Detalhamento
+        const tbody = document.getElementById('tax-breakdown-body');
+        if (tbody) {
+            tbody.innerHTML = '';
+            TAX_COMPOSITION_2026.forEach(tax => {
+                const valorReal = (totalVenda * (tax.perc / 100));
+                tbody.innerHTML += `
+                <tr>
+                    <td>${tax.label}</td>
+                    <td>${tax.perc.toFixed(2)}%</td>
+                    <td style="font-weight: 600;">${formatCurrency(valorReal)}</td>
+                </tr>
+            `;
+            });
+        }
+    };
+
     // Handler para Opções de Pagamento
     // Localize onde você tem "paymentOptions.forEach..."
     paymentOptions.forEach(option => {
@@ -554,7 +606,7 @@ document.addEventListener('DOMContentLoaded', () => {
             discountInputR.disabled = false;
             discountInputR.placeholder = "0,00";
             document.querySelectorAll('.perc-btn').forEach(b => b.disabled = false);
-            
+
             emptyState.style.display = 'none';
             itemListTable.style.display = 'table';
             itemListContainer.classList.remove('empty');
@@ -572,12 +624,12 @@ document.addEventListener('DOMContentLoaded', () => {
         cart.forEach(item => {
             const tr = document.createElement('tr');
             tr.dataset.id = item.id;
-            
+
             // Animação visual de item novo (opcional, mantido para UX)
-            if (item.isNew) { 
-                tr.classList.add('new-item-flash'); 
-                delete item.isNew; 
-                setTimeout(() => tr.classList.remove('new-item-flash'), 500); 
+            if (item.isNew) {
+                tr.classList.add('new-item-flash');
+                delete item.isNew;
+                setTimeout(() => tr.classList.remove('new-item-flash'), 500);
             }
 
             // HTML do Input de Desconto (Padronizado para todos os itens)
@@ -626,6 +678,14 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSummary();
     };
 
+    // Abre o modal de transparência tributária ao clicar no card
+    const taxCard = document.getElementById('open-tax-modal');
+    if (taxCard) {
+        taxCard.addEventListener('click', () => {
+            const modal = document.getElementById('tax-details-modal');
+            if (modal) openModal(modal);
+        });
+    }
 
     const updateSummary = () => {
         // 1. Subtotal Bruto (Soma dos preços cheios originais)
@@ -640,6 +700,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 4. Total Final a Pagar
         const finalTotal = subtotalGross - totalDiscount;
+        updateTaxEstimate(finalTotal);
 
         // Atualiza Interface
         const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
@@ -693,6 +754,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- VARIÁVEIS GLOBAIS NOVAS ---
     let currentProductFilter = 'all'; // all, fiscal_ok, fiscal_pending
     let editingProductId = null;      // ID do produto sendo editado
+    let currentProductPage = 1;       // <--- ADICIONE ISSO (Página Atual)
+    const ITEMS_PER_PAGE = 50;        // <--- ADICIONE ISSO (Itens por página)
 
     // =======================================================
     // LÓGICA DE PRODUTOS (PESQUISA, FILTROS E EDIÇÃO)
@@ -716,7 +779,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('count-pending').textContent = pending;
     };
 
-    // 1. Função Renderizar (SUBSTITUA a renderProdutosPage antiga)
+    // 1. Função Renderizar (COM PAGINAÇÃO)
+    // 1. Função Renderizar (COM PAGINAÇÃO)
     const renderProdutosPage = () => {
         const container = document.getElementById('produtos-table-container');
         const searchInput = document.getElementById('products-search-input');
@@ -724,7 +788,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Atualiza contadores
         if (typeof updateProductCounters === 'function') updateProductCounters();
 
-        // Verificação de segurança se o cache está vazio
+        // Verificação de segurança
         if (!localProductCache || localProductCache.length === 0) {
             container.innerHTML = '<div class="empty-state"><i class="bx bx-package"></i><p>Nenhum produto cadastrado.</p></div>';
             return;
@@ -732,8 +796,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const term = searchInput ? searchInput.value.toLowerCase().trim() : "";
 
+        // 1. Filtragem
         const produtosFiltrados = localProductCache.filter(p => {
-            // Segurança: Garante que tudo é string antes de buscar
             const safeName = (p.name || "").toString().toLowerCase();
             const safeBrand = (p.brand || "").toString().toLowerCase();
             const safeId = (p.id || "").toString().toLowerCase();
@@ -747,12 +811,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!matchesSearch) return false;
 
-            // --- LÓGICA DE STATUS FISCAL (CORREÇÃO DA FALHA) ---
-            // Converte para String() explicitamente antes de checar .length
-            // Isso resolve o problema de números vindos da planilha
             const hasNcm = p.ncm && String(p.ncm).trim().length >= 2;
             const hasCfop = p.cfop && String(p.cfop).trim().length >= 3;
-
             const isFiscalOk = (hasNcm && hasCfop);
 
             if (currentProductFilter === 'fiscal_ok' && !isFiscalOk) return false;
@@ -761,45 +821,54 @@ document.addEventListener('DOMContentLoaded', () => {
             return true;
         });
 
-        // Se a busca não retornou nada
         if (produtosFiltrados.length === 0) {
             container.innerHTML = `
-        <div class="empty-state" style="padding: 40px; text-align: center; color: var(--text-light);">
-            <i class='bx bx-search-alt' style="font-size: 3rem; margin-bottom: 10px;"></i>
-            <p>Nada encontrado para "${term}".</p>
-        </div>`;
+            <div class="empty-state" style="padding: 40px; text-align: center; color: var(--text-light);">
+                <i class='bx bx-search-alt' style="font-size: 3rem; margin-bottom: 10px;"></i>
+                <p>Nada encontrado para "${term}".</p>
+            </div>`;
             return;
         }
+
+        // 2. Lógica de Paginação
+        const totalItems = produtosFiltrados.length;
+        const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+        // Garante que a página atual é válida
+        if (currentProductPage > totalPages) currentProductPage = totalPages;
+        if (currentProductPage < 1) currentProductPage = 1;
+
+        const startIndex = (currentProductPage - 1) * ITEMS_PER_PAGE;
+        const endIndex = startIndex + ITEMS_PER_PAGE;
+        const produtosDaPagina = produtosFiltrados.slice(startIndex, endIndex);
 
         // --- TABELA ---
         const table = document.createElement('table');
         table.className = 'products-table';
 
         table.innerHTML = `
-    <thead>
-        <tr>
-            <th width="45%">Produto / Marca</th>
-            <th width="15%">Preço</th>
-            <th width="25%">Situação Fiscal</th>
-            <th width="10%" class="text-center">Ações</th>
-        </tr>
-    </thead>
-    <tbody></tbody>
-    `;
+        <thead>
+            <tr>
+                <th width="45%">Produto / Marca</th>
+                <th width="15%">Preço</th>
+                <th width="25%">Situação Fiscal</th>
+                <th width="10%" class="text-center">Ações</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+        `;
 
         const tbody = table.querySelector('tbody');
 
-        // Renderiza os produtos (limite de 50 para performance)
-        produtosFiltrados.slice(0, 50).forEach(prod => {
+        // Renderiza os produtos da página atual
+        produtosDaPagina.forEach(prod => {
             const tr = document.createElement('tr');
 
-            // Lógica de Status Fiscal
             const isFiscalOk = (prod.ncm && prod.cfop);
             const statusHtml = isFiscalOk
                 ? `<span class="fiscal-status ok" title="NCM: ${prod.ncm}"><i class='bx bx-check'></i> OK</span>`
                 : `<span class="fiscal-status pending"><i class='bx bx-error'></i> Pendente</span>`;
 
-            // Imagem ou Placeholder
             const imgHtml = prod.imgUrl && prod.imgUrl.length > 10
                 ? `<img src="${prod.imgUrl}" class="product-thumb-sm" alt="Foto">`
                 : `<div class="product-thumb-placeholder"><i class='bx bx-box'></i></div>`;
@@ -807,46 +876,92 @@ document.addEventListener('DOMContentLoaded', () => {
             const brandHtml = prod.brand ? `<span class="brand-tag">${prod.brand}</span>` : '';
 
             tr.innerHTML = `
-        <td>
-            <div class="product-cell-wrapper">
-                ${imgHtml}
-                <div style="display:flex; flex-direction:column;">
-                    <strong style="color:var(--text-dark); font-size: 0.95rem;">${prod.name}</strong>
-                    <div style="display:flex; gap:8px; align-items:center;">
-                        <span style="font-size:0.75rem; color:var(--text-light);">#${prod.id}</span>
-                        ${brandHtml}
+            <td>
+                <div class="product-cell-wrapper">
+                    ${imgHtml}
+                    <div style="display:flex; flex-direction:column;">
+                        <strong style="color:var(--text-dark); font-size: 0.95rem;">${prod.name}</strong>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <span style="font-size:0.75rem; color:var(--text-light);">#${prod.id}</span>
+                            ${brandHtml}
+                        </div>
                     </div>
                 </div>
-            </div>
-        </td>
-        <td>
-            <div style="font-weight:600; color:var(--text-dark);">${formatCurrency(prod.price)}</div>
-            ${prod.costPrice > 0 ? `<small style="color:var(--text-light); font-size:0.7rem;">Custo: ${formatCurrency(prod.costPrice)}</small>` : ''}
-        </td>
-        <td>
-            ${statusHtml}
-            <div style="font-size:0.7rem; color:var(--text-light); margin-top:2px;">
-                ${prod.ncm ? 'NCM: ' + prod.ncm : 'Sem NCM'}
-            </div>
-        </td>
-        <td class="text-center">
-            <button class="btn btn-sm btn-secondary" onclick="openProductEdit('${prod.id}')" title="Editar">
-                <i class='bx bx-edit-alt'></i>
-            </button>
-        </td>
-        `;
+            </td>
+            <td>
+                <div style="font-weight:600; color:var(--text-dark);">${formatCurrency(prod.price)}</div>
+                ${prod.costPrice > 0 ? `<small style="color:var(--text-light); font-size:0.7rem;">Custo: ${formatCurrency(prod.costPrice)}</small>` : ''}
+            </td>
+            <td>
+                ${statusHtml}
+                <div style="font-size:0.7rem; color:var(--text-light); margin-top:2px;">
+                    ${prod.ncm ? 'NCM: ' + prod.ncm : 'Sem NCM'}
+                </div>
+            </td>
+            <td class="text-center">
+                <button class="btn btn-sm btn-secondary" onclick="openProductEdit('${prod.id}')" title="Editar">
+                    <i class='bx bx-edit-alt'></i>
+                </button>
+            </td>
+            `;
             tbody.appendChild(tr);
         });
 
-        if (produtosFiltrados.length > 50) {
-            const warningRow = document.createElement('tr');
-            warningRow.innerHTML = `<td colspan="4" class="text-center text-light p-3"><small>Exibindo 50 de ${produtosFiltrados.length} resultados. Use a busca para ver mais.</small></td>`;
-            tbody.appendChild(warningRow);
+        // 3. Rodapé com Paginação
+        if (totalPages > 1) {
+            const paginationRow = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 4;
+            td.style.padding = "15px";
+            td.style.backgroundColor = "#f9fafb";
+            td.style.borderTop = "1px solid #e5e7eb";
+
+            // Controles
+            const controlsDiv = document.createElement('div');
+            controlsDiv.style.display = "flex";
+            controlsDiv.style.justifyContent = "space-between";
+            controlsDiv.style.alignItems = "center";
+
+            // Botão Anterior
+            const btnPrev = document.createElement('button');
+            btnPrev.className = "btn btn-sm btn-secondary";
+            btnPrev.innerHTML = "<i class='bx bx-chevron-left'></i> Anterior";
+            btnPrev.disabled = currentProductPage === 1;
+            btnPrev.onclick = () => {
+                currentProductPage--;
+                renderProdutosPage();
+                // Rola suavemente para o topo da tabela
+                container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            };
+
+            // Texto Informativo
+            const infoText = document.createElement('span');
+            infoText.style.color = "var(--text-light)";
+            infoText.style.fontSize = "0.9rem";
+            infoText.innerHTML = `Página <strong>${currentProductPage}</strong> de <strong>${totalPages}</strong> (${totalItems} itens)`;
+
+            // Botão Próximo
+            const btnNext = document.createElement('button');
+            btnNext.className = "btn btn-sm btn-secondary";
+            btnNext.innerHTML = "Próximo <i class='bx bx-chevron-right'></i>";
+            btnNext.disabled = currentProductPage === totalPages;
+            btnNext.onclick = () => {
+                currentProductPage++;
+                renderProdutosPage();
+                container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            };
+
+            controlsDiv.appendChild(btnPrev);
+            controlsDiv.appendChild(infoText);
+            controlsDiv.appendChild(btnNext);
+
+            td.appendChild(controlsDiv);
+            paginationRow.appendChild(td);
+            tbody.appendChild(paginationRow);
         }
 
-        // === A CORREÇÃO PRINCIPAL ESTÁ AQUI ===
-        container.innerHTML = ''; // Limpa o "Carregando..." ou "Empty State" antigo
-        container.appendChild(table); // Adiciona a tabela nova
+        container.innerHTML = '';
+        container.appendChild(table);
     };
 
     // --- FUNÇÃO RENDERIZAR CLIENTES (VERSÃO EMBLEMAS + CORREÇÃO DATA) ---
@@ -1291,7 +1406,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Pesquisa
     const prodSearchInput = document.getElementById('products-search-input');
     if (prodSearchInput) {
-        prodSearchInput.addEventListener('input', () => renderProdutosPage());
+        prodSearchInput.addEventListener('input', () => {
+            currentProductPage = 1; // <--- ADICIONE ESTA LINHA
+            renderProdutosPage();
+        });
     }
 
     // 2. Filtros
@@ -1443,51 +1561,183 @@ document.addEventListener('DOMContentLoaded', () => {
         return itens.map(item => `${item.quantity || 1}x ${item.name || item.nome || "Item"}`).join(", ");
     }
 
-    // --- Lógica da Página de Histórico ---
+    // --- Lógica da Página de Histórico (Atualizada) ---
+    let historyCache = []; // Cache local para os detalhes
+    let selectedHistorySale = null; // Venda selecionada para reimpressão
+
     const carregarHistorico = async () => {
-        salesHistoryList.innerHTML = '<p style="text-align: center; padding: 20px;"><i class="bx bx-loader-alt bx-spin"></i> Atualizando...</p>';
+        const tbody = document.getElementById('sales-history-list');
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center pad-20"><i class="bx bx-loader-alt bx-spin"></i> Carregando vendas de hoje...</td></tr>';
 
         try {
             const response = await fetch(`${SCRIPT_URL}?action=listarHistoricoVendas`);
             const result = await response.json();
 
             if (result.status === 'success' && result.data.length > 0) {
-                salesHistoryList.innerHTML = ''; // Limpa
+                historyCache = result.data; // Salva no cache
+                tbody.innerHTML = ''; // Limpa
 
-                result.data.forEach(venda => {
-                    // Cria o cartão da venda
-                    const card = document.createElement('div');
-                    card.style.border = '1px solid var(--border-color)';
-                    card.style.borderRadius = '12px';
-                    card.style.padding = '16px';
-                    card.style.backgroundColor = '#fff';
+                result.data.forEach((venda, index) => {
+                    const tr = document.createElement('tr');
 
-                    card.innerHTML = `
-                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                                <strong style="font-size:1rem;">${venda.cliente}</strong>
-                                <span style="color:var(--success-green); font-weight:bold;">${formatCurrency(venda.valor)}</span>
-                            </div>
-                            <div style="font-size:0.85rem; color:#666; margin-bottom:8px;">
-                                <i class='bx bx-user'></i> Vend: ${venda.vendedor} &bull; 
-                                <i class='bx bx-credit-card'></i> ${venda.pagamento} &bull; 
-                                <i class='bx bx-time'></i> ${venda.data}
-                            </div>
-                            <div style="font-size:0.8rem; background:#f9f9f9; padding:8px; border-radius:6px; color:#444;">
-                                ${venda.produtos}
-                            </div>
-                        `;
-                    salesHistoryList.appendChild(card);
+                    // Ícone de pagamento
+                    let iconPay = "<i class='bx bx-money'></i>";
+                    if (venda.pagamento.toLowerCase().includes('pix')) iconPay = "<i class='bx bx-scan'></i>";
+                    if (venda.pagamento.toLowerCase().includes('cartão')) iconPay = "<i class='bx bx-credit-card'></i>";
+                    if (venda.pagamento.toLowerCase().includes('crediário')) iconPay = "<i class='bx bx-user-check'></i>";
+
+                    tr.innerHTML = `
+                        <td style="color:var(--text-light); font-size:0.9rem;">${venda.data}</td>
+                        <td><strong>${venda.cliente}</strong><br><small style="color:var(--text-light); font-size:0.75rem;">Vend: ${venda.vendedor}</small></td>
+                        <td><span class="badge-neutral">${iconPay} ${venda.pagamento}</span></td>
+                        <td style="color:var(--success-green); font-weight:700;">${formatCurrency(venda.valor)}</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-secondary btn-view-sale" data-index="${index}" title="Ver Detalhes">
+                                <i class='bx bx-show-alt'></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
                 });
+
+                // Adiciona listeners aos botões
+                document.querySelectorAll('.btn-view-sale').forEach(btn => {
+                    btn.addEventListener('click', () => openHistoryDetails(btn.dataset.index));
+                });
+
             } else {
-                salesHistoryList.innerHTML = '<p style="text-align: center; color: #777; padding: 20px;">Nenhuma venda registrada hoje.</p>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center pad-20 text-muted">Nenhuma venda registrada hoje.</td></tr>';
             }
         } catch (e) {
-            salesHistoryList.innerHTML = '<p style="text-align: center; color: var(--warning-red);">Erro ao carregar histórico.</p>';
+            console.error(e);
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center pad-20 text-danger">Erro ao carregar histórico.</td></tr>';
         }
     };
 
     // Botão de Atualizar e Clique na Aba
     btnRefreshHistory.addEventListener('click', carregarHistorico);
+
+
+    // --- Funções de Detalhes e Reimpressão ---
+
+    // 1. Abrir Modal de Detalhes
+    window.openHistoryDetails = (index) => {
+        const venda = historyCache[index];
+        if (!venda) return;
+
+        selectedHistorySale = venda; // Salva para uso na impressão
+
+        // Preenche Modal
+        document.getElementById('hist-det-valor').textContent = formatCurrency(venda.valor);
+        document.getElementById('hist-det-pagamento').textContent = venda.pagamento;
+        document.getElementById('hist-det-cliente').textContent = venda.cliente;
+        document.getElementById('hist-det-vendedor').textContent = venda.vendedor;
+        document.getElementById('hist-det-hora').textContent = venda.data;
+
+        // Lista de Itens (Parse da string "1x Item A, 2x Item B")
+        const itensContainer = document.getElementById('hist-det-itens');
+        itensContainer.innerHTML = '';
+
+        if (venda.produtos) {
+            const itensLista = venda.produtos.split(', '); // Divide pela vírgula
+            itensLista.forEach(itemStr => {
+                const div = document.createElement('div');
+                div.className = 'receipt-item-row';
+                // Tenta separar quantidade do nome (Ex: "2x Coca Cola")
+                const partes = itemStr.match(/(\d+)x\s(.+)/);
+
+                if (partes) {
+                    div.innerHTML = `<span>${partes[2]}</span> <strong>x${partes[1]}</strong>`;
+                } else {
+                    div.innerHTML = `<span>${itemStr}</span>`;
+                }
+                itensContainer.appendChild(div);
+            });
+        }
+
+        openModal(document.getElementById('sale-details-modal'));
+    };
+
+    // 2. Botão "Reimprimir" no Modal de Detalhes
+    document.getElementById('btn-reprint-history').addEventListener('click', () => {
+        // Fecha o modal de detalhes
+        closeModal(document.getElementById('sale-details-modal'));
+
+        // Abre o modal de escolha de formato (o mesmo do checkout)
+        // O sistema vai saber que é reimpressão porque 'selectedHistorySale' não é nulo
+        openModal(document.getElementById('print-selection-modal'));
+    });
+
+    // 3. ATUALIZAÇÃO CRÍTICA: Modificar a lógica de impressão para aceitar dados históricos
+
+    document.getElementById('btn-print-a4').onclick = () => {
+        closeModal(document.getElementById('print-selection-modal'));
+        if (selectedHistorySale) {
+            printHistoryReceipt(selectedHistorySale, 'a4');
+            selectedHistorySale = null; // Reseta após usar
+        } else {
+            processFinalSale('a4'); // Fluxo normal de venda nova
+        }
+    };
+
+    // 4. Função Mestra de Reimpressão (Adapta os dados do histórico para o layout de impressão)
+    function printHistoryReceipt(venda, format) {
+        // Reconstrói o array de itens a partir da string
+        const itensSimulados = [];
+        if (venda.produtos) {
+            const lista = venda.produtos.split(', ');
+            lista.forEach(str => {
+                const partes = str.match(/(\d+)x\s(.+)/);
+                if (partes) {
+                    itensSimulados.push({
+                        name: partes[2],
+                        quantity: parseInt(partes[1]),
+                        price: 0, // Histórico simples não salva preço unitário, infelizmente
+                        originalPrice: 0
+                    });
+                } else {
+                    itensSimulados.push({ name: str, quantity: 1, price: 0, originalPrice: 0 });
+                }
+            });
+        }
+
+        // Mock dos dados financeiros (Já que não temos subtotal/desconto separados no histórico simples)
+        const financeiroSimulado = {
+            subtotal: parseFloat(venda.valor),
+            desconto: 0,
+            total: parseFloat(venda.valor),
+            pagamento: venda.pagamento
+        };
+
+        // Usa as funções de impressão existentes, mas precisamos "enganá-las" ou adaptá-las
+        // A melhor forma sem reescrever tudo é criar uma versão específica para histórico ou 
+        // temporariamente substituir as variáveis globais (cart e lastSaleData). 
+        // Vamos usar a técnica de substituir variáveis globais temporariamente, é mais rápido e reutiliza o layout.
+
+        // 1. Backup do estado atual
+        const backupCart = [...cart];
+        const backupSaleData = lastSaleData ? { ...lastSaleData } : null;
+        const backupPayment = selectedPaymentMethod;
+
+        // 2. Sobrescreve com dados do histórico
+        cart = itensSimulados;
+        lastSaleData = financeiroSimulado;
+        selectedPaymentMethod = venda.pagamento;
+
+        // 3. Chama a função de impressão correspondente
+        if (format === 'a4') {
+            printA4(venda.cliente); // Passa nome do cliente
+        } else {
+            printThermal(venda.cliente);
+        }
+
+        // 4. Restaura o estado original (Delay para garantir que a função de impressão leu os dados)
+        setTimeout(() => {
+            cart = backupCart;
+            lastSaleData = backupSaleData;
+            selectedPaymentMethod = backupPayment;
+        }, 1000);
+    }
 
     // --- Funções de Lógica do Carrinho ---
 
@@ -1613,7 +1863,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.updateCartItem = (id, field, value) => {
         // Converte para String para garantir que encontre o ID certo (Texto ou Número)
         const item = cart.find(i => String(i.id) === String(id));
-        
+
         if (!item) return;
 
         if (field === 'discountPercent') {
@@ -1811,15 +2061,22 @@ document.addEventListener('DOMContentLoaded', () => {
         openModal(document.getElementById('print-selection-modal'));
     };
 
-    // 2. Listeners das Opções
+    // ============================================================
+    // CORREÇÃO DA LÓGICA DE IMPRESSÃO (HISTÓRICO VS NOVA VENDA)
+    // ============================================================
+
     document.getElementById('btn-print-thermal').onclick = () => {
         closeModal(document.getElementById('print-selection-modal'));
-        printThermal(tempClientNameForSignature);
-    };
 
-    document.getElementById('btn-print-a4').onclick = () => {
-        closeModal(document.getElementById('print-selection-modal'));
-        printA4(tempClientNameForSignature);
+        // Verifica se estamos vindo do HISTÓRICO
+        if (selectedHistorySale) {
+            console.log("Imprimindo do Histórico:", selectedHistorySale); // Debug
+            printHistoryReceipt(selectedHistorySale, 'thermal');
+            selectedHistorySale = null;
+        } else {
+            // Se não for histórico, aí sim é venda nova
+            processFinalSale('thermal');
+        }
     };
 
     // --- Layout 1: Cupom Térmico ---
@@ -1855,142 +2112,133 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- FUNÇÃO DE IMPRESSÃO A4 (CORRIGIDA E BLINDADA) ---
     // --- FUNÇÃO DE IMPRESSÃO A4 (CORRIGIDA) ---
     function printA4(nomeClienteParams = null) {
-    console.log("Gerando A4...");
+        console.log("Gerando A4...");
 
-    // 1. RECALCULAR TOTAIS BASEADO NO CARRINHO (Mais seguro que ler o HTML)
-    // Se o carrinho estiver vazio (venda já finalizada e limpa), tentamos usar o lastSaleData
-    let itensParaImprimir = cart;
-    let dadosFinanceiros = null;
+        let itensParaImprimir = cart;
+        let dadosFinanceiros = null;
 
-    if (cart.length > 0) {
-        // Calcula na hora
-        const subtotalBruto = cart.reduce((acc, item) => acc + (item.originalPrice * item.quantity), 0);
-        const totalLiquido = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-        
-        // Se houver desconto global aplicado
-        let descontoGlobal = (typeof discount !== 'undefined') ? discount : 0;
-        
-        // O desconto total é a soma dos descontos por item + desconto global
-        const descontoItens = subtotalBruto - totalLiquido;
-        const totalDesconto = descontoItens + descontoGlobal;
-        const totalFinal = subtotalBruto - totalDesconto;
+        // --- CORREÇÃO PRINCIPAL ---
+        // Verifica se os itens no carrinho são "fakes" do histórico (preço zerado)
+        // Se todos forem zero, significa que é uma reimpressão e NÃO devemos recalcular.
+        const isHistoricoSimulado = cart.length > 0 && cart.every(i => i.price === 0);
 
-        dadosFinanceiros = {
-            subtotal: subtotalBruto,
-            desconto: totalDesconto,
-            total: totalFinal,
-            pagamento: selectedPaymentMethod || "Dinheiro" // Pega a variável global correta
-        };
-    } else if (lastSaleData) {
-        // Fallback se o carrinho já foi limpo mas temos o backup da última venda
-        dadosFinanceiros = {
-            subtotal: lastSaleData.subtotal,
-            desconto: lastSaleData.discount,
-            total: lastSaleData.total,
-            pagamento: lastSaleData.paymentMethod || "Dinheiro"
-        };
-        // Nota: se o carrinho estiver vazio, a tabela de itens ficará vazia. 
-        // O ideal é imprimir ANTES de limpar o carrinho (clearCart).
-    } else {
-        showCustomAlert("Erro", "Nenhum dado de venda para imprimir.");
-        return;
-    }
+        if (cart.length > 0 && !isHistoricoSimulado) {
+            // CENÁRIO 1: VENDA NOVA (Calcula tudo na hora para precisão exata)
+            const subtotalBruto = cart.reduce((acc, item) => acc + (item.originalPrice * item.quantity), 0);
+            const totalLiquido = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
-    // 2. DADOS DO CLIENTE
-    let clienteNome = "CONSUMIDOR FINAL";
-    let clienteEnd = "Endereço não informado";
-    
-    // Prioridade: 1. Parâmetro passado, 2. Cliente Crediário Selecionado, 3. Texto da tela
-    if (nomeClienteParams) {
-        clienteNome = nomeClienteParams;
-    } else if (selectedCrediarioClient) {
-        clienteNome = selectedCrediarioClient.nomeExibicao;
-        clienteEnd = selectedCrediarioClient.endereco || clienteEnd;
-    } else {
-        const nomeTela = document.getElementById('summary-client-name-text').textContent;
-        if (nomeTela && nomeTela !== "Nome do Cliente") clienteNome = nomeTela;
-    }
+            let descontoGlobal = (typeof discount !== 'undefined') ? discount : 0;
 
-    // --- PREENCHIMENTO DO DOM DE IMPRESSÃO ---
+            const descontoItens = subtotalBruto - totalLiquido;
+            const totalDesconto = descontoItens + descontoGlobal;
+            const totalFinal = subtotalBruto - totalDesconto;
 
-    // Cabeçalho
-    const now = new Date();
-    document.getElementById('print-sale-id').textContent = "V-" + now.getTime().toString().slice(-6);
-    document.getElementById('print-sale-date').textContent = now.toLocaleDateString('pt-BR') + " " + now.toLocaleTimeString('pt-BR');
-    
-    // Cliente
-    document.getElementById('print-client-name').textContent = clienteNome.toUpperCase();
-    document.getElementById('print-client-address').textContent = clienteEnd;
+            dadosFinanceiros = {
+                subtotal: subtotalBruto,
+                desconto: totalDesconto,
+                total: totalFinal,
+                pagamento: selectedPaymentMethod || "Dinheiro"
+            };
+        } else if (lastSaleData) {
+            // CENÁRIO 2: HISTÓRICO (Usa os dados fechados que vieram do backend)
+            dadosFinanceiros = {
+                subtotal: lastSaleData.subtotal,
+                desconto: lastSaleData.discount || 0,
+                total: lastSaleData.total,
+                pagamento: lastSaleData.paymentMethod || lastSaleData.pagamento || "Dinheiro"
+            };
+        } else {
+            showCustomAlert("Erro", "Nenhum dado de venda para imprimir.");
+            return;
+        }
 
-    // Tabela de Itens
-    const tbody = document.getElementById('print-items-body');
-    tbody.innerHTML = '';
-    
-    // Usa a variável global 'cart' se tiver itens, senão tenta recuperar de algum lugar ou avisa
-    if (itensParaImprimir.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center">Itens já processados. Reimpressão de itens indisponível.</td></tr>';
-    } else {
-        itensParaImprimir.forEach(item => {
-            const totalItem = item.price * item.quantity; // Preço unitário (já com desconto) * qtd
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
+        // 2. DADOS DO CLIENTE
+        let clienteNome = "CONSUMIDOR FINAL";
+        let clienteEnd = "Endereço não informado";
+
+        if (nomeClienteParams) {
+            clienteNome = nomeClienteParams;
+        } else if (selectedCrediarioClient) {
+            clienteNome = selectedCrediarioClient.nomeExibicao;
+            clienteEnd = selectedCrediarioClient.endereco || clienteEnd;
+        } else {
+            const nomeTela = document.getElementById('summary-client-name-text').textContent;
+            if (nomeTela && nomeTela !== "Nome do Cliente") clienteNome = nomeTela;
+        }
+
+        // --- PREENCHIMENTO DO DOM DE IMPRESSÃO ---
+
+        const now = new Date();
+        document.getElementById('print-sale-id').textContent = "V-" + now.getTime().toString().slice(-6);
+        document.getElementById('print-sale-date').textContent = now.toLocaleDateString('pt-BR') + " " + now.toLocaleTimeString('pt-BR');
+
+        document.getElementById('print-client-name').textContent = clienteNome.toUpperCase();
+        document.getElementById('print-client-address').textContent = clienteEnd;
+
+        // Tabela de Itens
+        const tbody = document.getElementById('print-items-body');
+        tbody.innerHTML = '';
+
+        if (itensParaImprimir.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center">Detalhes indisponíveis.</td></tr>';
+        } else {
+            itensParaImprimir.forEach(item => {
+                // CORREÇÃO VISUAL: Se for histórico (preço 0), mostra traço "-" em vez de "R$ 0,00"
+                const showPrice = item.price > 0 || !isHistoricoSimulado;
+                const textoUnit = showPrice ? formatCurrency(item.price) : "-";
+                const textoTotal = showPrice ? formatCurrency(item.price * item.quantity) : "-";
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
                 <td>${(item.id || "000").toString().slice(-4)}</td>
                 <td>${item.name}</td>
                 <td class="text-center">${item.quantity}</td>
-                <td class="text-right">${formatCurrency(item.price)}</td>
-                <td class="text-right"><strong>${formatCurrency(totalItem)}</strong></td>
+                <td class="text-right">${textoUnit}</td>
+                <td class="text-right"><strong>${textoTotal}</strong></td>
             `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    // Totais (Correção dos Zeros e Formatação)
-    document.getElementById('print-subtotal').textContent = formatCurrency(dadosFinanceiros.subtotal);
-    
-    // Formatação do Desconto: Se for 0, mostra R$ 0,00. Se for maior, mostra - R$ X,XX
-    const valDesconto = dadosFinanceiros.desconto;
-    if (valDesconto > 0.01) {
-        document.getElementById('print-discount').textContent = "- " + formatCurrency(valDesconto);
-    } else {
-        document.getElementById('print-discount').textContent = formatCurrency(0);
-    }
-    
-    document.getElementById('print-total').textContent = formatCurrency(dadosFinanceiros.total);
-    document.getElementById('print-obs-text').textContent = dadosFinanceiros.pagamento;
-
-    // 3. PARCELAS (Lógica corrigida)
-    const areaParcelas = document.getElementById('print-installments-area');
-    const listaParcelas = document.getElementById('print-installments-list');
-    listaParcelas.innerHTML = '';
-
-    // Verifica se é crediário (case insensitive)
-    if (String(dadosFinanceiros.pagamento).toLowerCase().includes('crediário') || selectedPaymentMethod === 'Crediário') {
-        areaParcelas.style.display = 'block';
-        
-        // Tenta pegar o número de parcelas da variável temporária ou deduzir
-        let numParcelas = window.tempInstallments || 1; 
-        
-        // Cálculo das datas
-        const hoje = new Date();
-        const diaVencimento = (selectedCrediarioClient && selectedCrediarioClient.diaVencimento) ? parseInt(selectedCrediarioClient.diaVencimento) : 10;
-        const valorParcela = dadosFinanceiros.total / numParcelas;
-
-        for (let i = 1; i <= numParcelas; i++) {
-            // Lógica simples de vencimento: Próximo mês no dia X
-            let dataParcela = new Date(hoje.getFullYear(), hoje.getMonth() + i, diaVencimento);
-            
-            const div = document.createElement('div');
-            div.className = 'inst-badge';
-            div.innerHTML = `<b>${i}/${numParcelas}</b> ${dataParcela.toLocaleDateString('pt-BR')}<br>${formatCurrency(valorParcela)}`;
-            listaParcelas.appendChild(div);
+                tbody.appendChild(tr);
+            });
         }
-    } else {
-        areaParcelas.style.display = 'none';
-    }
 
-    // Imprimir
-    setTimeout(() => window.print(), 300);
-}
+        // Totais (Agora usa o objeto correto 'dadosFinanceiros')
+        document.getElementById('print-subtotal').textContent = formatCurrency(dadosFinanceiros.subtotal);
+
+        const valDesconto = dadosFinanceiros.desconto;
+        if (valDesconto > 0.01) {
+            document.getElementById('print-discount').textContent = "- " + formatCurrency(valDesconto);
+        } else {
+            document.getElementById('print-discount').textContent = formatCurrency(0);
+        }
+
+        document.getElementById('print-total').textContent = formatCurrency(dadosFinanceiros.total);
+        document.getElementById('print-obs-text').textContent = dadosFinanceiros.pagamento;
+
+        // 3. PARCELAS
+        const areaParcelas = document.getElementById('print-installments-area');
+        const listaParcelas = document.getElementById('print-installments-list');
+        listaParcelas.innerHTML = '';
+
+        if (String(dadosFinanceiros.pagamento).toLowerCase().includes('crediário') || selectedPaymentMethod === 'Crediário') {
+            areaParcelas.style.display = 'block';
+            let numParcelas = window.tempInstallments || 1;
+
+            const hoje = new Date();
+            const diaVencimento = (selectedCrediarioClient && selectedCrediarioClient.diaVencimento) ? parseInt(selectedCrediarioClient.diaVencimento) : 10;
+            const valorParcela = dadosFinanceiros.total / numParcelas;
+
+            for (let i = 1; i <= numParcelas; i++) {
+                let dataParcela = new Date(hoje.getFullYear(), hoje.getMonth() + i, diaVencimento);
+                const div = document.createElement('div');
+                div.className = 'inst-badge';
+                div.innerHTML = `<b>${i}/${numParcelas}</b> ${dataParcela.toLocaleDateString('pt-BR')}<br>${formatCurrency(valorParcela)}`;
+                listaParcelas.appendChild(div);
+            }
+        } else {
+            areaParcelas.style.display = 'none';
+        }
+
+        setTimeout(() => window.print(), 300);
+    }
 
     const executePrint = (html) => {
         const iframe = document.createElement('iframe');
@@ -2080,10 +2328,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 openModal(clientSelectionModal);
                 return;
             }
-            
+
             // Chama direto a função de processamento com o formato A4
             processFinalSale('a4');
-            return; 
+            return;
         }
 
         // Para os outros métodos (Dinheiro, PIX, Cartão), continua perguntando
@@ -2091,18 +2339,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     let isReturningToPayment = false; // Controle de fluxo
-
-    // --- 1. LISTENERS DOS BOTÕES DE SELEÇÃO DE IMPRESSÃO ---
-    // Ao clicar, fechamos o modal de seleção e iniciamos o processo único
-    document.getElementById('btn-print-thermal').onclick = () => {
-        closeModal(document.getElementById('print-selection-modal'));
-        processFinalSale('thermal');
-    };
-
-    document.getElementById('btn-print-a4').onclick = () => {
-        closeModal(document.getElementById('print-selection-modal'));
-        processFinalSale('a4');
-    };
 
     // --- 2. FUNÇÃO MESTRA: REGISTRAR, IMPRIMIR E AVANÇAR ---
     async function processFinalSale(format) {
@@ -2193,13 +2429,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Mostra Passo 2 (Validação e QR Code)
                 const step2 = document.getElementById('cred-step-2');
-                step2.style.display = 'flex'; 
+                step2.style.display = 'flex';
                 step2.style.opacity = '1';
                 step2.classList.remove('locked-step');
 
                 // --- LÓGICA DO QR CODE ATUALIZADA ---
                 const qrImg = document.getElementById('cred-qrcode-img');
-                
+
                 if (qrImg && selectedCrediarioClient) {
                     // 1. Define a URL base para o valid55102.html
                     // window.location.href pega o endereço atual do navegador para garantir que funcione em qualquer domínio

@@ -3909,3 +3909,85 @@ input:checked+.slider:before {
     object-fit: contain;
     display: block;
 }
+
+
+/* Card de Impostos no PDV */
+.tax-transparency-card {
+    margin-top: 15px;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tax-transparency-card:hover {
+    background: #f1f5f9;
+    border-color: #64748b;
+}
+
+.tax-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.tax-amount-main {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #334155;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.tax-amount-main .currency {
+    font-size: 0.9rem;
+    color: #94a3b8;
+}
+
+.tax-legal-hint {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    margin-top: 4px;
+}
+
+/* Tabela de Impostos no Modal */
+.tax-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.tax-table th {
+    text-align: left;
+    font-size: 0.8rem;
+    color: #64748b;
+    padding: 10px;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.tax-table td {
+    padding: 12px 10px;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.tax-footer-info {
+    margin-top: 20px;
+    padding: 10px;
+    background: #fffbeb;
+    border-left: 4px solid #f59e0b;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: #92400e;
+}
+
+/* Animação de entrada dos números */
+.counter {
+    font-variant-numeric: tabular-nums;
+}
