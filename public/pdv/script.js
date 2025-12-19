@@ -1287,74 +1287,120 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // 4. Salvar Edição (Localmente por enquanto)
-    const handleSaveProductEdit = (e) => {
-        e.preventDefault();
-
-        // Pega os valores do form
-        const newCode = document.getElementById('edit-prod-code').value.trim();
-        const newName = document.getElementById('edit-prod-name').value.trim();
-
-        if (!newCode || !newName) {
-            showCustomAlert("Erro", "Código e Nome são obrigatórios.");
-            return;
-        }
-
-        // Objeto base do produto
-        const prodData = {
-            id: newCode,
-            name: newName,
-            price: parseFloat(document.getElementById('edit-prod-price').value) || 0,
-            costPrice: parseFloat(document.getElementById('edit-prod-cost').value) || 0,
-            brand: document.getElementById('edit-prod-brand').value.trim(),
-            imgUrl: document.getElementById('edit-prod-img-url').value.trim(),
-            stock: editingProductId ? parseInt(document.getElementById('edit-prod-stock').value) : 0, // Mantém estoque se editar, 0 se novo
-
-            // Fiscais
-            ncm: document.getElementById('edit-prod-ncm').value.trim(),
-            cest: document.getElementById('edit-prod-cest').value.trim(),
-            cfop: document.getElementById('edit-prod-cfop').value,
-            unit: document.getElementById('edit-prod-unit').value,
-            csosn: document.getElementById('edit-prod-csosn').value,
-            origem: document.getElementById('edit-prod-origem').value,
+    // Função para enviar o produto para o Google Sheets via POST
+    async function salvarProdutoNaAPI(prodData) {
+        // Monta o pacote JSON que o doPost do Code.js espera
+        const payload = {
+            action: "saveProduct",
+            data: prodData
         };
 
+        const options = {
+            method: 'POST', // O Code.js exige POST para salvar dados complexos
+            body: JSON.stringify(payload)
+        };
+
+        // Envia para a URL do seu script (SCRIPT_URL já está definida no topo do seu arquivo)
+        const response = await fetch(SCRIPT_URL, options);
+        return await response.json();
+    }
+
+    // 4. Salvar Edição (Localmente por enquanto)
+    // 4. Salvar Edição (Localmente + API Google Sheets)
+const handleSaveProductEdit = async (e) => {
+    e.preventDefault();
+
+    // Referência ao botão para dar feedback visual
+    const submitBtn = document.querySelector('#edit-product-form button[type="submit"]');
+    const originalBtnText = submitBtn.innerHTML;
+
+    // Pega os valores do form
+    const newCode = document.getElementById('edit-prod-code').value.trim();
+    const newName = document.getElementById('edit-prod-name').value.trim();
+
+    if (!newCode || !newName) {
+        showCustomAlert("Erro", "Código e Nome são obrigatórios.");
+        return;
+    }
+
+    // Objeto base do produto (Estrutura compatível com Code.js > saveProduct)
+    const prodData = {
+        id: newCode,
+        name: newName,
+        price: parseFloat(document.getElementById('edit-prod-price').value) || 0,
+        costPrice: parseFloat(document.getElementById('edit-prod-cost').value) || 0,
+        brand: document.getElementById('edit-prod-brand').value.trim(),
+        imgUrl: document.getElementById('edit-prod-img-url').value.trim(),
+        // Se for edição, mantém o estoque que estava no cache, se for novo começa com 0
+        // (O Google Sheets não deve sobrescrever estoque com 0 se já existir, mas enviamos por segurança)
+        stock: editingProductId ? parseInt(document.getElementById('edit-prod-stock').value) : 0,
+
+        // Dados Fiscais
+        ncm: document.getElementById('edit-prod-ncm').value.trim(),
+        cest: document.getElementById('edit-prod-cest').value.trim(),
+        cfop: document.getElementById('edit-prod-cfop').value,
+        unit: document.getElementById('edit-prod-unit').value,
+        csosn: document.getElementById('edit-prod-csosn').value,
+        origem: document.getElementById('edit-prod-origem').value,
+        
+        // Categoria (opcional, se não tiver no form, enviamos string vazia ou Geral)
+        category: 'Geral' 
+    };
+
+    // Bloqueia o botão
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Salvando...";
+
+    try {
+        // --- ENVIA PARA A API ---
+        const apiResult = await salvarProdutoNaAPI(prodData);
+
+        if (apiResult.status !== 'success') {
+            throw new Error(apiResult.message || "Erro desconhecido na API.");
+        }
+
+        // --- SUCESSO: ATUALIZA O CACHE LOCAL ---
         if (editingProductId) {
             // --- ATUALIZAR EXISTENTE ---
             const prodIndex = localProductCache.findIndex(p => String(p.id) === String(editingProductId));
-            if (prodIndex === -1) return;
-
-            // Verifica se mudou o código e se já existe outro igual
-            if (newCode !== String(editingProductId)) {
-                const exists = localProductCache.some(p => String(p.id) === newCode);
-                if (exists) {
-                    showCustomAlert("Erro", "Este código de barras já existe!");
-                    return;
+            
+            if (prodIndex !== -1) {
+                // Verifica troca de código
+                if (newCode !== String(editingProductId)) {
+                    // Se mudou o código, verifica se já existe outro igual
+                    const exists = localProductCache.some(p => String(p.id) === newCode);
+                    if (exists) {
+                        throw new Error("Este novo código de barras já existe em outro produto!");
+                    }
                 }
+                localProductCache[prodIndex] = prodData;
             }
-
-            localProductCache[prodIndex] = prodData;
-            showCustomAlert("Sucesso", "Produto atualizado!");
-
         } else {
             // --- CRIAR NOVO ---
-            // Verifica duplicidade
             const exists = localProductCache.some(p => String(p.id) === newCode);
             if (exists) {
-                showCustomAlert("Erro", "Já existe um produto com este código!");
-                return;
+                throw new Error("Já existe um produto com este código!");
             }
-
             localProductCache.push(prodData);
-            showCustomAlert("Sucesso", "Novo produto cadastrado!");
         }
 
+        // Sucesso final
+        showCustomAlert("Sucesso", "Produto salvo na nuvem e localmente!");
         closeModal(document.getElementById('edit-product-modal'));
         renderProdutosPage();
 
-        // Restaura botão de cadeado se foi escondido no modo novo
+        // Restaura botão de cadeado
         if (btnUnlockCode) btnUnlockCode.style.display = 'block';
-    };
+
+    } catch (error) {
+        console.error("Erro ao salvar produto:", error);
+        showCustomAlert("Erro ao Salvar", error.message);
+    } finally {
+        // Restaura o botão
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+    }
+};
 
     // --- LÓGICA DE MAXIMIZAR MODAL ---
     const btnMaximize = document.getElementById('btn-maximize-modal');

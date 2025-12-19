@@ -15,7 +15,7 @@
         href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
 
     <link rel="stylesheet" href="/assets/css/main.css">
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -69,9 +69,17 @@
         }
 
         @media (min-width: 992px) {
-            body:not(.sidebar-collapsed) .dashboard-wrapper { padding-left: 260px; }
-            body.sidebar-collapsed .dashboard-wrapper { padding-left: 90px; }
-            .dashboard-wrapper { padding-bottom: 0; }
+            body:not(.sidebar-collapsed) .dashboard-wrapper {
+                padding-left: 260px;
+            }
+
+            body.sidebar-collapsed .dashboard-wrapper {
+                padding-left: 90px;
+            }
+
+            .dashboard-wrapper {
+                padding-bottom: 0;
+            }
         }
 
         /* Skeleton Loading mais sutil */
@@ -80,21 +88,32 @@
             border-radius: 0.375rem;
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
+
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .5; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: .5;
+            }
         }
-        
+
         /* Esconde o conteúdo até carregar para fazer o fade-in */
-        .loading-state { opacity: 0; }
+        .loading-state {
+            opacity: 0;
+        }
     </style>
 </head>
 
 <body class="painel-adm1">
 
     <div class="dashboard-wrapper bg-slate-50">
-        
-        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-20">
+
+        <header
+            class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-20">
             <div class="flex items-center gap-4">
                 <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
                     <i data-lucide="layout-dashboard" class="w-5 h-5 text-slate-400"></i>
@@ -105,11 +124,13 @@
             <div class="flex items-center gap-4 md:gap-6">
                 <button class="relative p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors">
                     <i data-lucide="bell" class="w-5 h-5"></i>
-                    <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                    <span
+                        class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
                 </button>
 
                 <div class="flex items-center gap-3 border-l border-slate-200 pl-6">
-                    <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg" class="w-9 h-9 rounded-full bg-slate-200 object-cover border border-slate-200">
+                    <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg"
+                        class="w-9 h-9 rounded-full bg-slate-200 object-cover border border-slate-200">
                 </div>
             </div>
         </header>
@@ -118,19 +139,23 @@
 
             <div class="flex justify-end">
                 <div class="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
-                    <button class="px-3 py-1.5 text-xs font-medium rounded-md bg-blue-50 text-blue-600 transition-colors">7D</button>
-                    <button class="px-3 py-1.5 text-xs font-medium rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors">30D</button>
+                    <button
+                        class="px-3 py-1.5 text-xs font-medium rounded-md bg-blue-50 text-blue-600 transition-colors">7D</button>
+                    <button
+                        class="px-3 py-1.5 text-xs font-medium rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors">30D</button>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                
-                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+
+                <div
+                    class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
                     <div class="flex justify-between items-start mb-4">
                         <div class="p-3 bg-emerald-50 rounded-lg text-emerald-600">
                             <i data-lucide="trending-up" class="w-5 h-5"></i>
                         </div>
-                        <div class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600">
+                        <div
+                            class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600">
                             <span>Hoje</span>
                         </div>
                     </div>
@@ -138,12 +163,14 @@
                     <div id="faturamentoDate" class="text-2xl font-bold text-slate-800 skeleton h-8 w-32"></div>
                 </div>
 
-                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                <div
+                    class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
                     <div class="flex justify-between items-start mb-4">
                         <div class="p-3 bg-indigo-50 rounded-lg text-indigo-600">
                             <i data-lucide="piggy-bank" class="w-5 h-5"></i>
                         </div>
-                        <div class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-600">
+                        <div
+                            class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-600">
                             <span>Estimado</span>
                         </div>
                     </div>
@@ -151,12 +178,14 @@
                     <div id="lucroDate" class="text-2xl font-bold text-slate-800 skeleton h-8 w-32"></div>
                 </div>
 
-                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                <div
+                    class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
                     <div class="flex justify-between items-start mb-4">
                         <div class="p-3 bg-amber-50 rounded-lg text-amber-600">
                             <i data-lucide="ticket" class="w-5 h-5"></i>
                         </div>
-                         <div class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-600">
+                        <div
+                            class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-600">
                             <span>Geral</span>
                         </div>
                     </div>
@@ -164,12 +193,14 @@
                     <div id="ticketLJDate" class="text-2xl font-bold text-slate-800 skeleton h-8 w-32"></div>
                 </div>
 
-                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                <div
+                    class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
                     <div class="flex justify-between items-start mb-4">
                         <div class="p-3 bg-rose-50 rounded-lg text-rose-600">
                             <i data-lucide="alert-circle" class="w-5 h-5"></i>
                         </div>
-                        <div class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-600">
+                        <div
+                            class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-600">
                             <span>Pendente</span>
                         </div>
                     </div>
@@ -180,7 +211,7 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
+
                 <div class="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                     <div class="flex justify-between items-center mb-6">
                         <div>
@@ -193,9 +224,11 @@
 
                 <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
                     <h3 class="text-lg font-bold text-slate-800 mb-4">Top Produtos</h3>
-                    
-                    <div class="flex-1 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-slate-100 rounded-lg">
-                        <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-300">
+
+                    <div
+                        class="flex-1 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-slate-100 rounded-lg">
+                        <div
+                            class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-300">
                             <i data-lucide="package-open" class="w-8 h-8"></i>
                         </div>
                         <h4 class="text-slate-600 font-medium mb-1">Sem dados suficientes</h4>
@@ -219,16 +252,18 @@
                     <span class="text">Loja</span>
                 </a>
             </li>
+            <li class="list desktop-only">
+                <a href="/pdv">
+                    <span class="icon">
+                        <i class='bx  bx-cart-minus'></i>
+                    </span>
+                    <span class="text">PDV</span>
+                </a>
+            </li>
             <li class="list active">
                 <a href="#">
                     <span class="icon"><i class='bx bxs-bar-chart-big'></i></span>
                     <span class="text">Métrica</span>
-                </a>
-            </li>
-            <li class="list">
-                <a href="/users/45692327000100/CD1/adm/nb/push.html">
-                    <span class="icon"><i class='bxr bx-plus-circle'></i></span>
-                    <span class="text">Venda</span>
                 </a>
             </li>
             <li class="list">
@@ -251,7 +286,7 @@
         lucide.createIcons();
 
         document.addEventListener('DOMContentLoaded', () => {
-            
+
             // Formatação Moeda
             const formatCurrency = (value) => {
                 if (!value) return 'R$ 0,00';
@@ -265,9 +300,9 @@
             // Função de Animação de Entrada (Substitui o shimmer)
             const revealData = (elementId, value) => {
                 const el = document.getElementById(elementId);
-                if(el) {
+                if (el) {
                     // Remove o skeleton
-                    el.classList.remove('skeleton', 'h-8', 'w-32'); 
+                    el.classList.remove('skeleton', 'h-8', 'w-32');
                     // Aplica o valor
                     el.textContent = value;
                     // Adiciona a classe de animação suave
@@ -280,10 +315,10 @@
                 .then(res => res.json())
                 .then(data => {
                     // Mapeando os IDs corretos conforme sua solicitação de ordem
-                    if(data.faturamentoDate) revealData('faturamentoDate', formatCurrency(data.faturamentoDate));
-                    if(data.lucroDate) revealData('lucroDate', formatCurrency(data.lucroDate));
-                    if(data.ticketLJDate) revealData('ticketLJDate', formatCurrency(data.ticketLJDate));
-                    if(data.boletosPayDate) revealData('boletosPayDate', formatCurrency(data.boletosPayDate));
+                    if (data.faturamentoDate) revealData('faturamentoDate', formatCurrency(data.faturamentoDate));
+                    if (data.lucroDate) revealData('lucroDate', formatCurrency(data.lucroDate));
+                    if (data.ticketLJDate) revealData('ticketLJDate', formatCurrency(data.ticketLJDate));
+                    if (data.boletosPayDate) revealData('boletosPayDate', formatCurrency(data.boletosPayDate));
                 });
 
             // --- Gráfico ---
@@ -291,13 +326,13 @@
                 .then(res => res.json())
                 .then(data => {
                     const chartEl = document.getElementById('revenueChart');
-                    
+
                     if (data && data.length > 0 && chartEl) {
                         chartEl.classList.remove('skeleton', 'bg-slate-50'); // Remove skeleton do gráfico
                         chartEl.classList.add('animate-fade-in'); // Adiciona fade-in
-                        
+
                         const sortedData = data.sort((a, b) => new Date(a.dia) - new Date(b.dia)).slice(-7);
-                        
+
                         const options = {
                             chart: {
                                 type: 'area',
@@ -329,23 +364,23 @@
                                 labels: { style: { colors: '#94a3b8', fontSize: '12px' } }
                             },
                             yaxis: {
-                                labels: { 
-                                    formatter: (val) => `R$ ${val >= 1000 ? (val/1000).toFixed(1) + 'k' : val}`,
-                                    style: { colors: '#94a3b8', fontSize: '12px' } 
+                                labels: {
+                                    formatter: (val) => `R$ ${val >= 1000 ? (val / 1000).toFixed(1) + 'k' : val}`,
+                                    style: { colors: '#94a3b8', fontSize: '12px' }
                                 }
                             },
                             grid: {
                                 show: true,
                                 borderColor: '#f1f5f9',
                                 strokeDashArray: 4,
-                                xaxis: { lines: { show: false } } 
+                                xaxis: { lines: { show: false } }
                             },
                             tooltip: {
                                 theme: 'light',
                                 y: { formatter: (val) => formatCurrency(val) }
                             }
                         };
-                        
+
                         new ApexCharts(chartEl, options).render();
                     }
                 });
@@ -360,7 +395,7 @@
                     body.classList.toggle('sidebar-collapsed');
                 });
             }
-            
+
             if (logoutButton) {
                 logoutButton.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -371,4 +406,5 @@
         });
     </script>
 </body>
+
 </html>
