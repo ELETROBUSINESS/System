@@ -2399,123 +2399,71 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let isReturningToPayment = false; // Controle de fluxo
 
-    // --- 2. FUNÇÃO MESTRA: REGISTRAR, IMPRIMIR E AVANÇAR ---
     async function processFinalSale() {
         const btn = document.getElementById('finish-sale-btn');
         const originalText = btn.innerHTML;
 
-        let itensAptos = [];
-        let itensPendentes = [];
-        let fiscalResult = null;
-
         if (cart.length === 0) return showCustomAlert("Atenção", "Carrinho vazio!");
-
-        if (!selectedPaymentMethod) {
-            showCustomAlert("Pagamento", "Selecione a forma de pagamento.");
-            openModal(document.getElementById('payment-modal'));
-            return;
-        }
 
         try {
             btn.disabled = true;
-            btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Processando...';
+            btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Finalizando...';
 
             const totalVenda = lastSaleData ? lastSaleData.total : 0;
             const saleId = "V" + new Date().getTime().toString().slice(-8);
 
-            // 1. FILTRAGEM E PREPARAÇÃO DOS ITENS
-            cart.forEach(item => {
-                const ncmLimpo = (item.ncm || "").toString().replace(/\D/g, '');
-                if (ncmLimpo.length === 8 && item.cfop) {
-                    itensAptos.push({
-                        id: item.id || item.codigo,
-                        name: item.name || item.nome,
-                        price: Number(item.price || item.preco || 0),
-                        quantity: Number(item.quantity || 1),
-                        ncm: ncmLimpo,
-                        cfop: item.cfop,
-                        unit: item.unit || item.unidade || 'UN',
-                        csosn: item.csosn || '102',
-                        origem: item.origem || '0'
-                    });
-                } else {
-                    itensPendentes.push({ name: item.name || item.nome, reason: "Dados Fiscais Incompletos" });
-                }
-            });
+            // --- PASSO 1: Registrar no Google Sheets (Indispensável) ---
+            // Aqui você deve chamar a função que salva no seu Extrato/Logs
+            try {
+                const payments = [{ method: selectedPaymentMethod, value: totalVenda }];
+                await registrarVendaAtual(payments);
+            } catch (err) {
+                console.error("Erro ao registrar no Sheets, mas prosseguindo...", err);
+            }
 
-            // 2. COMUNICAÇÃO FISCAL COM DIAGNÓSTICO
-            if (itensAptos.length > 0) {
-                console.log("%c--- INICIANDO ENVIO FISCAL ---", "color: blue; font-weight: bold;");
-                console.log("Payload enviado:", { items: itensAptos, totalPagamento: totalVenda, saleId: saleId });
+            // --- PASSO 2: Tentar Emissão Fiscal (Opcional/Resiliente) ---
+            let fiscalSucesso = false;
+            try {
+                let itensAptos = cart.map(item => ({
+                    id: item.id || item.codigo,
+                    name: (item.name || item.nome).substring(0, 120),
+                    price: Number(item.price || 0),
+                    quantity: Number(item.quantity || 1),
+                    ncm: (item.ncm || "").replace(/\D/g, ''),
+                    cfop: item.cfop || '5102',
+                    unit: item.unit || 'UN'
+                })).filter(it => it.ncm.length === 8);
 
-                try {
-                    // Adicionamos /emitirNfce para garantir que bate no endpoint correto
+                if (itensAptos.length > 0) {
                     const response = await fetch(`${FISCAL_API_URL}/emitirNfce`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ items: itensAptos, totalPagamento: totalVenda, saleId: saleId })
                     });
-
-                    const data = await response.json();
-                    console.log("Resposta bruta do servidor:", data);
-
-                    if (!response.ok) {
-                        console.error("ERRO DO SERVIDOR FISCAL (DETALHADO):", data);
-                        throw new Error(data.message || "Erro interno no servidor fiscal");
-                    }
-
-                    fiscalResult = data;
-                } catch (err) {
-                    console.error("Erro na comunicação fiscal:", err);
-                    fiscalResult = { status: "error", message: err.message };
+                    const result = await response.json();
+                    fiscalSucesso = (result.status === "success");
                 }
+            } catch (fiscalErr) {
+                console.warn("Fisco fora do ar ou erro 500. A venda será gravada sem nota.");
             }
 
-            // 3. REGISTROS NO BANCO DE DADOS (GAS E FIREBASE)
-            const saleHistoryData = {
-                cliente: (typeof selectedCrediarioClient !== 'undefined' && selectedCrediarioClient) ? selectedCrediarioClient.nomeExibicao : "Cliente Balcão",
-                vendedor: (typeof currentSeller !== 'undefined') ? currentSeller : "Caixa",
-                valorTotal: totalVenda,
-                itens: cart,
-                metodoPagamento: selectedPaymentMethod,
-                id: saleId
-            };
-
-            await salvarVendaNoHistorico(saleHistoryData);
-            await abaterEstoqueFirebase(cart);
-
-            // 4. MENSAGEM DE FEEDBACK AO USUÁRIO
-            let msg = `Venda ${saleId} finalizada!`;
-            if (itensAptos.length > 0) {
-                if (fiscalResult?.status === "success") {
-                    msg += `\n✅ NFC-e AUTORIZADA: ${fiscalResult.chave}`;
-                    console.log("%c✅ NFC-e Emitida!", "color: green; font-weight: bold;");
-                } else {
-                    msg += `\n⚠️ NFC-e REJEITADA: ${fiscalResult?.message || 'Erro desconhecido'}`;
-                    console.warn("%c⚠️ NFC-e Rejeitada pelo servidor.", "color: orange;");
-                }
+            // --- PASSO 3: Conclusão (Sempre executa) ---
+            if (fiscalSucesso) {
+                showCustomAlert("Sucesso", "Venda finalizada e NFC-e emitida!");
+            } else {
+                showCustomAlert("Venda Concluída", "Venda registrada, mas a nota fiscal falhou e deverá ser emitida manualmente.");
             }
 
-            if (itensPendentes.length > 0) {
-                msg += `\n\nItens sem NFC-e: ${itensPendentes.length} (verifique NCM/CFOP)`;
-            }
-
-            showCustomAlert("Concluído", msg);
-            clearCart();
-
-            // Fecha o modal se ele existir
-            const printModal = document.getElementById('print-selection-modal');
-            if (printModal) closeModal(printModal);
+            clearCart(); // Limpa o carrinho independente do erro fiscal 
+            if (typeof carregarHistorico === 'function') carregarHistorico();
 
         } catch (error) {
-            console.error("ERRO CRÍTICO NO PROCESSO DE VENDA:", error);
-            showCustomAlert("Erro Crítico", error.message);
+            showCustomAlert("Erro Crítico", "Não foi possível concluir a venda.");
         } finally {
             btn.disabled = false;
             btn.innerHTML = originalText;
         }
     }
-
     // 2. Botão Concluir Final (AGORA SÓ LIMPA A TELA)
     // Como já salvamos no passo anterior, este botão serve apenas para fechar o ciclo.
     btnFinishCrediarioFinal.addEventListener('click', () => {
@@ -3919,3 +3867,74 @@ if (btnConfirmarReneg) {
         }
     };
 }
+
+// FUNÇÃO DE DIAGNÓSTICO (PLANO B)
+window.testefiscal = async () => {
+    console.log("🚀 Iniciando Teste Fiscal Isolado...");
+
+    const itemTeste = [{
+        id: "7897252260367",
+        name: "PRODUTO TESTE FISCAL",
+        price: 10.00,
+        quantity: 1,
+        ncm: "95030099", // NCM Genérico de brinquedo (o mesmo do seu erro)
+        cfop: "5102",
+        unit: "UN",
+        csosn: "102",
+        origem: "0"
+    }];
+
+    try {
+        const response = await fetch(`${FISCAL_API_URL}/emitirNfce`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                items: itemTeste,
+                totalPagamento: 10.00,
+                saleId: "TESTE-" + Date.now()
+            })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            console.log("✅ TESTE BEM SUCEDIDO:", data);
+            alert("Conexão Fiscal OK! Chave: " + data.chave);
+        } else {
+            console.error("❌ ERRO NO TESTE:", data);
+            alert("Erro no Servidor: " + data.message);
+        }
+    } catch (err) {
+        console.error("❌ FALHA NA REQUISIÇÃO:", err);
+        alert("Falha de rede/DNS. Verifique a URL do Cloud Run.");
+    }
+};
+
+// Função para fechar o aviso localmente
+function closeAnnouncement() {
+    document.getElementById('announcement-modal').classList.remove('active');
+}
+
+// Ouvinte em tempo real para avisos do sistema
+function listenForSystemAnnouncements() {
+    // Caminho no Firestore: Coleção 'system_alerts' -> Documento 'global_notice'
+    db.collection("system_alerts").doc("global_notice")
+        .onSnapshot((doc) => {
+            const data = doc.data();
+            // Se 'show' for verdadeiro no Firebase, o modal aparece para todos
+            if (data && data.show === true) {
+                const modal = document.getElementById('announcement-modal');
+                modal.classList.add('active');
+                
+                // Opcional: Tocar um alerta sonoro discreto
+                console.log("Sistema: Novo aviso de atualização recebido.");
+            }
+        }, (error) => {
+            console.error("Erro ao escutar avisos:", error);
+        });
+}
+
+// Inicie a escuta junto com as outras inicializações do DOM
+document.addEventListener('DOMContentLoaded', () => {
+    // ... suas inicializações existentes ...
+    listenForSystemAnnouncements();
+});
