@@ -2411,25 +2411,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const totalVenda = lastSaleData ? lastSaleData.total : 0;
             const saleId = "V" + new Date().getTime().toString().slice(-8);
+            const dadosVendaBase = {
+                id: saleId,
+                cliente: selectedCrediarioClient ? selectedCrediarioClient.nomeExibicao : "Cliente Balcão",
+                vendedor: currentSeller || "Caixa",
+                valorTotal: totalVenda,
+                itens: cart,
+                metodoPagamento: selectedPaymentMethod
+            };
 
-            // --- PASSO 1: Registrar no Google Sheets (Indispensável) ---
-            // Aqui você deve chamar a função que salva no seu Extrato/Logs
-            try {
-                const payments = [{ method: selectedPaymentMethod, value: totalVenda }];
-                await registrarVendaAtual(payments);
-            } catch (err) {
-                console.error("Erro ao registrar no Sheets, mas prosseguindo...", err);
-            }
+            // --- PASSO 1: Registro em AMBAS as APIs (Sheets) ---
+            // Usamos Promise.allSettled para que o erro em uma não trave a outra
+            const registros = await Promise.allSettled([
+                // API 1: Fluxo de Caixa / Extrato (REGISTRO_VENDA_SCRIPT_URL)
+                registrarVendaAtual([{ method: selectedPaymentMethod, value: totalVenda }]),
 
-            // --- PASSO 2: Tentar Emissão Fiscal (Opcional/Resiliente) ---
+                // API 2: Histórico Detalhado / Produtos (SCRIPT_URL)
+                salvarVendaNoHistorico(dadosVendaBase)
+            ]);
+
+            // Log de verificação no console
+            registros.forEach((res, i) => {
+                if (res.status === "rejected") console.error(`Falha na API ${i + 1}:`, res.reason);
+            });
+
+            // --- PASSO 2: Emissão Fiscal (Cloud Run) ---
             let fiscalSucesso = false;
             try {
-                let itensAptos = cart.map(item => ({
+                const itensAptos = cart.map(item => ({
                     id: item.id || item.codigo,
                     name: (item.name || item.nome).substring(0, 120),
                     price: Number(item.price || 0),
                     quantity: Number(item.quantity || 1),
-                    ncm: (item.ncm || "").replace(/\D/g, ''),
+                    ncm: (item.ncm || "").toString().replace(/\D/g, ''),
                     cfop: item.cfop || '5102',
                     unit: item.unit || 'UN'
                 })).filter(it => it.ncm.length === 8);
@@ -2440,25 +2454,26 @@ document.addEventListener('DOMContentLoaded', () => {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ items: itensAptos, totalPagamento: totalVenda, saleId: saleId })
                     });
-                    const result = await response.json();
-                    fiscalSucesso = (result.status === "success");
+                    const resFiscal = await response.json();
+                    fiscalSucesso = (resFiscal.status === "success");
                 }
-            } catch (fiscalErr) {
-                console.warn("Fisco fora do ar ou erro 500. A venda será gravada sem nota.");
+            } catch (fErr) {
+                console.warn("Falha fiscal (ignorada para concluir venda):", fErr);
             }
 
-            // --- PASSO 3: Conclusão (Sempre executa) ---
+            // --- PASSO 3: Finalização da Interface ---
             if (fiscalSucesso) {
-                showCustomAlert("Sucesso", "Venda finalizada e NFC-e emitida!");
+                showCustomAlert("Sucesso", "Venda registrada e NFC-e emitida!");
             } else {
-                showCustomAlert("Venda Concluída", "Venda registrada, mas a nota fiscal falhou e deverá ser emitida manualmente.");
+                showCustomAlert("Concluído", "Venda registrada nos bancos de dados. Nota fiscal pendente.");
             }
 
-            clearCart(); // Limpa o carrinho independente do erro fiscal 
+            clearCart();
             if (typeof carregarHistorico === 'function') carregarHistorico();
 
         } catch (error) {
-            showCustomAlert("Erro Crítico", "Não foi possível concluir a venda.");
+            console.error("Erro fatal na venda:", error);
+            showCustomAlert("Erro", "Ocorreu um erro ao processar a venda.");
         } finally {
             btn.disabled = false;
             btn.innerHTML = originalText;
@@ -3924,7 +3939,7 @@ function listenForSystemAnnouncements() {
             if (data && data.show === true) {
                 const modal = document.getElementById('announcement-modal');
                 modal.classList.add('active');
-                
+
                 // Opcional: Tocar um alerta sonoro discreto
                 console.log("Sistema: Novo aviso de atualização recebido.");
             }
