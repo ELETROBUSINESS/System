@@ -9,7 +9,7 @@ let realtimeOrdersUnsubscribe = null;
 let areValuesHidden = false;
 
 let fiscalHistory = []; // Armazena { idVenda, data, status, xml, itensEmitidos, itensPendentes }
-const FISCAL_API_URL = "https://us-central1-super-app25.cloudfunctions.net/emitirNfce"; // URL da sua Cloud Function
+const FISCAL_API_URL = "https://emitirnfce-xsy57wqb6q-uc.a.run.app";
 
 // Variáveis de Pedidos Online (Globais para evitar o erro ReferenceError)
 let activeOrdersData = [];
@@ -1987,6 +1987,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Verifica se a função toast existe antes de chamar (para evitar aquele erro anterior)
             if (typeof showCustomToast === 'function') {
+                runFiscalSanityCheck();
                 showCustomToast("Sistema Carregado!");
             } else {
                 console.log("Produtos carregados.");
@@ -2399,203 +2400,100 @@ document.addEventListener('DOMContentLoaded', () => {
     let isReturningToPayment = false; // Controle de fluxo
 
     // --- 2. FUNÇÃO MESTRA: REGISTRAR, IMPRIMIR E AVANÇAR ---
-    async function processFinalSale(format) {
-        // 1. Feedback Visual Imediato (Bloqueia a tela)
-        loadingOverlay.classList.remove('hidden');
-        loadingMessage.innerHTML = "Registrando Venda...<br>Aguarde a impressão.";
+    async function processFinalSale() {
+        const btn = document.getElementById('finish-sale-btn');
+        const originalText = btn.innerHTML;
 
-        // Desabilita botão original para evitar cliques extras no fundo
-        finishSaleBtn.disabled = true;
+        // Declarações fora do try para evitar ReferenceError
+        let itensAptos = [];
+        let itensPendentes = [];
+        let fiscalResult = null;
+
+        if (cart.length === 0) return showCustomAlert("Atenção", "Carrinho vazio!");
+
+        // Uso da variável global selectedPaymentMethod para evitar TypeError
+        if (!selectedPaymentMethod) {
+            showCustomAlert("Pagamento", "Selecione a forma de pagamento.");
+            openModal(document.getElementById('payment-modal'));
+            return;
+        }
 
         try {
-            const now = new Date();
-            const timestamp = formatTimestamp(now);
-            let parcelasEnvio = 1;
-            if (selectedPaymentMethod === 'Crediário') {
-                parcelasEnvio = window.tempInstallments || 1;
-            }
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Processando...';
 
-            // --- CORREÇÃO AQUI: Prepara e envia para o Histórico ---
-            const dadosParaHistorico = {
-                cliente: selectedCrediarioClient ? selectedCrediarioClient.nomeExibicao : "Cliente Balcão",
-                vendedor: currentSeller || "Caixa", // Pega o vendedor selecionado ou define Caixa
-                valorTotal: lastSaleData.total.toFixed(2),
-                itens: cart, // Passa o array do carrinho
-                metodoPagamento: selectedPaymentMethod,
-                id: timestamp
-            };
-
-            // 1. Separa o Joio do Trigo
-            const itensAptos = [];
-            const itensPendentes = [];
+            const totalVenda = lastSaleData ? lastSaleData.total : 0;
+            const saleId = "V" + new Date().getTime().toString().slice(-8);
 
             cart.forEach(item => {
-                const check = validateProductFiscal(item);
-                if (check.valid) {
-                    itensAptos.push(item);
+                const ncmLimpo = (item.ncm || "").toString().replace(/\D/g, '');
+                if (ncmLimpo.length === 8 && item.cfop) {
+                    // Localize no seu script.js dentro de processFinalSale:
+                    itensAptos.push({
+                        id: item.id || item.codigo,      // Busca ID ou Código
+                        name: item.name || item.nome,    // Compatibilidade com Planilha/GAS
+                        price: Number(item.price || item.preco || 0), // Garante tipo numérico
+                        quantity: Number(item.quantity || 1),
+                        ncm: ncmLimpo,
+                        cfop: item.cfop,
+                        unit: item.unit || item.unidade || 'UN',
+                        csosn: item.csosn || '102',
+                        origem: item.origem || '0'
+                    });
                 } else {
-                    itensPendentes.push({ ...item, reason: check.reason });
+                    itensPendentes.push({ name: item.name, reason: "Dados Fiscais Incompletos" });
                 }
             });
 
-            let fiscalResult = { status: 'skipped', message: 'Nenhum item apto' };
-
-            // 2. Se houver itens aptos, chama a API
             if (itensAptos.length > 0) {
-                // Não usamos await aqui para não travar a UI da venda (User Experience)
-                // O processamento acontece em background e atualiza o histórico depois
-                fetch(FISCAL_API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        items: itensAptos,
-                        totalPagamento: lastSaleData.total
-                    })
-                })
-                    .then(res => res.json())
-                    .then(data => {
-                        // Salva no histórico local da sessão
-                        fiscalHistory.unshift({
-                            idVenda: timestamp, // Usando o timestamp como ID de venda
-                            data: new Date(),
-                            status: data.status === 'success' ? 'Autorizada' : 'Rejeitada',
-                            itensEmitidos: itensAptos,
-                            itensPendentes: itensPendentes,
-                            xml: data.xml_enviado,
-                            sefazMsg: data.message
-                        });
-
-                        // Feedback discreto (Toast)
-                        if (data.status === 'success') {
-                            showCustomToast(`NFC-e emitida para ${itensAptos.length} itens.`);
-                        } else {
-                            showCustomToast(`Erro na SEFAZ: ${data.message}`);
-                        }
-
-                        // Atualiza a tela de notas se estiver aberta
-                        renderNotasPage();
-                    })
-                    .catch(err => {
-                        console.error("Erro Fiscal:", err);
-                        fiscalHistory.unshift({
-                            idVenda: timestamp,
-                            data: new Date(),
-                            status: 'Erro Conexão',
-                            itensEmitidos: itensAptos,
-                            itensPendentes: itensPendentes,
-                            xml: null
-                        });
+                try {
+                    const response = await fetch(FISCAL_API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ items: itensAptos, totalPagamento: totalVenda, saleId: saleId })
                     });
-            } else {
-                // Se tudo for pendente, registra apenas como pendente no histórico fiscal
-                fiscalHistory.unshift({
-                    idVenda: timestamp,
-                    data: new Date(),
-                    status: 'Não Emitida (Dados Incompletos)',
-                    itensEmitidos: [],
-                    itensPendentes: itensPendentes,
-                    xml: null
-                });
-            }
 
-            // Chama a função que envia para a planilha 'historic' (sem await para não travar a impressão)
-            salvarVendaNoHistorico(dadosParaHistorico);
-            // -------------------------------------------------------
+                    // Tenta ler o JSON mesmo se for erro 500 para pegar a mensagem do servidor
+                    const data = await response.json();
 
-            // 2. PREPARAR DADOS DO PAGAMENTO
-            let paymentsToSend = [];
-            if (selectedPaymentMethod && selectedPaymentMethod.startsWith("Dividido")) {
-                paymentsToSend.push({ method: currentSplitPayments.method1, value: currentSplitPayments.value1 });
-                paymentsToSend.push({ method: currentSplitPayments.method2, value: currentSplitPayments.value2 });
-            } else {
-                paymentsToSend.push({ method: selectedPaymentMethod, value: lastSaleData.total });
-            }
+                    if (!response.ok) {
+                        // Lança o erro específico vindo do Firebase
+                        throw new Error(data.message || "Erro desconhecido no servidor fiscal.");
+                    }
 
-            // ============================================================
-            // NOVO: ABATER ESTOQUE NO FIREBASE (Executa em paralelo)
-            // ============================================================
-            const promiseEstoque = abaterEstoqueFirebase(cart);
-            const promiseRegistro = registrarVendaAtual(paymentsToSend);
-
-            // Aguarda o registro financeiro (obrigatório) e o estoque (desejável)
-            await Promise.all([promiseRegistro, promiseEstoque]);
-            // ============================================================
-
-            // 4. REGISTRAR DÍVIDA (LOG) COM PARCELAMENTO
-            if (selectedPaymentMethod === 'Crediário') {
-                const paramsCliente = new URLSearchParams({
-                    action: 'registrarTransacao',
-                    idCliente: selectedCrediarioClient.idCliente,
-                    tipo: 'Compra',
-                    valor: lastSaleData.total.toFixed(2),
-                    timestamp: timestamp,
-                    parcelas: parcelasEnvio // <--- ENVIANDO AS PARCELAS AQUI
-                });
-
-                await fetch(`${SCRIPT_URL}?${paramsCliente.toString()}`, { method: 'GET' });
-            }
-
-            // 5. IMPRIMIR (Dispara a janela do navegador UMA VEZ)
-            const clientName = selectedCrediarioClient ? selectedCrediarioClient.nomeExibicao : null;
-
-            if (format === 'a4') {
-                printA4(clientName);
-            } else {
-                printThermal(clientName);
-            }
-
-            // 6. ATUALIZAR A TELA (Pós-Impressão)
-            loadingOverlay.classList.add('hidden');
-            finishSaleBtn.disabled = false;
-            finishSaleBtn.innerHTML = "<i class='bx bx-check-circle'></i> Finalizar Venda (F9)";
-
-            // LÓGICA DE NAVEGAÇÃO:
-            // LÓGICA DE NAVEGAÇÃO:
-            if (selectedPaymentMethod === 'Crediário') {
-                // Configura o nome do cliente
-                credFlowClientName.textContent = selectedCrediarioClient.nomeExibicao;
-
-                // Esconde Passo 1 (Impressão)
-                document.getElementById('cred-step-1').style.display = 'none';
-
-                // Mostra Passo 2 (Validação e QR Code)
-                const step2 = document.getElementById('cred-step-2');
-                step2.style.display = 'flex';
-                step2.style.opacity = '1';
-                step2.classList.remove('locked-step');
-
-                // --- LÓGICA DO QR CODE ATUALIZADA ---
-                const qrImg = document.getElementById('cred-qrcode-img');
-
-                if (qrImg && selectedCrediarioClient) {
-                    // 1. Define a URL base para o valid55102.html
-                    // window.location.href pega o endereço atual do navegador para garantir que funcione em qualquer domínio
-                    const currentPath = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
-                    const baseUrl = `${currentPath}/valid55102.html`;
-
-                    // 2. Adiciona o ID do cliente (idCliente) na URL
-                    // Isso permite que o valid55102.html saiba quem é o cliente
-                    const finalUrl = `${baseUrl}?id=${selectedCrediarioClient.idCliente}`;
-
-                    console.log("QR Code gerado para:", finalUrl); // Log para conferência
-
-                    // 3. Gera a imagem visual do QR Code apontando para essa URL
-                    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=5&data=${encodeURIComponent(finalUrl)}`;
+                    fiscalResult = data;
+                } catch (err) {
+                    console.error("Erro na comunicação fiscal:", err);
+                    fiscalResult = { status: "error", message: err.message };
                 }
-                // ------------------------------------
-
-                openModal(crediarioFlowModal);
-            } else {
-                // Se for Venda Comum, apenas mostra o Recibo de Sucesso
-                openModal(receiptModal);
             }
+
+            // Registros finais
+            const saleHistoryData = {
+                cliente: selectedCrediarioClient ? selectedCrediarioClient.nomeExibicao : "Cliente Balcão",
+                vendedor: currentSeller || "Caixa", valorTotal: totalVenda,
+                itens: cart, metodoPagamento: selectedPaymentMethod, id: saleId
+            };
+
+            await salvarVendaNoHistorico(saleHistoryData);
+            await abaterEstoqueFirebase(cart);
+
+            let msg = `Venda ${saleId} finalizada!`;
+            if (itensAptos.length > 0) {
+                msg += (fiscalResult?.status === "success")
+                    ? `\n✅ NFC-e AUTORIZADA: ${fiscalResult.chave}`
+                    : `\n⚠️ NFC-e REJEITADA: ${fiscalResult?.message || 'Erro desconhecido'}`;
+            }
+
+            showCustomAlert("Concluído", msg);
+            clearCart();
+            closeModal(document.getElementById('print-selection-modal'));
 
         } catch (error) {
-            console.error("Erro fatal na venda:", error);
-            loadingOverlay.classList.add('hidden');
-            finishSaleBtn.disabled = false;
-            finishSaleBtn.innerHTML = "<i class='bx bx-check-circle'></i> Finalizar Venda (F9)";
-            showCustomAlert("Erro", "Falha ao registrar. Verifique sua conexão.");
+            showCustomAlert("Erro Crítico", error.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
         }
     }
 
@@ -3709,6 +3607,60 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
+
+    function runFiscalSanityCheck() {
+        if (!localProductCache || localProductCache.length === 0) {
+            console.error("❌ Cache de produtos vazio.");
+            return null;
+        }
+
+        const comNcm = localProductCache.filter(prod => prod.ncm && String(prod.ncm).trim() !== "");
+
+        const prontosParaEmissao = comNcm.filter(prod => {
+            const ncmValido = String(prod.ncm).trim().length === 8;
+            const temCfop = prod.cfop && String(prod.cfop).trim() !== "";
+            const temNome = prod.nome || prod.name;
+            const temUnidade = prod.unidade || prod.unit;
+            return ncmValido && temCfop && temNome && temUnidade;
+        });
+
+        const resultado = {
+            stats: {
+                totalSistema: localProductCache.length,
+                totalComNcm: comNcm.length,
+                totalProntos: prontosParaEmissao.length,
+                totalComErro: comNcm.length - prontosParaEmissao.length
+            },
+            listas: { prontos: prontosParaEmissao }
+        };
+
+        console.log("%c📊 RELATÓRIO DE SAÚDE FISCAL (v7.5.0)", "color: white; background: #222; padding: 5px; border-radius: 3px;");
+        console.table(resultado.stats);
+
+        if (resultado.listas.prontos.length > 0) {
+            console.log("%c🚀 DADOS FISCAIS PARA TESTE (Simulação itensAptos):", "color: #00ff00; font-weight: bold;");
+
+            // Mapeia EXATAMENTE o que vai para o backend no processFinalSale
+            const payloadSimulado = resultado.listas.prontos.slice(0, 3).map(item => {
+                const ncmLimpo = (item.ncm || "").toString().replace(/\D/g, '');
+                return {
+                    id: item.id || item.codigo,
+                    name: item.name || item.nome,
+                    price: Number(item.price || item.preco),
+                    quantity: 1, // Simulação de 1 unidade
+                    ncm: ncmLimpo,
+                    cfop: item.cfop,
+                    unit: item.unit || item.unidade || 'UN',
+                    csosn: item.csosn || '102',
+                    origem: item.origem || '0'
+                };
+            });
+            console.table(payloadSimulado);
+        }
+        return resultado;
+    }
+
+
 });
 
 // =======================================================
