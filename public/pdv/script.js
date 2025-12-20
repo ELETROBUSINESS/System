@@ -2404,14 +2404,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const btn = document.getElementById('finish-sale-btn');
         const originalText = btn.innerHTML;
 
-        // Declarações fora do try para evitar ReferenceError
         let itensAptos = [];
         let itensPendentes = [];
         let fiscalResult = null;
 
         if (cart.length === 0) return showCustomAlert("Atenção", "Carrinho vazio!");
 
-        // Uso da variável global selectedPaymentMethod para evitar TypeError
         if (!selectedPaymentMethod) {
             showCustomAlert("Pagamento", "Selecione a forma de pagamento.");
             openModal(document.getElementById('payment-modal'));
@@ -2425,14 +2423,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const totalVenda = lastSaleData ? lastSaleData.total : 0;
             const saleId = "V" + new Date().getTime().toString().slice(-8);
 
+            // 1. FILTRAGEM E PREPARAÇÃO DOS ITENS
             cart.forEach(item => {
                 const ncmLimpo = (item.ncm || "").toString().replace(/\D/g, '');
                 if (ncmLimpo.length === 8 && item.cfop) {
-                    // Localize no seu script.js dentro de processFinalSale:
                     itensAptos.push({
-                        id: item.id || item.codigo,      // Busca ID ou Código
-                        name: item.name || item.nome,    // Compatibilidade com Planilha/GAS
-                        price: Number(item.price || item.preco || 0), // Garante tipo numérico
+                        id: item.id || item.codigo,
+                        name: item.name || item.nome,
+                        price: Number(item.price || item.preco || 0),
                         quantity: Number(item.quantity || 1),
                         ncm: ncmLimpo,
                         cfop: item.cfop,
@@ -2441,24 +2439,29 @@ document.addEventListener('DOMContentLoaded', () => {
                         origem: item.origem || '0'
                     });
                 } else {
-                    itensPendentes.push({ name: item.name, reason: "Dados Fiscais Incompletos" });
+                    itensPendentes.push({ name: item.name || item.nome, reason: "Dados Fiscais Incompletos" });
                 }
             });
 
+            // 2. COMUNICAÇÃO FISCAL COM DIAGNÓSTICO
             if (itensAptos.length > 0) {
+                console.log("%c--- INICIANDO ENVIO FISCAL ---", "color: blue; font-weight: bold;");
+                console.log("Payload enviado:", { items: itensAptos, totalPagamento: totalVenda, saleId: saleId });
+
                 try {
-                    const response = await fetch(FISCAL_API_URL, {
+                    // Adicionamos /emitirNfce para garantir que bate no endpoint correto
+                    const response = await fetch(`${FISCAL_API_URL}/emitirNfce`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ items: itensAptos, totalPagamento: totalVenda, saleId: saleId })
                     });
 
-                    // Tenta ler o JSON mesmo se for erro 500 para pegar a mensagem do servidor
                     const data = await response.json();
+                    console.log("Resposta bruta do servidor:", data);
 
                     if (!response.ok) {
-                        // Lança o erro específico vindo do Firebase
-                        throw new Error(data.message || "Erro desconhecido no servidor fiscal.");
+                        console.error("ERRO DO SERVIDOR FISCAL (DETALHADO):", data);
+                        throw new Error(data.message || "Erro interno no servidor fiscal");
                     }
 
                     fiscalResult = data;
@@ -2468,28 +2471,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Registros finais
+            // 3. REGISTROS NO BANCO DE DADOS (GAS E FIREBASE)
             const saleHistoryData = {
-                cliente: selectedCrediarioClient ? selectedCrediarioClient.nomeExibicao : "Cliente Balcão",
-                vendedor: currentSeller || "Caixa", valorTotal: totalVenda,
-                itens: cart, metodoPagamento: selectedPaymentMethod, id: saleId
+                cliente: (typeof selectedCrediarioClient !== 'undefined' && selectedCrediarioClient) ? selectedCrediarioClient.nomeExibicao : "Cliente Balcão",
+                vendedor: (typeof currentSeller !== 'undefined') ? currentSeller : "Caixa",
+                valorTotal: totalVenda,
+                itens: cart,
+                metodoPagamento: selectedPaymentMethod,
+                id: saleId
             };
 
             await salvarVendaNoHistorico(saleHistoryData);
             await abaterEstoqueFirebase(cart);
 
+            // 4. MENSAGEM DE FEEDBACK AO USUÁRIO
             let msg = `Venda ${saleId} finalizada!`;
             if (itensAptos.length > 0) {
-                msg += (fiscalResult?.status === "success")
-                    ? `\n✅ NFC-e AUTORIZADA: ${fiscalResult.chave}`
-                    : `\n⚠️ NFC-e REJEITADA: ${fiscalResult?.message || 'Erro desconhecido'}`;
+                if (fiscalResult?.status === "success") {
+                    msg += `\n✅ NFC-e AUTORIZADA: ${fiscalResult.chave}`;
+                    console.log("%c✅ NFC-e Emitida!", "color: green; font-weight: bold;");
+                } else {
+                    msg += `\n⚠️ NFC-e REJEITADA: ${fiscalResult?.message || 'Erro desconhecido'}`;
+                    console.warn("%c⚠️ NFC-e Rejeitada pelo servidor.", "color: orange;");
+                }
+            }
+
+            if (itensPendentes.length > 0) {
+                msg += `\n\nItens sem NFC-e: ${itensPendentes.length} (verifique NCM/CFOP)`;
             }
 
             showCustomAlert("Concluído", msg);
             clearCart();
-            closeModal(document.getElementById('print-selection-modal'));
+
+            // Fecha o modal se ele existir
+            const printModal = document.getElementById('print-selection-modal');
+            if (printModal) closeModal(printModal);
 
         } catch (error) {
+            console.error("ERRO CRÍTICO NO PROCESSO DE VENDA:", error);
             showCustomAlert("Erro Crítico", error.message);
         } finally {
             btn.disabled = false;

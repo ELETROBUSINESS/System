@@ -1659,6 +1659,48 @@
     </div>
 
     <script src="script.js"></script>
+    <script>
+        // FUNÇÃO DE DIAGNÓSTICO (PLANO B)
+        window.testefiscal = async () => {
+            console.log("🚀 Iniciando Teste Fiscal Isolado...");
+
+            const itemTeste = [{
+                id: "7897252260367",
+                name: "PRODUTO TESTE FISCAL",
+                price: 10.00,
+                quantity: 1,
+                ncm: "95030099", // NCM Genérico de brinquedo (o mesmo do seu erro)
+                cfop: "5102",
+                unit: "UN",
+                csosn: "102",
+                origem: "0"
+            }];
+
+            try {
+                const response = await fetch(`${FISCAL_API_URL}/emitirNfce`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        items: itemTeste,
+                        totalPagamento: 10.00,
+                        saleId: "TESTE-" + Date.now()
+                    })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    console.log("✅ TESTE BEM SUCEDIDO:", data);
+                    alert("Conexão Fiscal OK! Chave: " + data.chave);
+                } else {
+                    console.error("❌ ERRO NO TESTE:", data);
+                    alert("Erro no Servidor: " + data.message);
+                }
+            } catch (err) {
+                console.error("❌ FALHA NA REQUISIÇÃO:", err);
+                alert("Falha de rede/DNS. Verifique a URL do Cloud Run.");
+            }
+        };
+    </script>
 </body>
 
 </html>
