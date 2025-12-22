@@ -36,8 +36,8 @@
     <!-- Loader Inicial -->
     <div id="initial-loader" class="fixed inset-0 bg-white/90 z-[100] flex flex-col items-center justify-center text-center p-6">
         <div class="loader w-12 h-12 border-4 border-gray-200 border-t-blue-600 rounded-full mb-4"></div>
-        <h2 class="text-lg font-bold text-gray-800">Sincronizando com a Planilha...</h2>
-        <p class="text-sm text-gray-500 max-w-xs">Verificando itens registrados e processando base de dados CSV.</p>
+        <h2 class="text-lg font-bold text-gray-800">Sincronizando por Nome...</h2>
+        <p class="text-sm text-gray-500 max-w-xs">Vinculando itens da matriz com os dados da planilha usando o nome do produto.</p>
     </div>
 
     <div class="max-w-7xl mx-auto">
@@ -49,7 +49,7 @@
                         <i class="fas fa-check-double text-blue-600"></i>
                         Conferência e Registro
                     </h1>
-                    <p class="text-gray-500 text-sm">Validação flexível: bipes corretos ou novos códigos de barras.</p>
+                    <p class="text-gray-500 text-sm">Busca baseada no <b>Nome do Produto</b> (chave primária).</p>
                 </div>
                 
                 <div class="flex items-center gap-3">
@@ -77,12 +77,12 @@
                 <i class="fas fa-file-csv text-emerald-600"></i>
                 Importar Dados CSV
             </h3>
-            <p class="text-xs text-gray-500 mb-4">Cole abaixo os dados do seu arquivo de precificação.</p>
+            <p class="text-xs text-gray-500 mb-4">Cole os dados do seu arquivo. O Nome será usado como chave de busca.</p>
             <textarea id="csvInput" rows="5" class="w-full p-4 text-xs font-mono bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none mb-4" placeholder='Codigo_Barras_NCM;Produto;Fator;Qtd_Real;Val_Unit_NF;Encargos;Custo_Unit_Real;Venda_Sugerida'></textarea>
             <div class="flex justify-between items-center">
                 <div id="copyActionArea" class="hidden">
                     <button onclick="copyFormattedData()" class="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 text-xs font-bold rounded-lg hover:bg-blue-100 transition-all border border-blue-200">
-                        <i class="fas fa-copy"></i> Copiar Formatação (Banco de Dados)
+                        <i class="fas fa-copy"></i> Copiar para Banco de Dados
                     </button>
                 </div>
                 <div class="flex justify-end gap-2 ml-auto">
@@ -108,16 +108,16 @@
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-8">
             <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
                 <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Itens em Conferência</h2>
-                <span class="px-2 py-1 bg-blue-100 text-blue-700 text-[10px] font-bold rounded italic">CONFERÊNCIA ABERTA</span>
+                <span class="px-2 py-1 bg-blue-100 text-blue-700 text-[10px] font-bold rounded italic">BUSCA POR NOME ATIVA</span>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead class="bg-gray-50 text-gray-400 text-[10px] uppercase font-black">
+                <table class="w-full text-left border-separate border-spacing-0">
+                    <thead class="bg-gray-50 text-gray-400 text-[10px] uppercase font-black sticky top-0 z-10">
                         <tr>
                             <th class="px-6 py-4">Produto</th>
                             <th class="px-4 py-4 text-center">Fator / Qtd</th>
-                            <th class="px-4 py-4">Código Esperado</th>
-                            <th class="px-4 py-4">Bipar / Alterar</th>
+                            <th class="px-4 py-4">Cód. Esperado (CSV)</th>
+                            <th class="px-4 py-4">Bipar / Novo Código</th>
                             <th class="px-4 py-4 text-center">Precificação</th>
                             <th class="px-6 py-4 text-center">Confirmar</th>
                         </tr>
@@ -133,7 +133,7 @@
             <div class="flex flex-col items-center gap-2 text-center">
                 <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Já Registrados na Planilha</span>
                 <button onclick="updateAllSentItems()" class="px-4 py-2 bg-white border-2 border-amber-400 text-amber-600 text-[10px] font-black rounded-xl hover:bg-amber-50 transition-all flex items-center gap-2 shadow-md group">
-                    <i class="fas fa-sync-alt group-hover:rotate-180 transition-transform duration-500"></i> ATUALIZAR METADADOS DOS REGISTRADOS
+                    <i class="fas fa-sync-alt group-hover:rotate-180 transition-transform duration-500"></i> ATUALIZAR DADOS DOS REGISTRADOS
                 </button>
             </div>
             <div class="flex-1 h-px bg-gray-300"></div>
@@ -155,11 +155,9 @@
                 <i class="fas fa-edit"></i>
             </div>
             <h3 class="text-xl font-bold text-gray-800 mb-2">Confirmar Alterações?</h3>
-            <p id="modalDescription" class="text-gray-600 text-sm mb-6">Resumo das modificações detectadas:</p>
+            <p id="modalDescription" class="text-gray-600 text-sm mb-6">O sistema identificou mudanças para este produto:</p>
             
-            <div id="modalSummary" class="bg-gray-50 rounded-xl p-4 mb-6 text-left text-xs space-y-2 border border-gray-200">
-                <!-- Sumário inserido via JS -->
-            </div>
+            <div id="modalSummary" class="bg-gray-50 rounded-xl p-4 mb-6 text-left text-xs space-y-2 border border-gray-200"></div>
 
             <div class="grid grid-cols-2 gap-4">
                 <button onclick="closeChangesModal()" class="py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-colors">Cancelar</button>
@@ -496,12 +494,21 @@
                 const response = await fetch(`${API_URL}?action=getProducts`);
                 const result = await response.json();
                 if (Array.isArray(result)) {
-                    const remoteDataMap = {};
-                    result.forEach(p => remoteDataMap[String(p.id)] = p.price);
+                    // CHAVE DE BUSCA AGORA É O NOME (case-insensitive)
+                    const remoteDataByName = {};
+                    result.forEach(p => {
+                        if (p.name) remoteDataByName[String(p.name).trim().toUpperCase()] = p;
+                    });
+
                     itemsState.forEach(item => { 
-                        if (remoteDataMap[String(item.id)] !== undefined) {
+                        const normalizedLocalName = String(item.produto).trim().toUpperCase();
+                        const remoteMatch = remoteDataByName[normalizedLocalName];
+                        
+                        if (remoteMatch) {
                             item.sent = true; 
-                            item.remotePrice = remoteDataMap[String(item.id)];
+                            item.remotePrice = remoteMatch.price;
+                            // Preenche o código que já está na planilha como o input atual
+                            item.currentInput = String(remoteMatch.id || '');
                         }
                     });
                 }
@@ -579,7 +586,7 @@
             document.getElementById('statSent').innerText = countSent;
         }
 
-        // Lógica de atualização direta do DOM para evitar "trava" do input
+        // Lógica de atualização direta para manter foco do leitor
         function updateInput(index, val) {
             const item = itemsState[index];
             item.currentInput = val.trim();
@@ -595,7 +602,6 @@
             const hasInput = item.currentInput.length > 0;
             const isCorrectCode = item.currentInput === item.id;
 
-            // Atualiza classes da linha baseado no estado
             row.classList.remove('success-bg', 'warning-bg', 'bg-white');
             if (hasInput) {
                 row.classList.add(isCorrectCode ? 'success-bg' : 'warning-bg');
@@ -603,7 +609,6 @@
                 row.classList.add('bg-white');
             }
 
-            // Atualiza borda do input
             input.classList.remove('border-emerald-500', 'border-amber-400', 'border-gray-100');
             if (hasInput) {
                 input.classList.add(isCorrectCode ? 'border-emerald-500' : 'border-amber-400');
@@ -611,7 +616,6 @@
                 input.classList.add('border-gray-100');
             }
 
-            // Atualiza Ícones sem remover o elemento de input
             let icon = container.querySelector('i');
             if (hasInput) {
                 if (!icon) {
@@ -624,7 +628,6 @@
                 icon.remove();
             }
 
-            // Visibilidade da precificação e botão
             if (hasInput) {
                 pricingWrapper.classList.remove('invisible');
                 confirmBtn.disabled = false;
@@ -637,7 +640,6 @@
         function updatePrice(index, value) {
             const item = itemsState[index];
             item.newPrice = parseFloat(value) || 0;
-            
             const badge = document.getElementById(`markup-badge-${index}`);
             if(badge) {
                 const markup = (((item.newPrice - item.custo) / (item.custo || 1)) * 100).toFixed(1);
@@ -665,10 +667,10 @@
             if (codeChanged) {
                 summary.innerHTML += `
                     <div class="flex justify-between items-center text-amber-700">
-                        <span>Código Original:</span> <span class="font-mono">${item.id}</span>
+                        <span>Código Original (CSV):</span> <span class="font-mono">${item.id}</span>
                     </div>
                     <div class="flex justify-between items-center text-amber-700 font-bold">
-                        <span>Novo Código:</span> <span class="font-mono">${item.currentInput}</span>
+                        <span>Novo Código Planilha:</span> <span class="font-mono">${item.currentInput}</span>
                     </div>
                     <hr class="border-amber-100">
                 `;
@@ -715,7 +717,6 @@
             try {
                 await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 itemsState[index].sent = true;
-                itemsState[index].id = item.currentInput; 
                 itemsState[index].remotePrice = item.newPrice;
                 renderLists();
                 showSuccessToast("Registrado!");
@@ -723,6 +724,7 @@
             finally { setTimeout(() => toggleToast(false), 1500); }
         }
 
+        // --- HELPERS ---
         function detectBrand(name) {
             const n = name.toUpperCase();
             if (n.includes("CIS")) return "CIS";
@@ -765,11 +767,11 @@
         async function updateAllSentItems() {
             const sentItems = itemsState.filter(i => i.sent);
             if (sentItems.length === 0) return;
-            if (!confirm(`Sincronizar metadados de ${sentItems.length} itens? Preços originais serão mantidos.`)) return;
+            if (!confirm(`Sincronizar metadados de ${sentItems.length} itens? Chave de busca será o NOME.`)) return;
             showToast("Sincronizando...");
             for (const item of sentItems) {
                 await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
-                    action: "saveProduct", data: { id: item.id, name: item.produto, price: item.remotePrice, costPrice: item.custo, ncm: item.ncm, brand: item.brand, category: "Material Escolar", cadastrado: "Sim" }
+                    action: "saveProduct", data: { id: item.currentInput, name: item.produto, price: item.remotePrice, costPrice: item.custo, ncm: item.ncm, brand: item.brand, category: "Material Escolar", cadastrado: "Sim" }
                 })});
             }
             showSuccessToast("Finalizado!");
@@ -781,29 +783,16 @@
             const pageWidth = doc.internal.pageSize.getWidth();
             doc.setFontSize(16); doc.text("Relatório de Precificação - EletroBusiness", pageWidth/2, 15, {align:'center'});
             doc.setFontSize(10); doc.text(`Gerado em: ${new Date().toLocaleString()}`, pageWidth/2, 22, {align:'center'});
-            
-            const tableData = itemsState.map(i => [
-                i.id, i.produto, i.brand, i.fator, i.qtdReal, 
-                `R$ ${i.custo.toFixed(2)}`, 
-                `R$ ${i.newPrice.toFixed(2)}`, 
-                i.sent ? 'OK' : 'Pend'
-            ]);
-            
-            doc.autoTable({ 
-                startY: 28, 
-                head: [['Código', 'Produto', 'Marca', 'Fator', 'Qtd', 'Custo', 'Venda', 'Status']], 
-                body: tableData,
-                theme: 'striped',
-                headStyles: { fillColor: [59, 130, 246] }
-            });
-            doc.save(`relatorio_estoque_${new Date().getTime()}.pdf`);
+            const tableData = itemsState.map(i => [i.currentInput || i.id, i.produto, i.brand, i.fator, i.qtdReal, `R$ ${i.custo.toFixed(2)}`, `R$ ${i.newPrice.toFixed(2)}`, i.sent ? 'OK' : 'Pend']);
+            doc.autoTable({ startY: 28, head: [['Código', 'Produto', 'Marca', 'Fator', 'Qtd', 'Custo', 'Venda', 'Status']], body: tableData, theme: 'striped', headStyles: { fillColor: [59, 130, 246] } });
+            doc.save(`relatorio_${new Date().getTime()}.pdf`);
             showSuccessToast("PDF Gerado!");
         }
 
         function copyFormattedData() {
             if (itemsState.length === 0) return;
             const formatted = itemsState.map(item => {
-                return `  { id: "${item.id}", ncm: "${item.ncm}", produto: "${item.produto}", fator: "${item.fator}", qtdReal: "${item.qtdReal}", custo: ${item.custo}, venda: ${item.venda}, brand: "${item.brand}" }`;
+                return `  { id: "${item.currentInput || item.id}", ncm: "${item.ncm}", produto: "${item.produto}", fator: "${item.fator}", qtdReal: "${item.qtdReal}", custo: ${item.custo}, venda: ${item.venda}, brand: "${item.brand}" }`;
             }).join(',\n');
             const el = document.createElement('textarea');
             el.value = `const PRODUCT_DATABASE = [\n${formatted}\n];`;
