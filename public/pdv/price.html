@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,21 +9,73 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .success-bg { background-color: #f0fdf4 !important; }
-        .sent-row { opacity: 0.6; background-color: #f8fafc; pointer-events: none; border-left: 4px solid #cbd5e1; }
-        .loader { border-top-color: #3b82f6; animation: spinner 0.6s linear infinite; }
-        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        .btn-confirm { transition: all 0.2s ease; }
-        .btn-confirm:disabled { background-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
-        .btn-confirm:not(:disabled) { background-color: #2563eb; color: white; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2); }
-        .btn-confirm:not(:disabled):hover { background-color: #1d4ed8; transform: translateY(-1px); }
 
-        #initial-loader { backdrop-filter: blur(4px); transition: opacity 0.5s ease-out; }
-        .financial-badge { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .success-bg {
+            background-color: #f0fdf4 !important;
+        }
+
+        .sent-row {
+            opacity: 0.6;
+            background-color: #f8fafc;
+            pointer-events: none;
+            border-left: 4px solid #cbd5e1;
+        }
+
+        .loader {
+            border-top-color: #3b82f6;
+            animation: spinner 0.6s linear infinite;
+        }
+
+        @keyframes spinner {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .btn-confirm {
+            transition: all 0.2s ease;
+        }
+
+        .btn-confirm:disabled {
+            background-color: #e5e7eb;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .btn-confirm:not(:disabled) {
+            background-color: #2563eb;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+        }
+
+        .btn-confirm:not(:disabled):hover {
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        #initial-loader {
+            backdrop-filter: blur(4px);
+            transition: opacity 0.5s ease-out;
+        }
+
+        .financial-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
     </style>
 </head>
+
 <body class="p-4 md:p-8">
 
     <!-- Loader Inicial -->
@@ -40,14 +93,17 @@
                     <i class="fas fa-check-double text-blue-600"></i>
                     Conferência e Registro
                 </h1>
-                <p class="text-gray-500 text-sm">Valide os itens, ajuste o preço se necessário e confirme o registro.</p>
+                <p class="text-gray-500 text-sm">Valide os itens, ajuste o preço se necessário e confirme o registro.
+                </p>
             </div>
-            
+
             <div class="relative w-full max-w-md">
                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
                     <i class="fas fa-search"></i>
                 </span>
-                <input type="text" id="mainSearch" onkeyup="filterItems()" class="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm transition-all" placeholder="Pesquisar por nome ou código...">
+                <input type="text" id="mainSearch" onkeyup="filterItems()"
+                    class="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm transition-all"
+                    placeholder="Pesquisar por nome ou código...">
             </div>
         </header>
 
@@ -67,7 +123,8 @@
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-8">
             <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
                 <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Itens em Conferência</h2>
-                <span class="px-2 py-1 bg-blue-100 text-blue-700 text-[10px] font-bold rounded italic">SINCRONIZADO</span>
+                <span
+                    class="px-2 py-1 bg-blue-100 text-blue-700 text-[10px] font-bold rounded italic">SINCRONIZADO</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
@@ -89,7 +146,8 @@
         <!-- Histórico -->
         <div class="flex items-center gap-4 mb-6">
             <div class="flex-1 h-px bg-gray-300"></div>
-            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Já Registrados na Planilha</span>
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Já Registrados na
+                Planilha</span>
             <div class="flex-1 h-px bg-gray-300"></div>
         </div>
 
@@ -105,20 +163,26 @@
     <!-- Modal de Confirmação de Preço -->
     <div id="confirmPriceModal" class="fixed inset-0 bg-black/60 hidden z-[110] flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl">
-            <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+            <div
+                class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
                 <i class="fas fa-exclamation-triangle"></i>
             </div>
             <h3 class="text-xl font-bold text-center text-gray-800 mb-2">Alterar Preço?</h3>
-            <p class="text-gray-600 text-center text-sm mb-6">O preço de venda foi modificado. Deseja realmente salvar este novo valor na planilha?</p>
+            <p class="text-gray-600 text-center text-sm mb-6">O preço de venda foi modificado. Deseja realmente salvar
+                este novo valor na planilha?</p>
             <div class="grid grid-cols-2 gap-4">
-                <button onclick="closePriceModal()" class="py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-colors">Cancelar</button>
-                <button id="finalConfirmBtn" class="py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors">Sim, Alterar</button>
+                <button onclick="closePriceModal()"
+                    class="py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-colors">Cancelar</button>
+                <button id="finalConfirmBtn"
+                    class="py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors">Sim,
+                    Alterar</button>
             </div>
         </div>
     </div>
 
     <!-- Toast de Feedback -->
-    <div id="loadingToast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 opacity-0 pointer-events-none transition-all duration-300 z-50">
+    <div id="loadingToast"
+        class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 opacity-0 pointer-events-none transition-all duration-300 z-50">
         <div class="loader w-5 h-5 border-3 border-white/30 border-t-white rounded-full"></div>
         <span class="text-sm font-bold">Processando registro...</span>
     </div>
@@ -131,22 +195,273 @@
             { id: "7909438042640", ncm: "96081000", produto: "CANETA CIS 12X1 MOVE 0.7 PRETA 0661", fator: "12x", qtdReal: "60.00", custo: 3.89, venda: 5.99, brand: "CIS" },
             { id: "7909438009285", ncm: "96081000", produto: "CANETA CIS 12X1 PENTONIC 0.7 PRETA 2200", fator: "12x", qtdReal: "60.00", custo: 2.85, venda: 4.49, brand: "CIS" },
             { id: "7896326931233", ncm: "96081000", produto: "CANETA CIS 50X1 POTE NEOTIP 0.7 AZ 4700", fator: "50x", qtdReal: "150.00", custo: 1.66, venda: 2.49, brand: "CIS" },
+            { id: "7896572021153", ncm: "96081000", produto: "CANETA COMPACTOR MICROLINE 12X1 04MM PT", fator: "12x", qtdReal: "60.00", custo: 2.95, venda: 4.49, brand: "COMPACTOR" },
+            { id: "7897256282310", ncm: "96081000", produto: "CANETA ESF.LEONORA 25X1 07 PT MY-TECH 31", fator: "25x", qtdReal: "125.00", custo: 1.92, venda: 2.99, brand: "LEONORA" },
+            { id: "96081000", ncm: "96081000", produto: "CANETA ESFE, GOLLER 1,0 TWIST 24X1 AZ/PT", fator: "24x", qtdReal: "120.00", custo: 1.38, venda: 1.99, brand: "DIVERSOS" },
+            { id: "7909438009254", ncm: "96081000", produto: "CANETA CIS 12X1 PENTONIC 0.7 AZUL 2100", fator: "12x", qtdReal: "60.00", custo: 2.85, venda: 4.49, brand: "CIS" },
+            { id: "7909438009315", ncm: "96081000", produto: "CANETA CIS 12X1 PENTONIC 0.7 VERMEL 2300", fator: "12x", qtdReal: "60.00", custo: 2.85, venda: 4.49, brand: "CIS" },
+            { id: "7896572025342", ncm: "96081000", produto: "CANETA COMPACTOR 050X1,07 B1.2 PRETA", fator: "50x", qtdReal: "250.00", custo: 0.89, venda: 1.49, brand: "COMPACTOR" },
+            { id: "7908673901392", ncm: "96081000", produto: "CANETA ESF.BAZZE 50X1 1392 PRISMA 1.0 PT", fator: "50x", qtdReal: "250.00", custo: 0.57, venda: 0.99, brand: "DIVERSOS" },
+            { id: "7909438060248", ncm: "96081000", produto: "CANETA CIS 50X1 SPIRO GEL 0.7 SORT 7736", fator: "50x", qtdReal: "250.00", custo: 2.82, venda: 4.49, brand: "CIS" },
+            { id: "7897256241102", ncm: "00000000", produto: "MARCADOR DE TEXTO JOCAR 25X1 CARBON SORT", fator: "25x", qtdReal: "75.00", custo: 3.74, venda: 5.75, brand: "LEONORA" },
+            { id: "7909438050485", ncm: "00000000", produto: "MARCA TEXTO 06X1 MARKER 7166 PASTEL", fator: "6x", qtdReal: "36.00", custo: 2.89, venda: 4.49, brand: "DIVERSOS" },
+            { id: "7909438050461", ncm: "00000000", produto: "MARCA TEXTO 06X1 MARKER 7165 NEON", fator: "6x", qtdReal: "36.00", custo: 2.89, venda: 4.49, brand: "DIVERSOS" },
+            { id: "7897256241171", ncm: "00000000", produto: "MARCA-TEXTO LEONORA 18X1 MINI BOMBOM PIC", fator: "18x", qtdReal: "108.00", custo: 2.54, venda: 3.99, brand: "LEONORA" },
+            { id: "7896572030087", ncm: "00000000", produto: "LAPIS COR COMPACTOR 6X24CORES NEO-PEN GD", fator: "6x", qtdReal: "18.00", custo: 18.5, venda: 28.75, brand: "COMPACTOR" },
+            { id: "7897476609898", ncm: "35061090", produto: "LAPIS TRIS ESCOLAR C/36 POTE 9898 MARIE", fator: "36x", qtdReal: "36.00", custo: 1.33, venda: 1.99, brand: "TRIS" },
+            { id: "7908673905703", ncm: "35061090", produto: "LAPIS TRIS ESCOLAR 5703 C/36 DIVERTIDAM.", fator: "36x", qtdReal: "36.00", custo: 1.33, venda: 1.99, brand: "TRIS" },
+            { id: "7908673905635", ncm: "35061090", produto: "LAPIS TRIS ESCOLAR 5635 C/36 MINIONS", fator: "36x", qtdReal: "36.00", custo: 1.33, venda: 1.99, brand: "TRIS" },
+            { id: "7908673904188", ncm: "35061090", produto: "LAPIS TRIS ESCOLAR 4188 C/36 PRINCESAS", fator: "36x", qtdReal: "36.00", custo: 1.52, venda: 2.49, brand: "TRIS" },
+            { id: "7896572030049", ncm: "35061090", produto: "LAPIS COMPACTOR ESCOLA C/BOR C/72 2HB", fator: "72x", qtdReal: "360.00", custo: 0.73, venda: 0.99, brand: "COMPACTOR" },
+            { id: "7898939182316", ncm: "35061090", produto: "LAPIS NZA ESCOLAR SEXTAVADO VERDE C/72", fator: "72x", qtdReal: "360.00", custo: 0.24, venda: 0.49, brand: "DIVERSOS" },
+            { id: "7897256243908", ncm: "35061090", produto: "LAPIS LEONORA ESCOLAR FLEX C/BOR C/72 VD", fator: "72x", qtdReal: "360.00", custo: 0.45, venda: 0.75, brand: "LEONORA" },
+            { id: "7908673905581", ncm: "40169200", produto: "BORRACHA TRIS 20X1 MINIONS 905581", fator: "20x", qtdReal: "20.00", custo: 2.48, venda: 3.75, brand: "TRIS" },
+            { id: "7897476689333", ncm: "40169200", produto: "BORRACHA TRIS ESC 24X1 R/333 ARTOOLS BLA", fator: "24x", qtdReal: "24.00", custo: 2.83, venda: 4.49, brand: "TRIS" },
+            { id: "7897476687803", ncm: "40169200", produto: "BORRACHA TRIS ESC 24X1 7803 POP DP COLOR", fator: "24x", qtdReal: "24.00", custo: 2.43, venda: 3.75, brand: "TRIS" },
+            { id: "7897256232063", ncm: "40169200", produto: "BORRACHA LEONORA 12X1 72206 FOOD TRENDS", fator: "12x", qtdReal: "12.00", custo: 1.35, venda: 1.99, brand: "LEONORA" },
+            { id: "7908673903952", ncm: "82141000", produto: "APONTADOR TRIS 12X1 MARIE 3952 C/DEP", fator: "12x", qtdReal: "12.00", custo: 5.56, venda: 8.75, brand: "TRIS" },
+            { id: "7897256264002", ncm: "00000000", produto: "MARCA TEXTO 24X1 JOCAR 6 CORES 6140", fator: "24x", qtdReal: "48.00", custo: 3.58, venda: 5.49, brand: "LEONORA" },
+            { id: "96082000", ncm: "96082000", produto: "MARCADOR DE TEXTO LEONORA 24X1 PASTEL SO", fator: "24x", qtdReal: "24.00", custo: 4.27, venda: 6.49, brand: "LEONORA" },
+            { id: "7897256227205", ncm: "00000000", produto: "LAPIS COR LEONORA 6X12CORES SEXTAVADO GD", fator: "6x", qtdReal: "144.00", custo: 2.8, venda: 4.49, brand: "LEONORA" },
+            { id: "7897256242253", ncm: "00000000", produto: "LAPIS COR LEONORA 12X12CORES SERTAVA. PQ", fator: "12x", qtdReal: "480.00", custo: 1.92, venda: 2.99, brand: "LEONORA" },
+            { id: "7891153073217", ncm: "00000000", produto: "MASSA P/MODELAR ACRILEX SOFT PQ 12X6COR", fator: "12x", qtdReal: "144.00", custo: 2.33, venda: 3.49, brand: "ACRILEX" },
+            { id: "7897731115126", ncm: "00000000", produto: "MASSA P/MODEL MARIPEL 12X12CORES R/1512", fator: "12x", qtdReal: "144.00", custo: 4.17, venda: 6.49, brand: "MARIPEL" },
+            { id: "7897731170002", ncm: "00000000", produto: "TINTA TEMPERA GUACHE 15ML C/6 MARIPEL", fator: "6x", qtdReal: "1200.00", custo: 0.49, venda: 0.75, brand: "MARIPEL" },
+            { id: "7908214732799", ncm: "96081000", produto: "CORRETIVO LIQUIDO FUTURO 24X4ML CANETA", fator: "24x", qtdReal: "72.00", custo: 1.37, venda: 1.99, brand: "DIVERSOS" },
+            { id: "7896572000370", ncm: "96081000", produto: "CANETA COMPACTOR 050X1 07 AZUL", fator: "50x", qtdReal: "250.00", custo: 0.63, venda: 0.99, brand: "COMPACTOR" },
+            { id: "7896572000387", ncm: "96081000", produto: "CANETA COMPACTOR 050X1 07 VERMELHA", fator: "50x", qtdReal: "150.00", custo: 0.63, venda: 0.99, brand: "COMPACTOR" },
+            { id: "7896572000394", ncm: "96081000", produto: "CANETA COMPACTOR 050X1 07 PRETA", fator: "50x", qtdReal: "250.00", custo: 0.63, venda: 0.99, brand: "COMPACTOR" },
+            { id: "7896572013851", ncm: "96081000", produto: "CANETA COMPACTOR 050X1 ECONOMIC AZUL", fator: "50x", qtdReal: "250.00", custo: 0.59, venda: 0.99, brand: "COMPACTOR" },
+            { id: "7896572001131", ncm: "96081000", produto: "CANETA COMPACTOR 050X1 TOP 2000 VERMEL", fator: "50x", qtdReal: "100.00", custo: 0.68, venda: 0.99, brand: "COMPACTOR" },
+            { id: "7897256229544", ncm: "96081000", produto: "CANETA ESF.LEONORA 30X1 07 CARBON SORT.", fator: "30x", qtdReal: "30.00", custo: 2.07, venda: 2.99, brand: "LEONORA" },
+            { id: "7897256229537", ncm: "96081000", produto: "CANETA ESF.LEONORA 30X1 07 CARB.AZ/PT/VM", fator: "30x", qtdReal: "30.00", custo: 2.07, venda: 2.99, brand: "LEONORA" },
+            { id: "7897256229476", ncm: "96081000", produto: "CANETA ESF.LEONORA 50X1 0.7 WOW 7947 SOR", fator: "50x", qtdReal: "100.00", custo: 1.19, venda: 1.75, brand: "LEONORA" },
+            { id: "7897256229490", ncm: "96081000", produto: "CANETA ESF.LEONORA 50X1 0.7 WOW 7949 SOR", fator: "50x", qtdReal: "100.00", custo: 1.19, venda: 1.75, brand: "LEONORA" },
+            { id: "4902505482106", ncm: "96081000", produto: "CANETA PILOT 12X1 BP-1RT-M 1.0 VERMELHA", fator: "12x", qtdReal: "36.00", custo: 2.6, venda: 3.99, brand: "PILOT" },
+            { id: "4902505482113", ncm: "96081000", produto: "CANETA PILOT 12X1 BP-1RT-M 1.0 AZUL", fator: "12x", qtdReal: "36.00", custo: 2.6, venda: 3.99, brand: "PILOT" },
+            { id: "4902505482090", ncm: "96081000", produto: "CANETA PILOT 12X1 BP-1RT-M 1.0 PRETA", fator: "12x", qtdReal: "36.00", custo: 2.6, venda: 3.99, brand: "PILOT" },
+            { id: "7897424000210", ncm: "96081000", produto: "CANETA PILOT 12X1 BPS CRIP 1,0 PRETA", fator: "12x", qtdReal: "12.00", custo: 6.95, venda: 10.75, brand: "PILOT" },
+            { id: "7897424000203", ncm: "96081000", produto: "CANETA PILOT 12X1 BPS GRIP 1,0 AZUL", fator: "12x", qtdReal: "12.00", custo: 6.95, venda: 10.75, brand: "PILOT" },
+            { id: "7897476653266", ncm: "96081000", produto: "CANETA TRIS GEL 6X1 R/3266 METAL OURO", fator: "6x", qtdReal: "6.00", custo: 3.65, venda: 5.75, brand: "TRIS" },
+            { id: "7897256247012", ncm: "00000000", produto: "GRAFITE LEONORA 12X12 MINAS 05MM HB", fator: "12x", qtdReal: "12.00", custo: 0.57, venda: 0.99, brand: "LEONORA" },
+            { id: "7897256247029", ncm: "00000000", produto: "GRAFITE LEONORA 12X12 MINAS 07MM HB", fator: "12x", qtdReal: "12.00", custo: 0.57, venda: 0.99, brand: "LEONORA" },
+            { id: "7897476660349", ncm: "35061090", produto: "LAPIS TRIS ESCOLAR C/48 POTE 0349 TRIANG", fator: "48x", qtdReal: "96.00", custo: 0.76, venda: 0.99, brand: "TRIS" },
+            { id: "7896572011048", ncm: "96081000", produto: "CANETA COMPAC HIDROC 5X12CORES COLOR GD", fator: "5x", qtdReal: "50.00", custo: 15.76, venda: 24.49, brand: "DIVERSOS" },
+            { id: "7896572010133", ncm: "96081000", produto: "CANETA COMPAC HIDROC 5X6CORES NEOPE MIRI", fator: "5x", qtdReal: "50.00", custo: 4.1, venda: 6.49, brand: "DIVERSOS" },
+            { id: "7896572011307", ncm: "96081000", produto: "CANETA COMPAC HIDROC 10X6CORES COLOR GD", fator: "10x", qtdReal: "100.00", custo: 8.3, venda: 12.75, brand: "DIVERSOS" },
+            { id: "7908673904850", ncm: "35061090", produto: "LAPIS TRIS ESCOLAR 4850 C/36 COLLE.ASTRO", fator: "36x", qtdReal: "36.00", custo: 1.39, venda: 1.99, brand: "TRIS" },
+            { id: "7908673904775", ncm: "35061090", produto: "LAPIS TRIS ESCOLAR 4775 C/48 COLLE.ALOHA", fator: "48x", qtdReal: "48.00", custo: 0.95, venda: 1.49, brand: "TRIS" },
+            { id: "7897476609829", ncm: "35061090", produto: "LAPIS TRIS ESCOLAR C/36 POTE 9829 PRINCE", fator: "36x", qtdReal: "36.00", custo: 1.33, venda: 1.99, brand: "TRIS" },
+            { id: "7897476609911", ncm: "35061090", produto: "LAPIS TRIS ESCOLAR C/36 POTE 9911 FROZEN", fator: "36x", qtdReal: "36.00", custo: 1.33, venda: 1.99, brand: "TRIS" },
+            { id: "7908673904799", ncm: "35061090", produto: "LAPIS TRIS ESCOLAR 4799 C/48 COLLE.RADIC", fator: "48x", qtdReal: "48.00", custo: 0.95, venda: 1.49, brand: "TRIS" },
+            { id: "7908673907240", ncm: "00000000", produto: "LAPISEIRA TRIS OCEAN C/24 7240 0.7 SORT", fator: "24x", qtdReal: "24.00", custo: 2.33, venda: 3.49, brand: "TRIS" },
+            { id: "7908673901606", ncm: "35061090", produto: "LAPIS TRIS ESCOLAR C/48 POTE 1606 ARCADE", fator: "48x", qtdReal: "48.00", custo: 0.95, venda: 1.49, brand: "TRIS" },
+            { id: "7897476609720", ncm: "35061090", produto: "LAPIS TRIS ESCOLAR C/36 POTE 9720 BARBIE", fator: "36x", qtdReal: "36.00", custo: 1.33, venda: 1.99, brand: "TRIS" },
+            { id: "7897256263463", ncm: "00000000", produto: "LAPIS LEONORA TECNICO PT 12X1 GRAFIT.2B", fator: "12x", qtdReal: "12.00", custo: 1.02, venda: 1.49, brand: "LEONORA" },
+            { id: "7897256263470", ncm: "00000000", produto: "LAPIS LEONORA TECNICO PT 12X1 GRAFIT.4B", fator: "12x", qtdReal: "12.00", custo: 1.02, venda: 1.49, brand: "LEONORA" },
+            { id: "7897256263487", ncm: "00000000", produto: "LAPIS LEONORA TECNICO PT 12X1 GRAFIT.6B", fator: "12x", qtdReal: "12.00", custo: 0.95, venda: 1.49, brand: "LEONORA" },
+            { id: "7908673907561", ncm: "00000000", produto: "MARCADOR PAGINA TRIS 12X100FL ADORE ADES", fator: "12x", qtdReal: "12.00", custo: 3.58, venda: 5.49, brand: "TRIS" },
+            { id: "7897256259701", ncm: "00000000", produto: "MARCADOR PERMANENTE JOCAR RECARR.12X1 AZ", fator: "12x", qtdReal: "24.00", custo: 2.21, venda: 3.49, brand: "LEONORA" },
+            { id: "7908214717505", ncm: "00000000", produto: "MARCADOR QUAD BC FUTURO RECARRE. AZUL", fator: "1x", qtdReal: "2.00", custo: 23.7, venda: 36.75, brand: "DIVERSOS" },
+            { id: "96082000", ncm: "96082000", produto: "MARCADOR PERMANENTE FUTURO 12X1 PRETO", fator: "12x", qtdReal: "24.00", custo: 1.71, venda: 2.75, brand: "DIVERSOS" },
+            { id: "7908214722639", ncm: "00000000", produto: "MARCADOR PERMANENTE FUTURO 12X1 VERMELHO", fator: "12x", qtdReal: "24.00", custo: 1.71, venda: 2.75, brand: "DIVERSOS" },
+            { id: "7897476603148", ncm: "00000000", produto: "CORRETIVO LIQ. BAZZE 18ML 12X1 REFIX", fator: "12x", qtdReal: "120.00", custo: 1.58, venda: 2.49, brand: "DIVERSOS" },
+            { id: "7897731122124", ncm: "00000000", produto: "GIZAO DE CERA MARIPEL 06X12CORES", fator: "6x", qtdReal: "144.00", custo: 4.43, venda: 6.75, brand: "MARIPEL" },
+            { id: "7897731199317", ncm: "00000000", produto: "GIZ DE CERA MARIPEL 12X12CORES PEQUENO", fator: "12x", qtdReal: "252.00", custo: 2.83, venda: 4.49, brand: "MARIPEL" },
+            { id: "7897294400042", ncm: "35061090", produto: "REGUA ESCOLAR 25X30=CM CRISTAL FINA", fator: "25x", qtdReal: "50.00", custo: 0.68, venda: 0.99, brand: "DIVERSOS" },
+            { id: "7908214717154", ncm: "00000000", produto: "REGUA FLEX 25X2.3X30CM FUTURO 132202", fator: "25x", qtdReal: "900.00", custo: 0.08, venda: 0, brand: "DIVERSOS" },
+            { id: "7898675270063", ncm: "35061090", produto: "COLA ESCOLAR BRANCA IRIS 06X40GR", fator: "6x", qtdReal: "36.00", custo: 0.92, venda: 1.49, brand: "DIVERSOS" },
+            { id: "7898675270070", ncm: "35061090", produto: "COLA ESCOLAR BRANCA IRIS 06X90GR", fator: "6x", qtdReal: "36.00", custo: 1.67, venda: 2.49, brand: "DIVERSOS" },
+            { id: "7897731100023", ncm: "35061090", produto: "COLA ESCOLAR BRANCA MARIPEL 06X40GR", fator: "6x", qtdReal: "36.00", custo: 1.53, venda: 2.49, brand: "MARIPEL" },
+            { id: "7897731100030", ncm: "35061090", produto: "COLA ESCOLAR BRANCA MARIPEL 06X90GR", fator: "6x", qtdReal: "36.00", custo: 2.27, venda: 3.49, brand: "MARIPEL" },
+            { id: "7896572014063", ncm: "35061090", produto: "COLA ESCOLAR BRANCA COMPAC POLAR 12X40GR", fator: "12x", qtdReal: "120.00", custo: 2, venda: 2.99, brand: "DIVERSOS" },
+            { id: "7896572014087", ncm: "35061090", produto: "COLA ESCOLAR BRANCA COMPAC,POLAR 12X90GR", fator: "12x", qtdReal: "120.00", custo: 3.2, venda: 4.99, brand: "DIVERSOS" },
+            { id: "7897256220114", ncm: "35061090", produto: "COLA BASTAO ESC.12X1 LEONORA 10G 4506", fator: "12x", qtdReal: "60.00", custo: 0.98, venda: 1.49, brand: "LEONORA" },
+            { id: "7897256250449", ncm: "35061090", produto: "COLA BASTAO ESC.12X1 LEONORA 21G 4544", fator: "12x", qtdReal: "60.00", custo: 1.38, venda: 1.99, brand: "LEONORA" },
+            { id: "7898675270155", ncm: "35061090", produto: "COLA ESCOLAR P/ISOPOR IRIS 06X40GR", fator: "6x", qtdReal: "30.00", custo: 1.81, venda: 2.75, brand: "DIVERSOS" },
+            { id: "7898675270162", ncm: "35061090", produto: "COLA ESCOLAR P/ISOPOR IRIS 06X90GR", fator: "6x", qtdReal: "30.00", custo: 3.49, venda: 5.49, brand: "DIVERSOS" },
+            { id: "7897731145406", ncm: "35061090", produto: "COLA ESCOLAR P/ISOPOR MARIPEL 12X40GR", fator: "12x", qtdReal: "60.00", custo: 2.82, venda: 4.49, brand: "MARIPEL" },
+            { id: "7896572014223", ncm: "35061090", produto: "COLA ESCOLAR ISOPOR COMPAC.POLAR 12X40GR", fator: "12x", qtdReal: "36.00", custo: 3.18, venda: 4.99, brand: "DIVERSOS" },
+            { id: "7896572014247", ncm: "35061090", produto: "COLA ESCOLAR ISOPOR COMPAC.POLAR 12X90GR", fator: "12x", qtdReal: "36.00", custo: 5.31, venda: 7.99, brand: "DIVERSOS" },
+            { id: "7503002900253", ncm: "00000000", produto: "ESTILETE ESC,LEONORA 12X1 LARGO", fator: "12x", qtdReal: "24.00", custo: 2.33, venda: 3.49, brand: "LEONORA" },
+            { id: "7908596404284", ncm: "00000000", produto: "ESTILETE ESC NZA 12X1 NZ-508 ESTREITO", fator: "12x", qtdReal: "24.00", custo: 0.85, venda: 1.49, brand: "DIVERSOS" },
+            { id: "7899785556443", ncm: "35061090", produto: "PISTOLA P/COLA QUENTE VMP P.40W GRD", fator: "1x", qtdReal: "6.00", custo: 14.85, venda: 22.99, brand: "DIVERSOS" },
+            { id: "7899785556429", ncm: "35061090", produto: "PISTOLA P/COLA QUENTE VMP P.10W PQ", fator: "1x", qtdReal: "6.00", custo: 10.49, venda: 16.49, brand: "DIVERSOS" },
+            { id: "7898964789092", ncm: "00000000", produto: "ELASTICO PREMIER P/DINHEIRO 0050GRM", fator: "1x", qtdReal: "2.00", custo: 2.3, venda: 3.49, brand: "DIVERSOS" },
+            { id: "7898964789078", ncm: "00000000", produto: "ELASTICO PREMIER P/DINHEIRO 0100GRM", fator: "1x", qtdReal: "5.00", custo: 3.25, venda: 4.99, brand: "DIVERSOS" },
+            { id: "7898964789054", ncm: "00000000", produto: "ELASTICO PREMIER P/DINHEIRO 0250GRM", fator: "1x", qtdReal: "5.00", custo: 8.5, venda: 12.99, brand: "DIVERSOS" },
+            { id: "7898964789030", ncm: "00000000", produto: "ELASTICO PREMIER P/DINHEIRO 0500GRM", fator: "1x", qtdReal: "5.00", custo: 14.5, venda: 22.49, brand: "DIVERSOS" },
+            { id: "7897476612751", ncm: "00000000", produto: "GRAMPEADOR MINI BAZZE 12X1 18F B5101 SOR", fator: "12x", qtdReal: "12.00", custo: 5.56, venda: 8.49, brand: "DIVERSOS" },
+            { id: "7897476611846", ncm: "35061090", produto: "TESOURA ESCOLAR 24X1 TRIS R/1846 CLASS P", fator: "24x", qtdReal: "24.00", custo: 3.68, venda: 5.75, brand: "TRIS" },
+            { id: "7908214735592", ncm: "35061090", produto: "TESOURA ESCOLAR 24X1 FUTURO 1201 BLACK", fator: "24x", qtdReal: "48.00", custo: 2.11, venda: 3.49, brand: "DIVERSOS" },
+            { id: "82130000", ncm: "82130000", produto: "TESOURA ESCOLAR 24X1 LEONORA 72005 PLUS", fator: "24x", qtdReal: "24.00", custo: 3.74, venda: 5.75, brand: "LEONORA" },
+            { id: "7897476602318", ncm: "35061090", produto: "TESOURA ESCOLAR 20X1 TRIS R/2318 CLASS B", fator: "20x", qtdReal: "20.00", custo: 2.97, venda: 4.49, brand: "TRIS" },
+            { id: "7897476601588", ncm: "35061090", produto: "TESOURA ESCOLAR 30X1 TRIS R/1588 CLASS", fator: "30x", qtdReal: "30.00", custo: 3.03, venda: 4.75, brand: "TRIS" },
+            { id: "7897256213154", ncm: "00000000", produto: "BLOCO DE NOTAS LEONORA 4X1 ADV 100F 1115", fator: "4x", qtdReal: "40.00", custo: 1.23, venda: 1.99, brand: "LEONORA" },
+            { id: "7896603805004", ncm: "00000000", produto: "BLOCO DE NOTAS ADELBRAS 4X1 ADV 200F 019", fator: "4x", qtdReal: "40.00", custo: 0.89, venda: 1.49, brand: "DIVERSOS" },
+            { id: "7896603805042", ncm: "00000000", produto: "BLOCO MARCAD.200X1 ADELBRAS 8 COR 023", fator: "200x", qtdReal: "2000.00", custo: 0.03, venda: 0, brand: "DIVERSOS" },
+            { id: "7899767447134", ncm: "00000000", produto: "ETIQUETA PRECO N.12 43X25MM 5X48", fator: "43x", qtdReal: "215.00", custo: 0.11, venda: 0, brand: "DIVERSOS" },
+            { id: "39191010", ncm: "39191010", produto: "FITA CELTA GOMADA 6X45MMX30MT TRANSP", fator: "6x", qtdReal: "24.00", custo: 1.92, venda: 2.99, brand: "DIVERSOS" },
+            { id: "7896603800399", ncm: "00000000", produto: "FITA ADELBRAS DUREX PQ 10X1 12MMX10M", fator: "10x", qtdReal: "50.00", custo: 0.5, venda: 0.75, brand: "DIVERSOS" },
+            { id: "7898543384601", ncm: "35061090", produto: "COLA BASTAO SILI,QUENTE T.BOND 30CM FINA", fator: "1x", qtdReal: "1.00", custo: 32.4, venda: 49.99, brand: "DIVERSOS" },
+            { id: "7897294404538", ncm: "00000000", produto: "PORTA CANET/CLIP/LEMBRE,R/443 WALEU CRST", fator: "1x", qtdReal: "6.00", custo: 9.6, venda: 14.99, brand: "DIVERSOS" },
+            { id: "35061090", ncm: "35061090", produto: "COLA SILICONE LIQUIDA RENDICOLA 12X1 50G", fator: "12x", qtdReal: "12.00", custo: 3.69, venda: 5.75, brand: "DIVERSOS" },
+            { id: "35061090", ncm: "35061090", produto: "COLA SILICONE LIQUIDA RENDICOLA12X1 100G", fator: "12x", qtdReal: "12.00", custo: 5.86, venda: 8.99, brand: "DIVERSOS" },
+            { id: "7897256232018", ncm: "82141000", produto: "APONTADOR LEONORA 24X1 R/73001 C/DEP RET", fator: "24x", qtdReal: "24.00", custo: 0.83, venda: 1.49, brand: "LEONORA" },
+            { id: "7897256260028", ncm: "82141000", produto: "APONTADOR LEONORA 24X1 R/4530 REDONDO", fator: "24x", qtdReal: "48.00", custo: 0.29, venda: 0.49, brand: "LEONORA" },
+            { id: "82141000", ncm: "82141000", produto: "APONTADOR FUTURO 24X1 C/DEP.2211 RETANG.", fator: "24x", qtdReal: "24.00", custo: 0.8, venda: 0.99, brand: "DIVERSOS" },
+            { id: "7897256248453", ncm: "82141000", produto: "APONTADOR LEONORA 24X1 C/DEP. 4745", fator: "24x", qtdReal: "24.00", custo: 0.81, venda: 1.49, brand: "LEONORA" },
+            { id: "7897476607764", ncm: "82141000", produto: "APONTADOR 60X1 R/607764 TRIS S/DEPO SORT", fator: "60x", qtdReal: "60.00", custo: 1, venda: 1.49, brand: "TRIS" },
+            { id: "7908673907875", ncm: "82141000", produto: "APONTADOR TRIS 12X1 L.JUSTICA 7875 C/DEP", fator: "12x", qtdReal: "12.00", custo: 5.56, venda: 8.75, brand: "TRIS" },
+            { id: "7897476605555", ncm: "82141000", produto: "APONTADOR 24X1 R/SU660 5555 TRIS C/DEP,M", fator: "24x", qtdReal: "24.00", custo: 1.25, venda: 1.99, brand: "TRIS" },
+            { id: "7897185966336", ncm: "82141000", produto: "APONTADOR GOLLER 24X1 1633 C/DEPO", fator: "24x", qtdReal: "24.00", custo: 1.07, venda: 1.75, brand: "DIVERSOS" },
+            { id: "7897049720609", ncm: "35061090", produto: "COLA ESCOLAR C/GLITER PIRATININ 4X25GR", fator: "4x", qtdReal: "24.00", custo: 1.63, venda: 2.49, brand: "DIVERSOS" },
+            { id: "7899021335887", ncm: "00000000", produto: "FOLHA EVA/40X48 IBEL/PRETO", fator: "40x", qtdReal: "40.00", custo: 0.28, venda: 0.49, brand: "DIVERSOS" },
+            { id: "7899021335726", ncm: "00000000", produto: "FOLHA EVA/40X48 IBEL/LARANJA", fator: "40x", qtdReal: "40.00", custo: 0.28, venda: 0.49, brand: "DIVERSOS" },
+            { id: "7899021335818", ncm: "00000000", produto: "FOLHA EVA/40X48 IBEL/MARROM", fator: "40x", qtdReal: "40.00", custo: 0.28, venda: 0.49, brand: "DIVERSOS" },
+            { id: "7899021335665", ncm: "00000000", produto: "FOLHA EVA/40X48 IBEL/VERDE BAND", fator: "40x", qtdReal: "40.00", custo: 0.28, venda: 0.49, brand: "DIVERSOS" },
+            { id: "7899021335764", ncm: "00000000", produto: "FOLHA EVA/40X48 IBEL/VINHO", fator: "40x", qtdReal: "40.00", custo: 0.28, venda: 0.49, brand: "DIVERSOS" },
+            { id: "7899021335788", ncm: "00000000", produto: "FOLHA EVA/40X48 IBEL/CAMURCA", fator: "40x", qtdReal: "40.00", custo: 0.28, venda: 0.49, brand: "DIVERSOS" },
+            { id: "7899021335566", ncm: "00000000", produto: "FOLHA EVA/40X48 IBEL/ROSA", fator: "40x", qtdReal: "40.00", custo: 0.28, venda: 0.49, brand: "DIVERSOS" },
+            { id: "7899021335603", ncm: "00000000", produto: "FOLHA EVA/40X48 IBEL/AZUL", fator: "40x", qtdReal: "40.00", custo: 0.28, venda: 0.49, brand: "DIVERSOS" },
+            { id: "7899021335757", ncm: "00000000", produto: "FOLHA EVA/40X48 IBEL/VRML CARMI", fator: "40x", qtdReal: "40.00", custo: 0.28, venda: 0.49, brand: "DIVERSOS" },
+            { id: "7899021396871", ncm: "00000000", produto: "FOLHA EVA/40X48 IBEL/SALMON", fator: "40x", qtdReal: "40.00", custo: 0.28, venda: 0.49, brand: "DIVERSOS" },
+            { id: "7899021361299", ncm: "00000000", produto: "FOLHA EVA/40X48 IBEL C/GLIT BRANCO 117", fator: "40x", qtdReal: "40.00", custo: 0.69, venda: 0.99, brand: "DIVERSOS" },
+            { id: "7899021361381", ncm: "00000000", produto: "FOLHA EVA/40X48 IBEL C/GLIT AZUL 113", fator: "40x", qtdReal: "40.00", custo: 0.69, venda: 0.99, brand: "DIVERSOS" },
+            { id: "7899021368250", ncm: "00000000", produto: "FOLHA EVA/40X48 IBEL C/GLIT AZUL PET 140", fator: "40x", qtdReal: "40.00", custo: 0.69, venda: 0.99, brand: "DIVERSOS" },
+            { id: "7899021361367", ncm: "00000000", produto: "FOLHA EVA/40X48 IBEL C/GLIT OURO 107", fator: "40x", qtdReal: "40.00", custo: 0.69, venda: 0.99, brand: "DIVERSOS" },
+            { id: "7899021368182", ncm: "00000000", produto: "FOLHA EVA/40X48 IBEL C/GLIT LJA NEON 133", fator: "40x", qtdReal: "40.00", custo: 0.69, venda: 0.99, brand: "DIVERSOS" },
+            { id: "7899474238711", ncm: "00000000", produto: "FOLHA EMB EVA/40X60 VMP C/GLIT AZUL", fator: "40x", qtdReal: "40.00", custo: 0.67, venda: 0.99, brand: "DIVERSOS" },
+            { id: "7908770616809", ncm: "00000000", produto: "FOLHA EMB EVA 40X48 VMP 10F GLITTER PRAT", fator: "40x", qtdReal: "40.00", custo: 0.61, venda: 0.99, brand: "DIVERSOS" },
+            { id: "7908770616625", ncm: "00000000", produto: "FOLHA EMB EVA 40X48 VMP 10F GLITTER VD", fator: "40x", qtdReal: "40.00", custo: 0.61, venda: 0.99, brand: "DIVERSOS" },
+            { id: "7908770616861", ncm: "00000000", produto: "FOLHA EMB EVA 40X48 VMP 10F GLITTER AZUL", fator: "40x", qtdReal: "40.00", custo: 0.61, venda: 0.99, brand: "DIVERSOS" },
+            { id: "7898248392703", ncm: "00000000", produto: "PAPEL CREPON VMP C/10=FLH VERMELHO", fator: "10x", qtdReal: "10.00", custo: 1.26, venda: 1.99, brand: "DIVERSOS" },
+            { id: "7898248392635", ncm: "00000000", produto: "PAPEL CREPON VMP C/10=FLH BRANCO", fator: "10x", qtdReal: "10.00", custo: 1.26, venda: 1.99, brand: "DIVERSOS" },
+            { id: "7898248392727", ncm: "00000000", produto: "PAPEL CREPON VMP C/10=FLH AMARELO", fator: "10x", qtdReal: "10.00", custo: 1.26, venda: 1.99, brand: "DIVERSOS" },
+            { id: "7899014900344", ncm: "00000000", produto: "PAPEL CREPON VMP C/10=FLH VERDE BANDEIRA", fator: "10x", qtdReal: "10.00", custo: 1.26, venda: 1.99, brand: "DIVERSOS" },
+            { id: "7898248392710", ncm: "00000000", produto: "PAPEL CREPON VMP C/10=FLH LARANJA", fator: "10x", qtdReal: "10.00", custo: 1.26, venda: 1.99, brand: "DIVERSOS" },
+            { id: "7898248392659", ncm: "00000000", produto: "PAPEL CREPON VMP C/10=FLH AZUL CELESTE", fator: "10x", qtdReal: "10.00", custo: 1.26, venda: 1.99, brand: "DIVERSOS" },
+            { id: "7898248392673", ncm: "00000000", produto: "PAPEL CREPON VMP C/10=FLH ROXO", fator: "10x", qtdReal: "10.00", custo: 1.26, venda: 1.99, brand: "DIVERSOS" },
+            { id: "7898739862968", ncm: "48202000", produto: "CADERNO SMART C/D BROCH.05X80 AZUL", fator: "5x", qtdReal: "30.00", custo: 6.44, venda: 9.99, brand: "DIVERSOS" },
+            { id: "7891253207680", ncm: "48202000", produto: "CADERNO CRED C/D BROCHURAO 05X96 VERDE", fator: "5x", qtdReal: "30.00", custo: 7.64, venda: 11.75, brand: "DIVERSOS" },
+            { id: "7898739860612", ncm: "48202000", produto: "CADERNO SMART C/D BROCH.05X96 VERMELHO", fator: "5x", qtdReal: "30.00", custo: 6.87, venda: 10.75, brand: "DIVERSOS" },
+            { id: "7898739862982", ncm: "48202000", produto: "CADERNO SMART C/D BROCH.05X80 VERDE", fator: "5x", qtdReal: "30.00", custo: 6.44, venda: 9.99, brand: "DIVERSOS" },
+            { id: "7891253207673", ncm: "48202000", produto: "CADERNO CRED C/D BROCHURAO 05X96 AMARELO", fator: "5x", qtdReal: "30.00", custo: 7.64, venda: 11.75, brand: "DIVERSOS" },
+            { id: "7891253207666", ncm: "48202000", produto: "CADERNO CRED C/D BROCHURAO 05X96 AZUL", fator: "5x", qtdReal: "30.00", custo: 7.64, venda: 11.75, brand: "DIVERSOS" },
+            { id: "7891253207697", ncm: "48202000", produto: "CADERNO CRED C/D BROCHURAO 05X96 VM", fator: "5x", qtdReal: "30.00", custo: 7.64, venda: 11.75, brand: "DIVERSOS" },
+            { id: "27891253272989", ncm: "48202000", produto: "CADERNO CRED C/D BROCHURAO 05X96 COLORID", fator: "5x", qtdReal: "25.00", custo: 7.64, venda: 11.75, brand: "DIVERSOS" },
+            { id: "7891253279519", ncm: "48202000", produto: "CADERNO CRED C/D BROCHURAO 05X96 PRETO", fator: "5x", qtdReal: "30.00", custo: 7.64, venda: 11.75, brand: "DIVERSOS" },
+            { id: "7891253282328", ncm: "48202000", produto: "CADERNO CRED C/D BROCHURAO 5X96 FUSION B", fator: "5x", qtdReal: "15.00", custo: 12.89, venda: 19.99, brand: "DIVERSOS" },
+            { id: "27891253274266", ncm: "48202000", produto: "CADERNO CRED C/D BROCHURAO 05X80 S. CARS", fator: "5x", qtdReal: "25.00", custo: 7.74, venda: 11.99, brand: "DIVERSOS" },
+            { id: "7899743904996", ncm: "48202000", produto: "CADERNO TROPPO BROCHU C/A 5X80 POP GIRLS", fator: "5x", qtdReal: "25.00", custo: 7.2, venda: 10.99, brand: "DIVERSOS" },
+            { id: "7899743905009", ncm: "48202000", produto: "CADERNO TROPPO BROCHU C/A 5X80 ANIME BAT", fator: "5x", qtdReal: "30.00", custo: 7.2, venda: 10.99, brand: "DIVERSOS" },
+            { id: "7891253273968", ncm: "48202000", produto: "CADERNO CRED 1/4 C/D 5X80 ESP.MY COL,F", fator: "5x", qtdReal: "5.00", custo: 5.81, venda: 8.99, brand: "DIVERSOS" },
+            { id: "7891253273975", ncm: "48202000", produto: "CADERNO CRED 1/4 C/D 5X80 ESP.MY COL,M", fator: "5x", qtdReal: "5.00", custo: 5.81, venda: 8.99, brand: "DIVERSOS" },
+            { id: "7891253269589", ncm: "48202000", produto: "CADERNO CRED 1/4 C/D 5X200 ESP.MY COL,M", fator: "5x", qtdReal: "5.00", custo: 9.18, venda: 13.99, brand: "DIVERSOS" },
+            { id: "7898086991342", ncm: "48202000", produto: "CADERNO TROPPO 1/4 C/D 03X200 ESP M.AMIG", fator: "3x", qtdReal: "6.00", custo: 9.11, venda: 13.99, brand: "DIVERSOS" },
+            { id: "7896849100697", ncm: "48202000", produto: "CADERNO CDSIL C/D 1/4,05X90 ESP/INFANT", fator: "5x", qtdReal: "10.00", custo: 7.63, venda: 11.75, brand: "SÃO DOMINGOS" },
+            { id: "7891253275832", ncm: "48202000", produto: "CADERNO CRED 1/4 ESP,05X80 MORMAI FEM", fator: "5x", qtdReal: "10.00", custo: 10.55, venda: 16.49, brand: "DIVERSOS" },
+            { id: "7891253254042", ncm: "48202000", produto: "CADERNO CRED 1/4 C/D ESP,5X96 LOVE", fator: "5x", qtdReal: "10.00", custo: 9.03, venda: 13.99, brand: "DIVERSOS" },
+            { id: "7899743902688", ncm: "48202000", produto: "CADERNO TROPPO C/D 1MT 5X96 BLOX GAMES", fator: "5x", qtdReal: "15.00", custo: 8.94, venda: 13.75, brand: "DIVERSOS" },
+            { id: "48202000", ncm: "48202000", produto: "CADERNO TROPPO C/D ADV/B 1MT 5X96 PO GIR", fator: "5x", qtdReal: "15.00", custo: 10.66, venda: 16.49, brand: "DIVERSOS" },
+            { id: "27891253278424", ncm: "48202000", produto: "CADERNO CRED C/D 01MT 3X80 PET FUN", fator: "3x", qtdReal: "15.00", custo: 12.08, venda: 18.75, brand: "DIVERSOS" },
+            { id: "7891253281727", ncm: "48202000", produto: "CADERNO CRED C/D 01MT 4X96 MY COLL,MAS", fator: "4x", qtdReal: "20.00", custo: 7.53, venda: 11.75, brand: "DIVERSOS" },
+            { id: "7908347114912", ncm: "48202000", produto: "CADERNO CULTUR.C/D 01MT 1X80 C. H.ARANHA", fator: "1x", qtdReal: "5.00", custo: 14.4, venda: 22.49, brand: "DIVERSOS" },
+            { id: "7908347114134", ncm: "48202000", produto: "CADERNO CULTUR.C/D 01MT 1X80 STITCH LOVE", fator: "1x", qtdReal: "5.00", custo: 15.98, venda: 24.75, brand: "DIVERSOS" },
+            { id: "7899743908321", ncm: "48202000", produto: "CADERNO TROPPO C/D ADV/B 1MT 5X96 ST SHI", fator: "5x", qtdReal: "25.00", custo: 10.66, venda: 16.49, brand: "DIVERSOS" },
+            { id: "7908347114141", ncm: "48202000", produto: "CADERNO CULTUR.C/D 01MT 1X80 STITCH FEEL", fator: "1x", qtdReal: "5.00", custo: 15.98, venda: 24.75, brand: "DIVERSOS" },
+            { id: "7891253285862", ncm: "48202000", produto: "CADERNO CRED C/D 10MT 5X140 SUPER CARS", fator: "5x", qtdReal: "30.00", custo: 9.86, venda: 15.49, brand: "DIVERSOS" },
+            { id: "7891253285732", ncm: "48202000", produto: "CADERNO CRED C/D 10MT 5X140 LALA PETS", fator: "5x", qtdReal: "30.00", custo: 9.86, venda: 15.49, brand: "DIVERSOS" },
+            { id: "7898086992028", ncm: "48202000", produto: "CADERNO TROPPO C/D 10MT 3X140 ROSA CHIC", fator: "3x", qtdReal: "12.00", custo: 9.35, venda: 14.49, brand: "DIVERSOS" },
+            { id: "7898086993520", ncm: "48202000", produto: "CADERNO TROPPO C/D 10MT 3X140 CHERIE", fator: "3x", qtdReal: "12.00", custo: 9.35, venda: 14.49, brand: "DIVERSOS" },
+            { id: "7898086993773", ncm: "48202000", produto: "CADERNO TROPPO C/D 10MT 3X140 HELLO PAND", fator: "3x", qtdReal: "12.00", custo: 9.35, venda: 14.49, brand: "DIVERSOS" },
+            { id: "7898086999263", ncm: "48202000", produto: "CADERNO TROPPO C/D 10MT 3X140 FORCE DOG", fator: "3x", qtdReal: "9.00", custo: 9.35, venda: 14.49, brand: "DIVERSOS" },
+            { id: "7899743902848", ncm: "48202000", produto: "CADERNO TROPPO C/D 10MT 3X140 DREAM IT", fator: "3x", qtdReal: "12.00", custo: 9.35, venda: 14.49, brand: "DIVERSOS" },
+            { id: "7899743904903", ncm: "48202000", produto: "CADERNO TROPPO C/D ADV/B 10MT 3X200 PO G", fator: "3x", qtdReal: "12.00", custo: 16.92, venda: 25.99, brand: "DIVERSOS" },
+            { id: "7899743903142", ncm: "48202000", produto: "CADERNO TROPPO C/D 10MT 3X140 LUV", fator: "3x", qtdReal: "12.00", custo: 9.35, venda: 14.49, brand: "DIVERSOS" },
+            { id: "7898086997993", ncm: "48202000", produto: "CADERNO TROPPO C/D 10MT 3X140 UNICORN", fator: "3x", qtdReal: "12.00", custo: 9.35, venda: 14.49, brand: "DIVERSOS" },
+            { id: "7898086997061", ncm: "48202000", produto: "CADERNO TROPPO C/D 10MT 3X140 MO. WHEELS", fator: "3x", qtdReal: "12.00", custo: 9.35, venda: 14.49, brand: "DIVERSOS" },
+            { id: "7891253271872", ncm: "48202000", produto: "CADERNO CRED C/D 10MT 2X200 FUSION BOY", fator: "2x", qtdReal: "6.00", custo: 24.19, venda: 37.49, brand: "DIVERSOS" },
+            { id: "7891027304874", ncm: "48202000", produto: "CADERNO TILI,C/DURA 10MT 4X160 LOVE PINK", fator: "4x", qtdReal: "12.00", custo: 23.68, venda: 36.75, brand: "DIVERSOS" },
+            { id: "7891253285749", ncm: "48202000", produto: "CADERNO CRED C/D 12MT 3X168 LALA PETS", fator: "3x", qtdReal: "12.00", custo: 12.99, venda: 19.99, brand: "DIVERSOS" },
+            { id: "7891253285879", ncm: "48202000", produto: "CADERNO CRED C/D 12MT 3X168 SUPER CARS", fator: "3x", qtdReal: "12.00", custo: 12.3, venda: 18.99, brand: "DIVERSOS" },
+            { id: "7891253254219", ncm: "48202000", produto: "CADERNO CRED C/D 12MT 2X240 PERFORMANCE", fator: "2x", qtdReal: "10.00", custo: 16.2, venda: 24.99, brand: "DIVERSOS" },
+            { id: "7891253285008", ncm: "48202000", produto: "CADERNO CRED C/D 12MT 2X192 A MARGARIDA", fator: "2x", qtdReal: "6.00", custo: 20.19, venda: 31.49, brand: "DIVERSOS" },
+            { id: "7891253269657", ncm: "48202000", produto: "CADERNO CRED C/D 12MT 3X168 MY C,FEMI", fator: "3x", qtdReal: "12.00", custo: 12.6, venda: 19.49, brand: "DIVERSOS" },
+            { id: "7899743904156", ncm: "48202000", produto: "CADERNO TROPPO C/D 12MT 2X240 C.DINO ADV", fator: "2x", qtdReal: "6.00", custo: 19.35, venda: 29.99, brand: "DIVERSOS" },
+            { id: "7891253280751", ncm: "48202000", produto: "CADERNO CRED C/D 12MT 2X192 PEAKY BLINDE", fator: "2x", qtdReal: "6.00", custo: 27.26, venda: 42.49, brand: "DIVERSOS" },
+            { id: "27891253278028", ncm: "48202000", produto: "CADERNO CRED C/D 12MT 2X192 ARCO-IRIS", fator: "2x", qtdReal: "6.00", custo: 23.99, venda: 36.99, brand: "DIVERSOS" },
+            { id: "7891253279847", ncm: "48202000", produto: "CADERNO CRED C/D 12MT 3X168 ESSENCIALE P", fator: "3x", qtdReal: "6.00", custo: 12.6, venda: 19.49, brand: "DIVERSOS" },
+            { id: "7899743904163", ncm: "48202000", produto: "CADERNO TROPPO C/D 15MT 1X300 C.DINO ADV", fator: "1x", qtdReal: "6.00", custo: 24.23, venda: 37.49, brand: "DIVERSOS" },
+            { id: "7898086992424", ncm: "48202000", produto: "CADERNO TROPPO C/D 15MT 1X300 UNICOR ADV", fator: "1x", qtdReal: "6.00", custo: 24.25, venda: 37.49, brand: "DIVERSOS" },
+            { id: "7899743903968", ncm: "48202000", produto: "CADERNO TROPPO C/D 15MT 1X300 MEGABOTS", fator: "1x", qtdReal: "4.00", custo: 21.92, venda: 33.99, brand: "DIVERSOS" },
+            { id: "48202000", ncm: "48202000", produto: "CADERNO CDSIL C/D 15MT 2X248 DAY DREAM", fator: "2x", qtdReal: "6.00", custo: 35.32, venda: 54.75, brand: "SÃO DOMINGOS" },
+            { id: "7896849118999", ncm: "48202000", produto: "CADERNO CDSIL C/D 15MT 2X240 SMART PLAY", fator: "2x", qtdReal: "4.00", custo: 32.11, venda: 49.75, brand: "SÃO DOMINGOS" },
+            { id: "7896849125898", ncm: "48202000", produto: "CADERNO CDSIL C/D 15MT 2X248 SWEETLY", fator: "2x", qtdReal: "4.00", custo: 34.88, venda: 53.99, brand: "SÃO DOMINGOS" },
+            { id: "7891253285756", ncm: "48202000", produto: "CADERNO CRED C/D 16MT 3X224 LALA PETS", fator: "3x", qtdReal: "15.00", custo: 14.78, venda: 22.99, brand: "DIVERSOS" },
+            { id: "7891253285886", ncm: "48202000", produto: "CADERNO CRED C/D 16MT 3X224 SUPER CARS", fator: "3x", qtdReal: "15.00", custo: 14.78, venda: 22.99, brand: "DIVERSOS" },
+            { id: "7891253283301", ncm: "48202000", produto: "CADERNO CRED C/D 16MT 3X224 COMFY 30-1", fator: "3x", qtdReal: "15.00", custo: 14.78, venda: 22.99, brand: "DIVERSOS" },
+            { id: "7891253283585", ncm: "48202000", produto: "CADERNO CRED C/D 16MT 3X224 POP COLECT M", fator: "3x", qtdReal: "15.00", custo: 14.78, venda: 22.99, brand: "DIVERSOS" },
+            { id: "7891253285206", ncm: "48202000", produto: "CADERNO CRED C/D 16MT 2X256 THE BEATLES", fator: "2x", qtdReal: "10.00", custo: 39.42, venda: 60.99, brand: "DIVERSOS" },
+            { id: "27891253284777", ncm: "48202000", produto: "CADERNO CRED C/D 16MT 2X256 VIDA DE PET", fator: "2x", qtdReal: "4.00", custo: 29.75, venda: 45.99, brand: "DIVERSOS" },
+            { id: "27891253284210", ncm: "48202000", produto: "CADERNO CRED C/D 16MT 2X256 GARFILD LIGH", fator: "2x", qtdReal: "6.00", custo: 32.21, venda: 49.99, brand: "DIVERSOS" },
+            { id: "7891253281857", ncm: "48202000", produto: "CADERNO CRED C/D 16MT 2X256 MMA", fator: "2x", qtdReal: "10.00", custo: 29.75, venda: 45.99, brand: "DIVERSOS" },
+            { id: "48202000", ncm: "48202000", produto: "CADERNO CRED C/D 16MT 2X256 PURPURINA", fator: "2x", qtdReal: "10.00", custo: 33.75, venda: 52.49, brand: "DIVERSOS" },
+            { id: "7891027727598", ncm: "48202000", produto: "CADERNO TILI,C/DURA 16MT 2X320 MAIS FEM", fator: "2x", qtdReal: "10.00", custo: 26.37, venda: 40.99, brand: "DIVERSOS" },
+            { id: "7891253282373", ncm: "48202000", produto: "CADERNO CRED C/D 16MT 2X320 LOVE", fator: "2x", qtdReal: "10.00", custo: 39.83, venda: 61.75, brand: "DIVERSOS" },
+            { id: "7891253284902", ncm: "48202000", produto: "CADERNO CRED C/D 16MT 2X256 TIPODELA", fator: "2x", qtdReal: "10.00", custo: 39.42, venda: 60.99, brand: "DIVERSOS" },
+            { id: "7891253283318", ncm: "48202000", produto: "CADERNO CRED C/D 20MT 02X280 COMFY 31-8", fator: "2x", qtdReal: "12.00", custo: 20.03, venda: 30.99, brand: "DIVERSOS" },
+            { id: "7891253285893", ncm: "48202000", produto: "CADERNO CRED C/D 20MT 2X280 SUPER CARS", fator: "2x", qtdReal: "12.00", custo: 20.03, venda: 30.99, brand: "DIVERSOS" },
+            { id: "7891253285763", ncm: "48202000", produto: "CADERNO CRED C/D 20MT 2X280 LALA PETS", fator: "2x", qtdReal: "12.00", custo: 20.03, venda: 30.99, brand: "DIVERSOS" },
+            { id: "7891253254295", ncm: "48202000", produto: "CADERNO CRED C/D 20MT 2X280 PERFORMANCE", fator: "2x", qtdReal: "12.00", custo: 20.03, venda: 30.99, brand: "DIVERSOS" },
+            { id: "7891253281864", ncm: "48202000", produto: "CADERNO CRED C/D 20MT 2X320 MMA", fator: "2x", qtdReal: "12.00", custo: 37.06, venda: 57.49, brand: "DIVERSOS" },
+            { id: "7899743904170", ncm: "48202000", produto: "CADERNO TROPPO C/D 20MT 1X400 DINOS ADV", fator: "1x", qtdReal: "6.00", custo: 30.16, venda: 46.75, brand: "DIVERSOS" },
+            { id: "7891253285213", ncm: "48202000", produto: "CADERNO CRED C/D 20MT 2X320 THE BEATLES", fator: "2x", qtdReal: "10.00", custo: 49.5, venda: 76.75, brand: "DIVERSOS" },
+            { id: "7891253282380", ncm: "48202000", produto: "CADERNO CRED C/D 20MT 2X400 LOVE", fator: "2x", qtdReal: "10.00", custo: 46.86, venda: 72.75, brand: "DIVERSOS" },
+            { id: "7896849131103", ncm: "48202000", produto: "CADERNO CDSIL C/D 20MT 2X320 CHERRY LOVE", fator: "2x", qtdReal: "10.00", custo: 41.36, venda: 63.99, brand: "SÃO DOMINGOS" },
+            { id: "7896849133534", ncm: "48202000", produto: "CADERNO CDSIL C/D 20MT 2X320 IT'S LOVE", fator: "2x", qtdReal: "10.00", custo: 44.11, venda: 68.49, brand: "SÃO DOMINGOS" },
+            { id: "7891253274347", ncm: "48202000", produto: "CADERNO CRED DESENHO C/D 5X80 SUPER CARS", fator: "5x", qtdReal: "10.00", custo: 9.3, venda: 14.49, brand: "DIVERSOS" },
+            { id: "7891253104811", ncm: "48202000", produto: "CADERNO CRED DESENHO FLEX 10X48 C/SEDA", fator: "10x", qtdReal: "20.00", custo: 6, venda: 9.49, brand: "DIVERSOS" },
+            { id: "7896849118951", ncm: "48202000", produto: "CADERNO CDSIL P/DESENHO 05X80 SMART PLAY", fator: "5x", qtdReal: "10.00", custo: 16.56, venda: 25.75, brand: "SÃO DOMINGOS" },
+            { id: "7896849117459", ncm: "48202000", produto: "CADERNO CDSIL P/DESENHO 05X80 UNICORN I", fator: "5x", qtdReal: "10.00", custo: 16.56, venda: 25.75, brand: "SÃO DOMINGOS" },
+            { id: "7891253274132", ncm: "48202000", produto: "CADERNO CRED DESENHO C/D 5X80 LALA PETS", fator: "5x", qtdReal: "10.00", custo: 10.11, venda: 15.75, brand: "DIVERSOS" },
+            { id: "7896849102332", ncm: "48202000", produto: "CADERNO CDSIL C/D 20MT 2X400 BLIS RELIGI", fator: "2x", qtdReal: "10.00", custo: 39.65, venda: 61.49, brand: "SÃO DOMINGOS" },
+            { id: "7896849100215", ncm: "48202000", produto: "CADERNO CDSIL C/D 20MT 2X400 BLIS MISTO", fator: "2x", qtdReal: "10.00", custo: 39.65, venda: 61.49, brand: "SÃO DOMINGOS" },
+            { id: "7899743903975", ncm: "48202000", produto: "CADERNO TROPPO C/D 20MT 1X400 MEGABO.ADV", fator: "1x", qtdReal: "5.00", custo: 33.51, venda: 51.99, brand: "DIVERSOS" },
+            { id: "7891253282922", ncm: "48202000", produto: "CADERNO CRED C/D 10MT 2X160 ZICO", fator: "2x", qtdReal: "4.00", custo: 30.36, venda: 46.99, brand: "DIVERSOS" },
+            { id: "7891253284520", ncm: "48202000", produto: "CADERNO CRED C/D 16MT 2X256 ZICO", fator: "2x", qtdReal: "4.00", custo: 38.93, venda: 60.49, brand: "DIVERSOS" },
+            { id: "7891253284537", ncm: "48202000", produto: "CADERNO CRED C/D 20MT 2X320 ZICO", fator: "2x", qtdReal: "4.00", custo: 51.53, venda: 79.75, brand: "DIVERSOS" },
+            { id: "7891253284360", ncm: "48202000", produto: "CADERNO CRED C/D 20MT 2X320 PALMEIRA", fator: "2x", qtdReal: "4.00", custo: 51.53, venda: 79.75, brand: "DIVERSOS" },
+            { id: "7891253284339", ncm: "48202000", produto: "CADERNO CRED C/D 10MT 2X160 PALMEIRA", fator: "2x", qtdReal: "4.00", custo: 30.36, venda: 46.99, brand: "DIVERSOS" },
+            { id: "7891253284353", ncm: "48202000", produto: "CADERNO CRED C/D 16MT 2X256 PALMEIRA", fator: "2x", qtdReal: "4.00", custo: 40.21, venda: 62.49, brand: "DIVERSOS" },
+            { id: "7896849117442", ncm: "48202000", produto: "CADERNO CDSIL C/D 5X80 BROC.UNICORN BELI", fator: "5x", qtdReal: "10.00", custo: 13.11, venda: 20.49, brand: "SÃO DOMINGOS" },
+            { id: "7896849131288", ncm: "48202000", produto: "CADERNO CDSIL C/D 15MT 2X240 BLACK MASC.", fator: "2x", qtdReal: "2.00", custo: 35.68, venda: 55.49, brand: "SÃO DOMINGOS" },
+            { id: "7896849133022", ncm: "48202000", produto: "CADERNO CDSIL C/D 15MT 2X240 BLACK FEM.", fator: "2x", qtdReal: "2.00", custo: 36.75, venda: 56.99, brand: "SÃO DOMINGOS" },
             { id: "7896849131684", ncm: "48202000", produto: "CADERNO CDSIL C/D 10MT 2X160 XPLORE", fator: "2x", qtdReal: "4.00", custo: 22.68, venda: 34.99, brand: "SÃO DOMINGOS" },
             { id: "7896849131240", ncm: "48202000", produto: "CADERNO CDSIL C/D 10MT 2X160 BLACK MASC.", fator: "2x", qtdReal: "4.00", custo: 27.25, venda: 41.99, brand: "SÃO DOMINGOS" },
             { id: "7896849131028", ncm: "48202000", produto: "CADERNO CDSIL C/D 10MT 2X160 CHERRY LOVE", fator: "2x", qtdReal: "4.00", custo: 29.13, venda: 44.99, brand: "SÃO DOMINGOS" },
-            { id: "7896849125867", ncm: "48202000", produto: "CADERNO CDSIL C/D 10MT 2X160 SWEETLY", fator: "2x", qtdReal: "4.00", custo: 30.78, venda: 46.99, brand: "SÃO DOMINGOS" }
+            { id: "7896849125867", ncm: "48202000", produto: "CADERNO CDSIL C/D 10MT 2X160 SWEETLY", fator: "2x", qtdReal: "4.00", custo: 30.78, venda: 47.75, brand: "SÃO DOMINGOS" },
+            { id: "7896849119712", ncm: "48202000", produto: "CADERNO CDSIL C/D 10MT 2X160 DAY DREAM", fator: "2x", qtdReal: "2.00", custo: 28.29, venda: 43.75, brand: "SÃO DOMINGOS" },
+            { id: "7896849130809", ncm: "48202000", produto: "CADERNO CDSIL C/D 15MT 2X240 POSITIVITY", fator: "2x", qtdReal: "2.00", custo: 33.08, venda: 51.49, brand: "SÃO DOMINGOS" },
+            { id: "7896849133527", ncm: "48202000", produto: "CADERNO CDSIL C/D 15MT 2X240 IT'S LOVE", fator: "2x", qtdReal: "2.00", custo: 33.08, venda: 51.49, brand: "SÃO DOMINGOS" },
+            { id: "7896849131769", ncm: "48202000", produto: "CADERNO CDSIL C/D 20MT 2X320 BLACK MASC.", fator: "2x", qtdReal: "2.00", custo: 38.52, venda: 59.75, brand: "SÃO DOMINGOS" },
+            { id: "7896849117589", ncm: "48202000", produto: "CADERNO CDSIL C/D 15MT 2X240 C.WOODLAND", fator: "2x", qtdReal: "6.00", custo: 31.32, venda: 48.49, brand: "SÃO DOMINGOS" },
+            { id: "7896849133145", ncm: "48202000", produto: "CADERNO CDSIL C/D 1X80 C.BE KIND CRIAT.", fator: "1x", qtdReal: "3.00", custo: 35.34, venda: 54.75, brand: "SÃO DOMINGOS" },
+            { id: "7896849116957", ncm: "48202000", produto: "CADERNO CDSIL C/D 15MT 2X240 C.CUTE CAT", fator: "2x", qtdReal: "6.00", custo: 31.32, venda: 48.49, brand: "SÃO DOMINGOS" },
+            { id: "7896849133183", ncm: "48202000", produto: "CADERNO CDSIL C/D 1X80 C.DAY DREAM CRIAT", fator: "1x", qtdReal: "5.00", custo: 35.39, venda: 54.75, brand: "SÃO DOMINGOS" },
+            { id: "7896849133855", ncm: "48202000", produto: "CADERNO CDSIL C/D 1X80 C.WOODLAND CRIAT.", fator: "1x", qtdReal: "5.00", custo: 37.49, venda: 57.99, brand: "SÃO DOMINGOS" }
         ];
 
         let itemsState = [];
         let activeConfirmIndex = null;
 
         window.onload = async () => {
-            itemsState = PRODUCT_DATABASE.map(p => ({ 
-                ...p, 
-                sent: false, 
+            itemsState = PRODUCT_DATABASE.map(p => ({
+                ...p,
+                sent: false,
                 isValidated: false,
                 currentInput: '',
-                newPrice: p.venda 
+                newPrice: p.venda
             }));
 
             await syncWithAPI();
@@ -320,4 +635,5 @@
         function toggleToast(show) { document.getElementById('loadingToast').style.opacity = show ? '1' : '0'; }
     </script>
 </body>
+
 </html>
