@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conferência de Estoque - Business</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .success-bg { background-color: #f0fdf4 !important; }
+        .sent-row { opacity: 0.6; background-color: #f8fafc; pointer-events: none; border-left: 4px solid #cbd5e1; }
+        .loader { border-top-color: #3b82f6; animation: spinner 0.6s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .btn-confirm { transition: all 0.2s ease; }
+        .btn-confirm:disabled { background-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
+        .btn-confirm:not(:disabled) { background-color: #2563eb; color: white; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2); }
+        .btn-confirm:not(:disabled):hover { background-color: #1d4ed8; transform: translateY(-1px); }
+
+        #initial-loader { backdrop-filter: blur(4px); transition: opacity 0.5s ease-out; }
+        .financial-badge { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- Loader Inicial -->
+    <div id="initial-loader" class="fixed inset-0 bg-white/90 z-[100] flex flex-col items-center justify-center">
+        <div class="loader w-12 h-12 border-4 border-gray-200 border-t-blue-600 rounded-full mb-4"></div>
+        <h2 class="text-lg font-bold text-gray-800">Sincronizando com a Planilha...</h2>
+        <p class="text-sm text-gray-500">Buscando produtos já registrados.</p>
+    </div>
+
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fas fa-check-double text-blue-600"></i>
+                    Conferência e Registro
+                </h1>
+                <p class="text-gray-500 text-sm">Valide os itens, ajuste o preço se necessário e confirme o registro.</p>
+            </div>
+            
+            <div class="relative w-full max-w-md">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" id="mainSearch" onkeyup="filterItems()" class="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm transition-all" placeholder="Pesquisar por nome ou código...">
+            </div>
+        </header>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">Pendentes</p>
+                <h3 class="text-2xl font-black text-gray-800" id="statPending">0</h3>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 border-b-4 border-b-emerald-500">
+                <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">Enviados</p>
+                <h3 class="text-2xl font-black text-emerald-600" id="statSent">0</h3>
+            </div>
+        </div>
+
+        <!-- Tabela Principal -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-8">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Itens em Conferência</h2>
+                <span class="px-2 py-1 bg-blue-100 text-blue-700 text-[10px] font-bold rounded italic">SINCRONIZADO</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 text-gray-400 text-[10px] uppercase font-black">
+                        <tr>
+                            <th class="px-6 py-4">Produto</th>
+                            <th class="px-4 py-4 text-center">Fator / Qtd</th>
+                            <th class="px-4 py-4">Código Esperado</th>
+                            <th class="px-4 py-4">Bipar Código</th>
+                            <th class="px-4 py-4 text-center">Precificação</th>
+                            <th class="px-6 py-4 text-center">Confirmar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pendingTableBody" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Histórico -->
+        <div class="flex items-center gap-4 mb-6">
+            <div class="flex-1 h-px bg-gray-300"></div>
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Já Registrados na Planilha</span>
+            <div class="flex-1 h-px bg-gray-300"></div>
+        </div>
+
+        <div class="bg-white/50 rounded-2xl border border-gray-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <tbody id="sentTableBody" class="divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação de Preço -->
+    <div id="confirmPriceModal" class="fixed inset-0 bg-black/60 hidden z-[110] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl">
+            <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="text-xl font-bold text-center text-gray-800 mb-2">Alterar Preço?</h3>
+            <p class="text-gray-600 text-center text-sm mb-6">O preço de venda foi modificado. Deseja realmente salvar este novo valor na planilha?</p>
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="closePriceModal()" class="py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-colors">Cancelar</button>
+                <button id="finalConfirmBtn" class="py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors">Sim, Alterar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast de Feedback -->
+    <div id="loadingToast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 opacity-0 pointer-events-none transition-all duration-300 z-50">
+        <div class="loader w-5 h-5 border-3 border-white/30 border-t-white rounded-full"></div>
+        <span class="text-sm font-bold">Processando registro...</span>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
+
+        const PRODUCT_DATABASE = [
+            { id: "7909438042633", ncm: "96081000", produto: "CANETA CIS 12X1 MOVE 0.7 AZUL 0660", fator: "12x", qtdReal: "60.00", custo: 3.89, venda: 5.99, brand: "CIS" },
+            { id: "7909438042640", ncm: "96081000", produto: "CANETA CIS 12X1 MOVE 0.7 PRETA 0661", fator: "12x", qtdReal: "60.00", custo: 3.89, venda: 5.99, brand: "CIS" },
+            { id: "7909438009285", ncm: "96081000", produto: "CANETA CIS 12X1 PENTONIC 0.7 PRETA 2200", fator: "12x", qtdReal: "60.00", custo: 2.85, venda: 4.49, brand: "CIS" },
+            { id: "7896326931233", ncm: "96081000", produto: "CANETA CIS 50X1 POTE NEOTIP 0.7 AZ 4700", fator: "50x", qtdReal: "150.00", custo: 1.66, venda: 2.49, brand: "CIS" },
+            { id: "7896849131684", ncm: "48202000", produto: "CADERNO CDSIL C/D 10MT 2X160 XPLORE", fator: "2x", qtdReal: "4.00", custo: 22.68, venda: 34.99, brand: "SÃO DOMINGOS" },
+            { id: "7896849131240", ncm: "48202000", produto: "CADERNO CDSIL C/D 10MT 2X160 BLACK MASC.", fator: "2x", qtdReal: "4.00", custo: 27.25, venda: 41.99, brand: "SÃO DOMINGOS" },
+            { id: "7896849131028", ncm: "48202000", produto: "CADERNO CDSIL C/D 10MT 2X160 CHERRY LOVE", fator: "2x", qtdReal: "4.00", custo: 29.13, venda: 44.99, brand: "SÃO DOMINGOS" },
+            { id: "7896849125867", ncm: "48202000", produto: "CADERNO CDSIL C/D 10MT 2X160 SWEETLY", fator: "2x", qtdReal: "4.00", custo: 30.78, venda: 46.99, brand: "SÃO DOMINGOS" }
+        ];
+
+        let itemsState = [];
+        let activeConfirmIndex = null;
+
+        window.onload = async () => {
+            itemsState = PRODUCT_DATABASE.map(p => ({ 
+                ...p, 
+                sent: false, 
+                isValidated: false,
+                currentInput: '',
+                newPrice: p.venda 
+            }));
+
+            await syncWithAPI();
+            document.getElementById('initial-loader').style.opacity = '0';
+            setTimeout(() => { document.getElementById('initial-loader').classList.add('hidden'); renderLists(); }, 500);
+        };
+
+        async function syncWithAPI() {
+            try {
+                const response = await fetch(`${API_URL}?action=getProducts`);
+                const result = await response.json();
+                if (Array.isArray(result)) {
+                    const registeredIds = result.map(p => String(p.id));
+                    itemsState.forEach(item => { if (registeredIds.includes(String(item.id))) item.sent = true; });
+                }
+            } catch (error) { console.warn("API de consulta offline."); }
+        }
+
+        function calculateMarkup(price, cost) {
+            if (!cost) return 0;
+            return ((price - cost) / cost) * 100;
+        }
+
+        function calculateMargin(price, cost) {
+            if (!price) return 0;
+            return ((price - cost) / price) * 100;
+        }
+
+        function renderLists() {
+            const pendingBody = document.getElementById('pendingTableBody');
+            const sentBody = document.getElementById('sentTableBody');
+            pendingBody.innerHTML = ''; sentBody.innerHTML = '';
+            let countSent = 0; let countPending = 0;
+
+            itemsState.forEach((item, index) => {
+                if (item.sent) {
+                    countSent++;
+                    sentBody.innerHTML += `
+                        <tr class="sent-row text-xs text-slate-500">
+                            <td class="px-6 py-4 font-bold">${item.produto}</td>
+                            <td class="px-4 py-4 text-center">${item.fator} | ${item.qtdReal}</td>
+                            <td class="px-4 py-4 font-mono">${item.id}</td>
+                            <td class="px-6 py-4 text-right">
+                                <span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-bold text-[9px] uppercase">Registrado</span>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    countPending++;
+                    const valid = item.isValidated;
+                    const markup = calculateMarkup(item.newPrice, item.custo).toFixed(1);
+                    const margin = calculateMargin(item.newPrice, item.custo).toFixed(1);
+
+                    pendingBody.innerHTML += `
+                        <tr id="row-${index}" class="${valid ? 'success-bg' : 'bg-white'} transition-all duration-300">
+                            <td class="px-6 py-5">
+                                <p class="text-sm font-bold text-gray-800">${item.produto}</p>
+                                <span class="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-bold">NCM: ${item.ncm}</span>
+                            </td>
+                            <td class="px-4 py-5 text-center text-sm font-medium text-gray-500">${item.fator} | <span class="font-black text-gray-700">${item.qtdReal}</span></td>
+                            <td class="px-4 py-5 text-xs font-mono text-gray-400">${item.id}</td>
+                            <td class="px-4 py-5">
+                                <div class="relative">
+                                    <input type="text" value="${item.currentInput}" oninput="checkBarcode(this, ${index})" placeholder="Escaneie..." 
+                                        class="w-full text-xs font-bold p-3 border-2 border-gray-100 rounded-xl focus:ring-4 focus:ring-blue-100 focus:outline-none transition-all ${valid ? 'border-emerald-500 bg-white' : ''}">
+                                    ${valid ? '<i class="fas fa-check-circle absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500"></i>' : ''}
+                                </div>
+                            </td>
+                            <td class="px-4 py-5">
+                                <div class="${valid ? 'block' : 'hidden'} flex flex-col gap-2 min-w-[150px]">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[9px] font-bold text-gray-400 uppercase">Preço Final:</span>
+                                        <input type="number" step="0.01" value="${item.newPrice}" oninput="updatePrice(${index}, this.value)" 
+                                            class="w-20 text-xs font-black p-1 border-b-2 border-blue-200 focus:border-blue-600 outline-none bg-transparent">
+                                    </div>
+                                    <div class="flex flex-wrap gap-1">
+                                        <span class="financial-badge bg-gray-100 text-gray-600">Custo: R$ ${item.custo.toFixed(2)}</span>
+                                        <span class="financial-badge bg-blue-100 text-blue-700">Mkup: ${markup}%</span>
+                                        <span class="financial-badge bg-emerald-100 text-emerald-700">Mg: ${margin}%</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-5 text-center">
+                                <button onclick="handleConfirmClick(${index})" ${valid ? '' : 'disabled'} class="btn-confirm w-12 h-12 rounded-xl flex items-center justify-center text-lg">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
+            document.getElementById('statPending').innerText = countPending;
+            document.getElementById('statSent').innerText = countSent;
+        }
+
+        function checkBarcode(input, index) {
+            const val = input.value.trim();
+            itemsState[index].currentInput = val;
+            itemsState[index].isValidated = (val === itemsState[index].id);
+            renderLists();
+        }
+
+        function updatePrice(index, value) {
+            itemsState[index].newPrice = parseFloat(value) || 0;
+            // Atualiza apenas os badges de cálculo na linha sem re-renderizar a lista inteira para não perder foco
+            const row = document.getElementById(`row-${index}`);
+            const markup = calculateMarkup(itemsState[index].newPrice, itemsState[index].custo).toFixed(1);
+            const margin = calculateMargin(itemsState[index].newPrice, itemsState[index].custo).toFixed(1);
+            row.querySelector('.bg-blue-100').innerText = `Mkup: ${markup}%`;
+            row.querySelector('.bg-emerald-100').innerText = `Mg: ${margin}%`;
+        }
+
+        function handleConfirmClick(index) {
+            const item = itemsState[index];
+            if (item.newPrice !== item.venda) {
+                activeConfirmIndex = index;
+                document.getElementById('confirmPriceModal').classList.remove('hidden');
+                document.getElementById('finalConfirmBtn').onclick = () => {
+                    closePriceModal();
+                    sendItemToAPI(index);
+                };
+            } else {
+                sendItemToAPI(index);
+            }
+        }
+
+        async function sendItemToAPI(index) {
+            const item = itemsState[index];
+            toggleToast(true);
+
+            const payload = {
+                action: "saveProduct",
+                data: {
+                    id: String(item.id),
+                    name: String(item.produto),
+                    price: Number(item.newPrice),
+                    costPrice: Number(item.custo),
+                    ncm: String(item.ncm),
+                    brand: String(item.brand),
+                    unit: String(item.fator),
+                    category: "Material Escolar",
+                    cadastrado: "Sim",
+                    cfop: "5102",
+                    origem: "0",
+                    csosn: "102"
+                }
+            };
+
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                itemsState[index].sent = true;
+                renderLists();
+            } catch (error) {
+                console.error("Erro no envio:", error);
+            } finally {
+                toggleToast(false);
+            }
+        }
+
+        function closePriceModal() { document.getElementById('confirmPriceModal').classList.add('hidden'); activeConfirmIndex = null; }
+        function filterItems() {
+            const search = document.getElementById('mainSearch').value.toLowerCase();
+            const pendingRows = document.getElementById('pendingTableBody').getElementsByTagName('tr');
+            Array.from(pendingRows).forEach(row => { row.style.display = row.innerText.toLowerCase().includes(search) ? '' : 'none'; });
+        }
+        function toggleToast(show) { document.getElementById('loadingToast').style.opacity = show ? '1' : '0'; }
+    </script>
+</body>
+</html>

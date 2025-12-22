@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema ELETRO BUSINESS - Precificação & Exportação</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; color: #333; }
+        .container { max-width: 1400px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .no-print { margin-bottom: 20px; padding: 20px; border: 2px dashed #ccc; text-align: center; background: #fff; }
+        
+        .stats-bar { display: flex; gap: 20px; background: #e7f3ff; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #b2d7ff; }
+        .stat-card { font-weight: bold; color: #0052cc; font-size: 14px; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px; }
+        th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+        th { background: #333; color: white; }
+        .col-custo { background: #e8f5e9; font-weight: bold; }
+        .col-venda { background: #fff3e0; font-weight: bold; color: #d84315; border-left: 2px solid #ff9800 !important; }
+
+        #danfe-area { display: none; padding: 10px; font-family: 'Courier New', Courier, monospace; }
+        .danfe-box { border: 1px solid #000; padding: 10px; margin-bottom: 5px; }
+        .danfe-header { text-align: center; font-weight: bold; border-bottom: 2px solid #000; margin-bottom: 10px; font-size: 14px; }
+        .grid-danfe { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 11px; }
+        
+        .btn { padding: 10px 20px; cursor: pointer; border-radius: 4px; border: none; font-weight: bold; margin: 5px; transition: 0.3s; }
+        .btn-blue { background: #0052cc; color: white; }
+        .btn-red { background: #d32f2f; color: white; }
+        .btn-green { background: #2e7d32; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="no-print">
+        <h2>📦 Gestor XML: Precificação, DANFE & CSV</h2>
+        <p>Lógica: <b>Markup 55%</b> | Arredondamento: <b>.49, .75, .99</b> | Fatores: <b>12x1, C/36</b></p>
+        <input type="file" id="xmlInput" accept=".xml" multiple class="btn">
+        <div style="margin-top: 10px;">
+            <button id="downloadBtn" class="btn btn-blue" style="display:none;">Baixar PDF Preços</button>
+            <button id="danfeBtn" class="btn btn-red" style="display:none;">Gerar DANFE</button>
+            <button id="csvBtn" class="btn btn-green" style="display:none;">Baixar em CSV (Excel)</button>
+        </div>
+    </div>
+
+    <div class="stats-bar" id="statsBar" style="display:none;">
+        <div class="stat-card">Notas: <span id="countFiles">0</span></div>
+        <div class="stat-card">Total em Notas: <span id="sumTotal">R$ 0,00</span></div>
+    </div>
+
+    <div id="pdf-area">
+        <table id="mainTable">
+            <thead>
+                <tr>
+                    <th>Cód. Barras / NCM</th>
+                    <th>Produto</th>
+                    <th>Fator</th>
+                    <th>Qtd Real</th>
+                    <th>V. Unit (NF)</th>
+                    <th>Imp/Frete Item</th>
+                    <th class="col-custo">Custo Unit. Real</th>
+                    <th class="col-venda">Venda Sugerida</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <div id="danfe-area"></div>
+</div>
+
+<script>
+    const xmlInput = document.getElementById('xmlInput');
+    const tableBody = document.getElementById('tableBody');
+    const danfeArea = document.getElementById('danfe-area');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const danfeBtn = document.getElementById('danfeBtn');
+    const csvBtn = document.getElementById('csvBtn');
+
+    const formatBRL = (val) => val.toLocaleString('pt-br', {style:'currency', currency:'BRL'});
+
+    function arredondarPreco(valor) {
+        if (valor <= 0) return 0;
+        const inteiro = Math.floor(valor);
+        const candidatos = [inteiro - 1 + 0.99, inteiro + 0.49, inteiro + 0.75, inteiro + 0.99];
+        return candidatos.reduce((prev, curr) => Math.abs(curr - valor) < Math.abs(prev - valor) ? curr : prev);
+    }
+
+    xmlInput.addEventListener('change', async function(e) {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        tableBody.innerHTML = '';
+        danfeArea.innerHTML = '';
+        let valorTotalGeralNotas = 0;
+
+        for (const file of files) {
+            const text = await file.text();
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(text, "text/xml");
+
+            const nNF = xmlDoc.getElementsByTagName('nNF')[0]?.textContent || 'S/N';
+            const emit = xmlDoc.getElementsByTagName('emit')[0];
+            const dest = xmlDoc.getElementsByTagName('dest')[0];
+            const ide = xmlDoc.getElementsByTagName('ide')[0];
+            const totalNota = xmlDoc.getElementsByTagName('total')[0];
+
+            let htmlDanfe = `
+                <div class="danfe-box">
+                    <div class="danfe-header">DANFE SIMPLIFICADO - NFE Nº ${nNF}</div>
+                    <div class="grid-danfe">
+                        <div><b>EMITENTE:</b><br>${emit.querySelector('xNome').textContent}</div>
+                        <div style="text-align:right"><b>DATA:</b> ${ide.querySelector('dhEmi').textContent.split('T')[0]}</div>
+                    </div>
+                </div>
+                <table>
+                    <thead><tr><th>CÓD</th><th>DESCRIÇÃO</th><th>QTD</th><th>V.UNIT</th><th>V.TOTAL</th></tr></thead>
+                    <tbody>`;
+
+            const itens = xmlDoc.querySelectorAll('det'); 
+            itens.forEach(item => {
+                const prod = item.querySelector('prod');
+                const xProd = prod.querySelector('xProd').textContent;
+                const ncm = prod.querySelector('NCM').textContent;
+                const ean = prod.querySelector('cEAN')?.textContent || '';
+                const identificador = (ean && ean !== 'SEM GTIN') ? ean : ncm;
+
+                let fator = 1;
+                const matchX = xProd.match(/(\d+)\s*[xX]\s*(\d+)/);
+                const matchC = xProd.match(/[cC]\/(\d+)/);
+                if (matchX) fator = parseInt(matchX[1]);
+                else if (matchC) fator = parseInt(matchC[1]);
+
+                const qCom = parseFloat(prod.querySelector('qCom').textContent);
+                const vProd = parseFloat(prod.querySelector('vProd').textContent);
+                const vFrete = parseFloat(prod.querySelector('vFrete')?.textContent || 0);
+                const vIPI = parseFloat(item.querySelector('vIPI')?.textContent || 0);
+                const vST = parseFloat(item.querySelector('vICMSST')?.textContent || 0);
+                const vOutro = parseFloat(prod.querySelector('vOutro')?.textContent || 0);
+                const vDesc = parseFloat(prod.querySelector('vDesc')?.textContent || 0);
+                
+                const custoTotalLiquidoItem = (vProd + vFrete + vIPI + vST + vOutro) - vDesc;
+                const qtdRealTotal = qCom * fator;
+                const custoUnReal = custoTotalLiquidoItem / qtdRealTotal;
+                const vendaSugerida = arredondarPreco(custoUnReal * 1.55);
+
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${identificador}</td>
+                    <td><b>${xProd}</b></td>
+                    <td style="text-align:center">${fator}x</td>
+                    <td>${qtdRealTotal.toFixed(2)}</td>
+                    <td>${formatBRL(parseFloat(prod.querySelector('vUnCom').textContent))}</td>
+                    <td>${formatBRL(vFrete + vIPI + vST + vOutro)}</td>
+                    <td class="col-custo">${formatBRL(custoUnReal)}</td>
+                    <td class="col-venda">${formatBRL(vendaSugerida)}</td>
+                `;
+
+                htmlDanfe += `<tr><td>${prod.querySelector('cProd').textContent}</td><td>${xProd}</td><td>${qCom}</td><td>${formatBRL(parseFloat(prod.querySelector('vUnCom').textContent))}</td><td>${formatBRL(vProd)}</td></tr>`;
+            });
+
+            const vNF = parseFloat(totalNota.querySelector('vNF').textContent);
+            htmlDanfe += `</tbody></table><div class="danfe-box" style="text-align:right; font-weight:bold;">TOTAL: ${formatBRL(vNF)}</div><div style="page-break-after: always;"></div>`;
+            danfeArea.innerHTML += htmlDanfe;
+            valorTotalGeralNotas += vNF;
+        }
+
+        document.getElementById('countFiles').innerText = files.length;
+        document.getElementById('sumTotal').innerText = formatBRL(valorTotalGeralNotas);
+        document.getElementById('statsBar').style.display = 'flex';
+        downloadBtn.style.display = 'inline-block';
+        danfeBtn.style.display = 'inline-block';
+        csvBtn.style.display = 'inline-block';
+    });
+
+    // --- FUNÇÃO EXPORTAR PARA CSV ---
+    csvBtn.addEventListener('click', () => {
+        let csvContent = "\uFEFF"; // BOM para o Excel abrir com acentos corretos
+        csvContent += "Codigo_Barras_NCM;Produto;Fator;Qtd_Real;Val_Unit_NF;Encargos;Custo_Unit_Real;Venda_Sugerida\n";
+
+        const rows = tableBody.querySelectorAll('tr');
+        rows.forEach(row => {
+            const cols = row.querySelectorAll('td');
+            const data = Array.from(cols).map(col => {
+                // Remove R$, pontos de milhar e troca vírgula decimal por ponto para não quebrar o CSV se necessário
+                // Mas para o Excel BR, manteremos o texto limpo
+                return `"${col.innerText.replace(/"/g, '""')}"`;
+            });
+            csvContent += data.join(";") + "\n";
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "precificacao_eletro_business.csv");
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+
+    downloadBtn.addEventListener('click', () => {
+        const element = document.getElementById('pdf-area');
+        html2pdf().set({ margin: 5, filename: 'precos_eletro.pdf', jsPDF: { orientation: 'landscape' } }).from(element).save();
+    });
+
+    danfeBtn.addEventListener('click', () => {
+        danfeArea.style.display = 'block';
+        html2pdf().set({ margin: 5, filename: 'danfe_notas.pdf', jsPDF: { orientation: 'portrait' } }).from(danfeArea).save();
+        setTimeout(() => danfeArea.style.display = 'none', 1000);
+    });
+</script>
+
+</body>
+</html>
