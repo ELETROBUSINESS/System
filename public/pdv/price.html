@@ -764,7 +764,7 @@
         }
         function toggleToast(show) { document.getElementById('loadingToast').style.opacity = show ? '1' : '0'; }
         
-        async function updateAllSentItems() {
+        /*async function updateAllSentItems() {
             const sentItems = itemsState.filter(i => i.sent);
             if (sentItems.length === 0) return;
             if (!confirm(`Sincronizar metadados de ${sentItems.length} itens? Chave de busca será o NOME.`)) return;
@@ -775,7 +775,7 @@
                 })});
             }
             showSuccessToast("Finalizado!");
-        }
+        }*/
 
         function downloadReport() {
             const { jsPDF } = window.jspdf;
