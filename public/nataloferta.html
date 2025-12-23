@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Stories - Natal</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- html2canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Global Font Stack - Mais estável para download */
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        
+        /* Aplicando a fonte de sistema em todo o canvas para evitar bugs de alinhamento */
+        #story-canvas, #story-canvas * {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+        }
+
+        @media (max-width: 640px) {
+            #story-container-wrapper {
+                transform: scale(0.75);
+                transform-origin: center top;
+            }
+            #preview-area {
+                padding: 1rem;
+                min-height: 580px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+
+    <div class="flex flex-col lg:flex-row min-h-screen">
+        
+        <!-- PAINEL DE CONTROLE -->
+        <aside class="w-full lg:w-[420px] p-6 md:p-8 bg-white border-b lg:border-r border-slate-200 z-20 shadow-xl overflow-y-auto lg:h-screen">
+            <div class="flex items-center gap-4 mb-8 pb-6 border-b border-slate-100">
+                <div class="p-3 rounded-2xl text-white shadow-lg bg-[#e0131a]">
+                    <i data-lucide="gift" class="w-7 h-7"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black text-slate-800 leading-none text-red-600">Natal Editor</h1>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-2">Criação de Ofertas</p>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Nome -->
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                        <i data-lucide="shopping-bag" class="w-3 h-3"></i> Nome do Produto
+                    </label>
+                    <input type="text" id="input-name" value="Air Fryer Britânia BFR38" 
+                           class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-red-500/10 focus:border-[#e0131a] outline-none transition-all font-semibold text-slate-700">
+                </div>
+
+                <!-- Preços -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Preço Original</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">R$</span>
+                            <input type="number" id="input-original-price" value="459.90" 
+                                   class="w-full pl-10 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:border-[#e0131a] outline-none transition-all font-bold">
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Preço Oferta</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-red-400 font-bold text-sm">R$</span>
+                            <input type="number" id="input-sale-price" value="329.00" 
+                                   class="w-full pl-10 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:border-[#e0131a] outline-none transition-all font-black text-[#e0131a]">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Toggles -->
+                <div class="bg-slate-50 p-6 rounded-[2rem] space-y-4 border border-slate-100">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="tag" class="w-4 h-4 text-red-600"></i>
+                            <span class="text-sm font-extrabold text-slate-600">Modo Oferta</span>
+                        </div>
+                        <input type="checkbox" id="toggle-sale" class="w-5 h-5 accent-red-600 cursor-pointer" checked>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="eye" class="w-4 h-4 text-blue-500"></i>
+                            <span class="text-sm font-extrabold text-slate-600">Exibir Preço</span>
+                        </div>
+                        <input type="checkbox" id="toggle-price" class="w-5 h-5 accent-blue-600 cursor-pointer" checked>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="percent" class="w-4 h-4 text-emerald-500"></i>
+                            <span class="text-sm font-extrabold text-slate-600">Selo Desconto</span>
+                        </div>
+                        <input type="checkbox" id="toggle-discount" class="w-5 h-5 accent-emerald-500 cursor-pointer" checked>
+                    </div>
+                </div>
+
+                <!-- Upload Imagem -->
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Foto do Produto</label>
+                    <label class="relative block overflow-hidden rounded-2xl border-2 border-dashed border-slate-200 hover:border-[#e0131a] transition-all cursor-pointer group">
+                        <input type="file" id="input-image" accept="image/*" class="hidden">
+                        <div class="p-6 md:p-8 flex flex-col items-center justify-center gap-3 bg-white group-hover:bg-red-50 transition-colors">
+                            <i data-lucide="upload" class="w-7 h-7 text-slate-300 group-hover:text-[#e0131a]"></i>
+                            <span class="text-xs font-bold text-slate-400 group-hover:text-[#e0131a]">Trocar Foto</span>
+                        </div>
+                    </label>
+                </div>
+
+                <button id="btn-download" 
+                        class="w-full py-5 rounded-[2rem] font-black text-lg flex items-center justify-center gap-4 shadow-2xl transition-all transform hover:-translate-y-1 active:scale-95 text-white bg-[#e0131a] hover:bg-[#c01016]">
+                    <i data-lucide="download"></i>
+                    <span>Baixar Story HD</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- PREVIEW -->
+        <main id="preview-area" class="flex-1 flex items-center justify-center p-4 bg-[#f0f2f5] overflow-y-auto lg:h-screen">
+            
+            <div id="story-container-wrapper">
+                <div id="story-canvas" class="relative w-[360px] h-[640px] flex flex-col overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] rounded-[3rem] bg-white shrink-0">
+                    
+                    <!-- FUNDO -->
+                    <div class="absolute inset-0 z-0 pointer-events-none">
+                        <div class="absolute inset-0" style="background: linear-gradient(160deg, #e0131a 0%, #8a0a0f 100%);"></div>
+                        <div class="absolute top-0 right-0 w-full h-full opacity-30">
+                            <div class="absolute top-10 right-10 w-40 h-40 bg-white/20 blur-[60px] rounded-full"></div>
+                            <div class="absolute bottom-10 left-10 w-40 h-40 bg-amber-400/20 blur-[60px] rounded-full"></div>
+                        </div>
+                    </div>
+
+                    <!-- HEADER - CENTRALIZAÇÃO REFORÇADA -->
+                    <div class="relative z-10 pt-10 flex flex-col items-center">
+                        <div class="bg-white/10 backdrop-blur-md border border-white/20 px-6 py-2 rounded-full flex items-center justify-center gap-2 leading-none">
+                            <i data-lucide="gift" class="w-4 h-4 text-amber-400"></i>
+                            <span class="text-white text-[10px] font-black uppercase tracking-[0.3em] leading-none py-0.5">Presente de Natal</span>
+                        </div>
+                    </div>
+
+                    <!-- PRODUTO -->
+                    <div class="relative z-10 flex-1 flex flex-col items-center justify-center px-12 pt-6">
+                        <div class="relative w-full aspect-square bg-white rounded-[2.5rem] shadow-[0_20px_40px_rgba(0,0,0,0.4)] flex items-center justify-center p-6">
+                            <img id="preview-image" src="https://gazin-images.gazin.com.br/sNry9eqUCGGlmSANeNSiXfIIYRA=/1920x/filters:format(webp):quality(75)/https://gazin-marketplace.s3.amazonaws.com/midias/imagens/2024/04/fritadeira-eletrica-air-fryer-britania-bfr38-42l-1500w-112404500539.jpg" 
+                                class="relative z-10 max-w-full max-h-full object-contain" crossorigin="anonymous">
+                            
+                            <!-- SELO DESCONTO - ALINHAMENTO REFORÇADO -->
+                            <div id="badge-discount" class="absolute -top-4 -right-4 z-40 bg-[#e0131a] text-white w-20 h-20 rounded-full flex flex-col items-center justify-center shadow-2xl border-4 border-white transform rotate-12 transition-all overflow-hidden">
+                                <div class="flex flex-col items-center justify-center leading-none">
+                                    <span class="text-[9px] font-black tracking-tighter opacity-80 mb-1 leading-none">OFF</span>
+                                    <div class="flex items-center justify-center leading-none">
+                                        <span class="text-2xl font-black leading-none" id="text-discount">-28</span>
+                                        <span class="text-sm font-bold mt-1 ml-0.5 leading-none">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h2 id="display-name" class="text-white mt-6 text-[1.5rem] font-black uppercase tracking-tighter leading-tight drop-shadow-lg text-center px-4">
+                            Air Fryer Britânia BFR38
+                        </h2>
+                    </div>
+
+                    <!-- PREÇO -->
+                    <div class="relative z-10 px-8 pb-14 pt-4" id="price-section">
+                        <div class="bg-white p-6 rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] flex flex-col items-center relative border-b-[8px] border-amber-400">
+                            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-600 via-amber-400 to-red-600"></div>
+
+                            <div id="display-original-container" class="text-slate-400 text-[10px] font-bold flex items-center gap-2 mb-2 uppercase tracking-widest leading-none">
+                                <span>De</span>
+                                <span class="line-through decoration-[#e0131a] leading-none" id="display-original-price">R$ 459,90</span>
+                            </div>
+                            
+                            <div class="flex flex-col items-center justify-center">
+                                <div class="flex items-center justify-center text-[#e0131a] h-16 mb-2">
+                                    <span class="text-xl font-black mr-1 mt-2 leading-none">R$</span>
+                                    <span class="text-[3.8rem] font-black tracking-tighter leading-none" id="display-sale-main" style="display: flex; align-items: center;">329</span>
+                                    <div class="flex flex-col ml-1 justify-center h-full pt-1 leading-none">
+                                        <span class="text-2xl font-black leading-none" id="display-sale-cents">,00</span>
+                                        <span class="text-[9px] font-black text-slate-300 uppercase leading-none mt-1">à vista</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-2 flex items-center justify-center gap-2 text-slate-400 font-bold text-[9px] uppercase tracking-[0.2em] bg-slate-50 px-4 py-1.5 rounded-full border border-slate-100 leading-none">
+                                    <i data-lucide="tag" class="w-3 h-3 text-[#e0131a]"></i>
+                                    <span class="leading-none py-0.5">Oferta Especial de Natal</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const inputName = document.getElementById('input-name');
+        const inputOriginal = document.getElementById('input-original-price');
+        const inputSale = document.getElementById('input-sale-price');
+        const inputImage = document.getElementById('input-image');
+        
+        const toggleSale = document.getElementById('toggle-sale');
+        const togglePrice = document.getElementById('toggle-price');
+        const toggleDiscount = document.getElementById('toggle-discount');
+        const btnDownload = document.getElementById('btn-download');
+
+        const displayName = document.getElementById('display-name');
+        const displayOriginalPrice = document.getElementById('display-original-price');
+        const displayOriginalContainer = document.getElementById('display-original-container');
+        const displaySaleMain = document.getElementById('display-sale-main');
+        const displaySaleCents = document.getElementById('display-sale-cents');
+        const textDiscount = document.getElementById('text-discount');
+        const badgeDiscount = document.getElementById('badge-discount');
+        const priceSection = document.getElementById('price-section');
+        const previewImage = document.getElementById('preview-image');
+        const storyCanvas = document.getElementById('story-canvas');
+
+        function updateUI() {
+            displayName.innerText = inputName.value;
+
+            const original = parseFloat(inputOriginal.value) || 0;
+            const sale = parseFloat(inputSale.value) || 0;
+
+            displayOriginalPrice.innerText = original.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            
+            const saleParts = sale.toFixed(2).split('.');
+            displaySaleMain.innerText = parseInt(saleParts[0]).toLocaleString('pt-BR');
+            displaySaleCents.innerText = ',' + saleParts[1];
+
+            if (original > sale && original > 0) {
+                const discount = Math.round(((original - sale) / original) * 100);
+                textDiscount.innerText = `-${discount}`;
+            } else {
+                textDiscount.innerText = '-0';
+            }
+
+            displayOriginalContainer.style.display = toggleSale.checked ? 'flex' : 'none';
+            priceSection.style.display = togglePrice.checked ? 'block' : 'none';
+            badgeDiscount.style.display = (toggleDiscount.checked && toggleSale.checked) ? 'flex' : 'none';
+        }
+
+        [inputName, inputOriginal, inputSale, toggleSale, togglePrice, toggleDiscount].forEach(el => {
+            el.addEventListener('input', updateUI);
+        });
+
+        inputImage.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    previewImage.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        btnDownload.addEventListener('click', async function() {
+            btnDownload.disabled = true;
+            btnDownload.innerHTML = '<i data-lucide="refresh-ccw" class="animate-spin"></i> Gerando...';
+            lucide.createIcons();
+
+            try {
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+                const canvas = await html2canvas(storyCanvas, {
+                    useCORS: true,
+                    scale: 3,
+                    backgroundColor: '#e0131a',
+                    logging: false,
+                    allowTaint: true,
+                    scrollX: 0,
+                    scrollY: -window.scrollY
+                });
+
+                const link = document.createElement('a');
+                link.download = `oferta-natal-${inputName.value.toLowerCase().replace(/\s+/g, '-')}.png`;
+                link.href = canvas.toDataURL("image/png", 1.0);
+                link.click();
+            } catch (error) {
+                console.error("Erro:", error);
+            } finally {
+                btnDownload.disabled = false;
+                btnDownload.innerHTML = '<i data-lucide="download"></i> Baixar Story HD';
+                lucide.createIcons();
+            }
+        });
+
+        updateUI();
+    </script>
+</body>
+</html>
