@@ -71,14 +71,14 @@
                     <div class="flex items-center gap-3 mt-1.5">
                         <span
                             class="px-2.5 py-0.5 bg-blue-500/10 text-blue-400 text-[10px] font-black rounded-full border border-blue-500/20 uppercase tracking-widest">EPP
-                            - Linha 1</span>
+                            - Homologação</span>
                     </div>
                 </div>
             </div>
             <div class="flex items-center gap-8 bg-black/40 p-4 rounded-2xl border border-slate-800">
                 <div class="text-right">
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Latência Sefaz</p>
-                    <p id="stopwatch" class="mono text-2xl font-black text-white">00.00s</p>
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Status SEFAZ</p>
+                    <p id="status-sefaz" class="mono text-2xl font-black text-white">OFFLINE</p>
                 </div>
             </div>
         </header>
@@ -102,6 +102,11 @@
                 </section>
 
                 <div id="actions-xml" class="hidden space-y-3">
+                    <div class="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl mb-4 hidden" id="rejection-box">
+                        <p class="text-xs text-yellow-500 font-bold uppercase mb-1">Última Rejeição:</p>
+                        <p id="rejection-msg" class="text-sm text-yellow-200"></p>
+                    </div>
+                    
                     <button onclick="openXmlModal()"
                         class="w-full bg-slate-800 hover:bg-slate-700 text-blue-400 font-bold py-3 rounded-xl border border-blue-500/20 flex items-center justify-center gap-2">
                         <i class="fas fa-code"></i> VISUALIZAR XML
@@ -115,22 +120,22 @@
 
             <div class="lg:col-span-8 space-y-8">
                 <div id="terminal-container"
-                    class="bg-slate-950 rounded-[2.5rem] border border-slate-800 shadow-2xl overflow-hidden relative group">
-                    <div class="bg-slate-900/80 px-8 py-4 border-b border-slate-800 flex items-center justify-between">
+                    class="bg-slate-950 rounded-[2.5rem] border border-slate-800 shadow-2xl overflow-hidden relative group h-full max-h-[600px] flex flex-col">
+                    <div class="bg-slate-900/80 px-8 py-4 border-b border-slate-800 flex items-center justify-between shrink-0">
                         <span class="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em]">Console
                             Fiscal</span>
                         <button onclick="clearConsole()" class="text-slate-600 hover:text-white"><i
                                 class="fas fa-trash-can text-xs"></i></button>
                     </div>
                     <div id="terminal"
-                        class="p-8 h-[500px] overflow-y-auto terminal-scroll mono text-[11px] leading-relaxed space-y-1.5 bg-black/20">
-                        <p class="text-slate-700 italic">// Aguardando comando...</p>
+                        class="p-8 flex-1 overflow-y-auto terminal-scroll mono text-[11px] leading-relaxed space-y-1.5 bg-black/20">
+                        <p class="text-slate-700 italic">// Sistema pronto. Aguardando comando...</p>
                     </div>
                     <div id="loader"
-                        class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center">
+                        class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center z-10">
                         <div class="w-20 h-20 border-4 border-blue-500 border-t-transparent rounded-full animate-spin">
                         </div>
-                        <p class="mt-6 text-[10px] font-black text-white tracking-[0.4em] uppercase">Processando...</p>
+                        <p class="mt-6 text-[10px] font-black text-white tracking-[0.4em] uppercase">Comunicando com SEFAZ...</p>
                     </div>
                 </div>
             </div>
@@ -141,7 +146,7 @@
         <div
             class="bg-slate-900 w-full max-w-4xl max-h-[80vh] rounded-[2rem] border border-slate-800 flex flex-col shadow-2xl">
             <div class="p-6 border-b border-slate-800 flex justify-between items-center">
-                <h3 class="text-white font-black uppercase text-sm tracking-widest">Conteúdo do XML Assinado</h3>
+                <h3 class="text-white font-black uppercase text-sm tracking-widest">XML Processado</h3>
                 <div class="flex gap-4">
                     <button onclick="copyXml()"
                         class="text-xs bg-blue-600/20 text-blue-400 px-4 py-2 rounded-lg font-bold hover:bg-blue-600/30 transition-colors">COPIAR</button>
@@ -156,99 +161,157 @@
     </div>
 
     <script>
-        const API_URL = 'https://emitirnfce-xsy57wqb6q-rj.a.run.app';
-        let proximaNota = 240; // Incremento manual para evitar duplicidade
+    // Substitua pela URL da sua Function implantada
+    const API_URL = 'https://emitirnfce-xsy57wqb6q-rj.a.run.app';
+    
+    // Sugestão: Persistir isso no localStorage para testes
+    let proximaNota = parseInt(localStorage.getItem('last_nnf') || '465');
 
-        const itemData = [
-            { id: '7899963914348', name: 'AIR FRYER BRITANIA BFR37V PTO', price: 239.69, quantity: 1, ncm: '85166000', unit: 'UN' },
-            { id: '7899755660194', name: 'ARVORE NATAL ANGELITA 180 NEVADA', price: 139.99, quantity: 1, ncm: '95051000', unit: 'UN' }
-        ];
+    const itemData = [
+        { id: '7899963914348', name: 'AIR FRYER BRITANIA BFR37V PTO', price: 239.69, quantity: 1, ncm: '85166000', unit: 'UN' },
+        { id: '7899755660194', name: 'ARVORE NATAL ANGELITA 180 NEVADA', price: 139.99, quantity: 1, ncm: '95051000', unit: 'UN' }
+    ];
 
-        window.lastXml = null;
+    window.lastXml = null;
+    window.lastChave = null;
 
-        function log(msg, type = 'default') {
-            const term = document.getElementById('terminal');
-            const colors = { info: 'text-blue-400', success: 'text-green-400 font-bold', error: 'text-red-500 font-bold', warning: 'text-yellow-500' };
-            term.innerHTML += `<p class="${colors[type] || 'text-slate-500'}"><span class="opacity-20 mr-3">${new Date().toLocaleTimeString()}</span> ${msg}</p>`;
-            term.scrollTop = term.scrollHeight;
-        }
+    function log(msg, type = 'default') {
+        const term = document.getElementById('terminal');
+        const colors = { 
+            info: 'text-blue-400', 
+            success: 'text-emerald-400 font-bold', 
+            error: 'text-rose-500 font-bold', 
+            warning: 'text-amber-400',
+            detail: 'text-slate-500 pl-4'
+        };
+        const icon = type === 'success' ? '✓' : type === 'error' ? '✕' : '›';
+        
+        term.innerHTML += `<div class="${colors[type] || 'text-slate-400'} border-b border-slate-800/50 pb-1 mb-1">
+            <span class="opacity-30 mr-2 mono text-[9px]">${new Date().toLocaleTimeString()}</span>
+            <span class="mr-2 opacity-50">${icon}</span>
+            ${msg}
+        </div>`;
+        term.scrollTop = term.scrollHeight;
+    }
 
-        // FUNÇÕES DE XML (RESTAURADAS)
-        function openXmlModal() {
-            if (!window.lastXml) return alert("XML não disponível.");
-            document.getElementById('xml-viewer').innerText = window.lastXml;
-            document.getElementById('modal-xml').classList.remove('hidden');
-        }
-        function closeXmlModal() { document.getElementById('modal-xml').classList.add('hidden'); }
-        function copyXml() {
-            navigator.clipboard.writeText(window.lastXml);
-            alert("Copiado!");
-        }
-        function downloadXml() {
-            const blob = new Blob([window.lastXml], { type: 'text/xml' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = `NFCe-${proximaNota}.xml`;
-            a.click();
-        }
+    function clearConsole() {
+        document.getElementById('terminal').innerHTML = '<p class="text-slate-700 italic">// Console limpo.</p>';
+    }
 
-        function init() {
-            const container = document.getElementById('lista-itens');
-            let total = 0;
-            container.innerHTML = itemData.map(it => {
-                total += it.price * it.quantity;
-                return `<div class="bg-slate-800/20 p-4 rounded-2xl border border-slate-800/50 flex justify-between items-center"><div class="text-xs font-black text-white">${it.name}</div><div class="mono text-blue-500 italic">R$ ${it.price.toFixed(2)}</div></div>`;
-            }).join('');
-            document.getElementById('valor-total').innerText = `R$ ${total.toFixed(2)}`;
-        }
+    function openXmlModal() {
+        if (!window.lastXml) return alert("XML não disponível.");
+        document.getElementById('xml-viewer').innerText = window.lastXml;
+        document.getElementById('modal-xml').classList.remove('hidden');
+    }
 
-        window.onload = init;
+    function closeXmlModal() { 
+        document.getElementById('modal-xml').classList.add('hidden'); 
+    }
 
-        document.getElementById('btn-emitir').addEventListener('click', async () => {
-            const btn = document.getElementById('btn-emitir');
-            const loader = document.getElementById('loader');
-            const actions = document.getElementById('actions-xml');
+    function copyXml() {
+        navigator.clipboard.writeText(window.lastXml);
+        log("Conteúdo XML copiado para a área de transferência", "info");
+    }
 
-            btn.disabled = true;
-            loader.classList.remove('hidden');
-            document.getElementById('terminal').innerHTML = "";
+    function downloadXml() {
+        if (!window.lastXml) return;
+        const blob = new Blob([window.lastXml], { type: 'text/xml' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `NFCe-${window.lastChave || 'arquivo'}.xml`;
+        a.click();
+    }
 
-            const nNF = proximaNota.toString();
-            const cNF = Math.floor(10000000 + Math.random() * 90000000).toString();
+    function init() {
+        const container = document.getElementById('lista-itens');
+        let total = 0;
+        container.innerHTML = itemData.map(it => {
+            total += it.price * it.quantity;
+            return `<div class="bg-slate-800/20 p-4 rounded-2xl border border-slate-800/50 flex justify-between items-center hover:bg-slate-800/40 transition-colors">
+                        <div>
+                            <div class="text-xs font-black text-white">${it.name}</div>
+                            <div class="text-[10px] text-slate-500 mt-1">NCM: ${it.ncm} | Qtd: ${it.quantity}</div>
+                        </div>
+                        <div class="mono text-blue-500 font-bold">R$ ${it.price.toFixed(2)}</div>
+                    </div>`;
+        }).join('');
+        document.getElementById('valor-total').innerText = `R$ ${total.toFixed(2)}`;
+        document.getElementById('status-sefaz').innerText = "ONLINE";
+        document.getElementById('status-sefaz').classList.add("text-green-500");
+    }
 
-            log(`🚀 EMISSÃO NOTA ${nNF}...`, "info");
+    window.onload = init;
 
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ items: itemData, totalPagamento: 379.68, nNF, cNF, transmitir: true })
-                });
+    document.getElementById('btn-emitir').addEventListener('click', async () => {
+        const btn = document.getElementById('btn-emitir');
+        const loader = document.getElementById('loader');
+        const actions = document.getElementById('actions-xml');
+        const rejectionBox = document.getElementById('rejection-box');
 
-                const data = await response.json();
+        btn.disabled = true;
+        loader.classList.remove('hidden');
+        rejectionBox.classList.add('hidden');
+        
+        // Setup new emission
+        proximaNota++;
+        localStorage.setItem('last_nnf', proximaNota);
+        const nNF = proximaNota.toString();
+        
+        log(`------------------------------------------------`, "default");
+        log(`INICIANDO EMISSÃO DA NF-e Nº ${nNF}`, "info");
 
-                if (data.xml) {
-                    window.lastXml = data.xml;
-                    actions.classList.remove('hidden');
-                }
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    items: itemData, 
+                    totalPagamento: 379.68, 
+                    transmit: true // Setar como false para testar apenas geração de XML sem envio
+                })
+            });
 
-                if (data.status === "success") {
-                    log("✅ AUTORIZADO!", "success");
-                    proximaNota++;
-                } else if (data.status === "rejection") {
-                    log(`⚠️ REJEIÇÃO: ${data.message}`, "error");
-                    console.error("Detalhes:", data.details);
-                } else {
-                    log(`🚨 ERRO: ${data.message}`, "error");
-                }
-            } catch (err) {
-                log(`🚨 FALHA DE CONEXÃO`, "error");
-            } finally {
-                loader.classList.add('hidden');
-                btn.disabled = false;
+            const data = await response.json();
+            console.log("Response:", data);
+
+            // Save XML for viewing/downloading regardless of status
+            if (data.xml) {
+                window.lastXml = data.xml;
+                window.lastChave = data.chave;
+                actions.classList.remove('hidden');
             }
-        });
-    </script>
+
+            if (data.status === "success") {
+                log(`AUTORIZADO COM SUCESSO!`, "success");
+                log(`Protocolo: ${data.nProt}`, "detail");
+                log(`Chave: ${data.chave}`, "detail");
+                log(`Mensagem: ${data.message}`, "detail");
+            } else if (data.status === "rejection") {
+                log(`REJEIÇÃO SEFAZ (Cód: ${data.cStat})`, "error");
+                log(`Motivo: ${data.message}`, "error");
+                
+                // Show rejection in UI box
+                document.getElementById('rejection-msg').innerText = `${data.cStat} - ${data.message}`;
+                rejectionBox.classList.remove('hidden');
+                
+                if (data.cStat === '297') {
+                    log(`Dica: O erro 297 foi corrigido no backend. Se persistir, verifique a validade do certificado.`, "warning");
+                }
+            } else {
+                log(`ERRO DE PROCESSAMENTO`, "error");
+                log(data.message || "Erro desconhecido", "error");
+            }
+
+        } catch (err) {
+            log(`FALHA DE COMUNICAÇÃO`, "error");
+            console.error(err);
+        } finally {
+            loader.classList.add('hidden');
+            btn.disabled = false;
+        }
+    });
+</script>
 </body>
 
 </html>

@@ -9,7 +9,7 @@ let realtimeOrdersUnsubscribe = null;
 let areValuesHidden = false;
 
 let fiscalHistory = []; // Armazena { idVenda, data, status, xml, itensEmitidos, itensPendentes }
-const FISCAL_API_URL = "https://emitirnfce-xsy57wqb6q-uc.a.run.app";
+const FISCAL_API_URL = "https://emitirnfce-xsy57wqb6q-rj.a.run.app";
 
 // Variáveis de Pedidos Online (Globais para evitar o erro ReferenceError)
 let activeOrdersData = [];
@@ -399,49 +399,104 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Handler para Opções de Pagamento
-    // Localize onde você tem "paymentOptions.forEach..."
+
+    // Localize o bloco por volta da linha 1157 e substitua por este:
     paymentOptions.forEach(option => {
         option.addEventListener('click', () => {
             const method = option.dataset.method;
+            const cashSection = document.getElementById('cash-change-section');
+            const optionsGrid = document.getElementById('single-payment-options');
 
-            if (method === 'Crediário') {
-                // Lógica Nova: Não fecha o modal, mostra opções de parcelamento
-
-                // 1. Esconde as opções de ícones grandes
-                document.getElementById('single-payment-options').style.display = 'none';
-                document.getElementById('split-payment-toggle-btn').style.display = 'none';
-
-                // 2. Mostra o painel de parcelas
-                const crediarioArea = document.getElementById('crediario-options');
-                crediarioArea.style.display = 'block';
-
-                // 3. Atualiza simulação de valor
-                const total = lastSaleData ? lastSaleData.total : 0;
-                const select = document.getElementById('sale-installments');
-                const preview = document.getElementById('installment-preview');
-
-                const updatePreview = () => {
-                    const parc = parseInt(select.value);
-                    const val = total / parc;
-                    preview.innerHTML = `${parc}x de <strong>${formatCurrency(val)}</strong>`;
-                };
-
-                select.onchange = updatePreview;
-                updatePreview(); // Roda primeira vez
-
-                // Se ainda não selecionou cliente, abre o modal de seleção primeiro?
-                // Idealmente sim, mas vamos manter seu fluxo: seleciona cliente, depois volta pra cá ou confirma.
-                if (!selectedCrediarioClient) {
-                    // ... lógica para abrir busca de cliente ...
-                    // (Mantenha sua lógica atual de abrir modal de cliente se necessário)
+            if (method === 'Dinheiro') {
+                // Se for Dinheiro, apenas troca as telas internas do modal para digitar o troco
+                if (optionsGrid && cashSection) {
+                    optionsGrid.style.display = 'none';
+                    cashSection.style.display = 'block';
+                    // Dá foco no input de valor recebido
+                    setTimeout(() => document.getElementById('cash-received').focus(), 150);
                 }
+            } else if (method === 'Crediário') {
+                // Lógica de verificação de cliente para Crediário
+                if (!selectedCrediarioClient) {
+                    isReturningToPayment = true;
+                    closeModal(paymentModal);
 
+                    if (clientSelectionInput) clientSelectionInput.value = '';
+                    if (clientSelectionResults) {
+                        clientSelectionResults.innerHTML = '';
+                        clientSelectionResults.style.display = 'none';
+                    }
+                    openModal(clientSelectionModal);
+                    setTimeout(() => clientSelectionInput.focus(), 100);
+                    return;
+                }
+                showCrediarioScreen();
             } else {
-                // ... (Lógica normal para Dinheiro/Pix/Cartão)
+                // Para PIX, Cartões e Movecard, seleciona e fecha o modal direto
+                selectedCrediarioClient = null;
+                updateSummaryClientCard();
                 handlePaymentSelection(method);
             }
         });
     });
+
+    // Adicione o cálculo de troco em tempo real
+    document.getElementById('cash-received').addEventListener('input', (e) => {
+        const total = lastSaleData ? lastSaleData.total : 0;
+        const recebido = parseFloat(e.target.value) || 0;
+        const troco = recebido - total;
+        const display = document.getElementById('cash-change-value');
+        display.textContent = formatCurrency(troco > 0 ? troco : 0);
+        display.style.color = troco < 0 ? '#ef4444' : '#10b981';
+    });
+
+    // Botão de confirmar dinheiro
+    document.getElementById('confirm-cash-btn').addEventListener('click', () => {
+        const total = lastSaleData ? lastSaleData.total : 0;
+        const recebido = parseFloat(document.getElementById('cash-received').value) || 0;
+
+        if (recebido < total) {
+            showCustomAlert("Atenção", "Valor recebido é menor que o total.");
+            return;
+        }
+
+        window.lastTrocoValue = recebido - total; // Salva o troco para o backend fiscal 
+        handlePaymentSelection('Dinheiro');
+
+        // Reseta visual para a próxima venda
+        document.getElementById('cash-change-section').style.display = 'none';
+        document.getElementById('single-payment-options').style.display = 'grid';
+    });
+
+    // Adicione este evento no DOMContentLoaded do seu script.js
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('#confirm-cash-btn');
+        if (btn) {
+            const total = lastSaleData ? lastSaleData.total : 0;
+            const recebido = parseFloat(document.getElementById('cash-received').value) || 0;
+
+            if (recebido < total) {
+                showCustomAlert("Atenção", "Valor recebido é menor que o total.");
+                return;
+            }
+
+            window.lastTrocoValue = recebido - total; // Armazena globalmente para a nota
+            handlePaymentSelection('Dinheiro');
+        }
+    });
+    /*
+
+    // Cálculo de Troco em tempo real
+    document.getElementById('cash-received').addEventListener('input', (e) => {
+        const total = lastSaleData ? lastSaleData.total : 0;
+        const recebido = parseFloat(e.target.value) || 0;
+        const troco = recebido - total;
+
+        const display = document.getElementById('cash-change-value');
+        display.textContent = formatCurrency(troco > 0 ? troco : 0);
+        display.style.color = troco < 0 ? '#ef4444' : '#10b981';
+    });
+    */
 
     document.getElementById('confirm-crediario-btn').addEventListener('click', () => {
         if (!selectedCrediarioClient) {
@@ -454,7 +509,6 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedPaymentMethod = 'Crediário';
         const numParcelas = document.getElementById('sale-installments').value;
 
-        // Salva num lugar temporário para usar no processFinalSale
         window.tempInstallments = numParcelas;
 
         // Atualiza resumo
@@ -2367,117 +2421,404 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- VARIÁVEIS GLOBAIS DE IMPRESSÃO ---
     let selectedPrintFormat = 'thermal'; // 'thermal' ou 'a4'
 
-    // --- 1. BOTÃO FINALIZAR VENDA (F9) ---
-    finishSaleBtn.addEventListener('click', () => {
-        if (cart.length === 0) {
-            showCustomAlert("Vazio", "Adicione itens.");
+    function prepararConferenciaFiscal() {
+        const modal = document.getElementById('modal-confirm-fiscal');
+        const listApt = document.getElementById('confirm-fiscal-apt-list');
+        const listIgnored = document.getElementById('confirm-fiscal-ignored-list');
+        const secIgnored = document.getElementById('section-ignored-fiscal');
+        const btnConfirm = document.getElementById('btn-confirm-emission');
+
+        if (!modal || !btnConfirm) return;
+
+        // 1. RESET TOTAL
+        listApt.innerHTML = '';
+        listIgnored.innerHTML = '';
+        btnConfirm.disabled = false;
+        btnConfirm.style.opacity = "1";
+        btnConfirm.innerHTML = `<i class='bx bx-paper-plane'></i> Confirmar e Emitir`;
+
+        const globalDiscount = typeof discount !== 'undefined' ? discount : 0;
+        const globalTroco = window.lastTrocoValue || 0;
+        const totalVendaReal = lastSaleData ? lastSaleData.total : 0;
+
+        const totalItensOriginal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+        const fatorDesconto = totalItensOriginal > 0 ? (totalItensOriginal - globalDiscount) / totalItensOriginal : 1;
+
+        let itensFiscaisFinal = [];
+        let ignoredCount = 0;
+        let somaBrutaFiscal = 0;
+
+        // 2. PROCESSAMENTO INICIAL
+        cart.forEach(item => {
+            const ncmLimpo = (item.ncm || "").toString().replace(/\D/g, '');
+            const temCfop = item.cfop && String(item.cfop).trim().length >= 3;
+
+            if (ncmLimpo.length === 8 && temCfop) {
+                const precoFiscal = Number((item.price * fatorDesconto).toFixed(2));
+                const subtotalItem = Number((precoFiscal * item.quantity).toFixed(2));
+
+                itensFiscaisFinal.push({
+                    name: item.name,
+                    ncm: ncmLimpo,
+                    cfop: item.cfop,
+                    quantity: item.quantity,
+                    precoUnitario: precoFiscal,
+                    subtotal: subtotalItem
+                });
+                somaBrutaFiscal += subtotalItem;
+            } else {
+                ignoredCount++;
+                const div = document.createElement('div');
+                div.innerHTML = `<p style="font-size:0.8rem; color:#92400e; margin-bottom:5px;">● ${item.name} (Sem NCM/CFOP)</p>`;
+                listIgnored.appendChild(div);
+            }
+        });
+
+        // 3. ARREDONDAMENTO MÁGICO (Regra dos 5 Centavos)
+        // Arredonda o total fiscal para o múltiplo de 0.05 mais próximo (Ex: 35.99 -> 36.00)
+        let totalFiscalAjustado = Math.round(somaBrutaFiscal * 20) / 20;
+        let diferencaArredondamento = Number((totalFiscalAjustado - somaBrutaFiscal).toFixed(2));
+
+        // Ajusta o último item fiscal para absorver a diferença (exigência da SEFAZ: Soma itens = vNF)
+        if (itensFiscaisFinal.length > 0 && diferencaArredondamento !== 0) {
+            const ultimo = itensFiscaisFinal[itensFiscaisFinal.length - 1];
+            ultimo.subtotal = Number((ultimo.subtotal + diferencaArredondamento).toFixed(2));
+            ultimo.precoUnitario = Number((ultimo.subtotal / ultimo.quantity).toFixed(4));
+        }
+
+        // 4. RENDERIZAÇÃO NA TELA
+        itensFiscaisFinal.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'apt-item-row';
+            div.innerHTML = `
+            <div>
+                <strong>${item.name}</strong>
+                <span class="ncm-tag">NCM: ${item.ncm} | CFOP: ${item.cfop}</span>
+            </div>
+            <div style="text-align:right">${formatCurrency(item.precoUnitario)}</div>
+            <div style="text-align:right"><strong>${formatCurrency(item.subtotal)}</strong></div>
+        `;
+            listApt.appendChild(div);
+        });
+
+        // 5. VALIDAÇÃO E BOTÃO
+        document.getElementById('confirm-venda-total').textContent = formatCurrency(totalVendaReal);
+        document.getElementById('confirm-fiscal-payment-method').textContent = selectedPaymentMethod || "Dinheiro";
+        document.getElementById('confirm-valor-recebido').textContent = formatCurrency(totalVendaReal + globalTroco);
+        document.getElementById('confirm-troco-real').textContent = formatCurrency(globalTroco);
+
+        if (totalFiscalAjustado <= 0) {
+            document.getElementById('confirm-base-fiscal').innerHTML = `<span style="color:red">R$ 0,00 (Sem itens fiscais)</span>`;
+            document.getElementById('confirm-vpag-sefaz').textContent = "R$ 0,00";
+            btnConfirm.disabled = true;
+            btnConfirm.style.opacity = "0.5";
+            btnConfirm.innerHTML = `<i class='bx bx-error-circle'></i> Não há itens para emitir`;
+        } else {
+            // vPag = Total da Nota + Troco (Sempre limpo agora)
+            const vPagSefaz = totalFiscalAjustado + globalTroco;
+            document.getElementById('confirm-base-fiscal').textContent = formatCurrency(totalFiscalAjustado);
+            document.getElementById('confirm-vpag-sefaz').textContent = formatCurrency(vPagSefaz);
+            btnConfirm.disabled = false;
+            btnConfirm.style.opacity = "1";
+        }
+
+        secIgnored.style.display = ignoredCount > 0 ? 'block' : 'none';
+        openModal(modal);
+    }
+
+    // --- SEÇÃO FISCAL: NAVEGAÇÃO E PENDÊNCIAS ---
+
+    function switchOrderTab(tab) {
+        const emitidasView = document.getElementById('orders-emitidas-view');
+        const pendentesView = document.getElementById('orders-pendentes-view');
+        const tabs = document.querySelectorAll('.order-tab');
+
+        // Remove classe ativa de todos
+        tabs.forEach(t => t.classList.remove('active'));
+
+        if (tab === 'emitidas') {
+            emitidasView.style.display = 'block';
+            pendentesView.style.display = 'none';
+            // Seleciona a aba correta para destacar
+            document.querySelector('.order-tab[onclick*="emitidas"]').classList.add('active');
+        } else {
+            emitidasView.style.display = 'none';
+            pendentesView.style.display = 'block';
+            document.querySelector('.order-tab[onclick*="pendentes"]').classList.add('active');
+            renderizarItensPendentes(); // Atualiza a lista de itens com erro
+        }
+    }
+
+    // Renderiza itens que foram ignorados na última tentativa de emissão
+    function renderizarItensPendentes() {
+        const container = document.getElementById('pendentes-list');
+        if (!container) return;
+
+        // 'itensFiscaisPendentes' deve ser preenchido durante o processFinalSale
+        if (!window.itensFiscaisPendentes || window.itensFiscaisPendentes.length === 0) {
+            container.innerHTML = '<div class="empty-state">Nenhum item pendente de correção.</div>';
             return;
         }
 
+        container.innerHTML = window.itensFiscaisPendentes.map(item => `
+        <div class="apt-item-row" style="padding: 12px; border-bottom: 1px solid #eee;">
+            <div>
+                <strong>${item.name}</strong>
+                <span class="ncm-tag" style="color: #ef4444;">Motivo: ${item.reason}</span>
+            </div>
+            <div class="text-right">
+                <button class="btn-view" onclick="abrirEdicaoProduto('${item.id}')">
+                    <i class='bx bx-edit'></i> Corrigir
+                </button>
+            </div>
+        </div>
+    `).join('');
+    }
+
+    document.getElementById('btn-cancel-fiscal').onclick = () => {
+        closeModal(document.getElementById('modal-confirm-fiscal'));
+    };
+
+    // Listener para o botão de CONFIRMAR EMISSÃO (Verde)
+    document.getElementById('btn-confirm-emission').onclick = () => {
+        emissaoFiscalAtiva = true; // Ativa a flag fiscal
+        closeModal(document.getElementById('modal-confirm-fiscal'));
+        processFinalSale(pendingPrintFormat); // pendingPrintFormat já deve estar definido globalmente
+    };
+
+    // Listener para o botão de NÃO EMITIR (Cinza)
+    document.getElementById('btn-cancel-fiscal').onclick = () => {
+        emissaoFiscalAtiva = false; // Desativa a flag fiscal
+        closeModal(document.getElementById('modal-confirm-fiscal'));
+        processFinalSale(pendingPrintFormat);
+    };
+    // --- 1. BOTÃO FINALIZAR VENDA (F9) ---
+
+    // Variável global ao bloco para armazenar o formato
+    let pendingPrintFormat = 'thermal';
+    let emissaoFiscalAtiva = true; // Flag global de controle
+
+    finishSaleBtn.addEventListener('click', () => {
+        if (cart.length === 0) return showCustomAlert("Vazio", "Adicione itens.");
         if (!selectedPaymentMethod) {
-            showCustomAlert("Pagamento", "Selecione forma.");
+            showCustomAlert("Pagamento", "Selecione a forma de pagamento.");
             openModal(paymentModal);
             return;
         }
 
-        // LÓGICA ALTERADA: Se for Crediário, pula a pergunta e imprime A4 direto
         if (selectedPaymentMethod === 'Crediário') {
             if (!selectedCrediarioClient) {
-                showCustomAlert("Atenção", "Selecione o cliente para o Crediário.");
+                showCustomAlert("Atenção", "Selecione o cliente.");
                 openModal(clientSelectionModal);
                 return;
             }
-
-            // Chama direto a função de processamento com o formato A4
-            processFinalSale('a4');
-            return;
+            pendingPrintFormat = 'a4';
+            prepararConferenciaFiscal();
+        } else {
+            openModal(document.getElementById('print-selection-modal'));
         }
-
-        // Para os outros métodos (Dinheiro, PIX, Cartão), continua perguntando
-        openModal(document.getElementById('print-selection-modal'));
     });
+
+    // Handlers de seleção de impressão
+    document.getElementById('btn-print-thermal').onclick = () => {
+        closeModal(document.getElementById('print-selection-modal'));
+        pendingPrintFormat = 'thermal';
+        if (selectedHistorySale) {
+            printHistoryReceipt(selectedHistorySale, 'thermal');
+            selectedHistorySale = null;
+        } else {
+            prepararConferenciaFiscal();
+        }
+    };
+
+    document.getElementById('btn-print-a4').onclick = () => {
+        closeModal(document.getElementById('print-selection-modal'));
+        pendingPrintFormat = 'a4';
+        if (selectedHistorySale) {
+            printHistoryReceipt(selectedHistorySale, 'a4');
+            selectedHistorySale = null;
+        } else {
+            prepararConferenciaFiscal();
+        }
+    };
 
     let isReturningToPayment = false; // Controle de fluxo
 
-    async function processFinalSale() {
-        const btn = document.getElementById('finish-sale-btn');
-        const originalText = btn.innerHTML;
+    async function processFinalSale(printFormat = 'thermal') {
+        // Identifica o botão correto pelo ID que você definiu no HTML
+        const btnId = emissaoFiscalAtiva ? 'btn-confirm-emission' : 'btn-cancel-fiscal';
+        const btn = document.getElementById(btnId);
+        const originalText = btn ? btn.innerHTML : "";
 
         if (cart.length === 0) return showCustomAlert("Atenção", "Carrinho vazio!");
 
         try {
-            btn.disabled = true;
-            btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Finalizando...';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Processando...';
+            }
 
-            const totalVenda = lastSaleData ? lastSaleData.total : 0;
             const saleId = "V" + new Date().getTime().toString().slice(-8);
-            const dadosVendaBase = {
-                id: saleId,
-                cliente: selectedCrediarioClient ? selectedCrediarioClient.nomeExibicao : "Cliente Balcão",
-                vendedor: currentSeller || "Caixa",
-                valorTotal: totalVenda,
-                itens: cart,
-                metodoPagamento: selectedPaymentMethod
-            };
+            const globalDiscount = discount || 0;
+            const globalTroco = window.lastTrocoValue || 0;
 
-            // --- PASSO 1: Registro em AMBAS as APIs (Sheets) ---
-            // Usamos Promise.allSettled para que o erro em uma não trave a outra
-            const registros = await Promise.allSettled([
-                // API 1: Fluxo de Caixa / Extrato (REGISTRO_VENDA_SCRIPT_URL)
-                registrarVendaAtual([{ method: selectedPaymentMethod, value: totalVenda }]),
+            // Cálculos de Itens e Desconto (Mantidos conforme sua versão original)
+            const totalAntesDoDescontoGlobal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+            const fatorDesconto = totalAntesDoDescontoGlobal > 0 ? (totalAntesDoDescontoGlobal - globalDiscount) / totalAntesDoDescontoGlobal : 1;
 
-                // API 2: Histórico Detalhado / Produtos (SCRIPT_URL)
-                salvarVendaNoHistorico(dadosVendaBase)
-            ]);
-
-            // Log de verificação no console
-            registros.forEach((res, i) => {
-                if (res.status === "rejected") console.error(`Falha na API ${i + 1}:`, res.reason);
+            const itensAptos = [];
+            const itensIgnorados = [];
+            cart.forEach(item => {
+                const ncmLimpo = (item.ncm || "").toString().replace(/\D/g, '');
+                if (ncmLimpo.length === 8 && item.cfop) {
+                    itensAptos.push({
+                        id: item.id || item.codigo,
+                        name: (item.name || item.nome).substring(0, 120),
+                        price: Number((item.price * fatorDesconto).toFixed(2)),
+                        quantity: Number(item.quantity || 1),
+                        ncm: ncmLimpo,
+                        cfop: item.cfop,
+                        unit: item.unit || 'UN'
+                    });
+                } else {
+                    itensIgnorados.push({ name: item.name, reason: "NCM/CFOP ausente" });
+                }
             });
 
-            // --- PASSO 2: Emissão Fiscal (Cloud Run) ---
-            let fiscalSucesso = false;
-            try {
-                const itensAptos = cart.map(item => ({
-                    id: item.id || item.codigo,
-                    name: (item.name || item.nome).substring(0, 120),
-                    price: Number(item.price || 0),
-                    quantity: Number(item.quantity || 1),
-                    ncm: (item.ncm || "").toString().replace(/\D/g, ''),
-                    cfop: item.cfop || '5102',
-                    unit: item.unit || 'UN'
-                })).filter(it => it.ncm.length === 8);
+            const totalFiscalLiquido = itensAptos.reduce((acc, i) => acc + (i.price * i.quantity), 0);
 
-                if (itensAptos.length > 0) {
+            // Estado inicial dos dados fiscais
+            let dadosFiscal = {
+                status: "Não Emitida",
+                mensagem: "Venda simples registrada",
+                saleId: saleId,
+                itensIgnorados: itensIgnorados
+            };
+
+            // --- CHECAGEM DA VARIÁVEL DE CONTROLE ---
+            if (emissaoFiscalAtiva && itensAptos.length > 0) {
+                try {
+                    // SÓ chama o backend se a flag for true
                     const response = await fetch(`${FISCAL_API_URL}/emitirNfce`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ items: itensAptos, totalPagamento: totalVenda, saleId: saleId })
+                        body: JSON.stringify({
+                            items: itensAptos,
+                            totalPagamento: totalFiscalLiquido,
+                            paymentMethod: selectedPaymentMethod,
+                            troco: globalTroco,
+                            valorPagoManual: totalFiscalLiquido + globalTroco,
+                            saleId: saleId
+                        })
                     });
+
                     const resFiscal = await response.json();
-                    fiscalSucesso = (resFiscal.status === "success");
+                    if (resFiscal.status === "success") {
+                        dadosFiscal = {
+                            status: "Autorizada",
+                            cStat: resFiscal.cStat,
+                            chave: resFiscal.chave,
+                            nProt: resFiscal.nProt,
+                            nNF: resFiscal.nNF, // ADICIONADO: Número da nota para sua planilha
+                            xml: resFiscal.xml, // ADICIONADO: XML para sua planilha
+                            mensagem: resFiscal.message,
+                            saleId: saleId,
+                            itensIgnorados: itensIgnorados
+                        };
+                    }
+                } catch (err) {
+                    dadosFiscal.status = "Erro";
+                    dadosFiscal.mensagem = "Erro na comunicação com o servidor fiscal";
                 }
-            } catch (fErr) {
-                console.warn("Falha fiscal (ignorada para concluir venda):", fErr);
             }
 
-            // --- PASSO 3: Finalização da Interface ---
-            if (fiscalSucesso) {
-                showCustomAlert("Sucesso", "Venda registrada e NFC-e emitida!");
-            } else {
-                showCustomAlert("Concluído", "Venda registrada nos bancos de dados. Nota fiscal pendente.");
-            }
+            // --- SALVAMENTO (Independente da flag) ---
+            const totalGeralVenda = lastSaleData ? lastSaleData.total : 0;
+            const dadosVendaInterna = { id: saleId, cliente: selectedCrediarioClient ? selectedCrediarioClient.nomeExibicao : "Cliente Balcão", valorTotal: totalGeralVenda, itens: cart, metodoPagamento: selectedPaymentMethod };
+
+            await Promise.allSettled([
+                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "salvarNotaFiscal", data: dadosFiscal }) }),
+                registrarVendaAtual([{ method: selectedPaymentMethod, value: totalGeralVenda }]),
+                salvarVendaNoHistorico(dadosVendaInterna),
+                abaterEstoqueFirebase(cart)
+            ]);
+
+            if (printFormat === 'a4') printA4(dadosVendaInterna.cliente);
+            else printThermal(dadosVendaInterna.cliente);
 
             clearCart();
-            if (typeof carregarHistorico === 'function') carregarHistorico();
+            showCustomToast(emissaoFiscalAtiva ? "Venda com NFC-e Finalizada!" : "Venda Registrada!");
 
         } catch (error) {
-            console.error("Erro fatal na venda:", error);
-            showCustomAlert("Erro", "Ocorreu um erro ao processar a venda.");
+            console.error("Erro:", error);
         } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+            closeModal('payment-modal');
         }
+    }
+
+    async function cancelarNota(chave, nProt) {
+        // 1. Validações iniciais
+        if (!chave || !nProt) return alert("Dados da nota incompletos.");
+
+        // Pergunta a justificativa (Obrigatória, mín 15 caracteres)
+        const justificativa = prompt("Digite o motivo do cancelamento (Mínimo 15 letras):\nEx: Desistencia da compra pelo cliente no balcao");
+
+        if (!justificativa || justificativa.length < 15) {
+            return alert("O motivo é obrigatório e precisa ter no mínimo 15 caracteres.");
+        }
+
+        if (!confirm("Tem certeza? Esta ação é irreversível e o prazo é de 30 minutos após a emissão.")) {
+            return;
+        }
+
+        try {
+            // Mostra loading
+            showCustomAlert("Aguarde", "Processando cancelamento na SEFAZ...", "info");
+
+            // 2. Chama o Backend
+            const response = await fetch("https://sua-url-cloud-run/cancelarNfce", { // <-- ATUALIZE A URL
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chave: chave,
+                    nProt: nProt,
+                    justificativa: justificativa
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.status === "success") {
+                alert("✅ SUCESSO! Nota cancelada.\nStatus: " + data.message);
+
+                // 3. Atualiza na Planilha (Opcional, mas recomendado)
+                // Você deve criar uma ação no Code.js para atualizar o status da linha para "CANCELADA"
+                registrarCancelamentoPlanilha(chave);
+
+            } else {
+                alert("❌ ERRO AO CANCELAR:\nCód: " + data.cStat + "\nMotivo: " + data.message);
+            }
+
+        } catch (err) {
+            console.error(err);
+            alert("Erro de comunicação com o servidor.");
+        }
+    }
+
+    // Função auxiliar para atualizar a planilha (adicione ao script.js)
+    function registrarCancelamentoPlanilha(chave) {
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: "atualizarStatusNota", // Você precisará criar isso no Code.js se quiser
+                chave: chave,
+                novoStatus: "CANCELADA"
+            })
+        });
     }
     // 2. Botão Concluir Final (AGORA SÓ LIMPA A TELA)
     // Como já salvamos no passo anterior, este botão serve apenas para fechar o ciclo.
@@ -2506,126 +2847,97 @@ document.addEventListener('DOMContentLoaded', () => {
     quickAddSubmitBtn.addEventListener('click', handleQuickAddSubmit);
     quickAddForm.addEventListener('submit', (e) => { e.preventDefault(); handleQuickAddSubmit(); });
 
-    // Localize: paymentOptions.forEach...
-    paymentOptions.forEach(option => {
-        option.addEventListener('click', () => {
-            const method = option.dataset.method;
-
-            if (method === 'Crediário') {
-                // VERIFICAÇÃO IMEDIATA: Tem cliente selecionado?
-                if (!selectedCrediarioClient) {
-                    // FLUXO CORRETO: 
-                    // 1. Marca que queremos voltar pra cá depois
-                    isReturningToPayment = true;
-                    // 2. Fecha este modal
-                    closeModal(paymentModal);
-                    // 3. Abre a busca de cliente
-                    // (Reseta a busca antes para ficar limpo)
-                    if (clientSelectionInput) clientSelectionInput.value = '';
-                    if (clientSelectionResults) {
-                        clientSelectionResults.innerHTML = '';
-                        clientSelectionResults.style.display = 'none';
-                    }
-                    if (clientSearchHint) clientSearchHint.style.display = 'block';
-
-                    openModal(clientSelectionModal);
-                    setTimeout(() => clientSelectionInput.focus(), 100);
-                    return; // Para por aqui, espera o usuário selecionar
-                }
-
-                // Se JÁ TEM cliente, mostra a tela de parcelas
-                showCrediarioScreen();
-
-            } else {
-                // Fluxo normal (Dinheiro, Pix, Cartão)
-                selectedCrediarioClient = null;
-                updateSummaryClientCard();
-                handlePaymentSelection(method);
-            }
-        });
-    });
-
-    // Listener para as abas da página de Notas
-    document.querySelectorAll('#notas-tabs .order-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            document.querySelectorAll('#notas-tabs .order-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-
-            const view = tab.dataset.view;
-            if (view === 'emitidas') {
-                document.getElementById('view-notas-emitidas').style.display = 'block';
-                document.getElementById('view-notas-pendentes').style.display = 'none';
-            } else {
-                document.getElementById('view-notas-emitidas').style.display = 'none';
-                document.getElementById('view-notas-pendentes').style.display = 'block';
-            }
-        });
-    });
-
-    const renderNotasPage = () => {
-        // 1. Renderiza Emitidas
+    // Adicione esta função ao seu script.js
+    async function carregarHistoricoFiscal() {
         const tbodyEmitidas = document.getElementById('lista-notas-emitidas');
-        tbodyEmitidas.innerHTML = '';
-
-        fiscalHistory.forEach(reg => {
-            const tr = document.createElement('tr');
-
-            let statusBadge = '';
-            if (reg.status === 'Autorizada') statusBadge = `<span class="badge-status ok"><i class='bx bx-check'></i> Autorizada</span>`;
-            else if (reg.status.includes('Erro') || reg.status === 'Rejeitada') statusBadge = `<span class="badge-status error"><i class='bx bx-x'></i> ${reg.status}</span>`;
-            else statusBadge = `<span class="badge-status warning"> Ignorada</span>`;
-
-            tr.innerHTML = `
-            <td>${statusBadge}</td>
-            <td>#${reg.idVenda.slice(-6)}</td>
-            <td>${formatTime(reg.data)}</td>
-            <td>
-                <div style="font-size: 0.8rem;">
-                    <span class="text-success">${reg.itensEmitidos.length} ok</span> / 
-                    <span class="text-danger">${reg.itensPendentes.length} pend</span>
-                </div>
-            </td>
-            <td>
-                ${reg.status === 'Autorizada' ? `<button class="btn btn-sm btn-secondary" onclick="verDanfe('${reg.idVenda}')"><i class='bx bx-show'></i> Ver</button>` : ''}
-            </td>
-        `;
-            tbodyEmitidas.appendChild(tr);
-        });
-
-        // 2. Renderiza Pendentes (Agrupado por produto)
         const tbodyPendentes = document.getElementById('lista-itens-pendentes');
-        tbodyPendentes.innerHTML = '';
 
-        // Flatten a lista de pendentes
-        let allPending = [];
-        fiscalHistory.forEach(reg => {
-            reg.itensPendentes.forEach(item => {
-                allPending.push({ ...item, idVenda: reg.idVenda });
-            });
-        });
+        tbodyEmitidas.innerHTML = '<tr><td colspan="5" class="text-center"><i class="bx bx-loader-alt bx-spin"></i> Carregando notas...</td></tr>';
 
-        if (allPending.length === 0) {
-            tbodyPendentes.innerHTML = '<tr><td colspan="4" class="text-center text-light pad-20">Nenhuma pendência cadastral recente.</td></tr>';
-        } else {
-            allPending.forEach(item => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                <td>
-                    <strong>${item.name}</strong><br>
-                    <small class="text-light">Cod: ${item.id}</small>
-                </td>
-                <td>#${item.idVenda.slice(-6)}</td>
-                <td class="text-danger">${item.reason || 'Dados incompletos'}</td>
-                <td>
-                    <button class="btn btn-sm btn-primary" onclick="corrigirProduto('${item.id}')">
-                        <i class='bx bx-edit'></i> Corrigir
-                    </button>
-                </td>
-            `;
-                tbodyPendentes.appendChild(tr);
-            });
+        try {
+            // Chama o doGet do Code.js
+            const response = await fetch(`${SCRIPT_URL}?action=listarNotasFiscais`);
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                tbodyEmitidas.innerHTML = '';
+                tbodyPendentes.innerHTML = '';
+
+                result.data.forEach(nota => {
+                    // 1. Preenche Tabela de Notas Emitidas
+                    const tr = document.createElement('tr');
+
+                    let statusClass = 'warning';
+                    let icon = 'bx-error';
+                    if (nota.status === 'Autorizada') { statusClass = 'ok'; icon = 'bx-check'; }
+                    else if (nota.status === 'Rejeitada') { statusClass = 'error'; icon = 'bx-x'; }
+
+                    // Formata data
+                    const dataFormatada = new Date(nota.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                    tr.innerHTML = `
+                        <td><span class="badge-status ${statusClass}"><i class='bx ${icon}'></i> ${nota.status}</span></td>
+                        <td>#${nota.idVenda.slice(-6)}</td>
+                        <td>${dataFormatada}</td>
+                        <td title="${nota.mensagem}">${nota.mensagem.substring(0, 30)}...</td>
+                        <td>
+                           ${nota.chave ? `<button class="btn btn-sm btn-secondary" onclick="navigator.clipboard.writeText('${nota.chave}')"><i class='bx bx-copy'></i> Chave</button>` : ''}
+                        </td>
+                    `;
+                    const btnCancelar = `<button onclick="cancelarNota('${nota.chave}', '${nota.nProt}')" class="btn-cancelar">Cancelar</button>`;
+
+                    tr.innerHTML = `
+    ...
+    <td>${nota.chave ? btnCancelar : ''}</td>
+`;
+                    tbodyEmitidas.appendChild(tr);
+
+                    // 2. Preenche Tabela de Pendências (Itens Ignorados)
+                    if (nota.itensIgnorados && nota.itensIgnorados.length > 0) {
+                        // O Code.js salvou como string "Item (Motivo), Item 2 (Motivo)"
+                        // Vamos separar para exibir
+                        const listaPendentes = nota.itensIgnorados.split(', ');
+
+                        listaPendentes.forEach(itemStr => {
+                            const trPend = document.createElement('tr');
+                            trPend.innerHTML = `
+                                <td>${itemStr}</td>
+                                <td>#${nota.idVenda.slice(-6)}</td>
+                                <td class="text-danger">Cadastro Incompleto</td>
+                                <td><button class="btn btn-sm btn-primary" onclick="alert('Vá em Produtos e edite o NCM deste item.')">Corrigir</button></td>
+                            `;
+                            tbodyPendentes.appendChild(trPend);
+                        });
+                    }
+                });
+            }
+        } catch (e) {
+            console.error("Erro ao carregar notas:", e);
+            tbodyEmitidas.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Erro ao carregar histórico.</td></tr>';
         }
-    };
+    }
+
+    // --- CORREÇÃO DO MENU DE NOTAS FISCAIS ---
+
+    // 1. Tenta pegar o botão da Navbar (Barra lateral/principal)
+    const btnFiscalNavbar = document.querySelector('.navbar-item[data-page="notas"]');
+    if (btnFiscalNavbar) {
+        btnFiscalNavbar.addEventListener('click', () => {
+            carregarHistoricoFiscal();
+            // Se tiver lógica de troca de tela/aba, adicione aqui. Ex:
+            // document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+            // document.getElementById('notas-page').style.display = 'block';
+        });
+    }
+
+    // 2. Tenta pegar o botão do Menu "Mais" (O que você mostrou no código)
+    const btnFiscalMenu = document.querySelector('.more-menu-item[data-page="notas"]');
+    if (btnFiscalMenu) {
+        btnFiscalMenu.addEventListener('click', () => {
+            carregarHistoricoFiscal();
+            // Mesma lógica de troca de tela aqui, se necessário
+        });
+    }
 
     // Função para abrir o modal DANFE
     window.verDanfe = (idVenda) => {

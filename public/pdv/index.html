@@ -267,23 +267,25 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="announcement-modal" style="z-index: 9999;">
+    <div class="modal-overlay active" id="announcement-modal" style="z-index: 9999;">
         <div class="modal-content modal-sm">
             <div class="modal-header">
-                <h3><i class='bx bx-info-circle'></i> Comunicado Interno</h3>
+                <h3><i class='bx bx-broadcast'></i> Atualização do Sistema</h3>
                 <button class="close-modal-btn" onclick="closeAnnouncement()"><i class='bx bx-x'></i></button>
             </div>
             <div class="modal-body text-center">
-                <p class="mb-16"><strong>Recuperação de Vendas (Backup):</strong> O sistema recuperou todas as vendas do presente dia.</p>
-                <p class="text-light text-sm mb-16">A emissão de <strong>Notas Fiscais</strong> permanece em modo
-                    <strong>MANUAL</strong> até a conclusão da manutenção.</p>
+                <p class="mb-16"><strong>Emissão Fiscal Disponível:</strong> A integração com a SEFAZ para NFC-e foi
+                    restabelecida.</p>
+                <p class="text-light text-sm mb-16">Versão estável <strong>v.1.0.0.39.4B</strong>. Note que o sistema
+                    ainda está em fase de monitoramento e pode estar sujeito a erros eventuais.</p>
                 <div
-                    style="background: #f3f4f6; padding: 8px; border-radius: 6px; font-family: monospace; font-size: 0.8rem; color: #6b7280;">
-                    Versão: v.1.0.0.39.3B
+                    style="background: #ecfdf5; padding: 8px; border-radius: 6px; font-family: monospace; font-size: 0.8rem; color: #065f46; border: 1px solid #10b981;">
+                    Status: Produção Online
                 </div>
             </div>
             <div class="modal-footer justify-center">
-                <button class="btn btn-primary" onclick="closeAnnouncement()">Entendi</button>
+                <button class="btn btn-success" onclick="closeAnnouncement()" style="width: 100%;">Entendi e
+                    Continuar</button>
             </div>
         </div>
     </div>
@@ -360,13 +362,13 @@
                     <div class="more-menu-item">
                         <a href="/pdv/price.html">
                             <div class="item-icon-box pro-icon"><i class='bx bx-group'></i></div>
-                        <div class="item-content">
-                            <div class="title-row">
-                                <strong>Speed Cadastro</strong>
-                                <span class="pro-tag">PRO</span>
+                            <div class="item-content">
+                                <div class="title-row">
+                                    <strong>Speed Cadastro</strong>
+                                    <span class="pro-tag">PRO</span>
+                                </div>
+                                <span>Use a precificação rápida feita por um dos operadores.</span>
                             </div>
-                            <span>Use a precificação rápida feita por um dos operadores.</span>
-                        </div>
                         </a>
                     </div>
 
@@ -845,6 +847,42 @@
 
     </div>
 
+    <div class="modal-overlay" id="open-caixa-modal">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3>Abrir Caixa</h3>
+            </div>
+            <form id="open-caixa-form">
+                <div class="modal-body">
+                    <p>Informe o valor inicial para troco ou abra sem valor.</p>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="open-caixa-notas">Valor em Notas (R$)</label>
+                            <input type="number" id="open-caixa-notas" step="0.01" min="0" placeholder="0,00"
+                                data-primary-focus="true">
+                        </div>
+                        <div class="form-group">
+                            <label for="open-caixa-moedas">Valor em Moedas (R$)</label>
+                            <input type="number" id="open-caixa-moedas" step="0.01" min="0" placeholder="0,00">
+                        </div>
+                    </div>
+                    <div class="toggle-switch-group">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="open-caixa-sem-valor">
+                            <span class="slider"></span>
+                        </label>
+                        <label for="open-caixa-sem-valor">Abrir caixa sem valor inicial</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary" id="open-caixa-save-btn">
+                        <i class='bx bx-check'></i> Confirmar Abertura
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="tax-details-modal">
         <div class="modal-content modal-md">
             <div class="modal-header">
@@ -873,6 +911,76 @@
                         estão em fase de transição. O valor acima é uma estimativa da repartição tributária dentro da
                         guia DAS.</p>
                 </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="modal-confirm-fiscal" style="z-index: 10000;">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h3><i class='bx bx-spreadsheet'></i> Emissão NFC-e</h3>
+                <button class="close-modal-btn" data-target="modal-confirm-fiscal"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body fiscal-body-vertical">
+
+                <div class="fiscal-section">
+                    <h4 class="section-label"><i class='bx bx-money'></i> Resumo do Recebimento</h4>
+                    <div class="fiscal-row-grid">
+                        <div class="fiscal-stat-item">
+                            <span class="lbl">Total da Venda</span>
+                            <span class="val" id="confirm-venda-total">R$ 0,00</span>
+                        </div>
+                        <div class="fiscal-stat-item">
+                            <span class="lbl">Forma Pagto</span>
+                            <span class="val" id="confirm-fiscal-payment-method">---</span>
+                        </div>
+                        <div class="fiscal-stat-item">
+                            <span class="lbl">Dinheiro Recebido</span>
+                            <span class="val" id="confirm-valor-recebido">R$ 0,00</span>
+                        </div>
+                        <div class="fiscal-stat-item">
+                            <span class="lbl">Troco Real</span>
+                            <span class="val" id="confirm-troco-real" style="color: var(--primary-red);">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fiscal-section">
+                    <h4 class="section-label text-success"><i class='bx bx-check-double'></i> Itens Enviados ao Fisco
+                        (XML)</h4>
+                    <div class="fiscal-items-header">
+                        <span>Item / NCM</span>
+                        <span class="text-right">Unit. (c/ Desc.)</span>
+                        <span class="text-right">Subtotal</span>
+                    </div>
+                    <div id="confirm-fiscal-apt-list" class="fiscal-scroll-list"></div>
+                </div>
+
+                <div class="fiscal-section" id="section-ignored-fiscal" style="display:none;">
+                    <h4 class="section-label text-warning"><i class='bx bx-error'></i> Itens Sem Validade Fiscal
+                        (*pendente)</h4>
+                    <div id="confirm-fiscal-ignored-list" class="fiscal-scroll-list ignored"></div>
+                </div>
+
+                <div class="fiscal-summary-box">
+                    <div class="summary-line">
+                        <span>Base de Cálculo (Total Fiscal):</span>
+                        <strong id="confirm-base-fiscal">R$ 0,00</strong>
+                    </div>
+                    <div class="summary-line">
+                        <span title="Valor informado no campo detPag para evitar rejeição de vPag < vNF">Informado à
+                            SEFAZ (vPag):</span>
+                        <strong id="confirm-vpag-sefaz">R$ 0,00</strong>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button onclick="processFinalSale('thermal', false)" class="btn btn-secondary"
+                    id="btn-cancel-fiscal">Não Emitir</button>
+                <button onclick="processFinalSale('thermal', true)" class="btn btn-primary" id="btn-confirm-emission"
+                    style="background: #10b981;">
+                    <i class='bx bx-paper-plane'></i> Confirmar e Emitir
+                </button>
             </div>
         </div>
     </div>
@@ -1098,23 +1206,29 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Forma de Pagamento</h3>
-                <button class="close-modal-btn" data-target="payment-modal"><i class='bx bx-x'></i></button>
+                <button class="close-modal-btn" data-target="payment-modal"><i class="bx bx-x"></i></button>
             </div>
             <div class="modal-body">
                 <p>Valor total: <strong id="payment-total">R$ 0,00</strong>. Como o cliente irá pagar?</p>
 
-                <div class="payment-options" id="single-payment-options">
+                <div class="payment-options" id="single-payment-options" style="display: grid;">
                     <div class="payment-option" data-method="Dinheiro">
-                        <i class='bx bx-dollar-circle font-32'></i> <span>Dinheiro (F6)</span>
+                        <i class="bx bx-dollar-circle font-32"></i> <span>Dinheiro (F6)</span>
                     </div>
                     <div class="payment-option" data-method="PIX">
-                        <i class='bx bx-scan font-32'></i> <span>PIX (F7)</span>
+                        <i class="bx bx-scan font-32"></i> <span>PIX (F7)</span>
                     </div>
-                    <div class="payment-option" data-method="Cartão">
-                        <i class='bx bx-credit-card font-32'></i> <span>Cartão (F8)</span>
+                    <div class="payment-option" data-method="C. Crédito">
+                        <i class="bx bx-credit-card font-32"></i> <span>C. Crédito (F8)</span>
+                    </div>
+                    <div class="payment-option" data-method="C. Débito">
+                        <i class="bx bx-credit-card-alt font-32"></i> <span>C. Débito</span>
+                    </div>
+                    <div class="payment-option" data-method="Movecard">
+                        <i class="bx bx-card font-32"></i> <span>Movecard</span>
                     </div>
                     <div class="payment-option" data-method="Crediário" id="opt-crediario">
-                        <i class='bx bx-user-check font-32'></i> <span>Crediário</span>
+                        <i class="bx bx-user-check font-32"></i> <span>Crediário</span>
                     </div>
                 </div>
 
@@ -1167,11 +1281,30 @@
                         Divisão</button>
                 </div>
 
-                <div id="crediario-options" style="display: none; animation: slideInUp 0.3s ease;">
+                <div id="cash-change-section"
+                    style="display: none; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 15px;">
+                    <h4 class="mb-16">Pagamento em Dinheiro</h4>
+                    <div class="form-group">
+                        <label>Valor Recebido (R$)</label>
+                        <input type="number" id="cash-received" step="0.01" class="input-modern"
+                            style="font-size: 1.5rem; height: 50px;" placeholder="0,00">
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                        <span style="font-weight: 500; color: #64748b;">Troco:</span>
+                        <span id="cash-change-value" style="font-size: 1.5rem; font-weight: 700; color: #10b981;">R$
+                            0,00</span>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button class="btn btn-secondary btn-back-payment" style="width: auto;">Voltar</button>
+                        <button class="btn btn-primary" id="confirm-cash-btn" style="flex: 1;">Confirmar
+                            Pagamento</button>
+                    </div>
+                </div>
 
+                <div id="crediario-options" style="display: none; margin-top: 15px;">
                     <div
                         style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px dashed #eee; padding-bottom: 10px;">
-                        <button type="button" id="back-to-payment-methods"
+                        <button type="button" class="btn-back-payment"
                             style="background:none; border:none; cursor:pointer; font-size: 0.9rem; color: var(--text-light); display: flex; align-items: center; gap: 5px;">
                             <i class='bx bx-arrow-back'></i> Voltar
                         </button>
@@ -1205,8 +1338,7 @@
                             <option value="6">6x Sem Juros</option>
                         </select>
                         <div style="margin-top: 10px; text-align: center; font-weight: 600; color: var(--primary-red); background: #fff0f3; padding: 10px; border-radius: 8px;"
-                            id="installment-preview">
-                        </div>
+                            id="installment-preview">1x de R$ 0,00</div>
                     </div>
 
                     <button class="btn btn-primary" id="confirm-crediario-btn" style="width: 100%; margin-top: 10px;">
@@ -1215,484 +1347,447 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="modal-overlay" id="receipt-modal">
-        <div class="modal-content">
-            <div class="modal-body centered">
-                <div class="modal-icon success"><i class='bx bx-check font-40'></i></div>
-                <h3 class="font-1-5rem mb-8">Venda Finalizada!</h3>
-                <p>Venda no valor de <strong id="receipt-total">R$ 0,00</strong> registrada com sucesso.</p>
-                <div class="modal-footer flex-col">
-                    <button class="btn btn-primary" id="print-receipt-btn">
-                        <i class='bx bx-printer'></i> Imprimir Recibo (Não Fiscal)
-                    </button>
-                    <button class="btn btn-secondary" id="new-sale-btn" data-primary-focus="true">
-                        <i class='bx bx-rotate-left'></i> Nova Venda
-                    </button>
+
+        <div class="modal-overlay" id="receipt-modal">
+            <div class="modal-content">
+                <div class="modal-body centered">
+                    <div class="modal-icon success"><i class='bx bx-check font-40'></i></div>
+                    <h3 class="font-1-5rem mb-8">Venda Finalizada!</h3>
+                    <p>Venda no valor de <strong id="receipt-total">R$ 0,00</strong> registrada com sucesso.</p>
+                    <div class="modal-footer flex-col">
+                        <button class="btn btn-primary" id="print-receipt-btn">
+                            <i class='bx bx-printer'></i> Imprimir Recibo (Não Fiscal)
+                        </button>
+                        <button class="btn btn-secondary" id="new-sale-btn" data-primary-focus="true">
+                            <i class='bx bx-rotate-left'></i> Nova Venda
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="modal-overlay" id="order-details-modal">
-        <div class="modal-content modal-lg">
-            <div class="modal-header">
-                <h3>Pedido <span id="modal-order-id" class="text-light">#0000</span></h3>
-                <button class="close-modal-btn" data-target="order-details-modal"><i class='bx bx-x'></i></button>
-            </div>
-
-            <div class="modal-body">
-                <div class="order-progress-track">
-                    <div class="step-item" id="step-pendente" onclick="manualSetStatus('pendente')"
-                        title="Voltar para Recebido">
-                        <div class="step-icon"><i class='bx bx-list-ul'></i></div>
-                        <span>Recebido</span>
-                    </div>
-                    <div class="step-line"></div>
-                    <div class="step-item" id="step-preparando" onclick="manualSetStatus('preparando')"
-                        title="Mudar para Separando">
-                        <div class="step-icon"><i class='bx bx-box'></i></div>
-                        <span>Separando</span>
-                    </div>
-                    <div class="step-line"></div>
-                    <div class="step-item" id="step-enviado" onclick="manualSetStatus('enviado')"
-                        title="Mudar para Enviado">
-                        <div class="step-icon"><i class='bx bx-car'></i></div>
-                        <span>Enviado</span>
-                    </div>
-                    <div class="step-line"></div>
-                    <div class="step-item" id="step-finalizado" onclick="manualSetStatus('finalizado')"
-                        title="Mudar para Entregue">
-                        <div class="step-icon"><i class='bx bx-check-double'></i></div>
-                        <span>Entregue</span>
-                    </div>
+        <div class="modal-overlay" id="order-details-modal">
+            <div class="modal-content modal-lg">
+                <div class="modal-header">
+                    <h3>Pedido <span id="modal-order-id" class="text-light">#0000</span></h3>
+                    <button class="close-modal-btn" data-target="order-details-modal"><i class='bx bx-x'></i></button>
                 </div>
 
-                <div class="order-info-box">
-                    <h4 class="font-sm mb-8 flex-align gap-8">
-                        <i class='bx bx-user'></i> <span id="modal-order-client">Nome do Cliente</span>
-                    </h4>
-                    <p class="font-sm text-light mb-4">
-                        <i class='bx bx-map'></i> <span id="modal-order-address">Endereço...</span>
-                    </p>
-                    <div class="flex-justify mt-8">
-                        <span class="badge-bg" id="modal-payment-method">Pagamento: --</span>
-                    </div>
-                </div>
-
-                <div class="flex-justify-center mb-10">
-                    <h4 class="font-md margin-0">Conferência de Estoque</h4>
-                    <small class="text-light">Marque os itens disponíveis</small>
-                </div>
-
-                <div id="modal-order-items-list" class="order-items-scroll"></div>
-
-                <div class="financial-breakdown">
-                    <div class="financial-row">
-                        <span>Subtotal</span>
-                        <span id="modal-calc-subtotal">R$ 0,00</span>
-                    </div>
-                    <div class="financial-row danger" id="row-canceled-items" style="display: none;">
-                        <span>Itens Cancelados/Sem Estoque</span>
-                        <span id="modal-calc-canceled">- R$ 0,00</span>
-                    </div>
-                    <div class="financial-row final">
-                        <span>Total Final</span>
-                        <span id="modal-calc-total" class="text-red">R$ 0,00</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal-footer flex-col gap-10">
-                <button id="btn-update-status" class="btn btn-primary">Avançar Status</button>
-                <button class="btn btn-close-modal-lg close-modal-btn" data-target="order-details-modal">Fechar
-                    Janela</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="confirm-modal">
-        <div class="modal-content">
-            <div class="modal-body centered">
-                <div class="modal-icon danger"><i class='bx bx-error-alt font-40'></i></div>
-                <h3 class="font-1-5rem mb-8" id="confirm-title">Tem certeza?</h3>
-                <p id="confirm-message">Esta ação não pode ser desfeita.</p>
-                <div class="modal-footer justify-center">
-                    <button class="btn btn-secondary close-modal-btn" data-target="confirm-modal">Cancelar</button>
-                    <button class="btn btn-danger" id="confirm-action-btn" data-primary-focus="true">Confirmar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="alert-modal">
-        <div class="modal-content">
-            <div class="modal-body centered">
-                <div class="modal-icon info"><i class='bx bx-info-circle font-40'></i></div>
-                <h3 class="font-1-5rem mb-8" id="alert-title">Atenção</h3>
-                <p id="alert-message">Ocorreu um erro.</p>
-                <div class="modal-footer justify-center">
-                    <button class="btn btn-primary close-modal-btn" data-target="alert-modal"
-                        data-primary-focus="true">Entendi</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="add-cliente-modal">
-        <div class="modal-content modal-md">
-            <div class="modal-header">
-                <h3>Cadastrar Novo Cliente</h3>
-                <button class="close-modal-btn" data-target="add-cliente-modal"><i class='bx bx-x'></i></button>
-            </div>
-            <form id="add-cliente-form">
                 <div class="modal-body">
-                    <h4
-                        style="font-size: 0.9rem; color: var(--primary-red); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; font-weight: 700;">
-                        <i class='bx bx-id-card'></i> Dados Pessoais
-                    </h4>
-
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Apelido / Como prefere ser chamado *</label>
-                            <input type="text" id="cliente-apelido" required data-primary-focus="true"
-                                placeholder="Ex: João da Padaria">
+                    <div class="order-progress-track">
+                        <div class="step-item" id="step-pendente" onclick="manualSetStatus('pendente')"
+                            title="Voltar para Recebido">
+                            <div class="step-icon"><i class='bx bx-list-ul'></i></div>
+                            <span>Recebido</span>
                         </div>
-                        <div class="form-group">
-                            <label>Nome Completo (Civil)</label>
-                            <input type="text" id="cliente-nome" placeholder="Nome completo para contrato">
+                        <div class="step-line"></div>
+                        <div class="step-item" id="step-preparando" onclick="manualSetStatus('preparando')"
+                            title="Mudar para Separando">
+                            <div class="step-icon"><i class='bx bx-box'></i></div>
+                            <span>Separando</span>
                         </div>
-                    </div>
-
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>WhatsApp / Telefone</label>
-                            <input type="tel" id="cliente-telefone" placeholder="(XX) 9XXXX-XXXX">
+                        <div class="step-line"></div>
+                        <div class="step-item" id="step-enviado" onclick="manualSetStatus('enviado')"
+                            title="Mudar para Enviado">
+                            <div class="step-icon"><i class='bx bx-car'></i></div>
+                            <span>Enviado</span>
                         </div>
-                        <div class="form-group">
-                            <label>CPF (Apenas números)</label>
-                            <input type="text" id="cliente-cpf" placeholder="000.000.000-00">
+                        <div class="step-line"></div>
+                        <div class="step-item" id="step-finalizado" onclick="manualSetStatus('finalizado')"
+                            title="Mudar para Entregue">
+                            <div class="step-icon"><i class='bx bx-check-double'></i></div>
+                            <span>Entregue</span>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>Endereço Completo</label>
-                        <textarea id="cliente-endereco" rows="2" placeholder="Rua, Número, Bairro e Referência..."
-                            style="resize: none;"></textarea>
-                    </div>
-
-                    <hr class="separator my-16">
-
-                    <h4
-                        style="font-size: 0.9rem; color: var(--primary-red); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; font-weight: 700;">
-                        <i class='bx bx-wallet'></i> Configuração de Crédito
-                    </h4>
-
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Dia de Vencimento</label>
-                            <select id="cliente-dia-vencimento" required
-                                style="background-color: #fff1f2; border-color: #fda4af; color: #881337; font-weight: 600;">
-                                <option value="5">Dia 05</option>
-                                <option value="10" selected>Dia 10 (Padrão)</option>
-                                <option value="15">Dia 15</option>
-                                <option value="20">Dia 20</option>
-                                <option value="25">Dia 25</option>
-                                <option value="30">Dia 30</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Limite de Crédito (R$)</label>
-                            <input type="number" id="cliente-limite" placeholder="0.00" step="50.00">
+                    <div class="order-info-box">
+                        <h4 class="font-sm mb-8 flex-align gap-8">
+                            <i class='bx bx-user'></i> <span id="modal-order-client">Nome do Cliente</span>
+                        </h4>
+                        <p class="font-sm text-light mb-4">
+                            <i class='bx bx-map'></i> <span id="modal-order-address">Endereço...</span>
+                        </p>
+                        <div class="flex-justify mt-8">
+                            <span class="badge-bg" id="modal-payment-method">Pagamento: --</span>
                         </div>
                     </div>
 
-                    <input type="hidden" id="compra-valor" value="">
+                    <div class="flex-justify-center mb-10">
+                        <h4 class="font-md margin-0">Conferência de Estoque</h4>
+                        <small class="text-light">Marque os itens disponíveis</small>
+                    </div>
+
+                    <div id="modal-order-items-list" class="order-items-scroll"></div>
+
+                    <div class="financial-breakdown">
+                        <div class="financial-row">
+                            <span>Subtotal</span>
+                            <span id="modal-calc-subtotal">R$ 0,00</span>
+                        </div>
+                        <div class="financial-row danger" id="row-canceled-items" style="display: none;">
+                            <span>Itens Cancelados/Sem Estoque</span>
+                            <span id="modal-calc-canceled">- R$ 0,00</span>
+                        </div>
+                        <div class="financial-row final">
+                            <span>Total Final</span>
+                            <span id="modal-calc-total" class="text-red">R$ 0,00</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary close-modal-btn" data-target="add-cliente-modal"
-                        style="width: auto; padding: 0 24px;">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" id="cliente-save-btn"
-                        style="width: auto; padding: 0 32px;">
-                        <i class='bx bx-check'></i> Salvar Cadastro
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
 
-    <div class="modal-overlay" id="open-caixa-modal">
-        <div class="modal-content modal-sm">
-            <div class="modal-header">
-                <h3>Abrir Caixa</h3>
+                <div class="modal-footer flex-col gap-10">
+                    <button id="btn-update-status" class="btn btn-primary">Avançar Status</button>
+                    <button class="btn btn-close-modal-lg close-modal-btn" data-target="order-details-modal">Fechar
+                        Janela</button>
+                </div>
             </div>
-            <form id="open-caixa-form">
-                <div class="modal-body">
-                    <p>Informe o valor inicial para troco ou abra sem valor.</p>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="open-caixa-notas">Valor em Notas (R$)</label>
-                            <input type="number" id="open-caixa-notas" step="0.01" min="0" placeholder="0,00"
-                                data-primary-focus="true">
-                        </div>
-                        <div class="form-group">
-                            <label for="open-caixa-moedas">Valor em Moedas (R$)</label>
-                            <input type="number" id="open-caixa-moedas" step="0.01" min="0" placeholder="0,00">
-                        </div>
-                    </div>
-                    <div class="toggle-switch-group">
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="open-caixa-sem-valor">
-                            <span class="slider"></span>
-                        </label>
-                        <label for="open-caixa-sem-valor">Abrir caixa sem valor inicial</label>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary" id="open-caixa-save-btn">
-                        <i class='bx bx-check'></i> Confirmar Abertura
-                    </button>
-                </div>
-            </form>
         </div>
-    </div>
 
-    <div class="modal-overlay" id="close-caixa-modal">
-        <div class="modal-content modal-md">
-            <div class="modal-header">
-                <h3>Fechamento de Caixa</h3>
-                <button class="close-modal-btn" data-target="close-caixa-modal"><i class='bx bx-x'></i></button>
-            </div>
-            <div class="modal-body">
-
-                <div class="step-progress-container">
-                    <div class="step-progress-fill" id="close-caixa-progress" style="width: 25%;"></div>
+        <div class="modal-overlay" id="confirm-modal">
+            <div class="modal-content">
+                <div class="modal-body centered">
+                    <div class="modal-icon danger"><i class='bx bx-error-alt font-40'></i></div>
+                    <h3 class="font-1-5rem mb-8" id="confirm-title">Tem certeza?</h3>
+                    <p id="confirm-message">Esta ação não pode ser desfeita.</p>
+                    <div class="modal-footer justify-center">
+                        <button class="btn btn-secondary close-modal-btn" data-target="confirm-modal">Cancelar</button>
+                        <button class="btn btn-danger" id="confirm-action-btn"
+                            data-primary-focus="true">Confirmar</button>
+                    </div>
                 </div>
+            </div>
+        </div>
 
-                <form id="close-caixa-form" class="multi-step-form">
+        <div class="modal-overlay" id="alert-modal">
+            <div class="modal-content">
+                <div class="modal-body centered">
+                    <div class="modal-icon info"><i class='bx bx-info-circle font-40'></i></div>
+                    <h3 class="font-1-5rem mb-8" id="alert-title">Atenção</h3>
+                    <p id="alert-message">Ocorreu um erro.</p>
+                    <div class="modal-footer justify-center">
+                        <button class="btn btn-primary close-modal-btn" data-target="alert-modal"
+                            data-primary-focus="true">Entendi</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                    <div id="close-caixa-step-1" class="form-step active">
-                        <div class="text-center mb-16">
-                            <div class="modal-icon info"
-                                style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 10px;"><i
-                                    class='bx bx-money'></i></div>
-                            <h4>Contagem de Espécie</h4>
-                            <p class="text-sm">Conte o dinheiro físico na gaveta.</p>
-                        </div>
+        <div class="modal-overlay" id="add-cliente-modal">
+            <div class="modal-content modal-md">
+                <div class="modal-header">
+                    <h3>Cadastrar Novo Cliente</h3>
+                    <button class="close-modal-btn" data-target="add-cliente-modal"><i class='bx bx-x'></i></button>
+                </div>
+                <form id="add-cliente-form">
+                    <div class="modal-body">
+                        <h4
+                            style="font-size: 0.9rem; color: var(--primary-red); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; font-weight: 700;">
+                            <i class='bx bx-id-card'></i> Dados Pessoais
+                        </h4>
+
                         <div class="form-grid">
                             <div class="form-group">
-                                <label>Total em Notas (R$)</label>
-                                <input type="number" id="close-caixa-notas" step="0.01" min="0" placeholder="0,00"
-                                    required data-primary-focus="true" style="font-size: 1.2rem; font-weight: 700;">
+                                <label>Apelido / Como prefere ser chamado *</label>
+                                <input type="text" id="cliente-apelido" required data-primary-focus="true"
+                                    placeholder="Ex: João da Padaria">
                             </div>
                             <div class="form-group">
-                                <label>Total em Moedas (R$)</label>
-                                <input type="number" id="close-caixa-moedas" step="0.01" min="0" placeholder="0,00"
-                                    required style="font-size: 1.2rem; font-weight: 700;">
+                                <label>Nome Completo (Civil)</label>
+                                <input type="text" id="cliente-nome" placeholder="Nome completo para contrato">
                             </div>
                         </div>
-                    </div>
 
-                    <div id="close-caixa-step-2" class="form-step">
-                        <div class="text-center mb-16">
-                            <div class="modal-icon info"
-                                style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 10px;"><i
-                                    class='bx bx-credit-card'></i></div>
-                            <h4>Conferência Digital</h4>
-                            <p class="text-sm">Consulte o relatório da maquininha.</p>
-                        </div>
                         <div class="form-grid">
                             <div class="form-group">
-                                <label>Vendas no Cartão (R$)</label>
-                                <input type="number" id="close-caixa-cartao" step="0.01" min="0" placeholder="0,00"
-                                    required>
+                                <label>WhatsApp / Telefone</label>
+                                <input type="tel" id="cliente-telefone" placeholder="(XX) 9XXXX-XXXX">
                             </div>
                             <div class="form-group">
-                                <label>Pix QR Code (Se houver)</label>
-                                <input type="number" id="close-caixa-pix" step="0.01" min="0" placeholder="0,00">
+                                <label>CPF (Apenas números)</label>
+                                <input type="text" id="cliente-cpf" placeholder="000.000.000-00">
                             </div>
                         </div>
-                    </div>
 
-                    <div id="close-caixa-step-3" class="form-step">
-                        <div class="text-center mb-16">
-                            <div class="modal-icon info"
-                                style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 10px;"><i
-                                    class='bx bx-safe'></i></div>
-                            <h4>Destino do Dinheiro</h4>
-                            <p class="text-sm">Onde o dinheiro contado será guardado?</p>
-                        </div>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>Vai para Sangria/Depósito</label>
-                                <input type="number" id="close-caixa-deposito" step="0.01" min="0" placeholder="0,00"
-                                    required>
-                            </div>
-                            <div class="form-group">
-                                <label>Fica no Caixa (Troco)</label>
-                                <input type="number" id="close-caixa-fica" step="0.01" min="0" placeholder="0,00"
-                                    required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="close-caixa-step-4" class="form-step">
-                        <div class="text-center mb-16">
-                            <div class="modal-icon danger"
-                                style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 10px;"><i
-                                    class='bx bx-lock-alt'></i></div>
-                            <h4>Finalizar e Bloquear</h4>
-                            <p class="text-sm">Assine para confirmar o fechamento.</p>
-                        </div>
                         <div class="form-group">
-                            <label>Responsável pelo Fechamento</label>
-                            <input type="text" id="close-caixa-assinatura" required placeholder="Digite seu nome..."
-                                style="text-align: center;">
+                            <label>Endereço Completo</label>
+                            <textarea id="cliente-endereco" rows="2" placeholder="Rua, Número, Bairro e Referência..."
+                                style="resize: none;"></textarea>
                         </div>
+
+                        <hr class="separator my-16">
+
+                        <h4
+                            style="font-size: 0.9rem; color: var(--primary-red); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; font-weight: 700;">
+                            <i class='bx bx-wallet'></i> Configuração de Crédito
+                        </h4>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Dia de Vencimento</label>
+                                <select id="cliente-dia-vencimento" required
+                                    style="background-color: #fff1f2; border-color: #fda4af; color: #881337; font-weight: 600;">
+                                    <option value="5">Dia 05</option>
+                                    <option value="10" selected>Dia 10 (Padrão)</option>
+                                    <option value="15">Dia 15</option>
+                                    <option value="20">Dia 20</option>
+                                    <option value="25">Dia 25</option>
+                                    <option value="30">Dia 30</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Limite de Crédito (R$)</label>
+                                <input type="number" id="cliente-limite" placeholder="0.00" step="50.00">
+                            </div>
+                        </div>
+
+                        <input type="hidden" id="compra-valor" value="">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary close-modal-btn" data-target="add-cliente-modal"
+                            style="width: auto; padding: 0 24px;">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="cliente-save-btn"
+                            style="width: auto; padding: 0 32px;">
+                            <i class='bx bx-check'></i> Salvar Cadastro
+                        </button>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer modal-footer-multi-step">
-                <button class="btn btn-secondary" id="close-caixa-prev-btn" style="display: none; width: auto;">
-                    <i class='bx bx-chevron-left'></i> Voltar
-                </button>
-                <button class="btn btn-primary" id="close-caixa-next-btn" style="width: auto;">
-                    Próximo <i class='bx bx-chevron-right'></i>
-                </button>
-                <button type="submit" form="close-caixa-form" class="btn btn-danger" id="close-caixa-save-btn"
-                    style="display: none; width: auto;">
-                    <i class='bx bx-lock-alt'></i> Encerrar Dia
-                </button>
+        </div>
+
+        <div class="modal-overlay" id="close-caixa-modal">
+            <div class="modal-content modal-md">
+                <div class="modal-header">
+                    <h3>Fechamento de Caixa</h3>
+                    <button class="close-modal-btn" data-target="close-caixa-modal"><i class='bx bx-x'></i></button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="step-progress-container">
+                        <div class="step-progress-fill" id="close-caixa-progress" style="width: 25%;"></div>
+                    </div>
+
+                    <form id="close-caixa-form" class="multi-step-form">
+
+                        <div id="close-caixa-step-1" class="form-step active">
+                            <div class="text-center mb-16">
+                                <div class="modal-icon info"
+                                    style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 10px;"><i
+                                        class='bx bx-money'></i></div>
+                                <h4>Contagem de Espécie</h4>
+                                <p class="text-sm">Conte o dinheiro físico na gaveta.</p>
+                            </div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Total em Notas (R$)</label>
+                                    <input type="number" id="close-caixa-notas" step="0.01" min="0" placeholder="0,00"
+                                        required data-primary-focus="true" style="font-size: 1.2rem; font-weight: 700;">
+                                </div>
+                                <div class="form-group">
+                                    <label>Total em Moedas (R$)</label>
+                                    <input type="number" id="close-caixa-moedas" step="0.01" min="0" placeholder="0,00"
+                                        required style="font-size: 1.2rem; font-weight: 700;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="close-caixa-step-2" class="form-step">
+                            <div class="text-center mb-16">
+                                <div class="modal-icon info"
+                                    style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 10px;"><i
+                                        class='bx bx-credit-card'></i></div>
+                                <h4>Conferência Digital</h4>
+                                <p class="text-sm">Consulte o relatório da maquininha.</p>
+                            </div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Vendas no Cartão (R$)</label>
+                                    <input type="number" id="close-caixa-cartao" step="0.01" min="0" placeholder="0,00"
+                                        required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Pix QR Code (Se houver)</label>
+                                    <input type="number" id="close-caixa-pix" step="0.01" min="0" placeholder="0,00">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="close-caixa-step-3" class="form-step">
+                            <div class="text-center mb-16">
+                                <div class="modal-icon info"
+                                    style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 10px;"><i
+                                        class='bx bx-safe'></i></div>
+                                <h4>Destino do Dinheiro</h4>
+                                <p class="text-sm">Onde o dinheiro contado será guardado?</p>
+                            </div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Vai para Sangria/Depósito</label>
+                                    <input type="number" id="close-caixa-deposito" step="0.01" min="0"
+                                        placeholder="0,00" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Fica no Caixa (Troco)</label>
+                                    <input type="number" id="close-caixa-fica" step="0.01" min="0" placeholder="0,00"
+                                        required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="close-caixa-step-4" class="form-step">
+                            <div class="text-center mb-16">
+                                <div class="modal-icon danger"
+                                    style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 10px;"><i
+                                        class='bx bx-lock-alt'></i></div>
+                                <h4>Finalizar e Bloquear</h4>
+                                <p class="text-sm">Assine para confirmar o fechamento.</p>
+                            </div>
+                            <div class="form-group">
+                                <label>Responsável pelo Fechamento</label>
+                                <input type="text" id="close-caixa-assinatura" required placeholder="Digite seu nome..."
+                                    style="text-align: center;">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer modal-footer-multi-step">
+                    <button class="btn btn-secondary" id="close-caixa-prev-btn" style="display: none; width: auto;">
+                        <i class='bx bx-chevron-left'></i> Voltar
+                    </button>
+                    <button class="btn btn-primary" id="close-caixa-next-btn" style="width: auto;">
+                        Próximo <i class='bx bx-chevron-right'></i>
+                    </button>
+                    <button type="submit" form="close-caixa-form" class="btn btn-danger" id="close-caixa-save-btn"
+                        style="display: none; width: auto;">
+                        <i class='bx bx-lock-alt'></i> Encerrar Dia
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
 
+        <div id="print-area" class="print-only">
+            <div class="invoice-container">
 
+                <header class="invoice-header">
+                    <div class="brand-section">
+                        <img src="assets/logo.png" id="print-logo-img" alt="Logo">
 
-    <div id="print-area" class="print-only">
-        <div class="invoice-container">
-
-            <header class="invoice-header">
-                <div class="brand-section">
-                    <img src="assets/logo.png" id="print-logo-img" alt="Logo">
-
-                    <div class="brand-text">
-                        <h1 id="print-store-name">DTUDO VARIEDADES E UTILIDADES</h1>
-                        <p class="brand-subtitle">CNPJ: 45.692.327/0001-00</p>
-                    </div>
-                </div>
-
-                <div class="invoice-meta">
-                    <h2 class="doc-title">COMPROVANTE DE VENDA</h2>
-                    <div class="meta-grid">
-                        <div class="meta-item">
-                            <i class='bx bx-hash'></i>
-                            <div>
-                                <span class="label">NÚMERO</span>
-                                <span class="value" id="print-sale-id">0000</span>
-                            </div>
-                        </div>
-                        <div class="meta-item">
-                            <i class='bx bx-calendar'></i>
-                            <div>
-                                <span class="label">DATA</span>
-                                <span class="value" id="print-sale-date">--/--/--</span>
-                            </div>
+                        <div class="brand-text">
+                            <h1 id="print-store-name">DTUDO VARIEDADES E UTILIDADES</h1>
+                            <p class="brand-subtitle">CNPJ: 45.692.327/0001-00</p>
                         </div>
                     </div>
-                </div>
-            </header>
 
-            <hr class="divider-thick">
-
-            <section class="client-section">
-                <div class="section-title">
-                    <i class='bx bx-user-circle'></i> DADOS DO CLIENTE
-                </div>
-                <div class="client-card">
-                    <div class="client-row main">
-                        <span id="print-client-name">CONSUMIDOR FINAL</span>
+                    <div class="invoice-meta">
+                        <h2 class="doc-title">COMPROVANTE DE VENDA</h2>
+                        <div class="meta-grid">
+                            <div class="meta-item">
+                                <i class='bx bx-hash'></i>
+                                <div>
+                                    <span class="label">NÚMERO</span>
+                                    <span class="value" id="print-sale-id">0000</span>
+                                </div>
+                            </div>
+                            <div class="meta-item">
+                                <i class='bx bx-calendar'></i>
+                                <div>
+                                    <span class="label">DATA</span>
+                                    <span class="value" id="print-sale-date">--/--/--</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="client-row details">
-                        <span><i class='bx bx-id-card'></i> <span id="print-client-doc">---</span></span>
-                        <span><i class='bx bx-map'></i> <span id="print-client-address">Endereço não
-                                informado</span></span>
+                </header>
+
+                <hr class="divider-thick">
+
+                <section class="client-section">
+                    <div class="section-title">
+                        <i class='bx bx-user-circle'></i> DADOS DO CLIENTE
                     </div>
-                </div>
-            </section>
-
-            <section class="items-section">
-                <table class="premium-table">
-                    <thead>
-                        <tr>
-                            <th width="10%">COD</th>
-                            <th width="50%">DESCRIÇÃO</th>
-                            <th width="10%" class="text-center">QTD</th>
-                            <th width="15%" class="text-right">UNIT</th>
-                            <th width="15%" class="text-right">TOTAL</th>
-                        </tr>
-                    </thead>
-                    <tbody id="print-items-body">
-                    </tbody>
-                </table>
-            </section>
-
-            <section class="totals-section">
-                <div class="payment-info">
-                    <div class="section-title small">
-                        <i class='bx bx-credit-card'></i> PAGAMENTO
+                    <div class="client-card">
+                        <div class="client-row main">
+                            <span id="print-client-name">CONSUMIDOR FINAL</span>
+                        </div>
+                        <div class="client-row details">
+                            <span><i class='bx bx-id-card'></i> <span id="print-client-doc">---</span></span>
+                            <span><i class='bx bx-map'></i> <span id="print-client-address">Endereço não
+                                    informado</span></span>
+                        </div>
                     </div>
-                    <p id="print-obs-text" class="payment-method-text">---</p>
+                </section>
 
-                    <div id="print-installments-area" style="display: none; margin-top: 10px;">
-                        <div class="installments-strip" id="print-installments-list"></div>
+                <section class="items-section">
+                    <table class="premium-table">
+                        <thead>
+                            <tr>
+                                <th width="10%">COD</th>
+                                <th width="50%">DESCRIÇÃO</th>
+                                <th width="10%" class="text-center">QTD</th>
+                                <th width="15%" class="text-right">UNIT</th>
+                                <th width="15%" class="text-right">TOTAL</th>
+                            </tr>
+                        </thead>
+                        <tbody id="print-items-body">
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="totals-section">
+                    <div class="payment-info">
+                        <div class="section-title small">
+                            <i class='bx bx-credit-card'></i> PAGAMENTO
+                        </div>
+                        <p id="print-obs-text" class="payment-method-text">---</p>
+
+                        <div id="print-installments-area" style="display: none; margin-top: 10px;">
+                            <div class="installments-strip" id="print-installments-list"></div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="totals-box">
-                    <div class="t-row">
-                        <span>Subtotal</span>
-                        <span id="print-subtotal">R$ 0,00</span>
+                    <div class="totals-box">
+                        <div class="t-row">
+                            <span>Subtotal</span>
+                            <span id="print-subtotal">R$ 0,00</span>
+                        </div>
+                        <div class="t-row">
+                            <span>Descontos</span>
+                            <span id="print-discount">R$ 0,00</span>
+                        </div>
+                        <div class="t-row grand-total">
+                            <span>TOTAL A PAGAR</span>
+                            <span id="print-total">R$ 0,00</span>
+                        </div>
                     </div>
-                    <div class="t-row">
-                        <span>Descontos</span>
-                        <span id="print-discount">R$ 0,00</span>
+                </section>
+
+                <footer class="invoice-footer">
+                    <div class="legal-text">
+                        <p><strong>TERMO DE CONFISSÃO DE DÍVIDA:</strong> Reconheço(emos) a exatidão desta dívida e a
+                            obrigação de pagá-la. O não pagamento acarretará nas medidas legais cabíveis. Mercadoria
+                            recebida em perfeito estado.</p>
                     </div>
-                    <div class="t-row grand-total">
-                        <span>TOTAL A PAGAR</span>
-                        <span id="print-total">R$ 0,00</span>
+
+                    <div class="signature-area">
+                        <div class="line"></div>
+                        <div class="sig-name" id="print-signature-name">CLIENTE</div>
                     </div>
-                </div>
-            </section>
 
-            <footer class="invoice-footer">
-                <div class="legal-text">
-                    <p><strong>TERMO DE CONFISSÃO DE DÍVIDA:</strong> Reconheço(emos) a exatidão desta dívida e a
-                        obrigação de pagá-la. O não pagamento acarretará nas medidas legais cabíveis. Mercadoria
-                        recebida em perfeito estado.</p>
-                </div>
-
-                <div class="signature-area">
-                    <div class="line"></div>
-                    <div class="sig-name" id="print-signature-name">CLIENTE</div>
-                </div>
-
-                <div class="system-tag">
-                    DTUDO SISTEMAS • Impresso em <span id="print-timestamp"></span>
-                </div>
-            </footer>
+                    <div class="system-tag">
+                        DTUDO SISTEMAS • Impresso em <span id="print-timestamp"></span>
+                    </div>
+                </footer>
+            </div>
         </div>
-    </div>
 
-    <div class="pn">
-        <div class="pn-hr">
-            <div class="loading1"></div>
-            <p class="horario" id="horario">00:00:00</p>
+        <div class="pn">
+            <div class="pn-hr">
+                <div class="loading1"></div>
+                <p class="horario" id="horario">00:00:00</p>
+            </div>
         </div>
-    </div>
 
-    <script src="script.js"></script>
+        <script src="script.js"></script>
 </body>
 
 </html>
