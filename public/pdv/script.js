@@ -357,6 +357,42 @@ document.addEventListener('DOMContentLoaded', () => {
         return { valid: true };
     };
 
+    // --- Lógica para Remover Cliente Selecionado ---
+    const btnRemoveClient = document.getElementById('btn-remove-client');
+    const paymentRow = document.getElementById('payment-toggle-row'); // Seletor da linha de pagamento
+    const paymentLabel = document.getElementById('summary-payment-method'); // Texto do pagamento
+
+    if (btnRemoveClient) {
+        btnRemoveClient.addEventListener('click', (e) => {
+            e.stopPropagation();
+
+            // 1. Limpa a variável global do cliente
+            selectedCrediarioClient = null;
+
+            // 2. RESETA O PAGAMENTO (Conforme solicitado)
+            selectedPaymentMethod = null; // Limpa a variável de pagamento (se existir globalmente)
+
+            if (paymentLabel) {
+                paymentLabel.textContent = "Não selecionado";
+                paymentLabel.style.color = "var(--text-light)";
+                paymentLabel.style.fontWeight = "normal";
+            }
+
+            // 3. REMOVE A BORDA VERMELHA (Se estiver ativa)
+            if (paymentRow) {
+                paymentRow.classList.remove('border-pulse');
+            }
+
+            // 4. Atualiza a interface do card de cliente
+            updateSummaryClientCard();
+
+            // 5. Feedback visual
+            if (typeof showCustomToast === 'function') {
+                showCustomToast("Cliente removido. Pagamento resetado.");
+            }
+        });
+    }
+
     // Função para animar os números (Efeito de contagem)
     const animateTaxValue = (start, end, duration) => {
         const obj = document.getElementById('tax-counter-val');
@@ -440,17 +476,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Adicione o cálculo de troco em tempo real
+    // Adicione o cálculo de troco em tempo real (Apenas Visual no Modal)
     document.getElementById('cash-received').addEventListener('input', (e) => {
         const total = lastSaleData ? lastSaleData.total : 0;
         const recebido = parseFloat(e.target.value) || 0;
         const troco = recebido - total;
+
+        // Atualiza apenas o texto dentro do modal de pagamento
         const display = document.getElementById('cash-change-value');
         display.textContent = formatCurrency(troco > 0 ? troco : 0);
         display.style.color = troco < 0 ? '#ef4444' : '#10b981';
     });
 
-    // Botão de confirmar dinheiro
+    // Botão de confirmar dinheiro (Atualiza o Resumo Lateral)
     document.getElementById('confirm-cash-btn').addEventListener('click', () => {
         const total = lastSaleData ? lastSaleData.total : 0;
         const recebido = parseFloat(document.getElementById('cash-received').value) || 0;
@@ -460,29 +498,25 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        window.lastTrocoValue = recebido - total; // Salva o troco para o backend fiscal 
+        const troco = recebido - total;
+        window.lastTrocoValue = troco; // Salva o troco para o backend fiscal
+
+        // --- ATUALIZA O RESUMO NA SIDEBAR ---
+        const summaryChangeRow = document.getElementById('summary-change-row');
+        const summaryChangeValue = document.getElementById('summary-change-value');
+
+        if (summaryChangeRow && summaryChangeValue) {
+            // Só mostra se for Dinheiro (redundante mas seguro) e tiver troco/valor definido
+            summaryChangeValue.textContent = formatCurrency(troco);
+            summaryChangeRow.style.display = 'flex'; // Exibe a barra verde
+        }
+        // -------------------------------------
+
         handlePaymentSelection('Dinheiro');
 
         // Reseta visual para a próxima venda
         document.getElementById('cash-change-section').style.display = 'none';
         document.getElementById('single-payment-options').style.display = 'grid';
-    });
-
-    // Adicione este evento no DOMContentLoaded do seu script.js
-    document.addEventListener('click', (e) => {
-        const btn = e.target.closest('#confirm-cash-btn');
-        if (btn) {
-            const total = lastSaleData ? lastSaleData.total : 0;
-            const recebido = parseFloat(document.getElementById('cash-received').value) || 0;
-
-            if (recebido < total) {
-                showCustomAlert("Atenção", "Valor recebido é menor que o total.");
-                return;
-            }
-
-            window.lastTrocoValue = recebido - total; // Armazena globalmente para a nota
-            handlePaymentSelection('Dinheiro');
-        }
     });
     /*
 
@@ -584,6 +618,21 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSummaryClientCard();
         closeModal(clientSelectionModal);
 
+        // --- NOVO: Destaca a forma de pagamento para lembrar o operador ---
+        const paymentRow = document.getElementById('payment-toggle-row');
+        const paymentLabel = document.getElementById('summary-payment-method');
+
+        if (paymentRow) {
+            // Adiciona a borda vermelha pulsante
+            paymentRow.classList.add('border-pulse');
+
+            // Opcional: Muda o texto para "Definir Pagamento" em vermelho
+            if (paymentLabel.textContent === 'Não selecionado') {
+                paymentLabel.textContent = "Definir Pagamento!";
+                paymentLabel.style.color = "var(--warning-red)";
+            }
+        }
+
         // LÓGICA MÁGICA: Se viemos do botão de pagamento, reabre o pagamento direto nas parcelas
         if (isReturningToPayment) {
             isReturningToPayment = false; // Reseta a flag
@@ -605,48 +654,71 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => clientSelectionInput.focus(), 100);
     });
 
+    // --- ATUALIZADA: Lógica do Card de Cliente (CORRIGIDA) ---
     const updateSummaryClientCard = () => {
-        if (selectedCrediarioClient && selectedPaymentMethod === 'Crediário') {
-            summaryClientCard.style.display = 'block';
-            summaryClientNameText.textContent = selectedCrediarioClient.nomeExibicao;
+        const card = document.getElementById('summary-client-card');
+        const nameText = document.getElementById('summary-client-name-text');
+        const creditInfo = document.getElementById('client-credit-info');
+        const btnRemove = document.getElementById('btn-remove-client');
+        const limitFill = document.getElementById('summary-limit-fill');
+        const limitValue = document.getElementById('summary-limit-value');
 
-            // Cálculo do Limite em Tempo Real
+        // Se existe um cliente selecionado (global selectedCrediarioClient)
+        if (selectedCrediarioClient) {
+            // Estilo visual: Cliente Identificado
+            card.classList.add('active-client');
+
+            // Texto
+            nameText.textContent = selectedCrediarioClient.nomeExibicao || selectedCrediarioClient.nomeCompleto;
+            nameText.style.color = "var(--text-dark)";
+
+            // 1. MOSTRA o botão de remover (SEMPRE que tiver cliente)
+            if (btnRemove) btnRemove.style.display = 'inline-flex';
+
+            // Lógica da Barra de Crédito
             const limite = parseFloat(selectedCrediarioClient.limite) || 0;
-            const dividaAntiga = parseFloat(selectedCrediarioClient.saldoDevedor) || 0;
-            const compraAtual = lastSaleData ? lastSaleData.total : 0;
-
-            // Disponível AGORA (antes de consolidar a compra atual)
-            const disponivelReal = limite - dividaAntiga;
-
-            // Como ficará APÓS a compra
-            const saldoFinalPrevisto = disponivelReal - compraAtual;
 
             if (limite > 0) {
-                summaryLimitValue.textContent = formatCurrency(saldoFinalPrevisto);
+                creditInfo.style.display = 'block';
 
-                // Barra de progresso baseada no uso total (Dívida + Compra)
+                const dividaAntiga = parseFloat(selectedCrediarioClient.saldoDevedor) || 0;
+                const compraAtual = lastSaleData ? lastSaleData.total : 0;
+
+                const disponivelReal = limite - dividaAntiga;
+                const saldoFinalPrevisto = disponivelReal - compraAtual;
+
+                limitValue.textContent = formatCurrency(saldoFinalPrevisto);
+
                 const usoTotal = dividaAntiga + compraAtual;
                 let percentual = (usoTotal / limite) * 100;
                 if (percentual > 100) percentual = 100;
 
-                summaryLimitFill.style.width = `${percentual}%`;
+                limitFill.style.width = `${percentual}%`;
 
                 if (saldoFinalPrevisto < 0) {
-                    summaryLimitFill.classList.add('danger');
-                    summaryLimitValue.style.color = 'var(--warning-red)';
-                    summaryLimitValue.textContent = `Estourado: ${formatCurrency(saldoFinalPrevisto)}`;
+                    limitFill.classList.add('danger');
+                    limitValue.style.color = 'var(--warning-red)';
                 } else {
-                    summaryLimitFill.classList.remove('danger');
-                    summaryLimitValue.style.color = 'var(--text-dark)';
+                    limitFill.classList.remove('danger');
+                    limitValue.style.color = 'var(--text-dark)';
                 }
             } else {
-                // Sem limite definido
-                summaryLimitFill.style.width = '0%';
-                summaryLimitValue.textContent = "Ilimitado / Não def.";
+                // Cliente selecionado mas sem limite: Esconde SÓ a barra de crédito
+                creditInfo.style.display = 'none';
+                // (A linha que escondia o botão foi removida daqui)
             }
 
         } else {
-            summaryClientCard.style.display = 'none';
+            // --- CONSUMIDOR FINAL (Nenhum cliente selecionado) ---
+            card.classList.remove('active-client');
+            nameText.textContent = "Consumidor Final";
+            nameText.style.color = "#94a3b8";
+
+            // ESCONDE o botão de remover
+            if (btnRemove) btnRemove.style.display = 'none';
+
+            // Esconde info de crédito
+            creditInfo.style.display = 'none';
         }
     };
 
@@ -664,6 +736,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Funções de Renderização ---
 
     // --- Função Renderizar Carrinho (Versão Limpa - Apenas API Apps Script) ---
+    // --- Função Renderizar Carrinho (DESIGN MODERNO) ---
     const renderCart = () => {
         cartItemsBody.innerHTML = '';
 
@@ -682,8 +755,8 @@ document.addEventListener('DOMContentLoaded', () => {
             emptyState.style.display = 'flex';
             itemListTable.style.display = 'none';
             itemListContainer.classList.add('empty');
-            updateSummary(); // Zera os totais
-            return; // Encerra aqui se estiver vazio
+            updateSummary();
+            return;
         }
 
         // 2. Loop para desenhar os itens
@@ -691,56 +764,67 @@ document.addEventListener('DOMContentLoaded', () => {
             const tr = document.createElement('tr');
             tr.dataset.id = item.id;
 
-            // Animação visual de item novo (opcional, mantido para UX)
-            if (item.isNew) {
-                tr.classList.add('new-item-flash');
-                delete item.isNew;
-                setTimeout(() => tr.classList.remove('new-item-flash'), 500);
-            }
-
-            // HTML do Input de Desconto (Padronizado para todos os itens)
-            const discountInputHtml = `
-                <div class="discount-wrapper" onclick="this.querySelector('input').focus()">
-                    <input type="number" 
-                           class="discount-input" 
-                           value="${item.discountPercent}" 
-                           min="0" 
-                           max="100" 
-                           placeholder="0"
-                           onchange="updateCartItem('${item.id}', 'discountPercent', this.value)"
-                           onkeypress="return event.charCode >= 48 && event.charCode <= 57"> 
-                    <span class="discount-symbol">%</span>
-                </div>`;
+            // Define ícone base (pode melhorar se tiver imagem real)
+            const iconHtml = item.imgUrl
+                ? `<img src="${item.imgUrl}" style="width:100%; height:100%; object-fit:contain;">`
+                : `<i class='bx bx-package'></i>`;
 
             tr.innerHTML = `
-                    <td>
-                        <div class="product-info">
-                            <div class="product-image"><i class='bx bx-package'></i></div>
-                            <div class="product-details">
-                                <span class="name">${item.name}</span>
-                                <span class="barcode">#${item.id}</span>
-                            </div>
+                <td>
+                    <div class="product-cell-modern">
+                        <div class="prod-icon-box">${iconHtml}</div>
+                        <div class="prod-info-box">
+                            <span class="prod-name">${item.name}</span>
+                            <span class="prod-barcode">#${item.id}</span>
                         </div>
-                    </td>
-                    <td>
-                        <div class="quantity-control">
-                            <button class="qty-btn" data-action="decrease" data-id="${item.id}"><i class='bx bx-minus'></i></button>
-                            <span class="qty-display">${item.quantity}</span>
-                            <button class="qty-btn" data-action="increase" data-id="${item.id}"><i class='bx bx-plus'></i></button>
-                        </div>
-                    </td>
-                    <td class="item-price">${formatCurrency(item.originalPrice)}</td>
-                    
-                    <td class="item-offer">${discountInputHtml}</td>
-                    
-                    <td class="item-total">${formatCurrency(item.price * item.quantity)}</td>
-                    
-                    <td><button class="remove-btn" data-id="${item.id}" title="Remover"><i class='bx bx-trash'></i></button></td>
-                `;
+                    </div>
+                </td>
+                
+                <td class="text-center">
+                    <div class="qty-capsule">
+                        <button class="qty-btn" data-action="decrease" data-id="${item.id}">-</button>
+                        <span class="qty-display">${item.quantity}</span>
+                        <button class="qty-btn" data-action="increase" data-id="${item.id}">+</button>
+                    </div>
+                </td>
+                
+                <td class="text-center">
+                    <span class="unit-price-display">${formatCurrency(item.originalPrice)}</span>
+                </td>
+                
+                <td class="text-center">
+    <div class="discount-capsule" title="Clique para editar">
+        <input type="number" 
+               class="discount-input-embedded" 
+               value="${item.discountPercent || ''}" 
+               placeholder="0" 
+               min="0" max="100"
+               onchange="updateCartItem('${item.id}', 'discountPercent', this.value)"
+               onclick="this.select()">
+        <span class="discount-symbol">%</span>
+    </div>
+</td>
+                
+                <td class="text-right" style="padding-right: 20px;">
+                    <span class="total-price-display">${formatCurrency(item.price * item.quantity)}</span>
+                </td>
+                
+                <td class="text-center">
+                    <button class="btn-trash-item remove-btn" data-id="${item.id}" title="Remover">
+                        <i class='bx bx-trash'></i>
+                    </button>
+                </td>
+            `;
+
+            // Efeito visual de entrada
+            if (item.isNew) {
+                tr.style.animation = "fadeInHighlight 0.5s";
+                delete item.isNew;
+            }
+
             cartItemsBody.appendChild(tr);
         });
 
-        // 3. Atualiza os totais gerais
         updateSummary();
     };
 
@@ -754,42 +838,46 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const updateSummary = () => {
-        // 1. Subtotal Bruto (Soma dos preços cheios originais)
+        // 1. Cálculos (Mantidos)
         const subtotalGross = cart.reduce((acc, item) => acc + (item.originalPrice * item.quantity), 0);
-
-        // 2. Total Líquido (Soma dos preços reais com desconto aplicado nos itens)
         const totalNetItems = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-
-        // 3. Desconto Total (Diferença entre Bruto e Líquido + Desconto Global se houver)
-        // Nota: Se houver itens Firebase, 'discount' global será 0 pela lógica do renderCart
         const totalDiscount = (subtotalGross - totalNetItems) + discount;
-
-        // 4. Total Final a Pagar
         const finalTotal = subtotalGross - totalDiscount;
+
         updateTaxEstimate(finalTotal);
 
-        // Atualiza Interface
+        // 2. Atualiza Interface
         const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
 
-        summarySubtotal.textContent = formatCurrency(subtotalGross);
-        summaryDiscount.textContent = formatCurrency(totalDiscount > 0 ? totalDiscount * -1 : 0); // Exibe negativo visualmente
+        // Subtotal e Total
+        document.getElementById('summary-subtotal').textContent = formatCurrency(subtotalGross);
+        document.getElementById('summary-total').textContent = formatCurrency(finalTotal);
+        if (document.getElementById('item-count')) document.getElementById('item-count').textContent = totalItems;
 
-        // Exibe porcentagem efetiva se houver desconto
-        if (totalDiscount > 0 && subtotalGross > 0) {
-            const percentage = (totalDiscount / subtotalGross) * 100;
-            discountPercentageText.textContent = `(${percentage.toFixed(2)}% econ.)`;
-            effectiveDiscountDisplay.style.display = 'flex';
-        } else {
-            discountPercentageText.textContent = '';
-            effectiveDiscountDisplay.style.display = 'none';
+        // Atualiza Modais externos (Pagamento/Recibo)
+        if (document.getElementById('payment-total')) document.getElementById('payment-total').textContent = formatCurrency(finalTotal);
+        if (document.getElementById('receipt-total')) document.getElementById('receipt-total').textContent = formatCurrency(finalTotal);
+
+        // --- LÓGICA DE DESCONTO (ATUALIZADA) ---
+        const rowDiscount = document.getElementById('row-discount-display');
+        const summaryDiscountVal = document.getElementById('summary-discount'); // Texto na lista
+        const btnDiscountVal = document.getElementById('summary-discount-btn-val'); // Texto no botão
+
+        // Valor negativo para exibição
+        const discountDisplay = totalDiscount > 0 ? formatCurrency(totalDiscount * -1) : "R$ 0,00";
+
+        // Atualiza botão do grid
+        if (btnDiscountVal) btnDiscountVal.textContent = totalDiscount > 0 ? discountDisplay : "R$ 0,00";
+
+        // Atualiza linha do recibo
+        if (summaryDiscountVal) summaryDiscountVal.textContent = discountDisplay;
+
+        // Mostra/Esconde linha de desconto na lista final
+        if (rowDiscount) {
+            rowDiscount.style.display = totalDiscount > 0.01 ? 'flex' : 'none';
         }
 
-        summaryTotal.textContent = formatCurrency(finalTotal);
-        itemCount.textContent = totalItems;
-        paymentTotalEl.textContent = formatCurrency(finalTotal);
-        receiptTotalEl.textContent = formatCurrency(finalTotal);
-
-        // Atualiza dados globais da venda para o recibo
+        // Dados globais para o recibo
         lastSaleData = {
             subtotal: subtotalGross,
             discount: totalDiscount,
@@ -2137,30 +2225,55 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const liberarSistema = () => {
+        // 1. Remove o bloqueio visual imediatamente
         loadingOverlay.classList.add('hidden');
         mainContent.style.display = 'block';
         headerCloseCaixaBtn.style.display = 'inline-flex';
 
-        // 1. Dispara o carregamento de Produtos (se não tiver)
-        if (localProductCache === null) {
+        // 2. Força o fechamento do modal de abertura para liberar o teclado
+        openCaixaModal.classList.remove('active');
+
+        // 3. Tenta carregar dados em segundo plano sem travar a UI
+        try {
             carregarCacheDeProdutos();
-        }
-
-        // 2. Dispara o carregamento de Clientes (AGORA SEMPRE, independentemente da aba)
-        if (localClientCache === null) {
-            console.log("Pré-carregando clientes...");
             carregarClientesDaAPI();
+        } catch (e) {
+            console.error("Erro ao carregar dados iniciais, mas o sistema segue livre.", e);
         }
-
-        const activeItem = document.querySelector('.navbar-item.active');
-        if (activeItem) updateNavbarHighlight(activeItem);
     };
 
     // --- Handlers de Ação ---
     const handleScan = () => { const barcode = barcodeInput.value.trim(); if (!barcode) return; const product = buscarProdutoLocalmente(barcode); if (product) { addToCart(product); } else if (localProductCache !== null) { lastScannedBarcode = barcode; scannedBarcodeEl.textContent = barcode; quickAddForm.reset(); openModal(quickAddModal); } barcodeInput.value = ''; };
     const debounce = (func, delay) => { clearTimeout(barcodeScanTimeout); barcodeScanTimeout = setTimeout(func, delay); };
     const handleQuickAddSubmit = async () => { const name = quickAddName.value; const price = parseFloat(quickAddPrice.value); if (!name || isNaN(price) || price <= 0) { showCustomAlert("Inválido", "Nome e preço."); return; } const newProduct = { id: lastScannedBarcode, name: name, price: price }; const produtoCadastrado = await cadastrarProdutoNaAPI(newProduct); if (produtoCadastrado) { addToCart(produtoCadastrado); closeModal(quickAddModal); } };
-    const handlePaymentSelection = (method) => { if (splitPaymentArea.style.display === 'none') { selectedPaymentMethod = method; summaryPaymentMethod.textContent = method; summaryPaymentMethod.style.fontWeight = '600'; summaryPaymentMethod.style.color = 'var(--text-dark)'; updateSummary(); closeModal(paymentModal); } else { showCustomAlert("Atenção", "Confirme/cancele divisão."); } };
+
+    const handlePaymentSelection = (method) => {
+        if (splitPaymentArea.style.display === 'none') {
+            selectedPaymentMethod = method;
+            summaryPaymentMethod.textContent = method;
+            summaryPaymentMethod.style.fontWeight = '600';
+            summaryPaymentMethod.style.color = 'var(--text-dark)';
+
+            // Remove o alerta visual (borda vermelha)
+            const paymentRow = document.getElementById('payment-toggle-row');
+            if (paymentRow) paymentRow.classList.remove('border-pulse');
+
+            // --- NOVA LÓGICA DE LIMPEZA ---
+            // Se o método escolhido NÃO for 'Dinheiro', esconde o troco e zera o valor
+            if (method !== 'Dinheiro') {
+                const rowResumo = document.getElementById('summary-change-row');
+                if (rowResumo) rowResumo.style.display = 'none';
+                window.lastTrocoValue = 0; // Zera para evitar envio fiscal incorreto
+            }
+            // ------------------------------
+
+            updateSummary();
+            closeModal(paymentModal);
+        } else {
+            showCustomAlert("Atenção", "Confirme ou cancele a divisão de pagamento.");
+        }
+    };
+
     // --- Lógica de Impressão (Atualizada: Sem QR Code, Com A4) ---
 
     let tempClientNameForSignature = null; // Variável auxiliar
@@ -2408,7 +2521,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    barcodeInput.addEventListener('input', () => { debounce(handleScan, 300); });
+    barcodeInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleScan(); // Processa imediatamente ao detectar o sinal de conclusão do leitor
+        }
+    });
+
+    barcodeInput.addEventListener('input', () => {
+        debounce(() => {
+            if (barcodeInput.value.length >= 8) handleScan();
+        }, 500);
+    });
+
     discountToggleRow.addEventListener('click', () => { discountPopover.classList.toggle('active'); });
     percBtnContainer.addEventListener('click', (e) => { const button = e.target.closest('.perc-btn'); if (button && button.dataset.perc) { applyDiscount(parseFloat(button.dataset.perc), true); } });
     discountInputR.addEventListener('input', (e) => { applyDiscount(parseFloat(e.target.value) || 0, false); });
@@ -2476,7 +2601,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 3. ARREDONDAMENTO MÁGICO (Regra dos 5 Centavos)
         // Arredonda o total fiscal para o múltiplo de 0.05 mais próximo (Ex: 35.99 -> 36.00)
-        let totalFiscalAjustado = Math.round(somaBrutaFiscal * 20) / 20;
+        let totalFiscalAjustado = Number(somaBrutaFiscal.toFixed(2));
         let diferencaArredondamento = Number((totalFiscalAjustado - somaBrutaFiscal).toFixed(2));
 
         // Ajusta o último item fiscal para absorver a diferença (exigência da SEFAZ: Soma itens = vNF)
@@ -2695,10 +2820,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 itensIgnorados: itensIgnorados
             };
 
-            // --- CHECAGEM DA VARIÁVEL DE CONTROLE ---
+            // --- CHECAGEM DA VARIÁVEL DE CONTROLE E EMISSÃO ---
             if (emissaoFiscalAtiva && itensAptos.length > 0) {
                 try {
-                    // SÓ chama o backend se a flag for true
+                    console.log("%c 🚀 INICIANDO COMUNICAÇÃO FISCAL ", "background: #222; color: #3498db; font-weight: bold;");
+
                     const response = await fetch(`${FISCAL_API_URL}/emitirNfce`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -2713,20 +2839,40 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
 
                     const resFiscal = await response.json();
+
+                    // --- LOGS DETALHADOS NO CONSOLE DO NAVEGADOR (F12) ---
+                    console.log("%c 📄 RETORNO DA SEFAZ ", "background: #222; color: #bada55; font-size: 12px; font-weight: bold;");
+                    console.dir(resFiscal); // Aqui você vê o objeto completo da SEFAZ
+
                     if (resFiscal.status === "success") {
+                        console.log(`%c ✅ NOTA AUTORIZADA: ${resFiscal.chave} `, "color: #27ae60; font-weight: bold;");
+
+                        // Mantendo todas as suas funcionalidades úteis para a planilha:
                         dadosFiscal = {
                             status: "Autorizada",
                             cStat: resFiscal.cStat,
                             chave: resFiscal.chave,
                             nProt: resFiscal.nProt,
-                            nNF: resFiscal.nNF, // ADICIONADO: Número da nota para sua planilha
-                            xml: resFiscal.xml, // ADICIONADO: XML para sua planilha
+                            nNF: resFiscal.nNF,
+                            xml: resFiscal.xml,
+                            mensagem: resFiscal.message,
+                            saleId: saleId,
+                            itensIgnorados: itensIgnorados
+                        };
+                    } else {
+                        console.warn(`%c ⚠️ NOTA REJEITADA [${resFiscal.cStat}]: ${resFiscal.message} `, "color: #f39c12; font-weight: bold;");
+
+                        dadosFiscal = {
+                            status: "Rejeitada",
+                            cStat: resFiscal.cStat,
                             mensagem: resFiscal.message,
                             saleId: saleId,
                             itensIgnorados: itensIgnorados
                         };
                     }
                 } catch (err) {
+                    console.error("%c ❌ ERRO NA COMUNICAÇÃO COM O SERVIDOR ", "background: #c0392b; color: #fff; font-weight: bold;", err);
+
                     dadosFiscal.status = "Erro";
                     dadosFiscal.mensagem = "Erro na comunicação com o servidor fiscal";
                 }
@@ -2852,68 +2998,110 @@ document.addEventListener('DOMContentLoaded', () => {
         const tbodyEmitidas = document.getElementById('lista-notas-emitidas');
         const tbodyPendentes = document.getElementById('lista-itens-pendentes');
 
-        tbodyEmitidas.innerHTML = '<tr><td colspan="5" class="text-center"><i class="bx bx-loader-alt bx-spin"></i> Carregando notas...</td></tr>';
+        // VERIFICAÇÃO DE SEGURANÇA 1: O elemento existe?
+        if (!tbodyEmitidas || !tbodyPendentes) {
+            console.error("ERRO CRÍTICO: Não encontrei os TBODYs 'lista-notas-emitidas' ou 'lista-itens-pendentes' no HTML.");
+            return;
+        }
+
+        tbodyEmitidas.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner-border text-primary" role="status"></div> Carregando...</td></tr>';
 
         try {
-            // Chama o doGet do Code.js
+            console.log("Iniciando busca de notas...");
             const response = await fetch(`${SCRIPT_URL}?action=listarNotasFiscais`);
             const result = await response.json();
 
-            if (result.status === 'success') {
+            console.log("Dados recebidos do Backend:", result); // OLHE ISSO NO CONSOLE (F12)
+
+            if (result.status === 'success' && Array.isArray(result.data)) {
                 tbodyEmitidas.innerHTML = '';
                 tbodyPendentes.innerHTML = '';
 
+                if (result.data.length === 0) {
+                    tbodyEmitidas.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Nenhuma nota encontrada.</td></tr>';
+                    return;
+                }
+
                 result.data.forEach(nota => {
-                    // 1. Preenche Tabela de Notas Emitidas
+                    // --- 1. TABELA DE NOTAS EMITIDAS ---
                     const tr = document.createElement('tr');
 
-                    let statusClass = 'warning';
-                    let icon = 'bx-error';
-                    if (nota.status === 'Autorizada') { statusClass = 'ok'; icon = 'bx-check'; }
-                    else if (nota.status === 'Rejeitada') { statusClass = 'error'; icon = 'bx-x'; }
+                    // Lógica de Status (Usando classes CSS padrão)
+                    let badgeHtml = `<span class="badge bg-warning text-dark">Processando</span>`;
+                    let icon = 'bx-time';
 
-                    // Formata data
-                    const dataFormatada = new Date(nota.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    const statusLower = String(nota.status).toLowerCase();
 
+                    if (statusLower.includes('autorizada') || statusLower.includes('autorizado')) {
+                        badgeHtml = `<span class="badge bg-success"><i class='bx bx-check'></i> Autorizada</span>`;
+                    } else if (statusLower.includes('rejeitada') || statusLower.includes('erro') || statusLower.includes('cancelada')) {
+                        badgeHtml = `<span class="badge bg-danger"><i class='bx bx-x'></i> ${nota.status}</span>`;
+                    }
+
+                    // Formata data com segurança
+                    let dataTexto = "--:--";
+                    try {
+                        if (nota.timestamp) {
+                            const dataObj = new Date(nota.timestamp);
+                            if (!isNaN(dataObj)) {
+                                dataTexto = dataObj.toLocaleDateString('pt-BR') + ' ' + dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                            }
+                        }
+                    } catch (e) { dataTexto = nota.timestamp; }
+
+                    // Tratamento de segurança para Strings
+                    const idVendaSafe = nota.idVenda ? String(nota.idVenda) : "???";
+                    const msgSafe = nota.mensagem ? String(nota.mensagem) : "";
+
+                    // Botão de Cancelar (Só aparece se tiver chave e protocolo)
+                    const btnCancelar = (nota.chave && nota.nProt)
+                        ? `<button onclick="cancelarNota('${nota.chave}', '${nota.nProt}')" class="btn btn-sm btn-outline-danger" style="margin-left:5px;">Cancelar</button>`
+                        : '';
+
+                    const btnCopiar = nota.chave
+                        ? `<button class="btn btn-sm btn-light border" onclick="navigator.clipboard.writeText('${nota.chave}')" title="Copiar Chave"><i class='bx bx-copy'></i></button>`
+                        : '';
+
+                    // CONSTRUÇÃO DO HTML (DE UMA VEZ SÓ PARA NÃO QUEBRAR)
                     tr.innerHTML = `
-                        <td><span class="badge-status ${statusClass}"><i class='bx ${icon}'></i> ${nota.status}</span></td>
-                        <td>#${nota.idVenda.slice(-6)}</td>
-                        <td>${dataFormatada}</td>
-                        <td title="${nota.mensagem}">${nota.mensagem.substring(0, 30)}...</td>
-                        <td>
-                           ${nota.chave ? `<button class="btn btn-sm btn-secondary" onclick="navigator.clipboard.writeText('${nota.chave}')"><i class='bx bx-copy'></i> Chave</button>` : ''}
-                        </td>
-                    `;
-                    const btnCancelar = `<button onclick="cancelarNota('${nota.chave}', '${nota.nProt}')" class="btn-cancelar">Cancelar</button>`;
-
-                    tr.innerHTML = `
-    ...
-    <td>${nota.chave ? btnCancelar : ''}</td>
-`;
+                    <td>${badgeHtml}</td>
+                    <td><strong>#${idVendaSafe.slice(-6)}</strong></td>
+                    <td style="font-size:0.85rem;">${dataTexto}</td>
+                    <td title="${msgSafe}" style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        ${msgSafe.substring(0, 40)}...
+                    </td>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:5px;">
+                            ${btnCopiar}
+                            ${btnCancelar}
+                        </div>
+                    </td>
+                `;
                     tbodyEmitidas.appendChild(tr);
 
-                    // 2. Preenche Tabela de Pendências (Itens Ignorados)
-                    if (nota.itensIgnorados && nota.itensIgnorados.length > 0) {
-                        // O Code.js salvou como string "Item (Motivo), Item 2 (Motivo)"
-                        // Vamos separar para exibir
-                        const listaPendentes = nota.itensIgnorados.split(', ');
-
+                    // --- 2. TABELA DE PENDÊNCIAS ---
+                    if (nota.itensIgnorados && nota.itensIgnorados.length > 2) {
+                        const listaPendentes = nota.itensIgnorados.split(',');
                         listaPendentes.forEach(itemStr => {
+                            if (itemStr.trim() === "") return;
                             const trPend = document.createElement('tr');
                             trPend.innerHTML = `
-                                <td>${itemStr}</td>
-                                <td>#${nota.idVenda.slice(-6)}</td>
-                                <td class="text-danger">Cadastro Incompleto</td>
-                                <td><button class="btn btn-sm btn-primary" onclick="alert('Vá em Produtos e edite o NCM deste item.')">Corrigir</button></td>
-                            `;
+                            <td>${itemStr.replace(/[()]/g, '')}</td>
+                            <td>#${idVendaSafe.slice(-6)}</td>
+                            <td class="text-danger small">Dados Fiscais (NCM) ausentes</td>
+                            <td><button class="btn btn-sm btn-primary" onclick="alert('Edite o produto para corrigir o NCM.')">Corrigir</button></td>
+                        `;
                             tbodyPendentes.appendChild(trPend);
                         });
                     }
                 });
+            } else {
+                console.error("Formato inesperado:", result);
+                tbodyEmitidas.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Erro no formato de dados: ${result.message || 'Verifique o console'}</td></tr>`;
             }
         } catch (e) {
-            console.error("Erro ao carregar notas:", e);
-            tbodyEmitidas.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Erro ao carregar histórico.</td></tr>';
+            console.error("Erro fatal no JS:", e);
+            tbodyEmitidas.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Erro de execução: ${e.message}</td></tr>`;
         }
     }
 
@@ -3954,6 +4142,39 @@ document.addEventListener('DOMContentLoaded', () => {
         return resultado;
     }
 
+    // --- LÓGICA DE NAVEGAÇÃO ENTRE ABAS (EMITIDAS / PENDENTES) ---
+    // Usamos "event delegation" para funcionar sempre, mesmo que o HTML mude
+
+    document.addEventListener('click', function (e) {
+        // 1. Verifica se o clique foi em uma aba dentro de #notas-tabs
+        const tabClicada = e.target.closest('#notas-tabs .order-tab');
+
+        // Se não clicou na aba, não faz nada
+        if (!tabClicada) return;
+
+        // 2. Remove a classe 'active' de todas as abas irmãs
+        const container = tabClicada.parentElement;
+        const todasAbas = container.querySelectorAll('.order-tab');
+        todasAbas.forEach(t => t.classList.remove('active'));
+
+        // 3. Adiciona 'active' na que foi clicada
+        tabClicada.classList.add('active');
+
+        // 4. Troca a visualização (Mostra/Esconde as tabelas)
+        const viewAlvo = tabClicada.getAttribute('data-view');
+        const viewEmitidas = document.getElementById('view-notas-emitidas');
+        const viewPendentes = document.getElementById('view-notas-pendentes');
+
+        if (viewEmitidas && viewPendentes) {
+            if (viewAlvo === 'emitidas') {
+                viewEmitidas.style.display = 'block';
+                viewPendentes.style.display = 'none';
+            } else if (viewAlvo === 'pendentes') {
+                viewEmitidas.style.display = 'none';
+                viewPendentes.style.display = 'block';
+            }
+        }
+    });
 
 });
 
@@ -4265,3 +4486,32 @@ document.addEventListener('DOMContentLoaded', () => {
     // ... suas inicializações existentes ...
     listenForSystemAnnouncements();
 });
+
+// --- SISTEMA DE STATUS DE CONEXÃO E RELÓGIO ---
+
+function initSystemFooter() {
+    const footer = document.querySelector('.pn');
+    const statusText = document.getElementById('network-status-text');
+    const timeDisplay = document.getElementById('horario');
+
+    // 1. Lógica de Rede
+    function updateNetworkStatus() {
+        if (navigator.onLine) {
+            statusText.textContent = "ONLINE";
+            footer.classList.remove('offline');
+        } else {
+            statusText.textContent = "OFFLINE";
+            footer.classList.add('offline');
+        }
+    }
+
+    // Ouvintes de evento (dispara quando cai ou volta a net)
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
+
+    // Verificação inicial
+    updateNetworkStatus();
+}
+
+// Inicia ao carregar a página
+document.addEventListener("DOMContentLoaded", initSystemFooter);

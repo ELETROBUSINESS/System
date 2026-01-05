@@ -13,16 +13,23 @@
     --text-light: #6b7280;
     --border-subtle: #e5e7eb;
 
+    --success-green: #db0038;  /* Verde Esmeralda (Correção da barra) */
+    --warning-red: #ff000d;    /* Vermelho Alerta */
+    --info-blue: #3b82f6;      /* Azul Info */
+
     /* Sombras Suaves (Elevation) */
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    text-decoration: none;
+    color: inherit;
 }
 
 body {
@@ -249,7 +256,7 @@ body {
 }
 
 .perc-btn:hover {
-    background-color: var(--primary-red);
+    background-color: var(--primary-red-dark);
     border-color: var(--primary-red);
     color: white;
 }
@@ -834,8 +841,6 @@ body {
     gap: 6px;
 }
 
-´
-
 /* --- CORREÇÃO DO ÍCONE DE PESQUISA --- */
 .input-with-icon {
     position: relative;
@@ -968,7 +973,7 @@ body {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
-    overflow: hidden; 
+    overflow: hidden;
     min-height: 0;
 }
 
@@ -1135,18 +1140,94 @@ body {
     padding: 0;
 }
 
+/* --- ESTADO VAZIO COM LOGO (Branded) --- */
+
+/* Ajuste no container pai para garantir altura */
 .item-list-container.empty {
+    min-height: 400px; /* Garante espaço para a logo aparecer */
+    display: flex;
+    flex-direction: column;
+}
+
+/* O container principal (mantido do seu código) */
+.empty-state {
+    flex-grow: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    color: var(--text-light);
-    min-height: 300px;
+    padding: 40px;
+    background-color: #fff; /* Garante fundo branco limpo */
+    border-radius: 16px;
 }
 
-.item-list-container.empty span {
+/* O wrapper interno que segura a logo e textos */
+.empty-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    opacity: 0.8;
+    width: 100%;
+    max-width: 300px;
+}
+
+/* Logo Marca D'água */
+.empty-store-logo {
+    max-width: 140px;
+    height: auto;
+    margin-bottom: 20px;
+    filter: grayscale(100%); /* Preto e branco elegante */
+    opacity: 0.3;            /* Bem transparente (fundo) */
+    transition: all 0.4s ease;
+}
+
+/* Efeito ao passar o mouse: Logo ganha cor */
+.empty-state:hover .empty-store-logo {
+    filter: grayscale(0%);
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+/* Ícone de fallback (se imagem falhar) */
+#fallback-icon {
+    font-size: 4rem;
+    color: #e2e8f0;
+    margin-bottom: 15px;
+}
+
+/* Títulos */
+.empty-title {
     font-size: 1.1rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+}
+
+.empty-subtitle {
+    font-size: 0.85rem;
+    color: #cbd5e1;
     font-weight: 500;
+}
+
+/* Animação do Scanner Vermelho */
+.scanner-line-anim {
+    width: 0%;
+    height: 3px;
+    background: var(--primary-red); /* Usa sua cor vermelha */
+    margin-top: 25px;
+    box-shadow: 0 0 15px rgba(219, 0, 56, 0.4);
+    border-radius: 2px;
+    animation: scan-idle 3s infinite ease-in-out;
+}
+
+@keyframes scan-idle {
+    0% { width: 0%; opacity: 0; }
+    20% { width: 10%; opacity: 0.8; }
+    50% { width: 100%; opacity: 0; } /* Expande até sumir */
+    100% { width: 0%; opacity: 0; }
 }
 
 .item-list-table {
@@ -1266,6 +1347,864 @@ body {
     display: flex;
     flex-direction: column;
     height: 100%;
+}
+
+.pdv-summary-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+}
+
+.divider-dashed {
+    border-bottom: 1px dashed #e5e7eb;
+    margin: 15px 0;
+}
+
+/* Seção Cliente */
+.client-summary-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px;
+    transition: all 0.3s ease;
+}
+
+/* Estilo para o botão de remover cliente */
+.btn-danger-soft {
+    color: var(--warning-red);
+    border-color: #fee2e2; /* Vermelho muito claro */
+    background: #fff;
+}
+
+.btn-danger-soft:hover {
+    background-color: var(--warning-red);
+    color: white;
+    border-color: var(--warning-red);
+    box-shadow: 0 2px 5px rgba(229, 57, 53, 0.3);
+}
+
+/* Quando um cliente real é selecionado, muda a cor da borda */
+.client-summary-box.active-client {
+    background: #fff;
+    border-color: var(--primary-red);
+    box-shadow: 0 4px 12px rgba(219, 0, 56, 0.08);
+}
+
+.client-box-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.client-info-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.client-icon-avatar {
+    width: 38px;
+    height: 38px;
+    background: #e2e8f0;
+    color: #64748b;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 1.2rem;
+}
+
+.active-client .client-icon-avatar {
+    background: var(--primary-red);
+    color: #fff;
+}
+
+.client-text-data {
+    display: flex;
+    flex-direction: column;
+}
+
+.client-label {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.client-text-data strong {
+    font-size: 0.95rem;
+    color: var(--text-dark);
+    line-height: 1.2;
+}
+
+.btn-icon-small {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: all 0.2s;
+
+    flex-shrink: 0; /* Impede o botão de ser esmagado pelo texto do cliente */
+    display: flex;  /* Garante que o ícone possa ser centralizado */
+    align-items: center; /* Centraliza verticalmente */
+    justify-content: center; /* Centraliza horizontalmente */
+    padding: 0; /* Remove padding extra que possa atrapalhar */
+}
+
+.btn-icon-small:hover {
+    border-color: var(--primary-red);
+    color: var(--primary-red);
+}
+
+/* Lista de Ações (Menu) */
+.summary-actions-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Espaçamento uniforme entre os itens */
+    margin: 15px 0;
+    flex-grow: 1; /* Ocupa espaço disponível */
+}
+
+.action-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border: 1px solid transparent;
+}
+
+.action-item:hover {
+    background-color: #f8fafc;
+    border-color: #f1f5f9;
+}
+
+.action-item .icon-box {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    background: #f1f5f9;
+    color: #64748b;
+    border-radius: 8px;
+    margin-right: 12px;
+}
+
+.action-details {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.action-label {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.action-value {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-dark);
+}
+
+.action-value.highlight {
+    color: var(--primary-red);
+}
+
+.arrow-indicator {
+    color: #cbd5e1;
+}
+
+/* Popovers Ajustados */
+.discount-popover {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    margin-top: -5px; /* Leve ajuste */
+    margin-bottom: 10px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+}
+
+.popover-inner {
+    padding: 15px;
+}
+
+/* Footer e Totais */
+.summary-footer {
+    margin-top: auto;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 20px;
+}
+
+.total-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 10px;
+}
+
+.total-display .label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.total-display .value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--primary-red);
+    line-height: 1;
+}
+
+.tax-mini-card {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    text-align: right;
+    margin-bottom: 15px;
+    cursor: pointer;
+}
+
+.action-buttons {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 10px;
+}
+
+.btn-lg {
+    padding: 14px;
+    font-size: 1.1rem;
+}
+
+/* Nova classe para destacar a falta de pagamento */
+.border-pulse {
+    border: 2px solid var(--warning-red) !important;
+    animation: pulse-border 2s infinite;
+}
+
+@keyframes pulse-border {
+    0% { box-shadow: 0 0 0 0 rgba(97, 239, 68, 0.4); }
+    70% { box-shadow: 0 0 0 6px rgba(68, 239, 134, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(131, 239, 68, 0); }
+}
+
+/* --- Estilo para o Display de Troco --- */
+.change-display-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 12px; /* Espaço antes dos tributos */
+    margin-top: 5px;
+}
+
+.change-label {
+    font-size: 0.85rem;
+    color: var(--text-dark);
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.change-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+/* --- ESTILO SUPER MODERNO DO RESUMO --- */
+
+.pdv-summary-card {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    background: #fff;
+    border-radius: 20px; /* Mais arredondado */
+    height: 100%;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+}
+
+.spacer-20 { height: 20px; }
+.spacer-auto { flex-grow: 1; }
+
+/* Título das seções */
+.summary-controls-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #94a3b8;
+    font-weight: 700;
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+}
+
+/* GRID DE COMANDOS (3 Botões Lado a Lado) */
+.summary-controls-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.control-btn {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 5px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 85px;
+}
+
+.control-btn:hover {
+    background: #fff;
+    border-color: var(--primary-red);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.control-btn .c-icon {
+    font-size: 1.4rem;
+    color: #64748b;
+    margin-bottom: 6px;
+}
+
+.control-btn .c-label {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.control-btn .c-value {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.control-btn .c-value.highlight {
+    color: var(--primary-red);
+}
+
+/* Animação de Pulso no Botão de Pagamento (Mantendo a lógica JS) */
+.control-btn.border-pulse {
+    border-color: var(--warning-red);
+    background-color: #fef2f2;
+    animation: pulse-red 2s infinite;
+}
+
+/* ÁREA DO RECIBO (Cálculos) */
+.receipt-calculation-box {
+    background: #fff;
+    /* border-top: 2px dashed #f1f5f9; */
+    padding-top: 15px;
+}
+
+.calc-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.calc-label { font-size: 0.9rem; color: #64748b; }
+.calc-val { font-size: 1rem; font-weight: 600; color: #1f2937; }
+
+.calc-row.total-row {
+    margin-top: 10px;
+    align-items: flex-end;
+}
+
+.calc-row.total-row .calc-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.calc-val-lg {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    line-height: 1;
+    letter-spacing: -1px;
+}
+
+.tax-mini-text {
+    font-size: 0.7rem;
+    color: #cbd5e1;
+    text-align: right;
+    margin-top: 5px;
+    cursor: help;
+}
+
+/* BOTÕES FINAIS */
+.action-buttons {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-secondary-icon {
+    width: 50px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: #f1f5f9;
+    border: none;
+    font-size: 1.5rem;
+    color: #64748b;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-secondary-icon:hover {
+    background: #fee2e2;
+    color: var(--warning-red);
+}
+
+.btn-lg {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    height: 60px;
+    border-radius: 14px;
+}
+
+/* --- NOVA TABELA DE PRODUTOS --- */
+
+.item-list-container {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+    overflow: hidden; /* Arredonda cantos da tabela */
+    margin-top: 15px;
+}
+
+.item-list-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.item-list-table thead th {
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 15px 10px;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.item-list-table tbody tr {
+    transition: background 0.2s;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.item-list-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.item-list-table td {
+    padding: 12px 10px;
+    vertical-align: middle;
+}
+
+/* --- 1. NOVA CÁPSULA DE DESCONTO (Harmonia com Quantidade) --- */
+.discount-capsule {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px; /* Mesmo raio da qtd */
+    height: 32px;       /* Mesma altura da qtd */
+    width: 70px;        /* Largura fixa */
+    overflow: hidden;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.discount-capsule:focus-within {
+    border-color: var(--primary-red);
+    box-shadow: 0 0 0 2px rgba(219, 0, 56, 0.1);
+}
+
+.discount-input-embedded {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    text-align: right; /* Número alinhado à direita */
+    padding-right: 2px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    outline: none;
+    -moz-appearance: textfield; /* Remove setinhas no Firefox */
+}
+
+/* Remove setinhas no Chrome/Safari */
+.discount-input-embedded::-webkit-outer-spin-button,
+.discount-input-embedded::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.discount-symbol {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    padding-right: 8px; /* Espaço na direita */
+    padding-left: 2px;
+    font-weight: 500;
+    user-select: none;
+}
+
+
+/* --- 2. NOVO RODAPÉ DE STATUS (Online/Offline) --- */
+.pn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    left: auto;
+    width: auto;
+    height: auto;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    pointer-events: none;
+}
+
+/* --- CÁPSULA DE STATUS (Visível e Arredondada) --- */
+.status-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    
+    /* O novo visual */
+    background: var(--text-dark);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 50px;
+    
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    pointer-events: auto;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Texto */
+.status-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* Bolinha */
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #22c55e;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+}
+
+/* --- ESTADO OFFLINE --- */
+.pn.offline .status-container {
+    background: #7f1d1d; /* Fundo vermelho escuro */
+    border-color: #ef4444;
+}
+
+.pn.offline .status-dot {
+    background-color: #ef4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+}
+
+/* 1. Célula do Produto */
+.product-cell-modern {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding-left: 10px;
+}
+
+.prod-icon-box {
+    width: 42px;
+    height: 42px;
+    background: #e2e8f0;
+    color: #64748b;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.prod-info-box {
+    display: flex;
+    flex-direction: column;
+}
+
+.prod-name {
+    font-weight: 600;
+    color: var(--text-dark);
+    font-size: 0.95rem;
+    line-height: 1.2;
+}
+
+.prod-barcode {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+/* 2. Controle de Quantidade (Cápsula) */
+.qty-capsule {
+    display: inline-flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+    height: 32px;
+}
+
+.qty-btn {
+    width: 30px;
+    height: 100%;
+    background: #f8fafc;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 1rem;
+    display: grid;
+    place-items: center;
+    transition: 0.2s;
+}
+
+.qty-btn:hover {
+    background: #e2e8f0;
+    color: var(--text-dark);
+}
+
+.qty-display {
+    min-width: 30px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+}
+
+/* 3. Input de Desconto (Estilo Tag) */
+.discount-tag-input {
+    width: 60px;
+    padding: 4px 0;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: #64748b;
+    background: #fff;
+    transition: all 0.2s;
+}
+
+.discount-tag-input:focus {
+    border-color: var(--primary-red);
+    color: var(--primary-red);
+    outline: none;
+    background: #fff5f5;
+    font-weight: 700;
+}
+
+/* Preço Unitário (Discreto) */
+.unit-price-display {
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+/* Total (Destaque) */
+.total-price-display {
+    color: var(--text-dark);
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+/* Botão Lixeira */
+.btn-trash-item {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: #cbd5e1;
+    cursor: pointer;
+    transition: 0.2s;
+    display: grid;
+    place-items: center;
+    font-size: 1.2rem;
+}
+
+.btn-trash-item:hover {
+    background: #fee2e2;
+    color: var(--warning-red);
+}
+
+/* --- ESTADO VAZIO (BRANDED) --- */
+.empty-state-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 400px; /* Altura mínima para ocupar a área da tabela */
+    background: #fff;
+    border-radius: 16px;
+    margin-top: 15px;
+    border: 2px dashed #e2e8f0; /* Borda tracejada indica "área de drop/leitura" */
+}
+
+.empty-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0.8;
+    position: relative;
+    width: 100%;
+    max-width: 300px;
+}
+
+/* Estilo da Logo "Marca D'água" */
+.empty-store-logo {
+    max-width: 140px;      /* Tamanho controlado */
+    height: auto;
+    margin-bottom: 15px;
+    filter: grayscale(100%); /* Deixa preto e branco (elegante) */
+    opacity: 0.4;            /* Bem suave */
+    transition: all 0.3s;
+}
+
+/* Se passar o mouse, a logo ganha cor (efeito bacana) */
+.empty-state-container:hover .empty-store-logo {
+    filter: grayscale(0%);
+    opacity: 1;
+}
+
+.empty-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+.empty-subtitle {
+    font-size: 0.85rem;
+    color: #cbd5e1;
+}
+
+/* Animação: Linha de Scanner (Opcional, mas muito legal) */
+.scanner-line-anim {
+    width: 0%;
+    height: 2px;
+    background: var(--primary-red);
+    margin-top: 20px;
+    box-shadow: 0 0 10px var(--primary-red);
+    animation: scan-idle 3s infinite ease-in-out;
+    opacity: 0.5;
+}
+
+@keyframes scan-idle {
+    0% { width: 0%; opacity: 0; }
+    50% { width: 60%; opacity: 1; }
+    100% { width: 0%; opacity: 0; }
+}
+
+/* --- LOGO E NOME DO SISTEMA (Canto Inferior Esquerdo) --- */
+.system-brand-fixed {
+    position: fixed;
+    bottom: 15px;
+    left: 20px;
+    z-index: 999;
+    display: flex;
+    flex-direction: column; /* "Powered by" em cima do resto */
+    align-items: flex-start;
+    transition: all 0.3s ease;
+    cursor: default;
+    pointer-events: none; /* Deixa clicar no fundo */
+}
+
+/* Hover: Fica colorido e 100% visível */
+.system-brand-fixed:hover {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.powered-label {
+    font-size: 0.6rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+    font-weight: 600;
+    margin-left: 2px; /* Leve ajuste para alinhar com a logo */
+}
+
+/* Container que segura Logo + Texto */
+.brand-row {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Espaço entre a logo e o nome */
+}
+
+/* A Imagem da Logo */
+.brand-img-icon {
+    height: 24px; /* Tamanho equilibrado */
+    width: auto;
+    filter: grayscale(100%); /* Elegância: Preto e branco */
+    transition: filter 0.3s;
+}
+
+/* O Texto do Nome */
+.brand-name-text {
+    font-family: 'Inter', sans-serif;
+    font-weight: 800; /* Extra Bold para impacto */
+    font-size: 1.1rem;
+    color: var(--text-dark);
+    letter-spacing: -0.5px;
+    line-height: 1;
+    transition: color 0.3s;
+}
+
+.highlight-dot {
+    color: var(--primary-red); /* O ponto vermelho da identidade */
+}
+
+/* Efeitos de Hover: Traz a cor de volta */
+.system-brand-fixed:hover .brand-img-icon {
+    filter: grayscale(0%);
+}
+
+.system-brand-fixed:hover .brand-name-text {
+    color: #000;
 }
 
 .pdv-summary h2 {
@@ -2058,19 +2997,6 @@ input:checked+.slider:before {
 /* ======================================== */
 /* == ESTILOS DO RELÓGIO                 == */
 /* ======================================== */
-.pn {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background-color: var(--card-white);
-    border-top: 1px solid var(--border-color);
-    padding: 10px 20px;
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    z-index: 500;
-}
 
 .pn-hr {
     display: flex;
@@ -3545,8 +4471,6 @@ input:checked+.slider:before {
     }
 }
 
-/* --- CORREÇÃO DE Z-INDEX PARA MODAIS SOBREPOSTOS --- */
-
 /* Modal de Autenticação (Senha) - Deve ser o mais alto de todos */
 #modal-admin-auth {
     z-index: 99999 !important;
@@ -3590,43 +4514,55 @@ input:checked+.slider:before {
     align-items: center;
     justify-content: center;
     background-color: #fff;
-    border: 1px solid #e2e8f0; /* Borda cinza suave */
-    border-radius: 6px;       /* Bordas arredondadas modernas */
+    border: 1px solid #e2e8f0;
+    /* Borda cinza suave */
+    border-radius: 6px;
+    /* Bordas arredondadas modernas */
     padding: 4px 8px;
-    width: 75px;              /* Largura fixa para alinhamento */
-    margin: 0 auto;           /* Centraliza na célula da tabela */
+    width: 75px;
+    /* Largura fixa para alinhamento */
+    margin: 0 auto;
+    /* Centraliza na célula da tabela */
     transition: all 0.2s ease;
-    cursor: text;             /* Indica que é editável */
+    cursor: text;
+    /* Indica que é editável */
 }
 
 /* Efeito de Foco Moderno (Focus-Within) */
 /* Quando clica no input dentro, a div pai muda de cor */
 .discount-wrapper:focus-within {
-    border-color: var(--primary-color, #4a90e2); /* Usa sua cor principal ou azul padrão */
-    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.15); /* Brilho suave externo */
+    border-color: var(--primary-color, #4a90e2);
+    /* Usa sua cor principal ou azul padrão */
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.15);
+    /* Brilho suave externo */
 }
 
 /* O Input (Número) */
 .discount-input {
     width: 100%;
     border: none;
-    outline: none;     /* Remove a borda azul padrão do browser */
+    outline: none;
+    /* Remove a borda azul padrão do browser */
     background: transparent;
-    text-align: right; /* Números alinhados à direita perto do % */
+    text-align: right;
+    /* Números alinhados à direita perto do % */
     font-size: 14px;
     font-weight: 600;
-    color: #2d3748;    /* Cor de texto escura suave */
+    color: #2d3748;
+    /* Cor de texto escura suave */
     padding: 0;
     margin: 0;
 }
 
 /* O Símbolo (%) */
 .discount-symbol {
-    color: #a0aec0;    /* Cinza mais claro para não brigar com o número */
+    color: #a0aec0;
+    /* Cinza mais claro para não brigar com o número */
     font-size: 12px;
     font-weight: 500;
     margin-left: 2px;
-    user-select: none; /* Impede seleção acidental */
+    user-select: none;
+    /* Impede seleção acidental */
 }
 
 /* Remove as setinhas feias (spinners) do input number */
@@ -3635,8 +4571,10 @@ input:checked+.slider:before {
     -webkit-appearance: none;
     margin: 0;
 }
+
 .discount-input {
-    -moz-appearance: textfield; /* Para Firefox */
+    -moz-appearance: textfield;
+    /* Para Firefox */
 }
 
 /* Estado de Hover (opcional) */
@@ -3647,10 +4585,13 @@ input:checked+.slider:before {
 
 
 .modal-content.modal-md {
-    max-width: 600px; /* Um pouco mais largo que o padrão para conforto */
-    border-radius: 20px; /* Bordas mais arredondadas (Modern UI) */
+    max-width: 600px;
+    /* Um pouco mais largo que o padrão para conforto */
+    border-radius: 20px;
+    /* Bordas mais arredondadas (Modern UI) */
     overflow: hidden;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); /* Sombra mais profunda */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    /* Sombra mais profunda */
 }
 
 /* Ajuste de Header para Modais MD */
@@ -3675,7 +4616,8 @@ input:checked+.slider:before {
 /* Rodapé mais limpo */
 .modal-content.modal-md .modal-footer {
     padding: 24px 32px;
-    background-color: #fff; /* Removemos o cinza para ficar mais clean */
+    background-color: #fff;
+    /* Removemos o cinza para ficar mais clean */
     border-top: 1px solid #f3f4f6;
     gap: 16px;
 }
@@ -3729,19 +4671,22 @@ input:checked+.slider:before {
 .search-row-modern {
     display: flex;
     align-items: center;
-    gap: 12px; /* Espaço entre input e botão */
+    gap: 12px;
+    /* Espaço entre input e botão */
     width: 100%;
 }
 
 .input-modern-wrapper {
-    flex-grow: 1; /* Ocupa todo o espaço disponível */
+    flex-grow: 1;
+    /* Ocupa todo o espaço disponível */
     display: flex;
     align-items: center;
     background: #f9fafb;
     border: 1px solid #e5e7eb;
     border-radius: 12px;
     padding: 0 12px;
-    height: 50px; /* Altura fixa para alinhar com o botão */
+    height: 50px;
+    /* Altura fixa para alinhar com o botão */
     transition: all 0.2s;
 }
 
@@ -3769,8 +4714,10 @@ input:checked+.slider:before {
 }
 
 .btn-square-add {
-    width: 50px;       /* Largura fixa igual à altura */
-    height: 50px;      /* Altura fixa */
+    width: 50px;
+    /* Largura fixa igual à altura */
+    height: 50px;
+    /* Altura fixa */
     border-radius: 12px;
     background-color: var(--primary-red);
     color: white;
@@ -3780,8 +4727,10 @@ input:checked+.slider:before {
     justify-content: center;
     cursor: pointer;
     transition: background 0.2s;
-    flex-shrink: 0;    /* Impede que o botão encolha */
-    font-size: 1.5rem; /* Tamanho do ícone + */
+    flex-shrink: 0;
+    /* Impede que o botão encolha */
+    font-size: 1.5rem;
+    /* Tamanho do ícone + */
 }
 
 .btn-square-add:hover {
@@ -3809,8 +4758,10 @@ input:checked+.slider:before {
 }
 
 .client-result-item:hover {
-    background-color: #fff1f2; /* Vermelho muito suave */
-    padding-left: 24px; /* Efeito de slide */
+    background-color: #fff1f2;
+    /* Vermelho muito suave */
+    padding-left: 24px;
+    /* Efeito de slide */
 }
 
 /* --- UI: Steps do Fechamento de Caixa --- */
@@ -3863,10 +4814,12 @@ input:checked+.slider:before {
 }
 
 /* Força o botão a ter cor e fundo corretos */
-#btn-force-print, 
+#btn-force-print,
 #btn-finish-crediario-final {
-    background-color: var(--primary-red) !important; /* Força cor de fundo */
-    color: #ffffff !important; /* Força cor do texto */
+    background-color: var(--primary-red) !important;
+    /* Força cor de fundo */
+    color: #ffffff !important;
+    /* Força cor do texto */
     border: none;
     padding: 14px 24px;
     font-size: 1rem;
@@ -3882,7 +4835,7 @@ input:checked+.slider:before {
     margin-top: 10px;
 }
 
-#btn-force-print:hover, 
+#btn-force-print:hover,
 #btn-finish-crediario-final:hover {
     background-color: #b8002e !important;
     transform: translateY(-2px);
@@ -4027,8 +4980,16 @@ input:checked+.slider:before {
     flex-direction: column;
 }
 
-.fiscal-stat-item .lbl { font-size: 0.7rem; color: #6b7280; }
-.fiscal-stat-item .val { font-size: 1rem; font-weight: 700; color: #1f2937; }
+.fiscal-stat-item .lbl {
+    font-size: 0.7rem;
+    color: #6b7280;
+}
+
+.fiscal-stat-item .val {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1f2937;
+}
 
 .fiscal-items-header {
     display: grid;
@@ -4057,7 +5018,11 @@ input:checked+.slider:before {
     border-bottom: 1px dashed #f3f4f6;
 }
 
-.apt-item-row .ncm-tag { font-size: 0.7rem; color: #6b7280; display: block; }
+.apt-item-row .ncm-tag {
+    font-size: 0.7rem;
+    color: #6b7280;
+    display: block;
+}
 
 .fiscal-summary-box {
     background: #f8fafc;
@@ -4073,4 +5038,6 @@ input:checked+.slider:before {
     font-size: 0.9rem;
 }
 
-.summary-line strong { color: #10b981; }
+.summary-line strong {
+    color: #10b981;
+}
