@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/assets/img/iconWeb.png">
+    <title>Minha Empresa | D'TUDO</title>
+
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+    <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+
+
+    <style>
+        :root {
+            --card-bg: #ffffff;
+            --text-primary: #1A1A1A;
+            --text-secondary: #757575;
+            --brand-accent: #db0038;
+            --success-green: #00C853;
+            --chart-track: #f1f5f9;
+            --border-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .containerCard {
+            width: 100%;
+            padding: 0 5px;
+            box-sizing: border-box;
+        }
+
+        .credit-card-premium {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border-color);
+            position: relative;
+            margin-top: 15px;
+            margin-bottom: 20px;
+        }
+
+        /* HEADER */
+        .simple-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .header-text {
+            font-size: 0.85rem;
+            color: #999;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-icon {
+            font-size: 1.3rem;
+            color: #ccc;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .info-icon:hover {
+            color: var(--text-primary);
+        }
+
+        /* TOOLTIP DE DICA (Header) */
+        .tooltip-corner {
+            position: relative;
+        }
+
+        .tooltip-box {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 200px;
+            background: #333;
+            color: #fff;
+            font-size: 0.75rem;
+            padding: 10px;
+            border-radius: 8px;
+            z-index: 100;
+            margin-top: 5px;
+            transition: 0.2s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+        }
+
+        .tooltip-corner:hover .tooltip-box {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* CORPO */
+        .premium-body {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .data-column {
+            flex: 1;
+            padding-right: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* VALORES PRINCIPAIS */
+        .main-value {
+            margin-bottom: 8px;
+        }
+
+        .sub-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .main-value h2 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin: 0;
+            line-height: 1.1;
+        }
+
+        /* BARRA DE PROGRESSO (Barra Lateral) */
+        .progress-container {
+            margin-bottom: 12px;
+        }
+
+        .progress-track-micro {
+            width: 100%;
+            height: 8px;
+            background: var(--chart-track);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--brand-accent);
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        /* VALOR DISPONÍVEL */
+        .secondary-value {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .val-small {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* RECEBIDO NO MÊS (Estilo Restaurado) */
+        .received-metric {
+            background: rgba(0, 200, 83, 0.08);
+            /* Fundo verde leve */
+            padding: 10px 14px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: fit-content;
+        }
+
+        .received-metric i {
+            font-size: 1.2rem;
+            color: var(--success-green);
+        }
+
+        .rec-content span {
+            display: block;
+            font-size: 0.7rem;
+            color: var(--success-green);
+            font-weight: 600;
+        }
+
+        .rec-content strong {
+            display: block;
+            font-size: 1rem;
+            color: #15803d;
+            font-weight: 800;
+        }
+
+        /* --- GRÁFICO ATUALIZADO (DONUT) --- */
+        .chart-column {
+            width: 150px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .donut-chart-container {
+            position: relative;
+            width: 140px;
+            height: 140px;
+        }
+
+        /* Aumentado */
+
+        .circular-chart {
+            display: block;
+            max-width: 100%;
+            max-height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .circle-bg {
+            fill: none;
+            stroke: var(--chart-track);
+            stroke-width: 3;
+        }
+
+        .circle-interactive {
+            fill: none;
+            stroke-width: 3;
+            stroke-linecap: round;
+            transition: stroke-dasharray 1s ease-out;
+            cursor: pointer;
+        }
+
+        .circle-interactive:hover {
+            stroke-width: 4.5;
+        }
+
+        /* Cores */
+        .circle-risk {
+            stroke: var(--brand-accent);
+        }
+
+        /* --- NOVO: TEXTO NO CENTRO DO GRÁFICO --- */
+        .chart-center-info {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .center-percent {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+
+        .center-label {
+            font-size: 0.6rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        /* Tooltip Flutuante */
+        .chart-float-tooltip {
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30, 41, 59, 0.95);
+            color: #fff;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            width: max-content;
+            text-align: center;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 50;
+        }
+
+        /* Highlight */
+
+        .circle-outer {
+            stroke: var(--success-green);
+        }
+
+        .circle-inner {
+            stroke: var(--brand-accent);
+        }
+
+        .chart-float-tooltip.visible {
+            opacity: 1;
+        }
+
+        .chart-float-tooltip strong {
+            font-size: 0.9rem;
+            display: block;
+            margin-bottom: 2px;
+            color: #fff;
+        }
+
+        /* Legenda */
+        .chart-legend {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+
+        .l-item {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        /* RODAPÉ (Botão e Risco) */
+        .btn-details-styled {
+            width: 100%;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 12px;
+            border-radius: 12px;
+            margin-top: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: 0.2s;
+        }
+
+        .btn-details-styled:hover {
+            background: #f1f5f9;
+            color: var(--text-primary);
+        }
+
+        .risk-details-area {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #eee;
+        }
+
+        .premium-footer {
+            display: flex;
+            gap: 10px;
+        }
+
+        .risk-pill {
+            flex: 1;
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .risk-pill span {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            display: block;
+        }
+
+        .risk-pill strong {
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        /* SKELETON */
+        .skeleton-text {
+            color: transparent !important;
+            background: linear-gradient(90deg, #eee, #ddd, #eee);
+            background-size: 200%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        /* Toggle Header (Mantido) */
+        .toggle-header {
+            display: flex;
+            background: #f8fafc;
+            padding: 4px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .toggle-btn {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #999;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .toggle-btn.active {
+            background: #fff;
+            color: var(--text-primary);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .view-content {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .view-content.active-view {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Faturamento */
+        .faturamento-display-premium {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .store-selector-premium {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .store-pill {
+            border: 1px solid #eee;
+            background: transparent;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: #777;
+        }
+
+        .store-pill.active {
+            background: var(--text-primary);
+            color: #fff;
+            border-color: var(--text-primary);
+        }
+
+        /* Aviso Interno (Versão Compacta e Verde) */
+        .internal-alert {
+            background: rgba(0, 200, 83, 0.08);
+            /* Fundo verde bem suave */
+            border: 1px solid rgba(0, 200, 83, 0.2);
+            /* Borda verde discreta */
+            border-radius: 8px;
+            /* Cantos levemente arredondados */
+            padding: 8px 12px;
+            /* Espaçamento interno reduzido */
+            margin-bottom: 15px;
+            /* Margem inferior menor */
+            display: flex;
+            align-items: center;
+            /* Centraliza verticalmente o ícone e texto */
+            gap: 10px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .internal-alert i {
+            font-size: 1.1rem;
+            color: #00C853;
+            /* Verde principal do seu tema */
+            flex-shrink: 0;
+            /* Impede o ícone de amassar */
+        }
+
+        .alert-content {
+            flex: 1;
+            font-size: 0.75rem;
+            /* Texto pequeno e discreto */
+            color: #14532d;
+            /* Verde escuro para leitura */
+            text-align: left;
+            /* Garante alinhamento lateral */
+            line-height: 1.3;
+        }
+
+        .alert-content strong {
+            color: #15803d;
+            font-weight: 800;
+        }
+
+        /* Botão de fechar (X) */
+        .close-alert-btn {
+            background: transparent;
+            border: none;
+            color: #00C853;
+            opacity: 0.6;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 0;
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+        }
+
+        .close-alert-btn:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body class="painel-adm1" onload="AnimationLoading()">
+
+    <script>
+        (function () {
+            const tokenString = localStorage.getItem('session_token');
+            const LOGIN_URL = '/users/e-finance.html';
+            if (!tokenString) {
+                console.log("Acesso negado: Nenhum token de sessão encontrado.");
+                window.location.href = LOGIN_URL;
+                return;
+            }
+            try {
+                const token = JSON.parse(tokenString);
+                if (new Date().getTime() > token.expires) {
+                    console.log("Acesso negado: O token de sessão expirou.");
+                    localStorage.removeItem('session_token');
+                    window.location.href = LOGIN_URL;
+                } else {
+                    console.log('Acesso permitido. Bem-vindo, ' + token.username);
+                }
+            } catch (error) {
+                console.error('Erro ao processar o token de sessão:', error);
+                localStorage.removeItem('session_token');
+                window.location.href = LOGIN_URL;
+            }
+        })();
+    </script>
+
+    <div class="mensagerLocal">
+        <div class="mensager">
+            <img src="/assets/img/eFriend.png">
+            <div>
+                <h1>Bom dia <span>Dona Nubia</span>,</h1>
+                <p>Tenha um ótimo dia de vendas!</p>
+            </div>
+            <div class="progress-bar"></div>
+        </div>
+    </div>
+    <script>
+        const MENSAGEM_KEY = 'ultimaMensagemEletro';
+        const INTERVALO_HORAS = 20;
+        const INTERVALO_MS = INTERVALO_HORAS * 60 * 60 * 1000;
+        const agora = new Date().getTime();
+        const ultimaVisualizacao = localStorage.getItem(MENSAGEM_KEY);
+        const mensagemEl = document.querySelector('.mensagerLocal');
+
+        if (!ultimaVisualizacao || (agora - parseInt(ultimaVisualizacao)) > INTERVALO_MS) {
+            mensagemEl.style.display = 'flex';
+            setTimeout(() => {
+                mensagemEl.style.transition = "opacity 0.5s ease";
+                mensagemEl.style.opacity = 0;
+                setTimeout(() => {
+                    mensagemEl.style.display = "none";
+                }, 500);
+            }, 6200);
+            localStorage.setItem(MENSAGEM_KEY, agora);
+        } else {
+            mensagemEl.style.display = 'none';
+        }
+    </script>
+    <header>
+        <div class="loading">
+            <div class="efect-loading"></div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="info">
+            <div class="photo-profile">
+                <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg">
+                <div class="detals">
+                    <h1>Olá, Nubia!</h1>
+                    <p>CEO: D'TUDO | Dupão</p>
+                </div>
+                <i class="fi fi-rr-shield-trust"></i>
+            </div>
+            <div class="balance">
+                <p>Saldo</p>
+                <div class="saldo">
+                    <span id="valor1" class="skeleton shimmer"></span>
+                    <i class='bx bx-eye' id="toggle-balance-icon"></i>
+                </div>
+                <div class="pending">
+                    <p>Vendas a receber: </p>
+                    <span id="valor2" class="skeleton shimmer"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="new_nav">
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    const url = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=1`;
+                    const valor1Element = document.getElementById('valor1');
+                    const valor2Element = document.getElementById('valor2');
+                    const toggleIcon = document.getElementById('toggle-balance-icon');
+
+                    let valor1Original = '';
+                    let valor2Original = '';
+                    let isBalanceVisible = localStorage.getItem('balanceVisible') === 'true';
+
+                    function toggleBalanceDisplay() {
+                        if (isBalanceVisible) {
+                            valor1Element.textContent = valor1Original;
+                            valor2Element.textContent = valor2Original;
+                        } else {
+                            valor1Element.textContent = 'R$ *******';
+                            valor2Element.textContent = 'R$ ********';
+                        }
+                        toggleIcon.classList.toggle('bx-eye', isBalanceVisible);
+                        toggleIcon.classList.toggle('bx-eye-closed', !isBalanceVisible);
+                    }
+
+                    fetch(url)
+                        .then(response => response.json())
+                        .then(data => {
+                            valor1Original = data.valor1;
+                            valor2Original = data.valor2;
+                            valor1Element.classList.remove('skeleton', 'shimmer');
+                            valor2Element.classList.remove('skeleton', 'shimmer');
+                            toggleBalanceDisplay();
+                        }).catch(error => {
+                            valor1Element.textContent = 'Erro';
+                            valor2Element.textContent = 'Erro';
+                        });
+
+                    if (toggleIcon) {
+                        toggleIcon.addEventListener('click', () => {
+                            isBalanceVisible = !isBalanceVisible;
+                            localStorage.setItem('balanceVisible', isBalanceVisible);
+                            toggleBalanceDisplay();
+                        });
+                    }
+                });
+            </script>
+
+            <div class="conta-info">
+                <p>Prestes a vencer</p>
+                <div class="containerCard">
+                    <div class="card-optionSizeMain">
+                        <div class="card-optionSize">
+                            <i class='bx  bx-print-dollar'></i> 
+                            <div class="boleto-content-row">
+                                <div class="boleto-details">
+                                    <h1 id="boletoEmpresa">Carregando...</h1>
+                                    <span id="boletoValor"></span>
+                                </div>
+                                <div class="boleto-due-date">
+                                    <span class="lpan" id="boletoVencimento"></span>
+                                    <a href="/users/45692327000100/CD1/adm/nb/manager.html" class="add-btn-plus">
+                                        <i class='bx bx-plus'></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="paginationIndicators" class="pagination-indicators-container"></div>
+                    </div>
+                </div>
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', () => {
+                        const url = 'https://script.google.com/macros/s/AKfycbzkAs8dsJMepkQBhdL--XwO3wUQuQgvA-DFPEwraiz8ijiX9gkPMBuAeM5udQjzmJvzqQ/exec?action=getContas';
+                        let contas = [];
+                        let currentIndex = 0;
+                        const displayDuration = 5000;
+                        let intervalId;
+
+                        const cardContent = document.querySelector('.card-optionSize');
+                        const boletoEmpresa = document.getElementById('boletoEmpresa');
+                        const boletoValor = document.getElementById('boletoValor');
+                        const boletoVencimento = document.getElementById('boletoVencimento');
+                        const paginationIndicators = document.getElementById('paginationIndicators');
+
+                        function createPaginationIndicators() {
+                            paginationIndicators.innerHTML = '';
+                            if (contas.length <= 1) return;
+                            for (let i = 0; i < contas.length; i++) {
+                                const dot = document.createElement('div');
+                                dot.classList.add('pagination-dot');
+                                paginationIndicators.appendChild(dot);
+                            }
+                        }
+
+                        function updateContaDisplay() {
+                            if (contas.length === 0) {
+                                boletoEmpresa.textContent = "Nenhuma conta pendente";
+                                boletoValor.textContent = "Você está em dia! ✨";
+                                paginationIndicators.innerHTML = '';
+                                return;
+                            }
+
+                            const currentConta = contas[currentIndex];
+                            cardContent.classList.add('slide-out-up');
+
+                            setTimeout(() => {
+                                boletoEmpresa.textContent = currentConta.descricao;
+                                boletoValor.textContent = `R$ ${parseFloat(currentConta.valor).toFixed(2).replace('.', ',')}`;
+                                boletoVencimento.textContent = currentConta.vencimento;
+
+                                cardContent.classList.remove('slide-out-up');
+                                cardContent.classList.add('slide-in-down');
+
+                                const dots = document.querySelectorAll('.pagination-dot');
+                                dots.forEach((dot, index) => dot.classList.toggle('active', index === currentIndex));
+
+                                setTimeout(() => cardContent.classList.remove('slide-in-down'), 500);
+                            }, 250);
+
+                            currentIndex = (currentIndex + 1) % contas.length;
+                        }
+
+                        fetch(url)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data && !data.error && data.length > 0) {
+                                    contas = data.slice(0, 8);
+                                    createPaginationIndicators();
+                                    if (contas.length > 0) updateContaDisplay();
+                                    if (contas.length > 1) {
+                                        intervalId = setInterval(updateContaDisplay, displayDuration);
+                                    }
+                                } else {
+                                    updateContaDisplay();
+                                }
+                            }).catch(error => {
+                                boletoEmpresa.textContent = "Erro de conexão";
+                            });
+                    });
+                </script>
+
+
+                <div class="containerCard">
+                    <div class="credit-card-premium">
+
+                        <div class="toggle-header">
+                            <button class="toggle-btn active" onclick="switchView('crediario')" id="btn-crediario">
+                                <i class='bx bx-id-card'></i> Carteira
+                            </button>
+                            <button class="toggle-btn" onclick="switchView('faturamento')" id="btn-faturamento">
+                                <i class='bx bx-store-alt'></i> Faturamento
+                            </button>
+                        </div>
+
+                        <div id="view-crediario" class="view-content active-view">
+
+                            <div class="simple-header">
+                                <span class="header-text">Visão geral de risco</span>
+                                <div class="tooltip-corner">
+                                    <i class='bx bx-info-circle info-icon'></i>
+                                    <div class="tooltip-box" id="dynamic-tip">
+                                        Carregando...
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div class="internal-alert" id="admin-alert-box">
+                                <i class='bx bx-info-circle'></i>
+                                <div class="alert-content">
+                                    <strong>Aviso de crédito:</strong> Gilvan fez uma análise de crédito recentemente e
+                                    alterou limites de clientes.
+                                </div>
+                                <button class="close-alert-btn"
+                                    onclick="document.getElementById('admin-alert-box').style.display='none'">
+                                    <i class='bx bx-x'></i>
+                                </button>
+                            </div>
+
+                            <div class="premium-body">
+
+                                <div class="data-column">
+
+                                    <div class="main-value">
+                                        <span class="sub-label">Limite Total Concedido</span>
+                                        <h2 id="total-limit-display" class="skeleton-text">R$ --,--</h2>
+                                    </div>
+
+                                    <div class="progress-container">
+                                        <div class="progress-track-micro">
+                                            <div class="progress-fill" id="limit-bar" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="secondary-value">
+                                        <span>Limite disponível:</span>
+                                        <span id="available-amount" class="val-small skeleton-text">R$ --,--</span>
+                                    </div>
+
+                                    <div class="received-metric">
+                                        <div class="rec-content">
+                                            <span>Recebido (Mês)</span>
+                                            <strong id="received-month" class="skeleton-text">R$ 0,00</strong>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="chart-column">
+                                    <div class="donut-chart-container">
+                                        <svg viewBox="0 0 36 36" class="circular-chart">
+                                            <path class="circle-bg"
+                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+
+                                            <path class="circle-interactive circle-risk" id="risk-circle"
+                                                stroke-dasharray="0, 100"
+                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                        </svg>
+
+                                        <div class="chart-center-info">
+                                            <span class="center-percent" id="center-percent-text">0%</span>
+                                            <span class="center-label">Inadimplência</span>
+                                        </div>
+
+                                        <div class="chart-float-tooltip" id="chart-tooltip">Info</div>
+                                    </div>
+                                    <div class="chart-legend">
+                                        <div class="l-item">
+                                            <div class="dot" style="background:#db0038"></div>Atrasou
+                                        </div>
+                                    </div>
+                                    <div class="chart-legend">
+                                        <div class="l-item">
+                                            <div class="dot" style="background:#00C853"></div>Pagou
+                                        </div>
+                                        <div class="l-item">
+                                            <div class="dot" style="background:#db0038"></div>Atrasou
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button class="btn-details-styled" onclick="toggleRiskArea()">
+                                Ver detalhes da carteira <i class='bx bx-chevron-down' id="risk-arrow"></i>
+                            </button>
+
+                            <div class="risk-details-area" id="risk-area">
+                                <div class="premium-footer">
+                                    <div class="risk-pill"><span>14d</span><strong id="risk-14d"
+                                            style="color: #f59e0b;">0%</strong></div>
+                                    <div class="risk-pill"><span>30d</span><strong id="risk-30d"
+                                            style="color: #f97316;">0%</strong></div>
+                                    <div class="risk-pill"><span>90d+</span><strong id="risk-90d"
+                                            style="color: #db0038;">0%</strong></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="view-faturamento" class="view-content" style="display: none;">
+                            <div class="faturamento-display-premium">
+                                <span class="sub-label">Vendas de Hoje</span>
+                                <h1 id="faturamento-valor" class="skeleton-text" style="color: var(--text-primary);">R$
+                                    --,--</h1>
+                                <div class="store-selector-premium">
+                                    <button class="store-pill active">D'Tudo</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <script>
+                    function parseDataSegura(dataStr) {
+                        if (!dataStr || dataStr === "Quitado" || dataStr === "Verificar") return null;
+                        const partes = dataStr.split('/');
+                        if (partes.length === 3) {
+                            return new Date(parseInt(partes[2]), parseInt(partes[1]) - 1, parseInt(partes[0]), 12, 0, 0);
+                        }
+                        return null;
+                    }
+
+                    document.addEventListener('DOMContentLoaded', () => {
+                        // --- CONFIGURAÇÕES ---
+                        const API_BASE = 'https://script.google.com/macros/s/AKfycbx3EKgVWGJs68pPkeok9NTWFeWNTdl5C0cgPHXute6f5Iydxr1Ca0i27OAuCc9iUbvj/exec';
+                        const URL_CREDIARIO = `${API_BASE}?action=metricasCrediario`;
+                        const URL_FATURAMENTO = `https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=2`;
+
+                        // --- FUNÇÕES DE UI (TROCA DE ABAS) ---
+                        window.switchView = function (viewName) {
+                            // Esconde todas as views
+                            document.querySelectorAll('.view-content').forEach(v => v.style.display = 'none');
+                            // Mostra a selecionada
+                            document.getElementById(`view-${viewName}`).style.display = 'block';
+
+                            // Atualiza botões
+                            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                            document.getElementById(`btn-${viewName}`).classList.add('active');
+                        }
+
+                        window.toggleRiskArea = function () {
+                            const area = document.getElementById('risk-area');
+                            const icon = document.getElementById('risk-arrow');
+
+                            if (area.style.display === 'block') {
+                                area.style.display = 'none';
+                                icon.className = 'bx bx-chevron-down';
+                            } else {
+                                area.style.display = 'block';
+                                icon.className = 'bx bx-chevron-up';
+                            }
+                        }
+
+                        function formatMoney(val) {
+                            return parseFloat(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                        }
+
+                        // Variável para Tooltips
+                        let chartData = { pay: 0, late: 0 };
+
+                        fetch(URL_CREDIARIO)
+                            .then(res => res.json())
+                            .then(data => {
+                                console.log("📊 Dados Recebidos:", data); // Este log agora DEVE aparecer
+
+                                if (data.status === "success") {
+                                    // 1. DADOS FINANCEIROS (Cards)
+                                    document.getElementById('total-limit-display').textContent = formatMoney(data.limit);
+                                    document.getElementById('available-amount').textContent = formatMoney(data.limit - data.used);
+                                    document.getElementById('received-month').textContent = formatMoney(data.receivedMonth);
+
+                                    // 2. BARRA DE LIMITE (A barra que tinha sumido)
+                                    const pctUsed = data.limit > 0 ? Math.min((data.used / data.limit) * 100, 100) : 0;
+                                    const bar = document.getElementById('limit-bar');
+                                    if (bar) {
+                                        bar.style.width = `${pctUsed}%`;
+                                    }
+
+                                    // 3. GRÁFICO DONUT (SVG)
+                                    const latePct = parseFloat(data.totalRiskPercent);
+                                    const riskCircle = document.getElementById('risk-circle');
+                                    const centerText = document.getElementById('center-percent-text');
+
+                                    if (centerText) centerText.textContent = `${latePct.toFixed(0)}%`;
+                                    if (riskCircle) {
+                                        riskCircle.style.strokeDasharray = `${latePct}, 100`;
+                                        riskCircle.style.stroke = latePct > 0 ? 'var(--brand-accent)' : 'var(--success-green)';
+                                    }
+
+                                    // 4. RISK PILLS (%)
+                                    document.getElementById('risk-14d').textContent = data.risk14 + '%';
+                                    document.getElementById('risk-30d').textContent = data.risk30 + '%';
+                                    document.getElementById('risk-90d').textContent = data.risk90 + '%';
+
+                                    console.table(data); // Exibe uma tabela limpa no console
+                                }
+                            })
+                            .catch(err => console.error("❌ Erro no Fetch do Crediário:", err));
+                        // --- FETCH DADOS DE FATURAMENTO ---
+                        fetch(URL_FATURAMENTO)
+                            .then(r => r.json())
+                            .then(d => {
+                                const val = d.faturamentoDate || d.valor1 || 'R$ 0,00';
+                                const el = document.getElementById('faturamento-valor');
+                                if (el) {
+                                    el.textContent = val;
+                                    el.classList.remove('skeleton-text');
+                                }
+                            })
+                            .catch(err => console.error("Erro Fetch Faturamento:", err));
+
+                        // --- INTERAÇÃO TOOLTIP ---
+                        const tooltip = document.getElementById('chart-tooltip');
+                        const paths = document.querySelectorAll('.circle-interactive');
+
+                        if (tooltip && paths.length > 0) {
+                            paths.forEach(path => {
+                                const showTip = () => {
+                                    // Como só temos o círculo de risco interativo agora, mostramos sempre o atraso
+                                    tooltip.innerHTML = `<strong>${chartData.late}% Inadimplente</strong><br>Atraso > 1 dia`;
+                                    tooltip.classList.add('visible');
+                                };
+
+                                const hideTip = () => {
+                                    tooltip.classList.remove('visible');
+                                };
+
+                                path.addEventListener('mouseenter', showTip);
+                                path.addEventListener('mouseleave', hideTip);
+                                path.addEventListener('touchstart', (e) => { e.preventDefault(); showTip(); });
+                                path.addEventListener('touchend', () => setTimeout(hideTip, 2000));
+                            });
+                        }
+                    });
+                </script>
+
+
+                <!-- BOTÕES DE OPÇÕES PARA MOBILE -->
+                <div class="option">
+                    <div class="card-option">
+                        <a href="/users/45692327000100/CD1/adm/nb/formsPush.html">
+                            <i class='bx bx-plus-circle'></i>
+                            <h3>Registrar</h3>
+                        </a>
+                    </div>
+                    <div class="card-option">
+                        <a href="/users/45692327000100/CD1/adm/nb/manager.html">
+                            <i class='bx bx-scan'></i>
+                            <h3>Despesas</h3>
+                        </a>
+                    </div>
+                    <div class="card-option">
+                        <a href="/users/45692327000100/CD1/adm/nb/extrato.html">
+                            <i class='bx bx-copy-alt'></i>
+                            <h3>Extrato</h3>
+                        </a>
+                    </div>
+                    <br>
+                    <br><br><br><br><br><br>
+                </div>
+
+                <!-- NOVA SEÇÃO DE OPÇÕES APENAS PARA DESKTOP -->
+                <div class="desktop-options">
+                    <div class="card-option">
+                        <a href="#">
+                            <i class='bx bx-file-blank'></i>
+                            <h3>DAS Imposto</h3>
+                        </a>
+                    </div>
+                    <div class="card-option">
+                        <a href="#">
+                            <i class='bx bx-group'></i>
+                            <h3>Funcionários</h3>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <div class="navigation" id="main-navigation">
+        <button class="sidebar-toggle" id="sidebarToggle">
+            <i class='bx bx-menu'></i>
+        </button>
+        <ul>
+            <li class="list active">
+                <a href="#">
+                    <span class="icon"><i class='bx bxs-store-alt'></i></span>
+                    <span class="text">Loja</span>
+                </a>
+            </li>
+
+            <li class="list desktop-only">
+                <a href="/pdv">
+                    <span class="icon">
+                        <i class='bx  bx-cart-minus'></i>
+                    </span>
+                    <span class="text">PDV</span>
+                </a>
+            </li>
+
+            <li class="list">
+                <a href="/users/45692327000100/CD1/adm/nb/metricas.html">
+                    <span class="icon"><i class='bx bx-bar-chart-alt-2'></i></span>
+                    <span class="text">Métrica</span>
+                </a>
+            </li>
+            <li class="list">
+                <a href="/users/45692327000100/CD1/adm/nb/push.html">
+                    <span class="icon"><i class='bx bx-plus-circle'></i></span>
+                    <span class="text">Venda</span>
+                </a>
+            </li>
+            <li class="list">
+                <a href="/users/45692327000100/CD1/adm/nb/extrato.html">
+                    <span class="icon"><i class='bx bx-copy-alt'></i></span>
+                    <span class="text">Extrato</span>
+                </a>
+            </li>
+            <li class="list">
+                <a href="#" id="logout-btn">
+                    <span class="icon"><i class='bx bx-log-out'></i></span>
+                    <span class="text">Sair</span>
+                </a>
+            </li>
+
+            <!--
+            <li class="list" id="mobile-menu-btn">
+                <a href="#">
+                    <span class="icon"><i class='bx bx-menu'></i></span>
+                    <span class="text">Menu</span>
+                </a>
+            </li>
+            -->
+            <div class="indicator color11"></div>
+        </ul>
+    </div>
+
+    <script>
+        // Script para ativar a animação da Navbar e abrir o Menu Lateral
+        const list = document.querySelectorAll('.list');
+
+        function activeLink() {
+            list.forEach((item) => item.classList.remove('active'));
+            this.classList.add('active');
+
+            // Se clicar no botão "Menu", abre a sidebar lateral
+            if (this.id === 'mobile-menu-btn') {
+                document.body.classList.toggle('sidebar-collapsed'); // Ou a classe que abre seu menu
+                // Se você usa o logic do sidebarToggle antigo:
+                const toggleBtn = document.getElementById('sidebarToggle');
+                if (toggleBtn) toggleBtn.click();
+            }
+        }
+
+        list.forEach((item) => item.addEventListener('click', activeLink));
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navigation = document.getElementById('main-navigation');
+            const toggleButton = document.getElementById('sidebarToggle');
+            const body = document.querySelector('body');
+            const logoutButton = document.getElementById('logout-btn');
+
+            if (sessionStorage.getItem('sidebarAnimated') !== 'true') {
+                if (window.innerWidth >= 992) {
+                    navigation.classList.add('run-animation');
+                    sessionStorage.setItem('sidebarAnimated', 'true');
+                }
+            }
+
+            if (toggleButton) {
+                toggleButton.addEventListener('click', () => {
+                    body.classList.toggle('sidebar-collapsed');
+                });
+            }
+
+            if (logoutButton) {
+                logoutButton.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    localStorage.removeItem('session_token');
+                    window.location.href = '/users/e-finance.html';
+                });
+            }
+        });
+    </script>
+
+    <script src="/assets/js/loading.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,791 @@
+/* --- CONFIGURAÇÕES BASE --- */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0;
+    padding-bottom: 150px;
+    user-select: none;
+    transition: all 0.5s ease;
+    min-height: 100vh;
+}
+
+:root {
+    --brand-color: #db0038;
+    --brand-future: #b8002e;
+    --text-active: #000000;
+    --text-inactive: #000000;
+}
+
+/* --- GRID E LAYOUT PADRÃO (MOBILE FIRST) --- */
+#app-container {
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+/* Banner 'info' ocupando 100% do espaço lateral no mobile */
+.info {
+    width: 100%;
+}
+
+/* Cards e elementos com respiro (margem lateral) no Mobile */
+.finance-card,
+.shortcut-grid-free {
+    margin-left: 16px;
+    margin-right: 16px;
+    width: auto;
+}
+
+/* Recursos ocultos no Mobile (exclusivos Desktop) */
+.chart-area,
+.history-area,
+.btn-toggle-sidebar {
+    display: none;
+}
+
+/* Atalhos em linha no mobile */
+.shortcut-grid-free {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-around;
+    width: 100%;
+}
+
+/* Mapeamento de áreas para o Grid Desktop */
+.card-vencer-area {
+    grid-area: card1;
+}
+
+.resumo-venda-area {
+    grid-area: card2;
+}
+
+.chart-area {
+    grid-area: chart;
+}
+
+.history-area {
+    grid-area: history;
+}
+
+/* --- FIX MOBILE STRUCTURE (ANTIGRAVITY) --- */
+.nav-header-toggle {
+    display: none;
+}
+
+.nav-links-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+    justify-content: space-around;
+    /* Changed to space-around for even distribution */
+}
+
+/* --- CONFIGURAÇÕES DESKTOP UNIFICADAS (Navbar na Direita) --- */
+/* --- CONFIGURAÇÕES DESKTOP UNIFICADAS (Navbar na Esquerda) --- */
+@media (min-width: 1024px) {
+    body {
+        padding-top: 40px;
+        /* CORREÇÃO: Padding na esquerda para dar espaço à sidebar */
+        padding-left: 90px;
+        padding-right: 0;
+        align-items: center;
+        /* Centraliza o container principal na área restante */
+        transition: padding 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Ajuste de espaço quando a sidebar estiver expandida (Maximada) */
+    html[data-minimized="false"] body {
+        padding-left: 240px;
+        /* Aumenta o espaço do corpo */
+        padding-right: 0;
+    }
+
+    #app-container {
+        max-width: 1200px;
+        width: 100%;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 57% 43%;
+        grid-template-areas:
+            "info info"
+            "card1 card2"
+            "chart history" !important;
+        gap: 24px;
+        /* Removemos padding desnecessário */
+        padding-right: 20px;
+    }
+
+    .info {
+        grid-area: info;
+        width: 100% !important;
+        margin: 0;
+    }
+
+    .chart-area,
+    .history-area {
+        display: block;
+    }
+
+    .finance-card {
+        margin: 0;
+    }
+
+    div.shortcut-grid-free {
+        display: none !important;
+    }
+
+    /* --- SIDEBAR FIXA NA ESQUERDA --- */
+    /* --- SIDEBAR FIXA NA ESQUERDA --- */
+    .nav-container {
+        bottom: 0 !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: auto !important;
+        /* Invertido para Esquerda */
+        width: 80px !important;
+        max-width: none !important;
+        height: 100vh !important;
+        transform: none !important;
+        transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 0;
+        /* Remove bordas arredondadas soltas */
+    }
+
+    /* Estado Maximizado */
+    html[data-minimized="false"] .nav-container {
+        width: 220px !important;
+    }
+
+    .nav-bg {
+        border-radius: 0;
+        border-right: 1px solid #e5e7eb;
+        /* Borda agora na direita */
+        border-left: none;
+        background: #fff;
+        -webkit-mask: none !important;
+        mask: none !important;
+    }
+
+    /* Overlay organiza os itens verticalmente */
+    .nav-overlay {
+        flex-direction: column !important;
+        justify-content: flex-start !important;
+        align-items: flex-start !important;
+        /* Esquerda fixa para não mover o botão */
+        padding-top: 20px;
+    }
+
+    /* Container para agrupar os links e dar espaçamento do topo */
+    .nav-links-container {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: auto;
+        justify-content: flex-start;
+        gap: 38px;
+        /* Ajustado para 38px */
+        margin-top: 20px;
+    }
+
+    /* Área do Botão de Toggle */
+    .nav-header-toggle {
+        width: 80px;
+        /* Fixo para não mover o botão ao expandir */
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+
+    .btn-toggle-sidebar {
+        display: flex;
+        pointer-events: auto;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 8px;
+        transition: background 0.3s;
+        color: var(--text-inactive);
+    }
+
+    .btn-toggle-sidebar:hover {
+        background-color: #f3f4f6;
+        color: var(--brand-color);
+    }
+
+    /* Ícone do Toggle girando conforme estado */
+    html[data-minimized="false"] .btn-toggle-sidebar svg {
+        transform: rotate(180deg);
+        /* Seta aponta para esquerda p/ fechar */
+    }
+
+    html[data-minimized="true"] .btn-toggle-sidebar svg {
+        transform: rotate(0deg);
+        /* Seta aponta para direita p/ abrir */
+    }
+
+    /* Estilo dos Itens */
+
+    .nav-item {
+        flex-direction: row !important;
+        width: 100%;
+        height: 50px;
+        /* Altura fixa para não esticar */
+        flex: 0 0 auto;
+        /* Estado Minimizado (Padrão): Centralizado */
+        padding: 0;
+        /* Ajuste Fino Vertical */
+        padding-top: 4px;
+        justify-content: center;
+        align-items: center;
+        /* FIXED: Align items vertically text/icon */
+        position: relative;
+        gap: 0;
+        /* Sem gap quando fechado */
+    }
+
+    /* Estado Maximizado: Alinhado à Esquerda */
+    html[data-minimized="false"] .nav-item {
+        justify-content: flex-start;
+        padding-left: 28px;
+        gap: 16px;
+    }
+
+    /* Animação e Posição do Marcador Ativo */
+    .nav-marker {
+        top: var(--marker-y, 80px) !important;
+        /* JS deve calcular baseado no topo */
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Marcador quando maximizado */
+    html[data-minimized="false"] .nav-marker {
+        width: calc(100% - 24px);
+        left: 12px !important;
+        /* Margem da esquerda */
+        transform: translateY(-50%) !important;
+        border-radius: 10px;
+    }
+
+    .nav-item.active .nav-icon {
+        transform: none !important;
+    }
+
+    /* Labels (Textos) */
+    .nav-label {
+        position: static !important;
+        opacity: 0;
+        width: 0;
+        /* FIXED: Prevent layout shift */
+        overflow: hidden;
+        /* Escondido quando minimizado */
+        transform: translateX(-10px);
+        white-space: nowrap;
+        color: var(--text-inactive);
+        transition: all 0.3s ease;
+        pointer-events: none;
+    }
+
+    /* Labels aparecem apenas quando maximizado */
+    html[data-minimized="false"] .nav-label {
+        opacity: 1;
+        width: auto;
+        transform: translateX(0);
+        pointer-events: auto;
+    }
+
+    html[data-minimized="false"] .nav-item.active .nav-label {
+        color: #fff;
+    }
+}
+
+/* --- LIMPEZA DE CLASSES REDUNDANTES E ÂNCORAS DE ANIMAÇÃO --- */
+/* Removido .metrics, .despesas, .extrato e usado IDs para disparar as animações únicas */
+#btn-metrics.animating .shortcut-icon-free svg line {
+    animation: barGrowShortcut 0.25s infinite ease-in-out;
+}
+
+#btn-expenses.animating .shortcut-icon-free::after {
+    content: '';
+    position: absolute;
+    left: 15%;
+    width: 70%;
+    height: 2px;
+    background: #ffffff;
+    box-shadow: 0 0 15px 2px #ffffff;
+    animation: scanLine 0.6s ease-in-out;
+    z-index: 10;
+}
+
+#btn-extract.animating .shortcut-icon-free svg .read-line {
+    animation: lineRead 0.3s infinite ease-in-out;
+}
+
+/* --- COMPONENTES COMUNS --- */
+.finance-card {
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.089);
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.02);
+    position: relative;
+    z-index: 1;
+}
+
+/* --- PRESTES A VENCER (CARROSSEL E PAINT OVERLAY) --- */
+#paint-overlay {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    background-color: var(--brand-color);
+    border-radius: 50%;
+    transform: translate(-50%, 50%) scale(0);
+    transition: transform 1.2s cubic-bezier(0.65, 0, 0.35, 1);
+    z-index: 0;
+    pointer-events: none;
+}
+
+.total-active #paint-overlay {
+    transform: translate(-50%, 50%) scale(80);
+}
+
+.carousel-container {
+    position: relative;
+    height: 68px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.carousel-item {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    opacity: 0;
+    transform: translateX(30px);
+    transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+}
+
+.carousel-item.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+.carousel-item.exit {
+    opacity: 0;
+    transform: translateX(-30px);
+}
+
+.dot-container {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 12px;
+    height: 6px;
+}
+
+.dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    transition: all 0.4s ease;
+}
+
+.dot.active {
+    width: 16px;
+    border-radius: 20px;
+    background: var(--brand-color);
+}
+
+/* --- RESUMO OPERACIONAL (TOGGLE E HOLD) --- */
+.toggle-switch {
+    position: relative;
+    width: 86px;
+    height: 28px;
+    background: var(--brand-color);
+    border-radius: 20px;
+    cursor: pointer;
+    padding: 3px;
+    overflow: hidden;
+    transition: background 0.4s ease;
+}
+
+.toggle-switch.swapped {
+    background: var(--brand-future);
+}
+
+.toggle-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    background: var(--brand-future);
+    z-index: 1;
+    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.swapped .toggle-fill {
+    left: auto;
+    right: 0;
+    background: var(--brand-color);
+}
+
+.wind-line {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.5);
+    height: 2px;
+    border-radius: 2px;
+    width: 15px;
+    opacity: 0;
+    z-index: 5;
+}
+
+.is-holding .wind-line {
+    opacity: 1;
+    animation: windMove 0.4s infinite linear;
+}
+
+@keyframes windMove {
+    0% {
+        transform: translateX(-20px);
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateX(90px);
+        opacity: 0;
+    }
+}
+
+.toggle-thumb {
+    position: absolute;
+    left: 4px;
+    width: 22px;
+    height: 22px;
+    background: var(--brand-future);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    z-index: 10;
+    transition: left 0.3s ease, transform 0.4s ease, background 0.4s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.swapped .toggle-thumb {
+    left: 60px;
+    background: var(--brand-color);
+    transform: rotate(180deg);
+}
+
+.is-holding .toggle-thumb {
+    transition: left 1.2s cubic-bezier(0.4, 0, 0.2, 1), transform 1.2s linear;
+}
+
+.is-holding .toggle-fill {
+    width: 100% !important;
+}
+
+#interaction-hint {
+    position: absolute;
+    bottom: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    background: #000;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 9px;
+    font-weight: 700;
+    opacity: 0;
+    transition: all 0.5s ease;
+    pointer-events: none;
+    z-index: 100;
+}
+
+#interaction-hint.show {
+    opacity: 1;
+    bottom: -28px;
+}
+
+.section-disabled {
+    opacity: 0.15;
+    filter: grayscale(1);
+    pointer-events: none;
+    transform: scale(0.96);
+}
+
+.section-content {
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* --- ATALHOS MOBILE (ANIMAÇÕES) --- */
+.shortcut-item-free {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    flex: 1;
+}
+
+.shortcut-icon-free {
+    width: 72px;
+    height: 72px;
+    background-color: #ffffff;
+    color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 22px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.shortcut-item-free.animating .shortcut-icon-free {
+    background-color: var(--brand-color);
+    color: #ffffff;
+    box-shadow: 0 8px 24px rgba(219, 0, 56, 0.3);
+    transform: scale(0.92);
+}
+
+@keyframes scanLine {
+    0% {
+        top: 15%;
+        opacity: 0;
+    }
+
+    20% {
+        opacity: 1;
+    }
+
+    80% {
+        opacity: 1;
+    }
+
+    100% {
+        top: 85%;
+        opacity: 0;
+    }
+}
+
+.shortcut-item-free.despesas.animating .shortcut-icon-free::after {
+    content: '';
+    position: absolute;
+    left: 15%;
+    width: 70%;
+    height: 2px;
+    background: #ffffff;
+    box-shadow: 0 0 15px 2px #ffffff;
+    animation: scanLine 0.6s ease-in-out;
+    z-index: 10;
+}
+
+@keyframes barGrowShortcut {
+
+    0%,
+    100% {
+        transform: scaleY(1);
+    }
+
+    50% {
+        transform: scaleY(1.6);
+    }
+}
+
+.shortcut-item-free.metrics.animating .shortcut-icon-free svg line {
+    animation: barGrowShortcut 0.25s infinite ease-in-out;
+}
+
+@keyframes lineRead {
+    0% {
+        opacity: 0.3;
+        transform: scaleX(0.8);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scaleX(1);
+    }
+
+    100% {
+        opacity: 0.3;
+        transform: scaleX(0.8);
+    }
+}
+
+.shortcut-item-free.extrato.animating .shortcut-icon-free svg .read-line {
+    animation: lineRead 0.3s infinite ease-in-out;
+}
+
+.shortcut-label-free {
+    font-size: 11px;
+    font-weight: 700;
+    color: #000;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* --- GRÁFICOS --- */
+.chart-container {
+    position: relative;
+    height: 160px;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.line-chart-path {
+    stroke: var(--brand-color);
+    stroke-width: 1.5;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: all 1.5s ease;
+    stroke-dasharray: 2000;
+    stroke-dashoffset: 2000;
+}
+
+.line-chart-path.active {
+    stroke-dashoffset: 0;
+}
+
+.area-chart-fill {
+    fill: rgba(219, 0, 86, 0.05);
+    opacity: 0;
+    transition: opacity 1.5s ease;
+}
+
+.area-chart-fill.active {
+    opacity: 1;
+}
+
+/* --- NAVBAR FIXA (MOBILE) --- */
+.nav-container {
+    position: fixed !important;
+    /* Forçar fixação no Mobile */
+    z-index: 1000;
+    bottom: 24px !important;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 400px;
+    height: 64px;
+}
+
+.nav-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.05);
+    z-index: 1010;
+    border-radius: 28px;
+    -webkit-mask: radial-gradient(circle 38px at var(--marker-x, 10%) 0px, transparent 100%, #000 0) 0 0/100% 100% no-repeat;
+    mask: radial-gradient(circle 38px at var(--marker-x, 10%) 0px, transparent 100%, #000 0) 0 0/100% 100% no-repeat;
+}
+
+.nav-marker {
+    position: absolute;
+    background-color: var(--brand-color);
+    z-index: 1050;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    top: -28px;
+    left: var(--marker-x, 70%);
+    transform: translateX(-50%);
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    box-shadow: 0 8px 24px rgba(219, 0, 56, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    z-index: 1200;
+    pointer-events: none;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    height: 100%;
+    cursor: pointer;
+    position: relative;
+    pointer-events: auto;
+}
+
+.nav-icon {
+    color: var(--text-inactive);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1300;
+}
+
+.nav-item.active .nav-icon {
+    color: #fff !important;
+    transform: translateY(-32px);
+}
+
+.nav-label {
+    position: absolute;
+    bottom: 10px;
+    opacity: 0;
+    transform: translateY(10px);
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-item.active .nav-label {
+    opacity: 1;
+    transform: translateY(0);
+    color: #000000;
+    font-weight: 900;
+}

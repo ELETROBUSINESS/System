@@ -934,7 +934,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // 1. Função Renderizar (COM PAGINAÇÃO)
-    // 1. Função Renderizar (COM PAGINAÇÃO)
     const renderProdutosPage = () => {
         const container = document.getElementById('produtos-table-container');
         const searchInput = document.getElementById('products-search-input');
@@ -951,7 +950,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const term = searchInput ? searchInput.value.toLowerCase().trim() : "";
 
         // 1. Filtragem
-        const produtosFiltrados = localProductCache.filter(p => {
+        let produtosFiltrados = localProductCache.filter(p => {
             const safeName = (p.name || "").toString().toLowerCase();
             const safeBrand = (p.brand || "").toString().toLowerCase();
             const safeId = (p.id || "").toString().toLowerCase();
@@ -975,16 +974,26 @@ document.addEventListener('DOMContentLoaded', () => {
             return true;
         });
 
+        // ========================================================
+        // APLICAÇÃO DA ORDEM (MAIS RECENTES PRIMEIRO)
+        // Inverte a lista filtrada antes de calcular a paginação
+        // ========================================================
+        produtosFiltrados.reverse();
+
+        // DICA: Se preferir ordenar por ID numérico de forma garantida:
+        // produtosFiltrados.sort((a, b) => Number(b.id) - Number(a.id));
+        // ========================================================
+
         if (produtosFiltrados.length === 0) {
             container.innerHTML = `
-            <div class="empty-state" style="padding: 40px; text-align: center; color: var(--text-light);">
-                <i class='bx bx-search-alt' style="font-size: 3rem; margin-bottom: 10px;"></i>
-                <p>Nada encontrado para "${term}".</p>
-            </div>`;
+        <div class="empty-state" style="padding: 40px; text-align: center; color: var(--text-light);">
+            <i class='bx bx-search-alt' style="font-size: 3rem; margin-bottom: 10px;"></i>
+            <p>Nada encontrado para "${term}".</p>
+        </div>`;
             return;
         }
 
-        // 2. Lógica de Paginação
+        // 2. Lógica de Paginação (agora com a lista já invertida)
         const totalItems = produtosFiltrados.length;
         const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
 
@@ -1025,7 +1034,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const imgHtml = prod.imgUrl && prod.imgUrl.length > 10
                 ? `<img src="${prod.imgUrl}" class="product-thumb-sm" alt="Foto">`
-                : `<div class="product-thumb-placeholder"><i class='bx bx-box'></i></div>`;
+                : `<div class="product-thumb-placeholder"><i class="bx bx-package"></i></div>`;
 
             const brandHtml = prod.brand ? `<span class="brand-tag">${prod.brand}</span>` : '';
 
@@ -1847,7 +1856,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const partes = itemStr.match(/(\d+)x\s(.+)/);
 
                 if (partes) {
-                    div.innerHTML = `<span>${partes[2]}</span> <strong>x${partes[1]}</strong>`;
+                    div.innerHTML = `<span><i class="bx bx-package"></i> ${partes[2]}</span> <strong>x${partes[1]}</strong>`;
                 } else {
                     div.innerHTML = `<span>${itemStr}</span>`;
                 }
@@ -2996,116 +3005,141 @@ document.addEventListener('DOMContentLoaded', () => {
     // Adicione esta função ao seu script.js
     async function carregarHistoricoFiscal() {
         const tbodyEmitidas = document.getElementById('lista-notas-emitidas');
-        const tbodyPendentes = document.getElementById('lista-itens-pendentes');
+        if (!tbodyEmitidas) return;
 
-        // VERIFICAÇÃO DE SEGURANÇA 1: O elemento existe?
-        if (!tbodyEmitidas || !tbodyPendentes) {
-            console.error("ERRO CRÍTICO: Não encontrei os TBODYs 'lista-notas-emitidas' ou 'lista-itens-pendentes' no HTML.");
-            return;
-        }
-
-        tbodyEmitidas.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner-border text-primary" role="status"></div> Carregando...</td></tr>';
+        tbodyEmitidas.innerHTML = '<tr><td colspan="5" class="text-center pad-20"><i class="bx bx-loader-alt bx-spin"></i> Processando XMLs...</td></tr>';
 
         try {
-            console.log("Iniciando busca de notas...");
             const response = await fetch(`${SCRIPT_URL}?action=listarNotasFiscais`);
             const result = await response.json();
 
-            console.log("Dados recebidos do Backend:", result); // OLHE ISSO NO CONSOLE (F12)
-
             if (result.status === 'success' && Array.isArray(result.data)) {
                 tbodyEmitidas.innerHTML = '';
-                tbodyPendentes.innerHTML = '';
-
-                if (result.data.length === 0) {
-                    tbodyEmitidas.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Nenhuma nota encontrada.</td></tr>';
-                    return;
-                }
 
                 result.data.forEach(nota => {
-                    // --- 1. TABELA DE NOTAS EMITIDAS ---
                     const tr = document.createElement('tr');
 
-                    // Lógica de Status (Usando classes CSS padrão)
-                    let badgeHtml = `<span class="badge bg-warning text-dark">Processando</span>`;
-                    let icon = 'bx-time';
+                    // 1. Extração de dados do XML (vNF e tPag)
+                    const valorXML = extrairTagXML(nota.xml, "vNF");
+                    const codPagXML = extrairTagXML(nota.xml, "tPag");
 
+                    const valorFormatado = valorXML ? formatCurrency(parseFloat(valorXML)) : "R$ 0,00";
+                    const formaPagamento = codPagXML ? traduzirPagamentoSEFAZ(codPagXML) : "---";
+
+                    // 2. Lógica da Barra Lateral de Status
+                    let statusBarClass = 'bar-rejected';
                     const statusLower = String(nota.status).toLowerCase();
+                    const temItensIgnorados = nota.itensIgnorados && nota.itensIgnorados.trim().length > 2;
 
-                    if (statusLower.includes('autorizada') || statusLower.includes('autorizado')) {
-                        badgeHtml = `<span class="badge bg-success"><i class='bx bx-check'></i> Autorizada</span>`;
-                    } else if (statusLower.includes('rejeitada') || statusLower.includes('erro') || statusLower.includes('cancelada')) {
-                        badgeHtml = `<span class="badge bg-danger"><i class='bx bx-x'></i> ${nota.status}</span>`;
+                    if (statusLower.includes('autorizada')) {
+                        statusBarClass = temItensIgnorados ? 'bar-partial' : 'bar-approved';
+                    } else if (statusLower.includes('cancelada')) {
+                        statusBarClass = 'bar-cancelled';
                     }
 
-                    // Formata data com segurança
-                    let dataTexto = "--:--";
-                    try {
-                        if (nota.timestamp) {
-                            const dataObj = new Date(nota.timestamp);
-                            if (!isNaN(dataObj)) {
-                                dataTexto = dataObj.toLocaleDateString('pt-BR') + ' ' + dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                            }
-                        }
-                    } catch (e) { dataTexto = nota.timestamp; }
+                    // 3. Formatação da Data
+                    let dataEmi = "---";
+                    if (nota.timestamp) {
+                        const d = new Date(nota.timestamp);
+                        dataEmi = d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    }
 
-                    // Tratamento de segurança para Strings
-                    const idVendaSafe = nota.idVenda ? String(nota.idVenda) : "???";
-                    const msgSafe = nota.mensagem ? String(nota.mensagem) : "";
-
-                    // Botão de Cancelar (Só aparece se tiver chave e protocolo)
-                    const btnCancelar = (nota.chave && nota.nProt)
-                        ? `<button onclick="cancelarNota('${nota.chave}', '${nota.nProt}')" class="btn btn-sm btn-outline-danger" style="margin-left:5px;">Cancelar</button>`
-                        : '';
-
-                    const btnCopiar = nota.chave
-                        ? `<button class="btn btn-sm btn-light border" onclick="navigator.clipboard.writeText('${nota.chave}')" title="Copiar Chave"><i class='bx bx-copy'></i></button>`
-                        : '';
-
-                    // CONSTRUÇÃO DO HTML (DE UMA VEZ SÓ PARA NÃO QUEBRAR)
                     tr.innerHTML = `
-                    <td>${badgeHtml}</td>
-                    <td><strong>#${idVendaSafe.slice(-6)}</strong></td>
-                    <td style="font-size:0.85rem;">${dataTexto}</td>
-                    <td title="${msgSafe}" style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                        ${msgSafe.substring(0, 40)}...
-                    </td>
                     <td>
-                        <div style="display:flex; align-items:center; gap:5px;">
-                            ${btnCopiar}
-                            ${btnCancelar}
+                        <div class="note-cell-wrapper">
+                            <div class="status-indicator-bar ${statusBarClass}"></div>
+                            <div style="display:flex; flex-direction:column">
+                                <span class="note-number">N° ${nota.nNF || '---'}</span>
+                                <small style="font-size:0.7rem; color:var(--text-light)">ID: ${nota.idVenda.slice(-6)}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="color:var(--text-light)">Consumidor Final</td>
+                    <td style="font-size:1rem">${dataEmi}</td>
+                    <td>
+                        <div style="display:flex; flex-direction:column">
+                            <strong style="color:var(--text-dark)">${valorFormatado}</strong>
+                            <small style="color:var(--info-blue); font-weight:500; font-size:0.75rem">${formaPagamento}</small>
+                        </div>
+                    </td>
+                    <td class="text-right">
+                        <div style="display:flex; justify-content: flex-end; gap:8px;">
+                            <button class="btn-icon-small" onclick="copiarChave('${nota.chave}')" title="Copiar Chave">
+                                <i class='bx bx-copy'></i>
+                            </button>
+                            <button class="btn-icon-small" onclick="visualizarDetalhesNota('${nota.idVenda}')" title="Ver Detalhes">
+                                <i class='bx bx-search-alt'></i>
+                            </button>
                         </div>
                     </td>
                 `;
                     tbodyEmitidas.appendChild(tr);
-
-                    // --- 2. TABELA DE PENDÊNCIAS ---
-                    if (nota.itensIgnorados && nota.itensIgnorados.length > 2) {
-                        const listaPendentes = nota.itensIgnorados.split(',');
-                        listaPendentes.forEach(itemStr => {
-                            if (itemStr.trim() === "") return;
-                            const trPend = document.createElement('tr');
-                            trPend.innerHTML = `
-                            <td>${itemStr.replace(/[()]/g, '')}</td>
-                            <td>#${idVendaSafe.slice(-6)}</td>
-                            <td class="text-danger small">Dados Fiscais (NCM) ausentes</td>
-                            <td><button class="btn btn-sm btn-primary" onclick="alert('Edite o produto para corrigir o NCM.')">Corrigir</button></td>
-                        `;
-                            tbodyPendentes.appendChild(trPend);
-                        });
-                    }
                 });
-            } else {
-                console.error("Formato inesperado:", result);
-                tbodyEmitidas.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Erro no formato de dados: ${result.message || 'Verifique o console'}</td></tr>`;
             }
         } catch (e) {
-            console.error("Erro fatal no JS:", e);
-            tbodyEmitidas.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Erro de execução: ${e.message}</td></tr>`;
+            console.error("Erro fiscal:", e);
+            tbodyEmitidas.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Erro ao carregar dados fiscais.</td></tr>';
         }
     }
 
-    // --- CORREÇÃO DO MENU DE NOTAS FISCAIS ---
+    // Pop-up detalhado para a ação de visualização
+    window.visualizarDetalhesNota = async (idVenda) => {
+        const response = await fetch(`${SCRIPT_URL}?action=listarNotasFiscais`);
+        const result = await response.json();
+        const nota = result.data.find(n => n.idVenda === idVenda);
+
+        if (nota) {
+            const itensRemovidos = nota.itensIgnorados || "Nenhum item foi removido.";
+            showCustomAlert(
+                `Nota Fiscal #${nota.nNF}`,
+                `Status: ${nota.status}\n\nChave: ${nota.chave}\n\nProtocolo: ${nota.nProt}\n\nRetorno SEFAZ: ${nota.mensagem}\n\nItens Pendentes: ${itensRemovidos}`
+            );
+        }
+    };
+
+    // Funções de Pop-up para as Ações
+    window.copiarChave = (chave) => {
+        if (!chave) return showCustomAlert("Erro", "Chave não disponível.");
+        navigator.clipboard.writeText(chave);
+        showCustomToast("Chave copiada para a área de transferência!");
+    };
+
+    window.visualizarInfoFiscal = async (idVenda) => {
+        // Aqui você pode abrir um modal com o retorno da SEFAZ salvo na coluna 'mensagem'
+        const response = await fetch(`${SCRIPT_URL}?action=listarNotasFiscais`);
+        const result = await response.json();
+        const nota = result.data.find(n => n.idVenda === idVenda);
+
+        if (nota) {
+            showCustomAlert(`Detalhes da Venda ${nota.idVenda}`,
+                `Status: ${nota.status}\n\nRetorno SEFAZ: ${nota.mensagem}\n\nItens Ignorados: ${nota.itensIgnorados || 'Nenhum'}`);
+        }
+    };
+
+    // Função para extrair valores de tags específicas do XML
+    function extrairTagXML(xmlString, tag) {
+        if (!xmlString || xmlString === "" || xmlString === "---") return null;
+        const regex = new RegExp(`<${tag}>(.*?)<\/${tag}>`, 'i');
+        const match = xmlString.match(regex);
+        return match ? match[1] : null;
+    }
+
+    // Tradutor de códigos de pagamento da SEFAZ
+    function traduzirPagamentoSEFAZ(codigo) {
+        const tipos = {
+            "01": "Dinheiro",
+            "02": "Cheque",
+            "03": "C. Crédito",
+            "04": "C. Débito",
+            "05": "Crediário",
+            "10": "Vale Alimentação",
+            "11": "Vale Refeição",
+            "15": "Boleto",
+            "17": "PIX",
+            "99": "Outros"
+        };
+        return tipos[codigo] || "Outros";
+    }
 
     // 1. Tenta pegar o botão da Navbar (Barra lateral/principal)
     const btnFiscalNavbar = document.querySelector('.navbar-item[data-page="notas"]');
@@ -4515,3 +4549,55 @@ function initSystemFooter() {
 
 // Inicia ao carregar a página
 document.addEventListener("DOMContentLoaded", initSystemFooter);
+
+function verificarEspaçoLocalStorage() {
+    let totalCotas = 5120; // Limite padrão de ~5MB em KB
+    let totalUsado = 0;
+
+    for (let i = 0; i < localStorage.length; i++) {
+        let chave = localStorage.key(i);
+        let valor = localStorage.getItem(chave);
+        // Cada caractere em JS ocupa 2 bytes (UTF-16)
+        totalUsado += ((chave.length + valor.length) * 2) / 1024; // Convertendo para KB
+    }
+
+    let percentual = ((totalUsado / totalCotas) * 100).toFixed(2);
+    let livre = (totalCotas - totalUsado).toFixed(2);
+
+    // Log detalhado no console
+    console.log(`--- MONITOR DE ARMAZENAMENTO ---`);
+    console.log(`Usado: ${totalUsado.toFixed(2)} KB`);
+    console.log(`Livre: ${livre} KB`);
+    console.log(`Percentual: ${percentual}%`);
+
+    // Retorna os dados para uso visual se necessário
+    return { usado: totalUsado, percentual: percentual, livre: livre };
+}
+
+// Função para renderizar uma barrinha no rodapé (PN)
+function renderizarBarraArmazenamento() {
+    const info = verificarEspaçoLocalStorage();
+    const footer = document.querySelector('.pn');
+
+    if (!footer) return;
+
+    // Remove barra antiga se existir
+    const antiga = document.getElementById('storage-monitor');
+    if (antiga) antiga.remove();
+
+    const div = document.createElement('div');
+    div.id = 'storage-monitor';
+    div.style = "font-size: 10px; color: #fff; margin-left: 15px; display: flex; align-items: center; gap: 8px;";
+
+    div.innerHTML = `
+        <span>DB: ${info.percentual}%</span>
+        <div style="width: 50px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden;">
+            <div style="width: ${info.percentual}%; height: 100%; background: ${info.percentual > 80 ? '#ef4444' : '#10b981'}; transition: 0.3s;"></div>
+        </div>
+    `;
+
+    footer.appendChild(div);
+}
+
+// Chame ao carregar a página
+document.addEventListener('DOMContentLoaded', renderizarBarraArmazenamento);
