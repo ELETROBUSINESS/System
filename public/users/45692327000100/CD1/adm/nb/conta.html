@@ -52,7 +52,7 @@
             <div class="balance">
                 <p>Saldo</p>
                 <div class="saldo">
-                    <span id="valor1" class="">R$&nbsp;5.411,46</span>
+                    <span id="valor1" class="">R$&nbsp;</span>
                     <i class="bx bx-eye" id="toggle-balance-icon"></i>
                 </div>
                 <div class="pending">
@@ -113,7 +113,7 @@
                     </div>
 
                     <div class="flex-1 text-right section-content section-disabled" id="cred-section">
-                        <p class="text-[10px] font-semibold text-gray-400 uppercase mb-1">Carteira</p>
+                        <p class="text-[10px] font-semibold text-gray-400 uppercase mb-1">Crédito a receber</p>
                         <span class="text-xl font-bold text-gray-800" id="cred-val">R$ 0k</span>
                         <div class="w-full bg-gray-100 h-1 rounded-full mt-2 overflow-hidden ml-auto max-w-[80px]">
                             <div id="health-bar" class="h-full bg-red-500" style="width: 0%"></div>
@@ -213,28 +213,64 @@
             <!-- alterado pelo antigravity: adicionado container nav-links-container -->
             <div class="nav-links-container">
                 <div class="nav-item active" onclick="navTo(this, 'Casa', 0)">
-                    <div class="nav-icon"><i class='bx bxs-store-alt' style="font-size: 24px;"></i></div>
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
+                    </div>
                     <span class="nav-label">Casa</span>
                 </div>
 
                 <div class="nav-item" onclick="window.location.href='metricas.html'">
-                    <div class="nav-icon"><i class='bx bx-bar-chart-alt-2' style="font-size: 24px;"></i></div>
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <line x1="18" y1="20" x2="18" y2="10"></line>
+                            <line x1="12" y1="20" x2="12" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                        </svg>
+                    </div>
                     <span class="nav-label">Métricas</span>
                 </div>
 
                 <div class="nav-item" onclick="window.location.href='push.html'">
-                    <div class="nav-icon"><i class='bx bx-plus-circle' style="font-size: 24px;"></i></div>
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="16"></line>
+                            <line x1="8" y1="12" x2="16" y2="12"></line>
+                        </svg>
+                    </div>
                     <span class="nav-label">Registrar</span>
                 </div>
 
                 <div class="nav-item" onclick="window.location.href='extrato.html'">
-                    <div class="nav-icon"><i class='bx bx-copy-alt' style="font-size: 24px;"></i></div>
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <line x1="10" y1="9" x2="8" y2="9"></line>
+                        </svg>
+                    </div>
                     <span class="nav-label">Extrato</span>
                 </div>
 
                 <div class="nav-item"
                     onclick="localStorage.removeItem('session_token'); window.location.href='/users/e-finance.html'">
-                    <div class="nav-icon"><i class='bx bx-log-out' style="font-size: 24px;"></i></div>
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </div>
                     <span class="nav-label">Sair</span>
                 </div>
             </div>
