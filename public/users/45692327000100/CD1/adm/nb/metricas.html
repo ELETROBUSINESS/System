@@ -1,408 +1,227 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" data-view="mobile" data-minimized="false">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Varejo | ELETRO</title>
+    <meta name="google-adsense-account" content="ca-pub-9060080612658200">
     <link rel="icon" href="/assets/img/iconWeb.png">
-    <link rel="stylesheet" href="/assets/css/main.css">
-    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+    <title>Métricas | Nubia</title>
+
+    <!-- Libs -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- ApexCharts (Required for updated chart) -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel='stylesheet'
         href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
     <link rel='stylesheet'
         href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
 
+    <!-- CSS Global -->
     <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/style26.css">
 
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- View Transitions API -->
+    <meta name="view-transition" content="same-origin">
+
+    <!-- Navbar Anti-Flash -->
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'sans': ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-                    },
-                    colors: {
-                        slate: {
-                            50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1',
-                            400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334155',
-                            800: '#1e293b', 900: '#0f172a',
-                        },
-                        primary: '#3b82f6',
-                    },
-                    animation: {
-                        'fade-in': 'fadeIn 0.5s ease-out forwards',
-                    },
-                    keyframes: {
-                        fadeIn: {
-                            '0%': { opacity: '0', transform: 'translateY(10px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
-                        }
-                    }
+        (function () {
+            const savedState = localStorage.getItem('acc_navbar');
+            if (savedState !== null) {
+                document.documentElement.setAttribute('data-minimized', savedState);
+                if (savedState === 'true') {
+                    document.documentElement.classList.add('sidebar-minimized-init');
                 }
             }
-        }
+        })();
     </script>
 
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-
-    <script src="https://unpkg.com/lucide@latest"></script>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    <style>
-        body {
-            background-color: #f8fafc;
-            font-family: 'Inter', sans-serif;
-            color: #1e293b;
-        }
-
-        /* --- LAYOUT SIDEBAR --- */
-        .dashboard-wrapper {
-            width: 100%;
-            min-height: 100vh;
-            transition: padding-left 0.3s ease;
-            padding-bottom: 80px;
-        }
-
-        @media (min-width: 992px) {
-            body:not(.sidebar-collapsed) .dashboard-wrapper {
-                padding-left: 260px;
-            }
-
-            body.sidebar-collapsed .dashboard-wrapper {
-                padding-left: 90px;
-            }
-
-            .dashboard-wrapper {
-                padding-bottom: 0;
-            }
-        }
-
-        /* Skeleton Loading mais sutil */
-        .skeleton {
-            background-color: #e2e8f0;
-            border-radius: 0.375rem;
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: .5;
-            }
-        }
-
-        /* Esconde o conteúdo até carregar para fazer o fade-in */
-        .loading-state {
-            opacity: 0;
-        }
-    </style>
+    <!-- GA -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-BV6V3GTMR0');
+    </script>
 </head>
 
-<body class="painel-adm1">
+<body style="--marker-x: 30%; --marker-y: 50%;">
 
-    <div class="dashboard-wrapper bg-slate-50">
+    <div id="chart-tooltip"></div>
 
-        <header
-            class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-20">
-            <div class="flex items-center gap-4">
-                <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
-                    <i data-lucide="layout-dashboard" class="w-5 h-5 text-slate-400"></i>
-                    Painel de Controle
-                </h2>
-            </div>
-
-            <div class="flex items-center gap-4 md:gap-6">
-                <button class="relative p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors">
-                    <i data-lucide="bell" class="w-5 h-5"></i>
-                    <span
-                        class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-                </button>
-
-                <div class="flex items-center gap-3 border-l border-slate-200 pl-6">
-                    <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg"
-                        class="w-9 h-9 rounded-full bg-slate-200 object-cover border border-slate-200">
+    <!-- Dashboard Layout (Migrated from Ideial N1) -->
+    <div id="app-container">
+        <!-- Same structure as Conta.html (CSS handled by .info class) -->
+        <div class="info">
+            <div class="photo-profile">
+                <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg">
+                <div class="detals">
+                    <h1>Olá, Nubia!</h1>
+                    <p>CEO: D'TUDO | Dupão</p>
                 </div>
+                <i class="fi fi-rr-shield-trust"></i>
             </div>
-        </header>
-
-        <main class="p-6 md:p-8 max-w-[1600px] mx-auto space-y-8">
-
-            <div class="flex justify-end">
-                <div class="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
-                    <button
-                        class="px-3 py-1.5 text-xs font-medium rounded-md bg-blue-50 text-blue-600 transition-colors">7D</button>
-                    <button
-                        class="px-3 py-1.5 text-xs font-medium rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors">30D</button>
+            <div class="balance">
+                <p>Saldo</p>
+                <div class="saldo">
+                    <span id="valor1" class="">R$&nbsp;</span>
+                    <i class="bx bx-show" id="toggle-balance-icon"></i>
+                </div>
+                <div class="pending">
+                    <p>Vendas a receber: </p>
+                    <span id="valor2" class="">R$&nbsp;0,00</span>
                 </div>
             </div>
+        </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="filter-area mb-2 px-2 flex justify-end w-full">
+            <select class="period-selector" id="period-select" onchange="updateMetricsDashboard()">
+                <option value="day" selected>Hoje</option>
+                <option value="week">Esta Semana</option>
+                <option value="month">Este Mês</option>
+            </select>
+        </div>
 
-                <div
-                    class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="p-3 bg-emerald-50 rounded-lg text-emerald-600">
-                            <i data-lucide="trending-up" class="w-5 h-5"></i>
-                        </div>
-                        <div
-                            class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600">
-                            <span>Hoje</span>
-                        </div>
-                    </div>
-                    <h3 class="text-slate-500 text-sm font-medium mb-1">Faturamento</h3>
-                    <div id="faturamentoDate" class="text-2xl font-bold text-slate-800 skeleton h-8 w-32"></div>
+        <div class="kpi-area grid-kpi">
+            <div class="finance-card kpi-card">
+                <span class="kpi-label">Faturamento</span>
+                <div class="flex items-baseline">
+                    <span class="kpi-value" id="fat-int">R$ 0</span>
+                    <span class="text-xs ml-0.5 text-gray-500 font-bold" id="fat-dec">,00</span>
                 </div>
-
-                <div
-                    class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="p-3 bg-indigo-50 rounded-lg text-indigo-600">
-                            <i data-lucide="piggy-bank" class="w-5 h-5"></i>
-                        </div>
-                        <div
-                            class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-600">
-                            <span>Estimado</span>
-                        </div>
-                    </div>
-                    <h3 class="text-slate-500 text-sm font-medium mb-1">Lucro Líquido</h3>
-                    <div id="lucroDate" class="text-2xl font-bold text-slate-800 skeleton h-8 w-32"></div>
-                </div>
-
-                <div
-                    class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="p-3 bg-amber-50 rounded-lg text-amber-600">
-                            <i data-lucide="ticket" class="w-5 h-5"></i>
-                        </div>
-                        <div
-                            class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-600">
-                            <span>Geral</span>
-                        </div>
-                    </div>
-                    <h3 class="text-slate-500 text-sm font-medium mb-1">Ticket Médio</h3>
-                    <div id="ticketLJDate" class="text-2xl font-bold text-slate-800 skeleton h-8 w-32"></div>
-                </div>
-
-                <div
-                    class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="p-3 bg-rose-50 rounded-lg text-rose-600">
-                            <i data-lucide="alert-circle" class="w-5 h-5"></i>
-                        </div>
-                        <div
-                            class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-600">
-                            <span>Pendente</span>
-                        </div>
-                    </div>
-                    <h3 class="text-slate-500 text-sm font-medium mb-1">Contas a Pagar</h3>
-                    <div id="boletosPayDate" class="text-2xl font-bold text-slate-800 skeleton h-8 w-32"></div>
-                </div>
-
+                <span class="kpi-trend text-green-500" id="trend-fat">%</span>
             </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                <div class="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                    <div class="flex justify-between items-center mb-6">
-                        <div>
-                            <h3 class="text-lg font-bold text-slate-800">Evolução da Receita</h3>
-                            <p class="text-sm text-slate-500">Faturamento diário dos últimos 7 dias</p>
-                        </div>
-                    </div>
-                    <div id="revenueChart" class="w-full h-[300px] skeleton bg-slate-50 rounded-lg"></div>
-                </div>
-
-                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
-                    <h3 class="text-lg font-bold text-slate-800 mb-4">Top Produtos</h3>
-
-                    <div
-                        class="flex-1 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-slate-100 rounded-lg">
-                        <div
-                            class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-300">
-                            <i data-lucide="package-open" class="w-8 h-8"></i>
-                        </div>
-                        <h4 class="text-slate-600 font-medium mb-1">Sem dados suficientes</h4>
-                        <p class="text-slate-400 text-sm">Realize mais vendas para ver o ranking de produtos aqui.</p>
-                    </div>
-                </div>
-
+            <div class="finance-card kpi-card">
+                <span class="kpi-label">Ticket Médio</span>
+                <span class="kpi-value" id="kpi-ticket">R$ 0,00</span>
+                <span class="kpi-trend text-red-500" id="trend-ticket">%</span>
             </div>
+            <div class="finance-card kpi-card">
+                <span class="kpi-label">Lucro II</span>
+                <span class="kpi-value" id="kpi-lucro">R$ 0,00</span>
+                <span class="kpi-trend text-green-500" id="trend-lucro">%</span>
+            </div>
+            <div class="finance-card kpi-card">
+                <span class="kpi-label">NFC-e Emitidas</span>
+                <span class="kpi-value" id="kpi-nfce-val">R$ 0,00</span>
+                <span class="kpi-subtext" id="kpi-nfce-qtd">0 notas</span>
+            </div>
+        </div>
 
-        </main>
+        <div class="finance-card main-chart-area chart-area p-6">
+            <h3 class="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-1">Vendas na última semana</h3>
+            <p class="text-2xl font-bold text-gray-800" id="chart-total-val">R$ 0,00</p>
+            <div id="revenueChart" class="w-full h-[160px] skeleton rounded-lg"></div>
+            <div class="flex justify-between mt-6 text-[9px] text-gray-400 font-bold uppercase" id="chart-labels">
+                <!-- Labels via JS -->
+            </div>
+        </div>
+
+        <div class="finance-card side-metrics-area history-area p-6">
+            <h3 class="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-6">Distribuição por Categoria
+            </h3>
+            <div class="space-y-5" id="category-list">
+                <!-- Conteúdo via JS -->
+            </div>
+        </div>
     </div>
 
-    <div class="navigation">
-        <button class="sidebar-toggle" id="sidebarToggle">
-            <i class='bx bx-menu'></i>
-        </button>
-        <ul>
-            <li class="list">
-                <a href="/users/45692327000100/CD1/adm/nb/conta.html">
-                    <span class="icon"><i class="fi fi-rr-shop"></i></span>
-                    <span class="text">Loja</span>
-                </a>
-            </li>
-            <li class="list desktop-only">
-                <a href="/pdv">
-                    <span class="icon">
-                        <i class='bx  bx-cart-minus'></i>
-                    </span>
-                    <span class="text">PDV</span>
-                </a>
-            </li>
-            <li class="list active">
-                <a href="#">
-                    <span class="icon"><i class='bx bxs-bar-chart-big'></i></span>
-                    <span class="text">Métrica</span>
-                </a>
-            </li>
-            <li class="list">
-                <a href="/users/45692327000100/CD1/adm/nb/extrato.html">
-                    <span class="icon"><i class='bx bx-copy-alt'></i></span>
-                    <span class="text">Extrato</span>
-                </a>
-            </li>
-            <li class="list">
-                <a href="#" id="logout-btn">
-                    <span class="icon"><i class='bx bx-log-out'></i></span>
-                    <span class="text">Sair</span>
-                </a>
-            </li>
-            <div class="indicator color11"></div>
-        </ul>
+    <!-- Navbar (Standardized) -->
+    <div class="nav-container">
+        <div class="nav-marker" id="nav-marker"></div>
+        <div class="nav-bg" id="nav-bg"></div>
+        <nav class="nav-overlay" id="nav-overlay">
+            <div class="nav-header-toggle">
+                <div class="btn-toggle-sidebar" onclick="toggleSidebar()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        id="toggle-icon" style="transition: transform 0.3s ease;">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="nav-links-container">
+                <div class="nav-item" onclick="navigateTo('conta.html')">
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
+                    </div>
+                    <span class="nav-label">Casa</span>
+                </div>
+
+                <div class="nav-item active" onclick="navigateTo('metricas.html')">
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <line x1="18" y1="20" x2="18" y2="10"></line>
+                            <line x1="12" y1="20" x2="12" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                        </svg>
+                    </div>
+                    <span class="nav-label">Métricas</span>
+                </div>
+
+                <div class="nav-item" onclick="navigateTo('push.html')">
+                    <div class="nav-icon"> <!-- Corrigido link para push.html se for o registrar correto -->
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="16"></line>
+                            <line x1="8" y1="12" x2="16" y2="12"></line>
+                        </svg>
+                    </div>
+                    <span class="nav-label">Registrar</span>
+                </div>
+
+                <div class="nav-item" onclick="navigateTo('extrato.html')">
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <line x1="10" y1="9" x2="8" y2="9"></line>
+                        </svg>
+                    </div>
+                    <span class="nav-label">Extrato</span>
+                </div>
+
+                <div class="nav-item"
+                    onclick="localStorage.removeItem('session_token'); window.location.href='/users/e-finance.html'">
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </div>
+                    <span class="nav-label">Sair</span>
+                </div>
+            </div>
+        </nav>
     </div>
 
+    <!-- Script Unificado -->
+    <script src="/assets/js/script26.js"></script>
     <script>
-        lucide.createIcons();
-
-        document.addEventListener('DOMContentLoaded', () => {
-
-            // Formatação Moeda
-            const formatCurrency = (value) => {
-                if (!value) return 'R$ 0,00';
-                let number = value;
-                if (typeof value === 'string') {
-                    number = parseFloat(value.replace('R$', '').replace(/\./g, '').replace(',', '.').trim());
-                }
-                return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(isNaN(number) ? 0 : number);
-            };
-
-            // Função de Animação de Entrada (Substitui o shimmer)
-            const revealData = (elementId, value) => {
-                const el = document.getElementById(elementId);
-                if (el) {
-                    // Remove o skeleton
-                    el.classList.remove('skeleton', 'h-8', 'w-32');
-                    // Aplica o valor
-                    el.textContent = value;
-                    // Adiciona a classe de animação suave
-                    el.classList.add('animate-fade-in');
-                }
-            };
-
-            // --- Carregar KPIs ---
-            fetch(`https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec?pagina=2`)
-                .then(res => res.json())
-                .then(data => {
-                    // Mapeando os IDs corretos conforme sua solicitação de ordem
-                    if (data.faturamentoDate) revealData('faturamentoDate', formatCurrency(data.faturamentoDate));
-                    if (data.lucroDate) revealData('lucroDate', formatCurrency(data.lucroDate));
-                    if (data.ticketLJDate) revealData('ticketLJDate', formatCurrency(data.ticketLJDate));
-                    if (data.boletosPayDate) revealData('boletosPayDate', formatCurrency(data.boletosPayDate));
-                });
-
-            // --- Gráfico ---
-            fetch('https://script.google.com/macros/s/AKfycbzbeCWhW4cyixLvkvpYYpv1UK72CfLYQblJv8jWSPPSSHFzNehv0vW5vLjHZrua-qeMJg/exec')
-                .then(res => res.json())
-                .then(data => {
-                    const chartEl = document.getElementById('revenueChart');
-
-                    if (data && data.length > 0 && chartEl) {
-                        chartEl.classList.remove('skeleton', 'bg-slate-50'); // Remove skeleton do gráfico
-                        chartEl.classList.add('animate-fade-in'); // Adiciona fade-in
-
-                        const sortedData = data.sort((a, b) => new Date(a.dia) - new Date(b.dia)).slice(-7);
-
-                        const options = {
-                            chart: {
-                                type: 'area',
-                                height: '100%',
-                                toolbar: { show: false },
-                                fontFamily: 'Inter, sans-serif',
-                                zoom: { enabled: false }
-                            },
-                            series: [{
-                                name: 'Receita',
-                                data: sortedData.map(d => d.faturamento)
-                            }],
-                            colors: ['#3b82f6'],
-                            fill: {
-                                type: 'gradient',
-                                gradient: {
-                                    shadeIntensity: 1,
-                                    opacityFrom: 0.4,
-                                    opacityTo: 0.05,
-                                    stops: [0, 100]
-                                }
-                            },
-                            dataLabels: { enabled: false },
-                            stroke: { curve: 'smooth', width: 2 },
-                            xaxis: {
-                                categories: sortedData.map(d => new Date(d.dia).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })),
-                                axisBorder: { show: false },
-                                axisTicks: { show: false },
-                                labels: { style: { colors: '#94a3b8', fontSize: '12px' } }
-                            },
-                            yaxis: {
-                                labels: {
-                                    formatter: (val) => `R$ ${val >= 1000 ? (val / 1000).toFixed(1) + 'k' : val}`,
-                                    style: { colors: '#94a3b8', fontSize: '12px' }
-                                }
-                            },
-                            grid: {
-                                show: true,
-                                borderColor: '#f1f5f9',
-                                strokeDashArray: 4,
-                                xaxis: { lines: { show: false } }
-                            },
-                            tooltip: {
-                                theme: 'light',
-                                y: { formatter: (val) => formatCurrency(val) }
-                            }
-                        };
-
-                        new ApexCharts(chartEl, options).render();
-                    }
-                });
-
-            // --- Sidebar ---
-            const toggleButton = document.getElementById('sidebarToggle');
-            const body = document.querySelector('body');
-            const logoutButton = document.getElementById('logout-btn');
-
-            if (toggleButton) {
-                toggleButton.addEventListener('click', () => {
-                    body.classList.toggle('sidebar-collapsed');
-                });
-            }
-
-            if (logoutButton) {
-                logoutButton.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    localStorage.removeItem('session_token');
-                    window.location.href = '/users/e-finance.html';
-                });
-            }
+        // Init specifically for Metricas Page
+        window.addEventListener('load', () => {
+            // fetchBalanceData will auto-run due to IDs
+            // Metric data might be triggered by ID presence defined in script26.js
+            // or explicit call if needed. Script26 logic:
+            // if (document.getElementById('chart-dots-group')) { updateMetricsDashboard(); }
+            // Here we removed 'chart-dots-group' SVG and put ApexChart.
+            // But script26 might expect it.
+            // Let's ensure script26 supports the IDs in metricas.html.
         });
     </script>
 </body>

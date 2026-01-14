@@ -1,186 +1,221 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" data-view="mobile" data-minimized="false">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google-adsense-account" content="ca-pub-9060080612658200">
-
     <link rel="icon" href="/assets/img/iconWeb.png">
     <title>Extrato | Nubia</title>
 
-    <!-- Link To CSS -->
-    <link rel="stylesheet" href="/assets/css/main.css">
-    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+    <!-- Libs -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- BoxIcons and UIcons for Info Block -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+    <link rel='stylesheet'
         href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+
+    <!-- CSS Global -->
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/style26.css">
+
+    <!-- View Transitions API -->
+    <meta name="view-transition" content="same-origin">
+
+    <!-- Navbar Anti-Flash -->
+    <script>
+        (function () {
+            const savedState = localStorage.getItem('acc_navbar');
+            if (savedState !== null) {
+                document.documentElement.setAttribute('data-minimized', savedState);
+                if (savedState === 'true') {
+                    document.documentElement.classList.add('sidebar-minimized-init');
+                }
+            }
+        })();
+    </script>
+
+    <!-- GA -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-BV6V3GTMR0');
+    </script>
 </head>
 
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
-<script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('js', new Date());
+<body style="--marker-x: 70%; --marker-y: 50%;">
 
-    gtag('config', 'G-BV6V3GTMR0');
-</script>
+    <div id="app-container">
 
-<body class="painel-adm1" onload="AnimationLoading();">
-    <header>
-        <div class="loading">
-            <div class="efect-loading"></div>
-        </div>
-    </header>
-    <div class="info">
-        <div class="photo-profile">
-            <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg">
-            <div class="detals">
-                <h1>Olá, Nubia!</h1>
-                <p>CEO: D'TUDO | Dupão</p>
-                <br>
+        <!-- Info Block (Migrated from conta.html) -->
+        <div class="info">
+            <div class="photo-profile">
+                <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg">
+                <div class="detals">
+                    <h1>Olá, Nubia!</h1>
+                    <p>CEO: D'TUDO | Dupão</p>
+                </div>
+                <i class="fi fi-rr-shield-trust"></i>
+            </div>
+            <div class="balance">
+                <p>Saldo</p>
+                <div class="saldo">
+                    <span id="valor1" class="">R$&nbsp;</span>
+                    <i class="bx bx-eye" id="toggle-balance-icon"></i>
+                </div>
+                <div class="pending">
+                    <p>Vendas a receber: </p>
+                    <span id="valor2" class="">R$&nbsp;0,00</span>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="new_nav">
-        <div class="conta-info">
-            <div class="filter-selector">
-                <button class="filter-btn active" data-filter="entrada"> <i class='bx bx-trending-up'></i> Entradas
-                </button>
-                <button class="filter-btn" data-filter="saida">
-                    <i class='bx bx-trending-down'></i> Saídas
-                </button>
+        <!-- Resumo de Totais -->
+        <div class="finance-card">
+            <div class="flex divide-x divide-gray-100">
+                <div class="flex-1 p-5 text-center">
+                    <span class="text-[9px] uppercase font-bold text-gray-400 block mb-1">Entradas (Período)</span>
+                    <span class="text-lg font-bold text-green-600" id="total-in">+ R$ 0,00</span>
+                </div>
+                <div class="flex-1 p-5 text-center">
+                    <span class="text-[9px] uppercase font-bold text-gray-400 block mb-1">Saídas (Período)</span>
+                    <span class="text-lg font-bold text-red-500" id="total-out">- R$ 0,00</span>
+                </div>
             </div>
-
-            <div class="mainContainer">
-                <div class="transaction-list-container" id="transactionContainer"></div>
-                <br>
-                <br>
-                <br>
-            </div>
-
-            <script>
-                document.addEventListener('DOMContentLoaded', () => {
-                    const container = document.getElementById('transactionContainer');
-                    const filterButtons = document.querySelectorAll('.filter-btn');
-                    let allTransactions = [];
-
-                    const normalizeString = (str) => {
-                        if (!str) return '';
-                        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-                    };
-
-                    const renderTransactions = (filter) => {
-                        container.innerHTML = '';
-                        const normalizedFilter = normalizeString(filter);
-
-                        // ALTERAÇÃO 2: A condição 'todos' foi removida da lógica de filtro
-                        const filteredTransactions = allTransactions.filter(transaction => {
-                            return normalizeString(transaction.type) === normalizedFilter;
-                        });
-
-                        if (filteredTransactions.length === 0) {
-                            container.innerHTML = '<p style="text-align:center;color:#555;margin-top:20px;">Nenhuma operação encontrada para hoje.</p>';
-                            return;
-                        }
-
-                        filteredTransactions.forEach(transaction => {
-                            const div = document.createElement('div');
-                            div.classList.add('extrato-item');
-
-                            const valorFormatado = parseFloat(transaction.total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-                            div.innerHTML = `
-                                <i class='bx bx-shopping-bag extrato-icon'></i>
-                                <div class="extrato-details">
-                                    <span class="extrato-payment">${transaction.payment}</span>
-                                    <span class="extrato-data">
-                                        ${transaction.timestamp}
-                                        ${transaction.descricao ? `<span class="extrato-descricao"> - ${transaction.descricao}</span>` : ''}
-                                    </span> 
-                                </div>
-                                <span class="extrato-valor">${valorFormatado}</span>
-                            `;
-                            container.appendChild(div);
-                        });
-                    };
-
-                    container.innerHTML = `<div class="loader"><div class="spinner"></div></div>`;
-
-                    const url = "https://script.google.com/macros/s/AKfycbzd_UOW_Ei9nPxNwmJdEtX4q3XDXu_WWktWUvH70ooAFM8C1bB6r7m39E18vl5dRjDZ/exec";
-
-                    fetch(url)
-                        .then(res => res.json())
-                        .then(data => {
-                            allTransactions = data;
-                            // ALTERAÇÃO 1: O filtro padrão agora é 'entrada'
-                            renderTransactions('entrada');
-                        })
-                        .catch(err => {
-                            container.innerHTML = '<p style="text-align:center;color:red;">Erro ao carregar o extrato.</p>';
-                            console.error('Erro ao carregar extrato:', err);
-                        });
-
-                    filterButtons.forEach(button => {
-                        button.addEventListener('click', () => {
-                            filterButtons.forEach(btn => btn.classList.remove('active'));
-                            button.classList.add('active');
-                            renderTransactions(button.dataset.filter);
-                        });
-                    });
-                });
-            </script>
         </div>
+
+        <!-- Busca e Filtros Integrados -->
+        <div class="finance-card">
+            <div class="search-container p-2 flex items-center relative">
+                <div
+                    class="search-icon absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 flex items-center justify-center">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.3-4.3" />
+                    </svg>
+                </div>
+                <input type="text"
+                    class="w-full h-10 pl-12 pr-[240px] bg-transparent outline-none text-sm font-semibold text-gray-700"
+                    placeholder="Pesquisar..." id="search-input" oninput="filterExtractList()">
+
+                <div class="filter-group absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+                    <div class="filter-pill active" onclick="setExtractFilter('all', this)">Tudo</div>
+                    <div class="filter-pill" onclick="setExtractFilter('in', this)">Entradas</div>
+                    <div class="filter-pill" onclick="setExtractFilter('out', this)">Saídas</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Movimentações -->
+        <div class="finance-card">
+            <div class="period-badge">Histórico Completo</div>
+            <div id="transaction-list">
+                <!-- Skeleton Loading Inicial -->
+                <div class="p-6 space-y-4">
+                    <div class="h-10 bg-gray-100 rounded w-full animate-pulse"></div>
+                    <div class="h-10 bg-gray-100 rounded w-full animate-pulse"></div>
+                    <div class="h-10 bg-gray-100 rounded w-full animate-pulse"></div>
+                </div>
+            </div>
+            <button id="load-more" class="load-more-btn" onclick="loadExtractMore()" style="display: none;">
+                Carregar mais
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m6 9 6 6 6-6" />
+                </svg>
+            </button>
+        </div>
+
     </div>
 
-    <div class="navigation">
-        <ul>
-            <li class="list">
-                <a href="/users/45692327000100/CD1/adm/nb/conta.html">
-                    <span class="icon"><i class="fi fi-rr-shop"></i></span>
-                    <span class="text">Loja</span>
-                </a>
-            </li>
+    <!-- Navbar (Standardized) -->
+    <div class="nav-container">
+        <div class="nav-marker" id="nav-marker"></div>
+        <div class="nav-bg" id="nav-bg"></div>
+        <nav class="nav-overlay" id="nav-overlay">
+            <div class="nav-header-toggle">
+                <div class="btn-toggle-sidebar" onclick="toggleSidebar()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        id="toggle-icon" style="transition: transform 0.3s ease;">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </div>
+            </div>
 
-            <li class="list desktop-only">
-                <a href="/pdv">
-                    <span class="icon">
-                        <i class='bx  bx-cart-minus'></i>
-                    </span>
-                    <span class="text">PDV</span>
-                </a>
-            </li>
+            <div class="nav-links-container">
+                <div class="nav-item" onclick="navigateTo('conta.html')">
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
+                    </div>
+                    <span class="nav-label">Casa</span>
+                </div>
 
-            <li class="list">
-                <a href="/users/45692327000100/CD1/adm/nb/metricas.html">
-                    <span class="icon"><i class='bx  bx-bar-chart-big'></i></span>
-                    <span class="text">Métrica</span>
-                </a>
-            </li>
+                <div class="nav-item" onclick="navigateTo('metricas.html')">
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <line x1="18" y1="20" x2="18" y2="10"></line>
+                            <line x1="12" y1="20" x2="12" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                        </svg>
+                    </div>
+                    <span class="nav-label">Métricas</span>
+                </div>
 
-            <li class="list active">
-                <a href="#">
-                    <span class="icon"><i class='bx bxs-copy-alt'></i></span>
-                    <span class="text">Extrato</span>
-                </a>
-            </li>
+                <div class="nav-item" onclick="navigateTo('push.html')">
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="16"></line>
+                            <line x1="8" y1="12" x2="16" y2="12"></line>
+                        </svg>
+                    </div>
+                    <span class="nav-label">Registrar</span>
+                </div>
 
-            <li class="list">
-                <a href="/index.html">
-                    <span class="icon"><i class='bx  bx-arrow-out-up-square-half bx-rotate-270'></i></span>
-                    <span class="text">Sair</span>
-                </a>
-            </li>
-            <div class="indicator color11"></div>
-        </ul>
+                <div class="nav-item active">
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <line x1="10" y1="9" x2="8" y2="9"></line>
+                        </svg>
+                    </div>
+                    <span class="nav-label">Extrato</span>
+                </div>
+
+                <div class="nav-item"
+                    onclick="localStorage.removeItem('session_token'); window.location.href='/users/e-finance.html'">
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </div>
+                    <span class="nav-label">Sair</span>
+                </div>
+            </div>
+        </nav>
     </div>
 
-
-    <!-- Link To JS -->
-    <script src="/assets/js/loading.js"></script>
-    <script src="/assets/js/recurses.js"></script>
+    <!-- Script Unificado -->
+    <script src="/assets/js/script26.js"></script>
 </body>
 
 </html>

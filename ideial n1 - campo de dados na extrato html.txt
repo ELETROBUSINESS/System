@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="pt-pt" data-view="mobile" data-minimized="false">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            padding-bottom: 150px; 
+            user-select: none;
+            gap: 16px;
+            transition: all 0.5s ease;
+            min-height: 100vh;
+        }
+
+        :root {
+            --brand-color: #db0038;
+            --brand-future: #b8002e;
+            --text-active: #000000;
+            --text-inactive: #000000;
+        }
+
+        /* --- Grid Layout Responsivo (Ajustado 57/43) --- */
+        #app-container {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        html[data-view="desktop"] #app-container {
+            max-width: 1200px;
+            padding-left: 100px;
+            display: grid;
+            grid-template-columns: 57% 43%; 
+            grid-template-areas: 
+                "filters filters"
+                "kpis kpis"
+                "main-chart side-metrics";
+            gap: 24px;
+            padding-top: 40px;
+            justify-content: center;
+        }
+
+        html[data-view="desktop"][data-minimized="false"] #app-container {
+            padding-left: 260px;
+        }
+
+        .filter-area { grid-area: filters; display: flex; justify-content: flex-end; }
+        .kpi-area { grid-area: kpis; display: grid; gap: 16px; grid-template-columns: repeat(2, 1fr); }
+        html[data-view="desktop"] .kpi-area { grid-template-columns: repeat(4, 1fr); }
+        
+        .main-chart-area { grid-area: main-chart; }
+        .side-metrics-area { grid-area: side-metrics; }
+
+        /* --- Admin Controls --- */
+        .admin-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 9999;
+        }
+        .admin-btn {
+            background: #ffffff;
+            color: #333;
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.05);
+            text-transform: uppercase;
+        }
+
+        /* --- Finance Cards --- */
+        .finance-card {
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.02);
+            position: relative;
+        }
+
+        /* --- Filtro Unificado --- */
+        .period-selector {
+            appearance: none;
+            background: #ffffff;
+            border: 1px solid #eee;
+            padding: 8px 36px 8px 16px;
+            border-radius: 14px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #333;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            transition: all 0.3s ease;
+        }
+
+        /* --- Gráfico de Área --- */
+        .chart-container { position: relative; height: 200px; width: 100%; margin-top: 20px; }
+        .line-chart-path { stroke: var(--brand-color); stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round; transition: all 1.5s ease; stroke-dasharray: 2000; stroke-dashoffset: 2000; }
+        .line-chart-path.active { stroke-dashoffset: 0; }
+        .area-chart-fill { fill: rgba(219, 0, 86, 0.05); opacity: 0; transition: opacity 1.5s ease; }
+        .area-chart-fill.active { opacity: 1; }
+        .chart-dot { fill: var(--brand-color); stroke: #ffffff; stroke-width: 2; transition: all 0.2s ease; cursor: pointer; }
+        .chart-dot:hover { r: 6; stroke-width: 3; }
+
+        #chart-tooltip {
+            position: absolute; background: #000; color: #fff; padding: 8px 12px;
+            border-radius: 12px; font-size: 10px; font-weight: 700; pointer-events: none;
+            opacity: 0; transition: opacity 0.3s ease; z-index: 2000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); white-space: nowrap;
+        }
+
+        /* --- KPIs --- */
+        .kpi-card { padding: 16px; display: flex; flex-direction: column; gap: 4px; justify-content: center; }
+        .kpi-value { font-size: 16px; font-weight: 700; color: #1f2937; white-space: nowrap; }
+        html[data-view="desktop"] .kpi-value { font-size: 20px; }
+        .kpi-label { font-size: 9px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; }
+        .kpi-subtext { font-size: 9px; font-weight: 600; color: #6b7280; }
+        .kpi-trend { font-size: 9px; font-weight: 700; }
+
+        /* --- NAVBAR --- */
+        .nav-container { position: fixed; z-index: 1000; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        html[data-view="mobile"] .nav-container { bottom: 24px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: 400px; height: 64px; }
+        html[data-view="desktop"] .nav-container { bottom: 0; top: 0; left: 0; width: 80px; height: 100vh; transform: none; }
+        html[data-view="desktop"][data-minimized="false"] .nav-container { width: 220px; }
+
+        .nav-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; box-shadow: 0 0 40px rgba(0,0,0,0.05); z-index: 1010; transition: all 0.4s ease; }
+        html[data-view="mobile"] .nav-bg {
+            border-radius: 28px;
+            -webkit-mask: radial-gradient(circle 38px at var(--marker-x, 30%) 0px, transparent 100%, #000 0) 0 0/100% 100% no-repeat;
+            mask: radial-gradient(circle 38px at var(--marker-x, 30%) 0px, transparent 100%, #000 0) 0 0/100% 100% no-repeat;
+        }
+        html[data-view="desktop"] .nav-bg { border-radius: 0; border-right: 1px solid #f0f0f0; }
+
+        .nav-marker { 
+            position: absolute; background-color: var(--brand-color); z-index: 1050; 
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none;
+            display: flex; align-items: center; justify-content: center;
+        }
+        html[data-view="mobile"] .nav-marker { top: -28px; left: var(--marker-x, 30%); transform: translateX(-50%); width: 54px; height: 54px; border-radius: 50%; box-shadow: 0 8px 24px rgba(219, 0, 56, 0.25); }
+        html[data-view="desktop"] .nav-marker { left: 50%; top: var(--marker-y, 50%); transform: translate(-50%, -50%); width: 48px; height: 48px; border-radius: 50%; }
+        html[data-view="desktop"][data-minimized="false"] .nav-marker { width: calc(100% - 24px); height: 48px; border-radius: 14px; left: 12px; transform: translateY(-50%); justify-content: flex-start; padding-left: 16px; }
+
+        .nav-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; z-index: 1200; pointer-events: none; }
+        html[data-view="mobile"] .nav-overlay { flex-direction: row; padding: 0; align-items: center; justify-content: center; width: 100%; }
+        html[data-view="desktop"] .nav-overlay { flex-direction: column; padding: 0; align-items: flex-start; justify-content: center; }
+
+        .nav-item { display: flex; cursor: pointer; position: relative; transition: all 0.3s ease; pointer-events: auto; }
+        html[data-view="mobile"] .nav-item { flex-direction: column; align-items: center; justify-content: center; flex: 1; height: 100%; }
+        html[data-view="desktop"] .nav-item { flex-direction: row; align-items: center; width: 100%; height: 56px; padding: 0 28px; gap: 20px; }
+
+        .nav-icon { color: var(--text-inactive); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0; z-index: 1300; }
+        .nav-item.active .nav-icon { color: #fff !important; }
+        html[data-view="mobile"] .nav-item.active .nav-icon { transform: translateY(-32px); }
+        
+        .nav-label { font-size: 10px; font-weight: 800; color: var(--text-inactive); text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        html[data-view="mobile"] .nav-label { position: absolute; bottom: 10px; opacity: 0; transform: translateY(10px); }
+        
+        /* AJUSTE CORES: Preto no Mobile, Branco no Desktop Expandido */
+        html[data-view="mobile"] .nav-item.active .nav-label { opacity: 1; transform: translateY(0); color: #000000; font-weight: 900; }
+        html[data-view="desktop"] .nav-label { opacity: 1; white-space: nowrap; color: #000000; }
+        html[data-view="desktop"][data-minimized="true"] .nav-label { opacity: 0; pointer-events: none; }
+        html[data-view="desktop"][data-minimized="false"] .nav-item.active .nav-label { color: #ffffff; }
+
+        .btn-toggle-sidebar { 
+            display: none; 
+            width: 100%; 
+            height: 56px; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer; 
+            border-bottom: 1px solid #f8f8f8; 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            color: #bbb; 
+            z-index: 1300; 
+            transition: all 0.3s ease;
+        }
+        html[data-view="desktop"] .btn-toggle-sidebar { display: flex; pointer-events: auto; }
+
+        svg { display: block; margin: 0 auto; }
+    </style>
+</head>
+<body style="--marker-x: 30%; --marker-y: 50%;">
+
+    <div id="chart-tooltip"></div>
+
+    <div class="admin-controls">
+        <div class="admin-btn" onclick="setViewMode('mobile')">Simular Mobile</div>
+        <div class="admin-btn" onclick="setViewMode('desktop')">Simular Desktop</div>
+    </div>
+
+    <div id="app-container">
+        <div class="filter-area mb-2 px-2">
+            <select class="period-selector" id="period-select" onchange="updateDashboard()">
+                <option value="day">Hoje</option>
+                <option value="week">Esta Semana</option>
+                <option value="month" selected>Este Mês</option>
+            </select>
+        </div>
+
+        <div class="kpi-area">
+            <div class="finance-card kpi-card">
+                <span class="kpi-label">Faturamento</span>
+                <span class="kpi-value" id="kpi-faturamento">R$ 0,00</span>
+                <span class="kpi-trend text-green-500" id="trend-fat">↑ 12.5%</span>
+            </div>
+            <div class="finance-card kpi-card">
+                <span class="kpi-label">Ticket Médio</span>
+                <span class="kpi-value" id="kpi-ticket">R$ 0,00</span>
+                <span class="kpi-trend text-red-500" id="trend-ticket">↓ 2.1%</span>
+            </div>
+            <div class="finance-card kpi-card">
+                <span class="kpi-label">Lucro II</span>
+                <span class="kpi-value" id="kpi-lucro">R$ 0,00</span>
+                <span class="kpi-trend text-green-500" id="trend-lucro">↑ 4.2%</span>
+            </div>
+            <div class="finance-card kpi-card">
+                <span class="kpi-label">NFC-e Emitidas</span>
+                <span class="kpi-value" id="kpi-nfce-val">R$ 0,00</span>
+                <span class="kpi-subtext" id="kpi-nfce-qtd">0 notas</span>
+            </div>
+        </div>
+
+        <div class="finance-card main-chart-area p-6">
+            <h3 class="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-1">Vendas na última semana</h3>
+            <p class="text-2xl font-bold text-gray-800" id="chart-total-val">R$ 0,00</p>
+            <div class="chart-container">
+                <svg id="main-chart-svg" viewBox="0 0 400 200" width="100%" height="100%" preserveAspectRatio="none">
+                    <path id="chart-fill" class="area-chart-fill" d="" />
+                    <path id="chart-line" class="line-chart-path" d="" />
+                    <g id="chart-dots-group"></g>
+                </svg>
+            </div>
+            <div class="flex justify-between mt-6 text-[9px] text-gray-400 font-bold uppercase" id="chart-labels">
+                <span>Jan</span><span>Mar</span><span>Mai</span><span>Jul</span><span>Set</span><span>Nov</span><span>Dez</span>
+            </div>
+        </div>
+
+        <div class="finance-card side-metrics-area p-6">
+            <h3 class="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-6">Distribuição por Categoria</h3>
+            <div class="space-y-5" id="category-list">
+                <!-- Conteúdo via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <div class="nav-container">
+        <div class="nav-marker" id="nav-marker"></div>
+        <div class="nav-bg" id="nav-bg"></div>
+        <nav class="nav-overlay" id="nav-overlay">
+            <div class="btn-toggle-sidebar" id="sidebar-toggle" onclick="toggleSidebar()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" id="toggle-icon" style="transition: transform 0.3s ease;"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </div>
+
+            <div class="nav-item" onclick="window.location.href='dashboard_widget.html'">
+                <div class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+                <span class="nav-label">Casa</span>
+            </div>
+
+            <div class="nav-item active" onclick="navTo(this, 'Métricas', 1)">
+                <div class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></div>
+                <span class="nav-label">Métricas</span>
+            </div>
+
+            <div class="nav-item" onclick="window.location.href='registrar.html'">
+                <div class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></div>
+                <span class="nav-label">Registrar</span>
+            </div>
+
+            <div class="nav-item" onclick="window.location.href='extrato.html'">
+                <div class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg></div>
+                <span class="nav-label">Extrato</span>
+            </div>
+
+            <div class="nav-item" onclick="window.location.href='login.html'">
+                <div class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></div>
+                <span class="nav-label">Sair</span>
+            </div>
+        </nav>
+    </div>
+
+    <script>
+        const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        const dataSet = {
+            month: {
+                current: [12500, 14200, 11800, 16500, 19200, 18400, 21000, 24500, 22800, 28450, 26100, 31000],
+                prev: [11000, 13000, 12000, 15000, 17000, 17500, 19000, 22000, 21000, 25000, 24000, 28000],
+                labels: months,
+                ticket: 142.50, lucro: 8420, nfce: 15240, nfceQty: 124, cats: [{n: 'Eletrônicos', p: 45}, {n: 'Acessórios', p: 30}, {n: 'Serviços', p: 25}]
+            },
+            week: {
+                current: [5400, 7200, 6800, 8100],
+                prev: [5000, 6800, 6500, 7800],
+                labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
+                ticket: 128.10, lucro: 2150, nfce: 4800, nfceQty: 42, cats: [{n: 'Eletrônicos', p: 35}, {n: 'Acessórios', p: 40}, {n: 'Serviços', p: 25}]
+            },
+            day: {
+                current: [800, 1200, 950, 1100, 1500, 1300, 1800],
+                prev: [750, 1100, 1000, 900, 1400, 1200, 1600],
+                labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+                ticket: 98.40, lucro: 420, nfce: 1100, nfceQty: 12, cats: [{n: 'Eletrônicos', p: 20}, {n: 'Acessórios', p: 50}, {n: 'Serviços', p: 30}]
+            }
+        };
+
+        function updateDashboard() {
+            const period = document.getElementById('period-select').value;
+            const data = dataSet[period];
+            const total = data.current.reduce((a, b) => a + b, 0);
+            
+            animateValue(0, total, 800, v => document.getElementById('kpi-faturamento').innerText = `R$ ${v.toLocaleString('pt-PT', {maximumFractionDigits: 0})}`);
+            animateValue(0, total, 800, v => document.getElementById('chart-total-val').innerText = `R$ ${v.toLocaleString('pt-PT', {minimumFractionDigits: 2})}`);
+            animateValue(0, data.ticket, 800, v => document.getElementById('kpi-ticket').innerText = `R$ ${v.toLocaleString('pt-PT', {minimumFractionDigits: 2})}`);
+            animateValue(0, data.lucro, 800, v => document.getElementById('kpi-lucro').innerText = `R$ ${v.toLocaleString('pt-PT', {minimumFractionDigits: 0})}`);
+            animateValue(0, data.nfce, 800, v => document.getElementById('kpi-nfce-val').innerText = `R$ ${v.toLocaleString('pt-PT', {minimumFractionDigits: 0})}`);
+            document.getElementById('kpi-nfce-qtd').innerText = `${data.nfceQty} notas`;
+
+            const catList = document.getElementById('category-list');
+            catList.innerHTML = data.cats.map(c => `
+                <div>
+                    <div class="flex justify-between text-[11px] font-bold text-gray-600 mb-1"><span>${c.n}</span><span>${c.p}%</span></div>
+                    <div class="h-2 bg-gray-100 rounded-full overflow-hidden"><div class="h-full bg-red-500 transition-all duration-1000 ease-out" style="width: 0%;" data-w="${c.p}%"></div></div>
+                </div>
+            `).join('');
+
+            // Inicia animação de preenchimento após renderizar
+            setTimeout(() => {
+                catList.querySelectorAll('.h-full').forEach(bar => { bar.style.width = bar.getAttribute('data-w'); });
+            }, 100);
+
+            const labelContainer = document.getElementById('chart-labels');
+            labelContainer.innerHTML = data.labels.map(l => `<span>${l}</span>`).join('');
+            renderAreaChart(data.current, data.prev);
+        }
+
+        function renderAreaChart(values, oldValues) {
+            const linePath = document.getElementById('chart-line');
+            const fillPath = document.getElementById('chart-fill');
+            const dotsGroup = document.getElementById('chart-dots-group');
+            const maxVal = Math.max(...values, ...oldValues);
+            const stepX = 400 / (values.length - 1);
+            dotsGroup.innerHTML = '';
+            let d = `M 0 ${200 - (values[0] / maxVal * 160)}`;
+            createDot(0, 200 - (values[0] / maxVal * 160), 0, values, oldValues);
+            for(let i = 1; i < values.length; i++) {
+                const x = i * stepX; const y = 200 - (values[i] / maxVal * 160);
+                d += ` L ${x} ${y}`; createDot(x, y, i, values, oldValues);
+            }
+            linePath.setAttribute('d', d);
+            fillPath.setAttribute('d', d + ` L 400 200 L 0 200 Z`);
+            linePath.classList.remove('active'); fillPath.classList.remove('active');
+            void linePath.offsetWidth; linePath.classList.add('active'); fillPath.classList.add('active');
+        }
+
+        function createDot(x, y, index, currentSet, prevSet) {
+            const dotsGroup = document.getElementById('chart-dots-group');
+            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circle.setAttribute("cx", x); circle.setAttribute("cy", y); circle.setAttribute("r", "3.5"); circle.setAttribute("class", "chart-dot");
+            circle.addEventListener('mouseenter', (e) => {
+                const tooltip = document.getElementById('chart-tooltip');
+                const val = currentSet[index]; const oldVal = prevSet[index];
+                const diff = ((val - oldVal) / oldVal * 100).toFixed(1);
+                tooltip.innerHTML = `R$ ${val.toLocaleString('pt-PT')} <br><span class="${diff >= 0 ? 'text-green-400' : 'text-red-400'}">${diff >= 0 ? '+' : ''}${diff}%</span>`;
+                tooltip.style.opacity = '1'; tooltip.style.left = (e.pageX + 10) + 'px'; tooltip.style.top = (e.pageY - 40) + 'px';
+            });
+            circle.addEventListener('mouseleave', () => document.getElementById('chart-tooltip').style.opacity = '0');
+            dotsGroup.appendChild(circle);
+        }
+
+        function setViewMode(mode) {
+            document.documentElement.setAttribute('data-view', mode);
+            setTimeout(() => {
+                const activeItem = document.querySelector('.nav-item.active');
+                if (activeItem) navTo(activeItem, 'Métricas', 1);
+                updateDashboard();
+            }, 550);
+        }
+
+        function toggleSidebar() {
+            const isMin = document.documentElement.getAttribute('data-minimized') === 'true';
+            document.documentElement.setAttribute('data-minimized', !isMin);
+            document.getElementById('toggle-icon').style.transform = isMin ? 'rotate(0deg)' : 'rotate(180deg)';
+            // Reajusta o marcador após a animação de expansão/contração
+            setTimeout(() => {
+                const activeItem = document.querySelector('.nav-item.active');
+                if (activeItem) navTo(activeItem, 'Métricas', 1);
+            }, 400);
+        }
+
+        function navTo(el, page, index) {
+            const marker = document.getElementById('nav-marker');
+            const navOverlay = document.getElementById('nav-overlay');
+            const view = document.documentElement.getAttribute('data-view');
+            const navRect = navOverlay.getBoundingClientRect();
+            const elRect = el.getBoundingClientRect();
+            if (view === 'mobile') {
+                const centerX = elRect.left + elRect.width / 2 - navRect.left;
+                document.body.style.setProperty('--marker-x', (centerX / navRect.width * 100) + '%');
+            } else {
+                const centerY = elRect.top + elRect.height / 2 - navRect.top;
+                document.body.style.setProperty('--marker-y', centerY + 'px');
+            }
+        }
+
+        function animateValue(start, end, duration, callback) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                callback(progress * (end - start) + start);
+                if (progress < 1) window.requestAnimationFrame(step);
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        window.onload = () => {
+            const metricsItem = document.querySelectorAll('.nav-item')[1];
+            navTo(metricsItem, 'Métricas', 1);
+            updateDashboard();
+        };
+    </script>
+</body>
+</html>

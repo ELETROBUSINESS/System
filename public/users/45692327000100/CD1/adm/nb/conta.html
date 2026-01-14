@@ -12,6 +12,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 
+    <!-- Custom Styles handled in style26.css -->
+
+    <!-- ApexCharts (Adicionado para Gráfico de Vendas) -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
     <!-- Flaticon UIcons (Necessário para o bloco info) -->
     <link rel='stylesheet'
         href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
@@ -21,6 +26,25 @@
     <!-- Estilos Unificados e Main -->
     <link rel="stylesheet" href="/assets/css/main.css">
     <link rel="stylesheet" href="/assets/css/style26.css">
+
+    <link rel="stylesheet" href="/assets/css/style26.css">
+
+    <!-- View Transitions API -->
+    <meta name="view-transition" content="same-origin">
+
+    <!-- Navbar Anti-Flash -->
+    <script>
+        // Apply navbar state immediately
+        (function () {
+            const savedState = localStorage.getItem('acc_navbar');
+            if (savedState !== null) {
+                document.documentElement.setAttribute('data-minimized', savedState);
+                if (savedState === 'true') {
+                    document.documentElement.classList.add('sidebar-minimized-init');
+                }
+            }
+        })();
+    </script>
 </head>
 
 <body style="--marker-x: 10%; --marker-y: 50%;">
@@ -126,23 +150,13 @@
         <!-- 3. Gráfico Semanal (Vendas) -->
         <div class="finance-card chart-area p-6" id="chart-section">
             <h3 class="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-4">Vendas na última semana</h3>
-            <div id="chart-tooltip"></div>
-            <div class="chart-container">
-                <svg id="main-chart-svg" viewBox="0 0 400 160" width="100%" height="100%" preserveAspectRatio="none">
-                    <path id="chart-fill" class="area-chart-fill" d="" />
-                    <path id="chart-line" class="line-chart-path" d="" />
-                    <g id="chart-dots-group"></g>
-                </svg>
-            </div>
-            <div class="flex justify-between mt-4 text-[9px] text-gray-400 font-bold uppercase">
-                <span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sab</span><span>Dom</span>
-            </div>
+            <div id="revenueChart" class="w-full h-[160px] skeleton rounded-lg"></div>
         </div>
 
         <!-- 4. Histórico (Movimentações Clean) -->
         <div class="finance-card history-area p-6" id="history-section">
             <h3 class="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-4">Movimentações</h3>
-            <div class="transaction-list">
+            <div class="transaction-list" id="movements-list">
                 <div class="transaction-item">
                     <div class="trans-icon-box"><i class='bx bx-up-arrow-alt'></i></div>
                     <div class="flex-1 ml-3 text-left">
@@ -150,6 +164,11 @@
                         <p class="text-[9px] text-gray-400 font-bold uppercase">Aguardando dados</p>
                     </div>
                 </div>
+            </div>
+            <div class="mt-4 text-center">
+                <a href="extrato.html"
+                    class="text-[10px] font-bold text-class-gray-400 hover:text-red-500 uppercase tracking-widest transition-colors"
+                    style="color: #9ca3af; text-decoration: none;">Ver mais</a>
             </div>
         </div>
 
@@ -212,7 +231,8 @@
 
             <!-- alterado pelo antigravity: adicionado container nav-links-container -->
             <div class="nav-links-container">
-                <div class="nav-item active" onclick="navTo(this, 'Casa', 0)">
+                <div class="nav-item active" onclick="navigateTo('conta.html')">
+                    <!-- Self link or Home? Assuming 'Casa' in this context maps to this page or index -->
                     <div class="nav-icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2.5">
@@ -223,7 +243,7 @@
                     <span class="nav-label">Casa</span>
                 </div>
 
-                <div class="nav-item" onclick="window.location.href='metricas.html'">
+                <div class="nav-item" onclick="navigateTo('metricas.html')">
                     <div class="nav-icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2.5">
@@ -235,7 +255,7 @@
                     <span class="nav-label">Métricas</span>
                 </div>
 
-                <div class="nav-item" onclick="window.location.href='push.html'">
+                <div class="nav-item" onclick="navigateTo('push.html')">
                     <div class="nav-icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2.5">
@@ -247,7 +267,7 @@
                     <span class="nav-label">Registrar</span>
                 </div>
 
-                <div class="nav-item" onclick="window.location.href='extrato.html'">
+                <div class="nav-item" onclick="navigateTo('extrato.html')">
                     <div class="nav-icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2.5">
