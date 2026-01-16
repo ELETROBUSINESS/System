@@ -7,12 +7,19 @@
     <title>Extrato | ELETRO</title>
     <link rel="icon" href="/assets/img/iconWeb.png">
 
+    <!-- Bibliotecas Externas (Tailwind Added) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="/assets/css/main.css">
-    
+    <link rel="stylesheet" href="/assets/css/style26.css">
+
     <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
-    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+    <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+    <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -20,179 +27,317 @@
 
     <style>
         /* Loading Suave */
-        body.loading-auth .main-content, body.loading-auth .navigation {
-            opacity: 0; pointer-events: none;
+        body.loading-auth .main-content,
+        body.loading-auth .navigation {
+            opacity: 0;
+            pointer-events: none;
         }
-        .skeleton { color: transparent; background: #ccc; border-radius: 4px; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
+        .skeleton {
+            color: transparent;
+            background: #ccc;
+            border-radius: 4px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.6;
+            }
+        }
 
         /* Loader Interno */
-        .loader-internal { display: flex; justify-content: center; padding: 20px; }
-        .spinner-internal { width: 30px; height: 30px; border: 3px solid #eee; border-top-color: #db0038; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .loader-internal {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .spinner-internal {
+            width: 30px;
+            height: 30px;
+            border: 3px solid #eee;
+            border-top-color: #db0038;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 
-<body class="painel-adm1 loading-auth">
+<body class="loading-auth" style="--marker-x: 50%; --marker-y: 50%;">
 
-    <main class="main-content">
+    <div id="app-container" class="dashboard-grid">
+
+        <!-- Info Block (Adapted for Dynamic Data) -->
+        <!-- Standard Header (Matched to conta.html) -->
         <div class="info">
             <div class="photo-profile">
-                <img id="user-photo" src="https://placehold.co/150/db0038/FFFFFF?text=..." alt="Perfil">
+                <!-- Dynamic Data from app-core.js -->
+                <img src="/assets/img/iconWeb.png" id="user-profile-img" style="object-fit: cover;">
                 <div class="detals">
-                    <h1 id="user-greeting">Olá!</h1>
-                    <p id="user-role">Carregando...</p>
+                    <!-- IDs matched to app-core.js -->
+                    <h1 id="user-full-name">Olá, ...</h1>
+                    <p id="user-role-display">Carregando...</p>
                 </div>
             </div>
+
             <div class="balance">
+                <p>Pontos</p>
+                <div class="saldo">
+                    <span id="user-points" class="">0,00</span>
+                </div>
                 <div class="pending">
-                    <p>Pontos</p>
-                    <span id="user-points" class="skeleton">0,00</span>
+                    <!-- Reuse 'valor2' strictly for displaying ticket or keep 'kpi-ticket' if we want standard consistency -->
+                    <p>Ticket-Médio: </p>
+                    <span id="kpi-ticket" class="">R$ 0,00</span>
                 </div>
             </div>
         </div>
 
-        <div class="new_nav">
-            <div class="conta-info">
-                <div class="shop container">
-                    <p style="margin-bottom: 15px; font-weight: 600; color: #555;">Últimas vendas</p>
-                    <div class="mainContainer">
-                        <div class="boletosContainer">
-                            <div class="boletos-vencer" id="boletosContainer"></div>
-                        </div>
+        <div style="grid-column: 1 / -1;">
+
+            <!-- Resumo de Totais -->
+            <!-- Totals Removed -->
+
+            <!-- Lista de Movimentações -->
+            <div class="finance-card">
+                <div class="period-badge">Histórico Completo</div>
+                <div id="app-extract-list">
+                    <!-- Skeleton Loading Inicial -->
+                    <div class="p-6 space-y-4">
+                        <div class="h-10 bg-gray-100 rounded w-full animate-pulse"></div>
+                        <div class="h-10 bg-gray-100 rounded w-full animate-pulse"></div>
+                        <div class="h-10 bg-gray-100 rounded w-full animate-pulse"></div>
                     </div>
                 </div>
+                <!-- Load More Button -->
+                <div class="p-4 text-center">
+                    <button id="load-more"
+                        class="text-xs font-bold text-gray-500 uppercase tracking-wide border px-4 py-2 rounded hover:bg-gray-50 transition hidden"
+                        onclick="loadExtractMore()">
+                        Carregar mais
+                    </button>
+                </div>
             </div>
+
         </div>
-    </main>
-
-    <div class="navigation">
-        <ul>
-            <li class="list">
-                <a href="conta.html">
-                    <span class="icon"><i class='bx bxs-home'></i></span>
-                    <span class="text">Home</span>
-                </a>
-            </li>
-
-            <li class="list">
-                <a href="/pdv">
-                    <span class="icon"><i class='bx bx-cart-minus'></i></span>
-                    <span class="text">PDV</span>
-                </a>
-            </li>
-
-            <li class="list">
-                <a href="quest.html">
-                    <span class="icon"><i class='bx bx-radar'></i></span>
-                    <span class="text">Missões</span>
-                </a>
-            </li>
-
-            <li class="list active">
-                <a href="extrato.html">
-                    <span class="icon"><i class='bx bx-copy-alt'></i></span>
-                    <span class="text">Extrato</span>
-                </a>
-            </li>
-
-            <li class="list">
-                <a href="#" id="logout-btn">
-                    <span class="icon"><i class='bx bx-log-out'></i></span>
-                    <span class="text">Sair</span>
-                </a>
-            </li>
-            <div class="indicator color11"></div>
-        </ul>
     </div>
 
+    <!-- Navbar -->
+    <div class="nav-container">
+        <div class="nav-marker" id="nav-marker"></div>
+        <div class="nav-bg"></div>
+        <nav class="nav-overlay" id="nav-overlay">
+            <div class="nav-header-toggle">
+                <div class="btn-toggle-sidebar" onclick="toggleSidebar()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        id="toggle-icon" style="transition: transform 0.3s ease;">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="nav-links-container">
+                <div class="nav-item" onclick="navigateTo('conta.html')">
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
+                    </div>
+                    <span class="nav-label">Casa</span>
+                </div>
+
+                <div class="nav-item" onclick="navigateTo('wallet.html')">
+                    <div class="nav-icon">
+                        <i class='bx bx-user-circle' style="font-size: 24px;"></i>
+                    </div>
+                    <span class="nav-label">Conta</span>
+                </div>
+
+                <div class="nav-item desktop-only-item" onclick="navigateTo('/pdv')">
+                    <div class="nav-icon">
+                        <i class='bx bx-cart-minus' style="font-size: 24px;"></i>
+                    </div>
+                    <span class="nav-label">PDV</span>
+                </div>
+
+                <div class="nav-item desktop-only-item" onclick="navigateTo('quest.html')">
+                    <div class="nav-icon">
+                        <i class='bx bx-radar' style="font-size: 24px;"></i>
+                    </div>
+                    <span class="nav-label">Missão</span>
+                </div>
+
+                <div class="nav-item active" onclick="navigateTo('extrato.html')">
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <line x1="10" y1="9" x2="8" y2="9"></line>
+                        </svg>
+                    </div>
+                    <span class="nav-label">Extrato</span>
+                </div>
+
+                <div class="nav-item" onclick="logoutApp()">
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </div>
+                    <span class="nav-label">Sair</span>
+                </div>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Scripts -->
     <script src="js/app-core.js"></script>
+    <script src="/assets/js/script26.js"></script>
 
+    <!-- Specific Extrato Logic (to ensure it works with script26) -->
     <script>
-        // 1. Mapa de Usuários -> IDs de Extrato
-        const USER_EXTRATO_MAP = {
-            "ryan": "extratoID1",
-            "evelyn": "extratoID2",
-            // Adicione novos usuários aqui conforme necessário
-            // "novo_usuario": "extratoID3"
-        };
+        // URL da API (Do Script do PDV)
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
 
-        const EXTRATO_BASE_URL = "https://script.google.com/macros/s/AKfycbw4AyWVzzxfnwxgtUSR7p1ehjG62ufEPYQv8M3_tm9gTwGhRJ-lNhfI5QoIBLAV2x1gSA/exec";
+        // Elementos
+        const transactionList = document.getElementById('app-extract-list');
+        const totalInEl = document.getElementById('total-in');
+        const totalOutEl = document.getElementById('total-out');
 
+        // Load Data
         document.addEventListener('DOMContentLoaded', () => {
-            const container = document.getElementById('boletosContainer');
-            
-            // Loader Inicial
-            container.innerHTML = `<div class="loader-internal"><div class="spinner-internal"></div></div>`;
+            // Injeta estilo para garantir que o container role se necessário
+            const listContainer = document.querySelector('.finance-card:last-of-type');
+            if (listContainer) {
+                listContainer.style.maxHeight = '60vh';
+                listContainer.style.overflowY = 'auto'; // Garante scroll
+            }
 
-            // Aguarda o Firebase confirmar quem é o usuário
-            firebase.auth().onAuthStateChanged(async (user) => {
-                if (user) {
-                    try {
-                        // Busca o documento do usuário para ter certeza do 'username' correto
-                        const doc = await firebase.firestore().collection('users').doc(user.uid).get();
-                        
-                        if (doc.exists) {
-                            const userData = doc.data();
-                            // Pega o username (ex: "Evelyn") e normaliza para minúsculo ("evelyn")
-                            const usernameKey = (userData.username || "").toLowerCase().trim();
-                            
-                            // Verifica no mapa qual ID usar. Se não achar, usa um padrão ou exibe erro.
-                            const extratoID = USER_EXTRATO_MAP[usernameKey];
-
-                            if (extratoID) {
-                                carregarExtrato(extratoID, container);
-                            } else {
-                                container.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">Usuário sem extrato vinculado.</p>';
-                                console.warn(`Sem ID de extrato mapeado para: ${usernameKey}`);
-                            }
-                        }
-                    } catch (error) {
-                        console.error("Erro ao identificar usuário para extrato:", error);
-                        container.innerHTML = '<p style="text-align:center;color:red;">Erro de identificação.</p>';
-                    }
-                }
-            });
+            loadExtractData();
         });
 
-        function carregarExtrato(tipoID, container) {
-            const finalUrl = `${EXTRATO_BASE_URL}?tipo=${tipoID}`;
-            console.log("Carregando extrato:", finalUrl);
+        async function loadExtractData() {
+            if (!transactionList) return;
 
-            fetch(finalUrl)
-                .then(res => res.json())
-                .then(data => {
-                    container.innerHTML = ''; // Remove loader
+            // Check Cache
+            const CACHE_KEY = 'app_extract_cache_v6';
+            const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+            const cached = localStorage.getItem(CACHE_KEY);
 
-                    if (!data || data.length === 0) {
-                        container.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">Nenhuma movimentação recente.</p>';
+            if (cached) {
+                try {
+                    const parsed = JSON.parse(cached);
+                    if (Date.now() - parsed.timestamp < CACHE_DURATION) {
+                        console.log("Usando cache de extrato");
+                        renderTransactions(parsed.data);
+                        calculateTotals(parsed.data);
                         return;
                     }
+                } catch (e) {
+                    console.error("Cache invalido", e);
+                }
+            }
 
-                    data.forEach(boleto => {
-                        const div = document.createElement('div');
-                        div.classList.add('boleto-item');
-                        
-                        // Formatação de valor simples se vier numérico
-                        let valorFormatado = boleto.valor;
-                        if (!String(boleto.valor).includes('R$')) {
-                             valorFormatado = `R$ ${boleto.valor}`;
-                        }
+            // Fetch New Data
+            transactionList.innerHTML = '<div class="p-6 text-center"><i class="bx bx-loader-alt bx-spin text-2xl text-gray-400"></i><p class="text-sm text-gray-400 mt-2">Sincronizando...</p></div>';
 
-                        div.innerHTML = `
-                            <i class='bx bx-shopping-bag'></i> 
-                            <span class="data">${boleto.data}</span>
-                            <span class="payment">${boleto.formaPagamento}</span>
-                            <span class="valor">${valorFormatado}</span>
-                        `;
-                        container.appendChild(div);
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=listarHistoricoVendas`);
+                const result = await response.json();
+
+                if (result.status === 'success' && result.data && result.data.length > 0) {
+                    // Filter: Only valid sales (positive value or explicitly 'Venda')
+                    // This aligns with PDV showing active sales
+                    const filteredData = result.data.filter(item => {
+                        // Basic validation
+                        return item.valor && item.cliente;
                     });
-                })
-                .catch(err => {
-                    container.innerHTML = '<p style="text-align:center;color:var(--warning-red); padding:20px;">Erro ao carregar dados.</p>';
-                    console.error('Erro fetch extrato:', err);
-                });
+
+                    // Update Cache
+                    localStorage.setItem(CACHE_KEY, JSON.stringify({
+                        timestamp: Date.now(),
+                        data: filteredData
+                    }));
+
+                    renderTransactions(filteredData);
+                    calculateTotals(filteredData);
+                } else {
+                    transactionList.innerHTML = '<div class="p-6 text-center text-gray-400 text-sm">Nenhuma movimentação encontrada.</div>';
+                }
+            } catch (error) {
+                console.error("Erro ao carregar extrato:", error);
+                transactionList.innerHTML = '<div class="p-6 text-center text-red-400 text-sm">Erro ao sincronizar dados.</div>';
+            }
+        }
+
+        function renderTransactions(data) {
+            transactionList.innerHTML = '';
+
+            data.forEach((item) => {
+                let valorDisplay = item.valor;
+                if (typeof item.valor === 'number') {
+                    valorDisplay = item.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                }
+
+                // Standard Clean Style (Matches conta.html)
+                const html = `
+                <div class="transaction-item flex items-center justify-between p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition">
+                     <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+                            <i class='bx bx-shopping-bag text-sm'></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-gray-800">${item.cliente || 'Consumidor'}</p>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">${item.data || '--:--'}</span>
+                                <span class="text-[10px] text-gray-300">•</span>
+                                <span class="text-[10px] text-gray-500 font-medium">${item.pagamento || 'Dinheiro'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold text-green-600 block">+ ${valorDisplay}</span>
+                </div>`;
+
+                transactionList.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        function calculateTotals(data) {
+            let total = 0;
+            data.forEach(item => {
+                let val = item.valor;
+                if (typeof val === 'string') {
+                    val = parseFloat(val.replace('R$', '').replace(/\./g, '').replace(',', '.').trim());
+                }
+                if (!isNaN(val)) total += val;
+            });
+            if (totalInEl) totalInEl.innerText = `+ ${total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+            if (totalOutEl) totalOutEl.innerText = `R$ 0,00`;
         }
     </script>
 </body>
+
 </html>

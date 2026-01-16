@@ -1,5 +1,5 @@
-/* ======================================== */
-/* == ESTILOS GLOBAIS E VARIÁVEIS        == */
+﻿/* ======================================== */
+/* == ESTILOS GLOBAIS E VARIÃVEIS        == */
 /* ======================================== */
 
 :root {
@@ -14,7 +14,7 @@
     --border-subtle: #e5e7eb;
 
     --success-green: #db0038;
-    /* Verde Esmeralda (Correção da barra) */
+    /* Verde Esmeralda (CorreÃ§Ã£o da barra) */
     --warning-red: #ff000d;
     /* Vermelho Alerta */
     --info-blue: #3b82f6;
@@ -52,7 +52,7 @@ body {
     inset: 0;
     background-color: rgba(255, 255, 255, 0.9);
     display: flex;
-    /* Começa visível */
+    /* ComeÃ§a visÃ­vel */
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -77,12 +77,12 @@ body {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    /* Garante que não interfira com cliques */
+    /* Garante que nÃ£o interfira com cliques */
 }
 
 
 /* ======================================== */
-/* == ANIMAÇÕES                          == */
+/* == ANIMAÃ‡Ã•ES                          == */
 /* ======================================== */
 
 @keyframes slideInUp {
@@ -428,16 +428,16 @@ body {
     padding: 8px;
     z-index: 1000;
 
-    /* Substitua display: none por isso para permitir animações */
+    /* Substitua display: none por isso para permitir animaÃ§Ãµes */
     opacity: 0;
     visibility: hidden;
     transform: translateY(-10px);
     transition: all 0.2s ease-in-out;
     pointer-events: none;
-    /* Impede cliques enquanto invisível */
+    /* Impede cliques enquanto invisÃ­vel */
 }
 
-/* Classe de Ativação (O que o JS vai alternar) */
+/* Classe de AtivaÃ§Ã£o (O que o JS vai alternar) */
 .more-menu-modal.show {
     display: block;
     /* Caso prefira manter o display, certifique-se que esta classe existe */
@@ -475,7 +475,7 @@ body {
     background-color: var(--bg-body);
 }
 
-/* Ícones dos Itens */
+/* Ãcones dos Itens */
 .item-icon-box {
     width: 36px;
     height: 36px;
@@ -518,11 +518,11 @@ body {
     margin: 6px 8px;
 }
 
-/* Estilização PRO */
+/* EstilizaÃ§Ã£o PRO */
 .more-menu-item.is-pro {
     position: relative;
     background-color: rgba(219, 0, 56, 0.03);
-    /* Vermelho primário com baixa opacidade */
+    /* Vermelho primÃ¡rio com baixa opacidade */
 }
 
 .title-row {
@@ -590,7 +590,8 @@ body {
 }
 
 .summary-item h2 {
-    font-size: 2.2rem; /* Valor bem grande */
+    font-size: 2.2rem;
+    /* Valor bem grande */
     color: #0f172a;
     margin: 0;
 }
@@ -606,7 +607,7 @@ body {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-/* Grid de Informações */
+/* Grid de InformaÃ§Ãµes */
 .info-details-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -643,7 +644,7 @@ body {
     color: #1e293b;
 }
 
-/* Seção de Itens */
+/* SeÃ§Ã£o de Itens */
 .section-title {
     font-size: 0.9rem;
     color: #475569;
@@ -670,7 +671,9 @@ body {
     font-size: 1rem;
 }
 
-.receipt-item-row:last-child { border-bottom: none; }
+.receipt-item-row:last-child {
+    border-bottom: none;
+}
 
 .receipt-item-row span {
     color: #334155;
@@ -700,16 +703,24 @@ body {
 /* Overlay de Carregamento */
 .loader-overlay {
     position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(15, 23, 42, 0.9); /* Azul escuro profundo */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.9);
+    /* Azul escuro profundo */
     backdrop-filter: blur(8px);
-    display: none; /* Escondido por padrão */
+    display: none;
+    /* Escondido por padrÃ£o */
     justify-content: center;
     align-items: center;
     z-index: 9999;
 }
 
-.loader-overlay.active { display: flex; animation: fadeIn 0.3s ease; }
+.loader-overlay.active {
+    display: flex;
+    animation: fadeIn 0.3s ease;
+}
 
 .loader-card {
     background: white;
@@ -766,18 +777,44 @@ body {
     font-weight: 500;
 }
 
-.step-row.active { color: var(--primary-color); }
-.step-row.done { color: #10b981; }
-.step-row.done i { color: #10b981; content: '\eb7a'; /* Troca para check icon se desejar via JS */ }
+.step-row.active {
+    color: var(--primary-color);
+}
+
+.step-row.done {
+    color: #10b981;
+}
+
+.step-row.done i {
+    color: #10b981;
+    content: '\eb7a';
+    /* Troca para check icon se desejar via JS */
+}
 
 @keyframes scanAnimation {
-    0%, 100% { top: 20%; opacity: 0; }
-    50% { top: 80%; opacity: 1; }
+
+    0%,
+    100% {
+        top: 20%;
+        opacity: 0;
+    }
+
+    50% {
+        top: 80%;
+        opacity: 1;
+    }
 }
 
 @keyframes fadeInScale {
-    from { opacity: 0; transform: scale(0.9); }
-    to { opacity: 1; transform: scale(1); }
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 #emission-loader-overlay.active {
@@ -785,7 +822,7 @@ body {
     animation: fadeInScale 0.2s ease-out forwards;
 }
 
-/* Conteúdo adicional da página de produtos*/
+/* ConteÃºdo adicional da pÃ¡gina de produtos*/
 
 /* --- Toolbar de Produtos --- */
 .toolbar-products {
@@ -796,7 +833,7 @@ body {
     justify-content: space-between;
 }
 
-/* --- Filtros em Cápsula --- */
+/* --- Filtros em CÃ¡psula --- */
 .filter-capsules {
     display: flex;
     background-color: #f1f5f9;
@@ -868,7 +905,7 @@ body {
     vertical-align: middle;
 }
 
-/* Estilo para a célula da nota com barra lateral */
+/* Estilo para a cÃ©lula da nota com barra lateral */
 .note-cell-wrapper {
     display: flex;
     align-items: center;
@@ -905,7 +942,8 @@ body {
 /* Amarelo */
 
 .note-number {
-    font-size: 1.3rem; /* Tamanho grande para leitura rápida */
+    font-size: 1.3rem;
+    /* Tamanho grande para leitura rÃ¡pida */
     font-weight: 700;
     color: var(--text-dark);
 }
@@ -933,7 +971,7 @@ body {
     color: #723b13;
 }
 
-/* Seções do Modal */
+/* SeÃ§Ãµes do Modal */
 .section-title {
     font-size: 0.95rem;
     color: var(--text-dark);
@@ -951,7 +989,7 @@ body {
 
 
 
-/* Layout do Modal de Edição */
+/* Layout do Modal de EdiÃ§Ã£o */
 .product-edit-layout {
     display: flex;
     gap: 24px;
@@ -1012,7 +1050,7 @@ body {
     cursor: not-allowed;
 }
 
-/* Card de Precificação (Markup/Margem) */
+/* Card de PrecificaÃ§Ã£o (Markup/Margem) */
 .pricing-card {
     background-color: #f8fafc;
     border: 1px solid #e2e8f0;
@@ -1084,7 +1122,7 @@ body {
     font-weight: 600;
 }
 
-/* Nova Seção Fiscal (Clean) */
+/* Nova SeÃ§Ã£o Fiscal (Clean) */
 .fiscal-section-clean {
     border: 1px solid #e5e7eb;
     border-radius: 8px;
@@ -1110,7 +1148,7 @@ body {
     gap: 6px;
 }
 
-/* --- CORREÇÃO DO ÍCONE DE PESQUISA --- */
+/* --- CORREÃ‡ÃƒO DO ÃCONE DE PESQUISA --- */
 .input-with-icon {
     position: relative;
     width: 100%;
@@ -1118,7 +1156,7 @@ body {
 
 .input-with-icon input {
     padding-right: 36px !important;
-    /* Espaço para o ícone não ficar sobre o texto */
+    /* EspaÃ§o para o Ã­cone nÃ£o ficar sobre o texto */
     width: 100%;
 }
 
@@ -1127,14 +1165,14 @@ body {
     top: 50%;
     transform: translateY(-50%);
     right: 12px;
-    /* Posicionado DENTRO da barra, à direita */
+    /* Posicionado DENTRO da barra, Ã  direita */
     font-size: 1.2rem;
     color: var(--text-light);
     pointer-events: none;
-    /* Permite clicar no input através do ícone */
+    /* Permite clicar no input atravÃ©s do Ã­cone */
 }
 
-/* --- LÓGICA DE MAXIMIZAR JANELA --- */
+/* --- LÃ“GICA DE MAXIMIZAR JANELA --- */
 .transition-all {
     transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
@@ -1151,7 +1189,7 @@ body {
     margin: auto;
     /* Centraliza */
     border-radius: 12px;
-    /* Mantém borda arredondada */
+    /* MantÃ©m borda arredondada */
 }
 
 .modal-header .header-actions {
@@ -1180,7 +1218,7 @@ body {
     color: var(--text-dark);
 }
 
-/* --- INPUT DE CÓDIGO COM DESBLOQUEIO --- */
+/* --- INPUT DE CÃ“DIGO COM DESBLOQUEIO --- */
 .input-group-lock {
     display: flex;
     align-items: stretch;
@@ -1225,7 +1263,7 @@ body {
     /* Fecha a borda */
 }
 
-/* --- CORREÇÃO DO MODAL DE EDIÇÃO (Formulário Flexível) --- */
+/* --- CORREÃ‡ÃƒO DO MODAL DE EDIÃ‡ÃƒO (FormulÃ¡rio FlexÃ­vel) --- */
 
 /* 1. Garante que o Modal Content controle o tamanho total */
 .modal-content {
@@ -1234,10 +1272,10 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    /* Impede que o formulário vaze para fora */
+    /* Impede que o formulÃ¡rio vaze para fora */
 }
 
-/* Reforço para garantir que o formulário ocupe o espaço exato */
+/* ReforÃ§o para garantir que o formulÃ¡rio ocupe o espaÃ§o exato */
 #edit-product-form {
     display: flex;
     flex-direction: column;
@@ -1246,20 +1284,20 @@ body {
     min-height: 0;
 }
 
-/* 3. O corpo rola dentro do formulário */
+/* 3. O corpo rola dentro do formulÃ¡rio */
 #edit-product-form .modal-body {
     overflow-y: auto;
     /* Habilita o scroll vertical aqui */
     flex-grow: 1;
-    /* Ocupa o espaço entre o topo e o rodapé */
+    /* Ocupa o espaÃ§o entre o topo e o rodapÃ© */
     padding-right: 8px;
-    /* Evita que a barra de rolagem cubra conteúdo */
+    /* Evita que a barra de rolagem cubra conteÃºdo */
 }
 
-/* 4. Garante que o rodapé fique fixo no fundo do form */
+/* 4. Garante que o rodapÃ© fique fixo no fundo do form */
 #edit-product-form .modal-footer {
     flex-shrink: 0;
-    /* Não encolhe */
+    /* NÃ£o encolhe */
 }
 
 /* Ajuste Responsivo para telas pequenas (Mantido do anterior) */
@@ -1299,7 +1337,7 @@ body {
     flex-shrink: 0;
 }
 
-/* Fallback para quando não tiver imagem (ícone) */
+/* Fallback para quando nÃ£o tiver imagem (Ã­cone) */
 .product-thumb-placeholder {
     width: 42px;
     height: 42px;
@@ -1325,7 +1363,7 @@ body {
 }
 
 /* ======================================== */
-/* == CONTEÚDO PRINCIPAL (PDV)           == */
+/* == CONTEÃšDO PRINCIPAL (PDV)           == */
 /* ======================================== */
 
 .main-content {
@@ -1334,7 +1372,7 @@ body {
     padding: 32px;
     overflow-y: auto;
     display: none;
-    /* Começa oculto */
+    /* ComeÃ§a oculto */
 }
 
 .page-content {
@@ -1414,12 +1452,12 @@ body {
 /* Ajuste no container pai para garantir altura */
 .item-list-container.empty {
     min-height: 400px;
-    /* Garante espaço para a logo aparecer */
+    /* Garante espaÃ§o para a logo aparecer */
     display: flex;
     flex-direction: column;
 }
 
-/* O container principal (mantido do seu código) */
+/* O container principal (mantido do seu cÃ³digo) */
 .empty-state {
     flex-grow: 1;
     display: flex;
@@ -1443,7 +1481,7 @@ body {
     max-width: 300px;
 }
 
-/* Logo Marca D'água */
+/* Logo Marca D'Ã¡gua */
 .empty-store-logo {
     max-width: 140px;
     height: auto;
@@ -1462,14 +1500,14 @@ body {
     transform: scale(1.05);
 }
 
-/* Ícone de fallback (se imagem falhar) */
+/* Ãcone de fallback (se imagem falhar) */
 #fallback-icon {
     font-size: 4rem;
     color: #e2e8f0;
     margin-bottom: 15px;
 }
 
-/* Títulos */
+/* TÃ­tulos */
 .empty-title {
     font-size: 1.1rem;
     font-weight: 700;
@@ -1485,7 +1523,7 @@ body {
     font-weight: 500;
 }
 
-/* Animação do Scanner Vermelho */
+/* AnimaÃ§Ã£o do Scanner Vermelho */
 .scanner-line-anim {
     width: 0%;
     height: 3px;
@@ -1513,7 +1551,7 @@ body {
         opacity: 0;
     }
 
-    /* Expande até sumir */
+    /* Expande atÃ© sumir */
     100% {
         width: 0%;
         opacity: 0;
@@ -1654,7 +1692,7 @@ body {
     margin: 15px 0;
 }
 
-/* Seção Cliente */
+/* SeÃ§Ã£o Cliente */
 .client-summary-box {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
@@ -1663,7 +1701,7 @@ body {
     transition: all 0.3s ease;
 }
 
-/* Estilo para o botão de remover cliente */
+/* Estilo para o botÃ£o de remover cliente */
 .btn-danger-soft {
     color: var(--warning-red);
     border-color: #fee2e2;
@@ -1678,7 +1716,7 @@ body {
     box-shadow: 0 2px 5px rgba(229, 57, 53, 0.3);
 }
 
-/* Quando um cliente real é selecionado, muda a cor da borda */
+/* Quando um cliente real Ã© selecionado, muda a cor da borda */
 .client-summary-box.active-client {
     background: #fff;
     border-color: var(--primary-red);
@@ -1742,9 +1780,9 @@ body {
     transition: all 0.2s;
 
     flex-shrink: 0;
-    /* Impede o botão de ser esmagado pelo texto do cliente */
+    /* Impede o botÃ£o de ser esmagado pelo texto do cliente */
     display: flex;
-    /* Garante que o ícone possa ser centralizado */
+    /* Garante que o Ã­cone possa ser centralizado */
     align-items: center;
     /* Centraliza verticalmente */
     justify-content: center;
@@ -1758,15 +1796,15 @@ body {
     color: var(--primary-red);
 }
 
-/* Lista de Ações (Menu) */
+/* Lista de AÃ§Ãµes (Menu) */
 .summary-actions-group {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    /* Espaçamento uniforme entre os itens */
+    /* EspaÃ§amento uniforme entre os itens */
     margin: 15px 0;
     flex-grow: 1;
-    /* Ocupa espaço disponível */
+    /* Ocupa espaÃ§o disponÃ­vel */
 }
 
 .action-item {
@@ -1910,7 +1948,7 @@ body {
     padding: 10px 12px;
     border-radius: 8px;
     margin-bottom: 12px;
-    /* Espaço antes dos tributos */
+    /* EspaÃ§o antes dos tributos */
     margin-top: 5px;
 }
 
@@ -1948,7 +1986,7 @@ body {
     flex-grow: 1;
 }
 
-/* Título das seções */
+/* TÃ­tulo das seÃ§Ãµes */
 .summary-controls-title {
     font-size: 0.75rem;
     text-transform: uppercase;
@@ -1958,7 +1996,7 @@ body {
     letter-spacing: 0.5px;
 }
 
-/* GRID DE COMANDOS (3 Botões Lado a Lado) */
+/* GRID DE COMANDOS (3 BotÃµes Lado a Lado) */
 .summary-controls-grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -2017,14 +2055,14 @@ body {
     color: var(--primary-red);
 }
 
-/* Animação de Pulso no Botão de Pagamento (Mantendo a lógica JS) */
+/* AnimaÃ§Ã£o de Pulso no BotÃ£o de Pagamento (Mantendo a lÃ³gica JS) */
 .control-btn.border-pulse {
     border-color: var(--warning-red);
     background-color: #fef2f2;
     animation: pulse-red 2s infinite;
 }
 
-/* ÁREA DO RECIBO (Cálculos) */
+/* ÃREA DO RECIBO (CÃ¡lculos) */
 .receipt-calculation-box {
     background: #fff;
     /* border-top: 2px dashed #f1f5f9; */
@@ -2068,15 +2106,43 @@ body {
     letter-spacing: -1px;
 }
 
+/* [MODERNIZADO] Badge Fiscal Robusto */
 .tax-mini-text {
-    font-size: 0.7rem;
-    color: #cbd5e1;
-    text-align: right;
-    margin-top: 5px;
-    cursor: help;
+    background: #f1f5f9;
+    /* Fundo suave combinando com o tema */
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-top: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 600;
 }
 
-/* BOTÕES FINAIS */
+.tax-mini-text:hover {
+    background: #fff;
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    color: var(--text-dark);
+}
+
+.tax-mini-text i {
+    font-size: 1.1rem;
+    color: var(--info-blue);
+}
+
+.tax-mini-text span {
+    color: var(--text-dark);
+    font-weight: 700;
+}
+
+/* BOTÃ•ES FINAIS */
 .action-buttons {
     display: grid;
     grid-template-columns: 1fr auto;
@@ -2152,7 +2218,7 @@ body {
     vertical-align: middle;
 }
 
-/* --- 1. NOVA CÁPSULA DE DESCONTO (Harmonia com Quantidade) --- */
+/* --- 1. NOVA CÃPSULA DE DESCONTO (Harmonia com Quantidade) --- */
 .discount-capsule {
     display: inline-flex;
     align-items: center;
@@ -2181,7 +2247,7 @@ body {
     border: none;
     background: transparent;
     text-align: right;
-    /* Número alinhado à direita */
+    /* NÃºmero alinhado Ã  direita */
     padding-right: 2px;
     font-size: 0.9rem;
     font-weight: 600;
@@ -2202,14 +2268,14 @@ body {
     font-size: 0.8rem;
     color: #94a3b8;
     padding-right: 8px;
-    /* Espaço na direita */
+    /* EspaÃ§o na direita */
     padding-left: 2px;
     font-weight: 500;
     user-select: none;
 }
 
 
-/* --- 2. NOVO RODAPÉ DE STATUS (Online/Offline) --- */
+/* --- 2. NOVO RODAPÃ‰ DE STATUS (Online/Offline) --- */
 .pn {
     position: fixed;
     bottom: 20px;
@@ -2223,7 +2289,7 @@ body {
     pointer-events: none;
 }
 
-/* --- CÁPSULA DE STATUS (Visível e Arredondada) --- */
+/* --- CÃPSULA DE STATUS (VisÃ­vel e Arredondada) --- */
 .status-container {
     display: flex;
     align-items: center;
@@ -2270,7 +2336,7 @@ body {
     box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
 }
 
-/* 1. Célula do Produto */
+/* 1. CÃ©lula do Produto */
 .product-cell-modern {
     display: flex;
     align-items: center;
@@ -2308,7 +2374,7 @@ body {
     margin-top: 2px;
 }
 
-/* 2. Controle de Quantidade (Cápsula) */
+/* 2. Controle de Quantidade (CÃ¡psula) */
 .qty-capsule {
     display: inline-flex;
     align-items: center;
@@ -2366,7 +2432,7 @@ body {
     font-weight: 700;
 }
 
-/* Preço Unitário (Discreto) */
+/* PreÃ§o UnitÃ¡rio (Discreto) */
 .unit-price-display {
     color: #94a3b8;
     font-size: 0.9rem;
@@ -2379,7 +2445,7 @@ body {
     font-size: 1rem;
 }
 
-/* Botão Lixeira */
+/* BotÃ£o Lixeira */
 .btn-trash-item {
     width: 32px;
     height: 32px;
@@ -2405,12 +2471,12 @@ body {
     align-items: center;
     justify-content: center;
     height: 400px;
-    /* Altura mínima para ocupar a área da tabela */
+    /* Altura mÃ­nima para ocupar a Ã¡rea da tabela */
     background: #fff;
     border-radius: 16px;
     margin-top: 15px;
     border: 2px dashed #e2e8f0;
-    /* Borda tracejada indica "área de drop/leitura" */
+    /* Borda tracejada indica "Ã¡rea de drop/leitura" */
 }
 
 .empty-content-wrapper {
@@ -2423,7 +2489,7 @@ body {
     max-width: 300px;
 }
 
-/* Estilo da Logo "Marca D'água" */
+/* Estilo da Logo "Marca D'Ã¡gua" */
 .empty-store-logo {
     max-width: 140px;
     /* Tamanho controlado */
@@ -2456,7 +2522,7 @@ body {
     color: #cbd5e1;
 }
 
-/* Animação: Linha de Scanner (Opcional, mas muito legal) */
+/* AnimaÃ§Ã£o: Linha de Scanner (Opcional, mas muito legal) */
 .scanner-line-anim {
     width: 0%;
     height: 2px;
@@ -2500,7 +2566,7 @@ body {
     /* Deixa clicar no fundo */
 }
 
-/* Hover: Fica colorido e 100% visível */
+/* Hover: Fica colorido e 100% visÃ­vel */
 .system-brand-fixed:hover {
     opacity: 1;
     pointer-events: auto;
@@ -2522,7 +2588,7 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    /* Espaço entre a logo e o nome */
+    /* EspaÃ§o entre a logo e o nome */
 }
 
 /* A Imagem da Logo */
@@ -2531,7 +2597,7 @@ body {
     /* Tamanho equilibrado */
     width: auto;
     filter: grayscale(100%);
-    /* Elegância: Preto e branco */
+    /* ElegÃ¢ncia: Preto e branco */
     transition: filter 0.3s;
 }
 
@@ -2710,9 +2776,9 @@ body {
     padding: 0;
     width: 100%;
     max-width: 550px;
-    /* Define a altura máxima como 90% da altura da tela */
+    /* Define a altura mÃ¡xima como 90% da altura da tela */
     max-height: 90vh;
-    /* Cria um layout flexível para manter cabeçalho e rodapé fixos */
+    /* Cria um layout flexÃ­vel para manter cabeÃ§alho e rodapÃ© fixos */
     display: flex;
     flex-direction: column;
 
@@ -2731,7 +2797,7 @@ body {
     align-items: center;
     padding: 20px 24px;
     border-bottom: 1px solid var(--border-color);
-    /* Impede que o cabeçalho encolha */
+    /* Impede que o cabeÃ§alho encolha */
     flex-shrink: 0;
 }
 
@@ -2752,9 +2818,9 @@ body {
 
 .modal-body {
     padding: 24px;
-    /* Permite scroll vertical apenas nesta área */
+    /* Permite scroll vertical apenas nesta Ã¡rea */
     overflow-y: auto;
-    /* Faz o corpo ocupar todo o espaço disponível */
+    /* Faz o corpo ocupar todo o espaÃ§o disponÃ­vel */
     flex-grow: 1;
 }
 
@@ -2819,7 +2885,7 @@ body {
     justify-content: flex-end;
     border-top: 1px solid var(--border-color);
     background-color: #f9f9f9;
-    /* Impede que o rodapé encolha */
+    /* Impede que o rodapÃ© encolha */
     flex-shrink: 0;
 }
 
@@ -2882,7 +2948,7 @@ body {
     margin-top: 8px;
 }
 
-/* Modal Recibo / Confirmação / Alerta */
+/* Modal Recibo / ConfirmaÃ§Ã£o / Alerta */
 .modal-icon {
     width: 80px;
     height: 80px;
@@ -3029,7 +3095,7 @@ input:checked+.slider:before {
 }
 
 /* ======================================== */
-/* == PÁGINAS ADICIONAIS                 == */
+/* == PÃGINAS ADICIONAIS                 == */
 /* ======================================== */
 
 .data-table {
@@ -3081,18 +3147,18 @@ input:checked+.slider:before {
     color: var(--primary-red);
 }
 
-/* --- CORREÇÃO DO CABEÇALHO E BOTÃO GIGANTE --- */
+/* --- CORREÃ‡ÃƒO DO CABEÃ‡ALHO E BOTÃƒO GIGANTE --- */
 .page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    /* Isso impede que o botão estique verticalmente */
+    /* Isso impede que o botÃ£o estique verticalmente */
     margin-bottom: 24px;
     flex-wrap: wrap;
     gap: 16px;
 }
 
-/* Força o botão a ter apenas o tamanho do texto */
+/* ForÃ§a o botÃ£o a ter apenas o tamanho do texto */
 .page-header .btn-auto {
     width: fit-content !important;
     padding: 10px 24px;
@@ -3107,7 +3173,7 @@ input:checked+.slider:before {
     height: 32px;
     padding: 0 12px;
     border-radius: 50px;
-    /* Arredondado estilo pílula */
+    /* Arredondado estilo pÃ­lula */
     font-size: 0.85rem;
     font-weight: 700;
     color: white;
@@ -3219,10 +3285,10 @@ input:checked+.slider:before {
     background-color: #d1d5db !important;
 }
 
-/* --- MELHORIA NA TABELA E BOTÕES DE AÇÃO --- */
+/* --- MELHORIA NA TABELA E BOTÃ•ES DE AÃ‡ÃƒO --- */
 .clients-table {
     border-spacing: 0 8px;
-    /* Espaço entre linhas */
+    /* EspaÃ§o entre linhas */
     border-collapse: separate;
 }
 
@@ -3269,7 +3335,7 @@ input:checked+.slider:before {
     text-align: right;
 }
 
-/* Botões de Ação Maiores e Mais Claros */
+/* BotÃµes de AÃ§Ã£o Maiores e Mais Claros */
 .action-btn-group {
     display: flex;
     justify-content: flex-end;
@@ -3346,10 +3412,10 @@ input:checked+.slider:before {
     line-height: 1.5;
 }
 
-/* Reutilizando a classe toggle-switch para configurações */
+/* Reutilizando a classe toggle-switch para configuraÃ§Ãµes */
 
 /* ======================================== */
-/* == ESTILOS DO RELÓGIO                 == */
+/* == ESTILOS DO RELÃ“GIO                 == */
 /* ======================================== */
 
 .pn-hr {
@@ -3706,7 +3772,7 @@ input:checked+.slider:before {
     font-weight: 600;
 }
 
-/* --- Modal de Seleção de Cliente --- */
+/* --- Modal de SeleÃ§Ã£o de Cliente --- */
 .search-box-wrapper {
     position: relative;
     display: flex;
@@ -3731,7 +3797,7 @@ input:checked+.slider:before {
 
 .search-icon-input input {
     padding-left: 40px;
-    /* Espaço para o ícone */
+    /* EspaÃ§o para o Ã­cone */
     width: 100%;
 }
 
@@ -3749,7 +3815,7 @@ input:checked+.slider:before {
     border-bottom: none;
 }
 
-/* --- Cartão do Cliente no Resumo (Sidebar) --- */
+/* --- CartÃ£o do Cliente no Resumo (Sidebar) --- */
 .summary-client-card {
     background-color: var(--bg-light);
     border: 1px solid var(--border-color);
@@ -3757,7 +3823,7 @@ input:checked+.slider:before {
     padding: 12px;
     margin-bottom: 16px;
     display: none;
-    /* Oculto por padrão */
+    /* Oculto por padrÃ£o */
     animation: slideInUp 0.3s ease;
 }
 
@@ -3817,7 +3883,7 @@ input:checked+.slider:before {
     justify-content: space-between;
 }
 
-/* Estilos do Histórico do Cliente */
+/* Estilos do HistÃ³rico do Cliente */
 .history-section {
     margin-top: 20px;
     border-top: 1px dashed var(--border-color);
@@ -3893,7 +3959,7 @@ input:checked+.slider:before {
     text-decoration: underline;
 }
 
-/* Efeito Hover para os cartões de impressão */
+/* Efeito Hover para os cartÃµes de impressÃ£o */
 #btn-print-thermal:hover,
 #btn-print-a4:hover {
     border-color: var(--primary-red) !important;
@@ -3911,13 +3977,13 @@ input:checked+.slider:before {
 .client-search-input {
     width: 100%;
     padding: 16px 16px 16px 52px;
-    /* Espaço para o ícone */
+    /* EspaÃ§o para o Ã­cone */
     font-family: 'Inter', sans-serif;
     font-size: 1rem;
     color: var(--text-dark);
     background-color: #ffffff;
     border: 1px solid transparent;
-    /* Borda invisível inicialmente */
+    /* Borda invisÃ­vel inicialmente */
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     /* Sombra suave */
@@ -3950,16 +4016,16 @@ input:checked+.slider:before {
     color: #bbb;
     transition: color 0.3s ease;
     pointer-events: none;
-    /* O clique passa pelo ícone e vai pro input */
+    /* O clique passa pelo Ã­cone e vai pro input */
 }
 
-/* Quando o input está focado, muda a cor do ícone */
+/* Quando o input estÃ¡ focado, muda a cor do Ã­cone */
 .client-search-input:focus+.client-search-icon,
 .client-search-container:focus-within .client-search-icon {
     color: var(--primary-red);
 }
 
-/* --- Estilos da Página de Pedidos --- */
+/* --- Estilos da PÃ¡gina de Pedidos --- */
 
 /* Abas de Filtro */
 .orders-tabs {
@@ -4026,7 +4092,7 @@ input:checked+.slider:before {
     border-color: #ddd;
 }
 
-/* Cabeçalho do Card */
+/* CabeÃ§alho do Card */
 .order-header {
     display: flex;
     justify-content: space-between;
@@ -4080,7 +4146,7 @@ input:checked+.slider:before {
 
 /* Vermelho */
 
-/* Informações do Cliente */
+/* InformaÃ§Ãµes do Cliente */
 .order-client {
     display: flex;
     align-items: center;
@@ -4122,7 +4188,7 @@ input:checked+.slider:before {
     position: relative;
 }
 
-/* Rodapé do Card */
+/* RodapÃ© do Card */
 .order-footer {
     margin-top: auto;
     /* Empurra para baixo */
@@ -4179,10 +4245,10 @@ input:checked+.slider:before {
     background: black;
 }
 
-/* --- Estilo da Notificação na Navbar --- */
+/* --- Estilo da NotificaÃ§Ã£o na Navbar --- */
 .navbar-item {
     position: relative;
-    /* Necessário para posicionar a bolinha */
+    /* NecessÃ¡rio para posicionar a bolinha */
 }
 
 .nav-badge {
@@ -4211,7 +4277,7 @@ input:checked+.slider:before {
     transform: scale(1);
 }
 
-/* Ajuste na responsividade para a bolinha não sumir */
+/* Ajuste na responsividade para a bolinha nÃ£o sumir */
 @media (max-width: 768px) {
     .nav-badge {
         top: 0;
@@ -4220,7 +4286,7 @@ input:checked+.slider:before {
 }
 
 /* ======================================== */
-/* == ANIMAÇÃO DE NOTIFICAÇÃO (PEDIDOS)  == */
+/* == ANIMAÃ‡ÃƒO DE NOTIFICAÃ‡ÃƒO (PEDIDOS)  == */
 /* ======================================== */
 
 @keyframes nav-notify-pulse {
@@ -4316,7 +4382,7 @@ input:checked+.slider:before {
     margin: 0 -5px;
     /* Conecta os bolinhas */
     margin-bottom: 20px;
-    /* Alinha com o ícone */
+    /* Alinha com o Ã­cone */
     z-index: 1;
 }
 
@@ -4348,7 +4414,7 @@ input:checked+.slider:before {
 
 /* --- Estilos Atualizados do Modal de Pedidos (Varejo) --- */
 
-/* Lista de Itens com Conferência */
+/* Lista de Itens com ConferÃªncia */
 .modal-order-item {
     display: flex;
     justify-content: space-between;
@@ -4376,7 +4442,7 @@ input:checked+.slider:before {
     /* Tira o vermelho da quantidade */
 }
 
-/* Botões de Ação do Item (Estoque) */
+/* BotÃµes de AÃ§Ã£o do Item (Estoque) */
 .item-stock-actions {
     display: flex;
     gap: 8px;
@@ -4400,14 +4466,14 @@ input:checked+.slider:before {
     background-color: #f0f0f0;
 }
 
-/* Botão Confirmar (Verde) */
+/* BotÃ£o Confirmar (Verde) */
 .btn-stock-check.confirmed {
     background-color: var(--success-green);
     border-color: var(--success-green);
     color: white;
 }
 
-/* Botão Esgotado (Vermelho) */
+/* BotÃ£o Esgotado (Vermelho) */
 .btn-stock-check.missing {
     background-color: white;
     border-color: var(--warning-red);
@@ -4419,7 +4485,7 @@ input:checked+.slider:before {
     color: white;
 }
 
-/* Botão Fechar Gigante */
+/* BotÃ£o Fechar Gigante */
 .btn-close-modal-lg {
     width: 100%;
     padding: 16px;
@@ -4465,17 +4531,17 @@ input:checked+.slider:before {
     padding-top: 12px;
 }
 
-/* Botão desativado visualmente */
+/* BotÃ£o desativado visualmente */
 .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
     filter: grayscale(1);
 }
 
-/* --- Navegação na Timeline (Interativa) --- */
+/* --- NavegaÃ§Ã£o na Timeline (Interativa) --- */
 .step-item {
     cursor: pointer;
-    /* Mostra a mãozinha */
+    /* Mostra a mÃ£ozinha */
     position: relative;
     transition: transform 0.2s ease;
 }
@@ -4491,31 +4557,31 @@ input:checked+.slider:before {
     box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Quando estiver ativo ou completado, mantém as cores originais no hover */
+/* Quando estiver ativo ou completado, mantÃ©m as cores originais no hover */
 .step-item.active:hover .step-icon,
 .step-item.completed:hover .step-icon {
     transform: none;
-    /* Remove efeito extra se já estiver ativo */
+    /* Remove efeito extra se jÃ¡ estiver ativo */
 }
 
-/* --- Bloqueio de Navegação na Timeline --- */
+/* --- Bloqueio de NavegaÃ§Ã£o na Timeline --- */
 .step-item.locked {
     cursor: not-allowed;
-    /* Mostra o símbolo de bloqueio */
+    /* Mostra o sÃ­mbolo de bloqueio */
     opacity: 0.6;
     /* Deixa um pouco mais apagado */
     pointer-events: none;
-    /* (Opcional) Impede o clique via CSS também */
+    /* (Opcional) Impede o clique via CSS tambÃ©m */
 }
 
 .step-item.locked:hover {
     transform: none;
-    /* Remove a animação de pulo */
+    /* Remove a animaÃ§Ã£o de pulo */
 }
 
 .step-item.locked .step-icon {
     border-color: #ddd;
-    /* Mantém cinza */
+    /* MantÃ©m cinza */
     color: #999;
 }
 
@@ -4535,7 +4601,7 @@ input:checked+.slider:before {
 }
 
 /* =========================================
-   ESTILOS DE IMPRESSÃO A4 (CORRIGIDO)
+   ESTILOS DE IMPRESSÃƒO A4 (CORRIGIDO)
    ========================================= */
 .print-only {
     display: none;
@@ -4548,7 +4614,7 @@ input:checked+.slider:before {
         display: none !important;
     }
 
-    /* CORREÇÃO: Removemos o asterisco (*) para não forçar block em tudo */
+    /* CORREÃ‡ÃƒO: Removemos o asterisco (*) para nÃ£o forÃ§ar block em tudo */
     #print-area {
         display: block !important;
         visibility: visible !important;
@@ -4558,7 +4624,7 @@ input:checked+.slider:before {
         width: 100%;
     }
 
-    /* Garante que os filhos visíveis fiquem visíveis, mas respeitando o display original (flex, table, etc) */
+    /* Garante que os filhos visÃ­veis fiquem visÃ­veis, mas respeitando o display original (flex, table, etc) */
     #print-area * {
         visibility: visible !important;
     }
@@ -4589,7 +4655,7 @@ input:checked+.slider:before {
         align-items: center;
         /* Centraliza logo verticalmente com o texto */
         gap: 15px;
-        /* Espaço entre logo e texto */
+        /* EspaÃ§o entre logo e texto */
     }
 
     /* CONTROLE DA LOGO */
@@ -4603,7 +4669,7 @@ input:checked+.slider:before {
 
     .brand-text h1 {
         font-size: 18px;
-        /* Reduzi um pouco para não quebrar */
+        /* Reduzi um pouco para nÃ£o quebrar */
         font-weight: 800;
         text-transform: uppercase;
         margin: 0;
@@ -4664,7 +4730,7 @@ input:checked+.slider:before {
         margin: 0 0 20px 0;
     }
 
-    /* SEÇÕES E TABELA */
+    /* SEÃ‡Ã•ES E TABELA */
     .section-title {
         font-size: 10px;
         font-weight: 700;
@@ -4825,12 +4891,12 @@ input:checked+.slider:before {
     }
 }
 
-/* Modal de Autenticação (Senha) - Deve ser o mais alto de todos */
+/* Modal de AutenticaÃ§Ã£o (Senha) - Deve ser o mais alto de todos */
 #modal-admin-auth {
     z-index: 99999 !important;
 }
 
-/* Modal de Renegociação - Deve ficar acima da Ficha do Cliente */
+/* Modal de RenegociaÃ§Ã£o - Deve ficar acima da Ficha do Cliente */
 #modal-renegociar {
     z-index: 99998 !important;
 }
@@ -4842,7 +4908,7 @@ input:checked+.slider:before {
     /* Sombra mais forte para destacar */
 }
 
-/* Cores para os novos status de renegociação */
+/* Cores para os novos status de renegociaÃ§Ã£o */
 .history-type-tag.type-reneg-baixa {
     background-color: #e3f2fd;
     color: #1976d2;
@@ -4855,7 +4921,7 @@ input:checked+.slider:before {
     border: 1px solid #ffe0b2;
 }
 
-/* Garante que o valor da parcela (dívida) seja visível como negativo/alerta */
+/* Garante que o valor da parcela (dÃ­vida) seja visÃ­vel como negativo/alerta */
 .history-type-tag.type-reneg-nova {
     font-weight: bold;
 }
@@ -4876,30 +4942,30 @@ input:checked+.slider:before {
     width: 75px;
     /* Largura fixa para alinhamento */
     margin: 0 auto;
-    /* Centraliza na célula da tabela */
+    /* Centraliza na cÃ©lula da tabela */
     transition: all 0.2s ease;
     cursor: text;
-    /* Indica que é editável */
+    /* Indica que Ã© editÃ¡vel */
 }
 
 /* Efeito de Foco Moderno (Focus-Within) */
 /* Quando clica no input dentro, a div pai muda de cor */
 .discount-wrapper:focus-within {
     border-color: var(--primary-color, #4a90e2);
-    /* Usa sua cor principal ou azul padrão */
+    /* Usa sua cor principal ou azul padrÃ£o */
     box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.15);
     /* Brilho suave externo */
 }
 
-/* O Input (Número) */
+/* O Input (NÃºmero) */
 .discount-input {
     width: 100%;
     border: none;
     outline: none;
-    /* Remove a borda azul padrão do browser */
+    /* Remove a borda azul padrÃ£o do browser */
     background: transparent;
     text-align: right;
-    /* Números alinhados à direita perto do % */
+    /* NÃºmeros alinhados Ã  direita perto do % */
     font-size: 14px;
     font-weight: 600;
     color: #2d3748;
@@ -4908,15 +4974,15 @@ input:checked+.slider:before {
     margin: 0;
 }
 
-/* O Símbolo (%) */
+/* O SÃ­mbolo (%) */
 .discount-symbol {
     color: #a0aec0;
-    /* Cinza mais claro para não brigar com o número */
+    /* Cinza mais claro para nÃ£o brigar com o nÃºmero */
     font-size: 12px;
     font-weight: 500;
     margin-left: 2px;
     user-select: none;
-    /* Impede seleção acidental */
+    /* Impede seleÃ§Ã£o acidental */
 }
 
 /* Remove as setinhas feias (spinners) do input number */
@@ -4940,7 +5006,7 @@ input:checked+.slider:before {
 
 .modal-content.modal-md {
     max-width: 600px;
-    /* Um pouco mais largo que o padrão para conforto */
+    /* Um pouco mais largo que o padrÃ£o para conforto */
     border-radius: 20px;
     /* Bordas mais arredondadas (Modern UI) */
     overflow: hidden;
@@ -4967,7 +5033,7 @@ input:checked+.slider:before {
     background-color: #ffffff;
 }
 
-/* Rodapé mais limpo */
+/* RodapÃ© mais limpo */
 .modal-content.modal-md .modal-footer {
     padding: 24px 32px;
     background-color: #fff;
@@ -5021,18 +5087,18 @@ input:checked+.slider:before {
     font-weight: 700;
 }
 
-/* --- UI Específica: Inputs Modernos (Busca e Formulários) --- */
+/* --- UI EspecÃ­fica: Inputs Modernos (Busca e FormulÃ¡rios) --- */
 .search-row-modern {
     display: flex;
     align-items: center;
     gap: 12px;
-    /* Espaço entre input e botão */
+    /* EspaÃ§o entre input e botÃ£o */
     width: 100%;
 }
 
 .input-modern-wrapper {
     flex-grow: 1;
-    /* Ocupa todo o espaço disponível */
+    /* Ocupa todo o espaÃ§o disponÃ­vel */
     display: flex;
     align-items: center;
     background: #f9fafb;
@@ -5040,7 +5106,7 @@ input:checked+.slider:before {
     border-radius: 12px;
     padding: 0 12px;
     height: 50px;
-    /* Altura fixa para alinhar com o botão */
+    /* Altura fixa para alinhar com o botÃ£o */
     transition: all 0.2s;
 }
 
@@ -5069,7 +5135,7 @@ input:checked+.slider:before {
 
 .btn-square-add {
     width: 50px;
-    /* Largura fixa igual à altura */
+    /* Largura fixa igual Ã  altura */
     height: 50px;
     /* Altura fixa */
     border-radius: 12px;
@@ -5082,9 +5148,9 @@ input:checked+.slider:before {
     cursor: pointer;
     transition: background 0.2s;
     flex-shrink: 0;
-    /* Impede que o botão encolha */
+    /* Impede que o botÃ£o encolha */
     font-size: 1.5rem;
-    /* Tamanho do ícone + */
+    /* Tamanho do Ã­cone + */
 }
 
 .btn-square-add:hover {
@@ -5135,9 +5201,9 @@ input:checked+.slider:before {
 }
 
 
-/* --- Correção Modal Crediário Flow --- */
+/* --- CorreÃ§Ã£o Modal CrediÃ¡rio Flow --- */
 
-/* Centralizar conteúdo do corpo */
+/* Centralizar conteÃºdo do corpo */
 .modal-body.centered-flow {
     display: flex;
     flex-direction: column;
@@ -5167,13 +5233,13 @@ input:checked+.slider:before {
     margin-bottom: 24px;
 }
 
-/* Força o botão a ter cor e fundo corretos */
+/* ForÃ§a o botÃ£o a ter cor e fundo corretos */
 #btn-force-print,
 #btn-finish-crediario-final {
     background-color: var(--primary-red) !important;
-    /* Força cor de fundo */
+    /* ForÃ§a cor de fundo */
     color: #ffffff !important;
-    /* Força cor do texto */
+    /* ForÃ§a cor do texto */
     border: none;
     padding: 14px 24px;
     font-size: 1rem;
@@ -5294,7 +5360,7 @@ input:checked+.slider:before {
     color: #92400e;
 }
 
-/* Animação de entrada dos números */
+/* AnimaÃ§Ã£o de entrada dos nÃºmeros */
 .counter {
     font-variant-numeric: tabular-nums;
 }
@@ -5342,56 +5408,147 @@ input:checked+.slider:before {
 .fiscal-stat-item .val {
     font-size: 1rem;
     font-weight: 700;
-    color: #1f2937;
+}
+/* ======================================== */
+/* == SEÃ‡ÃƒO DE PAGAMENTO EM DINHEIRO     == */
+/* ======================================== */
+
+.payment-method-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 20px;
+    margin-top: 15px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    animation: slideInUp 0.3s ease-out;
 }
 
-.fiscal-items-header {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
-    font-size: 0.75rem;
-    color: #9ca3af;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #f3f4f6;
-    margin-bottom: 8px;
-}
-
-.fiscal-scroll-list {
-    max-height: 180px;
-    overflow-y: auto;
+.payment-method-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 20px;
     display: flex;
-    flex-direction: column;
+    align-items: center;
     gap: 8px;
 }
 
-.apt-item-row {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
-    font-size: 0.85rem;
-    align-items: center;
-    padding-bottom: 4px;
-    border-bottom: 1px dashed #f3f4f6;
-}
-
-.apt-item-row .ncm-tag {
-    font-size: 0.7rem;
-    color: #6b7280;
+.payment-method-title::before {
+    content: '';
     display: block;
+    width: 4px;
+    height: 18px;
+    background: var(--primary-red);
+    border-radius: 2px;
 }
 
-.fiscal-summary-box {
+.money-input-wrapper {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.money-input-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-light);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.money-input-field {
+    width: 100%;
+    height: 60px;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0 16px;
+    transition: all 0.2s ease;
     background: #f8fafc;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    padding: 12px;
 }
 
-.summary-line {
+.money-input-field:focus {
+    border-color: var(--primary-red);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(219, 0, 56, 0.1);
+    outline: none;
+}
+
+.money-input-field::placeholder {
+    color: #cbd5e1;
+}
+
+.change-display-box {
+    background: #f0fdf4;
+    /* Verde bem claro */
+    border: 1px dashed #bbf7d0;
+    border-radius: 12px;
+    padding: 16px;
     display: flex;
     justify-content: space-between;
-    margin-bottom: 4px;
-    font-size: 0.9rem;
+    align-items: center;
+    margin-top: 20px;
 }
 
-.summary-line strong {
-    color: #10b981;
+.change-label {
+    font-size: 0.9rem;
+    color: #166534;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.change-value-highlight {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #15803d;
+    /* Verde escuro */
+    letter-spacing: -0.5px;
+}
+
+.payment-actions-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.btn-payment-confirm {
+    flex: 1;
+    height: 50px;
+    font-size: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: var(--primary-red);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px -1px rgba(219, 0, 56, 0.2);
+}
+
+.btn-payment-confirm:hover {
+    background: var(--primary-red-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 8px -1px rgba(219, 0, 56, 0.3);
+}
+
+.btn-payment-back {
+    padding: 0 20px;
+    height: 50px;
+    font-weight: 600;
+    color: var(--text-light);
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-payment-back:hover {
+    background: #f8fafc;
+    color: var(--text-dark);
+    border-color: #cbd5e1;
 }

@@ -17,9 +17,9 @@ const API_URLS = {
  */
 (function checkAuth() {
     const tokenString = localStorage.getItem('session_token');
-    const LOGIN_URL = '/users/e-finance.html';
+    const LOGIN_URL = '/login.html';
     if (!tokenString) {
-        if (!window.location.pathname.includes('e-finance.html')) {
+        if (!window.location.pathname.includes('login.html')) {
             window.location.href = LOGIN_URL;
         }
         return;
@@ -300,8 +300,8 @@ function setViewMode(mode) {
  * --- LÓGICA DE COLETA DE DADOS (PÁGINA 1: SALDO) ---
  */
 function fetchBalanceData(forceUpdate = false) {
-    // Se não tem os elementos na tela, nem busca
-    if (!document.getElementById('valor1')) return;
+    // Se não tem os elementos na tela, nem busca (checa Saldo OU Ticket)
+    if (!document.getElementById('valor1') && !document.getElementById('kpi-ticket')) return;
 
     DataManager.fetchSmart('balance_data', API_URLS.PAGINA_1, (data, isUpdate) => {
         // Função de renderização (chamada via Cache e depois via Rede)
@@ -723,9 +723,64 @@ function navigateShortcut(elementId, targetUrl) {
  * --- INICIALIZAÇÃO ---
  */
 /* --- AUTO REFRESH LOGIC --- */
+/**
+ * --- LÓGICA DE PERFIL DO USUÁRIO (NOVA) ---
+ */
+function loadUserProfile() {
+    // Tenta carregar dados do usuário do cache (padrão antigo ou novo)
+    let userData = null;
+
+    // 1. Tenta user_cache (App Core Legacy)
+    try {
+        const cache = localStorage.getItem('user_cache');
+        if (cache) userData = JSON.parse(cache);
+    } catch (e) { console.error('Erro user_cache', e); }
+
+    // 2. Se não funcionar, tenta session_token (pode ter dados limitados)
+    if (!userData) {
+        try {
+            const token = JSON.parse(localStorage.getItem('session_token') || '{}');
+            if (token.uid) {
+                // Se só tiver o UID, tentamos defaults se não houver user_cache
+                userData = {
+                    name: token.name || 'Usuário',
+                    role: token.role || 'Colaborador',
+                    photoUrl: token.photoUrl || null
+                };
+            }
+        } catch (e) { }
+    }
+
+    if (!userData) return;
+
+    // Atualiza UI
+    const elNameFull = document.getElementById('user-full-name');
+    const elGreeting = document.getElementById('user-greeting-name');
+    const elRole = document.getElementById('user-role-display');
+    const elPhoto = document.getElementById('user-profile-img');
+
+    const firstName = (userData.name || 'Visitante').split(' ')[0];
+
+    if (elNameFull) elNameFull.innerText = `Olá, ${firstName}!`;
+    if (elGreeting) elGreeting.innerText = firstName;
+    if (elRole) elRole.innerText = userData.role || 'Colaborador';
+
+    if (elPhoto) {
+        if (userData.photoUrl && userData.photoUrl.startsWith('http')) {
+            elPhoto.src = userData.photoUrl;
+        } else {
+            // Fallback com inicial
+            const letter = firstName.charAt(0).toUpperCase();
+            elPhoto.src = `https://placehold.co/150/db0038/FFFFFF?text=${letter}`;
+        }
+    }
+}
+
 function refreshCurrentPageData(force = false) {
+    loadUserProfile();
+
     // Identificação de Página e Disparo de Dados REAIS
-    if (document.getElementById('valor1')) {
+    if (document.getElementById('valor1') || document.getElementById('kpi-ticket')) {
         fetchBalanceData(force); // Página 1
     }
 

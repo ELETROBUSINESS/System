@@ -1,256 +1,249 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" data-view="mobile" data-minimized="false">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carteira | ELETRO</title>
+    <title>Conta | ELETRO</title>
     <link rel="icon" href="/assets/img/iconWeb.png">
 
-    <link rel="stylesheet" href="/assets/css/main.css">
-    
-    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+    <!-- Bibliotecas Externas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
-    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+    <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+    <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
 
+    <!-- Firebase (Required for App Core) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-    <style>
-        /* Loading inicial */
-        body.loading-auth .main-content, body.loading-auth .navigation {
-            opacity: 0; pointer-events: none;
-        }
+    <!-- Estilos Unificados e Main -->
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/style26.css">
 
-        /* --- 1. LÓGICA RESPONSIVA (PC vs MOBILE) --- */
-        
-        /* Padrão (Mobile): Navbar escondida */
-        .navigation { display: none; } 
-        
-        /* BOTÃO VOLTAR (Novo Estilo: Abaixo do Banner) */
-        .mobile-back-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background-color: #fff;
-            color: #555;
-            font-size: 0.9rem;
-            font-weight: 600;
-            text-decoration: none;
-            padding: 8px 16px;
-            border-radius: 30px; /* Formato Pílula */
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08); /* Sombra suave */
-            margin-bottom: 15px; /* Espaço antes do Ticket Médio */
-            transition: transform 0.2s, color 0.2s;
-        }
-        
-        .mobile-back-btn i { font-size: 1.2rem; color: #db0038; } /* Seta vermelha */
-        .mobile-back-btn:active { transform: scale(0.95); background-color: #f9f9f9; }
-
-        /* Ajuste do Dashboard para acomodar o botão */
-        .dashboard {
-            padding-top: 10px; /* Espaço extra no topo da área branca */
-        }
-
-        /* Desktop (Telas grandes): Mostra Navbar, Esconde Botão Voltar */
-        @media (min-width: 1024px) {
-            .navigation { display: block; }
-            .mobile-back-btn { display: none !important; }
-            .main-content { margin-left: 80px; }
-        }
-
-        /* --- FIM LÓGICA RESPONSIVA --- */
-
-        /* Animação Ticket Médio */
-        .skeleton { 
-            color: transparent !important; 
-            background: rgba(224, 224, 224, 0.5); /* Cinza claro para fundo branco */
-            border-radius: 4px; 
-            position: relative; 
-            overflow: hidden;   
-            display: inline-block; 
-            min-width: 80px;
-        }
-        .skeleton::after {
-            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
-            transform: translateX(-100%); animation: shimmer 1.5s infinite;
-        }
-        @keyframes shimmer { 100% { transform: translateX(100%); } }
-
-        /* Estilos Lançamentos */
-        .containerCard { margin-bottom: 15px; }
-        .card-optionSize {
-            display: flex; align-items: center; gap: 15px; padding: 15px;
-            background: #fff; border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-        }
-        .card-optionSize i { font-size: 1.5rem; }
-        .lEntrada i { color: #28a745; background: rgba(40, 167, 69, 0.1); padding: 8px; border-radius: 50%; }
-        .lSaida i { color: #db0038; background: rgba(219, 0, 56, 0.1); padding: 8px; border-radius: 50%; }
-        
-        .l2 { margin-left: auto; font-size: 0.8rem; color: #999; }
-        .empty-wallet { text-align: center; color: #777; padding: 30px; }
-    </style>
+    <!-- Navbar Anti-Flash -->
+    <script>
+        (function () {
+            const savedState = localStorage.getItem('acc_navbar');
+            if (savedState !== null) {
+                document.documentElement.setAttribute('data-minimized', savedState);
+                if (savedState === 'true') {
+                    document.documentElement.classList.add('sidebar-minimized-init');
+                }
+            }
+        })();
+    </script>
 </head>
 
-<body class="painel-adm1 loading-auth">
+<body style="--marker-x: 50%; --marker-y: 50%;">
 
-    <main class="main-content">
+    <div id="app-container" class="dashboard-grid">
+
+        <!-- Header Information (Matches conta.html style) -->
         <div class="info">
             <div class="photo-profile">
-                <img id="user-photo" src="https://placehold.co/150/db0038/FFFFFF?text=..." alt="Perfil">
+                <!-- Placeholder image, will be updated by script -->
+                <img src="/assets/img/iconWeb.png" id="user-profile-img" style="object-fit: cover;">
                 <div class="detals">
-                    <h1 id="user-greeting">Olá!</h1>
-                    <p id="user-role">Carregando...</p>
+                    <h1 id="user-full-name">Olá, ...</h1>
+                    <p id="user-role-display">Carregando...</p>
                 </div>
             </div>
+
             <div class="balance">
-                <div class="pending">
-                    <p>A receber</p>
-                    <span id="wallet-balance" class="skeleton">R$ 0,00</span>
+                <p>Pontos</p>
+                <div class="saldo">
+                    <span id="user-points" class="">0,00</span>
                 </div>
             </div>
         </div>
 
-        <div class="dashboard">
-            <a href="conta.html" class="mobile-back-btn">
-                <i class='bx bx-left-arrow-alt'></i> Voltar
-            </a>
-
-            <div class="invoicing">
-                <i class="fi fi-rr-user-salary"></i>
-                <div class="detals">
-                    <h1>Ticket-Médio</h1>
-                    <span id="ticket-medio-display" class="skeleton">Carregando...</span>
+        <!-- Section 1: Balance (Ticket Médio Replacement) -->
+        <div class="finance-card p-6 mx-4 mb-0">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-600">
+                    <i class="fi fi-rr-user-salary text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xs uppercase font-bold text-gray-400 tracking-wider">A receber</h3>
+                    <p id="wallet-balance" class="text-xl font-bold text-gray-800 skeleton mt-1"
+                        style="min-width: 100px;">Carregando...</p>
                 </div>
             </div>
-            
-            <br>
-            <p style="font-weight: 600; color: #555; margin-bottom: 10px;">Lançamentos Recentes</p>
+        </div>
 
-            <div id="lancamentos-container">
-                <p style="text-align:center; padding: 20px; color: #777;">Carregando...</p>
+        <!-- Section 2: Transitions History (List) -->
+        <div class="px-4 w-full max-w-[800px] mx-auto mb-20 mt-6">
+            <h3 class="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-4 flex items-center gap-2">
+                <i class='bx bx-history'></i> Lançamentos Recentes
+            </h3>
+
+            <div id="lancamentos-container" class="space-y-3">
+                <!-- JS Injection -->
+                <div class="finance-card p-4 flex items-center justify-center text-gray-400 text-xs">
+                    Carregando histórico...
+                </div>
             </div>
         </div>
-    </main>
 
-    <div class="navigation">
-        <ul>
-            <li class="list">
-                <a href="conta.html">
-                    <span class="icon"><i class='bx bx-home'></i></span>
-                    <span class="text">Home</span>
-                </a>
-            </li>
-            <li class="list">
-                <a href="quest.html">
-                    <span class="icon"><i class='bx bx-radar'></i></span>
-                    <span class="text">Missões</span>
-                </a>
-            </li>
-            <li class="list">
-                <a href="pdv.html">
-                    <span class="icon"><i class='bxr bx-plus-circle'></i></span>
-                    <span class="text">Venda</span>
-                </a>
-            </li>
-            <li class="list active">
-                <a href="wallet.html">
-                    <span class="icon"><i class='bx bx-user-circle'></i></span>
-                    <span class="text">Conta</span>
-                </a>
-            </li>
-            <li class="list">
-                <a href="extrato.html">
-                    <span class="icon"><i class='bx bx-copy-alt'></i></span>
-                    <span class="text">Extrato</span>
-                </a>
-            </li>
-            <li class="list">
-                <a href="#" id="logout-btn">
-                    <span class="icon"><i class='bx bx-log-out'></i></span>
-                    <span class="text">Sair</span>
-                </a>
-            </li>
-            <div class="indicator color11"></div>
-        </ul>
     </div>
 
+    <!-- Navbar -->
+    <div class="nav-container">
+        <div class="nav-marker" id="nav-marker"></div>
+        <div class="nav-bg"></div>
+        <nav class="nav-overlay" id="nav-overlay">
+            <div class="nav-header-toggle">
+                <div class="btn-toggle-sidebar" onclick="toggleSidebar()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        id="toggle-icon" style="transition: transform 0.3s ease;">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="nav-links-container">
+                <div class="nav-item" onclick="navigateTo('conta.html')">
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
+                    </div>
+                    <span class="nav-label">Casa</span>
+                </div>
+
+                <div class="nav-item active" onclick="navigateTo('wallet.html')">
+                    <div class="nav-icon">
+                        <i class='bx bx-user-circle' style="font-size: 24px;"></i>
+                    </div>
+                    <span class="nav-label">Conta</span>
+                </div>
+
+                <div class="nav-item desktop-only-item" onclick="navigateTo('/pdv')">
+                    <div class="nav-icon">
+                        <i class='bx bx-cart-minus' style="font-size: 24px;"></i>
+                    </div>
+                    <span class="nav-label">PDV</span>
+                </div>
+
+                <div class="nav-item desktop-only-item" onclick="navigateTo('quest.html')">
+                    <div class="nav-icon">
+                        <i class='bx bx-radar' style="font-size: 24px;"></i>
+                    </div>
+                    <span class="nav-label">Missão</span>
+                </div>
+
+                <div class="nav-item" onclick="navigateTo('extrato.html')">
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <line x1="10" y1="9" x2="8" y2="9"></line>
+                        </svg>
+                    </div>
+                    <span class="nav-label">Extrato</span>
+                </div>
+
+                <div class="nav-item" onclick="logoutApp()">
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </div>
+                    <span class="nav-label">Sair</span>
+                </div>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Scripts -->
     <script src="js/app-core.js"></script>
+    <script src="/assets/js/script26.js"></script>
 
     <script>
-        const TICKET_MEDIO_MAP = { "ryan": "ID1", "evelyn": "ID2" };
-        const APPSCRIPT_BASE = "https://script.google.com/macros/s/AKfycbw4AyWVzzxfnwxgtUSR7p1ehjG62ufEPYQv8M3_tm9gTwGhRJ-lNhfI5QoIBLAV2x1gSA/exec"; 
-
+        // Specific Logic for Wallet Page
         document.addEventListener("DOMContentLoaded", () => {
+            // We reuse app-core.js for Auth
             firebase.auth().onAuthStateChanged(async (user) => {
                 if (user) {
                     const uid = user.uid;
                     loadWalletBalance(uid);
                     loadLancamentos(uid);
-
-                    const userDoc = await db.collection('users').doc(uid).get();
-                    if(userDoc.exists) {
-                        const usernameClean = (userDoc.data().username || "").trim().toLowerCase();
-                        loadTicketMedio(usernameClean);
-                    }
                 }
             });
         });
 
+        // Wallet Balance Logic (Moved from old wallet.html)
         async function loadWalletBalance(uid) {
             const el = document.getElementById('wallet-balance');
             try {
                 const doc = await db.collection('users').doc(uid).get();
                 if (doc.exists) {
-                    const val = doc.data().saldo || 0; 
+                    const val = doc.data().saldo || 0;
                     el.innerText = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
                     el.classList.remove('skeleton');
-                    el.style.color = "#fff";
                 }
             } catch (e) { console.error(e); }
         }
 
+        // Lancamentos Logic (Moved from old wallet.html and adapted to new UI)
         function loadLancamentos(uid) {
             const container = document.getElementById('lancamentos-container');
-            
+
             db.collection('users').doc(uid).collection('lancamentos')
                 .orderBy('data', 'desc')
                 .limit(10)
                 .get()
                 .then((snapshot) => {
                     container.innerHTML = '';
-                    
+
                     if (snapshot.empty) {
-                        container.innerHTML = '<div class="empty-wallet"><i class="bx bx-sleepy" style="font-size:2rem"></i><p>Sem lançamentos.</p></div>';
+                        container.innerHTML = '<div class="text-center py-6 text-gray-400 font-medium text-xs">Sem lançamentos recentes.</div>';
                         return;
                     }
 
                     snapshot.forEach(doc => {
                         const data = doc.data();
                         const isEntrada = data.tipo === 'entrada';
-                        const cssClass = isEntrada ? 'lEntrada' : 'lSaida';
-                        const icon = isEntrada ? 'bx-up-arrow-alt' : 'bx-down-arrow-alt'; 
-                        
+                        // Style Config
+                        const iconBg = isEntrada ? 'bg-green-50' : 'bg-red-50';
+                        const iconColor = isEntrada ? 'text-green-600' : 'text-[#db0038]';
+                        const iconClass = isEntrada ? 'bx-up-arrow-alt' : 'bx-down-arrow-alt';
+
                         let dataDisplay = "--/--";
-                        if(data.data && data.data.toDate) {
-                            dataDisplay = data.data.toDate().toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'});
+                        if (data.data && data.data.toDate) {
+                            dataDisplay = data.data.toDate().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
                         }
 
+                        // Using standard finance-card structure
                         const html = `
-                        <div class="containerCard">
-                            <div class="card-optionSize ${cssClass}">
-                                <i class='bx ${icon}'></i>
-                                <div style="flex-grow: 1;">
-                                    <h1 style="font-size: 1rem; margin:0;">${data.descricao || 'Movimentação'}</h1>
-                                    <span style="font-weight:600; font-size: 0.9rem;">
-                                        ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.valor)}
-                                    </span>
+                        <div class="finance-card p-4 flex items-center justify-between w-full">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full ${iconBg} flex items-center justify-center ${iconColor}">
+                                     <i class='bx ${iconClass} text-xl'></i>
                                 </div>
-                                <span class="l2">${dataDisplay}</span>
+                                <div>
+                                    <h3 class="text-sm font-bold text-gray-800">${data.descricao || 'Movimentação'}</h3>
+                                    <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mt-0.5">${dataDisplay}</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs font-bold text-gray-800 block">
+                                    ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.valor)}
+                                </span>
                             </div>
                         </div>`;
                         container.insertAdjacentHTML('beforeend', html);
@@ -258,46 +251,10 @@
                 })
                 .catch(err => {
                     console.error("Erro lançamentos:", err);
-                    container.innerHTML = '<p style="text-align:center;">Erro ao carregar dados.</p>';
+                    container.innerHTML = '<div class="text-center py-6 text-red-400 font-medium text-xs">Erro ao carregar dados.</div>';
                 });
-        }
-
-        async function loadTicketMedio(username) {
-            const el = document.getElementById('ticket-medio-display');
-            const mapId = TICKET_MEDIO_MAP[username]; 
-
-            if (!mapId) {
-                el.innerText = "N/A";
-                el.classList.remove('skeleton');
-                el.style.color = "#777";
-                return;
-            }
-
-            const url = `${APPSCRIPT_BASE}?tipo=${mapId}&mode=ticket`; 
-
-            try {
-                const response = await fetch(url);
-                const text = await response.text();
-
-                try {
-                    const data = JSON.parse(text);
-                    const valor = data.valor || data.ticket || 0; 
-                    el.innerText = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
-                    el.classList.remove('skeleton');
-                    el.style.color = "var(--text-dark)";
-                } catch (jsonError) {
-                    console.warn(`Resposta inválida para ${username}:`, text);
-                    el.innerText = "Indisponível"; 
-                    el.classList.remove('skeleton');
-                    el.style.color = "var(--warning-red)";
-                    el.style.fontSize = "0.8rem";
-                }
-
-            } catch (networkError) {
-                el.innerText = "Offline"; 
-                el.classList.remove('skeleton');
-            }
         }
     </script>
 </body>
+
 </html>

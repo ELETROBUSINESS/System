@@ -24,7 +24,12 @@
             --border-radius: 1rem;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
 
         body {
             background-color: var(--bg-color);
@@ -39,11 +44,22 @@
         }
 
         #particle-canvas {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
         }
 
         .screen1 {
-            position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; width: 100%; padding: 20px;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 20px;
         }
 
         .form-login {
@@ -58,88 +74,191 @@
             animation: fadeInUp 0.8s ease-out forwards;
         }
 
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
 
-        .section-title {
-            text-align: center; margin-bottom: 2rem; font-size: 1.8rem; font-weight: 700;
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .input-box { position: relative; margin-bottom: 1.5rem; }
+        .section-title {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .input-box {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
 
         .input-box input {
-            width: 100%; padding: 1rem 3.5rem 1rem 3rem;
-            background: var(--input-bg); border: 1px solid transparent; border-radius: 0.5rem;
-            color: var(--text-color); font-size: 1rem;
+            width: 100%;
+            padding: 1rem 3.5rem 1rem 3rem;
+            background: var(--input-bg);
+            border: 1px solid transparent;
+            border-radius: 0.5rem;
+            color: var(--text-color);
+            font-size: 1rem;
             transition: 0.3s;
         }
 
         .input-box input:focus {
-            outline: none; background: rgba(255, 255, 255, 0.15); border-color: var(--secondary-color);
+            outline: none;
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--secondary-color);
         }
 
         .input-icon {
-            position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
-            font-size: 1.25rem; color: rgba(255, 255, 255, 0.7);
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.25rem;
+            color: rgba(255, 255, 255, 0.7);
         }
 
         .password-toggle-icon {
-            position: absolute; right: 1rem; top: 50%; transform: translateY(-50%);
-            cursor: pointer; color: rgba(255, 255, 255, 0.7); font-size: 1.4rem;
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.4rem;
         }
 
         .btn_form {
-            width: 100%; padding: 1rem; border-radius: 0.5rem; border: none;
+            width: 100%;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: none;
             background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-            color: var(--text-color); font-size: 1.1rem; font-weight: 600; cursor: pointer;
-            transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            color: var(--text-color);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
         }
 
-        .btn_form:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(255, 16, 79, 0.4); }
-        .btn_form:disabled { background: #555; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn_form:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(255, 16, 79, 0.4);
+        }
 
-        .hidden { display: none; }
+        .btn_form:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .hidden {
+            display: none;
+        }
 
         .user-info {
-            display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding: 15px;
-            background: var(--input-bg); border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: var(--input-bg);
+            border-radius: 0.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .user-avatar {
-            width: 50px; height: 50px; border-radius: 50%; object-fit: cover;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
             border: 2px solid var(--secondary-color);
         }
 
-        .user-details { display: flex; flex-direction: column; flex-grow: 1; }
-        .user-name { font-size: 1.1rem; font-weight: 600; text-transform: capitalize; }
-        
-        .change-user {
-            background: none; border: none; color: rgba(255, 255, 255, 0.6); cursor: pointer;
-            font-size: 0.85rem; padding: 0; text-align: left; display: flex; align-items: center; gap: 0.25rem;
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
         }
-        .change-user:hover { color: var(--text-color); text-decoration: underline; }
+
+        .user-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .change-user {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            font-size: 0.85rem;
+            padding: 0;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .change-user:hover {
+            color: var(--text-color);
+            text-decoration: underline;
+        }
 
         .loading-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-color); z-index: 9999;
-            display: flex; justify-content: center; align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             transition: opacity 0.5s ease;
         }
+
         .spinner {
-            width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1);
-            border-top-color: var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite;
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
 
         /* Mensagem de Erro */
         .error-msg {
-            color: #ff4d4d; font-size: 0.9rem; text-align: center; margin-top: 10px; min-height: 20px;
+            color: #ff4d4d;
+            font-size: 0.9rem;
+            text-align: center;
+            margin-top: 10px;
+            min-height: 20px;
         }
     </style>
 </head>
 
 <body>
     <canvas id="particle-canvas"></canvas>
-    
+
     <div class="loading-overlay" id="global-loader">
         <div class="spinner"></div>
     </div>
@@ -150,9 +269,11 @@
                 <h2 class="section-title">ELETRO SYSTEM</h2>
 
                 <div id="username-step">
-                    <p style="text-align:center; color:#aaa; margin-bottom:15px; font-size:0.9rem;">Digite seu usuário para continuar</p>
+                    <p style="text-align:center; color:#aaa; margin-bottom:15px; font-size:0.9rem;">Digite seu usuário
+                        para continuar</p>
                     <div class="input-box">
-                        <input type="text" placeholder="Ex: evelyn" id="login-username" autocomplete="username" required>
+                        <input type="text" placeholder="Ex: evelyn" id="login-username" autocomplete="username"
+                            required>
                         <i class="bx bxs-user input-icon"></i>
                     </div>
                     <button class="btn_form" type="button" id="continue-btn">
@@ -173,11 +294,12 @@
                     </div>
 
                     <div class="input-box">
-                        <input type="password" placeholder="Sua senha" id="login-password" autocomplete="current-password">
+                        <input type="password" placeholder="Sua senha" id="login-password"
+                            autocomplete="current-password">
                         <i class="bx bxs-lock-alt input-icon"></i>
                         <i class='bx bx-show password-toggle-icon' id="password-toggle"></i>
                     </div>
-                    
+
                     <button class="btn_form" type="submit" id="submit-login-btn">
                         <span>Entrar</span>
                         <i class='bx bx-log-in-circle'></i>
@@ -235,8 +357,8 @@
             // Verifica se tem parametro na URL (ex: ?type=admin)
             // Apenas para lógica futura, por enquanto não bloqueia nada
             const urlParams = new URLSearchParams(window.location.search);
-            const loginType = urlParams.get('type'); 
-            if(loginType) console.log("Modo de login:", loginType);
+            const loginType = urlParams.get('type');
+            if (loginType) console.log("Modo de login:", loginType);
 
             initParticles();
         });
@@ -249,7 +371,7 @@
 
         function handleContinue() {
             const username = DOM.inputUser.value.trim();
-            
+
             if (username.length < 2) {
                 showError("Digite um usuário válido.");
                 return;
@@ -266,11 +388,11 @@
             // Atualiza UI para o Passo 2
             DOM.displayAvatar.src = avatarUrl;
             DOM.displayName.textContent = username;
-            
+
             // Troca de tela com animação simples
             DOM.stepUser.classList.add("hidden");
             DOM.stepPass.classList.remove("hidden");
-            
+
             // Foca na senha
             setTimeout(() => DOM.inputPass.focus(), 100);
         }
@@ -278,7 +400,7 @@
         // --- LÓGICA DO PASSO 2 (LOGIN REAL) ---
         DOM.form.addEventListener("submit", async (e) => {
             e.preventDefault();
-            
+
             // Se estiver no passo 1 e apertar enter, o evento de submit dispara
             // Precisamos garantir que estamos no passo 2
             if (!DOM.stepUser.classList.contains("hidden")) {
@@ -309,35 +431,59 @@
 
                 if (userDoc.exists) {
                     const userData = userDoc.data();
-                    
+
                     // 3. Salva Cache para o PDV/Dashboard usarem imediatamente
-                    localStorage.setItem('user_cache', JSON.stringify({
+                    const userDataObj = {
                         uid: uid,
                         username: userData.username,
                         name: userData.nome || username,
                         role: userData.funcao || 'colaborador',
-                        photoUrl: userData.photoUrl || DOM.displayAvatar.src, // Usa a do banco ou a gerada
+                        photoUrl: userData.photoUrl || DOM.displayAvatar.src,
                         lojaId: userData.lojaId || 'CD1'
-                    }));
+                    };
+                    localStorage.setItem('user_cache', JSON.stringify(userDataObj));
 
-                    // 4. Redireciona para a pasta centralizada
+                    // 4. GERA TOKEN DE SESSÃO (Para compatibilidade com script26.js)
+                    // Validade de 24 horas
+                    const SESSION_EXPIRY_MS = 20 * 60 * 1000;
+                    const sessionToken = {
+                        username: userData.username,
+                        uid: uid,
+                        profilePic: userDataObj.photoUrl,
+                        redirect: CENTRAL_DASHBOARD_URL,
+                        expires: new Date().getTime() + SESSION_EXPIRY_MS
+                    };
+                    localStorage.setItem('session_token', JSON.stringify(sessionToken));
+
+                    // 5. Redireciona para a pasta centralizada
                     window.location.href = CENTRAL_DASHBOARD_URL;
                 } else {
-                    // Usuário autenticou mas não tem doc no banco (caso raro de erro na migração)
-                    // Cria cache básico e deixa entrar
-                    localStorage.setItem('user_cache', JSON.stringify({
+                    // Usuário autenticou mas não tem doc no banco (Fallback)
+                    const fallbackData = {
                         uid: uid,
                         username: username,
                         name: username,
                         role: 'colaborador'
-                    }));
+                    };
+                    localStorage.setItem('user_cache', JSON.stringify(fallbackData));
+
+                    // Token de Sessão Fallback
+                    const SESSION_EXPIRY_MS = 20 * 60 * 1000;
+                    const sessionToken = {
+                        username: username,
+                        uid: uid,
+                        redirect: CENTRAL_DASHBOARD_URL,
+                        expires: new Date().getTime() + SESSION_EXPIRY_MS
+                    };
+                    localStorage.setItem('session_token', JSON.stringify(sessionToken));
+
                     window.location.href = CENTRAL_DASHBOARD_URL;
                 }
 
             } catch (error) {
                 console.error("Erro Login:", error);
                 setLoading(false);
-                
+
                 if (error.code === 'auth/wrong-password') {
                     showError("Senha incorreta.");
                     DOM.inputPass.value = "";
@@ -354,7 +500,7 @@
         });
 
         // --- UTILITÁRIOS ---
-        
+
         // Voltar para trocar usuário
         DOM.btnChange.addEventListener("click", () => {
             DOM.stepPass.classList.add("hidden");
@@ -374,7 +520,7 @@
 
         function showError(msg) {
             DOM.msgError.textContent = msg;
-            if(msg) {
+            if (msg) {
                 // Efeito de tremor se houver erro
                 DOM.form.animate([
                     { transform: 'translateX(0)' },
@@ -402,7 +548,7 @@
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
             let particles = [];
-            
+
             const setSize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
             setSize();
 
@@ -441,10 +587,10 @@
                 particles.forEach((a, index) => {
                     for (let bIndex = index + 1; bIndex < particles.length; bIndex++) {
                         const b = particles[bIndex];
-                        const dist = (a.x - b.x)**2 + (a.y - b.y)**2;
+                        const dist = (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
                         if (dist < 10000) {
                             ctx.beginPath();
-                            ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 - dist/100000})`;
+                            ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 - dist / 100000})`;
                             ctx.moveTo(a.x, a.y);
                             ctx.lineTo(b.x, b.y);
                             ctx.stroke();
@@ -460,4 +606,5 @@
         }
     </script>
 </body>
+
 </html>

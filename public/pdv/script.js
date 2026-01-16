@@ -476,6 +476,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // --- CORREÇÃO: Botões de Voltar no Modal de Pagamento ---
+    document.querySelectorAll('.btn-back-payment').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const cashSection = document.getElementById('cash-change-section');
+            const cred_options = document.getElementById('crediario-options');
+            const optionsGrid = document.getElementById('single-payment-options');
+
+            if (cashSection) cashSection.style.display = 'none';
+            if (cred_options) cred_options.style.display = 'none';
+            if (optionsGrid) optionsGrid.style.display = 'grid';
+        });
+    });
+
     // Adicione o cálculo de troco em tempo real (Apenas Visual no Modal)
     document.getElementById('cash-received').addEventListener('input', (e) => {
         const total = lastSaleData ? lastSaleData.total : 0;
@@ -2891,12 +2904,33 @@ document.addEventListener('DOMContentLoaded', () => {
             const totalGeralVenda = lastSaleData ? lastSaleData.total : 0;
             const dadosVendaInterna = { id: saleId, cliente: selectedCrediarioClient ? selectedCrediarioClient.nomeExibicao : "Cliente Balcão", valorTotal: totalGeralVenda, itens: cart, metodoPagamento: selectedPaymentMethod };
 
-            await Promise.allSettled([
+            const promisesParaExecutar = [
                 fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "salvarNotaFiscal", data: dadosFiscal }) }),
                 registrarVendaAtual([{ method: selectedPaymentMethod, value: totalGeralVenda }]),
                 salvarVendaNoHistorico(dadosVendaInterna),
                 abaterEstoqueFirebase(cart)
-            ]);
+            ];
+
+            // [CORREÇÃO] Se for Crediário, registrar na Ficha do Cliente (Logs)
+            if (String(selectedPaymentMethod).toLowerCase().includes('crediário')) {
+                const idCli = selectedCrediarioClient ? selectedCrediarioClient.idCliente : null;
+                if (idCli) {
+                    const params = new URLSearchParams({
+                        action: 'registrarTransacao',
+                        idCliente: idCli,
+                        valor: totalGeralVenda,
+                        tipo: 'Compra',
+                        parcelas: window.tempInstallments || 1,
+                        isEntrada: 'false'
+                    });
+
+                    promisesParaExecutar.push(fetch(`${SCRIPT_URL}?${params.toString()}`));
+                } else {
+                    console.warn("Venda Crediário sem cliente identificado. Não será lançado na ficha.");
+                }
+            }
+
+            await Promise.allSettled(promisesParaExecutar);
 
             if (printFormat === 'a4') printA4(dadosVendaInterna.cliente);
             else printThermal(dadosVendaInterna.cliente);

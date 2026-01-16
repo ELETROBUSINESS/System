@@ -7,7 +7,8 @@
     <link rel="icon" href="/assets/img/iconWeb.png">
     <title>Ponto de Venda | ELETRO</title>
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="pdv_payment.css?v=1">
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
@@ -1362,23 +1363,25 @@
                         Divisão</button>
                 </div>
 
-                <div id="cash-change-section"
-                    style="display: none; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 15px;">
-                    <h4 class="mb-16">Pagamento em Dinheiro</h4>
-                    <div class="form-group">
-                        <label>Valor Recebido (R$)</label>
-                        <input type="number" id="cash-received" step="0.01" class="input-modern"
-                            style="font-size: 1.5rem; height: 50px;" placeholder="0,00">
+                <div id="cash-change-section" class="payment-method-card" style="display: none;">
+                    <h4 class="payment-method-title">
+                        Pagamento em Dinheiro
+                    </h4>
+
+                    <div class="money-input-wrapper">
+                        <label class="money-input-label">Valor Recebido (R$)</label>
+                        <input type="number" id="cash-received" step="0.01" class="money-input-field"
+                            placeholder="0,00">
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
-                        <span style="font-weight: 500; color: #64748b;">Troco:</span>
-                        <span id="cash-change-value" style="font-size: 1.5rem; font-weight: 700; color: #10b981;">R$
-                            0,00</span>
+
+                    <div class="change-display-box">
+                        <span class="change-label">Troco Estimado:</span>
+                        <span id="cash-change-value" class="change-value-highlight">R$ 0,00</span>
                     </div>
-                    <div style="display: flex; gap: 10px; margin-top: 20px;">
-                        <button class="btn btn-secondary btn-back-payment" style="width: auto;">Voltar</button>
-                        <button class="btn btn-primary" id="confirm-cash-btn" style="flex: 1;">Confirmar
-                            Pagamento</button>
+
+                    <div class="payment-actions-row">
+                        <button class="btn-payment-back btn-back-payment">Voltar</button>
+                        <button class="btn-payment-confirm" id="confirm-cash-btn">Confirmar Pagamento</button>
                     </div>
                 </div>
 

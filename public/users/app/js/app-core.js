@@ -17,7 +17,7 @@ const db = firebase.firestore();
 
 // 2. Controle de Sessão e UI Global
 document.addEventListener("DOMContentLoaded", () => {
-    
+
     // Gerencia estado de Loading
     const body = document.body;
     body.classList.add('loading-auth'); // Força estado de carregamento inicial
@@ -30,23 +30,50 @@ document.addEventListener("DOMContentLoaded", () => {
             body.classList.remove('loading-auth');
             highlightCurrentMenu(); // Ativa o ícone correto no menu
         } else {
+            // Se não tem Firebase User, verifica se tem Token de Sessão (Legacy/E-finance)
+            const sessionToken = localStorage.getItem('session_token');
+            if (sessionToken) {
+                console.log("Sessão via Token detectada. Ignorando Auth Firebase.");
+                body.classList.remove('loading-auth');
+                window.location.href = "/users/e-finance.html";
+                return;
+            }
+
             console.warn("Sem sessão. Redirecionando...");
-            window.location.href = "/login.html";
+            window.location.href = "/users/e-finance.html";
         }
     });
 
-    // Configura Botão Sair (se existir na página)
+    // 6. Timer de Sessão Visual
+    createSessionTimer();
+
+    // Configura Botão Sair (se existir na página - Ex: Extrato)
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            auth.signOut().then(() => {
-                localStorage.removeItem('user_cache');
-                window.location.href = "/login.html";
-            });
+            window.logoutApp();
         });
     }
 });
+
+// Função Global de Logout (para usar em onClick inline)
+window.logoutApp = function () {
+    // Limpa tokens imediatamente para garantir
+    localStorage.removeItem('user_cache');
+    localStorage.removeItem('session_token');
+
+    // Tenta logout no Firebase e redireciona
+    if (firebase.auth().currentUser) {
+        auth.signOut().then(() => {
+            window.location.href = "/users/e-finance.html";
+        }).catch(() => {
+            window.location.href = "/users/e-finance.html";
+        });
+    } else {
+        window.location.href = "/users/e-finance.html";
+    }
+};
 
 // 3. Função de Carregamento de Dados (Reutilizável)
 async function loadUserDataGlobal(user) {
@@ -67,7 +94,16 @@ async function loadUserDataGlobal(user) {
                 points: data.pontos || 0,
                 // Adicione outros campos globais aqui se precisar
             };
-            
+
+            // --- TEMPORARY FRONTEND OVERRIDE FOR POINTS ---
+            const lowerName = (uiData.name || "").toLowerCase();
+            if (lowerName.includes('evelyn')) {
+                uiData.points = 7;
+            } else if (lowerName.includes('ryan')) {
+                uiData.points = 5;
+            }
+            // ----------------------------------------------
+
             updateGlobalUI(uiData);
             localStorage.setItem('user_cache', JSON.stringify(uiData));
         }
@@ -90,7 +126,7 @@ function updateGlobalUI(data) {
 
     if (els.greeting) els.greeting.innerText = `Olá, ${firstName}!`;
     if (els.role) els.role.innerText = data.role;
-    
+
     if (els.photo) {
         if (data.photoUrl && data.photoUrl.includes('http')) {
             els.photo.src = data.photoUrl;
@@ -119,4 +155,49 @@ function highlightCurrentMenu() {
             link.parentElement.classList.add('active');
         }
     });
+}
+
+// 6. Timer de Sessão
+function createSessionTimer() {
+    const div = document.createElement('div');
+    div.id = 'last-update-indicator';
+    div.style.cssText = 'position: fixed; bottom: 15px; right: 15px; font-size: 11px; color: rgb(75, 85, 99); z-index: 9999; font-family: Inter, sans-serif; background: rgba(255, 255, 255, 0.8); padding: 4px 8px; border-radius: 4px; border: 1px solid rgb(229, 231, 235); pointer-events: none; display: block;';
+
+    // Adiciona ao corpo se não existir
+    if (!document.getElementById('last-update-indicator')) {
+        document.body.appendChild(div);
+    }
+
+    const updateTimer = () => {
+        const tokenString = localStorage.getItem('session_token');
+        if (!tokenString) {
+            div.innerText = "Sessão inválida";
+            return;
+        }
+
+        try {
+            const token = JSON.parse(tokenString);
+            const now = new Date().getTime();
+            const diff = token.expires - now;
+
+            if (diff <= 0) {
+                div.innerText = "Sessão expirada";
+                div.style.color = "red";
+                // Redireciona se expirou
+                setTimeout(() => window.location.href = "/login.html", 1000);
+            } else {
+                const totalSeconds = Math.floor(diff / 1000);
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+
+                // Formatação MM:SS
+                div.innerText = `Sessão expira em ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+        } catch (e) {
+            div.innerText = "Erro no timer";
+        }
+    };
+
+    updateTimer(); // Chama imediatamente
+    setInterval(updateTimer, 1000); // Atualiza a cada segundo
 }

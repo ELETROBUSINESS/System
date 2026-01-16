@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" data-view="mobile" data-minimized="false">
 
 <head>
     <meta charset="UTF-8">
@@ -7,148 +7,353 @@
     <title>Missões | ELETRO</title>
     <link rel="icon" href="/assets/img/iconWeb.png">
 
-    <link rel="stylesheet" href="/assets/css/main.css">
-
-    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+    <!-- Bibliotecas Externas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <link rel='stylesheet'
         href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
     <link rel='stylesheet'
         href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
 
+    <!-- Firebase (Required for App Core) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
+    <!-- Estilos Unificados e Main -->
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/style26.css">
+
+    <!-- Navbar Anti-Flash -->
+    <script>
+        (function () {
+            const savedState = localStorage.getItem('acc_navbar');
+            if (savedState !== null) {
+                document.documentElement.setAttribute('data-minimized', savedState);
+                if (savedState === 'true') {
+                    document.documentElement.classList.add('sidebar-minimized-init');
+                }
+            }
+        })();
+    </script>
+    <!-- Custom Style to Hide Navbar on Mobile for Quest Page -->
     <style>
-        /* CSS para evitar piscar tela enquanto autentica */
-        body.loading-auth .info,
-        body.loading-auth .dashboard,
-        body.loading-auth .navigation {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        /* Estilo do Skeleton Loading */
-        .skeleton {
-            color: transparent;
-            background: #ccc;
-            border-radius: 4px;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% {
-                opacity: 0.6;
+        @media (max-width: 768px) {
+            .nav-container {
+                display: none !important;
             }
 
-            50% {
-                opacity: 1;
-            }
-
-            100% {
-                opacity: 0.6;
+            /* Adjust padding or margin if needed since navbar is gone */
+            #app-container {
+                padding-bottom: 20px;
             }
         }
     </style>
 </head>
 
-<body class="painel-adm1 loading-auth">
+<body style="--marker-x: 50%; --marker-y: 50%;">
 
-    <main class="main-content">
+    <div id="app-container" class="dashboard-grid">
+
+        <!-- Header Information (Matches conta.html style) -->
         <div class="info">
             <div class="photo-profile">
-                <img id="user-photo" src="https://placehold.co/150/db0038/FFFFFF?text=..." alt="Perfil">
+                <!-- Placeholder image, will be updated by script -->
+                <img src="/assets/img/iconWeb.png" id="user-profile-img" style="object-fit: cover;">
                 <div class="detals">
-                    <h1 id="user-greeting">Olá!</h1>
-                    <p id="user-role">Carregando...</p>
+                    <h1 id="user-full-name">Olá, ...</h1>
+                    <p id="user-role-display">Carregando...</p>
                 </div>
             </div>
+
             <div class="balance">
-                <div class="pending">
-                    <p>Pontos</p>
-                    <span id="user-points" class="skeleton">0,00</span>
+                <p>Pontos</p>
+                <div class="saldo">
+                    <span id="user-points" class="">0,00</span>
                 </div>
             </div>
         </div>
-    </main>
 
-    <div class="dashboard">
-        <p><i class='bx bx-radar'></i> Missões disponíveis</p>
+        <!-- Two Column Layout (55% / 45%) -->
+        <div style="grid-column: 1 / -1; display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px;">
 
-        <div class="containerCard">
-            <div class="card-optionSize">
-                <i class="fi fi-rr-money-bill-transfer"></i>
-                <div>
-                    <h1>Meta de vendas</h1>
-                    <span id="meta-vendas-display" class="skeleton">Carregando meta...</span>
+            <!-- Left Column (55% approx -> 7/12) -->
+            <div class="col-span-12 lg:col-span-7">
+                <!-- Section Title -->
+                <div style="margin: 0 4px;">
+                    <p
+                        class="text-[12px] uppercase font-bold text-gray-400 tracking-wider mb-2 flex items-center justify-center gap-2">
+                        <i class='bx bx-radar'></i> Missões do Dia
+                    </p>
                 </div>
-                <span class="l2">1.00 pts</span>
+
+                <div class="quest-grid" id="quest-grid-container">
+                    <!-- Cards will be injected by JS based on PDV mapping -->
+                    <div class="finance-card quest-card p-4 skeleton-card">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>
+                            <div>
+                                <div class="h-4 bg-gray-200 rounded w-24 mb-2 animate-pulse"></div>
+                                <div class="h-3 bg-gray-200 rounded w-16 animate-pulse"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            <!-- Right Column (45% approx -> 5/12) - Removed 'hidden' to show on mobile below missions -->
+            <div class="col-span-12 lg:col-span-5 flex flex-col gap-4">
+
+                <!-- NEW: Minimalist Wallet Card -->
+                <div class="finance-card p-6 h-auto">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Valor
+                                Resgatável</p>
+                            <h2 id="card-converted-value" class="text-3xl font-bold text-gray-800 tracking-tight">R$
+                                0,00</h2>
+                        </div>
+                        <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
+                            <i class='bx bx-wallet text-xl'></i>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- Conversion Rate -->
+                        <div class="flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#db0038]"></span>
+                            <p class="text-xs text-gray-500 font-medium">1 Ponto = <span
+                                    class="text-gray-900 font-bold">R$ 0,37</span></p>
+                        </div>
+
+                        <!-- Minimal Progress -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1.5">
+                                <span class="text-[10px] text-gray-400 font-medium">Meta Diária (4,5 pts)</span>
+                                <span class="text-[10px] text-[#db0038] font-bold">R$ 1,67</span>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-1">
+                                <div class="bg-[#db0038] h-1 rounded-full" style="width: 15%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Simple CTA -->
+                        <button id="btn-resgate"
+                            class="w-full mt-2 bg-gray-900 text-white text-[10px] font-bold py-2.5 rounded-lg hover:bg-gray-800 transition flex items-center justify-center gap-2">
+                            <span>Solicitar Resgate</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        <div class="containerCard">
-            <div class="card-optionSize">
-                <i class="fi fi-rr-messages-question"></i>
-                <div>
-                    <h1>Avaliação</h1>
-                    <span>Responda perguntas rápidas para ganhar pontos!</span>
-                    <a class="add_btn" href="#">Responder</a>
-                </div>
-                <span class="l2">2.25 pts</span>
-            </div>
-        </div>
     </div>
 
-    <div class="navigation">
-        <ul>
-            <li class="list">
-                <a href="conta.html">
-                    <span class="icon"><i class='bx bx-home'></i></span>
-                    <span class="text">Home</span>
-                </a>
-            </li>
-            <li class="list active">
-                <a href="quest.html">
-                    <span class="icon"><i class='bx bxs-radar'></i></span>
-                    <span class="text">Missões</span>
-                </a>
-            </li>
-            <li class="list">
-                <a href="pdv.html">
-                    <span class="icon"><i class='bxr bx-plus-circle'></i></span>
-                    <span class="text">Venda</span>
-                </a>
-            </li>
-            <li class="list">
-                <a href="extrato.html">
-                    <span class="icon"><i class='bx bx-copy-alt'></i></span>
-                    <span class="text">Extrato</span>
-                </a>
-            </li>
-            <li class="list">
-                <a href="#" id="logout-btn">
-                    <span class="icon"><i class='bx bx-log-out'></i></span>
-                    <span class="text">Sair</span>
-                </a>
-            </li>
-            <div class="indicator color11"></div>
-        </ul>
+    <!-- Navbar -->
+    <div class="nav-container">
+        <div class="nav-marker" id="nav-marker"></div>
+        <div class="nav-bg"></div>
+        <nav class="nav-overlay" id="nav-overlay">
+            <div class="nav-header-toggle">
+                <div class="btn-toggle-sidebar" onclick="toggleSidebar()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        id="toggle-icon" style="transition: transform 0.3s ease;">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="nav-links-container">
+                <div class="nav-item" onclick="navigateTo('conta.html')">
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
+                    </div>
+                    <span class="nav-label">Casa</span>
+                </div>
+
+                <div class="nav-item" onclick="navigateTo('wallet.html')">
+                    <div class="nav-icon">
+                        <i class='bx bx-user-circle' style="font-size: 24px;"></i>
+                    </div>
+                    <span class="nav-label">Conta</span>
+                </div>
+
+                <div class="nav-item desktop-only-item" onclick="navigateTo('/pdv')">
+                    <div class="nav-icon">
+                        <i class='bx bx-cart-minus' style="font-size: 24px;"></i>
+                    </div>
+                    <span class="nav-label">PDV</span>
+                </div>
+
+                <div class="nav-item active desktop-only-item" onclick="navigateTo('quest.html')">
+                    <div class="nav-icon">
+                        <i class='bx bx-radar' style="font-size: 24px;"></i>
+                    </div>
+                    <span class="nav-label">Missão</span>
+                </div>
+
+                <div class="nav-item" onclick="navigateTo('extrato.html')">
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <line x1="10" y1="9" x2="8" y2="9"></line>
+                        </svg>
+                    </div>
+                    <span class="nav-label">Extrato</span>
+                </div>
+
+                <div class="nav-item" onclick="logoutApp()">
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </div>
+                    <span class="nav-label">Sair</span>
+                </div>
+            </div>
+        </nav>
     </div>
 
+    <!-- Scripts -->
     <script src="js/app-core.js"></script>
+    <script src="/assets/js/script26.js"></script>
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            // Simulação de carregamento da meta (substituir por chamada real ao DB depois)
-            setTimeout(() => {
-                const el = document.getElementById('meta-vendas-display');
-                if (el) {
-                    // Aqui você conectará com seu backend real futuramente
-                    el.innerText = "Faltam R$ 500,00";
-                    el.classList.remove('skeleton');
+            // --- 1. CONFIGURAÇÃO DE CONVERSÃO ---
+            const POINT_VALUE = 0.37;
+
+            const pointsEl = document.getElementById('user-points');
+            const convertedEl = document.getElementById('card-converted-value');
+
+            const updateConversion = () => {
+                const pointsText = pointsEl.innerText.replace(',', '.');
+                const points = parseFloat(pointsText) || 0;
+                const value = points * POINT_VALUE;
+                if (convertedEl) {
+                    convertedEl.innerText = value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                 }
-            }, 1000);
+            };
+
+            // Observa mudanças nos pontos (carregados via app-core.js)
+            const observer = new MutationObserver(updateConversion);
+            if (pointsEl) {
+                observer.observe(pointsEl, { childList: true, characterData: true, subtree: true });
+                // Primeira execução caso já tenha valor
+                if (pointsEl.innerText !== "0,00") updateConversion();
+            }
+
+            // --- 2. LÓGICA DE MISSÕES DO PDV ---
+            const db = firebase.firestore();
+            const questGrid = document.getElementById('quest-grid-container');
+            const highlightsContainer = document.getElementById('pdv-highlights');
+
+            const renderQuestCard = (title, subtitle, points, statusClass, statusText, iconClass, actionBtn = false) => {
+                return `
+                    <div class="finance-card quest-card p-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-[#db0038]">
+                                <i class="${iconClass} text-lg"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold text-gray-800">${title}</h3>
+                                <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mt-0.5">${subtitle}</span>
+                            </div>
+                        </div>
+                        <div class="text-right flex flex-col items-end gap-1">
+                            ${actionBtn ? `<button class="bg-[#db0038] text-white text-[10px] font-bold px-4 py-1.5 rounded-full hover:bg-[#b8002e] transition shadow-sm">Responder</button>` : ''}
+                            <span class="text-xs font-bold text-gray-800 block">${points} pts</span>
+                            <span class="text-[9px] ${statusClass} font-bold uppercase tracking-wide">${statusText}</span>
+                        </div>
+                    </div>
+                 `;
+            };
+
+            const loadMissions = async () => {
+                const questGrid = document.getElementById('quest-grid-container');
+
+                // --- DESIGN DE MISSÃO BLOQUEADA ---
+                const renderLockedCard = (title, subtitle, iconClass = 'bx-question-mark') => {
+                    return `
+                        <div class="finance-card quest-card p-4 relative overflow-hidden group border border-dashed border-gray-200">
+                                <div class="absolute inset-0 bg-gray-50/50 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <i class='bx bxs-lock-alt text-xl text-gray-400'></i>
+                                <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Em Breve</span>
+                            </div>
+                            <div class="flex items-center gap-4 opacity-40 grayscale">
+                                <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+                                    <i class='bx ${iconClass} text-lg'></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-gray-800">${title}</h3>
+                                    <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mt-0.5">${subtitle}</span>
+                                </div>
+                            </div>
+                            <div class="text-right flex flex-col items-end gap-1 opacity-40 grayscale">
+                                    <div class="w-16 h-4 bg-gray-200 rounded"></div>
+                            </div>
+                        </div>
+                    `;
+                };
+
+                // --- GERAR MISSÕES (TODAS STATIC E BLOQUEADAS) ---
+                let html = '';
+
+                // Missões do Roadmap
+                html += renderLockedCard("Meta de Vendas", "R$ 1.000,00", "bx-money");
+                html += renderLockedCard("Ticket Médio", "Manter > R$ 50", "bx-bar-chart-alt-2");
+                html += renderLockedCard("Produto Foco", "Vender +5 Itens", "bx-shopping-bag");
+                html += renderLockedCard("Avaliação", "Quiz Rápido", "bx-message-square-dots");
+                html += renderLockedCard("Super Meta", "Desafio semanal", "bx-trophy");
+                html += renderLockedCard("Divulgação", "Poste ao menos 5 stories da loja", "bx-camera");
+
+                // --- MENSAGEM DE DESENVOLVIMENTO ---
+                html += `
+                    <div style="grid-column: 1 / -1; margin-top: 10px;text-align: center;">
+                        <p class="text-[10px] text-gray-400 uppercase tracking-widest font-semibold flex items-center justify-center gap-2">
+                            <i class='bx bx-code-alt'></i> Sistema de missões em desenvolvimento
+                        </p>
+                    </div>
+                `;
+
+                questGrid.innerHTML = html;
+            };
+
+            loadMissions();
+
+            // --- 3. BOTÃO DE RESGATE (ANIMAÇÃO) ---
+            const btnResgate = document.getElementById('btn-resgate');
+            if (btnResgate) {
+                btnResgate.addEventListener('click', () => {
+                    const originalContent = `<span>Solicitar Resgate</span>`;
+
+                    // Muda estado para bloqueado
+                    btnResgate.innerHTML = `<i class='bx bxs-lock-alt'></i> Em Breve`;
+                    btnResgate.classList.add('bg-gray-500', 'cursor-not-allowed');
+                    btnResgate.classList.remove('bg-gray-900', 'hover:bg-gray-800');
+
+                    // Reverte após 2 segundos
+                    setTimeout(() => {
+                        btnResgate.innerHTML = originalContent;
+                        btnResgate.classList.remove('bg-gray-500', 'cursor-not-allowed');
+                        btnResgate.classList.add('bg-gray-900', 'hover:bg-gray-800');
+                    }, 2000);
+                });
+            }
         });
     </script>
 </body>
