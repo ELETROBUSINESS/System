@@ -1759,6 +1759,67 @@ body {
     background-color: #e5e7eb;
 }
 
+/* Mobile Navbar Hide for Specific Pages */
+@media (max-width: 1023px) {
+    .hidden-mobile-paged {
+        display: none !important;
+    }
+
+    /* Responsive Card Table for Crediário */
+    .page-crediario .finance-table thead {
+        display: none;
+    }
+
+    .page-crediario .finance-table tbody tr {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "name value"
+            "status action";
+        gap: 12px;
+        padding: 16px;
+        background: #ffffff;
+        border: 1px solid #f0f0f0;
+        border-radius: 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+    }
+
+    /* Remove default td borders/padding override */
+    .page-crediario .finance-table td {
+        display: block;
+        border: none;
+        padding: 0 !important;
+    }
+
+    /* Area Assignment */
+    .page-crediario .col-name {
+        grid-area: name;
+    }
+
+    .page-crediario .col-status {
+        grid-area: status;
+        align-self: center;
+    }
+
+    .page-crediario .col-debt {
+        grid-area: value;
+        text-align: right;
+        font-size: 1.1rem;
+        align-self: start;
+    }
+
+    .page-crediario .col-venc {
+        display: none !important;
+    }
+
+    .page-crediario .col-actions {
+        grid-area: action;
+        text-align: right;
+        align-self: center;
+    }
+}
+
 .btn-danger-soft {
     color: #dc2626;
     background: #fee2e2;
