@@ -803,6 +803,21 @@
         <input type="tel" id="valor" required placeholder="R$ 0,00" inputmode="numeric">
         <label style="display:block; margin-top:15px;">Vencimento</label>
         <input type="text" id="vencimento" required placeholder="DD/MM/AAAA" maxlength="10" inputmode="numeric">
+
+        <label style="display:block; margin-top:15px;">Parcelas</label>
+        <select id="parcelas" style="margin-top:8px;">
+          <option value="1">À vista (1x)</option>
+          <option value="2">2x</option>
+          <option value="3">3x</option>
+          <option value="4">4x</option>
+        </select>
+
+        <div id="preview-parcelas"
+          style="margin-top:15px; padding:15px; background:#f1f5f9; border-radius:12px; font-size:0.85rem; color:var(--text-muted); display:none;">
+          <strong>Cobranças Previstas:</strong>
+          <ul style="margin:5px 0 0 0; padding-left:20px; list-style-type:circle;"></ul>
+        </div>
+
         <button type="submit" class="btn-submit">Registrar</button>
       </form>
     </div>
@@ -1084,8 +1099,102 @@
       }
     };
 
-    document.getElementById('formNovaConta').addEventListener('submit', async (e) => { e.preventDefault(); const btn = e.target.querySelector('button'); btn.innerText = '...'; try { const [d, m, a] = document.getElementById('vencimento').value.split('/'); const payload = { id: Date.now().toString(), descricao: document.getElementById('beneficiario').value, valor: document.getElementById('valor').value.replace(/\D/g, '') / 100, vencimento: `${a}-${m}-${d}` }; await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'adicionarConta', data: payload }) }); document.getElementById('modalNovaConta').style.display = 'none'; showToast('Salvo!', 'success'); carregarContas(); } catch (err) { showToast('Erro', 'error'); } btn.innerText = 'Registrar'; });
-    document.getElementById('btnConfirmarPagamento').onclick = async (e) => { const btn = e.target; btn.innerText = '...'; try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'pagarConta', id: btn.dataset.id, paymentMethod: document.getElementById('forma-pagamento').value }) }); document.getElementById('modalPagarConta').style.display = 'none'; showToast('Pago!', 'success'); carregarContas(); } catch (err) { showToast('Erro', 'error'); } btn.innerText = 'Confirmar'; };
+    document.getElementById('formNovaConta').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('button');
+      if (btn.disabled) return;
+
+      btn.disabled = true;
+      btn.innerText = 'Registrando...';
+
+      try {
+        const [d, m, a] = document.getElementById('vencimento').value.split('/');
+        const parcelas = parseInt(document.getElementById('parcelas').value);
+        const descricaoBase = document.getElementById('beneficiario').value;
+        const valorTotal = parseFloat(document.getElementById('valor').value.replace(/\D/g, '') || 0) / 100;
+
+        const promises = [];
+
+        for (let i = 0; i < parcelas; i++) {
+          // CALCULO SEGURO DE DATA (EVITANDO PULO DE MÊS, EX: 31/JAN -> 28/FEV)
+          let targetMonthIndex = parseInt(m) - 1 + i;
+          let targetYear = parseInt(a) + Math.floor(targetMonthIndex / 12);
+          let targetMonth = targetMonthIndex % 12;
+
+          // Pega o último dia do mês alvo (ex: dia 0 de Março é 28 ou 29 de Fev)
+          let maxDayOfMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+          let targetDay = Math.min(parseInt(d), maxDayOfMonth);
+
+          const dataBase = new Date(targetYear, targetMonth, targetDay);
+          const dia = String(dataBase.getDate()).padStart(2, '0');
+          // getMonth() retorna 0-11, adicionamos 1 para formatar
+          const mes = String(dataBase.getMonth() + 1).padStart(2, '0');
+          const ano = dataBase.getFullYear();
+
+          const desc = parcelas > 1 ? `${descricaoBase} (${i + 1}/${parcelas})` : descricaoBase;
+
+          const payload = {
+            id: Date.now().toString() + i,
+            descricao: desc,
+            valor: valorTotal,
+            vencimento: `${ano}-${mes}-${dia}`
+          };
+
+          promises.push(fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'adicionarConta', data: payload }) }));
+        }
+
+        await Promise.all(promises);
+
+        document.getElementById('modalNovaConta').style.display = 'none';
+        showToast('Contas Salvas!', 'success');
+
+        // LIMPAR FORMULÁRIO
+        document.getElementById('beneficiario').value = '';
+        document.getElementById('valor').value = '';
+        document.getElementById('vencimento').value = '';
+        document.getElementById('parcelas').value = '1';
+        document.getElementById('preview-parcelas').style.display = 'none';
+
+        carregarContas();
+      } catch (err) {
+        showToast('Erro ao salvar', 'error');
+        console.error(err);
+      }
+      btn.innerText = 'Registrar';
+      btn.disabled = false;
+    });
+
+    // LÓGICA DE PREVIEW DE PARCELAS
+    const updatePreview = () => {
+      const v = document.getElementById('vencimento').value;
+      const p = parseInt(document.getElementById('parcelas').value);
+      const div = document.getElementById('preview-parcelas');
+      const ul = div.querySelector('ul');
+
+      if (v.length !== 10 || p <= 1) {
+        div.style.display = 'none';
+        return;
+      }
+
+      const [d, m, a] = v.split('/');
+      ul.innerHTML = '';
+
+      for (let i = 0; i < p; i++) {
+        const data = new Date(parseInt(a), parseInt(m) - 1 + i, parseInt(d));
+        const dia = String(data.getDate()).padStart(2, '0');
+        const mesNome = data.toLocaleString('pt-BR', { month: 'long' });
+        const ano = data.getFullYear();
+
+        const li = document.createElement('li');
+        li.textContent = `${i + 1}ª Parcela: ${dia} de ${mesNome} de ${ano}`;
+        ul.appendChild(li);
+      }
+      div.style.display = 'block';
+    };
+
+    document.getElementById('vencimento').addEventListener('input', updatePreview);
+    document.getElementById('parcelas').addEventListener('change', updatePreview);
+    document.getElementById('btnConfirmarPagamento').onclick = async (e) => { const btn = e.target; if (btn.disabled) return; btn.disabled = true; btn.innerText = '...'; try { await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'pagarConta', id: btn.dataset.id, paymentMethod: document.getElementById('forma-pagamento').value }) }); document.getElementById('modalPagarConta').style.display = 'none'; showToast('Pago!', 'success'); carregarContas(); } catch (err) { showToast('Erro', 'error'); } btn.innerText = 'Confirmar'; btn.disabled = false; };
     document.getElementById('inputBusca').addEventListener('input', (e) => { const t = e.target.value.toLowerCase(); document.querySelectorAll('.conta-card').forEach(c => c.style.display = c.innerText.toLowerCase().includes(t) ? 'flex' : 'none'); });
     document.getElementById('valor').addEventListener('input', (e) => { let v = e.target.value.replace(/\D/g, ''); e.target.value = 'R$ ' + (parseInt(v || 0) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 }); });
     document.getElementById('vencimento').addEventListener('input', (e) => { let v = e.target.value.replace(/\D/g, ''); if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2); if (v.length > 5) v = v.slice(0, 5) + '/' + v.slice(5, 9); e.target.value = v; });
