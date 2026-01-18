@@ -212,6 +212,25 @@ body {
         gap: 20px;
     }
 
+    /* Page Crediário Specific Layout */
+    #app-container.page-crediario {
+        grid-template-areas:
+            "info info"
+            "kpi kpi"
+            "main main" !important;
+    }
+
+    #app-container.page-crediario .kpi-area {
+        grid-area: kpi;
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+
+    #app-container.page-crediario>.finance-card {
+        grid-area: main;
+        width: 100%;
+        margin-top: 0;
+    }
+
     /* Layout overrides */
     .chart-area,
     .history-area,
@@ -335,6 +354,10 @@ body {
         z-index: 1300;
         order: 0;
         margin: 0;
+    }
+
+    .nav-icon i {
+        font-size: 25px;
     }
 
     .nav-item.active .nav-icon {
@@ -1041,6 +1064,14 @@ body {
 @media (min-width: 1024px) {
     .kpi-area {
         grid-template-columns: repeat(4, 1fr);
+    }
+
+    .kpi-area.cols-2 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .kpi-area.cols-3 {
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 

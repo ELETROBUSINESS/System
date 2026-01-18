@@ -13,6 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <!-- BoxIcons -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <link rel='stylesheet'
         href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
     <link rel='stylesheet'
@@ -44,11 +45,11 @@
     </script>
 </head>
 
-<body style="--marker-x: 50%; --marker-y: 50%;">
+<body style="--marker-x: 0%; --marker-y: 50%;">
 
     <div id="chart-tooltip"></div>
 
-    <div id="app-container">
+    <div id="app-container" class="page-crediario">
         <!-- Info Profile -->
         <div class="info">
             <div class="photo-profile">
@@ -65,33 +66,50 @@
                     <span id="total-receivable" class="">R$ 0,00</span>
                     <i class="bx bx-show" id="toggle-balance-icon"></i>
                 </div>
-                <div class="pending">
-                    <p>Em atraso: </p>
-                    <span id="total-overdue" class="text-red-500 font-bold">R$ 0,00</span>
+                <!-- Pending removed from banner -->
+            </div>
+        </div>
+
+        <!-- KPIs -->
+        <!-- KPIs -->
+        <div class="kpi-area grid-kpi cols-3 mb-6">
+            <!-- Crédito a Receber -->
+            <div class="finance-card kpi-card">
+                <span class="kpi-label">Crédito a Receber</span>
+                <div class="flex items-baseline">
+                    <span class="kpi-value" id="kpi-cred-val">R$ 0</span>
+                    <span class="text-xs ml-0.5 text-gray-500 font-bold" id="kpi-cred-dec">,00</span>
                 </div>
+                <span class="kpi-trend text-green-500" id="trend-cred">Ativos</span>
+            </div>
+
+            <!-- Em Atraso (New) -->
+            <div class="finance-card kpi-card">
+                <span class="kpi-label">Em Atraso</span>
+                <div class="flex items-baseline">
+                    <span class="kpi-value" id="kpi-overdue-val">R$ 0</span>
+                    <span class="text-xs ml-0.5 text-gray-500 font-bold" id="kpi-overdue-dec">,00</span>
+                </div>
+                <span class="kpi-trend text-red-500" id="trend-overdue">Vencidos</span>
+            </div>
+
+            <!-- Quantidade de Clientes -->
+            <div class="finance-card kpi-card">
+                <span class="kpi-label">Carteira de Clientes</span>
+                <div class="flex items-baseline">
+                    <span class="kpi-value" id="kpi-clients-count">0</span>
+                </div>
+                <span class="kpi-trend text-blue-500" id="trend-clients">Cadastrados</span>
             </div>
         </div>
 
         <!-- Content -->
-        <div class="finance-card p-6" style="min-height: 80vh;">
-            <div class="flex items-center justify-between mb-6">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600">
-                        <i class='bx bx-book-content text-xl'></i>
-                    </div>
-                    <div>
-                        <h2 class="text-xl font-bold text-gray-800">Minha Carteira</h2>
-                        <p class="text-gray-500 text-sm">Gerencie clientes e cobranças.</p>
-                    </div>
-                </div>
-                <button class="btn btn-secondary btn-sm bg-gray-100 hover:bg-gray-200 text-gray-700 p-2 rounded-lg"
-                    onclick="loadClientsFromFirebase()" title="Recarregar">
-                    <i class='bx bx-refresh text-xl'></i>
-                </button>
-            </div>
+        <div class="finance-card p-6 w-full max-w-full" style="min-height: 80vh;">
+            <!-- Header -->
+            <h3 class="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-4">Carteira de Crédito</h3>
 
             <!-- Search Area -->
-            <div class="client-search-wrapper w-full max-w-md mx-auto mb-6 relative">
+            <div class="client-search-wrapper w-full mb-6 relative">
                 <i class='bx bx-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg'></i>
                 <input type="text" id="client-search-input"
                     class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-full focus:outline-none focus:border-red-500 transition-colors"
@@ -161,16 +179,18 @@
                     <span class="nav-label">Métricas</span>
                 </div>
 
-                <div class="nav-item" onclick="navigateTo('push.html')">
+                <div class="nav-item desktop-only" onclick="navigateTo('/pdv/index.html')">
                     <div class="nav-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2.5">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="8" x2="12" y2="16"></line>
-                            <line x1="8" y1="12" x2="16" y2="12"></line>
-                        </svg>
+                        <i class="bx bx-cart-minus" style="font-size: 24px;"></i>
                     </div>
-                    <span class="nav-label">Registrar</span>
+                    <span class="nav-label">PDV</span>
+                </div>
+
+                <div class="nav-item desktop-only" onclick="navigateTo('manager.html')">
+                    <div class="nav-icon">
+                        <i class='bxr bx-scan-barcode'></i>
+                    </div>
+                    <span class="nav-label">Despesas</span>
                 </div>
 
                 <div class="nav-item" onclick="navigateTo('extrato.html')">
@@ -187,10 +207,9 @@
                     <span class="nav-label">Extrato</span>
                 </div>
 
-                <!-- Crediário Item (Desktop Only) -->
                 <div class="nav-item active desktop-only" onclick="navigateTo('crediario.html')">
                     <div class="nav-icon">
-                        <i class='bx bx-box' style="font-size: 20px;"></i>
+                        <i class='bxr bx-wallet-cards'></i>
                     </div>
                     <span class="nav-label">Crediário</span>
                 </div>
@@ -427,13 +446,13 @@
 
                 let statusBadge = '';
                 if (saldo <= 0.01) {
-                    statusBadge = `<span class="badge-status ok"><i class='bx bx-check'></i> Quitado</span>`;
+                    statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-green-100 text-green-700 uppercase tracking-wider"><i class='bx bx-check mr-1'></i>Quitado</span>`;
                 } else if (diffDays < 0) {
-                    statusBadge = `<span class="badge-status danger"><i class='bx bx-time'></i> Atrasado (${Math.abs(diffDays)}d)</span>`;
+                    statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700 uppercase tracking-wider"><i class='bx bx-time mr-1'></i>Atrasado</span>`;
                 } else if (diffDays === 0) {
-                    statusBadge = `<span class="badge-status warning"><i class='bx bx-bell'></i> Vence Hoje</span>`;
+                    statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-yellow-100 text-yellow-800 uppercase tracking-wider"><i class='bx bx-bell mr-1'></i>Hoje</span>`;
                 } else {
-                    statusBadge = `<span class="badge-status info">Em dia (${diffDays}d)</span>`;
+                    statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-700 uppercase tracking-wider">Em dia</span>`;
                 }
 
                 const tr = document.createElement('tr');
@@ -446,8 +465,7 @@
             <td class="font-bold ${saldo > 0 ? 'text-red-500' : 'text-green-600'}">${formatCurrency(saldo)}</td>
             <td class="text-sm">${venc ? simpleDate(venc) : '-'}</td>
             <td class="text-right">
-                <button class="btn-icon-small hover:bg-gray-100 p-2 rounded-full" onclick="openDetails('${client.idCliente}')" title="Detalhes"><i class='bx bx-file text-lg'></i></button>
-                <button class="btn-icon-small bg-green-50 text-green-600 hover:bg-green-100 p-2 rounded-full ml-2" onclick="openPayment('${client.idCliente}')" title="Receber"><i class='bx bx-dollar text-lg'></i></button>
+                <button class="btn-icon-small hover:bg-gray-100 p-2 rounded-full" onclick="openDetails('${client.idCliente}')" title="Detalhes"><i class='bx bx-zoom-in' style="font-size: 1.2rem;"></i></button>
             </td>
         `;
                 tbody.appendChild(tr);
@@ -471,8 +489,39 @@
                 }
             });
 
-            document.getElementById('total-receivable').innerText = formatCurrency(totalReceivable);
-            document.getElementById('total-overdue').innerText = formatCurrency(totalOverdue);
+            // Update Top Balance (kept for compatibility if needed, but UI changed)
+            if (document.getElementById('total-receivable')) document.getElementById('total-receivable').innerText = formatCurrency(totalReceivable);
+            if (document.getElementById('total-overdue')) document.getElementById('total-overdue').innerText = formatCurrency(totalOverdue);
+
+            // Update New KPI Cards
+            const formattedTotal = totalReceivable.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            const parts = formattedTotal.split(',');
+            if (document.getElementById('kpi-cred-val')) {
+                if (parts.length === 2) {
+                    document.getElementById('kpi-cred-val').innerText = parts[0];
+                    document.getElementById('kpi-cred-dec').innerText = ',' + parts[1];
+                } else {
+                    document.getElementById('kpi-cred-val').innerText = formattedTotal;
+                    document.getElementById('kpi-cred-dec').innerText = '';
+                }
+            }
+
+            // Update Overdue KPI
+            const formattedOverdue = totalOverdue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            const partsOverdue = formattedOverdue.split(',');
+            if (document.getElementById('kpi-overdue-val')) {
+                if (partsOverdue.length === 2) {
+                    document.getElementById('kpi-overdue-val').innerText = partsOverdue[0];
+                    document.getElementById('kpi-overdue-dec').innerText = ',' + partsOverdue[1];
+                } else {
+                    document.getElementById('kpi-overdue-val').innerText = formattedOverdue;
+                    document.getElementById('kpi-overdue-dec').innerText = '';
+                }
+            }
+
+            if (document.getElementById('kpi-clients-count')) {
+                document.getElementById('kpi-clients-count').innerText = localClientCache.length;
+            }
         }
 
         // --- Modals Logic ---

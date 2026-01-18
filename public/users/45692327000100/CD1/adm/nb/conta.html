@@ -11,6 +11,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
 
     <!-- Custom Styles handled in style26.css -->
 
@@ -211,6 +212,13 @@
                 </div>
                 <span class="shortcut-label-free">Extrato</span>
             </div>
+            <div class="shortcut-item-free md:hidden" id="btn-crediario"
+                onclick="navigateShortcut('btn-crediario', 'crediario.html')">
+                <div class="shortcut-icon-free">
+                    <i class='bxr bx-wallet-cards' style="font-size: 28px;"></i>
+                </div>
+                <span class="shortcut-label-free">Crediário</span>
+            </div>
         </div>
     </div>
 
@@ -255,16 +263,18 @@
                     <span class="nav-label">Métricas</span>
                 </div>
 
-                <div class="nav-item" onclick="navigateTo('push.html')">
+                <div class="nav-item desktop-only" onclick="navigateTo('/pdv/index.html')">
                     <div class="nav-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2.5">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="8" x2="12" y2="16"></line>
-                            <line x1="8" y1="12" x2="16" y2="12"></line>
-                        </svg>
+                        <i class="bx bx-cart-minus" style="font-size: 24px;"></i>
                     </div>
-                    <span class="nav-label">Registrar</span>
+                    <span class="nav-label">PDV</span>
+                </div>
+
+                <div class="nav-item desktop-only" onclick="navigateTo('manager.html')">
+                    <div class="nav-icon">
+                        <i class='bxr bx-scan-barcode'></i>
+                    </div>
+                    <span class="nav-label">Despesas</span>
                 </div>
 
                 <div class="nav-item" onclick="navigateTo('extrato.html')">
@@ -283,7 +293,7 @@
 
                 <div class="nav-item desktop-only" onclick="navigateTo('crediario.html')">
                     <div class="nav-icon">
-                        <i class='bx bx-box' style="font-size: 20px;"></i>
+                        <i class='bxr bx-wallet-cards'></i>
                     </div>
                     <span class="nav-label">Crediário</span>
                 </div>
