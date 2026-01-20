@@ -35,7 +35,10 @@ document.addEventListener("DOMContentLoaded", () => {
             if (sessionToken) {
                 console.log("Sessão via Token detectada. Ignorando Auth Firebase.");
                 body.classList.remove('loading-auth');
-                window.location.href = "/users/e-finance.html";
+                console.log("Sessão via Token detectada. Permitindo acesso.");
+                body.classList.remove('loading-auth');
+                // Não redirecionamos mais, pos o token pode ser válido para esta área
+                // window.location.href = "/users/e-finance.html";
                 return;
             }
 

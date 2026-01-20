@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-view="mobile" data-minimized="false">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equipe | ELETRO</title>
+    <link rel="icon" href="/assets/img/iconWeb.png">
+
+    <!-- Bibliotecas Externas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+
+    <!-- ApexCharts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <!-- Flaticon UIcons -->
+    <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+    <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+
+    <!-- Estilos Unificados e Main -->
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/style26.css">
+
+    <!-- Navbar Anti-Flash -->
+    <script>
+        (function () {
+            const savedState = localStorage.getItem('acc_navbar');
+            if (savedState !== null) {
+                document.documentElement.setAttribute('data-minimized', savedState);
+                if (savedState === 'true') {
+                    document.documentElement.classList.add('sidebar-minimized-init');
+                }
+            }
+        })();
+    </script>
+
+    <style>
+        /* Ajustes específicos para o template da equipe */
+        .project-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+            border: 1px solid #f3f4f6;
+            transition: transform 0.2s;
+        }
+
+        .project-card:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+
+<body style="--marker-x: 10%; --marker-y: 50%;">
+
+    <!-- Mensagem de Saudação -->
+    <div class="mensagerLocal"
+        style="display: none; position: fixed; top: 20px; z-index: 10000; width: 100%; justify-content: center;">
+        <div class="finance-card flex items-center p-4 gap-4 max-w-[350px]">
+            <img src="/assets/img/eFriend.png" class="w-12 h-12">
+            <div>
+                <h1 class="text-sm font-bold">Bom dia <span id="notification-user-name"
+                        class="text-red-600">Equipe</span>,</h1>
+                <p class="text-xs text-gray-500">Bora produzir!</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-container" class="dashboard-grid">
+
+        <!-- Bloco de Perfil e Saldo (Mantido conforme user request) -->
+        <div class="info">
+            <div class="photo-profile">
+                <img id="user-profile-img" src="/assets/img/iconWeb.png"
+                    style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                <div class="detals">
+                    <!-- Dropdown simples para simular troca de usuario -->
+                    <select id="user-switcher"
+                        class="bg-transparent text-lg font-bold border-none focus:ring-0 cursor-pointer"
+                        style="margin: -4px 0 0 -4px;">
+                        <option value="nathan">Olá, Nathan!</option>
+                        <option value="eduardo">Olá, Eduardo!</option>
+                    </select>
+                    <p id="user-role-display" class="text-xs text-gray-400">Videomaker</p>
+                </div>
+            </div>
+
+            <div class="balance">
+                <p>Saldo do Mês</p>
+                <div class="saldo">
+                    <span id="valor1" class="">R$&nbsp;0,00</span>
+                    <i class="bx bx-eye" id="toggle-balance-icon" onclick="toggleBalance()"></i>
+                </div>
+                <div class="pending">
+                    <p>A receber: </p>
+                    <span id="valor2" class="">R$&nbsp;0,00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Atalhos Rápidos da Equipe -->
+        <div class="finance-card p-4 mx-4 mt-2 mb-4 flex justify-between gap-4 overflow-x-auto">
+            <div class="flex flex-col items-center gap-2 cursor-pointer min-w-[60px]"
+                onclick="navigateTo('projetos.html')">
+                <div class="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-red-600">
+                    <i class='bx bx-camera-movie text-xl'></i>
+                </div>
+                <span class="text-[10px] font-bold text-gray-600">Projetos</span>
+            </div>
+            <div class="flex flex-col items-center gap-2 cursor-pointer min-w-[60px]"
+                onclick="navigateTo('agenda.html')">
+                <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                    <i class='bx bx-calendar text-xl'></i>
+                </div>
+                <span class="text-[10px] font-bold text-gray-600">Agenda</span>
+            </div>
+            <div class="flex flex-col items-center gap-2 cursor-pointer min-w-[60px]">
+                <div class="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
+                    <i class='bx bx-upload text-xl'></i>
+                </div>
+                <span class="text-[10px] font-bold text-gray-600">Upload</span>
+            </div>
+            <div class="flex flex-col items-center gap-2 cursor-pointer min-w-[60px]">
+                <div class="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
+                    <i class='bx bx-stats text-xl'></i>
+                </div>
+                <span class="text-[10px] font-bold text-gray-600">Metas</span>
+            </div>
+        </div>
+
+        <!-- Próximas Gravações (Substituindo 'Prestes a Vencer' por contexto de vídeo, mas mantendo estilo) -->
+        <div class="finance-card card-vencer-area" id="equipe-tasks-card">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Próximas
+                        Gravações</span>
+                    <span class="text-[10px] text-red-500 font-bold cursor-pointer">VER TODAS</span>
+                </div>
+
+                <div class="flex flex-col gap-3" id="tasks-list">
+                    <!-- Inserido via JS -->
+                    <div
+                        class="project-card flex items-center justify-between border-l-4 border-red-500 rounded-lg p-3 bg-white shadow-sm">
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-800">Review iPhone 15</h4>
+                            <p class="text-[10px] text-gray-400">Cliente: EletroStore • 14:00</p>
+                        </div>
+                        <span class="text-xs font-bold text-red-500 bg-red-50 px-2 py-1 rounded">Hoje</span>
+                    </div>
+
+                    <div
+                        class="project-card flex items-center justify-between border-l-4 border-blue-500 rounded-lg p-3 bg-white shadow-sm">
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-800">Reels Promoção</h4>
+                            <p class="text-[10px] text-gray-400">Loja Centro • 16:30</p>
+                        </div>
+                        <span class="text-xs font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded">Amanhã</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Projetos em Andamento -->
+        <div class="finance-card history-area p-6 mt-4">
+            <h3 class="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-4">Em Edição</h3>
+            <div class="transaction-list space-y-3">
+                <div class="flex items-center justify-between p-3 border-b border-gray-50 last:border-0">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 rounded bg-gray-100 flex items-center justify-center mr-3 text-gray-500">
+                            <i class='bx bx-film'></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-gray-800">Vlog da Loja #42</p>
+                            <p class="text-[9px] text-gray-400 font-bold uppercase">Corte Final • Nathan</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold text-orange-500">80%</span>
+                </div>
+
+                <div class="flex items-center justify-between p-3 border-b border-gray-50 last:border-0">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 rounded bg-gray-100 flex items-center justify-center mr-3 text-gray-500">
+                            <i class='bx bx-music'></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-gray-800">Campanha Natal</p>
+                            <p class="text-[9px] text-gray-400 font-bold uppercase">Color Grading • Eduardo</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold text-yellow-500">45%</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Navbar -->
+    <div class="nav-container">
+        <div class="nav-marker" id="nav-marker"></div>
+        <div class="nav-bg"></div>
+        <nav class="nav-overlay" id="nav-overlay">
+            <div class="nav-header-toggle">
+                <div class="btn-toggle-sidebar" onclick="toggleSidebar()">
+                    <i class='bx bx-chevron-down text-2xl'></i>
+                </div>
+            </div>
+
+            <div class="nav-links-container">
+                <div class="nav-item active" onclick="navigateTo('index.html')">
+                    <div class="nav-icon"><i class='bx bx-home-alt'></i></div>
+                    <span class="nav-label">Início</span>
+                </div>
+
+                <div class="nav-item" onclick="navigateTo('projetos.html')">
+                    <div class="nav-icon"><i class='bx bx-camera-movie'></i></div>
+                    <span class="nav-label">Projetos</span>
+                </div>
+
+                <div class="nav-item" onclick="navigateTo('agenda.html')">
+                    <div class="nav-icon"><i class='bx bx-calendar'></i></div>
+                    <span class="nav-label">Agenda</span>
+                </div>
+
+                <div class="nav-item" onclick="navigateTo('#financeiro')">
+                    <div class="nav-icon"><i class='bx bx-wallet'></i></div>
+                    <span class="nav-label">Finan.</span>
+                </div>
+
+                <div class="nav-item" onclick="alert('Funcionalidade de Chat em breve')">
+                    <div class="nav-icon"><i class='bx bx-chat'></i></div>
+                    <span class="nav-label">Chat</span>
+                </div>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/assets/js/equipe-core.js"></script>
+    <script>
+        // Init Check
+        document.addEventListener('DOMContentLoaded', () => {
+            initEquipeDashboard();
+        });
+
+        function toggleBalance() {
+            const val1 = document.getElementById('valor1');
+            const val2 = document.getElementById('valor2');
+            const icon = document.getElementById('toggle-balance-icon');
+
+            if (val1.classList.contains('blur-sm')) {
+                val1.classList.remove('blur-sm');
+                val2.classList.remove('blur-sm');
+                icon.classList.remove('bx-show');
+                icon.classList.add('bx-hide');
+            } else {
+                val1.classList.add('blur-sm');
+                val2.classList.add('blur-sm');
+                icon.classList.remove('bx-hide');
+                icon.classList.add('bx-show');
+            }
+        }
+    </script>
+</body>
+
+</html>

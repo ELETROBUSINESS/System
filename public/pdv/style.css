@@ -722,6 +722,117 @@ body {
     animation: fadeIn 0.3s ease;
 }
 
+.modal-overlay.active {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 1;
+}
+
+/* --- Detail Info Card --- */
+.detail-info-row {
+    display: flex;
+    gap: 8px;
+    /* Slightly tighter gap for 4 items */
+    margin-bottom: 20px;
+}
+
+.detail-info-card {
+    flex: 1;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 10px 4px;
+    /* Reduced side padding */
+    text-align: center;
+    min-width: 0;
+    /* Allows text truncation if absolutely needed */
+}
+
+.detail-info-card span.label {
+    display: block;
+    font-size: 0.7rem;
+    /* Slightly smaller label */
+    color: #64748b;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.detail-info-card span.value {
+    display: block;
+    font-size: 0.95rem;
+    /* Adjusted for space */
+    font-weight: 700;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.detail-info-card span.value.danger {
+    color: #ef4444;
+}
+
+
+/* --- Improved QR Code Container --- */
+.qr-modern-container {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 24px;
+    display: none;
+    /* Controlled by JS */
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    margin-top: 20px;
+    position: relative;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+}
+
+.qr-modern-container.active {
+    display: flex;
+    animation: fadeInScale 0.3s ease-out;
+}
+
+.qr-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 1.25rem;
+    transition: color 0.2s;
+}
+
+.qr-close-btn:hover {
+    color: #ef4444;
+}
+
+.qr-link-box {
+    background: #eff6ff;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: #2563eb;
+    word-break: break-all;
+    text-align: center;
+    cursor: pointer;
+    border: 1px dashed #bfdbfe;
+    transition: all 0.2s;
+}
+
+.qr-link-box:hover {
+    background: #dbeafe;
+    border-color: #3b82f6;
+}
+
 .loader-card {
     background: white;
     padding: 40px;
@@ -3942,7 +4053,7 @@ input:checked+.slider:before {
 
 .type-pagamento {
     background: rgba(40, 167, 69, 0.1);
-    color: var(--success-green);
+    color: green;
 }
 
 .btn-link-receipt {
@@ -5409,6 +5520,7 @@ input:checked+.slider:before {
     font-size: 1rem;
     font-weight: 700;
 }
+
 /* ======================================== */
 /* == SEÃ‡ÃƒO DE PAGAMENTO EM DINHEIRO     == */
 /* ======================================== */
@@ -5551,4 +5663,225 @@ input:checked+.slider:before {
     background: #f8fafc;
     color: var(--text-dark);
     border-color: #cbd5e1;
+}
+
+
+/* --- Client Details Dropdown & Action Button (Added by Antigravity) --- */
+.btn-icon-soft {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: #64748b;
+    /* var(--text-light) fallback */
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-icon-soft:hover {
+    background-color: #f1f5f9;
+    color: #1e293b;
+    /* var(--text-dark) fallback */
+}
+
+.client-options-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 220px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    /* var(--border-color) */
+    padding: 8px;
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+}
+
+.client-options-dropdown.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #1e293b;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+    background-color: #f8fafc;
+    color: var(--brand-color, #db0038);
+}
+
+.dropdown-item i {
+    font-size: 1.1rem;
+    color: #64748b;
+}
+
+.dropdown-item:hover i {
+    color: var(--brand-color, #db0038);
+}
+
+
+/* --- Admin Auth Modal (Refined) --- */
+.modal-auth-content {
+    max-width: 320px !important;
+    text-align: center;
+    border-radius: 20px;
+    padding: 30px 25px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    background: white;
+    display: flex;
+    flex-direction: column;
+}
+
+.auth-header {
+    justify-content: center;
+    border: none;
+    padding: 0;
+    margin-bottom: 20px;
+    background: transparent;
+}
+
+.auth-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    background: #fee2e2;
+    color: #ef4444;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.1);
+}
+
+.auth-title {
+    margin: 0 0 8px 0;
+    color: #1f2937;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.auth-subtitle {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-bottom: 24px;
+}
+
+.auth-input {
+    text-align: center;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 12px;
+    width: 100%;
+    transition: all 0.2s;
+    outline: none;
+}
+
+.auth-input:focus {
+    background: #fff;
+    border-color: var(--primary-red);
+    box-shadow: 0 0 0 4px rgba(219, 0, 56, 0.1);
+}
+
+.auth-error {
+    color: #ef4444;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    display: none;
+    animation: shake 0.4s ease-in-out;
+}
+
+.auth-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-auth-cancel {
+    flex: 1;
+    background: #f3f4f6;
+    color: #374151;
+    border: none;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-auth-cancel:hover {
+    background: #e5e7eb;
+}
+
+.btn-auth-confirm {
+    flex: 1;
+    background: var(--primary-red);
+    color: white;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    box-shadow: 0 4px 6px -1px rgba(219, 0, 56, 0.2);
+}
+
+.btn-auth-confirm:hover {
+    background: var(--primary-red-dark);
+    box-shadow: 0 6px 12px -1px rgba(219, 0, 56, 0.3);
+}
+
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-5px);
+    }
+
+    75% {
+        transform: translateX(5px);
+    }
+}
+
+/* --- Modal Maximization Style --- */
+.modal-content.maximized {
+    width: 95vw !important;
+    height: 95vh !important;
+    max-width: 98vw !important;
+    max-height: 98vh !important;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-content.maximized .modal-body {
+    flex: 1;
+    overflow-y: auto;
 }

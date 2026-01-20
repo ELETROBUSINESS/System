@@ -3612,11 +3612,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 1. Preenchimento de Cabeçalho e Dados Básicos
         document.getElementById('detail-cliente-nome').textContent = cliente.nomeCompleto || cliente.nomeExibicao;
-        document.getElementById('detail-cliente-apelido').textContent = cliente.apelido ? `(${cliente.apelido})` : '';
+        // Remove os parênteses do apelido conforme solicitado
+        document.getElementById('detail-cliente-apelido').textContent = cliente.apelido ? cliente.apelido : '';
 
         const saldoEl = document.getElementById('detail-cliente-saldo');
         saldoEl.textContent = formatCurrency(cliente.saldoDevedor);
-        saldoEl.style.color = cliente.saldoDevedor > 0 ? 'var(--warning-red)' : 'var(--success-green)';
+        // User requested black color for debt value instead of red
+        saldoEl.style.color = 'var(--text-dark)';
 
         // 2. Cálculo de Data e Diferença de Dias (Proteção contra erro getMonth)
         const dataObj = parseDataSegura(cliente.proximoVencimento);
@@ -3639,15 +3641,41 @@ document.addEventListener('DOMContentLoaded', () => {
             const ano = dataObj.getFullYear();
             textoVencimento = `${dia}/${mes}/${ano}`;
 
-            // Alerta visual de atraso
+            // Alerta visual de atraso (Texto removido conforme solicitado, mantem cor se desejado ou remove tb)
             if (diffDays < 0 && cliente.saldoDevedor > 0.01) {
                 vencimentoEl.style.color = 'var(--warning-red)';
-                textoVencimento += " (Atrasado)";
+                // textoVencimento += " (Atrasado)"; // REMOVIDO
             } else {
                 vencimentoEl.style.color = 'var(--text-dark)';
             }
         }
         vencimentoEl.textContent = textoVencimento;
+
+        // [NOVO] Cards de Parcelas (Prioriza dados do Backend)
+        const qtdParcelasEl = document.getElementById('detail-cliente-qtd-parcelas');
+        const valorParcelaEl = document.getElementById('detail-cliente-valor-parcela-mensal');
+
+        let qtdRestante = 0;
+        let valorMensal = 0;
+
+        // Se o Backend já mandou calculado, usa. Senão, calcula fallback.
+        if (cliente.parcelasRestantes !== undefined) {
+            qtdRestante = parseInt(cliente.parcelasRestantes) || 0;
+        } else {
+            const totalP = parseInt(cliente.parcelasTotais) || 0;
+            const pagasP = parseInt(cliente.parcelasPagas) || 0;
+            qtdRestante = totalP - pagasP;
+        }
+
+        if (cliente.valorParcela !== undefined && parseFloat(cliente.valorParcela) > 0) {
+            valorMensal = parseFloat(cliente.valorParcela);
+        } else if (qtdRestante > 0 && cliente.saldoDevedor > 0) {
+            valorMensal = cliente.saldoDevedor / qtdRestante;
+        }
+
+        if (qtdParcelasEl) qtdParcelasEl.textContent = qtdRestante > 0 ? `${qtdRestante}x` : "-";
+        if (valorParcelaEl) valorParcelaEl.textContent = valorMensal > 0 ? formatCurrency(valorMensal) : "-";
+
 
         document.getElementById('detail-cliente-telefone').textContent = cliente.telefone || 'Não informado';
         document.getElementById('detail-cliente-endereco').textContent = cliente.endereco || 'Não informado';
@@ -3660,34 +3688,50 @@ document.addEventListener('DOMContentLoaded', () => {
         const detailLimitAvailable = document.getElementById('detail-cliente-disponivel');
         const detailLimitPercent = document.getElementById('detail-cliente-percentual');
 
-        detailLimitTotal.textContent = formatCurrency(limite);
+        if (detailLimitTotal) detailLimitTotal.textContent = formatCurrency(limite);
 
         if (limite > 0) {
             const disponivel = limite - saldo;
             let percentualUso = (saldo / limite) * 100;
             let visualWidth = percentualUso > 100 ? 100 : (percentualUso < 0 ? 0 : percentualUso);
 
-            detailLimitAvailable.textContent = `Disponível: ${formatCurrency(disponivel)}`;
-            detailLimitPercent.textContent = `${percentualUso.toFixed(1)}% usado`;
-            detailProgressBar.style.width = `${visualWidth}%`;
-
-            detailProgressBar.className = 'progress-fill';
-            if (disponivel < 0) {
-                detailProgressBar.classList.add('danger');
-                detailLimitAvailable.style.color = 'var(--warning-red)';
-            } else if (percentualUso > 80) {
-                detailProgressBar.classList.add('warning');
+            if (detailLimitAvailable) detailLimitAvailable.textContent = `Disponível: ${formatCurrency(disponivel)}`;
+            if (detailLimitPercent) detailLimitPercent.textContent = `${percentualUso.toFixed(1)}% usado`;
+            if (detailProgressBar) {
+                detailProgressBar.style.width = `${visualWidth}%`;
+                detailProgressBar.className = 'progress-fill';
+                if (disponivel < 0) {
+                    detailProgressBar.classList.add('danger');
+                    detailLimitAvailable.style.color = 'var(--warning-red)';
+                } else if (percentualUso > 80) {
+                    detailProgressBar.classList.add('warning');
+                }
             }
         } else {
-            detailProgressBar.style.width = '0%';
-            detailLimitAvailable.textContent = "Sem limite definido";
-            detailLimitPercent.textContent = "-";
+            if (detailProgressBar) detailProgressBar.style.width = '0%';
+            if (detailLimitAvailable) detailLimitAvailable.textContent = "Sem limite definido";
+            if (detailLimitPercent) detailLimitPercent.textContent = "-";
         }
+
+        // Reset Menu Dropdown
+        const menu = document.getElementById('client-options-dropdown');
+        if (menu) {
+            menu.classList.remove('active'); // Usa classe agora
+            menu.style.display = ''; // Limpa inline style se houver
+        }
+
+        // Reset QR Code Container
+        const qrContainer = document.getElementById('qrcode-container');
+        if (qrContainer) qrContainer.classList.remove('active');
+
+        // Guardar ID atual para ações do menu
+        document.getElementById('cliente-details-modal').setAttribute('data-current-client-id', id);
+        document.getElementById('cliente-details-modal').setAttribute('data-cliente-nome', cliente.nomeCompleto || cliente.nomeExibicao);
 
         // Exibe o modal
         openModal(document.getElementById('cliente-details-modal'));
 
-        // 4. Carregar Histórico com Nova Lógica de Classificação (Renegociação)
+        // 4. Carregar Histórico...
         const historyContainer = document.getElementById('detail-history-container');
         historyContainer.innerHTML = '<p style="text-align:center; padding:20px;"><i class="bx bx-loader-alt bx-spin"></i> Carregando extrato...</p>';
 
@@ -3700,22 +3744,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 result.data.forEach(item => {
                     const tipoLower = String(item.tipo).toLowerCase();
+                    const obsLower = String(item.obs || "").toLowerCase();
+
+                    // Lógica visual da tabela
                     let tipoTexto = 'PAGTO';
                     let tipoClass = 'type-pagamento';
                     let valorColor = 'var(--success-green)';
 
-                    // --- NOVA LÓGICA DE CLASSIFICAÇÃO ---
                     if (tipoLower.includes('compra')) {
                         tipoTexto = 'COMPRA';
                         tipoClass = 'type-compra';
                         valorColor = 'var(--warning-red)';
-                    } else if (tipoLower.includes('renegociação (baixa)')) {
+                    } else if (tipoLower.includes('renegiciação (baixa)') || tipoLower.includes('renegociação (baixa)')) {
                         tipoTexto = 'RENEG. BAIXA';
-                        tipoClass = 'type-reneg-baixa'; // Azul/Informativo
+                        tipoClass = 'type-reneg-baixa';
                         valorColor = '#2196F3';
                     } else if (tipoLower.includes('renegociação (nova)')) {
-                        tipoTexto = 'PARCELA';
-                        tipoClass = 'type-reneg-nova'; // Laranja/Dívida
+                        tipoTexto = 'RENEG. NOVA';
+                        tipoClass = 'type-reneg-nova';
                         valorColor = 'var(--warning-red)';
                     }
 
@@ -3724,39 +3770,139 @@ document.addEventListener('DOMContentLoaded', () => {
                         anexoHtml = `<button class="btn-link-receipt" onclick="window.open('${item.anexo}', '_blank')"><i class='bx bx-show'></i></button>`;
                     }
 
-                    html += `
-                <tr>
+                    html += `<tr>
                     <td>${item.data}<br><small style="color:#999">${item.obs || ''}</small></td>
                     <td><span class="history-type-tag ${tipoClass}">${tipoTexto}</span></td>
                     <td style="color:${valorColor}; font-weight:600;">${formatCurrency(Math.abs(item.valor))}</td>
                     <td>${anexoHtml}</td>
                 </tr>`;
                 });
+
                 html += '</tbody></table>';
                 historyContainer.innerHTML = html;
+
             } else {
-                historyContainer.innerHTML = '<p style="text-align:center; padding:20px; color:#999;">Nenhuma movimentação encontrada.</p>';
+                historyContainer.innerHTML = '<p class="text-center text-light pad-20">Nenhum histórico recente encontrado.</p>';
             }
-        } catch (error) {
-            console.error("Erro no histórico:", error);
-            historyContainer.innerHTML = '<p style="text-align:center; padding:20px; color:red;">Erro ao carregar dados.</p>';
+        } catch (e) {
+            console.error("Erro histórico", e);
+            historyContainer.innerHTML = '<p class="text-center text-danger">Erro ao carregar histórico.</p>';
         }
     };
 
-    // --- Listener para o Botão Alterar Limite ---
-    if (btnAlterarLimite) {
-        btnAlterarLimite.addEventListener('click', () => {
-            showCustomAlert(
-                "Acesso Restrito",
-                "Somente um administrador pode alterar o limite de crédito de forma segura no momento."
-            );
+    // --- NOVA LÓGICA DO MENU DE OPÇÕES DO CLIENTE ---
+
+    // Toggle Menu
+    const btnOptions = document.getElementById('btn-client-options');
+    const menuDropdown = document.getElementById('client-options-dropdown');
+
+    if (btnOptions && menuDropdown) {
+        btnOptions.addEventListener('click', (e) => {
+            e.stopPropagation();
+            menuDropdown.classList.toggle('active'); // Usa classe
+        });
+
+        // Fechar ao clicar fora
+        document.addEventListener('click', () => {
+            menuDropdown.classList.remove('active');
         });
     }
+
+    // Ações do Menu
+    const dropdownItems = document.querySelectorAll('.dropdown-item');
+    dropdownItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            const action = item.getAttribute('data-action');
+            const modalDetails = document.getElementById('cliente-details-modal');
+            const nomeCliente = modalDetails.getAttribute('data-cliente-nome');
+            const idCliente = modalDetails.getAttribute('data-current-client-id'); // ID REAL se necessario, mas usamos nome em mtos lugares
+            const menu = document.getElementById('client-options-dropdown');
+
+            if (menu) menu.classList.remove('active'); // Fecha menu ao clicar
+
+            if (!nomeCliente) return;
+
+            if (action === 'renegociar') {
+                solicitarAcessoAdm(function () {
+                    const modalReneg = document.getElementById('modal-renegociar');
+                    modalReneg.setAttribute('data-cliente-nome', nomeCliente);
+                    // Preenche dados atuais 
+                    const saldoEl = document.getElementById('detail-cliente-saldo');
+                    const vencEl = document.getElementById('detail-cliente-vencimento');
+                    if (modalReneg) {
+                        document.getElementById('reneg-saldo-atual').innerText = saldoEl ? saldoEl.innerText : "R$ 0,00";
+                        document.getElementById('reneg-vencimento-atual').value = vencEl ? vencEl.innerText : "";
+                        modalReneg.style.display = 'flex';
+                        modalReneg.classList.add('active');
+                    }
+                });
+            }
+            else if (action === 'manual_venc') {
+                solicitarAcessoAdm(function () {
+                    const modalDate = document.getElementById('modal-alterar-vencimento');
+                    modalDate.setAttribute('data-cliente-nome', nomeCliente);
+                    // Tenta preencher data atual
+                    const vencEl = document.getElementById('detail-cliente-vencimento');
+                    if (vencEl) {
+                        const partes = vencEl.innerText.trim().split('/'); // dd/mm/yyyy
+                        if (partes.length === 3) {
+                            // html input date espera yyyy-mm-dd
+                            try { document.getElementById('input-novo-vencimento').value = `${partes[2]}-${partes[1]}-${partes[0]}`; } catch (e) { }
+                        }
+                    }
+                    modalDate.style.display = 'flex';
+                    modalDate.classList.add('active');
+                });
+            }
+            else if (action === 'limite') {
+                solicitarAcessoAdm(function () {
+                    const novoLimite = prompt(`Digite o novo limite para ${nomeCliente} (apenas números):`);
+                    if (novoLimite) {
+                        const btn = item; // Referência visual se precisasse
+                        // ... Logica de API ...
+                        fetch(`${SCRIPT_URL}?action=alterarLimite&idCliente=${encodeURIComponent(idCliente)}&novoLimite=${novoLimite}`)
+                            .then(r => r.json())
+                            .then(res => {
+                                if (res.status === 'success') {
+                                    alert("Limite atualizado com sucesso!");
+                                    // Recarrega
+                                    openClienteDetails(idCliente);
+                                } else {
+                                    alert("Erro: " + res.message);
+                                }
+                            })
+                            .catch(err => alert("Erro comunicacao: " + err.message));
+                    }
+                });
+            }
+            else if (action === 'acesso') {
+                solicitarAcessoAdm(function () {
+                    const nomeParam = nomeCliente.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+                    const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/')) + "/meuacesso.html";
+                    const linkCompleto = `${baseUrl}?q=${nomeParam}`; // Usando nome simplificado para query
+
+                    const qrContainer = document.getElementById('qrcode-container');
+                    const qrCanvas = document.getElementById('qrcode-canvas');
+                    const linkText = document.getElementById('link-acesso-text');
+
+                    if (qrContainer && qrCanvas && linkText) {
+                        qrCanvas.innerHTML = ""; // Limpa anterior
+                        new QRCode(qrCanvas, { text: linkCompleto, width: 180, height: 180 });
+
+                        linkText.innerHTML = `<i class='bx bx-link-external'></i> ${linkCompleto}`;
+                        linkText.onclick = () => window.open(linkCompleto, '_blank');
+
+                        qrContainer.classList.add('active'); // Exibe com animação
+                        qrContainer.style.display = 'flex'; // Garante display flex
+                    }
+                });
+            }
+        });
+    });
 
     // --- Lógica de Abrir Modal de Pagamento ---
     const openClientePayment = (id) => {
         const cliente = localClientCache.find(c => c.idCliente == id);
-        if (!cliente) return;
 
         currentSelectedClientId = id;
 
@@ -4365,6 +4511,89 @@ document.addEventListener('click', function (e) {
         });
     }
 
+    // >>> CLIQUE NO LÁPIS (EDITAR VENCIMENTO MANUAL) <<<
+    const btnEditVenc = target.closest('#btn-edit-vencimento');
+    if (btnEditVenc) {
+        e.preventDefault();
+        solicitarAcessoAdm(function () {
+            const modalDate = document.getElementById('modal-alterar-vencimento');
+            const nomeEl = document.getElementById('detail-cliente-nome');
+            const nomeAtual = nomeEl ? nomeEl.innerText.trim() : "";
+            if (!nomeAtual || nomeAtual === "Carregando...") { alert("Erro: Nome não carregado."); return; }
+
+            modalDate.setAttribute('data-cliente-nome', nomeAtual);
+            // Tenta preencher a data atual
+            const vencEl = document.getElementById('detail-cliente-vencimento');
+            if (vencEl) {
+                const partes = vencEl.innerText.trim().split('/');
+                if (partes.length === 3) {
+                    try { document.getElementById('input-novo-vencimento').value = `${partes[2]}-${partes[1]}-${partes[0]}`; } catch (e) { }
+                }
+            }
+
+            modalDate.style.display = 'flex';
+            modalDate.classList.add('active');
+        });
+    }
+
+    // >>> CLIQUE NO FECHAR MODAL DATA <<<
+    if (target.closest('[data-target="modal-alterar-vencimento"]')) {
+        const m = document.getElementById('modal-alterar-vencimento');
+        if (m) { m.style.display = 'none'; m.classList.remove('active'); }
+    }
+
+    // >>> CONFIRMAR ALTERAÇÃO DATA MANUAL (API) <<<
+    const btnConfirmDate = target.closest('#btn-confirmar-vencimento');
+    if (btnConfirmDate) {
+        e.preventDefault();
+        const modalDate = document.getElementById('modal-alterar-vencimento');
+        const nomeParaBuscar = modalDate.getAttribute('data-cliente-nome');
+        const novaData = document.getElementById('input-novo-vencimento').value;
+
+        if (!novaData) { alert("Selecione uma data."); return; }
+        if (!nomeParaBuscar) { alert("Erro nome cliente."); return; }
+
+        const btn = btnConfirmDate;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Salvando...";
+        btn.disabled = true;
+
+        (async () => {
+            try {
+                const params = new URLSearchParams({
+                    action: "alterarVencimentoManual",
+                    idCliente: nomeParaBuscar,
+                    novaData: novaData
+                });
+
+                const response = await fetch(`${SCRIPT_URL}?${params.toString()}`);
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    alert("Data alterada com sucesso!");
+                    modalDate.style.display = 'none';
+                    modalDate.classList.remove('active');
+
+                    // Atualiza visualmente se o modal estiver aberto (está, por baixo)
+                    const vencEl = document.getElementById('detail-cliente-vencimento');
+                    if (vencEl) {
+                        const partes = novaData.split('-');
+                        vencEl.innerText = `${partes[2]}/${partes[1]}/${partes[0]}`;
+                    }
+
+                    // Dispara evento de "refresh" se existir, ou apenas alerta.
+                } else {
+                    alert("Erro: " + result.message);
+                }
+            } catch (e) {
+                alert("Erro de conexão: " + e.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        })();
+    }
+
     // >>> CLIQUE NO GERAR ACESSO (QR CODE) <<<
     if (btnQrCode) {
         e.preventDefault();
@@ -4408,24 +4637,17 @@ document.addEventListener('click', function (e) {
         modalReneg.style.display = 'none';
         modalReneg.classList.remove('active');
     }
-});
 
-// Listener de Tecla Enter no Input de Senha
-const inputAuth = document.getElementById('admin-password-input');
-if (inputAuth) {
-    inputAuth.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') verificarSenhaAdm();
-    });
-}
+    // >>> CONFIRMAR RENEGOCIAÇÃO (ENVIO API) <<<
+    const btnConfirmarRenegDelegate = target.closest('#btn-confirmar-renegociacao');
+    if (btnConfirmarRenegDelegate) {
+        e.preventDefault(); // Evita reload se for form
 
-// --- 3. CONFIRMAR RENEGOCIAÇÃO (ENVIO API) ---
-const btnConfirmarReneg = document.getElementById('btn-confirmar-renegociacao');
-
-if (btnConfirmarReneg) {
-    btnConfirmarReneg.onclick = async function () {
-        const novaData = document.getElementById('reneg-nova-data').value;
         const modalReneg = document.getElementById('modal-renegociar');
+        const novaDataEl = document.getElementById('reneg-nova-data');
         const parcelasEl = document.getElementById('reneg-parcelas');
+
+        const novaData = novaDataEl ? novaDataEl.value : "";
         const qtdParcelas = parcelasEl ? parcelasEl.value : "1";
 
         // RECUPERA O NOME GUARDADO NO ATRIBUTO
@@ -4440,49 +4662,62 @@ if (btnConfirmarReneg) {
             return;
         }
 
-        const btn = this;
+        const btn = btnConfirmarRenegDelegate;
         const originalText = btn.innerHTML;
         btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Salvando...";
         btn.disabled = true;
 
-        try {
-            const API_URL_ADM = "https://script.google.com/macros/s/AKfycbzvd0BBLEEQlu-ksnIbsmnYcjQNQuZcTrsCmXMKHGM5g7DPEk3Nj95X47LKbj7rRSAT/exec";
+        // Função assíncrona auto-executável para suportar await dentro do listener
+        (async () => {
+            try {
+                // USA A URL GLOBAL (SCRIPT_URL) que contém a lógica do Code.js fornecido
+                // Envia o NOME na variavel idCliente (o backend já sabe lidar com isso)
+                const response = await fetch(`${SCRIPT_URL}?action=renegociarSaldo&idCliente=${encodeURIComponent(nomeParaBuscar)}&novaData=${novaData}&parcelas=${qtdParcelas}`);
+                const json = await response.json();
 
-            // Envia o NOME na variavel idCliente (o backend já sabe lidar com isso)
-            const response = await fetch(`${API_URL_ADM}?action=renegociarSaldo&idCliente=${encodeURIComponent(nomeParaBuscar)}&novaData=${novaData}&parcelas=${qtdParcelas}`);
-            const json = await response.json();
+                if (json.status === 'success') {
+                    alert("✅ Renegociação realizada com sucesso!");
+                    modalReneg.style.display = 'none';
+                    modalReneg.classList.remove('active');
 
-            if (json.status === 'success') {
-                alert("✅ Renegociação realizada com sucesso!");
-                modalReneg.style.display = 'none';
-                modalReneg.classList.remove('active');
+                    // Fecha a ficha do cliente para forçar atualização visual
+                    const ficha = document.getElementById('cliente-details-modal');
+                    if (ficha) {
+                        ficha.classList.remove('active');
+                        ficha.style.display = 'none';
+                    }
 
-                // Fecha a ficha do cliente para forçar atualização visual
-                const ficha = document.getElementById('cliente-details-modal');
-                if (ficha) {
-                    ficha.classList.remove('active');
-                    ficha.style.display = 'none';
-                }
-
-                // Recarrega lista
-                if (typeof renderClientesPage === 'function') {
-                    if (typeof localClientCache !== 'undefined') localClientCache = null; // Limpa cache
-                    renderClientesPage();
+                    // Recarrega lista
+                    if (typeof renderClientesPage === 'function') {
+                        if (typeof localClientCache !== 'undefined') localClientCache = null; // Limpa cache
+                        renderClientesPage();
+                    } else {
+                        location.reload();
+                    }
                 } else {
-                    location.reload();
+                    alert("Erro do Sistema: " + json.message);
                 }
-            } else {
-                alert("Erro do Sistema: " + json.message);
-            }
 
-        } catch (error) {
-            alert("Erro de conexão: " + error.message);
-        } finally {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        }
-    };
+            } catch (error) {
+                alert("Erro de conexão: " + error.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        })();
+    }
+});
+
+// Listener de Tecla Enter no Input de Senha
+const inputAuth = document.getElementById('admin-password-input');
+if (inputAuth) {
+    inputAuth.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') verificarSenhaAdm();
+    });
 }
+
+// --- 3. CONFIRMAR RENEGOCIAÇÃO (ENVIO API) ---
+
 
 // FUNÇÃO DE DIAGNÓSTICO (PLANO B)
 window.testefiscal = async () => {
@@ -4635,3 +4870,40 @@ function renderizarBarraArmazenamento() {
 
 // Chame ao carregar a página
 document.addEventListener('DOMContentLoaded', renderizarBarraArmazenamento);
+
+
+
+
+// --- Função Reutilizável de Maximização de Modais ---
+function setupMaximizeModal(btnId, modalSelector) {
+    const btn = document.getElementById(btnId);
+    const modal = document.querySelector(modalSelector);
+    if (!btn || !modal) return;
+
+    // Remove listeners antigos (clone hack)
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+
+    newBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        modal.classList.toggle('maximized');
+        const icon = newBtn.querySelector('i');
+        if (icon) {
+            if (modal.classList.contains('maximized')) {
+                icon.className = 'bx bx-exit-fullscreen';
+                newBtn.title = "Restaurar janela";
+            } else {
+                icon.className = 'bx bx-expand';
+                newBtn.title = "Expandir janela";
+            }
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Aplica a lógica ao modal de Cliente
+    setupMaximizeModal('btn-maximize-client-modal', '#cliente-details-modal .modal-content');
+
+    // Aplica também ao modal de Produtos (garante funcionamento para ambos)
+    setupMaximizeModal('btn-maximize-modal', '#edit-product-modal .modal-content');
+});

@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELETROPAY</title>
+    <link rel="icon" href="/assets/img/iconWeb.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Boxicons CDN -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        :root {
+            --main-color: #db0038;
+            --light-red: #ff4d6d;
+            --primary: #db0038;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+            color: #1e293b;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        .glass-header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        /* Botão de interação '+' na cor main-color */
+        .add-card-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            background-color: var(--main-color);
+            color: white;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            border: none;
+        }
+
+        .add-card-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #94a3b8;
+            transform: translateY(100%);
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 0;
+        }
+
+        .add-card-btn.painting::before {
+            transform: translateY(0);
+        }
+
+        .add-card-btn i {
+            position: relative;
+            z-index: 1;
+            transition: transform 0.3s ease, opacity 0.2s ease;
+        }
+
+        /* Modal Styles */
+        .bottom-sheet {
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top-left-radius: 32px;
+            border-top-right-radius: 32px;
+            z-index: 70;
+            display: flex;
+            flex-direction: column;
+            height: 65vh;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .sheet-hidden {
+            transform: translateY(100%);
+        }
+
+        .overlay-hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .handle-bar {
+            width: 40px;
+            height: 5px;
+            background-color: #e2e8f0;
+            border-radius: 10px;
+            margin: 12px auto;
+        }
+
+        /* Cartão na cor main-color com textura */
+        .credit-card {
+            background-color: var(--main-color);
+            background-image:
+                radial-gradient(circle at 50% -20%, rgba(255, 255, 255, 0.2) 0%, transparent 60%),
+                radial-gradient(circle at 20% 120%, rgba(0, 0, 0, 0.15) 0%, transparent 50%),
+                repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0, 0, 0, 0.05) 1px, rgba(0, 0, 0, 0.05) 2px),
+                repeating-linear-gradient(90deg, transparent, transparent 1px, rgba(0, 0, 0, 0.05) 1px, rgba(0, 0, 0, 0.05) 2px),
+                repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.05) 0px, rgba(255, 255, 255, 0.05) 1px, transparent 1px, transparent 10px);
+            background-blend-mode: overlay, normal, overlay, overlay, normal;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 25px 45px -12px rgba(219, 0, 56, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        /* Gráfico de Limite */
+        .limit-progress-container {
+            height: 8px;
+            background-color: #f1f5f9;
+            border-radius: 999px;
+            width: 100%;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .progress-segment-fatura {
+            background-color: var(--main-color);
+        }
+
+        .progress-segment-utilizado {
+            background-color: #475569;
+        }
+
+        .section-divider {
+            height: 1px;
+            width: 100%;
+            background-color: #f1f5f9;
+            margin: 28px 0;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Faturas vencidas usam a cor main-color */
+        .fatura-atrasada {
+            border-color: var(--main-color) !important;
+            background-color: #fff1f2 !important;
+        }
+
+        .fatura-atrasada p:nth-child(1),
+        .fatura-atrasada p:nth-child(2) {
+            color: var(--main-color) !important;
+        }
+
+        .fatura-atrasada p:nth-child(3) {
+            color: #be123c !important;
+        }
+
+        .fatura-paga {
+            border-color: #10b981 !important;
+            background-color: #f0fdf4 !important;
+        }
+
+        .fatura-paga p {
+            color: #047857 !important;
+        }
+
+        /* PIN Dots */
+        .pin-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .pin-dot.filled {
+            background: var(--main-color);
+            border-color: var(--main-color);
+            transform: scale(1.2);
+            box-shadow: 0 0 15px rgba(219, 0, 56, 0.4);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Loading Screen -->
+    <div id="loading" class="fixed inset-0 bg-slate-50 z-[9999] flex items-center justify-center">
+        <div class="flex flex-col items-center">
+            <div class="w-12 h-12 border-4 border-slate-200 border-t-[#db0038] rounded-full animate-spin"></div>
+            <span class="mt-4 text-slate-400 font-bold text-xs uppercase tracking-widest">Carregando...</span>
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="login-screen" class="fixed inset-0 bg-white z-[6000] hidden flex-col items-center justify-center p-10">
+        <div class="w-full max-w-xs text-center">
+            <div class="w-24 h-24 bg-rose-50 rounded-[32px] flex items-center justify-center mx-auto mb-8 shadow-inner">
+                <i class='bx bxs-key text-4xl text-[#db0038]'></i>
+            </div>
+            <h1 id="login-name" class="text-3xl font-black text-slate-900 mb-2">Bem-vindo</h1>
+            <p class="text-slate-400 font-medium mb-12">Informe seu PIN de acesso</p>
+
+            <div class="pin-display flex justify-center gap-5 mb-14">
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-6">
+                <!-- Numeric Keypad -->
+                <button
+                    class="w-full aspect-square rounded-full bg-slate-50 text-2xl font-black text-slate-700 active:bg-[#db0038] active:text-white transition-all"
+                    onclick="typePin(1)">1</button>
+                <button
+                    class="w-full aspect-square rounded-full bg-slate-50 text-2xl font-black text-slate-700 active:bg-[#db0038] active:text-white transition-all"
+                    onclick="typePin(2)">2</button>
+                <button
+                    class="w-full aspect-square rounded-full bg-slate-50 text-2xl font-black text-slate-700 active:bg-[#db0038] active:text-white transition-all"
+                    onclick="typePin(3)">3</button>
+                <button
+                    class="w-full aspect-square rounded-full bg-slate-50 text-2xl font-black text-slate-700 active:bg-[#db0038] active:text-white transition-all"
+                    onclick="typePin(4)">4</button>
+                <button
+                    class="w-full aspect-square rounded-full bg-slate-50 text-2xl font-black text-slate-700 active:bg-[#db0038] active:text-white transition-all"
+                    onclick="typePin(5)">5</button>
+                <button
+                    class="w-full aspect-square rounded-full bg-slate-50 text-2xl font-black text-slate-700 active:bg-[#db0038] active:text-white transition-all"
+                    onclick="typePin(6)">6</button>
+                <button
+                    class="w-full aspect-square rounded-full bg-slate-50 text-2xl font-black text-slate-700 active:bg-[#db0038] active:text-white transition-all"
+                    onclick="typePin(7)">7</button>
+                <button
+                    class="w-full aspect-square rounded-full bg-slate-50 text-2xl font-black text-slate-700 active:bg-[#db0038] active:text-white transition-all"
+                    onclick="typePin(8)">8</button>
+                <button
+                    class="w-full aspect-square rounded-full bg-slate-50 text-2xl font-black text-slate-700 active:bg-[#db0038] active:text-white transition-all"
+                    onclick="typePin(9)">9</button>
+                <button class="w-full aspect-square rounded-full text-rose-500 font-bold"
+                    onclick="clearPin()">Limpar</button>
+                <button
+                    class="w-full aspect-square rounded-full bg-slate-50 text-2xl font-black text-slate-700 active:bg-[#db0038] active:text-white transition-all"
+                    onclick="typePin(0)">0</button>
+                <button class="w-full aspect-square rounded-full text-slate-400" onclick="backspacePin()"><i
+                        class='bx bx-chevron-left text-3xl'></i></button>
+            </div>
+            <p id="login-error" class="text-rose-600 mt-8 font-bold text-sm hidden"></p>
+        </div>
+    </div>
+
+    <!-- Modais Overlay -->
+    <div id="modalOverlay"
+        class="overlay-hidden fixed inset-0 bg-black/40 z-[60] flex items-end transition-opacity duration-300">
+
+        <!-- Sheet: Notificações -->
+        <div id="notificationSheet" class="bottom-sheet sheet-hidden w-full">
+            <div class="sheet-handle w-full flex-none">
+                <div class="handle-bar"></div>
+            </div>
+            <div class="px-6 pb-6 overflow-y-auto flex-1">
+                <h3 class="text-lg font-bold text-slate-800 mb-4 text-center">Notificações</h3>
+                <div class="space-y-3" id="notif-list">
+                    <p class="text-center text-slate-400 text-xs">Sem notificações recentes.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sheet: Perfil -->
+        <div id="profileSheet" class="bottom-sheet sheet-hidden w-full">
+            <div class="sheet-handle w-full flex-none">
+                <div class="handle-bar"></div>
+            </div>
+            <div class="px-6 pb-8 overflow-y-auto flex-1 text-center">
+                <div
+                    class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mx-auto mb-4">
+                    <i class='bx bx-user text-3xl'></i>
+                </div>
+                <!-- Dynamic Profile Info -->
+                <h3 id="sheet-profile-name" class="font-bold text-slate-800 mb-6">...</h3>
+                <div class="text-left space-y-4">
+                    <div>
+                        <p class="text-[10px] uppercase font-bold text-slate-400">ID Cliente</p>
+                        <p id="sheet-profile-id" class="text-sm font-medium text-slate-800">...</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] uppercase font-bold text-slate-400">Telefone</p>
+                        <p id="sheet-profile-phone" class="text-sm font-medium text-slate-800">...</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] uppercase font-bold text-slate-400">Endereço</p>
+                        <p id="sheet-profile-address" class="text-sm font-medium text-slate-800">...</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] uppercase font-bold text-slate-400">Dia Vencimento</p>
+                        <p id="sheet-profile-venc" class="text-sm font-medium text-slate-800">...</p>
+                    </div>
+                </div>
+                <button onclick="window.location.reload()"
+                    class="w-full mt-8 py-4 bg-slate-900 text-white font-bold rounded-2xl shadow-lg active:scale-[0.98]">Sair</button>
+            </div>
+        </div>
+
+        <!-- Sheet Detalhes da Fatura -->
+        <div id="invoiceDetailSheet" class="bottom-sheet sheet-hidden w-full">
+            <div class="sheet-handle w-full flex-none">
+                <div class="handle-bar"></div>
+            </div>
+            <div class="px-6 pb-8 overflow-y-auto flex-1">
+                <div id="invoiceDetailHeader" class="text-center mb-6"></div>
+                <!-- Payment Action moved to top -->
+                <div id="paymentAction" class="mb-6"></div>
+                <div class="space-y-4" id="purchaseList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="glass-header sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
+        <button id="profileBtn" class="flex items-center gap-2 outline-none">
+            <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                <i class='bx bx-user text-lg'></i>
+            </div>
+            <span id="header-name" class="text-sm font-semibold text-slate-800">...</span>
+        </button>
+        <button id="notifBtn"
+            class="relative w-9 h-9 flex items-center justify-center rounded-full text-slate-400 outline-none">
+            <i class='bx bx-bell text-xl'></i>
+            <span id="notifBadge"
+                class="absolute top-2 right-2 w-2 h-2 bg-red-600 rounded-full border-2 border-white hidden"></span>
+        </button>
+    </header>
+
+    <main id="app-content" class="p-6 max-w-lg mx-auto hidden">
+        <!-- Seção de Cartão -->
+        <div class="flex items-center justify-between mb-4">
+            <h1 class="text-sm font-semibold text-slate-900 tracking-tight">Cartões Virtuais</h1>
+            <button id="addCardBtn" class="add-card-btn"><i id="addCardIcon" class='bx bx-plus text-lg'></i></button>
+        </div>
+
+        <section class="credit-card flex flex-col justify-between h-48 text-white">
+            <div class="flex justify-between items-start">
+                <div class="flex items-baseline gap-1"><span class="font-light opacity-90 text-sm">D'tudo</span><span
+                        class="font-bold text-sm">Pay</span></div>
+                <!-- Optional: Use generate_image for logo or keep URL -->
+                <img src="https://blogger.googleusercontent.com/img/a/AVvXsEiZzTxHOG5_5urktvF0Z-h_k9ErnlVbfG1y1RA6wQZl_FknHP--AHNS9vyt5Ms2bShV1bemboqaohV9rdyI34WE_O80akBmoUJ9jb-zMvJcQUcJvQZuYrFDkaoBZ5603CpP2Yf3_rSqJuEKK2zHuwEdmbN7l_BX_ZQi1jjvgvqusxw-ZUyYxKLVIgBkwlU"
+                    class="w-8 filter drop-shadow-md brightness-0 invert" alt="Logo">
+            </div>
+            <p class="text-lg font-medium tracking-[0.25em] flex gap-3">
+                <span>••••</span><span>••••</span><span>••••</span><span id="card-last-digits">0000</span>
+            </p>
+            <div class="flex justify-between items-end">
+                <div class="flex flex-col"><span class="text-[8px] uppercase opacity-60 font-bold">Titular</span><span
+                        id="card-holder-name" class="text-[10px] font-bold uppercase">...</span></div>
+                <div class="flex gap-4">
+                    <div class="flex flex-col items-end"><span
+                            class="text-[8px] uppercase opacity-60 font-bold">Validade</span><span
+                            class="text-[10px] font-medium">--/--</span></div>
+                    <div class="flex flex-col items-end"><span
+                            class="text-[8px] uppercase opacity-60 font-bold">CVV</span><span
+                            class="text-[10px] font-medium">***</span></div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- Faturas Mês a Mês -->
+        <section class="mb-8">
+            <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Faturas</h2>
+            <div class="flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6" id="invoiceCarousel">
+                <!-- Injected via JS -->
+                <p class="text-slate-400 italic text-xs">Carregando faturas...</p>
+            </div>
+        </section>
+
+        <!-- Limite Unificado -->
+        <section class="p-5 rounded-3xl bg-slate-50/50 border border-slate-50">
+            <div class="flex justify-between items-end mb-4">
+                <div class="flex flex-col gap-1">
+                    <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Limite do Cartão</h2>
+                </div>
+                <div class="text-right">
+                    <span id="limit-total-display" class="text-sm font-bold text-slate-900">R$ 0,00</span>
+                </div>
+            </div>
+
+            <div class="limit-progress-container">
+                <div id="bar-fatura" class="progress-segment-fatura h-full transition-all duration-1000"
+                    style="width: 0%"></div>
+                <div id="bar-utilizado" class="progress-segment-utilizado h-full transition-all duration-1000"
+                    style="width: 0%"></div>
+            </div>
+
+            <div class="flex items-center gap-4 mt-4">
+                <div class="flex items-center gap-1.5">
+                    <div class="w-2 h-2 rounded-full progress-segment-fatura"></div>
+                    <span id="legend-fatura" class="text-[10px] font-bold text-slate-600">Fatura Atual</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <div class="w-2 h-2 rounded-full progress-segment-utilizado"></div>
+                    <span id="legend-future" class="text-[10px] font-bold text-slate-900">Futuro</span>
+                </div>
+            </div>
+            <p id="available-limit"
+                class="text-[10px] text-right mt-2 text-emerald-600 font-bold hover:opacity-80 transition-opacity cursor-pointer">
+                Disponível: R$ 0,00</p>
+        </section>
+    </main>
+
+    <script>
+        // --- API Config ---
+        const API_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
+
+        let GLOBAL_ID = null;
+        let PIN = "";
+        let CLIENT_DATA = null;
+        let INVOICES = [];
+
+        // --- DOM Elements ---
+        const modalOverlay = document.getElementById('modalOverlay');
+        const detailSheet = document.getElementById('invoiceDetailSheet');
+        const notificationSheet = document.getElementById('notificationSheet');
+        const profileSheet = document.getElementById('profileSheet');
+
+        // --- Helpers ---
+        const formatMoney = (val) => (val || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        function parseDateSafe(d) {
+            if (!d) return new Date();
+            if (d instanceof Date) return d;
+            if (typeof d === 'string' && d.includes('T')) return new Date(d);
+            if (typeof d === 'string' && d.includes('/')) {
+                const p = d.split(' ')[0].split('/');
+                if (p.length === 3) return new Date(p[2], p[1] - 1, p[0], 12, 0, 0);
+            }
+            return new Date(d);
+        }
+
+        // --- Core Logic ---
+        async function init() {
+            const p = new URLSearchParams(window.location.search);
+            GLOBAL_ID = p.get('q') || p.get('id');
+
+            if (!GLOBAL_ID) {
+                alert("Identificação de cliente não encontrada.");
+                document.getElementById('loading').style.display = 'none';
+                return;
+            }
+
+            await loadData();
+        }
+
+        async function loadData() {
+            try {
+                document.getElementById('loading').style.display = 'flex';
+                // Using the exact action from API.js
+                const url = `${API_URL}?action=obterDadosFatura&idCliente=${GLOBAL_ID}&pin=${PIN}`;
+
+                const res = await fetch(url);
+                const json = await res.json();
+
+                document.getElementById('loading').style.display = 'none';
+
+                if (json.status === 'auth_required') {
+                    showLoginScreen(json.cliente.nome);
+                } else if (json.status === 'success') {
+                    hideLoginScreen();
+                    CLIENT_DATA = json.cliente;
+                    processInvoices(json);
+                    renderApp();
+                    document.getElementById('app-content').classList.remove('hidden');
+                } else {
+                    if (PIN.length > 0) {
+                        const err = document.getElementById('login-error');
+                        err.textContent = "PIN incorreto.";
+                        err.classList.remove('hidden');
+                        clearPin();
+                    } else {
+                        alert(json.message || "Erro desconhecido");
+                    }
+                }
+            } catch (e) {
+                document.getElementById('loading').style.display = 'none';
+                alert("Erro de conexão: " + e.message);
+            }
+        }
+
+        // --- Data Processing (Same logic as meuacesso.html) ---
+        function processInvoices(data) {
+            const logs = data.historico || [];
+            const diaVenc = parseInt(data.cliente.diaVencimento) || 10;
+            const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+            const fMap = {};
+
+            logs.forEach(log => {
+                let comp;
+                if (log.vencimentoParcela && log.vencimentoParcela.length > 5) {
+                    comp = parseDateSafe(log.vencimentoParcela);
+                } else {
+                    const dV = parseDateSafe(log.data);
+                    let b = new Date(dV.getFullYear(), dV.getMonth(), diaVenc);
+                    // If purchase is close to due date (e.g. 10 days before), move to next month
+                    if (dV.getDate() >= (diaVenc - 10)) {
+                        b.setMonth(b.getMonth() + 1);
+                    }
+                    comp = b;
+                }
+
+                // Key format: YYYY-MM
+                const key = `${comp.getFullYear()}-${String(comp.getMonth() + 1).padStart(2, '0')}`;
+
+                if (!fMap[key]) {
+                    fMap[key] = {
+                        dataVencimento: new Date(comp.getFullYear(), comp.getMonth(), diaVenc),
+                        totalCompras: 0,
+                        totalPagos: 0,
+                        itens: []
+                    };
+                }
+
+                fMap[key].itens.push(log);
+
+                // Check if payment or purchase
+                const isPayment = String(log.tipo).toLowerCase().includes('pagamento') || log.valor < 0;
+                if (isPayment) {
+                    fMap[key].totalPagos += Math.abs(log.valor);
+                } else {
+                    fMap[key].totalCompras += log.valor;
+                }
+            });
+
+            // Sort by date
+            let crua = Object.values(fMap).sort((a, b) => a.dataVencimento - b.dataVencimento);
+            let fin = [];
+            let atraso = { total: 0, itens: [] };
+
+            // Separate overdue
+            crua.forEach(fat => {
+                const s = fat.totalCompras - fat.totalPagos;
+                // If invoice due date is in the past
+                if (fat.dataVencimento < hoje) {
+                    // Add to backlog
+                    atraso.total += s;
+                    if (s > 0.01) {
+                        fat.itens.forEach(i => { i.isAtrasado = true; atraso.itens.push(i); });
+                    }
+                } else {
+                    fin.push(fat);
+                }
+            });
+
+            // If there's overdue amount, add to first available invoice or create one
+            if (atraso.total > 0.01) {
+                if (fin.length > 0) {
+                    // Add to the first future invoice
+                    fin[0].totalCompras += atraso.total;
+                    fin[0].itens = [...atraso.itens, ...fin[0].itens];
+                    fin[0].hasAtraso = true;
+                } else {
+                    // Create a "current" invoice for the overdue amount
+                    fin.push({
+                        dataVencimento: new Date(hoje.getFullYear(), hoje.getMonth(), diaVenc),
+                        totalCompras: atraso.total,
+                        totalPagos: 0,
+                        itens: atraso.itens,
+                        hasAtraso: true
+                    });
+                }
+            }
+
+            // Ensure current month exists if empty
+            if (fin.length === 0) {
+                fin.push({
+                    dataVencimento: new Date(hoje.getFullYear(), hoje.getMonth(), diaVenc),
+                    totalCompras: 0,
+                    totalPagos: 0,
+                    itens: []
+                });
+            }
+
+            INVOICES = fin;
+        }
+
+        // --- Rendering ---
+        function renderApp() {
+            if (!CLIENT_DATA) return;
+
+            // 1. Header & Profile
+            document.getElementById('header-name').textContent = CLIENT_DATA.nome.split(' ')[0];
+            document.getElementById('sheet-profile-name').textContent = CLIENT_DATA.nome;
+            document.getElementById('sheet-profile-id').textContent = CLIENT_DATA.id;
+            document.getElementById('sheet-profile-phone').textContent = CLIENT_DATA.telefone || "Não informado";
+            document.getElementById('sheet-profile-address').textContent = CLIENT_DATA.endereco || "Não cadastrado";
+            document.getElementById('sheet-profile-venc').textContent = "Dia " + (CLIENT_DATA.diaVencimento || 10);
+
+
+            // 2. Card
+            document.getElementById('card-holder-name').textContent = CLIENT_DATA.nome;
+            document.getElementById('card-last-digits').textContent = (CLIENT_DATA.id || "0000").slice(-4);
+            // Dynamic Expiry: Masked
+            document.getElementById('card-last-digits').parentElement.parentElement.parentElement.querySelector('.font-medium').textContent = "****";
+
+            // 3. Carousel
+            renderInvoiceCarousel();
+
+            // 4. Limit Bar
+            renderLimit();
+        }
+
+        function renderInvoiceCarousel() {
+            const container = document.getElementById('invoiceCarousel');
+            container.innerHTML = '';
+
+            const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+            const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+            INVOICES.forEach((inv, idx) => {
+                const saldo = inv.totalCompras - inv.totalPagos;
+                let status = "aberta";
+                let statusClass = "border-slate-100 bg-slate-50"; // Default
+
+                const isCurrentMonth = inv.dataVencimento.getMonth() === hoje.getMonth() && inv.dataVencimento.getFullYear() === hoje.getFullYear();
+
+                if (saldo <= 0.01) {
+                    status = "paga";
+                    statusClass = "fatura-paga";
+                } else if (inv.dataVencimento < hoje) {
+                    status = "atrasada";
+                    statusClass = "fatura-atrasada border-2";
+                } else if (!isCurrentMonth && inv.dataVencimento > hoje) { // Future (Next months)
+                    status = "fechada"; // Uses styles for future/closed
+                    statusClass = "border-2 border-slate-900 bg-white";
+                }
+
+                // Format month name
+                const monthName = meses[inv.dataVencimento.getMonth()];
+                const fullYear = inv.dataVencimento.getFullYear();
+                const displayDate = `${inv.dataVencimento.getDate()}/${String(inv.dataVencimento.getMonth() + 1).padStart(2, '0')}`;
+
+                const card = document.createElement('div');
+                card.className = `flex-none w-28 p-3 rounded-2xl border cursor-pointer transition-all active:scale-95 ${statusClass}`;
+
+                card.innerHTML = `
+                    <p class="text-[9px] font-bold uppercase ${status === 'aberta' ? 'text-slate-300' : 'text-slate-400'}">${monthName} ${fullYear}</p>
+                    <p class="text-sm font-bold mt-1 ${status === 'aberta' ? 'text-slate-300' : 'text-slate-900'}">${formatMoney(saldo)}</p>
+                    <p class="text-[8px] font-medium mt-2 ${status === 'aberta' ? 'text-slate-300' : 'text-slate-500'}">
+                        ${status === 'atrasada' ? 'Vencida' : (saldo > 0.01 ? 'Vence ' + displayDate : 'Paga')}
+                    </p>
+                `;
+
+                card.onclick = () => openInvoiceDetail(inv, monthName);
+                container.appendChild(card);
+            });
+        }
+
+        // Helper for unique month comparison
+        function uniqueMonth(d) {
+            return new Date(d.getFullYear(), d.getMonth(), 1);
+        }
+
+        function renderLimit() {
+            const limitTotal = parseFloat(CLIENT_DATA.limite) || 0;
+            let currentDebt = 0;
+            let futureDebt = 0;
+
+            INVOICES.forEach((inv, i) => {
+                const saldo = inv.totalCompras - inv.totalPagos;
+                if (saldo > 0) {
+                    if (i === 0) currentDebt += saldo;
+                    else futureDebt += saldo;
+                }
+            });
+
+            const totalUsed = currentDebt + futureDebt;
+            const available = limitTotal - totalUsed;
+
+            // Width percentages
+            const barBase = Math.max(limitTotal, totalUsed);
+            const wCurrent = barBase > 0 ? (currentDebt / barBase) * 100 : 0;
+            const wFuture = barBase > 0 ? (futureDebt / barBase) * 100 : 0;
+
+            document.getElementById('limit-total-display').textContent = formatMoney(limitTotal);
+            document.getElementById('available-limit').textContent = `Disponível: ${formatMoney(available)}`;
+            if (available < 0) {
+                document.getElementById('available-limit').classList.replace('text-emerald-600', 'text-rose-600');
+                document.getElementById('available-limit').textContent = `Excedido: ${formatMoney(Math.abs(available))}`;
+            }
+
+            document.getElementById('bar-fatura').style.width = `${wCurrent}%`;
+            document.getElementById('bar-utilizado').style.width = `${wFuture}%`;
+
+            document.getElementById('legend-fatura').textContent = `Fatura (${formatMoney(currentDebt)})`;
+            document.getElementById('legend-future').textContent = `Futuro (${formatMoney(futureDebt)})`;
+        }
+
+        const openInvoiceDetail = (inv, monthName) => {
+            const saldo = inv.totalCompras - inv.totalPagos;
+
+            let statusBadge = '';
+            if (saldo <= 0.01) statusBadge = '<span class="inline-block mt-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-600">Paga</span>';
+            else if (inv.dataVencimento < new Date().setHours(0, 0, 0, 0)) statusBadge = '<span class="inline-block mt-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-100 text-red-600">Atrasada</span>';
+            else statusBadge = '<span class="inline-block mt-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-800">Aberta</span>';
+
+            document.getElementById('invoiceDetailHeader').innerHTML = `
+                <h3 class="text-xl font-bold text-slate-800">Fatura de ${monthName}</h3>
+                <p class="text-2xl font-black text-slate-900 mt-2">${formatMoney(saldo)}</p>
+                ${statusBadge}
+            `;
+
+            if (inv.itens.length > 0) {
+                // Sort by date desc
+                const itensSorted = [...inv.itens].sort((a, b) => parseDateSafe(b.data) - parseDateSafe(a.data));
+
+                document.getElementById('purchaseList').innerHTML = itensSorted.map(p => {
+                    const isPay = String(p.tipo).toLowerCase().includes('pagamento') || p.valor < 0;
+                    const dateStr = parseDateSafe(p.data).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+
+                    return `
+                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
+                        <div class="flex flex-col">
+                            <span class="text-xs font-bold ${isPay ? 'text-emerald-600' : 'text-slate-800'}">${p.obs || p.tipo}</span>
+                            <span class="text-[10px] text-slate-400">${dateStr}</span>
+                        </div>
+                        <span class="text-sm font-bold ${isPay ? 'text-emerald-600' : 'text-slate-900'}">${formatMoney(Math.abs(p.valor))}</span>
+                    </div>
+                    `;
+                }).join('');
+            } else {
+                document.getElementById('purchaseList').innerHTML = '<p class="text-center text-slate-400 py-10 italic">Nenhuma compra registada.</p>';
+            }
+
+            // Payment Button if open
+            // Payment Button if open
+            if (saldo > 0.01) {
+                const desc = `Fatura ${monthName} - Venc ${inv.dataVencimento.toLocaleDateString('pt-BR')}`;
+                const dueDateIso = inv.dataVencimento.toISOString();
+
+                // Verificação de Amortização (Última parcela)
+                const isLastInvoice = INVOICES.indexOf(inv) === INVOICES.length - 1;
+                const totalParcels = INVOICES.length;
+
+                let finalAmount = saldo;
+                let discountHtml = '';
+                let discountRate = 0;
+
+                // Lógica de Desconto Progressivo
+                if (totalParcels > 5) {
+                    discountRate = 0.05; // 5% para > 5 parcelas
+                } else if (totalParcels >= 3) {
+                    discountRate = 0.025; // 2.5% para 3 a 5 parcelas
+                }
+                // Menos de 3 parcelas (1 ou 2) = 0%
+
+                if (isLastInvoice && saldo > 10 && discountRate > 0) {
+                    const discount = saldo * discountRate;
+                    finalAmount = saldo - discount;
+                    const percentText = (discountRate * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1 }) + '%'; // 2,5% ou 5%
+
+                    discountHtml = `
+                        <div class="mb-3 p-3 bg-emerald-50 rounded-xl border border-emerald-100 flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] font-bold text-emerald-600 uppercase">Amortização Disponível</p>
+                                <p class="text-xs text-emerald-800">${percentText} de desconto por antecipação</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[10px] text-slate-400 line-through">${formatMoney(saldo)}</p>
+                                <p class="text-sm font-bold text-emerald-600">${formatMoney(finalAmount)}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                document.getElementById('paymentAction').innerHTML = `
+                    ${discountHtml}
+                    <button class="w-full py-4 bg-black text-white font-bold rounded-2xl shadow-lg active:scale-[0.98] flex flex-col items-center justify-center" onclick="createPixPayment(${finalAmount.toFixed(2)}, '${desc}', '${dueDateIso}')">
+                        <span>Pagar ${formatMoney(finalAmount)} com Pix</span>
+                        ${isLastInvoice ? '<span class="text-[10px] font-normal opacity-80">Parabéns pela antecipação!</span>' : ''}
+                    </button>
+                    <p id="pay-loading" class="text-center text-xs text-slate-400 mt-2 hidden">Gerando Pix...</p>
+                `;
+            } else {
+                document.getElementById('paymentAction').innerHTML = '';
+            }
+
+            modalOverlay.classList.remove('overlay-hidden');
+            detailSheet.classList.remove('sheet-hidden');
+        };
+
+        // --- Pix Payment Logic ---
+        async function createPixPayment(amount, description, dueDateIso) {
+            const btn = document.querySelector('#paymentAction button');
+            const loading = document.getElementById('pay-loading');
+
+            const originalContent = btn.innerHTML;
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML = `<div class="flex flex-col items-center gap-2"><div class="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div><span class="text-xs font-normal">Gerando Pix...</span></div>`;
+                loading.classList.remove('hidden');
+
+                const descFinal = description || "Pagamento Fatura EletroPay";
+
+                // Calcula Expiração
+                let dateExp = new Date();
+                if (dueDateIso) {
+                    const d = new Date(dueDateIso);
+                    d.setDate(d.getDate() + 5);
+                    d.setHours(23, 59, 59);
+
+                    if (d > new Date()) dateExp = d;
+                    else dateExp.setHours(dateExp.getHours() + 48);
+                } else {
+                    dateExp.setHours(dateExp.getHours() + 48);
+                }
+                const expirationIso = dateExp.toISOString();
+
+                const payload = {
+                    items: [{
+                        id: "FATURA-" + GLOBAL_ID,
+                        name: descFinal,
+                        quantity: 1,
+                        priceNew: amount
+                    }],
+                    shippingCost: 0,
+                    clientData: {
+                        firstName: CLIENT_DATA.nome.split(' ')[0],
+                        lastName: CLIENT_DATA.nome.split(' ').slice(1).join(' ') || "Cliente",
+                        email: "cliente@eletropay.com.br", // Default ou real se tiver
+                        phone: CLIENT_DATA.telefone.replace(/\D/g, '') || "99999999999"
+                    },
+                    account: 'eletropay' // FLAG IMPORTANTE PARA USAR A SEGUNDA CONTA
+                };
+
+                // Primeiro cria a preferência/pedido
+                const resPref = await fetch('https://createpreference-xsy57wqb6q-uc.a.run.app', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!resPref.ok) throw new Error("Erro ao criar pedido");
+                const dataPref = await resPref.json();
+
+                // Agora cria o pagamento Pix efetivo usando o orderId
+                const payPayload = {
+                    payment_data: {
+                        payment_method_id: "pix",
+                        transaction_amount: amount,
+                        description: descFinal,
+                        date_of_expiration: expirationIso,
+                        payer: {
+                            email: "cliente@eletropay.com.br"
+                        }
+                    },
+                    orderId: dataPref.orderId,
+                    account: 'eletropay' // FLAG IMPORTANTE
+                };
+
+                const resPay = await fetch('https://createpayment-xsy57wqb6q-uc.a.run.app', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payPayload)
+                });
+
+                if (!resPay.ok) throw new Error("Erro ao gerar Pix");
+                const dataPay = await resPay.json();
+
+                const qrCodeBase64 = dataPay.point_of_interaction.transaction_data.qr_code_base64;
+                const copyPaste = dataPay.point_of_interaction.transaction_data.qr_code;
+
+                showPixModal(qrCodeBase64, copyPaste);
+
+            } catch (error) {
+                alert("Erro ao gerar pagamento: " + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalContent; // Restore button content
+                loading.classList.add('hidden');
+            }
+        }
+
+        function showPixModal(base64, copypaste) {
+            // Reutiliza o invoiceDetailSheet ou cria um novo. Vamos injetar no invoiceDetailSheet por simplicidade por enquanto
+            document.getElementById('invoiceDetailSheet').classList.add('sheet-hidden');
+
+            // Cria um modal temporário de Pix se não existir
+            let pixSheet = document.getElementById('pixSheet');
+            if (!pixSheet) {
+                const d = document.createElement('div');
+                d.innerHTML = `
+                 <div id="pixSheet" class="bottom-sheet sheet-hidden w-full" style="z-index: 80;">
+                    <div class="sheet-handle w-full flex-none"><div class="handle-bar"></div></div>
+                    <div class="px-6 pb-8 overflow-y-auto flex-1 text-center">
+                        <h3 class="text-lg font-bold text-slate-800 mb-4">Pagamento Pix</h3>
+                        <p class="text-sm text-slate-500 mb-6">Escaneie o QR Code ou copie a chave abaixo</p>
+                        
+                        <img id="pix-qr-img" src="" class="w-48 h-48 mx-auto mb-6 border p-2 rounded-xl">
+                        
+                        <div class="bg-slate-100 p-4 rounded-xl mb-6 relative">
+                            <p id="pix-key" class="text-[10px] text-slate-500 break-all font-mono line-clamp-2">...</p>
+                            <button onclick="copyPix()" class="absolute right-2 top-2 bg-white p-2 rounded-lg shadow-sm text-xs font-bold text-slate-700">Copiar</button>
+                        </div>
+
+                        <button onclick="closePix()" class="w-full py-4 bg-slate-900 text-white font-bold rounded-2xl">Fechar</button>
+                    </div>
+                 </div>`;
+                document.getElementById('modalOverlay').appendChild(d.firstElementChild);
+                pixSheet = document.getElementById('pixSheet');
+            }
+
+            document.getElementById('pix-qr-img').src = "data:image/png;base64," + base64;
+            document.getElementById('pix-key').textContent = copypaste;
+
+            setTimeout(() => pixSheet.classList.remove('sheet-hidden'), 100);
+        }
+
+        function copyPix() {
+            const txt = document.getElementById('pix-key').textContent;
+            navigator.clipboard.writeText(txt);
+            alert("Chave Pix copiada!");
+        }
+
+        function closePix() {
+            document.getElementById('pixSheet').classList.add('sheet-hidden');
+            setTimeout(() => modalOverlay.classList.add('overlay-hidden'), 300);
+        }
+
+        // --- Login Logic ---
+        function showLoginScreen(nome) {
+            document.getElementById('login-name').textContent = `Olá, ${nome || "Cliente"}`;
+            document.getElementById('login-screen').style.display = 'flex';
+        }
+        function hideLoginScreen() { document.getElementById('login-screen').style.display = 'none'; }
+        function typePin(n) {
+            if (PIN.length < 6) {
+                PIN += n;
+                updatePinDots();
+                if (PIN.length === 6) setTimeout(loadData, 300);
+            }
+        }
+        function backspacePin() {
+            PIN = PIN.slice(0, -1);
+            updatePinDots();
+            document.getElementById('login-error').classList.add('hidden');
+        }
+        function clearPin() { PIN = ""; updatePinDots(); }
+        function updatePinDots() {
+            document.querySelectorAll('.pin-dot').forEach((dot, i) => {
+                if (i < PIN.length) dot.classList.add('filled');
+                else dot.classList.remove('filled');
+            });
+        }
+
+        // --- UI Interactions ---
+        const closeAllSheets = () => {
+            document.querySelectorAll('.bottom-sheet').forEach(s => s.classList.add('sheet-hidden'));
+            setTimeout(() => modalOverlay.classList.add('overlay-hidden'), 300);
+        };
+
+        document.getElementById('notifBtn').onclick = () => {
+            modalOverlay.classList.remove('overlay-hidden');
+            document.getElementById('notificationSheet').classList.remove('sheet-hidden');
+            document.getElementById('notifBadge').style.display = 'none';
+        };
+
+        document.getElementById('profileBtn').onclick = () => {
+            modalOverlay.classList.remove('overlay-hidden');
+            document.getElementById('profileSheet').classList.remove('sheet-hidden');
+        };
+
+        modalOverlay.onclick = (e) => { if (e.target === modalOverlay) closeAllSheets(); };
+
+        const addCardBtn = document.getElementById('addCardBtn');
+        const addCardIcon = document.getElementById('addCardIcon');
+        addCardBtn.onclick = () => {
+            if (addCardBtn.classList.contains('painting')) return;
+            addCardBtn.classList.add('painting');
+            addCardIcon.style.opacity = '0';
+            setTimeout(() => { addCardIcon.className = 'bx bx-lock-alt text-lg'; addCardIcon.style.opacity = '1'; }, 200);
+            setTimeout(() => {
+                addCardBtn.classList.remove('painting');
+                addCardIcon.style.opacity = '0';
+                setTimeout(() => { addCardIcon.className = 'bx bx-plus text-lg'; addCardIcon.style.opacity = '1'; }, 200);
+            }, 2000);
+        };
+
+        // Start
+        init();
+    </script>
+</body>
+
+</html>

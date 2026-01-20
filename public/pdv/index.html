@@ -112,55 +112,83 @@
 
     <div class="modal-overlay" id="cliente-details-modal">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header" style="justify-content: space-between; align-items: center;">
                 <h3>Ficha do Cliente</h3>
-                <button class="close-modal-btn" data-target="cliente-details-modal"><i class='bx bx-x'></i></button>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="position: relative;">
+                        <button id="btn-client-options" class="btn-icon-soft">
+                            <i class='bxr  bx-sparkles-alt'></i>
+                        </button>
+                        <div id="client-options-dropdown" class="client-options-dropdown">
+                            <div class="dropdown-item" data-action="renegociar">
+                                <i class='bx bx-calendar-edit'></i> Renegociar
+                            </div>
+                            <div class="dropdown-item" data-action="limite">
+                                <i class='bx bx-coin-stack'></i> Limite
+                            </div>
+                            <div class="dropdown-item" data-action="manual_venc">
+                                <i class='bx bx-time'></i> Prazo
+                            </div>
+                            <div class="dropdown-item" data-action="acesso">
+                                <i class='bx bx-qr-scan'></i> Gerar acesso QRCODE
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botão Expandir Janela (Cliente) -->
+                    <button class="window-control-btn" id="btn-maximize-client-modal" title="Expandir janela">
+                        <i class='bx bx-expand'></i>
+                    </button>
+
+                    <button class="btn-icon-soft close-modal-btn" data-target="cliente-details-modal">
+                        <i class='bx bx-x'></i>
+                    </button>
+                </div>
             </div>
+
             <div class="modal-body">
                 <div class="client-profile-header"
-                    style="position: relative; display: flex; align-items: center; gap: 10px;">
-                    <div class="client-avatar"><i class='bx bx-user'></i></div>
+                    style="position: relative; display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+                    <div class="client-avatar" style="width: 50px; height: 50px; font-size: 1.5rem;"><i
+                            class='bx bx-user'></i></div>
                     <div style="flex-grow: 1;">
-                        <h4 id="detail-cliente-nome">Carregando...</h4>
-                        <p id="detail-cliente-apelido" class="text-light">...</p>
-                    </div>
-                    <button id="btn-admin-edit"
-                        style="background: none; border: none; color: #666; font-size: 1.4rem; cursor: pointer; padding: 5px;"
-                        title="Admin: Renegociar">
-                        <i class='bx bxs-pencil'></i>
-                    </button>
-                </div>
-                <div class="client-stats-grid">
-                    <div class="stat-box">
-                        <span class="stat-label">Saldo Devedor</span>
-                        <span class="stat-value danger" id="detail-cliente-saldo">R$ 0,00</span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-label">Próximo Venc.</span>
-                        <span class="stat-value" id="detail-cliente-vencimento">--/--/----</span>
+                        <h4 id="detail-cliente-nome" style="margin:0; font-size: 1.1rem; color: #111;">Carregando...
+                        </h4>
+                        <p id="detail-cliente-apelido" class="text-light" style="margin:0; font-size: 0.9rem;">...</p>
                     </div>
                 </div>
 
-                <div style="margin-top: 20px; padding: 0 5px;">
-                    <button id="btn-gerar-acesso" class="action-btn"
-                        style="background: #1f2937; color: white; width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">
-                        <i class='bx bx-qr-scan'></i> Gerar Acesso do Cliente
-                    </button>
-
-                    <div id="qrcode-container"
-                        style="display:none; margin-top: 15px; justify-content: center; background: white; padding: 10px; border-radius: 8px;">
+                <div class="detail-info-row" style="gap: 8px;">
+                    <div class="detail-info-card">
+                        <span class="label">Saldo Devedor</span>
+                        <span class="value" id="detail-cliente-saldo">R$ 0,00</span>
                     </div>
-
-                    <p id="link-acesso-text"
-                        style="font-size: 12px; color: #007bff; word-break: break-all; display:none; margin-top:10px; text-align: center; cursor: pointer;">
-                    </p>
+                    <div class="detail-info-card">
+                        <span class="label">Próximo Venc.</span>
+                        <span class="value" id="detail-cliente-vencimento">--/--/----</span>
+                    </div>
+                    <div class="detail-info-card">
+                        <span class="label">Parcelas Rest.</span>
+                        <span class="value" id="detail-cliente-qtd-parcelas">-</span>
+                    </div>
+                    <div class="detail-info-card">
+                        <span class="label">Valor Parcela</span>
+                        <span class="value" id="detail-cliente-valor-parcela-mensal">-</span>
+                    </div>
                 </div>
 
-                <div class="limit-container">
+                <!-- QR Code Container (Modernizado) -->
+                <div id="qrcode-container" class="qr-modern-container">
+                    <button class="qr-close-btn"
+                        onclick="document.getElementById('qrcode-container').classList.remove('active');"><i
+                            class='bx bx-x'></i></button>
+                    <div id="qrcode-canvas"></div>
+                    <div id="link-acesso-text" class="qr-link-box"></div>
+                </div>
+
+                <div class="limit-container" style="margin-top: 20px;">
                     <div class="limit-header">
                         <span>Limite: <strong id="detail-cliente-limite-total">R$ 0,00</strong></span>
-                        <button class="btn-edit-limit" id="btn-alterar-limite" title="Alterar Limite"><i
-                                class='bx bx-edit-alt'></i></button>
                     </div>
                     <div class="progress-track">
                         <div class="progress-fill" id="detail-cliente-progress"></div>
@@ -171,7 +199,7 @@
                     </div>
                 </div>
 
-                <div class="history-section">
+                <div class="history-section" style="margin-top: 25px;">
                     <h4><i class='bx bx-history'></i> Histórico Recente</h4>
                     <div class="history-list-container" id="detail-history-container">
                         <p class="text-center loading-text">Carregando...</p>
@@ -186,35 +214,26 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary close-modal-btn" data-target="cliente-details-modal">Fechar</button>
-            </div>
         </div>
     </div>
 
     <div id="modal-admin-auth" class="modal-overlay">
-        <div class="modal-content" style="max-width: 300px; text-align: center; border-radius: 15px; padding: 25px;">
-            <div class="modal-header" style="justify-content: center; border: none; padding: 0; margin-bottom: 15px;">
-                <div
-                    style="background: #fee2e2; color: #dc2626; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+        <div class="modal-content modal-auth-content">
+            <div class="modal-header auth-header">
+                <div class="auth-icon-wrapper">
                     <i class='bx bxs-lock-alt'></i>
                 </div>
             </div>
             <div class="modal-body" style="padding: 0;">
-                <h3 style="margin: 0 0 10px 0; color: #1f2937;">Área Restrita</h3>
-                <p style="font-size: 0.9rem; color: #6b7280; margin-bottom: 20px;">Digite a senha de administrador.</p>
+                <h3 class="auth-title">Área Restrita</h3>
+                <p class="auth-subtitle">Digite a senha de administrador.</p>
 
-                <input type="password" id="admin-password-input" class="form-input" placeholder="Senha..."
-                    style="text-align: center; font-size: 1.1rem; margin-bottom: 5px;">
-                <p id="auth-error-msg"
-                    style="color: #dc2626; font-size: 0.8rem; display: none; margin-bottom: 15px; font-weight: 600;">
-                    Senha incorreta!</p>
+                <input type="password" id="admin-password-input" class="auth-input" placeholder="Senha...">
+                <p id="auth-error-msg" class="auth-error">Senha incorreta!</p>
 
-                <div style="display: flex; gap: 10px;">
-                    <button id="btn-cancel-auth" class="secondary-btn"
-                        style="flex: 1; justify-content: center;">Cancelar</button>
-                    <button id="btn-confirm-auth" class="primary-btn"
-                        style="flex: 1; background: #db0038; justify-content: center;">Entrar</button>
+                <div class="auth-actions">
+                    <button id="btn-cancel-auth" class="btn-auth-cancel">Cancelar</button>
+                    <button id="btn-confirm-auth" class="btn-auth-confirm">Entrar</button>
                 </div>
             </div>
         </div>
@@ -249,6 +268,15 @@
                         <option value="4">4x</option>
                         <option value="5">5x</option>
                         <option value="6">6x</option>
+                        <option value="7">7x</option>
+                        <option value="8">8x</option>
+                        <option value="9">9x</option>
+                        <option value="10">10x</option>
+                        <option value="11">11x</option>
+                        <option value="12">12x (Não recomendado)</option>
+                        <option value="13">13x (Não recomendado)</option>
+                        <option value="14">14x (Não recomendado)</option>
+                        <option value="15">15x (Não recomendado)</option>
                     </select>
                 </div>
 
@@ -1867,13 +1895,37 @@
         <div class="brand-row">
             <img src="assets/sistema.png" alt="Logo" class="brand-img-icon">
 
-            <span class="brand-name-text">ELETRO<span class="highlight-dot">. 1.0.0.41</span></span>
+            <span class="brand-name-text">ELETRO<span class="highlight-dot">. 1.0.0.43</span></span>
         </div>
     </div>
     <div class="pn">
         <div class="status-container">
             <div class="status-dot"></div>
             <span class="status-text" id="network-status-text">ONLINE</span>
+        </div>
+    </div>
+
+    <!-- Modal Alterar Vencimento Manual -->
+    <div class="modal-overlay" id="modal-alterar-vencimento">
+        <div class="modal-content" style="max-width: 350px;">
+            <div class="modal-header">
+                <h3>Alterar Vencimento</h3>
+                <button class="close-modal-btn" data-target="modal-alterar-vencimento"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">
+                    Defina uma data fixa para o vencimento total da dívida atual. Isso ignorará cálculos automáticos
+                    anteriores.
+                </p>
+                <div class="form-group">
+                    <label>Nova Data</label>
+                    <input type="date" id="input-novo-vencimento" class="form-input" style="border: 2px solid #db0038;">
+                </div>
+                <button id="btn-confirmar-vencimento" class="primary-btn"
+                    style="width: 100%; margin-top: 15px; background-color: #db0038;">
+                    Confirmar Alteração
+                </button>
+            </div>
         </div>
     </div>
 

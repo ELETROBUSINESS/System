@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-view="mobile">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projetos | Equipe</title>
+    <!-- Imports Comuns -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/style26.css">
+</head>
+
+<body class="bg-gray-50">
+
+    <div class="p-6 pb-24">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Projetos</h1>
+                <p class="text-xs text-gray-500">Gerencie suas produções</p>
+            </div>
+            <button onclick="window.history.back()"
+                class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-gray-600">
+                <i class='bx bx-arrow-back text-xl'></i>
+            </button>
+        </div>
+
+        <!-- Filtros -->
+        <div class="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
+            <span class="px-4 py-2 bg-gray-800 text-white rounded-full text-xs font-bold whitespace-nowrap">Todos</span>
+            <span
+                class="px-4 py-2 bg-white text-gray-500 border border-gray-200 rounded-full text-xs font-bold whitespace-nowrap">Roteiro</span>
+            <span
+                class="px-4 py-2 bg-white text-gray-500 border border-gray-200 rounded-full text-xs font-bold whitespace-nowrap">Gravação</span>
+            <span
+                class="px-4 py-2 bg-white text-gray-500 border border-gray-200 rounded-full text-xs font-bold whitespace-nowrap">Edição</span>
+        </div>
+
+        <!-- Lista de Projetos -->
+        <div class="space-y-4" id="project-list">
+
+            <!-- Projeto 1 -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex justify-between items-start mb-2">
+                    <span
+                        class="px-2 py-1 rounded bg-blue-50 text-blue-600 text-[10px] font-bold uppercase">Edição</span>
+                    <button class="text-gray-400"><i class='bx bx-dots-vertical-rounded'></i></button>
+                </div>
+                <h3 class="font-bold text-gray-800 mb-1">Vídeo Institucional 2026</h3>
+                <p class="text-xs text-gray-500 mb-3">Cliente: Grupo Alpha</p>
+
+                <div class="w-full bg-gray-100 h-1.5 rounded-full mb-3">
+                    <div class="bg-blue-500 h-1.5 rounded-full" style="width: 60%"></div>
+                </div>
+
+                <div class="flex justify-between items-center mt-2">
+                    <div class="flex -space-x-2">
+                        <div class="w-6 h-6 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-[10px]"
+                            title="Nathan">N</div>
+                        <div class="w-6 h-6 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-[10px]"
+                            title="Eduardo">E</div>
+                    </div>
+                    <span class="text-[10px] text-gray-400 font-bold">Entrega: 25/01</span>
+                </div>
+            </div>
+
+            <!-- Projeto 2 -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex justify-between items-start mb-2">
+                    <span
+                        class="px-2 py-1 rounded bg-orange-50 text-orange-600 text-[10px] font-bold uppercase">Gravação</span>
+                    <button class="text-gray-400"><i class='bx bx-dots-vertical-rounded'></i></button>
+                </div>
+                <h3 class="font-bold text-gray-800 mb-1">Reels Promocional - Tênis</h3>
+                <p class="text-xs text-gray-500 mb-3">Cliente: SportLife</p>
+
+                <div class="w-full bg-gray-100 h-1.5 rounded-full mb-3">
+                    <div class="bg-orange-500 h-1.5 rounded-full" style="width: 25%"></div>
+                </div>
+
+                <div class="flex justify-between items-center mt-2">
+                    <div class="flex -space-x-2">
+                        <div class="w-6 h-6 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-[10px]"
+                            title="Nathan">N</div>
+                    </div>
+                    <span class="text-[10px] text-gray-400 font-bold">Entrega: 22/01</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Fab Button -->
+        <button onclick="alert('Novo Projeto')"
+            class="fixed bottom-24 right-6 w-14 h-14 bg-red-600 rounded-full text-white shadow-lg flex items-center justify-center">
+            <i class='bx bx-plus text-2xl'></i>
+        </button>
+
+    </div>
+
+</body>
+
+</html>
