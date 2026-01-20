@@ -332,6 +332,49 @@
                 <div class="space-y-4" id="purchaseList"></div>
             </div>
         </div>
+
+        <!-- Sheet: Seleção de Pagamento (Novo & Restaurado) -->
+        <div id="paymentSelectModal" class="bottom-sheet sheet-hidden w-full">
+            <div class="sheet-handle w-full flex-none">
+                <div class="handle-bar"></div>
+            </div>
+            <div class="px-6 pb-6 overflow-y-auto flex-1 flex flex-col">
+                <h3 class="text-lg font-bold text-slate-800 mb-1 text-center">Realizar Pagamento</h3>
+                <p class="text-[10px] text-slate-400 text-center mb-6">Selecione as faturas que deseja pagar juntas.</p>
+
+                <div id="installmentsList" class="space-y-3 mb-6 overflow-y-auto max-h-[40vh] no-scrollbar">
+                    <!-- Dynamic Content -->
+                </div>
+
+                <div class="mt-auto pt-4 border-t border-slate-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-xs font-bold text-slate-500 uppercase">Total Selecionado</span>
+                        <div class="text-right">
+                            <span id="paymentTotalDisplay" class="text-2xl font-black text-slate-900">R$ 0,00</span>
+                            <p id="totalSavingsDisplay" class="text-[10px] text-emerald-600 font-bold hidden">Economia
+                                de R$ 0,00</p>
+                        </div>
+                    </div>
+
+                    <div id="amortizationTip"
+                        class="hidden mb-4 p-3 bg-indigo-50 rounded-xl border border-indigo-100 flex items-start gap-2">
+                        <i class='bx bxs-bulb text-indigo-500 text-lg'></i>
+                        <div>
+                            <p class="text-[10px] font-bold text-indigo-700 uppercase">Dica Financeira</p>
+                            <p class="text-xs text-indigo-900">Amortizar parcelas aumenta seu limite disponível
+                                imediatamente.</p>
+                        </div>
+                    </div>
+
+                    <button id="confirmPayBtn"
+                        class="w-full py-4 bg-black text-white font-bold rounded-2xl shadow-lg active:scale-[0.98] flex items-center justify-center gap-2">
+                        <span>Gerar Pix</span>
+                        <i class='bx bx-check-circle text-xl'></i>
+                    </button>
+                    <p id="pay-select-loading" class="text-center text-xs text-slate-400 mt-2 hidden">Gerando Pix...</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Header -->
@@ -484,6 +527,11 @@
                 if (json.status === 'auth_required') {
                     showLoginScreen(json.cliente.nome);
                 } else if (json.status === 'success') {
+                    // [SECURITY FIX] Enforce login if client has password
+                    if (json.cliente && json.cliente.temSenha && PIN.length < 4) {
+                        showLoginScreen(json.cliente.nome);
+                        return;
+                    }
                     hideLoginScreen();
                     CLIENT_DATA = json.cliente;
                     processInvoices(json);
@@ -505,10 +553,35 @@
             }
         }
 
+        // Helper to find the effective due day from logs
+        function getRealDueDay(logs, defaultDay) {
+            if (!logs || logs.length === 0) return defaultDay;
+            // Sort by date to find latest change
+            const sorted = [...logs].sort((a, b) => parseDateSafe(a.data) - parseDateSafe(b.data));
+
+            for (let i = sorted.length - 1; i >= 0; i--) {
+                const obs = sorted[i].obs || "";
+                // Regex from API.js
+                const match = obs.match(/Data de vencimento alterada para \{(\d{2}\/\d{2}\/\d{4})\}/i);
+                if (match) {
+                    const parts = match[1].split('/');
+                    return parseInt(parts[0]); // Return day (e.g. 5)
+                }
+            }
+            return defaultDay;
+        }
+
         // --- Data Processing (Same logic as meuacesso.html) ---
         function processInvoices(data) {
             const logs = data.historico || [];
-            const diaVenc = parseInt(data.cliente.diaVencimento) || 10;
+
+            // Determine Real Due Day dynamically
+            const defaultDia = parseInt(data.cliente.diaVencimento) || 10;
+            const diaVenc = getRealDueDay(logs, defaultDia);
+
+            // Expose for Profile Render
+            CLIENT_DATA.realDiaVencimento = diaVenc;
+
             const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
             const fMap = {};
 
@@ -611,7 +684,8 @@
             document.getElementById('sheet-profile-id').textContent = CLIENT_DATA.id;
             document.getElementById('sheet-profile-phone').textContent = CLIENT_DATA.telefone || "Não informado";
             document.getElementById('sheet-profile-address').textContent = CLIENT_DATA.endereco || "Não cadastrado";
-            document.getElementById('sheet-profile-venc').textContent = "Dia " + (CLIENT_DATA.diaVencimento || 10);
+            // Use Real Calculated Day
+            document.getElementById('sheet-profile-venc').textContent = "Dia " + (CLIENT_DATA.realDiaVencimento || CLIENT_DATA.diaVencimento || 10);
 
 
             // 2. Card
@@ -792,11 +866,11 @@
 
                 document.getElementById('paymentAction').innerHTML = `
                     ${discountHtml}
-                    <button class="w-full py-4 bg-black text-white font-bold rounded-2xl shadow-lg active:scale-[0.98] flex flex-col items-center justify-center" onclick="createPixPayment(${finalAmount.toFixed(2)}, '${desc}', '${dueDateIso}')">
-                        <span>Pagar ${formatMoney(finalAmount)} com Pix</span>
-                        ${isLastInvoice ? '<span class="text-[10px] font-normal opacity-80">Parabéns pela antecipação!</span>' : ''}
+                    <button class="w-full py-4 bg-slate-900 text-white font-bold rounded-2xl shadow-lg active:scale-[0.98] flex flex-col items-center justify-center p-3" onclick='openPaymentModal(${JSON.stringify(inv)})'>
+                        <span>Pagar ${formatMoney(saldo)}</span>
+                        <span class="text-[10px] font-normal opacity-80">ou antecipar parcelas</span>
                     </button>
-                    <p id="pay-loading" class="text-center text-xs text-slate-400 mt-2 hidden">Gerando Pix...</p>
+                    <p id="pay-loading" class="text-center text-xs text-slate-400 mt-2 hidden">Carregando...</p>
                 `;
             } else {
                 document.getElementById('paymentAction').innerHTML = '';
@@ -807,16 +881,200 @@
         };
 
         // --- Pix Payment Logic ---
-        async function createPixPayment(amount, description, dueDateIso) {
-            const btn = document.querySelector('#paymentAction button');
-            const loading = document.getElementById('pay-loading');
+        // --- Payment Modal Logic (Restored & Enhanced) ---
+        let SELECTED_INSTALLMENTS = [];
+
+        function getDiscountRate(installmentIndex) { // 1-based index
+            if (installmentIndex <= 2) return 0;
+            if (installmentIndex === 3) return 0.01;
+            if (installmentIndex === 4) return 0.0175;
+            if (installmentIndex === 5) return 0.0225;
+            if (installmentIndex === 6) return 0.0295;
+            if (installmentIndex === 7) return 0.0335;
+            if (installmentIndex === 8) return 0.0395;
+            if (installmentIndex >= 9 && installmentIndex <= 11) return 0.0425;
+            if (installmentIndex >= 12) return 0.05;
+            return 0;
+        }
+
+        function openPaymentModal(initialInvoice) {
+            // Close detail sheet first
+            document.getElementById('invoiceDetailSheet').classList.add('sheet-hidden');
+
+            // Open payment modal
+            document.getElementById('paymentSelectModal').classList.remove('sheet-hidden');
+            document.getElementById('modalOverlay').classList.remove('overlay-hidden');
+
+            const listContainer = document.getElementById('installmentsList');
+            listContainer.innerHTML = '';
+            SELECTED_INSTALLMENTS = [];
+
+            // Filter only unpaid invoices (future or current)
+            // Sort by date ASC
+            const validInvoices = INVOICES.filter(i => (i.totalCompras - i.totalPagos) > 0.01).sort((a, b) => a.dataVencimento - b.dataVencimento);
+
+            validInvoices.forEach((inv, index) => {
+                const saldo = inv.totalCompras - inv.totalPagos;
+                const monthName = inv.dataVencimento.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }).replace('.', '').toUpperCase();
+
+                // Determine GLOBAL installment number (1-based)
+                const globalIndex = INVOICES.indexOf(inv) + 1;
+                const rate = getDiscountRate(globalIndex);
+
+                const hasDiscount = rate > 0 && saldo > 10;
+                let displayPrice = formatMoney(saldo);
+
+                if (hasDiscount) {
+                    const discount = saldo * rate;
+                    const finalAmt = saldo - discount;
+                    displayPrice = `
+                        <span class="text-[10px] text-slate-400 line-through mr-1">${formatMoney(saldo)}</span>
+                        <span class="text-emerald-600">${formatMoney(finalAmt)}</span>
+                    `;
+                }
+
+                // Pre-select logic
+                const isPreSelected = initialInvoice && inv.dataVencimento.getTime() === new Date(initialInvoice.dataVencimento).getTime();
+
+                // Create Item
+                const item = document.createElement('div');
+                item.className = 'w-full p-3 rounded-xl border border-slate-100 bg-white flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors select-none';
+                item.onclick = (e) => toggleInstallment(index, validInvoices);
+
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div id="check-${index}" class="w-5 h-5 rounded-md border-2 border-slate-300 flex items-center justify-center transition-colors ${isPreSelected ? 'bg-slate-900 border-slate-900' : ''}">
+                            <i class='bx bx-check text-white text-sm ${isPreSelected ? '' : 'hidden'}'></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-slate-800">${monthName}</p>
+                            <p class="text-[10px] text-slate-400">Vence em ${inv.dataVencimento.toLocaleDateString('pt-BR')}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p id="price-display-${index}" class="text-sm font-bold text-slate-900 transition-all">${displayPrice}</p>
+                        ${hasDiscount ? `<span class="text-[9px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-md">Amortizável ${(rate * 100).toFixed(2).replace('.', ',')}%</span>` : ''}
+                    </div>
+                `;
+
+                listContainer.appendChild(item);
+
+                if (isPreSelected) {
+                    toggleInstallment(index, validInvoices, true);
+                }
+            });
+
+            updatePaymentTotal(validInvoices);
+        }
+
+        function toggleInstallment(index, allInvoices, forceSelect = false) {
+            const isSelected = SELECTED_INSTALLMENTS.includes(index);
+
+            if (forceSelect && !isSelected) {
+                SELECTED_INSTALLMENTS.push(index);
+            } else if (!forceSelect) {
+                if (isSelected) {
+                    SELECTED_INSTALLMENTS = SELECTED_INSTALLMENTS.filter(i => i !== index);
+                } else {
+                    SELECTED_INSTALLMENTS.push(index);
+                }
+            }
+
+            // Visual Update
+            const check = document.getElementById(`check-${index}`);
+            if (check) {
+                if (SELECTED_INSTALLMENTS.includes(index)) {
+                    check.classList.add('bg-slate-900', 'border-slate-900');
+                    check.classList.remove('border-slate-300');
+                    check.querySelector('i').classList.remove('hidden');
+                } else {
+                    check.classList.remove('bg-slate-900', 'border-slate-900');
+                    check.classList.add('border-slate-300');
+                    check.querySelector('i').classList.add('hidden');
+                }
+            }
+
+            updatePaymentTotal(allInvoices);
+        }
+
+        function updatePaymentTotal(allInvoices) {
+            let total = 0;
+            let totalSavings = 0;
+            const selectedIndices = SELECTED_INSTALLMENTS.sort((a, b) => a - b); // Ascending
+
+            selectedIndices.forEach(idx => {
+                const inv = allInvoices[idx];
+                let amount = inv.totalCompras - inv.totalPagos;
+
+                // Global index logic for rate
+                const globalIndex = INVOICES.indexOf(inv) + 1;
+                const rate = getDiscountRate(globalIndex);
+
+                if (rate > 0 && amount > 10) {
+                    const discount = amount * rate;
+                    totalSavings += discount;
+                    amount -= discount;
+                }
+
+                total += amount;
+            });
+
+            document.getElementById('paymentTotalDisplay').textContent = formatMoney(total);
+
+            const savingsEl = document.getElementById('totalSavingsDisplay');
+            const tipEl = document.getElementById('amortizationTip');
+
+            if (totalSavings > 0) {
+                savingsEl.textContent = `Economia de ${formatMoney(totalSavings)}`;
+                savingsEl.classList.remove('hidden');
+                tipEl.classList.remove('hidden');
+            } else {
+                savingsEl.classList.add('hidden');
+                tipEl.classList.add('hidden');
+            }
+
+            // Setup Pay Button
+            const btn = document.getElementById('confirmPayBtn');
+            const loading = document.getElementById('pay-select-loading');
+
+            if (selectedIndices.length === 0) {
+                btn.disabled = true;
+                btn.classList.add('opacity-50');
+                btn.onclick = null;
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+
+                const months = selectedIndices.map(i => {
+                    let m = allInvoices[i].dataVencimento.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+                    return m;
+                }).join(', ');
+
+                const desc = `Pagamento: ${months}`;
+                const lastDate = allInvoices[selectedIndices[selectedIndices.length - 1]].dataVencimento.toISOString();
+
+                btn.onclick = () => {
+                    createPixPayment(total, desc, lastDate, btn, loading);
+                };
+            }
+        }
+
+        async function createPixPayment(amount, description, dueDateIso, btnElement, loadingElement) {
+            // Restore Original Reference if not passed (fallback)
+            let btn = btnElement;
+            let loading = loadingElement;
+
+            // If called from the new modal, these are passed. 
+            // If called from old inline button (if any left), we handle it.
+            if (!btn) btn = document.querySelector('#paymentAction button');
+            if (!loading) loading = document.getElementById('pay-loading');
 
             const originalContent = btn.innerHTML;
 
             try {
                 btn.disabled = true;
                 btn.innerHTML = `<div class="flex flex-col items-center gap-2"><div class="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div><span class="text-xs font-normal">Gerando Pix...</span></div>`;
-                loading.classList.remove('hidden');
+                if (loading) loading.classList.remove('hidden');
 
                 const descFinal = description || "Pagamento Fatura EletroPay";
 
@@ -888,6 +1146,10 @@
                 const qrCodeBase64 = dataPay.point_of_interaction.transaction_data.qr_code_base64;
                 const copyPaste = dataPay.point_of_interaction.transaction_data.qr_code;
 
+                // Close payment modal and open Pix Key Modal
+                const modal = document.getElementById('paymentSelectModal');
+                if (modal) modal.classList.add('sheet-hidden');
+
                 showPixModal(qrCodeBase64, copyPaste);
 
             } catch (error) {
@@ -895,7 +1157,7 @@
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalContent; // Restore button content
-                loading.classList.add('hidden');
+                if (loading) loading.classList.add('hidden');
             }
         }
 
