@@ -2125,6 +2125,7 @@ function obterDadosFaturaCliente(identificador, senhaInformada) {
         }
 
         // Retorna tudo limpo (removendo a senha por segurança)
+        clienteEncontrado.temSenha = (clienteEncontrado.senha && clienteEncontrado.senha.length > 0);
         delete clienteEncontrado.senha;
 
         return {

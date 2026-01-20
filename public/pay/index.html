@@ -1094,17 +1094,17 @@
 
                 const payload = {
                     items: [{
-                        id: "FATURA-" + GLOBAL_ID,
+                        id: "FATURA-" + (GLOBAL_ID || "UNKNOWN"),
                         name: descFinal,
                         quantity: 1,
-                        priceNew: amount
+                        priceNew: parseFloat(parseFloat(amount).toFixed(2))
                     }],
                     shippingCost: 0,
                     clientData: {
-                        firstName: CLIENT_DATA.nome.split(' ')[0],
-                        lastName: CLIENT_DATA.nome.split(' ').slice(1).join(' ') || "Cliente",
-                        email: "cliente@eletropay.com.br", // Default ou real se tiver
-                        phone: CLIENT_DATA.telefone.replace(/\D/g, '') || "99999999999"
+                        firstName: (CLIENT_DATA.nome || "Cliente").split(' ')[0],
+                        lastName: (CLIENT_DATA.nome || "").split(' ').slice(1).join(' ') || "Cliente",
+                        email: "cliente@eletropay.com.br",
+                        phone: String(CLIENT_DATA.telefone || "").replace(/\D/g, '') || "99999999999"
                     },
                     account: 'eletropay' // FLAG IMPORTANTE PARA USAR A SEGUNDA CONTA
                 };
@@ -1123,7 +1123,7 @@
                 const payPayload = {
                     payment_data: {
                         payment_method_id: "pix",
-                        transaction_amount: amount,
+                        transaction_amount: parseFloat(parseFloat(amount).toFixed(2)),
                         description: descFinal,
                         date_of_expiration: expirationIso,
                         payer: {
