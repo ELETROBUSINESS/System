@@ -8,9 +8,65 @@
     <link rel="icon" href="/assets/img/iconWeb.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
     <!-- Boxicons CDN -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <style>
+        /* Install Banner (Floating) */
+        #install-app-banner {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            width: 90%;
+            max-width: 400px;
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #install-app-banner.visible {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .install-btn {
+            background: var(--main-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .close-install {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #cbd5e1;
+            color: #475569;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
         :root {
             --main-color: #db0038;
             --light-red: #ff4d6d;
@@ -1268,6 +1324,76 @@
 
         // Start
         init();
+    </script>
+    <!-- Install App Banner -->
+    <div id="install-app-banner">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-content-center overflow-hidden">
+                <img src="/assets/img/iconWeb.png" class="w-full h-full object-cover">
+            </div>
+            <div>
+                <p class="font-bold text-sm text-slate-800">Instalar EletroPay</p>
+                <p class="text-[10px] text-slate-500">Acesse suas faturas mais rápido</p>
+            </div>
+        </div>
+        <button id="install-btn-action" class="install-btn">Instalar</button>
+        <div class="close-install" onclick="closeInstallBanner()">&times;</div>
+    </div>
+
+    <!-- PWA Logic -->
+    <script>
+        let deferredPrompt;
+        const installBanner = document.getElementById('install-app-banner');
+        const installBtn = document.getElementById('install-btn-action');
+
+        function isPWA() {
+            return (window.matchMedia('(display-mode: standalone)').matches) || (window.navigator.standalone) || document.referrer.includes('android-app://');
+        }
+
+        // Only show if mobile and NOT already PWA
+        const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            if (!isMobile || isPWA()) return;
+
+            // Prevent the mini-infobar from appearing on mobile
+            e.preventDefault();
+            // Stash the event so it can be triggered later.
+            deferredPrompt = e;
+            // Update UI notify the user they can install the PWA
+            showInstallBanner();
+        });
+
+        function showInstallBanner() {
+            // Check if user dismissed recently (e.g., in last 24h) - implementing simple session check for now
+            if (sessionStorage.getItem('install_dismissed')) return;
+
+            installBanner.classList.add('visible');
+        }
+
+        function closeInstallBanner() {
+            installBanner.classList.remove('visible');
+            sessionStorage.setItem('install_dismissed', 'true');
+        }
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to the install prompt: ${outcome}`);
+                deferredPrompt = null;
+                closeInstallBanner();
+            } else {
+                // Fallback for iOS or if prompt unavailable (manual instructions)
+                alert("Para instalar: Toque no botão Compartilhar do seu navegador e selecione 'Adicionar à Tela de Início'.");
+            }
+        });
+
+        // Setup for iOS (Manual Trigger since beforeinstallprompt doesn't fire)
+        if (isMobile && !isPWA() && !deferredPrompt && /iPhone|iPad/i.test(navigator.userAgent)) {
+            // For iOS we might show it anyway after a timeout just to inform
+            setTimeout(showInstallBanner, 2000);
+        }
     </script>
 </body>
 
