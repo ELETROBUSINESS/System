@@ -444,7 +444,43 @@
             }
 
             // Sort by debt desc
-            filtered.sort((a, b) => (b.saldoDevedor || 0) - (a.saldoDevedor || 0));
+            // Sort by "Positivist Model": Quitado -> Em Dia -> Atrasado (Smallest Delay First)
+            filtered.sort((a, b) => {
+                const getVars = (c) => {
+                    const saldo = parseFloat(c.saldoDevedor || 0);
+                    const venc = parseDataSegura(c.proximoVencimento);
+                    // Ensure valid date to prevent NaN in sort
+                    const isValidDate = venc && !isNaN(venc.getTime());
+                    const diffDays = isValidDate ? Math.ceil((venc - new Date()) / (1000 * 60 * 60 * 24)) : 0;
+                    return { saldo, diffDays };
+                };
+
+                const dA = getVars(a);
+                const dB = getVars(b);
+
+                // 1. Quitado First
+                const isQuitadoA = dA.saldo <= 0.01;
+                const isQuitadoB = dB.saldo <= 0.01;
+                if (isQuitadoA && !isQuitadoB) return -1;
+                if (!isQuitadoA && isQuitadoB) return 1;
+                if (isQuitadoA && isQuitadoB) return (a.nome || '').localeCompare(b.nome || '');
+
+                // 2. Em Dia before Atrasado
+                const isAtrasadoA = dA.diffDays < 0;
+                const isAtrasadoB = dB.diffDays < 0;
+                if (!isAtrasadoA && isAtrasadoB) return -1;
+                if (isAtrasadoA && !isAtrasadoB) return 1;
+
+                // 3. Both Atrasado: Smallest Delay First (Closer to 0) => Descending diffDays
+                // Ex: -2 (2 days late) vs -10 (10 days late). We want -2 first.
+                // -10 - (-2) = -8 (A comes first)
+                if (isAtrasadoA && isAtrasadoB) {
+                    return dB.diffDays - dA.diffDays;
+                }
+
+                // 4. Both Em Dia: Closest Due Date First => Ascending diffDays
+                return dA.diffDays - dB.diffDays;
+            });
 
             filtered.forEach(client => {
                 const saldo = parseFloat(client.saldoDevedor || 0);
