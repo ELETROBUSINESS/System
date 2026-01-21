@@ -612,6 +612,145 @@ function renderBillsCarousel(totalVal = 0) {
     startCarouselLogic();
 }
 
+/**
+ * --- LÓGICA DE GRÁFICO DE GASTOS (HISTÓRICO + PREVISÃO) ---
+ */
+let expenseChartRef = null;
+
+function fetchExpenseHistory(forceUpdate = false) {
+    const ctx = document.getElementById('expenseChart');
+    if (!ctx) return;
+
+    // Se já temos dados e não é force, talvez retornar (se implementasse cache especifico)
+    // Mas vamos usar o cache de 'bills_data' que já existe
+    const cachedBills = DataManager.get('bills_data');
+    if (!cachedBills) {
+        // Se não tem cache de contas, chama o fetchBills para popular e depois volta aqui?
+        // Ou chamamos fetchSmart direto.
+        // O fetchBills populates 'bills_data'. Vamos reusar.
+        DataManager.fetchSmart('bills_data', API_URLS.BILLS, (data) => {
+            // Quando chegar, renderiza
+            if (data) processAndRenderExpenseChart(data);
+        });
+    } else {
+        processAndRenderExpenseChart(cachedBills);
+    }
+}
+
+function processAndRenderExpenseChart(bills) {
+    const ctxEl = document.getElementById('expenseChart');
+    if (!ctxEl) return;
+    const ctx = ctxEl.getContext('2d');
+
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+
+    const labels = [];
+    const paidData = [];
+    const forecastData = [];
+
+    // Range: 5 meses para trás até 6 meses para frente (Total 12)
+    for (let i = -5; i <= 6; i++) {
+        const d = new Date(currentYear, currentMonth + i, 1);
+        const m = d.getMonth(); // 0-11
+        const y = d.getFullYear();
+        const monthFilter = m + 1; // 1-12
+
+        // Label
+        const label = d.toLocaleString('pt-BR', { month: 'short' }).replace('.', '').toUpperCase();
+        labels.push(label);
+
+        // Sum
+        let sumPaid = 0;
+        let sumForecast = 0;
+
+        bills.forEach(c => {
+            const [dd, mm, aa] = c.vencimento.split('/');
+            if (parseInt(mm) === monthFilter && parseInt(aa) === y) {
+                const val = parseFloat(c.valor);
+                if (c.status === 'pago') {
+                    sumPaid += val;
+                } else {
+                    sumForecast += val;
+                }
+            }
+        });
+
+        paidData.push(sumPaid);
+        forecastData.push(sumForecast);
+    }
+
+    if (expenseChartRef) expenseChartRef.destroy();
+
+    // Create Gradient for Forecast
+    let forecastGradient = ctx.createLinearGradient(0, 0, 0, 300);
+    forecastGradient.addColorStop(0, 'rgba(197, 0, 55, 0.4)');
+    forecastGradient.addColorStop(1, 'rgba(197, 0, 55, 0.05)');
+
+    expenseChartRef = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Pago',
+                    data: paidData,
+                    backgroundColor: '#c50037',
+                    borderRadius: 4,
+                    barThickness: 12,
+                    stack: 'Stack 0'
+                },
+                {
+                    label: 'Previsto',
+                    data: forecastData,
+                    backgroundColor: forecastGradient,
+                    borderColor: '#c50037',
+                    borderWidth: { top: 1, right: 0, bottom: 0, left: 0 },
+                    borderRadius: 4,
+                    barThickness: 12,
+                    stack: 'Stack 0'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }, // Custom HTML legend used
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += context.parsed.y.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    display: false,
+                    beginAtZero: true
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: {
+                        font: { size: 10 },
+                        color: '#94a3b8'
+                    },
+                    border: { display: false }
+                }
+            }
+        }
+    });
+}
+
 function startHintCycle() {
     const hint = document.getElementById('interaction-hint');
     if (!hint) return;
@@ -791,6 +930,11 @@ function refreshCurrentPageData(force = false) {
         startHintCycle();
         fetchRevenueChart(force); // Gráfico de Vendas (ApexCharts)
         fetchNFCeData(force); // Validação de XML
+    }
+
+    // Expense Chart (Metricas Logic) - Checks if element exists
+    if (document.getElementById('expenseChart')) {
+        fetchExpenseHistory(force);
     }
 
     if (document.getElementById('chart-dots-group')) {

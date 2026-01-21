@@ -13,6 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <!-- ApexCharts (Required for updated chart) -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <link rel='stylesheet'
@@ -127,6 +128,25 @@
             </h3>
             <div class="space-y-5" id="category-list">
                 <!-- Conteúdo via JS -->
+            </div>
+        </div>
+
+        <!-- NEW: Expense Forecast Chart (Full Width) -->
+        <div class="finance-card expense-chart-area sensitive-data p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Histórico de Gastos (+
+                    Previsão)</h3>
+                <div class="flex gap-2 text-[10px] font-bold uppercase text-gray-400">
+                    <div class="flex items-center gap-1">
+                        <div class="w-2 h-2 rounded-full bg-[#c50037]"></div>Pago
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <div class="w-2 h-2 rounded-full bg-red-100 border-t border-[#c50037]"></div>Previsto
+                    </div>
+                </div>
+            </div>
+            <div style="height: 250px; position: relative;">
+                <canvas id="expenseChart"></canvas>
             </div>
         </div>
     </div>

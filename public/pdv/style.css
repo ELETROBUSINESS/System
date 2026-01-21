@@ -5740,6 +5740,16 @@ input:checked+.slider:before {
     color: var(--brand-color, #db0038);
 }
 
+.dropdown-item.restricted:hover {
+    color: #1e293b;
+    /* Keep text dark/black */
+}
+
+.dropdown-item.restricted:hover i {
+    color: #1e293b;
+    /* Keep icon dark/black */
+}
+
 
 /* --- Admin Auth Modal (Refined) --- */
 .modal-auth-content {
@@ -5884,4 +5894,447 @@ input:checked+.slider:before {
 .modal-content.maximized .modal-body {
     flex: 1;
     overflow-y: auto;
+}
+
+/* ======================================== */
+/* == BACKGROUND NOTIFICATION SIDEBAR    == */
+/* ======================================== */
+
+.notification-sidebar {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 300px;
+    background-color: var(--card-white);
+    border-left: 5px solid var(--info-blue);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 16px;
+    z-index: 9999;
+    transform: translateX(120%);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.notification-sidebar.active {
+    transform: translateX(0);
+}
+
+.notif-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-dark);
+}
+
+.notif-header i {
+    font-size: 1.5rem;
+    color: var(--info-blue);
+}
+
+.notif-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.notif-status {
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+.progress-bar-track {
+    width: 100%;
+    height: 6px;
+    background-color: #e5e7eb;
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    width: 0%;
+    height: 100%;
+    background-color: var(--info-blue);
+    transition: width 0.3s ease;
+}
+
+/* Estados de Sucesso/Erro */
+.notification-sidebar.success {
+    border-left-color: var(--success-green);
+}
+
+.notification-sidebar.success .notif-header i {
+    color: var(--success-green);
+}
+
+.notification-sidebar.success .progress-bar-fill {
+    background-color: var(--success-green);
+}
+
+.notification-sidebar.error {
+    border-left-color: var(--warning-red);
+}
+
+.notification-sidebar.error .notif-header i {
+    color: var(--warning-red);
+}
+
+.notification-sidebar.error .progress-bar-fill {
+    background-color: var(--warning-red);
+}
+
+
+/* ======================================== */
+/* == MODERN NOTIFICATION TOAST          == */
+/* ======================================== */
+
+.notification-sidebar {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: auto;
+    min-width: 320px;
+    max-width: 400px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    border-radius: 16px;
+    padding: 16px 20px;
+    z-index: 10000;
+    transform: translateY(100px);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.notification-sidebar.active {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Icon Wrapper */
+.notif-icon-wrapper {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Spinner SVG */
+.spinner-svg {
+    animation: rotate 2s linear infinite;
+    width: 100%;
+    height: 100%;
+}
+
+.spinner-svg .path {
+    stroke: var(--primary-red);
+    stroke-linecap: round;
+    animation: dash 1.5s ease-in-out infinite;
+}
+
+/* Success/Error Icons */
+.success-icon,
+.error-icon {
+    position: absolute;
+    font-size: 2.2rem;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.success-icon {
+    color: #10b981;
+}
+
+/* Emerald 500 */
+.error-icon {
+    color: #ef4444;
+}
+
+/* Red 500 */
+
+/* States */
+.notification-sidebar.success .spinner-svg {
+    opacity: 0;
+}
+
+.notification-sidebar.success .success-icon {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.notification-sidebar.error .spinner-svg {
+    opacity: 0;
+}
+
+.notification-sidebar.error .error-icon {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Content Text */
+.notif-content {
+    display: flex;
+    flex-direction: column;
+}
+
+#notif-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-dark);
+    letter-spacing: -0.02em;
+}
+
+#notif-status {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Animations */
+@keyframes rotate {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes dash {
+    0% {
+        stroke-dasharray: 1, 150;
+        stroke-dashoffset: 0;
+    }
+
+    50% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -35;
+    }
+
+    100% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -124;
+    }
+}
+
+
+/* ======================================== */
+/* == ADVANCED SEARCH MODAL              == */
+/* ======================================== */
+
+/* --- Advanced Search Results (Strict List View) --- */
+.adv-results-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    /* Tighter gap */
+    padding: 16px;
+    padding-bottom: 80px;
+    width: 100%;
+}
+
+.adv-product-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #f3f4f6;
+    border-radius: 8px;
+    padding: 8px;
+    transition: all 0.2s ease;
+    gap: 12px;
+    width: 100%;
+}
+
+.adv-product-card:hover {
+    border-color: #d1d5db;
+    background-color: #f9fafb;
+}
+
+/* Image or Icon Placeholder */
+.adv-card-img {
+    width: 48px;
+    height: 48px;
+    border-radius: 6px;
+    object-fit: cover;
+    background-color: #f1f5f9;
+    flex-shrink: 0;
+}
+
+.adv-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 6px;
+    background-color: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.adv-card-body {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+}
+
+.adv-card-title {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #111;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.adv-card-subtitle {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+/* Price & Actions Right Side */
+.adv-card-price-box {
+    text-align: right;
+    min-width: max-content;
+    margin-right: 12px;
+}
+
+.adv-card-price {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #000;
+    /* Minimalist Black */
+}
+
+.adv-card-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+/* Minimalist Icon Buttons */
+.btn-adv-action-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    color: #4b5563;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1.1rem;
+}
+
+.btn-adv-action-icon:hover {
+    background: #f3f4f6;
+    color: #000;
+    border-color: #d1d5db;
+}
+
+.btn-adv-action-icon.btn-add:hover {
+    background: #ecfdf5;
+    color: #059669;
+    /* Subtle Green */
+    border-color: #a7f3d0;
+}
+
+.btn-adv-action-icon.btn-details:hover {
+    background: #eff6ff;
+    color: #2563eb;
+    /* Subtle Blue */
+    border-color: #bfdbfe;
+}
+
+/* --- Search Button & Scanner Container (New) --- */
+.scan-search-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    /* Ensures vertical alignment */
+    width: 100%;
+}
+
+.btn-search-pdv {
+    height: 56px;
+    width: 56px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 0 !important;
+    /* Forces 0 margin to fix alignment */
+    color: var(--text-light);
+}
+
+.btn-search-pdv:hover {
+    background-color: var(--bg-light);
+    border-color: var(--primary-red);
+    color: var(--primary-red);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.btn-search-pdv i {
+    font-size: 1.5rem;
+}
+
+/* --- Modern Input Group (Search) --- */
+.input-group-modern {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px 16px;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.input-group-modern:focus-within {
+    border-color: var(--primary-red);
+    box-shadow: 0 0 0 3px rgba(219, 0, 56, 0.1);
+}
+
+.input-group-modern i {
+    color: #9ca3af;
+    font-size: 1.25rem;
+    margin-right: 12px;
+}
+
+.input-group-modern input {
+    border: none;
+    outline: none;
+    width: 100%;
+    font-size: 1rem;
+    color: var(--text-dark);
+    background: transparent;
+    font-weight: 500;
+}
+
+.input-group-modern input::placeholder {
+    color: #9ca3af;
 }

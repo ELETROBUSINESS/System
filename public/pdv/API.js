@@ -57,6 +57,12 @@ function doPost(e) {
             return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
         }
 
+        // 5. Atualizar Dados do Cliente (NOVO)
+        else if (action === "updateClientData") {
+            const result = atualizarDadosCliente(data.data);
+            return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+        }
+
         return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "AÃ§Ã£o desconhecida" })).setMimeType(ContentService.MimeType.JSON);
 
     } catch (error) {
@@ -2136,5 +2142,44 @@ function obterDadosFaturaCliente(identificador, senhaInformada) {
 
     } catch (e) {
         return { status: "error", message: e.toString() };
+    }
+}
+
+// --- 3. ATUALIZAR DADOS CLIENTE (NOVO) ---
+function atualizarDadosCliente(dados) {
+    const lock = LockService.getScriptLock();
+    lock.tryLock(10000);
+
+    try {
+        const sheet = getSheet(CLIENTES_SHEET_NAME);
+        const dataRange = sheet.getDataRange();
+        const values = dataRange.getValues();
+
+        const idClienteAlvo = String(dados.idCliente);
+        let rowIndex = -1;
+
+        // Procura a linha do cliente pelo ID (Coluna A = index 0)
+        for (let i = 1; i < values.length; i++) {
+            if (String(values[i][0]) === idClienteAlvo) {
+                rowIndex = i + 1; // Linha da planilha (1-based)
+                break;
+            }
+        }
+
+        if (rowIndex === -1) {
+            return { status: "error", message: "Cliente não encontrado para atualização." };
+        }
+
+        // Atualiza Telefone (Coluna D = 4) e Endereço (Coluna E = 5)
+        // OBS: getRange(row, column) -> Column D is 4, E is 5
+        sheet.getRange(rowIndex, 4).setValue(dados.telefone);
+        sheet.getRange(rowIndex, 5).setValue(dados.endereco);
+
+        return { status: "success", message: "Dados atualizados com sucesso!" };
+
+    } catch (e) {
+        return { status: "error", message: "Erro ao atualizar dados: " + e.toString() };
+    } finally {
+        lock.releaseLock();
     }
 }

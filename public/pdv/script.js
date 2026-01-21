@@ -1998,7 +1998,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const updateQuantity = (id, action) => { const item = cart.find(item => item.id === id); if (!item) return; if (action === 'increase') { item.quantity += 1; } else if (action === 'decrease') { item.quantity -= 1; if (item.quantity === 0) { removeFromCart(id); return; } } renderCart(); };
     const removeFromCart = (id) => { cart = cart.filter(item => item.id !== id); renderCart(); };
-    const clearCart = () => { cart = []; removeDiscount(); resetPaymentMethod(); lastSaleData = null; renderCart(); };
+    const clearCart = () => {
+        cart = [];
+        removeDiscount();
+        resetPaymentMethod();
+        lastSaleData = null;
+
+        // Reset Troco UI
+        window.lastTrocoValue = 0;
+        const rowResumo = document.getElementById('summary-change-row');
+        if (rowResumo) rowResumo.style.display = 'none';
+
+        renderCart();
+    };
 
     // Funções de Modal com Acessibilidade
     const openModal = (modalEl) => { elementToRestoreFocus = document.activeElement; modalEl.classList.add('active'); const primaryFocus = modalEl.querySelector('[data-primary-focus="true"]'); if (primaryFocus) { setTimeout(() => primaryFocus.focus(), 100); } };
@@ -2186,7 +2198,41 @@ document.addEventListener('DOMContentLoaded', () => {
         return localProductCache.find(p => String(p.id).trim() === barcodeLimpo) || null;
     }
     async function cadastrarProdutoNaAPI(product) { quickAddSubmitBtn.disabled = true; quickAddSubmitBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Cadastrando..."; try { const params = new URLSearchParams({ action: 'cadastrarProduto', codigo: product.id, nome: product.name, preco: product.price }); const response = await fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET' }); if (!response.ok) throw new Error("Erro rede."); const result = await response.json(); if (result.status === 'success') { if (localProductCache) { localProductCache.push(result.data); } return result.data; } else { throw new Error(result.message || "Erro API."); } } catch (error) { console.error("Erro cadastro prod:", error); showCustomAlert("Erro Cadastro Prod", error.message); return null; } finally { quickAddSubmitBtn.disabled = false; quickAddSubmitBtn.innerHTML = "Adicionar"; } }
-    async function registrarVendaAtual(payments) { if (!lastSaleData) { throw new Error("Sem dados venda."); } if (!REGISTRO_VENDA_SCRIPT_URL || REGISTRO_VENDA_SCRIPT_URL.includes("COLE_A_URL")) { throw new Error("URL registro não config."); } const now = new Date(); const timestamp = formatTimestamp(now); const baseData = { formType: 'venda', seller: 'nubia', type: 'entrada', value: lastSaleData.subtotal.toFixed(2), desconto: lastSaleData.discount.toFixed(2), Timestamp: timestamp }; const fetchPromises = payments.map(payment => { const paymentData = { ...baseData, payment: payment.method || 'N/A', total: payment.value.toFixed(2) }; const formData = new URLSearchParams(paymentData); console.log("Enviando parte registro:", formData.toString()); return fetch(REGISTRO_VENDA_SCRIPT_URL, { redirect: "follow", method: "POST", body: formData.toString(), headers: { "Content-Type": "application/x-www-form-urlencoded" }, }); }); const responses = await Promise.all(fetchPromises); const allOk = responses.every(response => response.ok); if (allOk) { console.log("Registro OK!"); } else { const firstErrorResponse = responses.find(response => !response.ok); let errorText = `Falha registro. Status: ${firstErrorResponse?.status || '?'}`; try { if (firstErrorResponse) errorText = await firstErrorResponse.text(); } catch (readError) { } throw new Error(errorText); } }
+    async function registrarVendaAtual(payments, totalValueOverride = null, discountOverride = null) {
+        if (!REGISTRO_VENDA_SCRIPT_URL || REGISTRO_VENDA_SCRIPT_URL.includes("COLE_A_URL")) { throw new Error("URL registro não config."); }
+
+        // Use overrides if provided (Background Mode), otherwise fallback to global (Legacy Mode)
+        const effectiveTotal = totalValueOverride !== null ? totalValueOverride : (lastSaleData ? lastSaleData.subtotal : 0);
+        const effectiveDiscount = discountOverride !== null ? discountOverride : (lastSaleData ? lastSaleData.discount : 0);
+
+        const now = new Date();
+        const timestamp = formatTimestamp(now);
+
+        const baseData = {
+            formType: 'venda',
+            seller: 'nubia',
+            type: 'entrada',
+            value: Number(effectiveTotal).toFixed(2),
+            desconto: Number(effectiveDiscount).toFixed(2),
+            Timestamp: timestamp
+        };
+
+        const fetchPromises = payments.map(payment => {
+            const paymentData = { ...baseData, payment: payment.method || 'N/A', total: payment.value.toFixed(2) };
+            const formData = new URLSearchParams(paymentData);
+            console.log("Enviando parte registro:", formData.toString());
+            return fetch(REGISTRO_VENDA_SCRIPT_URL, { redirect: "follow", method: "POST", body: formData.toString(), headers: { "Content-Type": "application/x-www-form-urlencoded" }, });
+        });
+
+        const responses = await Promise.all(fetchPromises);
+        const allOk = responses.every(response => response.ok);
+        if (allOk) { console.log("Registro OK!"); } else {
+            const firstErrorResponse = responses.find(response => !response.ok);
+            let errorText = `Falha registro. Status: ${firstErrorResponse?.status || '?'}`;
+            try { if (firstErrorResponse) errorText = await firstErrorResponse.text(); } catch (readError) { }
+            throw new Error(errorText);
+        }
+    }
 
     // Função para abater estoque no Firebase
     async function abaterEstoqueFirebase(itensVendidos) {
@@ -2328,12 +2374,17 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Layout 1: Cupom Térmico ---
-    const printThermal = (clientName) => {
+    const printThermal = (clientName, saleData = null) => {
         const now = new Date();
         const uniqueSaleID = formatTimestamp(now);
 
+        // Use passed data or fall back to globals
+        const currentCart = saleData ? saleData.items : cart;
+        const currentTotal = saleData ? saleData.valorTotal : (lastSaleData ? lastSaleData.total : 0);
+        const currentPayment = saleData ? saleData.metodoPagamento : selectedPaymentMethod;
+
         let itemLinesHtml = '';
-        cart.forEach(item => {
+        currentCart.forEach(item => {
             itemLinesHtml += `<div class="receipt-item"><div class="item-name">${item.name}</div><div class="item-details">${item.quantity} x ${formatCurrency(item.price)}<span>${formatCurrency(item.quantity * item.price)}</span></div></div>`;
         });
 
@@ -2347,8 +2398,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <p style="text-align:center;font-weight:bold">COMPROVANTE</p>
             <div class="items">${itemLinesHtml}</div>
             <div class="summary">
-                <div class="line"><span>TOTAL:</span><span>${formatCurrency(lastSaleData.total)}</span></div>
-                <div class="line"><span>Pagto:</span><span>${selectedPaymentMethod || 'N/A'}</span></div>
+                <div class="line"><span>TOTAL:</span><span>${formatCurrency(currentTotal)}</span></div>
+                <div class="line"><span>Pagto:</span><span>${currentPayment || 'N/A'}</span></div>
             </div>
             ${signatureHtml}
             <div style="text-align:center;margin-top:20px;font-size:0.8rem"><p>Não é documento fiscal</p></div>
@@ -2359,18 +2410,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- FUNÇÃO DE IMPRESSÃO A4 (CORRIGIDA E BLINDADA) ---
     // --- FUNÇÃO DE IMPRESSÃO A4 (CORRIGIDA) ---
-    function printA4(nomeClienteParams = null) {
+    function printA4(nomeClienteParams = null, saleData = null) {
         console.log("Gerando A4...");
 
-        let itensParaImprimir = cart;
+        let itensParaImprimir = saleData ? saleData.items : cart;
         let dadosFinanceiros = null;
 
         // --- CORREÇÃO PRINCIPAL ---
         // Verifica se os itens no carrinho são "fakes" do histórico (preço zerado)
         // Se todos forem zero, significa que é uma reimpressão e NÃO devemos recalcular.
-        const isHistoricoSimulado = cart.length > 0 && cart.every(i => i.price === 0);
+        const isHistoricoSimulado = itensParaImprimir.length > 0 && itensParaImprimir.every(i => i.price === 0);
 
-        if (cart.length > 0 && !isHistoricoSimulado) {
+        if (saleData) {
+            // Recalculate robustly using original prices if available
+            const subtotalBruto = saleData.items.reduce((acc, i) => acc + ((i.originalPrice || i.price) * i.quantity), 0);
+            const totalLiquido = saleData.items.reduce((acc, i) => acc + (i.price * i.quantity), 0);
+
+            // Total Discount = (Gross - Net) + Global Discount
+            const descontoTotal = (subtotalBruto - totalLiquido) + (saleData.discount || 0);
+
+            dadosFinanceiros = {
+                subtotal: subtotalBruto,
+                desconto: descontoTotal,
+                total: saleData.valorTotal,
+                pagamento: saleData.metodoPagamento
+            };
+        } else if (cart.length > 0 && !isHistoricoSimulado) {
             // CENÁRIO 1: VENDA NOVA (Calcula tudo na hora para precisão exata)
             const subtotalBruto = cart.reduce((acc, item) => acc + (item.originalPrice * item.quantity), 0);
             const totalLiquido = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
@@ -2791,37 +2856,97 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let isReturningToPayment = false; // Controle de fluxo
 
-    async function processFinalSale(printFormat = 'thermal') {
-        // Identifica o botão correto pelo ID que você definiu no HTML
-        const btnId = emissaoFiscalAtiva ? 'btn-confirm-emission' : 'btn-cancel-fiscal';
-        const btn = document.getElementById(btnId);
-        const originalText = btn ? btn.innerHTML : "";
+    /* ======================================== */
+    /* == BACKGROUND SALE PROCESSING LOGIC   == */
+    /* ======================================== */
 
-        if (cart.length === 0) return showCustomAlert("Atenção", "Carrinho vazio!");
+    // --- Notification Helpers ---
+    const notifSidebar = document.getElementById('sale-processing-notification');
+    const notifTitle = document.getElementById('notif-title');
+    const notifStatus = document.getElementById('notif-status');
+
+    function showProcessingNotification() {
+        if (!notifSidebar) return;
+        notifSidebar.classList.remove('success', 'error');
+        notifSidebar.classList.add('active');
+        if (notifTitle) notifTitle.innerText = "Processando...";
+        if (notifStatus) notifStatus.innerText = "Iniciando...";
+    }
+
+    function updateNotificationStatus(percent, message) {
+        if (!notifSidebar) return;
+        // Percent ignored in new UI
+        if (notifStatus) notifStatus.innerText = message;
+    }
+
+    function showSuccessNotification() {
+        if (!notifSidebar) return;
+        notifSidebar.classList.add('success');
+        if (notifTitle) notifTitle.innerText = "Venda Concluída!";
+        if (notifStatus) notifStatus.innerText = "Tudo certo.";
+
+        setTimeout(() => {
+            notifSidebar.classList.remove('active');
+            // Reset styles after hiding
+            setTimeout(() => {
+                notifSidebar.classList.remove('success', 'error');
+            }, 500);
+        }, 3000);
+    }
+
+    function showErrorNotification(message) {
+        if (!notifSidebar) return;
+        notifSidebar.classList.add('error');
+        if (notifTitle) notifTitle.innerText = "Erro";
+        if (notifStatus) notifStatus.innerText = message || "Falha ao salvar.";
+
+        setTimeout(() => {
+            notifSidebar.classList.remove('active');
+            setTimeout(() => {
+                notifSidebar.classList.remove('success', 'error');
+            }, 500);
+        }, 5000);
+    }
+
+    // --- Data Capture ---
+    function captureSaleState(printFormat, isFiscalActive) {
+        return {
+            items: JSON.parse(JSON.stringify(cart)), // Deep copy items
+            metodoPagamento: selectedPaymentMethod,
+            client: selectedCrediarioClient ? JSON.parse(JSON.stringify(selectedCrediarioClient)) : null,
+            discount: discount || 0,
+            troco: window.lastTrocoValue || 0,
+            printFormat: printFormat,
+            isFiscalActive: isFiscalActive,
+            saleId: "V" + new Date().getTime().toString().slice(-8),
+            tempInstallments: window.tempInstallments || 1, // Capture installments if present
+            valorTotal: cart.reduce((acc, item) => acc + (item.price * item.quantity), 0) - (discount || 0)
+        };
+    }
+
+    // --- Background Worker ---
+    async function startBackgroundSale(saleData) {
+        console.log("Starting Background Sale:", saleData.saleId);
+        updateNotificationStatus(10, "Preparando dados...");
+
+        // Destructure for easier access
+        const { items, metodoPagamento, client, discount, troco, printFormat, isFiscalActive, saleId, tempInstallments } = saleData;
 
         try {
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Processando...';
-            }
-
-            const saleId = "V" + new Date().getTime().toString().slice(-8);
-            const globalDiscount = discount || 0;
-            const globalTroco = window.lastTrocoValue || 0;
-
-            // Cálculos de Itens e Desconto (Mantidos conforme sua versão original)
-            const totalAntesDoDescontoGlobal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-            const fatorDesconto = totalAntesDoDescontoGlobal > 0 ? (totalAntesDoDescontoGlobal - globalDiscount) / totalAntesDoDescontoGlobal : 1;
+            // 1. Calculations
+            const totalBase = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+            const factor = totalBase > 0 ? (totalBase - discount) / totalBase : 1;
 
             const itensAptos = [];
             const itensIgnorados = [];
-            cart.forEach(item => {
+
+            items.forEach(item => {
                 const ncmLimpo = (item.ncm || "").toString().replace(/\D/g, '');
                 if (ncmLimpo.length === 8 && item.cfop) {
                     itensAptos.push({
                         id: item.id || item.codigo,
                         name: (item.name || item.nome).substring(0, 120),
-                        price: Number((item.price * fatorDesconto).toFixed(2)),
+                        price: Number((item.price * factor).toFixed(2)),
                         quantity: Number(item.quantity || 1),
                         ncm: ncmLimpo,
                         cfop: item.cfop,
@@ -2834,7 +2959,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const totalFiscalLiquido = itensAptos.reduce((acc, i) => acc + (i.price * i.quantity), 0);
 
-            // Estado inicial dos dados fiscais
+            // 2. Fiscal Emission
             let dadosFiscal = {
                 status: "Não Emitida",
                 mensagem: "Venda simples registrada",
@@ -2842,34 +2967,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 itensIgnorados: itensIgnorados
             };
 
-            // --- CHECAGEM DA VARIÁVEL DE CONTROLE E EMISSÃO ---
-            if (emissaoFiscalAtiva && itensAptos.length > 0) {
+            if (isFiscalActive && itensAptos.length > 0) {
+                updateNotificationStatus(30, "Emitindo NFC-e...");
                 try {
-                    console.log("%c 🚀 INICIANDO COMUNICAÇÃO FISCAL ", "background: #222; color: #3498db; font-weight: bold;");
-
                     const response = await fetch(`${FISCAL_API_URL}/emitirNfce`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             items: itensAptos,
                             totalPagamento: totalFiscalLiquido,
-                            paymentMethod: selectedPaymentMethod,
-                            troco: globalTroco,
-                            valorPagoManual: totalFiscalLiquido + globalTroco,
+                            paymentMethod: metodoPagamento,
+                            troco: troco,
+                            valorPagoManual: totalFiscalLiquido + troco,
                             saleId: saleId
                         })
                     });
-
                     const resFiscal = await response.json();
 
-                    // --- LOGS DETALHADOS NO CONSOLE DO NAVEGADOR (F12) ---
-                    console.log("%c 📄 RETORNO DA SEFAZ ", "background: #222; color: #bada55; font-size: 12px; font-weight: bold;");
-                    console.dir(resFiscal); // Aqui você vê o objeto completo da SEFAZ
-
                     if (resFiscal.status === "success") {
-                        console.log(`%c ✅ NOTA AUTORIZADA: ${resFiscal.chave} `, "color: #27ae60; font-weight: bold;");
-
-                        // Mantendo todas as suas funcionalidades úteis para a planilha:
                         dadosFiscal = {
                             status: "Autorizada",
                             cStat: resFiscal.cStat,
@@ -2882,8 +2997,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             itensIgnorados: itensIgnorados
                         };
                     } else {
-                        console.warn(`%c ⚠️ NOTA REJEITADA [${resFiscal.cStat}]: ${resFiscal.message} `, "color: #f39c12; font-weight: bold;");
-
                         dadosFiscal = {
                             status: "Rejeitada",
                             cStat: resFiscal.cStat,
@@ -2893,60 +3006,109 @@ document.addEventListener('DOMContentLoaded', () => {
                         };
                     }
                 } catch (err) {
-                    console.error("%c ❌ ERRO NA COMUNICAÇÃO COM O SERVIDOR ", "background: #c0392b; color: #fff; font-weight: bold;", err);
-
                     dadosFiscal.status = "Erro";
-                    dadosFiscal.mensagem = "Erro na comunicação com o servidor fiscal";
+                    dadosFiscal.mensagem = "Erro de comunicação";
                 }
             }
 
-            // --- SALVAMENTO (Independente da flag) ---
-            const totalGeralVenda = lastSaleData ? lastSaleData.total : 0;
-            const dadosVendaInterna = { id: saleId, cliente: selectedCrediarioClient ? selectedCrediarioClient.nomeExibicao : "Cliente Balcão", valorTotal: totalGeralVenda, itens: cart, metodoPagamento: selectedPaymentMethod };
+            updateNotificationStatus(60, "Salvando dados...");
+
+            // 3. Persist Data
+            const clientName = client ? client.nomeExibicao : "Cliente Balcão";
+            const totalGeralVenda = saleData.valorTotal;
+
+            // Recalculate Totals for Reporting (Gross vs Net)
+            // Ensure we use originalPrice if available to reconstruct the Gross Subtotal
+            const subtotalBruto = items.reduce((acc, item) => acc + ((item.originalPrice || item.price) * item.quantity), 0);
+            const totalLiquidoItens = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+            const globalDiscount = discount || 0;
+            const totalDesconto = (subtotalBruto - totalLiquidoItens) + globalDiscount;
+
+            const dadosVendaInterna = {
+                id: saleId,
+                cliente: clientName,
+                valorTotal: totalGeralVenda,
+                itens: items,
+                metodoPagamento: metodoPagamento
+            };
 
             const promisesParaExecutar = [
                 fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "salvarNotaFiscal", data: dadosFiscal }) }),
-                registrarVendaAtual([{ method: selectedPaymentMethod, value: totalGeralVenda }]),
+                // Pass Gross Subtotal and Total Discount to match legacy behavior
+                registrarVendaAtual(
+                    [{ method: metodoPagamento, value: totalGeralVenda }],
+                    subtotalBruto,
+                    totalDesconto
+                ),
                 salvarVendaNoHistorico(dadosVendaInterna),
-                abaterEstoqueFirebase(cart)
+                abaterEstoqueFirebase(items)
             ];
 
-            // [CORREÇÃO] Se for Crediário, registrar na Ficha do Cliente (Logs)
-            if (String(selectedPaymentMethod).toLowerCase().includes('crediário')) {
-                const idCli = selectedCrediarioClient ? selectedCrediarioClient.idCliente : null;
+            if (String(metodoPagamento).toLowerCase().includes('crediário')) {
+                const idCli = client ? client.idCliente : null;
                 if (idCli) {
                     const params = new URLSearchParams({
                         action: 'registrarTransacao',
                         idCliente: idCli,
                         valor: totalGeralVenda,
                         tipo: 'Compra',
-                        parcelas: window.tempInstallments || 1,
+                        parcelas: tempInstallments || 1,
                         isEntrada: 'false'
                     });
-
                     promisesParaExecutar.push(fetch(`${SCRIPT_URL}?${params.toString()}`));
-                } else {
-                    console.warn("Venda Crediário sem cliente identificado. Não será lançado na ficha.");
                 }
             }
 
             await Promise.allSettled(promisesParaExecutar);
 
-            if (printFormat === 'a4') printA4(dadosVendaInterna.cliente);
-            else printThermal(dadosVendaInterna.cliente);
+            updateNotificationStatus(90, "Finalizando...");
 
-            clearCart();
-            showCustomToast(emissaoFiscalAtiva ? "Venda com NFC-e Finalizada!" : "Venda Registrada!");
+            // 4. Printing
+            if (printFormat === 'a4') {
+                printA4(clientName, saleData);
+            } else {
+                printThermal(clientName, saleData);
+            }
+
+            showSuccessNotification();
 
         } catch (error) {
-            console.error("Erro:", error);
+            console.error("Background Sale Error:", error);
+            showErrorNotification("Erro ao salvar. Verifique conexão.");
         } finally {
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-            }
-            closeModal('payment-modal');
+            finishSaleBtn.disabled = false;
+            finishSaleBtn.style.backgroundColor = '';
+            finishSaleBtn.innerText = "Finalizar Compra (F9)";
         }
+    }
+
+    // --- PROCESSAMENTO FINAL DA VENDA (Refatorado para Async) --
+    async function processFinalSale(printFormat = 'thermal') {
+        const btnId = emissaoFiscalAtiva ? 'btn-confirm-emission' : 'btn-cancel-fiscal';
+
+        if (cart.length === 0) return showCustomAlert("Atenção", "Carrinho vazio!");
+
+        // 1. Capture State
+        const saleState = captureSaleState(printFormat, emissaoFiscalAtiva);
+
+        // 2. Reset UI Immediately
+        clearCart();
+        selectedCrediarioClient = null;
+        const clientSpan = document.getElementById('selected-client-name');
+        if (clientSpan) clientSpan.innerText = "Cliente não identificado";
+
+        closeModal(document.getElementById('modal-confirm-fiscal'));
+        closeModal(document.getElementById('payment-modal'));
+        closeModal(document.getElementById('print-selection-modal'));
+
+        // 3. Start Background Process
+        showProcessingNotification();
+
+        // Disable temporarily to prevent accidental double-trigger on old state?
+        // Not needed as cart is empty.
+
+        // Call async without await
+        startBackgroundSale(saleState);
     }
 
     async function cancelarNota(chave, nProt) {
@@ -3811,16 +3973,106 @@ document.addEventListener('DOMContentLoaded', () => {
     // Ações do Menu
     const dropdownItems = document.querySelectorAll('.dropdown-item');
     dropdownItems.forEach(item => {
+        // Hover effect for restricted items (Padlock Icon)
+        if (item.classList.contains('restricted')) {
+            const icon = item.querySelector('i');
+            const originalIconClass = icon ? icon.className : '';
+
+            item.addEventListener('mouseenter', () => {
+                if (icon) icon.className = 'bx bx-lock-alt';
+            });
+
+            item.addEventListener('mouseleave', () => {
+                if (icon) icon.className = originalIconClass;
+            });
+        }
+
         item.addEventListener('click', (e) => {
             const action = item.getAttribute('data-action');
             const modalDetails = document.getElementById('cliente-details-modal');
             const nomeCliente = modalDetails.getAttribute('data-cliente-nome');
-            const idCliente = modalDetails.getAttribute('data-current-client-id'); // ID REAL se necessario, mas usamos nome em mtos lugares
+            const idCliente = modalDetails.getAttribute('data-current-client-id');
             const menu = document.getElementById('client-options-dropdown');
 
             if (menu) menu.classList.remove('active'); // Fecha menu ao clicar
 
             if (!nomeCliente) return;
+
+            if (action === 'dados') {
+                // Ação sem senha - Abre Modal de Edição
+                const modalEdit = document.getElementById('modal-edit-client-data');
+                const telefoneAtual = document.getElementById('detail-cliente-telefone').innerText;
+                const enderecoAtual = document.getElementById('detail-cliente-endereco').innerText;
+
+                // Preenche campos
+                document.getElementById('input-edit-telefone').value = telefoneAtual !== '--' ? telefoneAtual : '';
+                document.getElementById('input-edit-endereco').value = enderecoAtual !== '--' ? enderecoAtual : '';
+
+                // Abre Modal
+                openModal(modalEdit);
+
+                // Configura botão de salvar (Remove listeners antigos para evitar duplicação)
+                const btnSave = document.getElementById('btn-save-client-data');
+                const newBtnSave = btnSave.cloneNode(true);
+                btnSave.parentNode.replaceChild(newBtnSave, btnSave);
+
+                newBtnSave.addEventListener('click', async () => {
+                    const novoTelefone = document.getElementById('input-edit-telefone').value.trim();
+                    const novoEndereco = document.getElementById('input-edit-endereco').value.trim();
+
+                    if (!novoTelefone && !novoEndereco) {
+                        showCustomAlert("Atenção", "Preencha ao menos um campo.");
+                        return;
+                    }
+
+                    // Feedback visual
+                    const originalText = newBtnSave.innerText;
+                    newBtnSave.disabled = true;
+                    newBtnSave.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Salvando...";
+
+                    try {
+                        const payload = {
+                            action: "updateClientData",
+                            data: {
+                                idCliente: idCliente,
+                                telefone: novoTelefone,
+                                endereco: novoEndereco
+                            }
+                        };
+
+                        const options = {
+                            method: 'POST',
+                            body: JSON.stringify(payload)
+                        };
+
+                        const response = await fetch(SCRIPT_URL, options);
+                        const result = await response.json();
+
+                        if (result.status === 'success') {
+                            showCustomAlert("Sucesso", "Dados atualizados!");
+
+                            // Atualiza a tela de detalhes instantaneamente
+                            document.getElementById('detail-cliente-telefone').innerText = novoTelefone || '--';
+                            document.getElementById('detail-cliente-endereco').innerText = novoEndereco || '--';
+
+                            // Recarrega lista de clientes no fundo para manter cache atualizado
+                            // renderClientesPage(); // Opcional, se quiser forçar refresh total
+
+                            closeModal(modalEdit);
+                        } else {
+                            throw new Error(result.message || "Erro desconhecido.");
+                        }
+
+                    } catch (err) {
+                        console.error(err);
+                        showCustomAlert("Erro", "Falha ao salvar dados: " + err.message);
+                    } finally {
+                        newBtnSave.disabled = false;
+                        newBtnSave.innerText = originalText;
+                    }
+                });
+                return;
+            }
 
             if (action === 'renegociar') {
                 solicitarAcessoAdm(function () {
@@ -4390,6 +4642,135 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    /* ======================================== */
+    /* == ADVANCED SEARCH LOGIC              == */
+    /* ======================================== */
+
+    // Utility Debounce Function
+    // Utility Debounce Function (Local to avoid conflicts)
+    function debounceLocal(func, wait) {
+        let timeout;
+        return function (...args) {
+            const context = this;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), wait);
+        };
+    }
+
+    const searchModal = document.getElementById('adv-search-modal');
+    const searchInputAdv = document.getElementById('adv-search-input');
+    const searchResultsGrid = document.getElementById('adv-search-results');
+    const btnOpenSearch = document.getElementById('btn-open-adv-search');
+
+    // Open Modal
+    if (btnOpenSearch) {
+        btnOpenSearch.addEventListener('click', (e) => {
+            console.log("Botão de pesquisa avançada clicado!");
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (typeof openModal === 'function') {
+                console.log("Abrindo modal de pesquisa...");
+                openModal(searchModal);
+            } else {
+                console.error("Função openModal não encontrada! (Verifique o escopo)");
+            }
+
+            setTimeout(() => {
+                if (searchInputAdv) searchInputAdv.focus();
+            }, 100);
+
+            // Clear search on open
+            if (searchInputAdv) {
+                searchInputAdv.value = '';
+                // Don't render results initially to avoid performance hits
+                if (searchResultsGrid) searchResultsGrid.innerHTML = '';
+            }
+        });
+    }
+
+    // Search Logic
+    if (searchInputAdv) {
+        searchInputAdv.addEventListener('input', debounceLocal((e) => {
+            const term = e.target.value.toLowerCase().trim();
+            renderAdvancedSearchResults(term);
+        }, 300));
+    }
+
+    function renderAdvancedSearchResults(term) {
+        if (!searchResultsGrid) return;
+
+        if (!localProductCache) {
+            searchResultsGrid.innerHTML = '<p class="text-center">Carregando produtos...</p>';
+            return;
+        }
+
+        let results = [];
+        if (!term) {
+            // If no term, clear valid results or show nothing
+            searchResultsGrid.innerHTML = '';
+            return;
+        } else {
+            // Filter Products
+            results = localProductCache.filter(p =>
+                (p.name && p.name.toLowerCase().includes(term)) ||
+                (p.id && p.id.toString().includes(term)) ||
+                (p.brand && p.brand.toLowerCase().includes(term))
+            ).slice(0, 20);
+        }
+
+        if (results.length === 0) {
+            searchResultsGrid.innerHTML = '<p class="text-center w-full" style="grid-column: 1 / -1; padding: 20px;">Nenhum produto encontrado.</p>';
+            return;
+        }
+
+        searchResultsGrid.innerHTML = results.map(p => {
+            const hasImage = p.imgUrl && p.imgUrl.length > 10;
+            const preco = parseFloat(p.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            // Image or Icon Logic
+            let imgHTML = '';
+            if (hasImage) {
+                imgHTML = `<img src="${p.imgUrl}" alt="${p.name}" class="adv-card-img">`;
+            } else {
+                imgHTML = `<div class="adv-card-icon"><i class='bx bx-box'></i></div>`;
+            }
+
+            return `
+            <div class="adv-product-card">
+                ${imgHTML}
+                
+                <div class="adv-card-body">
+                    <h4 class="adv-card-title" title="${p.name}">${p.name}</h4>
+                    <span class="adv-card-subtitle">#${p.id} ${p.brand ? '• ' + p.brand : ''}</span>
+                </div>
+
+                <div class="adv-card-price-box">
+                    <div class="adv-card-price">${preco}</div>
+                </div>
+
+                <div class="adv-card-actions">
+                     <button class="btn-adv-action-icon btn-add" title="Adicionar" onclick="event.stopPropagation(); addToCartByCode('${p.id}')">
+                        <i class='bx bx-plus'></i>
+                     </button>
+                     <button class="btn-adv-action-icon btn-details" title="Detalhes" onclick="event.stopPropagation(); if(typeof openEditProductModal === 'function') openEditProductModal('${p.id}');">
+                        <i class='bx bx-edit-alt'></i>
+                     </button>
+                </div>
+            </div>
+            `;
+        }).join('');
+    }
+
+    // Helper to add by code
+    window.addToCartByCode = function (code) {
+        const product = localProductCache.find(p => p.codigo == code || p.id == code);
+        if (product) {
+            addToCart(product);
+            if (typeof showCustomToast === 'function') showCustomToast("Produto Adicionado!");
+        }
+    };
+
 });
 
 // =======================================================
@@ -4907,3 +5288,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // Aplica também ao modal de Produtos (garante funcionamento para ambos)
     setupMaximizeModal('btn-maximize-modal', '#edit-product-modal .modal-content');
 });
+
