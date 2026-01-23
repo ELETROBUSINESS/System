@@ -442,22 +442,23 @@ document.addEventListener('DOMContentLoaded', () => {
         option.addEventListener('click', () => {
             const method = option.dataset.method;
             const cashSection = document.getElementById('cash-change-section');
+            const cardOptions = document.getElementById('credit-card-options');
             const optionsGrid = document.getElementById('single-payment-options');
 
+            // Reset visual active state
+            document.querySelectorAll('.payment-card').forEach(c => c.classList.remove('active'));
+            option.classList.add('active');
+
             if (method === 'Dinheiro') {
-                // Se for Dinheiro, apenas troca as telas internas do modal para digitar o troco
                 if (optionsGrid && cashSection) {
                     optionsGrid.style.display = 'none';
                     cashSection.style.display = 'block';
-                    // Dá foco no input de valor recebido
                     setTimeout(() => document.getElementById('cash-received').focus(), 150);
                 }
             } else if (method === 'Crediário') {
-                // Lógica de verificação de cliente para Crediário
                 if (!selectedCrediarioClient) {
                     isReturningToPayment = true;
                     closeModal(paymentModal);
-
                     if (clientSelectionInput) clientSelectionInput.value = '';
                     if (clientSelectionResults) {
                         clientSelectionResults.innerHTML = '';
@@ -468,8 +469,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
                 showCrediarioScreen();
+            } else if (method === 'C. Crédito') {
+                if (optionsGrid && cardOptions) {
+                    optionsGrid.style.display = 'none';
+                    cardOptions.style.display = 'flex';
+                }
             } else {
-                // Para PIX, Cartões e Movecard, seleciona e fecha o modal direto
+                // Para PIX, Débito e Movecard
                 selectedCrediarioClient = null;
                 updateSummaryClientCard();
                 handlePaymentSelection(method);
@@ -482,13 +488,42 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => {
             const cashSection = document.getElementById('cash-change-section');
             const cred_options = document.getElementById('crediario-options');
+            const card_options = document.getElementById('credit-card-options');
             const optionsGrid = document.getElementById('single-payment-options');
 
             if (cashSection) cashSection.style.display = 'none';
             if (cred_options) cred_options.style.display = 'none';
+            if (card_options) card_options.style.display = 'none';
             if (optionsGrid) optionsGrid.style.display = 'grid';
         });
     });
+
+    // CONFIRMAR CARTÃO DE CRÉDITO
+    const confirmCreditBtn = document.getElementById('confirm-credit-card-btn');
+    if (confirmCreditBtn) {
+        confirmCreditBtn.addEventListener('click', () => {
+            const flag = document.getElementById('card-flag-select').value;
+            const installments = document.getElementById('card-installments-select').value;
+
+            // Update Sidebar
+            const summaryMethod = document.getElementById('summary-payment-method');
+            if (summaryMethod) {
+                summaryMethod.textContent = `C. Crédito (${flag} - ${installments}x)`;
+            }
+
+            // Logic to confirm sale
+            handlePaymentSelection('C. Crédito');
+
+            // Close modal handled in handlePaymentSelection usually, but let's ensure
+            closeModal(document.getElementById('payment-modal'));
+
+            // Reset UI
+            setTimeout(() => {
+                document.getElementById('credit-card-options').style.display = 'none';
+                document.getElementById('single-payment-options').style.display = 'grid';
+            }, 300);
+        });
+    }
 
     // Adicione o cálculo de troco em tempo real (Apenas Visual no Modal)
     document.getElementById('cash-received').addEventListener('input', (e) => {
@@ -563,13 +598,13 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('single-payment-options').style.display = 'grid';
     });
     /*
-
+ 
     // Cálculo de Troco em tempo real
     document.getElementById('cash-received').addEventListener('input', (e) => {
         const total = lastSaleData ? lastSaleData.total : 0;
         const recebido = parseFloat(e.target.value) || 0;
         const troco = recebido - total;
-
+ 
         const display = document.getElementById('cash-change-value');
         display.textContent = formatCurrency(troco > 0 ? troco : 0);
         display.style.color = troco < 0 ? '#ef4444' : '#10b981';
