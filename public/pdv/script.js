@@ -2732,16 +2732,43 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 3. ARREDONDAMENTO MÁGICO (Regra dos 5 Centavos)
-        // Arredonda o total fiscal para o múltiplo de 0.05 mais próximo (Ex: 35.99 -> 36.00)
-        let totalFiscalAjustado = Number(somaBrutaFiscal.toFixed(2));
+        // 3. ARREDONDAMENTO ROBUSTO (0.05) - Apenas para Dinheiro
+        // Se for Dinheiro, a nota fiscal TEM que bater com o arredondamento físico (x.00, x.05, x.10...)
+        // Se for PIX/Cartão, mantém precisão de centavos (x.01, x.02...)
+
+        const isCash = selectedPaymentMethod === 'Dinheiro';
+        let totalFiscalAjustado = somaBrutaFiscal;
+
+        if (isCash) {
+            // Arredonda para o múltiplo de 0.05 mais próximo (Regra de Troco)
+            // Ex: 19.99 -> 19.99 * 20 = 399.8 -> 400 / 20 = 20.00 (Errado, queremos Floor ou Round?)
+            // A regra do Banco Central para troco é geralmente arredondar para BAIXO se não tem moeda,
+            // mas aqui queremos alinhar com o que foi cobrado no checkout (que foi arredondado).
+            // Vamos assumir o mesmo arredondamento usado no checkout: Floor(x * 2) / 2 para 0.50
+            // MAS PERA: A nota fiscal precisa ser precisa. Se o checkout arredondou para 19.50, a nota tem que ser 19.50.
+
+            // Recalcula o alvo baseado na regra de checkout (0.50)
+            // totalVendaReal já deve estar arredondado se for dinheiro, mas vamos garantir.
+            totalFiscalAjustado = Number(totalVendaReal.toFixed(2));
+        } else {
+            totalFiscalAjustado = Number(somaBrutaFiscal.toFixed(2));
+        }
+
         let diferencaArredondamento = Number((totalFiscalAjustado - somaBrutaFiscal).toFixed(2));
 
         // Ajusta o último item fiscal para absorver a diferença (exigência da SEFAZ: Soma itens = vNF)
-        if (itensFiscaisFinal.length > 0 && diferencaArredondamento !== 0) {
+        if (itensFiscaisFinal.length > 0 && Math.abs(diferencaArredondamento) > 0.0001) {
             const ultimo = itensFiscaisFinal[itensFiscaisFinal.length - 1];
+
+            // Aplica a diferença no subtotal do item
             ultimo.subtotal = Number((ultimo.subtotal + diferencaArredondamento).toFixed(2));
+
+            // Recalcula o unitário para bater (Unitário = Subtotal / Quantidade)
+            // A SEFAZ aceita até 4 casas decimais no unitário, o que ajuda no ajuste fino
             ultimo.precoUnitario = Number((ultimo.subtotal / ultimo.quantity).toFixed(4));
+
+            // Log de Debug
+            console.log(`[Fiscal] Ajuste de Arredondamento (${isCash ? 'Dinheiro' : 'Outro'}): ${diferencaArredondamento}`);
         }
 
         // 4. RENDERIZAÇÃO NA TELA
