@@ -1276,7 +1276,7 @@ body {
     top: 50%;
     transform: translateY(-50%);
     right: 12px;
-    /* Posicionado DENTRO da barra, Ã  direita */
+    /* Posicionado DENTRO da barra, Ã  direita */
     font-size: 1.2rem;
     color: var(--text-light);
     pointer-events: none;
@@ -2358,7 +2358,7 @@ body {
     border: none;
     background: transparent;
     text-align: right;
-    /* NÃºmero alinhado Ã  direita */
+    /* NÃºmero alinhado Ã  direita */
     padding-right: 2px;
     font-size: 0.9rem;
     font-weight: 600;
@@ -5076,7 +5076,7 @@ input:checked+.slider:before {
     /* Remove a borda azul padrÃ£o do browser */
     background: transparent;
     text-align: right;
-    /* NÃºmeros alinhados Ã  direita perto do % */
+    /* NÃºmeros alinhados Ã  direita perto do % */
     font-size: 14px;
     font-weight: 600;
     color: #2d3748;
@@ -5246,7 +5246,7 @@ input:checked+.slider:before {
 
 .btn-square-add {
     width: 50px;
-    /* Largura fixa igual Ã  altura */
+    /* Largura fixa igual Ã  altura */
     height: 50px;
     /* Altura fixa */
     border-radius: 12px;
@@ -6337,4 +6337,72 @@ input:checked+.slider:before {
 
 .input-group-modern input::placeholder {
     color: #9ca3af;
+}
+
+/* ======================================== */
+/* == PROMO BANNER FIXED                 == */
+/* ======================================== */
+.promo-banner-fixed {
+    position: fixed;
+    top: 0;
+    right: 180px;
+    background-color: var(--primary-red);
+    color: white;
+    padding: 10px 20px 15px 20px;
+    border-radius: 0 0 16px 16px;
+    z-index: 9990;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(219, 0, 56, 0.4);
+    line-height: 1;
+    pointer-events: none;
+    transform-origin: top center;
+    animation: swingIn 1s ease-out;
+}
+
+@keyframes swingIn {
+    0% {
+        transform: translateY(-100%);
+    }
+
+    60% {
+        transform: translateY(10%);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
+
+.promo-text-small {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 2px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0.9;
+}
+
+.promo-text-large {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin: -8px 0;
+    letter-spacing: -2px;
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
+}
+
+.promo-text-sub {
+    font-size: 0.75rem;
+    margin-top: 4px;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+    .promo-banner-fixed {
+        transform: scale(0.6);
+        right: 10px;
+        transform-origin: top right;
+    }
 }
