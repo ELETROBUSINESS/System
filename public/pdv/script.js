@@ -288,6 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const clientesListContainer = document.getElementById('clientes-list-container');
     const smartRoundingToggle = document.getElementById('smart-rounding-toggle');
     const reloadCacheBtn = document.getElementById('reload-cache-btn');
+    // discountInputP helper removed
     const discountNavElements = [discountInputR, ...document.querySelectorAll('.perc-btn'), removeDiscountBtn];
     let discountNavIndex = 0;
     const removeDiscountHint = document.getElementById('remove-discount-hint');
@@ -503,24 +504,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Botão de confirmar dinheiro (Atualiza o Resumo Lateral)
     document.getElementById('confirm-cash-btn').addEventListener('click', () => {
-        const total = lastSaleData ? lastSaleData.total : 0;
+        // Usa o getSubtotal() - discount atual, pois o 'lastSaleData' pode estar defasado se houve edits
+        // Mas 'discount' pode mudar durante a função, então salvamos o estado inicial
+        const currentSubtotal = getSubtotal();
+        const currentTotal = currentSubtotal - discount; // Total ANTES do arredondamento extra
         const recebido = parseFloat(document.getElementById('cash-received').value) || 0;
 
-        if (recebido < total) {
+        if (recebido < (currentTotal - 0.01)) { // Margem de erro pequena para floats
             showCustomAlert("Atenção", "Valor recebido é menor que o total.");
             return;
         }
 
-        const troco = recebido - total;
-        window.lastTrocoValue = troco; // Salva o troco para o backend fiscal
-
+        const troco = recebido - currentTotal;
         // --- ATUALIZA O RESUMO NA SIDEBAR ---
         const summaryChangeRow = document.getElementById('summary-change-row');
         const summaryChangeValue = document.getElementById('summary-change-value');
+        const summaryTotal = document.getElementById('summary-total'); // Para atualizar o total visualmente
+
+        // --- LÓGICA DE ARREDONDAMENTO (ANTES DO TROCO) ---
+        // 1. Calcula o total arredondado alvo
+        const targetTotal = Math.floor(currentTotal * 2) / 2;
+        const roundingDiff = currentTotal - targetTotal;
+        let finalTroco = troco;
+
+        // 2. Aplica o arredondamento se necessário
+        if (roundingDiff > 0.009) {
+            // Atualiza o desconto global adicionando a diferença
+            discount += roundingDiff;
+            discountInputR.value = discount.toFixed(2);
+
+            // Recalcula o troco com base no NOVO total (menor)
+            // Ex: Total 19.99 (Pago 20) -> Troco 0.01
+            // Novo Total 19.50 (Pago 20) -> Troco 0.50
+            finalTroco = recebido - targetTotal;
+            window.lastTrocoValue = finalTroco;
+
+            // Força atualização da View de Totais
+            updateSummary();
+
+            if (typeof showCustomToast === 'function') {
+                showCustomToast(`Arredondamento: -${formatCurrency(roundingDiff)}`);
+            }
+        } else {
+            window.lastTrocoValue = finalTroco;
+        }
 
         if (summaryChangeRow && summaryChangeValue) {
             // Só mostra se for Dinheiro (redundante mas seguro) e tiver troco/valor definido
-            summaryChangeValue.textContent = formatCurrency(troco);
+            summaryChangeValue.textContent = formatCurrency(finalTroco);
             summaryChangeRow.style.display = 'flex'; // Exibe a barra verde
         }
         // -------------------------------------
@@ -2009,6 +2040,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const rowResumo = document.getElementById('summary-change-row');
         if (rowResumo) rowResumo.style.display = 'none';
 
+        // Reset Input de Dinheiro e Display de Troco (Fix)
+        const cashInput = document.getElementById('cash-received');
+        if (cashInput) cashInput.value = '';
+
+        const changeDisplay = document.getElementById('cash-change-value');
+        if (changeDisplay) {
+            changeDisplay.textContent = 'R$ 0,00';
+            changeDisplay.style.color = ''; // Reseta cor (remove verde/vermelho)
+        }
+
         renderCart();
     };
 
@@ -2319,6 +2360,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (splitPaymentArea.style.display === 'none') {
             selectedPaymentMethod = method;
             summaryPaymentMethod.textContent = method;
+
+            // --- LÓGICA DE ARREDONDAMENTO AUTOMÁTICO (DINHEIRO) ---
+            // A lógica foi movida para o botão de confirmação do dinheiro para garantir que o troco esteja correto.
+            // Aqui apenas garantimos que o metodo seja registrado.
             summaryPaymentMethod.style.fontWeight = '600';
             summaryPaymentMethod.style.color = 'var(--text-dark)';
 
@@ -2624,6 +2669,7 @@ document.addEventListener('DOMContentLoaded', () => {
     discountToggleRow.addEventListener('click', () => { discountPopover.classList.toggle('active'); });
     percBtnContainer.addEventListener('click', (e) => { const button = e.target.closest('.perc-btn'); if (button && button.dataset.perc) { applyDiscount(parseFloat(button.dataset.perc), true); } });
     discountInputR.addEventListener('input', (e) => { applyDiscount(parseFloat(e.target.value) || 0, false); });
+    // Porcentagem input removed
     removeDiscountBtn.addEventListener('click', removeDiscount);
     paymentToggleRow.addEventListener('click', () => { if (cart.length > 0) { splitPaymentArea.style.display = 'none'; singlePaymentOptions.style.display = 'grid'; splitPaymentToggleBtn.innerHTML = "<i class='bx bx-columns'></i> Dividir Pagamento"; splitPaymentToggleBtn.classList.remove('active'); splitValue1.value = ''; splitValue2.value = ''; splitMethod1.value = ''; splitMethod2.value = ''; confirmSplitPaymentBtn.disabled = true; updateSplitRemaining(); openModal(paymentModal); } else { showCustomAlert("Vazio", "Adicione itens."); } });
     splitPaymentToggleBtn.addEventListener('click', () => { const isActive = splitPaymentArea.style.display !== 'none'; splitPaymentArea.style.display = isActive ? 'none' : 'block'; singlePaymentOptions.style.display = isActive ? 'grid' : 'none'; splitPaymentToggleBtn.innerHTML = isActive ? "<i class='bx bx-columns'></i> Dividir Pagamento" : "<i class='bx bx-x'></i> Cancelar Divisão"; splitPaymentToggleBtn.classList.toggle('active'); if (!isActive) { currentSplitPayments.totalSaleValue = lastSaleData?.total || 0; updateSplitRemaining(); splitMethod1.focus(); } else { confirmSplitPaymentBtn.disabled = true; } });
