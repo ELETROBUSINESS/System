@@ -1,8 +1,26 @@
 
 
+
 // ============================================================
 // 1. ESCOPO GLOBAL (VARIÁVEIS E BANCO DE DADOS)
 // ============================================================
+
+const infinitePayRates = {
+    "pix": 0.00,
+    "debit": 0.85,
+    "credit_spot": 2.89,
+    "installments_visa_master": {
+        "2x": 4.22, "3x": 4.83, "4x": 5.44, "5x": 6.05, "6x": 6.64,
+        "7x": 7.24, "8x": 7.82, "9x": 8.41, "10x": 8.98, "11x": 9.56, "12x": 10.12
+    },
+    "installments_elo_amex": {
+        "2x": 6.09, "3x": 6.69, "4x": 7.28, "5x": 7.87, "6x": 8.46,
+        "7x": 9.05, "8x": 9.63, "9x": 10.20, "10x": 10.76, "11x": 11.33, "12x": 11.88
+    },
+    "debit_elo_amex": 2.08,
+    "credit_spot_elo_amex": 4.65,
+    "movecard": 8.00
+};
 
 let db; // Variável do Banco de Dados
 let realtimeOrdersUnsubscribe = null;
@@ -224,6 +242,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentClienteStep = 1;
     let currentFecharCaixaStep = 1;
     let currentSplitPayments = { method1: null, value1: 0, method2: null, value2: 0, remaining: 0, totalSaleValue: 0 };
+    // VARIÁVEIS PARA TAXA INFINITEPAY
+    let selectedCardFlag = 'Visa'; // Default
+    let selectedInstallments = '1'; // Default
 
     // --- Seletores do DOM ---
     const loadingOverlay = document.getElementById('loading-overlay');
@@ -478,6 +499,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Para PIX, Débito e Movecard
                 selectedCrediarioClient = null;
                 updateSummaryClientCard();
+
+                // Reseta detalhes de cartão para calcular taxa corretamente
+                if (method === 'C. Débito') {
+                    selectedCardFlag = 'Visa'; /// Default para ref
+                    selectedInstallments = 'debit'; // Marcador interno
+                }
+
                 handlePaymentSelection(method);
             }
         });
@@ -504,6 +532,10 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmCreditBtn.addEventListener('click', () => {
             const flag = document.getElementById('card-flag-select').value;
             const installments = document.getElementById('card-installments-select').value;
+
+            // ATUALIZA GLOBAIS
+            selectedCardFlag = flag;
+            selectedInstallments = installments;
 
             // Update Sidebar
             const summaryMethod = document.getElementById('summary-payment-method');
@@ -924,6 +956,52 @@ document.addEventListener('DOMContentLoaded', () => {
         const finalTotal = subtotalGross - totalDiscount;
 
         updateTaxEstimate(finalTotal);
+
+        // --- CÁLCULO DA TAXA INFINITEPAY ---
+        const taxRow = document.getElementById('infinitepay-tax-row');
+        const taxValEl = document.getElementById('infinitepay-tax-val');
+
+        let txVal = 0;
+        let rate = 0;
+
+        if (selectedPaymentMethod === 'PIX') {
+            rate = infinitePayRates.pix;
+        } else if (selectedPaymentMethod === 'C. Débito') {
+            // Verifica bandeira se necessário, mas rate é fixo para débito geral ou específico
+            // Pelo objeto: "debit": 0.85, "debit_elo_amex": 2.08
+            // Como não selecionamos bandeira no débito rápido, vamos assumir padrão ou criar modal depois?
+            // Por enquanto, usa padrão:
+            rate = infinitePayRates.debit;
+        } else if (selectedPaymentMethod === 'Movecard') {
+            rate = infinitePayRates.movecard;
+        } else if (selectedPaymentMethod === 'C. Crédito') {
+            const isEloAmex = (selectedCardFlag === 'Elo' || selectedCardFlag === 'Amex');
+            const instKey = selectedInstallments + 'x';
+
+            if (selectedInstallments === '1') {
+                rate = isEloAmex ? infinitePayRates.credit_spot_elo_amex : infinitePayRates.credit_spot;
+            } else {
+                const table = isEloAmex ? infinitePayRates.installments_elo_amex : infinitePayRates.installments_visa_master;
+                rate = table[instKey] || 0;
+            }
+        }
+
+        // Se rate > 0, calcula
+        if (rate > 0) {
+            txVal = finalTotal * (rate / 100);
+            if (taxValEl) taxValEl.textContent = formatCurrency(txVal);
+            if (taxRow) taxRow.style.display = 'flex';
+        } else {
+            // Se for dinheiro ou taxa 0
+            if (selectedPaymentMethod === 'Dinheiro' || !selectedPaymentMethod) {
+                if (taxRow) taxRow.style.display = 'none';
+            } else {
+                // Exibe 0,00 se for Pix (rate 0) ou outro
+                if (taxValEl) taxValEl.textContent = formatCurrency(0);
+                if (taxRow) taxRow.style.display = 'flex';
+            }
+        }
+        // -----------------------------------
 
         // 2. Atualiza Interface
         const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);

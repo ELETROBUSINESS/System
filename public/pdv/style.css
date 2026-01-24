@@ -6930,8 +6930,46 @@ input:checked+.slider:before {
     font-size: 0.9rem;
 }
 
-.btn-confirm-split:disabled {
+
+/* Dropdown Badge Style - Redesigned as Tag */
+.dropdown-badge-container {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-top: 8px;
+}
+
+.dropdown-badge-label {
+    font-size: 0.65rem;
+    color: #6b7280;
+    font-weight: 700;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dropdown-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    color: #374151;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dropdown-badge:hover {
     background: #e5e7eb;
+    border-color: #d1d5db;
+    color: #111;
+}
+
+.dropdown-badge i {
+    font-size: 1rem;
     color: #9ca3af;
-    cursor: not-allowed;
 }
