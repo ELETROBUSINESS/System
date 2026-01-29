@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-view="mobile" data-minimized="false">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/assets/img/iconWeb.png">
+    <title>Crediário | Sistema</title>
+
+    <!-- Libs -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+    <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+    <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+
+    <!-- CSS Global -->
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/style26.css">
+
+    <!-- Firebase & Auth -->
+    <script type="module" src="/app/js/firebase-config.js"></script>
+    <script type="module" src="/app/js/acess.js"></script>
+    <script type="module" src="/app/js/main.js"></script>
+
+    <!-- Crediario Logic -->
+    <script type="module" src="/app/js/crediario.js"></script>
+
+    <script>
+        (function () {
+            const savedState = localStorage.getItem('acc_navbar');
+            if (savedState !== null) {
+                document.documentElement.setAttribute('data-minimized', savedState);
+                if (savedState === 'true') {
+                    document.documentElement.classList.add('sidebar-minimized-init');
+                }
+            }
+        })();
+    </script>
+</head>
+
+<body style="--marker-x: 0%; --marker-y: 50%;">
+
+    <div id="app-container" class="opacity-0 transition-opacity duration-300 page-crediario">
+        <!-- Info Profile -->
+        <div class="info">
+            <div class="photo-profile">
+                <!-- User IDs matching main.js -->
+                <img id="user-photo-display" src="" style="display: none;" onload="this.style.display='block'">
+                <div class="detals">
+                    <h1 id="welcome-user-name">Olá, ...</h1>
+                    <p id="user-role-display">...</p>
+                </div>
+                <i class="fi fi-rr-shield-trust"></i>
+            </div>
+            <div class="balance">
+                <p>Recebível Total</p>
+                <div class="saldo">
+                    <span id="total-receivable" class="">R$ 0,00</span>
+                    <i class="bx bx-show" id="toggle-balance-icon"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="kpi-area grid-kpi cols-3 mb-6">
+            <div class="finance-card kpi-card">
+                <span class="kpi-label">Crédito a Receber</span>
+                <div class="flex items-baseline">
+                    <span class="kpi-value" id="kpi-cred-val">R$ 0</span>
+                </div>
+                <span class="kpi-trend text-green-500" id="trend-cred">Ativos</span>
+            </div>
+
+            <div class="finance-card kpi-card">
+                <span class="kpi-label">Em Atraso</span>
+                <div class="flex items-baseline">
+                    <span class="kpi-value" id="kpi-overdue-val">R$ 0</span>
+                </div>
+                <span class="kpi-trend text-red-500" id="trend-overdue">Vencidos</span>
+            </div>
+
+            <div class="finance-card kpi-card">
+                <span class="kpi-label">Carteira de Clientes</span>
+                <div class="flex items-baseline">
+                    <span class="kpi-value" id="kpi-clients-count">0</span>
+                </div>
+                <span class="kpi-trend text-blue-500" id="trend-clients">Cadastrados</span>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="finance-card p-6 w-full max-w-full" style="min-height: 80vh;">
+            <h3 class="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-4">Carteira de Crédito</h3>
+            <div class="client-search-wrapper w-full mb-6 relative">
+                <i class='bx bx-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg'></i>
+                <input type="text" id="client-search-input"
+                    class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-full focus:outline-none focus:border-red-500 transition-colors"
+                    placeholder="Buscar por nome, apelido ou CPF..." autocomplete="off">
+            </div>
+
+            <div class="crediario-table-container">
+                <table class="finance-table w-full">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Status Crediário</th>
+                            <th>Dívida Atual</th>
+                            <th>Próx. Venc.</th>
+                            <th class="text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clients-table-body">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="cliente-details-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Ficha do Cliente</h3>
+                <button class="close-modal-btn" data-target="cliente-details-modal"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="client-profile-header">
+                    <div class="client-avatar-lg"><i class='bx bx-user'></i></div>
+                    <div style="flex-grow: 1;">
+                        <h4 id="detail-cliente-nome" class="text-lg font-bold">...</h4>
+                        <p id="detail-cliente-apelido" class="text-light text-sm">...</p>
+                    </div>
+                </div>
+                <div class="client-stats-grid">
+                    <div class="stat-box">
+                        <span class="stat-label">Saldo Devedor</span>
+                        <span class="stat-value danger" id="detail-cliente-saldo">R$ 0,00</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Próximo Venc.</span>
+                        <span class="stat-value" id="detail-cliente-vencimento">--/--/----</span>
+                    </div>
+                </div>
+                <div class="quick-actions-grid"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;">
+                    <button id="btn-whatsapp" class="btn-action-lg"
+                        style="background-color: #25D366; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <i class='bx bxl-whatsapp' style="font-size: 1.2rem;"></i> WhatsApp
+                    </button>
+                    <button id="btn-new-transaction" class="btn-action-lg"
+                        style="background-color: #db0038; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <i class='bx bx-transfer'></i> Movimentação
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary close-modal-btn" data-target="cliente-details-modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal (Simplified) -->
+    <div class="modal-overlay" id="cliente-pay-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Receber Pagamento (API Mock)</h3>
+                <button class="close-modal-btn" data-target="cliente-pay-modal"><i class='bx bx-x'></i></button>
+            </div>
+            <form id="cliente-pay-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Valor a Receber (R$)</label>
+                        <input type="number" id="pay-valor" step="0.01" min="0.01" placeholder="0,00" required
+                            class="text-lg font-bold text-green-700">
+                    </div>
+                    <div class="form-group">
+                        <label>Forma</label>
+                        <select id="pay-metodo">
+                            <option>Dinheiro</option>
+                            <option>PIX</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary close-modal-btn"
+                        data-target="cliente-pay-modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Confirmar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Purchase Modal (New Transaction - Add Debt) -->
+    <div class="modal-overlay" id="cliente-purchase-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nova Compra (Adicionar na Conta)</h3>
+                <button class="close-modal-btn" data-target="cliente-purchase-modal"><i class='bx bx-x'></i></button>
+            </div>
+            <form id="cliente-purchase-form">
+                <div class="modal-body">
+                    <p class="text-sm text-gray-500 mb-4">Adicione uma nova compra para este cliente. O valor será
+                        somado à dívida atual.</p>
+                    <div class="form-group">
+                        <label>Valor da Compra (R$)</label>
+                        <input type="number" id="purchase-valor" step="0.01" min="0.01" placeholder="0,00" required
+                            class="text-lg font-bold text-red-600 form-input">
+                    </div>
+                    <div class="form-group mt-3">
+                        <label>Descrição (Opcional)</label>
+                        <input type="text" id="purchase-desc" placeholder="Ex: Compra Balcão" class="form-input">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary close-modal-btn"
+                        data-target="cliente-purchase-modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="background-color: #db0038;">Confirmar
+                        Compra</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Transaction Choice Modal -->
+    <div class="modal-overlay" id="transaction-choice-modal">
+        <div class="modal-content" style="max-width: 350px;">
+            <div class="modal-header">
+                <h3>Nova Movimentação</h3>
+                <button class="close-modal-btn" data-target="transaction-choice-modal"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="flex flex-col gap-3">
+                    <button id="choice-btn-pay"
+                        class="w-full p-4 rounded-xl border border-green-500 bg-green-50 flex items-center gap-3 hover:bg-green-100 transition-colors">
+                        <div class="bg-green-500 text-white p-2 rounded-full"><i class='bx bx-dollar'></i></div>
+                        <div class="text-left">
+                            <h4 class="font-bold text-green-900">Receber Pagamento</h4>
+                            <p class="text-xs text-green-700">Abater valor da dívida</p>
+                        </div>
+                    </button>
+
+                    <button id="choice-btn-purchase"
+                        class="w-full p-4 rounded-xl border border-red-500 bg-red-50 flex items-center gap-3 hover:bg-red-100 transition-colors">
+                        <div class="bg-red-600 text-white p-2 rounded-full"><i class='bx bx-cart-add'></i></div>
+                        <div class="text-left">
+                            <h4 class="font-bold text-red-900">Nova Compra</h4>
+                            <p class="text-xs text-red-700">Adicionar à conta</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Mobile Card View for Table */
+        @media (max-width: 768px) {
+
+            .crediario-table-container table,
+            .crediario-table-container thead,
+            .crediario-table-container tbody,
+            .crediario-table-container th,
+            .crediario-table-container td,
+            .crediario-table-container tr {
+                display: block;
+            }
+
+            .crediario-table-container thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+
+            .crediario-table-container tr {
+                margin-bottom: 1rem;
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+                padding: 16px;
+                border: 1px solid #f0f0f0;
+            }
+
+            .crediario-table-container td {
+                border: none;
+                position: relative;
+                padding-left: 0;
+                padding-right: 0;
+                padding-top: 5px;
+                padding-bottom: 5px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .crediario-table-container td:before {
+                display: none;
+            }
+
+            /* Specific Styles for Mobile Row */
+            .client-name-cell {
+                font-size: 1.1rem;
+                margin-bottom: 10px;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 10px !important;
+                display: block !important;
+            }
+
+            .client-name-cell small {
+                display: block;
+                color: #666;
+                font-size: 0.85rem;
+                font-weight: normal;
+            }
+
+            /* Labels for other cells */
+            .mobile-label {
+                font-size: 0.8rem;
+                color: #888;
+                font-weight: 600;
+            }
+
+            .action-btn-group {
+                justify-content: flex-end;
+                width: 100%;
+                margin-top: 10px;
+                border-top: 1px solid #eee;
+                padding-top: 10px;
+            }
+
+            .btn-action-md {
+                padding: 8px 16px;
+                border-radius: 8px;
+                width: 48%;
+                justify-content: center;
+            }
+        }
+    </style>
+
+
+    <!-- Navbar -->
+    <div class="nav-container">
+        <div class="nav-marker" id="nav-marker"></div>
+        <div class="nav-bg" id="nav-bg"></div>
+        <nav class="nav-overlay" id="nav-overlay">
+            <div class="nav-header-toggle">
+                <div class="btn-toggle-sidebar" onclick="toggleSidebar()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        id="toggle-icon">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </div>
+            </div>
+            <div class="nav-links-container">
+                <div class="nav-item" onclick="navigateTo('conta.html')">
+                    <div class="nav-icon"><i class='bx bx-home-alt-2'></i></div>
+                    <span class="nav-label">Casa</span>
+                </div>
+                <div class="nav-item" onclick="navigateTo('metricas.html')">
+                    <div class="nav-icon"><i class='bx bx-bar-chart-alt-2'></i></div>
+                    <span class="nav-label">Métricas</span>
+                </div>
+                <!-- Other links matches main.js injection or static -->
+                <div class="nav-item desktop-only" onclick="navigateTo('/pdv/index.html')">
+                    <div class="nav-icon"><i class='bx bx-cart-minus'></i></div>
+                    <span class="nav-label">PDV</span>
+                </div>
+                <div class="nav-item desktop-only" onclick="navigateTo('manager.html')">
+                    <div class="nav-icon"><i class='bxr bx-scan-barcode'></i></div>
+                    <span class="nav-label">Despesas</span>
+                </div>
+                <div class="nav-item" onclick="navigateTo('extrato.html')">
+                    <div class="nav-icon"><i class='bx bx-list-ul'></i></div>
+                    <span class="nav-label">Extrato</span>
+                </div>
+                <div class="nav-item active" onclick="navigateTo('crediario.html')">
+                    <div class="nav-icon"><i class='bxr bx-wallet-cards'></i></div>
+                    <span class="nav-label">Crediário</span>
+                </div>
+                <div class="nav-item" id="logout-btn">
+                    <div class="nav-icon"><i class='bx bx-log-out'></i></div>
+                    <span class="nav-label">Sair</span>
+                </div>
+            </div>
+        </nav>
+    </div>
+
+    <script>
+        window.DISABLE_LEGACY_AUTH = true;
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fiscal | PDV</title>
+    <!-- Reutilizando estilos principais para manter identidade visual -->
+    <link rel="stylesheet" href="../style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <!-- Bibliotecas para ZIP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <style>
+        body {
+            background-color: #f3f4f6;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #1f2937;
+        }
+
+        .fiscal-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            background: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            transition: 0.3s;
+        }
+
+        /* Header Style */
+        .header-fiscal {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 25px;
+            border-bottom: 2px solid #e5e7eb;
+            margin-bottom: 30px;
+        }
+
+        .company-info h1 {
+            font-size: 1.5rem;
+            color: #111;
+            margin: 0;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .company-info h2 {
+            font-size: 1.1rem;
+            color: #4b5563;
+            margin: 4px 0 0;
+            font-weight: 500;
+        }
+
+        .fiscal-info {
+            text-align: right;
+        }
+
+        .fiscal-info h3 {
+            font-size: 1.25rem;
+            color: #111;
+            margin: 0;
+            font-weight: 700;
+            font-family: monospace;
+        }
+
+        .fiscal-info p {
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin: 4px 0 0;
+            font-weight: 500;
+        }
+
+        /* Controls */
+        .controls-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .month-select {
+            padding: 10px 15px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 220px;
+            background-color: #fff;
+            color: #374151;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .month-select:focus {
+            border-color: #2563eb;
+        }
+
+        .btn-download {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+        }
+
+        .btn-download:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .btn-download:active {
+            transform: translateY(0);
+        }
+
+        /* Botão para Imprimir (Estilo secundário) */
+        .btn-print {
+            background: #4b5563;
+            margin-right: 10px;
+        }
+
+        .btn-print:hover {
+            background: #374151;
+        }
+
+        /* Table */
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .fiscal-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .fiscal-table th,
+        .fiscal-table td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .fiscal-table th {
+            background: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .fiscal-table td {
+            color: #4b5563;
+            font-size: 0.95rem;
+        }
+
+        .fiscal-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .fiscal-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .key-cell {
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+
+        .currency-cell {
+            font-weight: 600;
+            color: #111;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-authorized {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-rejected {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-cancelled {
+            background-color: #f3f4f6;
+            color: #374151;
+            text-decoration: line-through;
+        }
+
+        /* Footer Summary */
+        .summary-box {
+            background: #f8fafc;
+            padding: 25px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-end;
+            margin-top: 30px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .summary-row {
+            font-size: 1.1rem;
+            color: #374151;
+            display: flex;
+            gap: 30px;
+            justify-content: space-between;
+            min-width: 300px;
+        }
+
+        .summary-row span:first-child {
+            color: #6b7280;
+        }
+
+        .summary-row.total {
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: #111;
+            padding-top: 10px;
+            border-top: 1px dashed #d1d5db;
+        }
+
+        .summary-row.projection {
+            color: #059669;
+            font-weight: 600;
+        }
+
+        /* Auth Modal Override for this page */
+        #main-content.blurred {
+            filter: blur(8px);
+            pointer-events: none;
+            user-select: none;
+        }
+
+        /* Custom Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes modalPop {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .auth-icon-wrapper {
+            width: 60px;
+            height: 60px;
+            background: #fee2e2;
+            color: #ef4444;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin: 0 auto;
+        }
+
+        .auth-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #111;
+            margin: 10px 0 5px;
+            text-align: center;
+        }
+
+        .auth-subtitle {
+            color: #6b7280;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            outline: none;
+            transition: 0.2s;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .auth-input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .auth-error {
+            color: #ef4444;
+            font-size: 0.9rem;
+            text-align: center;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .auth-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .btn-auth-confirm {
+            flex: 1;
+            background: #111;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-auth-confirm:hover {
+            background: #000;
+        }
+
+        .btn-auth-cancel {
+            flex: 1;
+            background: #fff;
+            color: #374151;
+            border: 1px solid #d1d5db;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-auth-cancel:hover {
+            background: #f3f4f6;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #9ca3af;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        /* --- PRINT STYLES (A4 LANDSCAPE) --- */
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 0.5cm;
+            }
+
+            body {
+                background-color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                height: 100%;
+                overflow: visible !important;
+            }
+
+            /* Esconde tudo inicialmente para garantir controle total */
+            body * {
+                visibility: hidden;
+            }
+
+            /* Mostra apenas o conteúdo principal e seus filhos */
+            #main-content,
+            #main-content * {
+                visibility: visible;
+            }
+
+            /* Posicionamento absoluto para garantir que apareça no topo da página */
+            #main-content {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                filter: none !important;
+                overflow: visible !important;
+                transform: none !important;
+            }
+
+            /* Esconde controles explicitamente */
+            .controls-bar,
+            .btn-download,
+            #loading-spinner,
+            #modal-admin-auth,
+            #btn-refresh,
+            #btn-print {
+                display: none !important;
+            }
+
+            .header-fiscal {
+                border-bottom: 2px solid #000;
+                padding-bottom: 10px;
+                margin-bottom: 20px;
+            }
+
+            /* Forçar cores pretas para impressão */
+            h1,
+            h2,
+            h3,
+            p,
+            th,
+            td,
+            span,
+            div {
+                color: black !important;
+            }
+
+            .fiscal-table th {
+                background-color: #eee !important;
+                border: 1px solid #000 !important;
+            }
+
+            .fiscal-table td {
+                border: 1px solid #ddd !important;
+            }
+
+            /* Remove scroll da tabela */
+            .table-responsive {
+                overflow: visible !important;
+                display: block !important;
+            }
+
+            /* Label do mês para impressão */
+            #print-month-label {
+                display: block !important;
+                font-size: 1.2rem;
+                margin-top: 10px;
+                visibility: visible;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Modal de Autenticação -->
+    <div id="modal-admin-auth" class="modal-overlay active">
+        <div class="modal-content">
+            <div class="modal-header auth-header">
+                <div class="auth-icon-wrapper">
+                    <i class='bx bxs-lock-alt'></i>
+                </div>
+            </div>
+            <div class="modal-body">
+                <h3 class="auth-title">Área Restrita</h3>
+                <p class="auth-subtitle">Acesso aos dados fiscais.</p>
+
+                <input type="password" id="admin-password-input" class="auth-input" placeholder="SENHA" autofocus
+                    autocomplete="off">
+                <p id="auth-error-msg" class="auth-error">Senha incorreta!</p>
+
+                <div class="auth-actions">
+                    <button id="btn-cancel-auth" class="btn-auth-cancel">Sair</button>
+                    <button id="btn-confirm-auth" class="btn-auth-confirm">Acessar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="fiscal-container blurred" id="main-content">
+        <div class="header-fiscal">
+            <div class="company-info">
+                <h1>A N F da Silva LTDA</h1>
+                <h2>Dtudo Variedades & Utilidades</h2>
+            </div>
+            <div class="fiscal-info">
+                <h3>45.692.327/0001-00</h3>
+                <p>Inscrita sobre o CNPJ</p>
+                <!-- Elemento extra para print mostrar o mês filtrado se o select sumir -->
+                <p id="print-month-label" style="display:none; font-weight:bold; margin-top:5px;"></p>
+            </div>
+        </div>
+
+        <div class="controls-bar">
+            <div class="filter-group">
+                <label for="month-filter"><strong>Mês de Referência:</strong></label>
+                <select id="month-filter" class="month-select">
+                    <!-- Opções geradas via JS -->
+                </select>
+                <button class="btn-download" id="btn-refresh" title="Atualizar dados"
+                    style="background: #10b981; margin-left:10px;">
+                    <i class='bx bx-refresh'></i>
+                </button>
+            </div>
+
+            <div style="display: flex;">
+                <!-- Botão de Imprimir Adicionado -->
+                <button class="btn-download btn-print" id="btn-print" title="Imprimir Relatório (A4 Deitado)">
+                    <i class='bx bxs-printer'></i> Imprimir
+                </button>
+
+                <button class="btn-download" id="btn-download-zip" title="Baixar todas as notas do mês em XML">
+                    <i class='bx bxs-file-archive'></i> Baixar ZIP (XMLs)
+                </button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="fiscal-table">
+                <thead>
+                    <tr>
+                        <th width="35%">Chave NFC-e</th>
+                        <th width="15%">Emissão</th>
+                        <th width="20%">Status</th>
+                        <th width="15%">Número</th>
+                        <th width="15%" style="text-align: right;">Valor (R$)</th>
+                    </tr>
+                </thead>
+                <tbody id="fiscal-table-body">
+                    <!-- Linhas geradas via JS -->
+                </tbody>
+            </table>
+            <div id="loading-spinner" style="display:none; text-align:center; padding: 20px;">
+                <i class='bx bx-loader-alt bx-spin' style="font-size: 2rem; color: #666;"></i>
+                <p style="color: #666; margin-top: 10px;">Buscando notas...</p>
+                <small style="color:#999;">Carregando todas as notas da planilha...</small>
+            </div>
+        </div>
+
+        <div class="summary-box">
+            <div class="summary-row total">
+                <span>Total Emitido:</span>
+                <span id="total-emitido">R$ 0,00</span>
+            </div>
+            <div class="summary-row projection">
+                <span>DAS Projeção (4%):</span>
+                <span id="das-projection">R$ 0,00</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURAÇÃO
+        const ADMIN_PASS = "ADM25-PASS"; // Senha identificada no sistema
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
+        const CURRENT_CNPJ = "45.692.327/0001-00";
+
+        let ALL_FISCAL_NOTES = [];
+
+        // ELEMENTOS
+        const mainContent = document.getElementById('main-content');
+        const modalAuth = document.getElementById('modal-admin-auth');
+        const inputPass = document.getElementById('admin-password-input');
+        const btnLogin = document.getElementById('btn-confirm-auth');
+        const btnCancel = document.getElementById('btn-cancel-auth');
+        const errorMsg = document.getElementById('auth-error-msg');
+
+        const monthFilter = document.getElementById('month-filter');
+        const tableBody = document.getElementById('fiscal-table-body');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const totalEl = document.getElementById('total-emitido');
+        const dasEl = document.getElementById('das-projection');
+        const btnDownload = document.getElementById('btn-download-zip');
+        const btnPrint = document.getElementById('btn-print'); // Novo Botão
+        const btnRefresh = document.getElementById('btn-refresh');
+        const printMonthLabel = document.getElementById('print-month-label');
+
+        // --- AUTH LOGIC ---
+        function checkPassword() {
+            if (inputPass.value === ADMIN_PASS) {
+                modalAuth.classList.remove('active');
+                mainContent.classList.remove('blurred');
+                initSystem();
+            } else {
+                errorMsg.style.display = 'block';
+                inputPass.classList.add('shake');
+                inputPass.value = '';
+                inputPass.focus();
+                setTimeout(() => inputPass.classList.remove('shake'), 500);
+            }
+        }
+
+        btnLogin.addEventListener('click', checkPassword);
+        inputPass.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkPassword();
+        });
+
+        btnCancel.addEventListener('click', () => {
+            window.location.href = '../index.html';
+        });
+
+        if (btnRefresh) {
+            btnRefresh.addEventListener('click', () => {
+                initSystem();
+            });
+        }
+
+        // --- PRINT LOGIC ---
+        if (btnPrint) {
+            btnPrint.addEventListener('click', () => {
+                // Atualiza label de mês para impressão
+                if (monthFilter && monthFilter.options[monthFilter.selectedIndex]) {
+                    printMonthLabel.innerText = "Competência: " + monthFilter.options[monthFilter.selectedIndex].text;
+                    printMonthLabel.style.display = 'block';
+                }
+
+                window.print();
+            });
+        }
+
+        // --- SYSTEM LOGIC ---
+        function formatCurrency(value) {
+            return parseFloat(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function formatDate(date) {
+            if (!date) return '-';
+            const d = new Date(date);
+            if (isNaN(d.getTime())) return date;
+            return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Helper Parser Robusto
+        function parseDate(dateStr) {
+            if (!dateStr) return new Date();
+            if (dateStr instanceof Date) return dateStr;
+
+            // Se já for ISO
+            let d = new Date(dateStr);
+            if (!isNaN(d.getTime())) return d;
+
+            // Tenta PT-BR (dd/mm/yyyy)
+            if (typeof dateStr === 'string') {
+                const parts = dateStr.split(/[/\-\s]/);
+                if (parts.length >= 3) {
+                    if (parts[0].length <= 2 && parts[1].length <= 2 && parts[2].length === 4) {
+                        const timeParts = dateStr.includes(':') ? dateStr.split(' ')[1].split(':') : [0, 0, 0];
+                        return new Date(parts[2], parts[1] - 1, parts[0], timeParts[0] || 0, timeParts[1] || 0, timeParts[2] || 0);
+                    }
+                }
+            }
+            return new Date(); // Fallback
+        }
+
+        function getMonthLabel(date) {
+            const d = new Date(date);
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            return `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+        }
+
+        function getMonthKey(date) {
+            const d = new Date(date);
+            return `${d.getFullYear()}-${d.getMonth()}`;
+        }
+
+        function extrairTagXML(xmlString, tag) {
+            if (!xmlString || xmlString === "" || xmlString === "---") return null;
+            const regex = new RegExp(`<${tag}>(.*?)<\/${tag}>`, 'i');
+            const match = xmlString.match(regex);
+            return match ? match[1] : null;
+        }
+
+        function initSystem() {
+            fetchFiscalNotes();
+        }
+
+        async function fetchFiscalNotes() {
+            tableBody.innerHTML = '';
+            loadingSpinner.style.display = 'block';
+
+            try {
+                // Adicionado parâmetro 'offlimite=true' conforme solicitado
+                const response = await fetch(`${SCRIPT_URL}?action=listarNotasFiscais&offlimite=true`);
+                const result = await response.json();
+
+                if (result.status === 'success' && Array.isArray(result.data)) {
+                    console.log(`Recebidas ${result.data.length} notas.`);
+                    ALL_FISCAL_NOTES = result.data.map(item => {
+                        const valorXML = extrairTagXML(item.xml, "vNF");
+                        const valor = valorXML ? parseFloat(valorXML) : 0;
+                        const dateObj = parseDate(item.timestamp);
+
+                        return {
+                            id: item.idVenda || Math.random().toString(),
+                            chave: item.chave || 'SEM CHAVE',
+                            emissao: dateObj,
+                            cnpj: CURRENT_CNPJ,
+                            numero: item.nNF || extrairTagXML(item.xml, "nNF") || '---',
+                            valor: valor,
+                            xml: item.xml || '',
+                            status: item.status || 'Desconhecido'
+                        };
+                    });
+
+                    populateFilter();
+                    renderTable();
+                } else {
+                    console.error("Erro na API ou formato inesperado:", result);
+                    throw new Error(result.message || "Formato inválido");
+                }
+
+            } catch (error) {
+                console.error("Erro ao buscar notas:", error);
+                tableBody.innerHTML = `<tr>
+                    <td colspan="5" style="text-align:center; padding: 20px;">
+                        <span style="color:var(--warning-red); display:block; margin-bottom:10px; font-weight:bold;">
+                            <i class='bx bx-error'></i> Falha ao carregar Notas
+                        </span>
+                        <small style="color:#666;">${error.message}</small>
+                    </td>
+                </tr>`;
+            } finally {
+                loadingSpinner.style.display = 'none';
+            }
+        }
+
+        function populateFilter() {
+            if (ALL_FISCAL_NOTES.length === 0) {
+                const now = new Date();
+                const currentKey = `${now.getFullYear()}-${now.getMonth()}`;
+                monthFilter.innerHTML = `<option value="${currentKey}">${getMonthLabel(now)}</option>`;
+                return;
+            }
+
+            const uniqueMonths = new Set();
+            ALL_FISCAL_NOTES.forEach(item => {
+                if (item.emissao && !isNaN(item.emissao.getTime())) {
+                    uniqueMonths.add(getMonthKey(item.emissao));
+                }
+            });
+
+            const monthsArr = Array.from(uniqueMonths).sort((a, b) => {
+                const [yA, mA] = a.split('-').map(Number);
+                const [yB, mB] = b.split('-').map(Number);
+                if (yA !== yB) return yB - yA;
+                return mB - mA;
+            });
+
+            const currentSelection = monthFilter.value;
+
+            monthFilter.innerHTML = '';
+            monthsArr.forEach(key => {
+                const [y, m] = key.split('-');
+                const option = document.createElement('option');
+                option.value = key;
+                const dateObj = new Date(y, m, 1);
+                option.textContent = getMonthLabel(dateObj);
+                monthFilter.appendChild(option);
+            });
+
+            if (currentSelection && monthsArr.includes(currentSelection)) {
+                monthFilter.value = currentSelection;
+            } else if (monthsArr.length > 0) {
+                monthFilter.value = monthsArr[0];
+            }
+
+            const newFilter = monthFilter.cloneNode(true);
+            monthFilter.parentNode.replaceChild(newFilter, monthFilter);
+            newFilter.addEventListener('change', () => renderTable());
+
+            renderTable();
+        }
+
+        function renderTable() {
+            const filterEl = document.getElementById('month-filter');
+            const selectedKey = filterEl.value;
+            if (!selectedKey) return;
+
+            const [selYear, selMonth] = selectedKey.split('-').map(Number);
+
+            // Atualiza label oculta para impressao
+            if (printMonthLabel) {
+                printMonthLabel.innerText = "Mês de Referência: " + getMonthLabel(new Date(selYear, selMonth, 1));
+            }
+
+            const filteredData = ALL_FISCAL_NOTES.filter(item => {
+                if (!item.emissao || isNaN(item.emissao.getTime())) return false;
+                return item.emissao.getFullYear() === selYear && item.emissao.getMonth() === selMonth;
+            });
+
+            filteredData.sort((a, b) => b.emissao - a.emissao);
+
+            const tbody = document.getElementById('fiscal-table-body');
+            tbody.innerHTML = '';
+            let totalPeriodo = 0;
+
+            if (filteredData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="empty-state"><i class='bx bx-search'></i> Nenhuma nota encontrada neste mês.</td></tr>`;
+                btnDownload.disabled = true;
+                btnDownload.style.opacity = 0.5;
+            } else {
+                btnDownload.disabled = false;
+                btnDownload.style.opacity = 1;
+
+                filteredData.forEach(item => {
+                    if (item.status && item.status.toLowerCase().includes('autorizada')) {
+                        totalPeriodo += item.valor;
+                    }
+
+                    const tr = document.createElement('tr');
+
+                    let statusClass = 'status-badge';
+                    let statusText = item.status;
+                    if (statusText.toLowerCase().includes('autorizada')) statusClass += ' status-authorized';
+                    else if (statusText.toLowerCase().includes('cancelada')) statusClass += ' status-cancelled';
+                    else statusClass += ' status-rejected';
+
+                    tr.innerHTML = `
+                        <td class="key-cell" title="${item.chave}">${item.chave}</td>
+                        <td>${formatDate(item.emissao)}</td>
+                        <td><span class="${statusClass}">${statusText}</span></td>
+                        <td>${item.numero}</td>
+                        <td class="currency-cell" style="text-align: right;">${formatCurrency(item.valor)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            const dasProj = totalPeriodo * 0.04;
+            totalEl.innerText = formatCurrency(totalPeriodo);
+            dasEl.innerText = formatCurrency(dasProj);
+        }
+
+        btnDownload.addEventListener('click', () => {
+            const filterEl = document.getElementById('month-filter');
+            const selectedKey = filterEl.value;
+            const [selYear, selMonth] = selectedKey.split('-').map(Number);
+
+            const filteredData = ALL_FISCAL_NOTES.filter(item => {
+                if (!item.emissao || isNaN(item.emissao.getTime())) return false;
+                return item.emissao.getFullYear() === selYear && item.emissao.getMonth() === selMonth;
+            });
+
+            if (filteredData.length === 0) return;
+
+            const zip = new JSZip();
+            const folderName = `NFCe_${getMonthLabel(new Date(selYear, selMonth, 1)).replace(/ /g, '_')}`;
+            const folder = zip.folder(folderName);
+
+            let count = 0;
+            filteredData.forEach(item => {
+                if (item.xml && item.xml.length > 50) {
+                    folder.file(`NFe_${item.chave}.xml`, item.xml);
+                    count++;
+                }
+            });
+
+            if (count === 0) {
+                alert("As notas listadas não possuem XML armazenado (apenas registro de valor).");
+                return;
+            }
+
+            const originalText = btnDownload.innerHTML;
+            btnDownload.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> Gerando ZIP...`;
+
+            zip.generateAsync({ type: "blob" }).then(function (content) {
+                saveAs(content, `Notas_Fiscais_${selYear}_${selMonth + 1}.zip`);
+                btnDownload.innerHTML = originalText;
+            });
+        });
+
+    </script>
+</body>
+
+</html>

@@ -410,7 +410,9 @@ function doGet(e) {
 
         // --- 6. FISCAL: LISTAGEM ---
         else if (action === "listarNotasFiscais") {
-            const dados = listarLogFiscal();
+            // VERIFICACAO DO PARAMETRO OFFLIMITE
+            const ignoreLimit = (e && e.parameter && (e.parameter.offlimite === "true" || e.parameter.offlimite === "?" || e.parameter.offlimite === "1"));
+            const dados = listarLogFiscal(ignoreLimit);
             response = {
                 status: 'success',
                 data: dados
@@ -2006,7 +2008,7 @@ function salvarLogFiscal(data) {
 
 // --- NO ARQUIVO Code.js ---
 
-function listarLogFiscal() {
+function listarLogFiscal(ignoreLimit) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     let sheet = ss.getSheetByName("fiscal") || ss.getSheetByName("Fiscal");
 
@@ -2050,7 +2052,8 @@ function listarLogFiscal() {
         });
 
         // Se jÃ¡ temos 50 notas vÃ¡lidas, paramos de procurar para nÃ£o travar o script
-        if (logs.length >= 50) break;
+        // Se jÃ¡ temos 50 notas vÃ¡lidas E NÃƒO temos a flag ignoreLimit, paramos de procurar
+        if (!ignoreLimit && logs.length >= 50) break;
     }
 
     return logs;
@@ -2167,10 +2170,10 @@ function atualizarDadosCliente(dados) {
         }
 
         if (rowIndex === -1) {
-            return { status: "error", message: "Cliente não encontrado para atualização." };
+            return { status: "error", message: "Cliente nï¿½o encontrado para atualizaï¿½ï¿½o." };
         }
 
-        // Atualiza Telefone (Coluna D = 4) e Endereço (Coluna E = 5)
+        // Atualiza Telefone (Coluna D = 4) e Endereï¿½o (Coluna E = 5)
         // OBS: getRange(row, column) -> Column D is 4, E is 5
         sheet.getRange(rowIndex, 4).setValue(dados.telefone);
         sheet.getRange(rowIndex, 5).setValue(dados.endereco);

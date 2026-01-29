@@ -4,7 +4,7 @@
  */
 const BASE_API = "https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec";
 
-const API_URLS = {
+const API_URLS = window.USER_API_CONFIG || {
     PAGINA_1: `${BASE_API}?pagina=1`, // Saldo e A Receber
     PAGINA_2: `${BASE_API}?pagina=2`, // Faturamento, Lucro, Ticket, Clientes
     PAGINA_3: `${BASE_API}?pagina=3`, // Metas e Tickets específicos
@@ -16,6 +16,7 @@ const API_URLS = {
  * --- SEGURANÇA E AUTENTICAÇÃO ---
  */
 (function checkAuth() {
+    if (window.USER_API_CONFIG || window.DISABLE_LEGACY_AUTH) return;
     const tokenString = localStorage.getItem('session_token');
     const LOGIN_URL = '/login.html';
     if (!tokenString) {
@@ -109,6 +110,11 @@ const DataManager = {
      * @param {function(data, isUpdate)} renderFn Callback para renderizar a UI. isUpdate=true indica que os dados chegaram depois (animação).
      */
     fetchSmart: async function (key, url, renderFn) {
+        if (!url || url === 'undefined' || url === "") {
+            console.warn(`[DataManager] URL invalid for ${key}. Skipping.`);
+            return;
+        }
+
         // 1. Tenta Cache
         const cached = this.get(key);
         let hasCache = false;
@@ -471,6 +477,8 @@ function fetchDashboardOperational(forceUpdate = false) {
     const intEl = document.getElementById('fat-int');
     const decEl = document.getElementById('fat-dec');
 
+    if (!API_URLS.PAGINA_2 || API_URLS.PAGINA_2 === "") return;
+
     // Se não tem cache e vai buscar, skeleton
     if (!DataManager.get('dashboard_ops') && intEl) {
         toggleSkeleton(['fat-int', 'fat-dec'], true);
@@ -508,6 +516,10 @@ function fetchDashboardOperational(forceUpdate = false) {
 // Busca Contas (Carousel)
 function fetchBills(forceUpdate = false) {
     const container = document.getElementById('due-carousel');
+    if (!API_URLS.BILLS || API_URLS.BILLS === "") {
+        if (container) container.innerHTML = '<div class="text-center text-xs text-gray-400 py-4">Recurso não disponível.</div>';
+        return;
+    }
 
     // Skeleton (apenas se não tiver cache)
     if (!DataManager.get('bills_data') && container) {
@@ -866,6 +878,8 @@ function navigateShortcut(elementId, targetUrl) {
  * --- LÓGICA DE PERFIL DO USUÁRIO (NOVA) ---
  */
 function loadUserProfile() {
+    if (window.USER_API_CONFIG || window.DISABLE_LEGACY_AUTH) return;
+
     // Tenta carregar dados do usuário do cache (padrão antigo ou novo)
     let userData = null;
 
@@ -1038,7 +1052,8 @@ function fetchMovements(forceUpdate = false) {
     const list = document.getElementById('movements-list');
     if (!list) return;
 
-    const url = "https://script.google.com/macros/s/AKfycbzd_UOW_Ei9nPxNwmJdEtX4q3XDXu_WWktWUvH70ooAFM8C1bB6r7m39E18vl5dRjDZ/exec";
+    if (!API_URLS.MOVEMENTS || API_URLS.MOVEMENTS === "") return;
+    const url = API_URLS.MOVEMENTS;
 
     // Skeleton (apenas se não houver cache)
     if (!DataManager.get('movements_data')) {
@@ -1127,6 +1142,9 @@ function renderMovements() {
 let revenueChartInstance = null; // Store instance globally
 
 function fetchRevenueChart(forceUpdate = false) {
+    // Antigravity Guard: Charts usually depend on Operational Data (Page 2) permission
+    if (!API_URLS.PAGINA_2 || API_URLS.PAGINA_2 === "") return;
+
     const chartEl = document.getElementById('revenueChart');
     if (!chartEl) return;
 
@@ -1421,8 +1439,10 @@ function logStorageUsage() {
 let fullMetricsData = null;
 
 function fetchMetricsDashboardData(forceUpdate = false) {
+    if (!API_URLS.MOVEMENTS || API_URLS.MOVEMENTS === "") return;
+
     // API URL para buscar todas as transações
-    const url = "https://script.google.com/macros/s/AKfycbzd_UOW_Ei9nPxNwmJdEtX4q3XDXu_WWktWUvH70ooAFM8C1bB6r7m39E18vl5dRjDZ/exec";
+    const url = API_URLS.MOVEMENTS;
 
     // Se não tem cache, e estamos no extrato, maybe show skeleton?
     // Mas a renderExtractList trata lista vazia.

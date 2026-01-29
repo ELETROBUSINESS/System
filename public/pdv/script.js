@@ -68,6 +68,7 @@ const FIREBASE_CONFIG_ID = 'floralchic-loja';
 const STORE_OWNER_UID = "3zYT9Y6hXWeJSuvmEYP4FMZa5gI2";
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
 const REGISTRO_VENDA_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCCaxdYdC6J_QKsaoWTDquH915MHUnM9BykD39ZUujR2LB3lx9d9n5vAsHdJZJByaa7w/exec";
+const CENTRAL_API_URL = "https://script.google.com/macros/s/AKfycbyZtUsI44xA4MQQLZWJ6K93t6ZaSaN6hw7YQw9EclZG9E85kM6yOWQCQ0D-ZJpGmyq4/exec"; // URL de Migração
 
 // Funções Auxiliares Globais (Necessárias para as funções abaixo)
 const formatCurrency = (value) => { const n = Number(value); if (isNaN(n)) return 'R$ 0,00'; return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); };
@@ -3106,8 +3107,79 @@ document.addEventListener('DOMContentLoaded', () => {
             isFiscalActive: isFiscalActive,
             saleId: "V" + new Date().getTime().toString().slice(-8),
             tempInstallments: window.tempInstallments || 1, // Capture installments if present
-            valorTotal: cart.reduce((acc, item) => acc + (item.price * item.quantity), 0) - (discount || 0)
+            valorTotal: cart.reduce((acc, item) => acc + (item.price * item.quantity), 0) - (discount || 0),
+            // --- DADOS PARA MIGRAÇÃO ---
+            operador: document.getElementById('summary-seller-name') ? document.getElementById('summary-seller-name').textContent : "Caixa",
+            taxaString: document.getElementById('infinitepay-tax-val') ? document.getElementById('infinitepay-tax-val').textContent : "R$ 0,00",
+            cardFlag: selectedCardFlag,
+            installments: selectedInstallments
         };
+    }
+
+    // --- FUNÇÃO DE MIGRAÇÃO (ENVIO PARA NOVA API CENTRAL) ---
+    async function sendToCentralApi(saleData) {
+        try {
+            console.log("Iniciando envio para API Central (Migração)...");
+
+            const operadorNome = saleData.operador || "Caixa";
+            // Regra: Nubia = ADM, outros = Caixa
+            const cargo = operadorNome === "Nubia" ? "ADM" : "Caixa";
+
+            // Tratamento da Taxa
+            const taxaStr = saleData.taxaString || "0";
+            // Remove R$, pontos e substitui virgula por ponto
+            const taxaVal = parseFloat(taxaStr.replace('R$', '').replace(/\./g, '').replace(',', '.').trim()) || 0;
+
+            // Tratamento do Pagamento
+            let pagamentoDetalhe = saleData.metodoPagamento;
+            if (pagamentoDetalhe === 'C. Crédito') {
+                const flag = saleData.cardFlag || '';
+                const inst = saleData.installments || '';
+                if (flag && inst) {
+                    pagamentoDetalhe = `Crédito ${inst}x ${flag}`;
+                }
+            }
+
+            // Tratamento do Valor Total (Neto) e Bruto
+            // saleData.valorTotal já é (items - desconto)
+            // Precisamos do Bruto para o campo 'valor' (item 6)
+            // item 9 'total' = Valor da Operação (Neto) - Taxas
+
+            const valorNetoVenda = saleData.valorTotal;
+            const valorBrutoVenda = valorNetoVenda + (saleData.discount || 0);
+
+            const totalLiquidoComTaxas = valorNetoVenda - taxaVal;
+
+            const payload = {
+                loja: "DT#25",      // 1. Loja (Fixo)
+                operador: operadorNome, // 2. Operador
+                cargo: cargo,       // 3. Cargo
+                tipo: "entrada",    // 4. Tipo (Fixo)
+                pagamento: pagamentoDetalhe, // 5. Pagamento
+                valor: valorBrutoVenda,      // 6. Valor
+                desconto: saleData.discount || 0, // 7. Desconto
+                taxas: taxaVal,     // 8. Taxas
+                total: totalLiquidoComTaxas, // 9. Total
+                descricao: "Venda no PDV"    // 10. Descrição
+                // Timestamp vai ser gerado pelo Google Script (new Date())
+            };
+
+            // Envio 'no-cors' para evitar bloqueio, enviando como string text/plain mas formato JSON
+            await fetch(CENTRAL_API_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            console.log("Dados enviados para API Central com sucesso!");
+
+        } catch (e) {
+            console.error("Erro na migração API Central:", e);
+            // Silencioso para o usuário final
+        }
     }
 
     // --- Background Worker ---
@@ -3244,6 +3316,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     promisesParaExecutar.push(fetch(`${SCRIPT_URL}?${params.toString()}`));
                 }
             }
+
+            // --- DISPARO DA MIGRAÇÃO (EM PARALELO) ---
+            promisesParaExecutar.push(sendToCentralApi(saleData));
 
             await Promise.allSettled(promisesParaExecutar);
 

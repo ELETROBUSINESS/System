@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperar XML | PDV</title>
+    <link rel="stylesheet" href="style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <style>
+        body {
+            background-color: #f3f4f6;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h1 {
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        p.subtitle {
+            color: #6b7280;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #111;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #000;
+        }
+
+        .textarea-wrapper textarea {
+            width: 100%;
+            height: 250px;
+            font-family: monospace;
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            resize: vertical;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>Recuperar XML Fiscal</h1>
+        <p class="subtitle">Insira a chave de acesso para recuperar o XML diretamente da SEFAZ.</p>
+
+        <div class="input-group">
+            <label>Chave de Acesso (44 dígitos)</label>
+            <input type="text" id="chave-input" maxlength="44" placeholder="Ex: 1526...">
+        </div>
+
+        <button id="btn-recuperar">
+            <i class='bx bx-cloud-download'></i> Recuperar XML
+        </button>
+
+        <!-- Área de Resultado (XML Final) -->
+        <div id="result-area" style="display:none; margin-top: 20px;">
+            <h3>XML Recuperado:</h3>
+            <div class="textarea-wrapper">
+                <textarea id="xml-textarea" readonly></textarea>
+            </div>
+            <button id="btn-baixar" style="background: #10b981;">
+                <i class='bx bx-download'></i> Baixar .XML
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        const API_URL = "https://southamerica-east1-super-app25.cloudfunctions.net/recuperarXmlNfce";
+
+        document.getElementById('btn-recuperar').addEventListener('click', async () => {
+            const chave = document.getElementById('chave-input').value.replace(/\D/g, '');
+            if (chave.length !== 44) {
+                alert("A chave deve ter 44 dígitos numéricos.");
+                return;
+            }
+
+            const btn = document.getElementById('btn-recuperar');
+            const originalText = btn.innerHTML;
+
+            btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Buscando na SEFAZ...";
+            btn.disabled = true;
+            document.getElementById('result-area').style.display = 'none';
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ chave: chave })
+                });
+
+                const data = await response.json();
+
+                if (data.status === "success" && data.xml) {
+                    document.getElementById('result-area').style.display = 'block';
+                    document.getElementById('xml-textarea').value = data.xml;
+                    alert("XML Recuperado com Sucesso!");
+                } else {
+                    alert("Erro: " + (data.message || "Documento não encontrado ou erro desconhecido."));
+                    console.error("Detalhes:", data);
+                }
+
+            } catch (err) {
+                alert("Erro de comunicação: " + err.message);
+                console.error(err);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        // --- BAIXAR ---
+        document.getElementById('btn-baixar').addEventListener('click', () => {
+            const xmlContent = document.getElementById('xml-textarea').value;
+            if (!xmlContent) return;
+
+            const blob = new Blob([xmlContent], { type: "text/xml" });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `NFe${document.getElementById('chave-input').value}.xml`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        });
+    </script>
+</body>
+
+</html>

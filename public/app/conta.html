@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-view="mobile" data-minimized="false">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Empresa | App</title>
+    <link rel="icon" href="/assets/img/iconWeb.png">
+
+    <!-- Bibliotecas Externas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/style26.css">
+
+    <!-- ApexCharts (Adicionado para Gráfico de Vendas) -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <!-- Flaticon UIcons (Necessário para o bloco info) -->
+    <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+    <link rel='stylesheet'
+        href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+
+    <!-- View Transitions API -->
+    <meta name="view-transition" content="same-origin">
+</head>
+
+<body style="--marker-x: 10%; --marker-y: 50%;">
+
+    <!-- Mensagem de Saudação -->
+    <div class="mensagerLocal"
+        style="display: none; position: fixed; top: 20px; z-index: 10000; width: 100%; justify-content: center;">
+        <div class="finance-card flex items-center p-4 gap-4 max-w-[350px]">
+            <img src="/assets/img/eFriend.png" class="w-12 h-12">
+            <div>
+                <h1 class="text-sm font-bold">Bom dia <span class="text-red-600" id="welcome-user-name">Usuário</span>,
+                </h1>
+                <p class="text-xs text-gray-500">Tenha um ótimo dia de vendas!</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-container" class="dashboard-grid">
+
+        <!-- Bloco de Perfil e Saldo -->
+        <div class="info">
+            <div class="photo-profile">
+                <!-- Foto Dinâmica -->
+                <img src="https://placehold.co/150/db0038/FFFFFF?text=U" id="user-photo-display">
+                <div class="detals">
+                    <h1 id="user-name-display">Olá, Usuário!</h1>
+                    <p id="user-role-display">Cargo | Empresa</p>
+                </div>
+                <i class="fi fi-rr-shield-trust"></i>
+            </div>
+            <div class="balance">
+                <p>Saldo</p>
+                <div class="saldo">
+                    <span id="valor1" class="">R$&nbsp;</span>
+                    <i class="bx bx-eye" id="toggle-balance-icon"></i>
+                </div>
+                <div class="pending">
+                    <p>Vendas a receber: </p>
+                    <span id="valor2" class="">R$&nbsp;0,00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1. Prestes a Vencer (Card Dinâmico) -->
+        <div class="finance-card card-vencer-area" id="card-vencer">
+            <div id="paint-overlay"></div>
+            <div class="p-6">
+                <div class="flex justify-center items-center mb-4">
+                    <span class="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Prestes a vencer</span>
+                </div>
+                <div class="carousel-container" id="due-carousel">
+                    <!-- Gerado dinamicamente via script26.js -->
+                    <div class="carousel-item active">
+                        <div class="flex flex-col items-center justify-center w-full">
+                            <span
+                                class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Carregando
+                                contas...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="dot-container" id="dot-pager"></div>
+            </div>
+        </div>
+
+        <!-- 2. Resumo Operacional -->
+        <div class="finance-card resumo-venda-area">
+            <div class="p-6">
+                <div class="flex justify-center items-center mb-6">
+                    <span class="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Resumo
+                        Operacional</span>
+                </div>
+                <div class="flex items-center justify-between relative mb-2">
+                    <div class="flex-1 section-content" id="fat-section">
+                        <p class="text-[10px] font-semibold text-gray-400 uppercase mb-1">Faturamento</p>
+                        <div class="flex items-baseline">
+                            <span class="text-xl font-bold text-gray-800" id="fat-int">R$ 0</span>
+                            <span class="text-[10px] ml-0.5 text-gray-400 font-bold" id="fat-dec">,00</span>
+                        </div>
+                    </div>
+
+                    <div class="divider-container flex items-center justify-center w-[100px]">
+                        <div class="toggle-switch" id="main-toggle" onmousedown="startHold()" onmouseup="endHold()"
+                            ontouchstart="startHold()" ontouchend="endHold()">
+                            <div class="toggle-fill">
+                                <div class="wind-line" style="top: 25%;"></div>
+                                <div class="wind-line" style="top: 50%;"></div>
+                                <div class="wind-line" style="top: 75%;"></div>
+                            </div>
+                            <div class="toggle-thumb" id="thumb"><i class='bx bx-chevron-right'></i></div>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 text-right section-content section-disabled" id="cred-section">
+                        <p class="text-[10px] font-semibold text-gray-400 uppercase mb-1">Crédito a receber</p>
+                        <span class="text-xl font-bold text-gray-800" id="cred-val">R$ 0k</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Gráfico Semanal (Vendas) -->
+        <!-- Feature Flag: graphs -->
+        <div class="finance-card chart-area p-6 hidden-feature" id="chart-section" data-feature="graphs">
+            <h3 class="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-4">Vendas na última semana</h3>
+            <div id="revenueChart" class="w-full h-[160px] skeleton rounded-lg"></div>
+        </div>
+
+        <!-- 4. Histórico -->
+        <div class="finance-card history-area p-6" id="history-section">
+            <h3 class="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-4">Movimentações</h3>
+            <div class="transaction-list" id="movements-list">
+                <div class="transaction-item">
+                    <div class="trans-icon-box"><i class='bx bx-up-arrow-alt'></i></div>
+                    <div class="flex-1 ml-3 text-left">
+                        <p class="text-xs font-bold text-gray-800">Sincronizando...</p>
+                        <p class="text-[9px] text-gray-400 font-bold uppercase">Aguardando dados</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 text-center">
+                <a class='text-[10px] font-bold text-class-gray-400 hover:text-red-500 uppercase tracking-widest transition-colors'
+                    href='extrato.html' style='color: #9ca3af; text-decoration: none;'>Ver mais</a>
+            </div>
+        </div>
+
+        <!-- Shortcuts Grid -->
+        <!-- Feature Flag: shortcuts -->
+        <div class="shortcut-grid-free hidden-feature" data-feature="shortcuts">
+            <div class="shortcut-item-free" id="btn-metrics" onclick="navigateShortcut('btn-metrics', 'metricas.html')">
+                <div class="shortcut-icon-free">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                </div>
+                <span class="shortcut-label-free">Métricas</span>
+            </div>
+            <div class="shortcut-item-free" id="btn-expenses"
+                onclick="navigateShortcut('btn-expenses', 'manager.html')">
+                <div class="shortcut-icon-free">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+                        <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+                        <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                        <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+                        <line x1="7" y1="12" x2="17" y2="12"></line>
+                    </svg>
+                </div>
+                <span class="shortcut-label-free">Despesas</span>
+            </div>
+            <div class="shortcut-item-free" id="btn-extract" onclick="navigateShortcut('btn-extract', 'extrato.html')">
+                <div class="shortcut-icon-free">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line class="read-line" x1="16" y1="13" x2="8" y2="13"></line>
+                        <line class="read-line" x1="16" y1="17" x2="8" y2="17"></line>
+                        <line class="read-line" x1="10" y1="9" x2="8" y2="9"></line>
+                    </svg>
+                </div>
+                <span class="shortcut-label-free">Extrato</span>
+            </div>
+            <div class="shortcut-item-free md:hidden" id="btn-crediario"
+                onclick="navigateShortcut('btn-crediario', 'crediario.html')">
+                <div class="shortcut-icon-free">
+                    <i class='bxr bx-wallet-cards' style="font-size: 28px;"></i>
+                </div>
+                <span class="shortcut-label-free">Crediário</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <div class="nav-container">
+        <div class="nav-marker" id="nav-marker"></div>
+        <div class="nav-bg"></div>
+        <nav class="nav-overlay" id="nav-overlay">
+            <div class="nav-header-toggle">
+                <div class="btn-toggle-sidebar" onclick="toggleSidebar()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        id="toggle-icon" style="transition: transform 0.3s ease;">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="nav-links-container">
+                <div class="nav-item active" onclick="navigateTo('conta.html')">
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
+                    </div>
+                    <span class="nav-label">Casa</span>
+                </div>
+
+                <div class="nav-item" onclick="navigateTo('metricas.html')">
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <line x1="18" y1="20" x2="18" y2="10"></line>
+                            <line x1="12" y1="20" x2="12" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                        </svg>
+                    </div>
+                    <span class="nav-label">Métricas</span>
+                </div>
+
+                <div class="nav-item desktop-only" onclick="navigateTo('/pdv/index.html')">
+                    <div class="nav-icon">
+                        <i class="bx bx-cart-minus" style="font-size: 24px;"></i>
+                    </div>
+                    <span class="nav-label">PDV</span>
+                </div>
+
+                <div class="nav-item desktop-only" onclick="navigateTo('manager.html')">
+                    <div class="nav-icon">
+                        <i class='bxr bx-scan-barcode'></i>
+                    </div>
+                    <span class="nav-label">Despesas</span>
+                </div>
+
+                <div class="nav-item" onclick="navigateTo('extrato.html')">
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <line x1="10" y1="9" x2="8" y2="9"></line>
+                        </svg>
+                    </div>
+                    <span class="nav-label">Extrato</span>
+                </div>
+
+                <div class="nav-item desktop-only" onclick="navigateTo('crediario.html')">
+                    <div class="nav-icon">
+                        <i class='bxr bx-wallet-cards'></i>
+                    </div>
+                    <span class="nav-label">Crediário</span>
+                </div>
+
+                <div class="nav-item" id="logout-btn" style="cursor: pointer;">
+                    <div class="nav-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </div>
+                    <span class="nav-label">Sair</span>
+                </div>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Controller Script (Handles data injection and loads script26.js) -->
+    <script type="module" src="js/main.js"></script>
+
+</body>
+
+</html>
