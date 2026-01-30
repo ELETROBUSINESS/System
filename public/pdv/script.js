@@ -278,7 +278,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const paymentTotalEl = document.getElementById('payment-total');
     const singlePaymentOptions = document.getElementById('single-payment-options');
     const paymentOptions = paymentModal.querySelectorAll('.payment-option');
-    const splitPaymentToggleBtn = document.getElementById('split-payment-toggle-btn');
+    /**
+     * const splitPaymentToggleBtn = document.getElementById('split-payment-toggle-btn');
+     */
     const splitPaymentArea = document.getElementById('split-payment-area');
     const splitMethod1 = document.getElementById('split-method-1');
     const splitValue1 = document.getElementById('split-value-1');
