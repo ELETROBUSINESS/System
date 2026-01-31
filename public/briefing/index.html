@@ -185,20 +185,60 @@
             }
         }
 
-        .slide-enter {
-            animation: slideIn 0.4s ease-out forwards;
+        /* Smooth Transitions */
+        .fade-enter {
+            animation: fadeScaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        @keyframes slideIn {
+        .fade-exit {
+            animation: fadeScaleOut 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        @keyframes fadeScaleIn {
             from {
                 opacity: 0;
-                transform: translateX(50px);
+                transform: scale(0.95);
             }
 
             to {
                 opacity: 1;
-                transform: translateX(0);
+                transform: scale(1);
             }
+        }
+
+        @keyframes fadeScaleOut {
+            from {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            to {
+                opacity: 0;
+                transform: scale(1.05);
+            }
+        }
+
+        /* Global Loader */
+        #global-loader {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-app);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease-out;
+        }
+
+        #global-loader.hidden-loader {
+            opacity: 0;
+            pointer-events: none;
         }
 
         .bg-primary {
@@ -618,6 +658,14 @@
         };
 
         async function init() {
+            // Create loader if not exists (fail-safe)
+            if (!document.getElementById('global-loader')) {
+                const loader = document.createElement('div');
+                loader.id = 'global-loader';
+                loader.innerHTML = `<i class='bx bx-loader-alt bx-spin text-4xl text-primary mb-4'></i><p class="text-gray-500 font-medium">Carregando experiência...</p>`;
+                document.body.appendChild(loader);
+            }
+
             onAuthStateChanged(auth, async (user) => {
                 if (!user) {
                     try {
@@ -625,14 +673,13 @@
                         return; // Wait for re-trigger
                     } catch (e) {
                         console.error("Auth failed", e);
-                        alert("Erro de autenticação: Não foi possível conectar ao servidor.");
+                        document.getElementById('global-loader').innerHTML = `<p class="text-red-500">Erro de conexão.</p>`;
                         return;
                     }
                 }
 
                 if (auth.currentUser) {
                     try {
-                        // Load steps from Firebase
                         const q = query(collection(db, "briefing_steps"), orderBy("order", "asc"));
                         const querySnapshot = await getDocs(q);
 
@@ -641,19 +688,28 @@
                             querySnapshot.forEach((doc) => {
                                 steps.push({ id: doc.id, ...doc.data() });
                             });
+
+                            // Preload all images
+                            await preloadAllImages(steps);
+
                         } else {
-                            console.warn("No steps found in Firestore.");
+                            console.warn("No steps found.");
                             steps = [];
                         }
                     } catch (e) {
-                        console.error("Error loading steps from Firebase:", e);
-                        alert("Erro ao carregar os dados do briefing.");
+                        console.error("Error loading steps:", e);
                         steps = [];
                     }
                 }
 
-                // Ensure we have internal IDs 
                 steps = steps.map((s, i) => ({ ...s, internalId: i + 1 }));
+
+                // Hide Loader
+                const loader = document.getElementById('global-loader');
+                if (loader) {
+                    loader.classList.add('hidden-loader');
+                    setTimeout(() => loader.remove(), 600);
+                }
 
                 if (steps.length === 0) {
                     ui.container.innerHTML = `
@@ -674,6 +730,23 @@
                     window.listenersAdded = true;
                 }
             });
+        }
+
+        async function preloadAllImages(stepsData) {
+            const promises = [];
+            stepsData.forEach(step => {
+                if (step.images && Array.isArray(step.images)) {
+                    step.images.forEach(src => {
+                        promises.push(new Promise((resolve) => {
+                            const img = new Image();
+                            img.src = src;
+                            img.onload = resolve;
+                            img.onerror = resolve; // Continue even if one fails
+                        }));
+                    });
+                }
+            });
+            await Promise.all(promises);
         }
 
         function renderStep() {
@@ -700,17 +773,40 @@
 
         function updateCarousel() {
             const data = steps[currentStepIndex];
-            ui.img.style.opacity = '0.5';
-            setTimeout(() => {
-                ui.img.src = data.images[currentImageIndex];
-                ui.img.style.opacity = '1';
-            }, 150);
+            const newSrc = data.images[currentImageIndex];
+            const container = ui.img.parentElement;
 
+            // Note: ui.img is the original static img. We will use dynamic images now.
+            // On first run, ui.img exists. We can replace it or just append over it.
+            // Best strategy: 
+            // 1. Create new img
+            const newImg = document.createElement('img');
+            newImg.src = newSrc;
+            newImg.className = "absolute inset-0 w-full h-full object-cover fade-enter z-20";
+
+            // 2. Append
+            container.appendChild(newImg);
+
+            // 3. Find old images to remove
+            const oldImages = Array.from(container.querySelectorAll('img')).filter(img => img !== newImg);
+
+            oldImages.forEach(img => {
+                img.classList.remove('fade-enter');
+                img.classList.add('fade-exit');
+                img.style.zIndex = '10'; // Move behind new one
+                setTimeout(() => {
+                    if (img.parentNode) img.remove();
+                }, 500);
+            });
+
+            // Dots
             ui.carouselDots.innerHTML = data.images.map((_, idx) => `
-    <div class="dot ${idx === currentImageIndex ? 'active' : ''}"></div>
-    `).join('');
+                <div class="dot ${idx === currentImageIndex ? 'active' : ''}"></div>
+            `).join('');
 
-            if (data.images.length <= 1) { ui.carouselControls.classList.add('hidden'); } else {
+            if (data.images.length <= 1) {
+                ui.carouselControls.classList.add('hidden');
+            } else {
                 ui.carouselControls.classList.remove('hidden');
             }
         } function nextImage() {
