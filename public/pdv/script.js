@@ -226,6 +226,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log("Firebase inicializado com sucesso!");
 
+    // --- MONITORAMENTO DE ATUALIZAÇÃO (GLOBAL) ---
+    const updateBanner = document.getElementById('system-update-banner'); // Mudança de ID
+    const updateBtn = document.getElementById('btn-update-refresh');
+
+    if (updateBanner && updateBtn) {
+        db.collection('system_alerts').doc('update-notice').onSnapshot((doc) => {
+            if (doc.exists) {
+                const data = doc.data();
+                const serverVersion = data.version || 'default';
+                const localVersion = localStorage.getItem('pdv_update_version');
+
+                if (data.show === true && serverVersion !== localVersion) {
+                    updateBanner.classList.add('visible'); // Slide Down
+                    updateBtn.dataset.pendingVersion = serverVersion;
+                    document.body.style.paddingTop = "70px"; // Empurra o conteúdo para baixo
+                } else {
+                    updateBanner.classList.remove('visible');
+                    document.body.style.paddingTop = "0px"; // Restaura
+                }
+            }
+        }, (error) => {
+            console.error("Erro ao monitorar alertas:", error);
+        });
+
+        updateBtn.addEventListener('click', () => {
+            const versionToConfirm = updateBtn.dataset.pendingVersion;
+
+            updateBtn.disabled = true;
+            updateBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Atualizando...";
+
+            if (versionToConfirm) {
+                localStorage.setItem('pdv_update_version', versionToConfirm);
+
+                db.collection('system_alerts').doc('update-notice').update({
+                    updated_count: firebase.firestore.FieldValue.increment(1)
+                }).then(() => {
+                    window.location.reload();
+                }).catch(err => {
+                    console.error("Erro:", err);
+                    window.location.reload();
+                });
+            } else {
+                window.location.reload();
+            }
+        });
+    }
+
     let selectedCrediarioClient = null; // Para armazenar o cliente selecionado no pagamento
 
     // --- Estado da Aplicação ---
@@ -246,6 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // VARIÁVEIS PARA TAXA INFINITEPAY
     let selectedCardFlag = 'Visa'; // Default
     let selectedInstallments = '1'; // Default
+    let selectedPixType = null; // MIGRATION: Stores specific Pix type
 
     // --- Seletores do DOM ---
     const loadingOverlay = document.getElementById('loading-overlay');
@@ -510,6 +558,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 handlePaymentSelection(method);
             }
         });
+    });
+
+    // --- LISTENER MIGRATION PIX ---
+    document.getElementById('btn-pix-qrcode').addEventListener('click', () => {
+        selectedPixType = 'qrcode';
+        closeModal(document.getElementById('pix-type-modal'));
+        handlePaymentSelection('PIX', true);
+    });
+
+    document.getElementById('btn-pix-maquininha').addEventListener('click', () => {
+        selectedPixType = 'maquininha';
+        closeModal(document.getElementById('pix-type-modal'));
+        handlePaymentSelection('PIX', true);
     });
 
     // --- CORREÇÃO: Botões de Voltar no Modal de Pagamento ---
@@ -2470,8 +2531,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const debounce = (func, delay) => { clearTimeout(barcodeScanTimeout); barcodeScanTimeout = setTimeout(func, delay); };
     const handleQuickAddSubmit = async () => { const name = quickAddName.value; const price = parseFloat(quickAddPrice.value); if (!name || isNaN(price) || price <= 0) { showCustomAlert("Inválido", "Nome e preço."); return; } const newProduct = { id: lastScannedBarcode, name: name, price: price }; const produtoCadastrado = await cadastrarProdutoNaAPI(newProduct); if (produtoCadastrado) { addToCart(produtoCadastrado); closeModal(quickAddModal); } };
 
-    const handlePaymentSelection = (method) => {
+    const handlePaymentSelection = (method, isConfirmedPix = false) => {
         if (splitPaymentArea.style.display === 'none') {
+
+            // --- INTERCEPTAÇÃO PIX (MIGRAÇÃO) ---
+            if (method === 'PIX' && !isConfirmedPix) {
+                openModal(document.getElementById('pix-type-modal'));
+                return;
+            }
+
             selectedPaymentMethod = method;
             summaryPaymentMethod.textContent = method;
 
@@ -3111,8 +3179,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- DADOS PARA MIGRAÇÃO ---
             operador: document.getElementById('summary-seller-name') ? document.getElementById('summary-seller-name').textContent : "Caixa",
             taxaString: document.getElementById('infinitepay-tax-val') ? document.getElementById('infinitepay-tax-val').textContent : "R$ 0,00",
-            cardFlag: selectedCardFlag,
-            installments: selectedInstallments
+            installments: selectedInstallments,
+            pixType: selectedPixType
         };
     }
 
@@ -3138,6 +3206,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (flag && inst) {
                     pagamentoDetalhe = `Crédito ${inst}x ${flag}`;
                 }
+            } else if (pagamentoDetalhe === 'PIX') {
+                // Mapeamento PIX Migração
+                if (saleData.pixType === 'maquininha') {
+                    pagamentoDetalhe = 'PixQr';
+                } else {
+                    // qrcode ou null(default)
+                    pagamentoDetalhe = 'PIX';
+                }
             }
 
             // Tratamento do Valor Total (Neto) e Bruto
@@ -3150,17 +3226,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const totalLiquidoComTaxas = valorNetoVenda - taxaVal;
 
+            // Tratamento da Descrição (Lista de Itens)
+            const listaItens = saleData.items.map(i => `${i.quantity}x ${i.name}`).join('; ');
+            const descricaoFinal = listaItens || "Venda no PDV";
+
             const payload = {
                 loja: "DT#25",      // 1. Loja (Fixo)
                 operador: operadorNome, // 2. Operador
                 cargo: cargo,       // 3. Cargo
                 tipo: "entrada",    // 4. Tipo (Fixo)
-                pagamento: pagamentoDetalhe, // 5. Pagamento
-                valor: valorBrutoVenda,      // 6. Valor
-                desconto: saleData.discount || 0, // 7. Desconto
-                taxas: taxaVal,     // 8. Taxas
-                total: totalLiquidoComTaxas, // 9. Total
-                descricao: "Venda no PDV"    // 10. Descrição
+                id: saleData.saleId,// 5. ID (Novo)
+                pagamento: pagamentoDetalhe, // 6. Pagamento (Formatado)
+                valor: valorBrutoVenda,      // 7. Valor
+                desconto: saleData.discount || 0, // 8. Desconto
+                taxas: taxaVal,     // 9. Taxas
+                total: totalLiquidoComTaxas, // 10. Total
+                descricao: descricaoFinal    // 11. Descrição (Lista de itens)
                 // Timestamp vai ser gerado pelo Google Script (new Date())
             };
 

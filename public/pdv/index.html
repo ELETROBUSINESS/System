@@ -62,6 +62,31 @@
         </div>
     </div>
 
+    <!-- Modal Tipo de PIX -->
+    <div class="modal-overlay" id="pix-type-modal" style="z-index: 9999;">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3>Tipo de PIX</h3>
+                <button class="close-modal-btn" data-target="pix-type-modal"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-center mb-16 text-light">Qual forma de PIX foi utilizada?</p>
+                <div class="print-options-grid"> <!-- Reusing grid style -->
+                    <div id="btn-pix-qrcode" class="print-option-card">
+                        <i class='bx bx-qr-scan print-icon' style="color: #10b981;"></i>
+                        <h4>QR Code</h4>
+                        <p class="text-sm text-light text-center">Loja / Estático</p>
+                    </div>
+                    <div id="btn-pix-maquininha" class="print-option-card">
+                        <i class='bx bx-calculator print-icon' style="color: #3b82f6;"></i>
+                        <h4>Maquininha</h4>
+                        <p class="text-sm text-light text-center">InfinitePay</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="loading-overlay">
         <i class='bx bx-loader-alt bx-spin'></i>
         <p id="loading-message">Verificando status do caixa...</p>
@@ -375,30 +400,92 @@
         </div>
     </div>
 
-    <!--
-    <div class="modal-overlay active" id="announcement-modal" style="z-index: 9999;">
-        <div class="modal-content modal-sm">
-            <div class="modal-header">
-                <h3><i class='bx bx-broadcast'></i> Atualização do Sistema</h3>
-                <button class="close-modal-btn" onclick="closeAnnouncement()"><i class='bx bx-x'></i></button>
-            </div>
-            <div class="modal-body text-center">
-                <p class="mb-16"><strong>Emissão Fiscal Disponível:</strong> A integração com a SEFAZ para NFC-e foi
-                    restabelecida.</p>
-                <p class="text-light text-sm mb-16">Versão estável <strong>v.1.0.0.39.4B</strong>. Note que o sistema
-                    ainda está em fase de monitoramento e pode estar sujeito a erros eventuais.</p>
-                <div
-                    style="background: #ecfdf5; padding: 8px; border-radius: 6px; font-family: monospace; font-size: 0.8rem; color: #065f46; border: 1px solid #10b981;">
-                    Status: Produção Online
-                </div>
-            </div>
-            <div class="modal-footer justify-center">
-                <button class="btn btn-success" onclick="closeAnnouncement()" style="width: 100%;">Entendi e
-                    Continuar</button>
-            </div>
+    <!-- Banner de Atualização (Top Bar) -->
+    <style>
+        #system-update-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 10000;
+            background: #db0038;
+            /* Vermelho Primário */
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transform: translateY(-100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 24px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        #system-update-banner.visible {
+            transform: translateY(0);
+        }
+
+        .update-banner-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .update-banner-icon {
+            font-size: 1.4rem;
+            animation: spin-slow 3s linear infinite;
+        }
+
+        .update-banner-text {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .update-banner-text strong {
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .btn-update-banner {
+            background: white;
+            color: #db0038;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-update-banner:hover {
+            background: #111;
+            color: white;
+        }
+
+        @keyframes spin-slow {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+
+    <div id="system-update-banner">
+        <div class="update-banner-content">
+            <i class='bx bx-refresh update-banner-icon'></i>
+            <span class="update-banner-text">
+                <strong>Atualização Necessária:</strong> Uma nova versão do sistema está disponível.
+            </span>
         </div>
+        <button id="btn-update-refresh" class="btn-update-banner">
+            <i class='bx bx-download' style="margin-right: 6px;"></i> ATUALIZAR AGORA (F5)
+        </button>
     </div>
-    -->
 
     <div class="modal-overlay" id="cliente-pay-modal">
         <div class="modal-content">
@@ -1691,8 +1778,8 @@
                     </div>
 
                     <div class="split-trigger-row" style="display: none;"">
-                        <button class="btn-text-action" id="split-payment-toggle-btn">
-                            <i class='bx bx-columns'></i> Dividir em 2 formas
+                        <button class=" btn-text-action" id="split-payment-toggle-btn">
+                        <i class='bx bx-columns'></i> Dividir em 2 formas
                         </button>
                     </div>
 
