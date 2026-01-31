@@ -2,15 +2,173 @@
  * --- CONFIGURAÇÕES DE API (INTEGRAÇÃO COM GOOGLE SHEETS) ---
  * Baseado no código doGet(e) fornecido.
  */
-const BASE_API = "https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec";
+const BASE_API = "https://script.google.com/macros/s/AKfycby8x6--ITfvIW7ui6c24reBqzL3LUhqL30hf4-gaJCS0xB0EDPM50TcSji_W-IuNU33/exec"; // Legacy
+// NOVA API CENTRAL (Migração)
+const NEW_API = "https://script.google.com/macros/s/AKfycbyZtUsI44xA4MQQLZWJ6K93t6ZaSaN6hw7YQw9EclZG9E85kM6yOWQCQ0D-ZJpGmyq4/exec";
 
 const API_URLS = window.USER_API_CONFIG || {
-    PAGINA_1: `${BASE_API}?pagina=1`, // Saldo e A Receber
-    PAGINA_2: `${BASE_API}?pagina=2`, // Faturamento, Lucro, Ticket, Clientes
-    PAGINA_3: `${BASE_API}?pagina=3`, // Metas e Tickets específicos
+    PAGINA_1: `${BASE_API}?pagina=1`,
+    PAGINA_2: `${BASE_API}?pagina=2`,
+    PAGINA_3: `${BASE_API}?pagina=3`,
     BILLS: "https://script.google.com/macros/s/AKfycbzkAs8dsJMepkQBhdL--XwO3wUQuQgvA-DFPEwraiz8ijiX9gkPMBuAeM5udQjzmJvzqQ/exec?action=getContas",
     NFCE: "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec"
 };
+
+// ... (Security Header Redacted for brevity in replacement, assuming it is outside the replaced block or I include it) ...
+// Actually, I will replace only the Fetch functions to avoid messing with headers/auth if possible.
+// Waiting for correct replacement block.
+
+// --- LÓGICA HÍBRIDA (NOVA + LEGADA) ---
+// --- LÓGICA HÍBRIDA (NOVA + LEGADA) ---
+/**
+ * Busca dados combinando a nova API (Saldo/Fat/Receber) com a Legacy (KPIs extras).
+ */
+async function fetchBalanceData(forceUpdate = false) {
+    if (!document.getElementById('valor1') && !document.getElementById('kpi-ticket')) return;
+
+    // Detectar Período (Prioridade: Select da página > Padrão 'dia')
+    const periodSelect = document.getElementById('period-select');
+    const selectedPeriod = periodSelect ? periodSelect.value : 'dia';
+
+    // Cache Key distinct for period (para não misturar 'dia' com 'semana')
+    const keyHybrid = `hybrid_dashboard_data_${selectedPeriod}`;
+
+    // URL & Payload
+    // Nota: Forçamos 'DT#25' temporariamente para garantir compatibilidade com os dados atuais da planilha.
+    // Futuramente, pode-se usar: const storeId = pathParts.length > 3 ? pathParts[3] : 'DT#25';
+    const storeId = 'DT#25';
+
+    const urlNew = NEW_API;
+    const payloadNew = { action: 'calcular', loja: storeId, periodo: selectedPeriod };
+
+    const urlLegacy = API_URLS.PAGINA_1;
+
+    // Skeleton
+    if (!DataManager.get(keyHybrid) && !forceUpdate) {
+        toggleSkeleton(['valor1', 'valor2', 'cred-val', 'fat-int'], true, 'red');
+    }
+
+    try {
+        const [resNew, resLegacy] = await Promise.allSettled([
+            // NOVA API: Deve ser POST conforme doPost(e)
+            fetch(urlNew, {
+                method: 'POST',
+                // body: JSON.stringify(payloadNew), // Apps Script doPost lê postData.contents
+                // O padrão do navegador é text/plain para evitar preflight em simple requests,
+                // mas vamos enviar sem headers explícitos para o Apps Script aceitar.
+                body: JSON.stringify(payloadNew)
+            }).then(r => r.json()),
+
+            // LEGACY API: GET normal
+            fetch(urlLegacy).then(r => r.json())
+        ]);
+
+        let combinedData = {};
+
+        // 3. Processa Nova API
+        if (resNew.status === 'fulfilled' && resNew.value.success) {
+            const d = resNew.value.resultados;
+
+            combinedData.saldo = d.saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            combinedData.receber = d.aReceber.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            const fatStr = d.faturamento.toFixed(2).replace('.', ',');
+            const [intPart, decPart] = fatStr.split(',');
+            combinedData.faturamento = `R$ ${intPart}`;
+            combinedData.faturamentoDecimal = `,${decPart}`;
+
+            combinedData.clientes = d.clientesAtendidos;
+        }
+
+        // 4. Processa Legacy
+        if (resLegacy.status === 'fulfilled') {
+            const d = resLegacy.value;
+            combinedData.credito = d.valor3 || 'R$ 0,00';
+            combinedData.ticket = d.valor4 || 'R$ 0,00';
+            combinedData.lucro = d.valor5 || 'R$ 0,00';
+            combinedData.nfceVal = d.valor6 || 'R$ 0,00';
+            combinedData.nfceQtd = d.valor7 || '0';
+        }
+
+        DataManager.set(keyHybrid, combinedData);
+        renderDashboardData(combinedData, true);
+
+    } catch (error) {
+        console.error("Erro no fetch híbrido:", error);
+        const cached = DataManager.get(keyHybrid);
+        if (cached) renderDashboardData(cached, false);
+    }
+}
+
+// Wrapper para o evento onchange do select
+function updateMetricsDashboard() {
+    fetchBalanceData(true);
+}
+
+// Renderizador unificado para os dados combinados
+function renderDashboardData(data, animate = false) {
+    if (!data) return;
+
+    // Globais para o toggle de privacidade (applyBalanceVisibility)
+    // Lógica Segura: Só sobrescreve se o dado veio. Se veio null/undefined, mantém o que estava ou usa padrão.
+    if (data.saldo) valor1Original = data.saldo;
+    if (data.receber) valor2Original = data.receber;
+    if (data.credito) creditoOriginal = data.credito;
+
+    // Faturamento tem partes Int e Dec
+    if (data.faturamento) {
+        faturamentoOriginal = data.faturamento;
+        faturamentoDecimalOriginal = data.faturamentoDecimal || ',00';
+    }
+
+    // Se a privacidade estiver ativa (olho aberto), atualiza a tela
+    if (isBalanceVisible) {
+        if (animate) {
+            updateValueWithAnimation('valor1', valor1Original);
+            updateValueWithAnimation('valor2', valor2Original);
+            updateValueWithAnimation('cred-val', creditoOriginal);
+            // Fat update no animation helper yet, direct set
+            const fatInt = document.getElementById('fat-int');
+            const fatDec = document.getElementById('fat-dec');
+            if (fatInt) fatInt.innerText = faturamentoOriginal;
+            if (fatDec) fatDec.innerText = faturamentoDecimalOriginal;
+        } else {
+            // Direct set sem animação
+            applyBalanceVisibility();
+        }
+    }
+
+    // Sempre remove Skeleton ao final (se sucesso)
+    toggleSkeleton(['valor1', 'valor2', 'cred-val', 'fat-int'], false);
+
+    // Garante que o estado visual (*** ou Valor) esteja correto
+    applyBalanceVisibility();
+
+    // KPIs Extras (Sempre visíveis ou controlados separado?)
+    const ticketEl = document.getElementById('kpi-ticket');
+    const lucroEl = document.getElementById('kpi-lucro');
+    const nfceValEl = document.getElementById('kpi-nfce-val');
+    const nfceQtdEl = document.getElementById('kpi-nfce-qtd');
+
+    if (ticketEl && data.ticket) ticketEl.innerText = data.ticket;
+    if (lucroEl && data.lucro) lucroEl.innerText = data.lucro;
+    if (nfceValEl && data.nfceVal) nfceValEl.innerText = data.nfceVal;
+
+    if (nfceQtdEl && data.nfceQtd) {
+        let qtd = String(data.nfceQtd).replace('R$', '').trim().split(',')[0];
+        nfceQtdEl.innerText = qtd + ' notas';
+    }
+}
+
+function fetchDashboardOperational(forceUpdate = false) {
+    // Reutiliza a mesma chamada da Nova API (pois ela traz tudo: Saldo + Faturamento)
+    // Se a página chamar fetchDashboardOperational, redirecionamos para fetchBalanceData
+    // ou apenas garantimos que o update de UI ocorra.
+
+    // Como fetchBalanceData já atualiza 'faturamentoOriginal', basta chamá-la.
+    // Mas para manter compatibilidade se forem chamadas separadas:
+    fetchBalanceData(forceUpdate);
+}
 
 /**
  * --- SEGURANÇA E AUTENTICAÇÃO ---
@@ -305,65 +463,7 @@ function setViewMode(mode) {
 /**
  * --- LÓGICA DE COLETA DE DADOS (PÁGINA 1: SALDO) ---
  */
-function fetchBalanceData(forceUpdate = false) {
-    // Se não tem os elementos na tela, nem busca (checa Saldo OU Ticket)
-    if (!document.getElementById('valor1') && !document.getElementById('kpi-ticket')) return;
-
-    DataManager.fetchSmart('balance_data', API_URLS.PAGINA_1, (data, isUpdate) => {
-        // Função de renderização (chamada via Cache e depois via Rede)
-
-        // 1. Armazena globais (para uso no toggle privacy)
-        valor1Original = data.valor1;
-        valor2Original = data.valor2;
-        if (data.valor3 !== undefined) creditoOriginal = data.valor3;
-
-        // 2. Se for UPDATE (dados mudaram no background), animar!
-        if (isUpdate) {
-            // Se a privacidade estiver ativa (visível), animamos os números na tela
-            if (isBalanceVisible) {
-                updateValueWithAnimation('valor1', valor1Original);
-                updateValueWithAnimation('valor2', valor2Original);
-                updateValueWithAnimation('cred-val', creditoOriginal);
-            }
-        } else {
-            // Render Inicial (Cache ou First Load) -> Sem animação de contagem, apenas mostra.
-            // Mas precisamos tirar o Skeleton SE ele estiver lá.
-            toggleSkeleton(['valor1', 'valor2'], false, 'red');
-            toggleSkeleton('cred-val', false);
-
-            applyBalanceVisibility(); // Aplica texto seco
-        }
-
-        // Novos Campos (Valor4, Valor5) - Moved from Dashboard Ops
-        // Valor6 e Valor7 (NFCe) vindos da API PAGINA_1
-        const ticketEl = document.getElementById('kpi-ticket');
-        const lucroEl = document.getElementById('kpi-lucro');
-        const nfceValEl = document.getElementById('kpi-nfce-val');
-        const nfceQtdEl = document.getElementById('kpi-nfce-qtd');
-
-        if (ticketEl) ticketEl.innerText = data.valor4 || 'R$ 0,00';
-        if (lucroEl) lucroEl.innerText = data.valor5 || 'R$ 0,00';
-        // Valor 6 = Total NFCe (R$)
-        if (nfceValEl) nfceValEl.innerText = data.valor6 || 'R$ 0,00';
-
-        // Valor 7 = Quantidade NFCe (Remover R$ e decimais)
-        if (nfceQtdEl) {
-            let rawQtd = String(data.valor7 || '0');
-            // Remove 'R$', espaços, e qualquer texto antes
-            rawQtd = rawQtd.replace('R$', '').trim();
-            // Se vier "9,00", pega só o "9"
-            if (rawQtd.includes(',')) rawQtd = rawQtd.split(',')[0];
-            nfceQtdEl.innerText = rawQtd + ' notas';
-        }
-    });
-
-    // Se NÃO tiver cache, o DataManager não chamou o callback imediatamente.
-    // Então mostramos Skeleton APENAS se não houver dados em cache.
-    if (!DataManager.get('balance_data')) {
-        toggleSkeleton(['valor1', 'valor2'], true, 'red');
-        toggleSkeleton('cred-val', true);
-    }
-}
+/* fetchBalanceData (Legacy) removed to avoid conflict with New Hybrid API */
 
 /* --- HELPERS DE ANIMAÇÃO NUMÉRICA --- */
 function updateValueWithAnimation(elementId, newValueStr) {
@@ -473,45 +573,7 @@ function applyBalanceVisibility() {
 /**
  * --- LÓGICA DE DASHBOARD (PÁGINA 2: OPERACIONAL) ---
  */
-function fetchDashboardOperational(forceUpdate = false) {
-    const intEl = document.getElementById('fat-int');
-    const decEl = document.getElementById('fat-dec');
-
-    if (!API_URLS.PAGINA_2 || API_URLS.PAGINA_2 === "") return;
-
-    // Se não tem cache e vai buscar, skeleton
-    if (!DataManager.get('dashboard_ops') && intEl) {
-        toggleSkeleton(['fat-int', 'fat-dec'], true);
-    }
-
-    DataManager.fetchSmart('dashboard_ops', API_URLS.PAGINA_2, (data, isUpdate) => {
-        if (intEl) toggleSkeleton(['fat-int', 'fat-dec'], false);
-
-        // 1. Processa Faturamento
-        let newFaturamento = faturamentoOriginal;
-        let newDecimal = faturamentoDecimalOriginal;
-
-        if (data.faturamentoDate) {
-            const cleanVal = data.faturamentoDate.replace('R$', '').trim();
-            const parts = cleanVal.split(',');
-            newFaturamento = `R$ ${parts[0]}`;
-            newDecimal = `,${parts[1] || '00'}`;
-        }
-
-        // Se update, checar se mudou
-        if (isUpdate) {
-            // Animar mudança se privacy off
-            // (Simplificação: apenas atualiza vars globais e rechama applyBalanceVisibility que lida com o display)
-            faturamentoOriginal = newFaturamento;
-            faturamentoDecimalOriginal = newDecimal;
-            applyBalanceVisibility(); // Re-renderiza com novos valores
-        } else {
-            faturamentoOriginal = newFaturamento;
-            faturamentoDecimalOriginal = newDecimal;
-            applyBalanceVisibility();
-        }
-    });
-}
+/* fetchDashboardOperational (Legacy) removed to avoid conflict */
 
 // Busca Contas (Carousel)
 function fetchBills(forceUpdate = false) {
