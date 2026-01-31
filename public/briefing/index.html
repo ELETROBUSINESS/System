@@ -342,6 +342,7 @@
             <div id="card-container" class="slide-enter pb-24">
 
                 <!-- 1. Imagem e Overlay -->
+                <!-- Use onclick here for ZOOM -->
                 <div id="image-wrapper" class="brand-image-container relative group cursor-zoom-in"
                     onclick="openImageZoom()">
                     <img id="brand-img" src="" alt="Exemplo de Identidade Visual">
@@ -350,14 +351,14 @@
                         class="absolute top-0 left-0 w-full h-20 bg-gradient-to-b from-black/30 to-transparent pointer-events-none">
                     </div>
 
-                    <!-- Carousel Controls -->
+                    <!-- Carousel Controls: Fixed Visibility -->
                     <div id="carousel-controls"
-                        class="absolute inset-0 flex items-center justify-between px-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                        <button onclick="prevImage()"
+                        class="absolute inset-0 flex items-center justify-between px-2 pointer-events-none z-10">
+                        <button onclick="event.stopPropagation(); prevImage()"
                             class="pointer-events-auto bg-black/20 hover:bg-black/40 text-white rounded-full p-2 backdrop-blur-sm">
                             <i class='bx bx-chevron-left text-2xl'></i>
                         </button>
-                        <button onclick="nextImage()"
+                        <button onclick="event.stopPropagation(); nextImage()"
                             class="pointer-events-auto bg-black/20 hover:bg-black/40 text-white rounded-full p-2 backdrop-blur-sm">
                             <i class='bx bx-chevron-right text-2xl'></i>
                         </button>
@@ -372,7 +373,7 @@
                         Minimalista
                     </div>
 
-                    <!-- Botões na Imagem -->
+                    <!-- Botões na Imagem: Listeners Stop Propagation in JS -->
                     <div class="absolute bottom-4 left-4 z-20">
                         <div class="image-overlay-actions">
                             <button id="like-btn" class="action-btn-overlay">
@@ -1172,12 +1173,17 @@
         }
 
         function setupEventListeners() {
-            ui.likeBtn.addEventListener('click', () => {
+            ui.likeBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Stop zoom propagation
                 ui.likeBtn.classList.toggle('like-active');
                 triggerGiantHeart();
             });
 
-            ui.micTriggerBtn.addEventListener('click', openAudioModal);
+            ui.micTriggerBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Stop zoom propagation
+                openAudioModal();
+            });
+
             ui.deleteAudioBtn.addEventListener('click', deleteAudio);
             ui.playPreviewBtn.addEventListener('click', playAudio);
 
@@ -1227,6 +1233,8 @@
                 setTimeout(() => { modal.classList.add('hidden'); }, 300);
             }
         };
+
+        window.saveBriefingToFirebase = saveBriefingToFirebase;
 
         init();
 
