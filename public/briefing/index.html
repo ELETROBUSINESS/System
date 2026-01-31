@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Brand Discovery - Identidade Visual</title>
+
+    <!-- Boxicons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        /* Custom Styles & Reset */
+        :root {
+            --primary: #db0038;
+            --primary-light: #ffe5ea;
+            --bg-app: #f8fafc;
+            --surface: #ffffff;
+        }
+
+        body {
+            background-color: #e2e8f0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #app-container {
+            width: 100%;
+            max-width: 420px;
+            height: 100%;
+            max-height: 900px;
+            background-color: var(--bg-app);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        @media (min-width: 450px) {
+            #app-container {
+                height: 90vh;
+                border-radius: 24px;
+                border: 8px solid #ffffff;
+            }
+        }
+
+        .content-scroll {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .content-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Image Adaptation Logic - Height Auto */
+        .brand-image-container {
+            position: relative;
+            width: 100%;
+            min-height: 200px;
+            background-color: #e2e8f0;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .brand-image-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: opacity 0.3s ease;
+        }
+
+        /* Overlay Buttons inside Image */
+        .image-overlay-actions {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            border-radius: 99px;
+            padding: 4px;
+            display: flex;
+            gap: 4px;
+        }
+
+        .action-btn-overlay {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            transition: all 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .action-btn-overlay:active {
+            transform: scale(0.9);
+        }
+
+        .action-btn-overlay.like-active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Giant Heart Animation */
+        #giant-heart-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.5);
+            transition: all 0.5s ease-out;
+            z-index: 100;
+        }
+
+        #giant-heart-overlay.animate {
+            animation: giantPop 0.8s ease-out forwards;
+        }
+
+        @keyframes giantPop {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+
+            40% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.2);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(2);
+            }
+        }
+
+        @keyframes pop {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.4);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* Audio Bars */
+        .bar {
+            width: 4px;
+            background: var(--primary);
+            border-radius: 2px;
+            animation: sound 0ms -800ms linear infinite alternate;
+        }
+
+        .animate-sound .bar {
+            animation-duration: 400ms;
+        }
+
+        @keyframes sound {
+            0% {
+                height: 4px;
+                opacity: .35;
+            }
+
+            100% {
+                height: 24px;
+                opacity: 1;
+            }
+        }
+
+        .slide-enter {
+            animation: slideIn 0.4s ease-out forwards;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .bg-primary {
+            background-color: #db0038;
+        }
+
+        .text-primary {
+            color: #db0038;
+        }
+
+        .border-primary {
+            border-color: #db0038;
+        }
+
+        .bg-primary-light {
+            background-color: #ffe5ea;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.4);
+            transition: all 0.3s;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .dot.active {
+            background-color: white;
+            transform: scale(1.5);
+        }
+
+        .chat-bubble {
+            background-color: #f1f5f9;
+            border-radius: 12px 12px 12px 0;
+            padding: 10px 14px;
+            font-size: 0.9rem;
+            color: #334155;
+            position: relative;
+            animation: popIn 0.3s ease-out;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            gap: 8px;
+        }
+
+        @keyframes popIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Subtle Send Button */
+        #send-btn {
+            transition: all 0.2s ease;
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.8);
+        }
+
+        #send-btn.visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="app-container">
+
+        <!-- Giant Heart Overlay -->
+        <div id="giant-heart-overlay" class="text-[#db0038]">
+            <i class='bx bxs-heart text-[150px] drop-shadow-xl'></i>
+        </div>
+
+        <!-- Header -->
+        <header class="bg-white px-6 py-4 flex justify-between items-center shadow-sm z-10 shrink-0">
+            <div>
+                <h1 class="text-xs font-bold text-gray-400 uppercase tracking-wide">Brand Discovery</h1>
+                <p class="text-base font-bold text-gray-800" id="step-title">Etapa 1 de 4</p>
+            </div>
+        </header>
+
+        <!-- Progress Bar -->
+        <div class="w-full bg-gray-200 h-1 shrink-0">
+            <div id="progress-bar" class="bg-primary h-1 transition-all duration-300" style="width: 25%"></div>
+        </div>
+
+        <!-- Main Content -->
+        <main id="main-content" class="flex-1 content-scroll p-0 relative bg-white">
+
+            <div id="card-container" class="slide-enter pb-24">
+
+                <!-- 1. Imagem e Overlay -->
+                <div class="brand-image-container relative group">
+                    <img id="brand-img" src="" alt="Exemplo de Identidade Visual">
+
+                    <div
+                        class="absolute top-0 left-0 w-full h-20 bg-gradient-to-b from-black/30 to-transparent pointer-events-none">
+                    </div>
+
+                    <!-- Carousel Controls -->
+                    <div id="carousel-controls"
+                        class="absolute inset-0 flex items-center justify-between px-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                        <button onclick="prevImage()"
+                            class="pointer-events-auto bg-black/20 hover:bg-black/40 text-white rounded-full p-2 backdrop-blur-sm">
+                            <i class='bx bx-chevron-left text-2xl'></i>
+                        </button>
+                        <button onclick="nextImage()"
+                            class="pointer-events-auto bg-black/20 hover:bg-black/40 text-white rounded-full p-2 backdrop-blur-sm">
+                            <i class='bx bx-chevron-right text-2xl'></i>
+                        </button>
+                    </div>
+
+                    <!-- Dots -->
+                    <div id="carousel-dots" class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10"></div>
+
+                    <!-- Style Tag -->
+                    <div class="absolute top-4 right-4 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full text-white text-xs font-bold border border-white/20"
+                        id="style-tag">
+                        Minimalista
+                    </div>
+
+                    <!-- Botões na Imagem -->
+                    <div class="absolute bottom-4 left-4 z-20">
+                        <div class="image-overlay-actions">
+                            <button id="like-btn" class="action-btn-overlay">
+                                <i class='bx bxs-heart text-xl'></i>
+                            </button>
+                            <button id="mic-trigger-btn" class="action-btn-overlay hover:bg-white/30">
+                                <i class='bx bxs-microphone text-xl'></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Título e Descrição -->
+                <div class="px-6 mt-6 mb-2">
+                    <h2 class="text-2xl font-bold text-gray-900 leading-tight" id="brand-concept-title">Pureza & Espaço
+                    </h2>
+                    <p class="text-gray-600 leading-relaxed text-sm mt-2" id="brand-concept-desc">Observe o uso de
+                        espaços em branco e tipografia limpa.</p>
+                </div>
+
+                <!-- 4. Seção de Comentário -->
+                <div class="px-6 mt-6">
+
+                    <!-- Ícone removido conforme solicitado -->
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="text-sm font-bold text-gray-700">O que você sente sobre essa identidade
+                            visual?</span>
+                    </div>
+
+                    <div id="comment-display-area" class="hidden mb-3"></div>
+
+                    <div id="input-area" class="space-y-3">
+
+                        <div class="relative flex items-center">
+                            <input type="text" id="text-input" placeholder="Escreva seu sentimento..."
+                                class="w-full pl-4 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+
+                            <!-- Botão Enviar Redondo -->
+                            <button id="send-btn" onclick="sendComment()"
+                                class="absolute right-2 h-9 w-9 bg-gray-900 text-white rounded-full hover:bg-primary transition-colors flex items-center justify-center">
+                                <i class='bx bx-send text-lg'></i>
+                            </button>
+                        </div>
+
+                        <!-- Audio Player/Status Area -->
+                        <div id="audio-feedback-area" class="hidden animate-[popIn_0.3s_ease-out]">
+                            <div id="recording-status"
+                                class="hidden bg-red-50 text-red-500 rounded-xl p-3 flex items-center justify-between border border-red-100 mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="flex h-3 w-3 relative">
+                                        <span
+                                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                                    </span>
+                                    <span class="text-xs font-bold font-mono" id="recording-timer">00:00</span>
+                                </div>
+                                <button onclick="stopRecording()"
+                                    class="text-xs font-bold bg-white px-3 py-1.5 rounded-lg shadow-sm text-red-600 border border-red-100">PARAR</button>
+                            </div>
+
+                            <div id="active-audio-ui"
+                                class="hidden flex items-center gap-2 bg-primary-light border border-primary rounded-xl px-3 py-2">
+                                <button id="play-preview-btn"
+                                    class="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center shadow-sm flex-shrink-0">
+                                    <i class='bx bx-play text-lg'></i>
+                                </button>
+                                <div class="flex-1 flex flex-col justify-center px-2">
+                                    <span class="text-[10px] text-primary font-bold uppercase tracking-wide mb-1">Áudio
+                                        gravado</span>
+                                    <div class="flex items-center gap-[2px] h-3 overflow-hidden">
+                                        <div class="bar h-2 bg-primary rounded-full"></div>
+                                        <div class="bar h-3 bg-primary rounded-full"></div>
+                                        <div class="bar h-2 bg-primary rounded-full"></div>
+                                        <div class="bar h-3 bg-primary rounded-full"></div>
+                                        <div class="bar h-1 bg-primary rounded-full"></div>
+                                    </div>
+                                </div>
+                                <button id="delete-audio-btn"
+                                    class="h-8 w-8 rounded-full bg-white text-red-400 hover:text-red-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+                                    <i class='bx bx-trash'></i>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        </main>
+
+        <!-- Navigation Footer -->
+        <footer class="bg-white p-6 border-t border-gray-100 z-10 flex gap-3 shrink-0">
+            <button id="prev-btn"
+                class="flex-1 bg-white border-2 border-gray-200 text-gray-500 py-3.5 rounded-xl font-bold active:scale-95 transition-transform flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none">
+                <i class='bx bx-left-arrow-alt text-xl'></i>
+                <span>Voltar</span>
+            </button>
+            <button id="next-btn"
+                class="flex-[2] bg-gray-900 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-gray-300 active:scale-95 transition-transform flex items-center justify-center gap-2">
+                <span>Próxima</span>
+                <i class='bx bx-right-arrow-alt text-xl'></i>
+            </button>
+        </footer>
+
+        <!-- Modal de Instrução de Áudio -->
+        <div id="audio-modal"
+            class="hidden absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-[slideIn_0.3s_ease-out]">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-primary-light rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class='bx bxs-microphone text-3xl text-primary'></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800">Grave sua opinião</h3>
+                    <p class="text-gray-600 text-sm mt-2">Fale o que você sente sobre essa marca. Confiança? Alegria?
+                        Sério demais?</p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="closeAudioModal()"
+                        class="flex-1 py-3 text-gray-500 font-semibold text-sm hover:bg-gray-50 rounded-lg">Cancelar</button>
+                    <button onclick="confirmStartRecording()"
+                        class="flex-1 py-3 bg-primary text-white font-bold rounded-lg shadow-md hover:opacity-90">Gravar
+                        Agora</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- NEW: Edit Modal (For fixing the pencil issue) -->
+        <div id="edit-modal"
+            class="hidden absolute inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-[slideIn_0.3s_ease-out]">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">Editar Comentário</h3>
+                <textarea id="edit-textarea"
+                    class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary h-32 resize-none mb-4"
+                    placeholder="Digite seu novo comentário..."></textarea>
+                <div class="flex gap-3">
+                    <button onclick="closeEditModal()"
+                        class="flex-1 py-3 text-gray-500 font-semibold text-sm hover:bg-gray-50 rounded-lg">Cancelar</button>
+                    <button onclick="saveEdit()"
+                        class="flex-1 py-3 bg-primary text-white font-bold rounded-lg shadow-md hover:opacity-90">Salvar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Finish Screen -->
+        <div id="finish-screen"
+            class="absolute inset-0 bg-white z-50 transform translate-y-full transition-transform duration-500 flex flex-col">
+            <div
+                class="bg-primary p-8 pt-16 text-center text-white rounded-b-[3rem] shadow-xl relative overflow-hidden shrink-0">
+                <i class='bx bxs-badge-check text-6xl mb-2 relative z-10'></i>
+                <h2 class="text-3xl font-bold relative z-10">Tudo Pronto!</h2>
+                <p class="opacity-90 mt-2 relative z-10">Aqui está o resumo do que você sentiu.</p>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-6 pb-12">
+                <h3 class="text-gray-500 text-sm font-bold uppercase tracking-wider mb-4">Suas Escolhas</h3>
+                <div id="summary-list" class="space-y-4"></div>
+
+                <!-- Status do Projeto (Timeline) -->
+                <div class="mt-12 pt-8 border-t border-gray-100">
+                    <h3 class="text-gray-900 text-sm font-bold uppercase tracking-wider mb-6">Status do Projeto</h3>
+
+                    <div class="relative pl-4 ml-2 border-l-2 border-gray-200 space-y-8">
+
+                        <!-- Etapa 1: Concluída -->
+                        <div class="relative">
+                            <div
+                                class="absolute -left-[21px] top-1 h-4 w-4 rounded-full bg-green-500 border-2 border-white shadow-sm z-10">
+                            </div>
+                            <span
+                                class="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-md mb-1 inline-block">Concluído</span>
+                            <h4 class="font-bold text-gray-800">Briefing & Alinhamento</h4>
+                            <p class="text-xs text-gray-500">Definição dos objetivos e público alvo.</p>
+                        </div>
+
+                        <!-- Etapa 2: Atual -->
+                        <div class="relative">
+                            <!-- Pulse effect for current step -->
+                            <span
+                                class="absolute -left-[21px] top-1 h-4 w-4 rounded-full bg-primary opacity-75 animate-ping"></span>
+                            <div
+                                class="absolute -left-[21px] top-1 h-4 w-4 rounded-full bg-primary border-2 border-white shadow-sm z-10">
+                            </div>
+
+                            <span
+                                class="text-xs font-semibold text-primary bg-primary-light px-2 py-0.5 rounded-md mb-1 inline-block">Em
+                                Progresso</span>
+                            <h4 class="font-bold text-gray-800">Estudo de Estilo Visual</h4>
+                            <p class="text-xs text-gray-500">Essa etapa ajuda a definir o caminho criativo.</p>
+                        </div>
+
+                        <!-- Etapa 3: Futura -->
+                        <div class="relative opacity-50">
+                            <div
+                                class="absolute -left-[21px] top-1 h-4 w-4 rounded-full bg-gray-300 border-2 border-white shadow-sm z-10">
+                            </div>
+                            <h4 class="font-bold text-gray-800">Primeiros Esboços</h4>
+                            <p class="text-xs text-gray-500">Criação das opções de logo.</p>
+                        </div>
+
+                        <!-- Etapa 4: Futura -->
+                        <div class="relative opacity-50">
+                            <div
+                                class="absolute -left-[21px] top-1 h-4 w-4 rounded-full bg-gray-300 border-2 border-white shadow-sm z-10">
+                            </div>
+                            <h4 class="font-bold text-gray-800">Entrega Final</h4>
+                            <p class="text-xs text-gray-500">Envio dos arquivos e manual.</p>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Logic -->
+
+    <script type="module">
+        import { db, auth } from "../app/js/firebase-config.js";
+        import { collection, addDoc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        // --- Data ---
+        let steps = [];
+
+        // --- State ---
+        let currentStepIndex = 0;
+        let currentImageIndex = 0;
+        let userResponses = [];
+        let currentComment = "";
+
+        let mediaRecorder;
+        let audioChunks = [];
+        let currentAudioBlob = null;
+        let isRecording = false;
+        let recordingInterval;
+
+        // Edit State
+        let currentEditIndex = null;
+
+        // --- DOM Elements ---
+        const ui = {
+            title: document.getElementById('step-title'),
+            progressBar: document.getElementById('progress-bar'),
+            container: document.getElementById('card-container'),
+            img: document.getElementById('brand-img'),
+            tag: document.getElementById('style-tag'),
+            conceptTitle: document.getElementById('brand-concept-title'),
+            conceptDesc: document.getElementById('brand-concept-desc'),
+            likeBtn: document.getElementById('like-btn'),
+
+            // Comment
+            textInput: document.getElementById('text-input'),
+            sendBtn: document.getElementById('send-btn'),
+            commentDisplayArea: document.getElementById('comment-display-area'),
+
+            // Audio
+            micTriggerBtn: document.getElementById('mic-trigger-btn'),
+            audioFeedbackArea: document.getElementById('audio-feedback-area'),
+            activeAudioUI: document.getElementById('active-audio-ui'),
+            recordingStatus: document.getElementById('recording-status'),
+            recordingTimer: document.getElementById('recording-timer'),
+            playPreviewBtn: document.getElementById('play-preview-btn'),
+            deleteAudioBtn: document.getElementById('delete-audio-btn'),
+            audioModal: document.getElementById('audio-modal'),
+
+            // Edit Modal
+            editModal: document.getElementById('edit-modal'),
+            editTextarea: document.getElementById('edit-textarea'),
+
+            // Carousel
+            carouselControls: document.getElementById('carousel-controls'),
+            carouselDots: document.getElementById('carousel-dots'),
+
+            // Nav
+            nextBtn: document.getElementById('next-btn'),
+            prevBtn: document.getElementById('prev-btn'),
+            finishScreen: document.getElementById('finish-screen'),
+            summaryList: document.getElementById('summary-list'),
+            giantHeart: document.getElementById('giant-heart-overlay')
+        };
+
+        async function init() {
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                    try {
+                        await signInAnonymously(auth);
+                        return; // Wait for re-trigger
+                    } catch (e) {
+                        console.error("Auth failed", e);
+                        alert("Erro de autenticação: Não foi possível conectar ao servidor.");
+                        return;
+                    }
+                }
+
+                if (auth.currentUser) {
+                    try {
+                        // Load steps from Firebase
+                        const q = query(collection(db, "briefing_steps"), orderBy("order", "asc"));
+                        const querySnapshot = await getDocs(q);
+
+                        if (!querySnapshot.empty) {
+                            steps = [];
+                            querySnapshot.forEach((doc) => {
+                                steps.push({ id: doc.id, ...doc.data() });
+                            });
+                        } else {
+                            console.warn("No steps found in Firestore.");
+                            steps = [];
+                        }
+                    } catch (e) {
+                        console.error("Error loading steps from Firebase:", e);
+                        alert("Erro ao carregar os dados do briefing.");
+                        steps = [];
+                    }
+                }
+
+                // Ensure we have internal IDs 
+                steps = steps.map((s, i) => ({ ...s, internalId: i + 1 }));
+
+                if (steps.length === 0) {
+                    ui.container.innerHTML = `
+                        <div class="flex flex-col items-center justify-center h-64 text-center px-6">
+                            <i class='bx bx-error-circle text-4xl text-gray-300 mb-2'></i>
+                            <h3 class="text-lg font-bold text-gray-700">Nenhuma etapa encontrada</h3>
+                            <p class="text-sm text-gray-500">O briefing ainda não foi configurado.</p>
+                        </div>
+                    `;
+                    ui.title.textContent = "Briefing";
+                    ui.progressBar.style.width = "0%";
+                    return;
+                }
+
+                renderStep();
+                if (!window.listenersAdded) {
+                    setupEventListeners();
+                    window.listenersAdded = true;
+                }
+            });
+        }
+
+        function renderStep() {
+            if (steps.length === 0) return;
+            const data = steps[currentStepIndex];
+            currentImageIndex = 0;
+
+            ui.container.classList.remove('slide-enter');
+            void ui.container.offsetWidth;
+            ui.container.classList.add('slide-enter');
+
+            ui.title.textContent = `Etapa ${currentStepIndex + 1} de ${steps.length}`;
+            ui.progressBar.style.width = `${((currentStepIndex + 1) / steps.length) * 100}%`;
+
+            ui.tag.textContent = data.style;
+            ui.conceptTitle.textContent = data.title;
+            ui.conceptDesc.textContent = data.description;
+            // Prevent going back if at start
+            ui.prevBtn.disabled = currentStepIndex === 0;
+
+            updateCarousel();
+            resetInputs();
+        }
+
+        function updateCarousel() {
+            const data = steps[currentStepIndex];
+            ui.img.style.opacity = '0.5';
+            setTimeout(() => {
+                ui.img.src = data.images[currentImageIndex];
+                ui.img.style.opacity = '1';
+            }, 150);
+
+            ui.carouselDots.innerHTML = data.images.map((_, idx) => `
+    <div class="dot ${idx === currentImageIndex ? 'active' : ''}"></div>
+    `).join('');
+
+            if (data.images.length <= 1) { ui.carouselControls.classList.add('hidden'); } else {
+                ui.carouselControls.classList.remove('hidden');
+            }
+        } function nextImage() {
+            const data = steps[currentStepIndex];
+            currentImageIndex = (currentImageIndex + 1) % data.images.length; updateCarousel();
+        } function prevImage() {
+            const
+                data = steps[currentStepIndex]; currentImageIndex = (currentImageIndex - 1 + data.images.length) %
+                    data.images.length; updateCarousel();
+        } function resetInputs() {
+            ui.likeBtn.classList.remove('like-active');
+            ui.textInput.value = ""; checkInput(); currentComment = ""; ui.commentDisplayArea.innerHTML = "";
+            ui.commentDisplayArea.classList.add('hidden'); deleteAudio();
+        } function checkInput() {
+            if
+                (ui.textInput.value.trim().length > 0) {
+                ui.sendBtn.classList.add('visible');
+            } else {
+                ui.sendBtn.classList.remove('visible');
+            }
+        }
+
+        function sendComment() {
+            const text = ui.textInput.value.trim();
+            if (!text) return;
+
+            currentComment = text;
+
+            ui.commentDisplayArea.classList.remove('hidden');
+            ui.commentDisplayArea.innerHTML = `
+        <div class="chat-bubble shadow-sm border border-gray-200">
+            <p>${text}</p>
+            <button onclick="editComment()" class="text-xs text-gray-400 hover:text-primary"><i
+                    class='bx bxs-edit'></i></button>
+        </div>
+        `;
+
+            ui.textInput.value = "";
+            checkInput();
+        }
+
+        window.sendComment = sendComment;
+
+        window.editComment = function () {
+            ui.textInput.value = currentComment;
+            checkInput();
+            ui.commentDisplayArea.innerHTML = "";
+            ui.commentDisplayArea.classList.add('hidden');
+            currentComment = "";
+            ui.textInput.focus();
+        }
+
+        // --- NEW EDIT MODAL FUNCTIONS ---
+        window.editResponse = function (index) {
+            currentEditIndex = index;
+            const currentResp = userResponses[index];
+            ui.editTextarea.value = currentResp.comment || "";
+            ui.editModal.classList.remove('hidden');
+        }
+
+        window.closeEditModal = function () {
+            ui.editModal.classList.add('hidden');
+            currentEditIndex = null;
+        }
+
+        window.saveEdit = function () {
+            if (currentEditIndex !== null) {
+                const newText = ui.editTextarea.value.trim();
+                userResponses[currentEditIndex].comment = newText;
+                closeEditModal();
+                finishFlow(); // Re-render list
+            }
+        }
+
+        function triggerGiantHeart() {
+            const isActive = ui.likeBtn.classList.contains('like-active');
+            if (isActive) {
+                ui.giantHeart.classList.remove('animate');
+                void ui.giantHeart.offsetWidth;
+                ui.giantHeart.classList.add('animate');
+            }
+        }
+
+        // --- Audio Logic ---
+        function openAudioModal() {
+            if (isRecording || currentAudioBlob) return;
+            ui.audioModal.classList.remove('hidden');
+        }
+
+        function closeAudioModal() {
+            ui.audioModal.classList.add('hidden');
+        }
+
+        function confirmStartRecording() {
+            closeAudioModal();
+            startRecording();
+        }
+
+        async function startRecording() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert("Gravação não suportada neste navegador.");
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    currentAudioBlob = { blob: audioBlob, url: audioUrl };
+
+                    isRecording = false;
+                    clearInterval(recordingInterval);
+                    ui.recordingStatus.classList.add('hidden');
+                    ui.activeAudioUI.classList.remove('hidden');
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+
+                ui.audioFeedbackArea.classList.remove('hidden');
+                ui.recordingStatus.classList.remove('hidden');
+                ui.activeAudioUI.classList.add('hidden');
+
+                ui.audioFeedbackArea.scrollIntoView({ behavior: 'smooth' });
+
+                let seconds = 0;
+                ui.recordingTimer.innerText = "00:00";
+                recordingInterval = setInterval(() => {
+                    seconds++;
+                    const min = Math.floor(seconds / 60).toString().padStart(2, '0');
+                    const sec = (seconds % 60).toString().padStart(2, '0');
+                    ui.recordingTimer.innerText = `${min}:${sec}`;
+                }, 1000);
+
+            } catch (err) {
+                console.error(err);
+                alert("Erro ao acessar microfone.");
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === "recording") {
+                mediaRecorder.stop();
+            }
+        }
+
+        function deleteAudio() {
+            currentAudioBlob = null;
+            ui.audioFeedbackArea.classList.add('hidden');
+            ui.activeAudioUI.classList.add('hidden');
+            ui.recordingStatus.classList.add('hidden');
+        }
+
+        function playAudio() {
+            if (currentAudioBlob) {
+                const audio = new Audio(currentAudioBlob.url);
+                audio.play();
+                ui.activeAudioUI.classList.add('animate-sound');
+                audio.onended = () => {
+                    ui.activeAudioUI.classList.remove('animate-sound');
+                };
+            }
+        }
+
+        // --- Navigation ---
+        function saveData() {
+            const unsentComment = ui.textInput.value.trim();
+            const finalComment = currentComment || unsentComment;
+
+            if (steps[currentStepIndex]) {
+                userResponses[currentStepIndex] = {
+                    stepId: steps[currentStepIndex].id || null,
+                    styleName: steps[currentStepIndex].style || "Unknown",
+                    imageUsed: steps[currentStepIndex].images[currentImageIndex],
+                    liked: ui.likeBtn.classList.contains('like-active'),
+                    comment: finalComment,
+                    hasAudio: !!currentAudioBlob,
+                    audioUrl: currentAudioBlob ? currentAudioBlob.url : null
+                    // Note: audioUrl is blob URL, won't persist across sessions.
+                    // To strictly persist audio, we need to upload currentAudioBlob.blob to Firebase Storage.
+                    // For now, let's stick to saving text/metadata as requested "connect firebase".
+                    // Uploading audio would require more robust logic (upload task).
+                };
+            }
+        }
+
+        function goNext() {
+            saveData();
+            if (currentStepIndex < steps.length - 1) { currentStepIndex++; renderStep(); } else { finishFlow(); }
+        } function
+            goBack() {
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                renderStep();
+            }
+        }
+
+        function finishFlow() {
+            ui.finishScreen.style.transform = "translateY(0)";
+
+            // Save to Firebase
+            saveBriefingToFirebase();
+
+            ui.summaryList.innerHTML = userResponses.map((resp, index) => {
+                if (!resp) return '';
+                return `
+                <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 flex gap-4 relative group">
+                    <button onclick="editResponse(${index})" class="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-primary hover:bg-white rounded-full transition-colors z-20" title="Editar comentário">
+                        <i class='bx bxs-pencil'></i>
+                    </button>
+
+                    <div class="h-20 w-20 rounded-lg bg-gray-200 overflow-hidden flex-shrink-0 border border-gray-200">
+                        <img src="${resp.imageUsed}" class="w-full h-full object-contain bg-white">
+                    </div>
+                    <div class="flex-1 min-w-0 pr-6">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-bold text-gray-800 text-sm">${resp.styleName}</h4>
+                            ${resp.liked ? '<i class="bx bxs-heart text-primary"></i>' : '<i class="bx bx-heart text-gray-300"></i>'}
+                        </div>
+                        
+                        ${resp.comment ? `<div class="bg-white p-2 rounded-lg mt-2 border border-gray-100 text-xs text-gray-600">"${resp.comment}"</div>` : '<p class="text-xs text-gray-400 italic mt-1">Sem comentário</p>'}
+
+                        ${resp.hasAudio ? `
+                            <button onclick="new Audio('${resp.audioUrl}').play()" class="mt-2 text-xs bg-primary-light text-primary px-2 py-1.5 rounded-lg flex items-center gap-1 w-full justify-center font-bold hover:bg-opacity-80">
+                                <i class='bx bx-play text-base'></i> Ouvir nota (Local)
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        async function saveBriefingToFirebase() {
+            try {
+                // Filter out empty responses
+                const validResponses = userResponses.filter(r => r);
+
+                await addDoc(collection(db, "briefing_responses"), {
+                    responses: validResponses,
+                    timestamp: serverTimestamp(),
+                    userAgent: navigator.userAgent
+                });
+                console.log("Briefing saved to Firebase!");
+                // Optionally show a toast
+            } catch (e) {
+                console.error("Error saving briefing: ", e);
+                alert("Erro ao salvar respostas. Tente novamente.");
+            }
+        }
+
+        function setupEventListeners() {
+            ui.likeBtn.addEventListener('click', () => {
+                ui.likeBtn.classList.toggle('like-active');
+                triggerGiantHeart();
+            });
+
+            ui.micTriggerBtn.addEventListener('click', openAudioModal);
+            ui.deleteAudioBtn.addEventListener('click', deleteAudio);
+            ui.playPreviewBtn.addEventListener('click', playAudio);
+
+            ui.nextBtn.addEventListener('click', goNext);
+            ui.prevBtn.addEventListener('click', goBack);
+
+            ui.textInput.addEventListener('input', checkInput);
+            ui.textInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    sendComment();
+                }
+            });
+        }
+
+        window.closeAudioModal = closeAudioModal;
+        window.confirmStartRecording = confirmStartRecording;
+        window.stopRecording = stopRecording;
+        window.prevImage = prevImage;
+        window.nextImage = nextImage;
+
+        init();
+
+    </script>
+</body>
+
+</html>

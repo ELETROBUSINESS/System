@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento de Briefing</title>
+
+    <!-- Boxicons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        :root {
+            --primary: #db0038;
+            --primary-light: #ffe5ea;
+            --bg-app: #f8fafc;
+        }
+
+        body {
+            background-color: #f1f5f9;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #334155;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background-color: white;
+            border: 1px solid #e2e8f0;
+            color: #64748b;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background-color: #f8fafc;
+            color: #334155;
+        }
+
+        .card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 1.5rem;
+        }
+    </style>
+</head>
+
+<body class="p-6 max-w-5xl mx-auto">
+
+    <header class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">Gerenciamento de Briefing</h1>
+            <p class="text-slate-500">Edite as etapas e imagens do processo de brand discovery.</p>
+        </div>
+        <button onclick="openModal()" class="btn-primary flex items-center gap-2">
+            <i class='bx bx-plus'></i> Nova Etapa
+        </button>
+    </header>
+
+    <div id="loading" class="text-center py-12">
+        <i class='bx bx-loader-alt bx-spin text-4xl text-primary'></i>
+    </div>
+
+    <!-- Steps List -->
+    <div id="steps-list" class="grid grid-cols-1 md:grid-cols-2 gap-6 hidden">
+        <!-- Cards will be injected here -->
+    </div>
+
+    <!-- Edit/Add Modal -->
+    <div id="modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl">
+
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
+                <h3 class="text-xl font-bold text-slate-800" id="modal-title">Editar Etapa</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class='bx bx-x text-2xl'></i>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto flex-1 space-y-6">
+                <input type="hidden" id="step-id">
+
+                <!-- Title & Style -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Título</label>
+                        <input type="text" id="input-title"
+                            class="w-full p-2.5 bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Estilo (Tag)</label>
+                        <input type="text" id="input-style"
+                            class="w-full p-2.5 bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Subtítulo / Descrição</label>
+                    <textarea id="input-desc" rows="3"
+                        class="w-full p-2.5 bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none"></textarea>
+                </div>
+
+                <!-- Images Management -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Imagens</label>
+
+                    <div id="current-images" class="grid grid-cols-3 md:grid-cols-4 gap-3 mb-4">
+                        <!-- Image Thumbnails -->
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-xl border border-dashed border-gray-300">
+                        <p class="text-sm font-semibold mb-3 text-gray-600">Adicionar Imagem</p>
+
+                        <div class="flex flex-col gap-3">
+                            <div class="flex gap-2">
+                                <input type="text" id="input-img-url" placeholder="Cole uma URL de imagem..."
+                                    class="flex-1 p-2 text-sm border border-gray-200 rounded-lg">
+                                <button onclick="addImageFromUrl()" class="btn-secondary text-sm">Adicionar URL</button>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <div class="h-px bg-gray-200 flex-1"></div>
+                                <span class="text-xs text-gray-400">OU</span>
+                                <div class="h-px bg-gray-200 flex-1"></div>
+                            </div>
+
+                            <label
+                                class="flex items-center justify-center gap-2 p-2 border border-gray-200 rounded-lg bg-white cursor-pointer hover:bg-gray-50 transition-colors">
+                                <i class='bx bx-cloud-upload text-xl text-primary'></i>
+                                <span class="text-sm font-semibold text-gray-600">Upload do Dispositivo</span>
+                                <input type="file" id="file-upload" class="hidden" accept="image/*"
+                                    onchange="uploadImage(this)">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Ordem</label>
+                    <input type="number" id="input-order"
+                        class="w-24 p-2.5 bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                        value="0">
+                </div>
+
+            </div>
+
+            <div class="p-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">
+                <button onclick="closeModal()" class="btn-secondary">Cancelar</button>
+                <button onclick="saveStep()" class="btn-primary min-w-[100px]" id="btn-save">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db, storage, auth } from "../app/js/firebase-config.js";
+        import { collection, addDoc, doc, updateDoc, deleteDoc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+        import { signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        let steps = [];
+        let currentEditingImages = [];
+
+        // DOM Inputs
+        const ui = {
+            id: document.getElementById('step-id'),
+            title: document.getElementById('input-title'),
+            style: document.getElementById('input-style'),
+            desc: document.getElementById('input-desc'),
+            order: document.getElementById('input-order'),
+            imgUrl: document.getElementById('input-img-url'),
+            currentImages: document.getElementById('current-images'),
+            modal: document.getElementById('modal'),
+            modalTitle: document.getElementById('modal-title'),
+            btnSave: document.getElementById('btn-save'),
+            stepsList: document.getElementById('steps-list'),
+            loading: document.getElementById('loading')
+        };
+
+        window.init = async function () {
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    console.log("User authenticated:", user.uid);
+                    await fetchSteps();
+                } else {
+                    console.log("No user, attempting anonymous login...");
+                    try {
+                        await signInAnonymously(auth);
+                    } catch (error) {
+                        console.error("Auth error:", error);
+                        alert("Erro de autenticação: " + error.message);
+                        ui.loading.innerHTML = `<p class="text-red-500">Erro de permissão/autenticação.<br>Verifique se o 'Anonymous Auth' está ativado no Firebase Console.</p>`;
+                    }
+                }
+            });
+        }
+
+        async function fetchSteps() {
+            ui.loading.classList.remove('hidden');
+            ui.stepsList.classList.add('hidden');
+
+            try {
+                const q = query(collection(db, "briefing_steps"), orderBy("order", "asc"));
+                const querySnapshot = await getDocs(q);
+
+                steps = [];
+                querySnapshot.forEach((doc) => {
+                    steps.push({ id: doc.id, ...doc.data() });
+                });
+
+                renderList();
+            } catch (e) {
+                console.error("Error fetching steps:", e);
+                alert("Erro ao carregar etapas.");
+            } finally {
+                ui.loading.classList.add('hidden');
+                ui.stepsList.classList.remove('hidden');
+            }
+        }
+
+        function renderList() {
+            ui.stepsList.innerHTML = steps.map(step => `
+                <div class="card hover:border-primary border border-transparent transition-all group relative">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-primary bg-primary-light px-2 py-1 rounded-md mb-2 inline-block">${step.style}</span>
+                            <h3 class="text-lg font-bold text-gray-800">${step.title}</h3>
+                        </div>
+                        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="editStep('${step.id}')" class="p-2 text-gray-400 hover:text-primary hover:bg-slate-50 rounded-lg">
+                                <i class='bx bxs-pencil'></i>
+                            </button>
+                            <button onclick="deleteStep('${step.id}')" class="p-2 text-gray-400 hover:text-red-500 hover:bg-slate-50 rounded-lg">
+                                <i class='bx bxs-trash'></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <p class="text-sm text-gray-600 mb-4 line-clamp-2">${step.description}</p>
+                    
+                    <div class="flex gap-2 overflow-x-auto pb-2">
+                        ${step.images ? step.images.map(img => `
+                            <img src="${img}" class="h-16 w-16 object-cover rounded-lg border border-gray-100 shrink-0">
+                        `).join('') : '<span class="text-xs text-gray-400 italic">Sem imagens</span>'}
+                    </div>
+                    
+                    <div class="absolute top-4 right-4 text-xs font-mono text-gray-300">#${step.order || 0}</div>
+                </div>
+            `).join('');
+        }
+
+        window.openModal = function (isEdit = false) {
+            ui.modal.classList.remove('hidden');
+            if (!isEdit) resetForm();
+        }
+
+        window.closeModal = function () {
+            ui.modal.classList.add('hidden');
+        }
+
+        function resetForm() {
+            ui.modalTitle.textContent = "Nova Etapa";
+            ui.id.value = "";
+            ui.title.value = "";
+            ui.style.value = "";
+            ui.desc.value = "";
+            ui.order.value = steps.length + 1;
+            currentEditingImages = [];
+            renderEditingImages();
+        }
+
+        window.editStep = function (id) {
+            const step = steps.find(s => s.id === id);
+            if (!step) return;
+
+            ui.modalTitle.textContent = "Editar Etapa";
+            ui.id.value = step.id;
+            ui.title.value = step.title;
+            ui.style.value = step.style;
+            ui.desc.value = step.description;
+            ui.order.value = step.order || 0;
+            currentEditingImages = [...(step.images || [])];
+
+            renderEditingImages();
+            openModal(true);
+        }
+
+        function renderEditingImages() {
+            ui.currentImages.innerHTML = currentEditingImages.map((img, idx) => `
+                <div class="relative group h-20 w-20">
+                    <img src="${img}" class="h-full w-full object-cover rounded-lg border border-gray-200">
+                    <button onclick="removeImage(${idx})" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full h-5 w-5 flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                        <i class='bx bx-x'></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        window.removeImage = function (index) {
+            currentEditingImages.splice(index, 1);
+            renderEditingImages();
+        }
+
+        window.addImageFromUrl = function () {
+            const url = ui.imgUrl.value.trim();
+            if (!url) return;
+            currentEditingImages.push(url);
+            ui.imgUrl.value = "";
+            renderEditingImages();
+        }
+
+        window.uploadImage = async function (input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const originalLabel = input.parentElement.innerText;
+                const icon = input.parentElement.querySelector('i');
+
+                // Show loading state on the label
+                input.parentElement.classList.add('opacity-50', 'cursor-not-allowed');
+                if (icon) icon.className = 'bx bx-loader-alt bx-spin text-xl text-primary';
+
+                try {
+                    const storageRef = ref(storage, 'briefing_uploads/' + Date.now() + '_' + file.name);
+                    const snapshot = await uploadBytes(storageRef, file);
+                    const url = await getDownloadURL(snapshot.ref);
+
+                    currentEditingImages.push(url);
+                    renderEditingImages();
+                } catch (error) {
+                    console.error("Upload error:", error);
+                    alert("Erro no upload da imagem. Verifique se o CORS está configurado no Firebase Storage.");
+                } finally {
+                    // Reset input and UI
+                    input.value = '';
+                    input.parentElement.classList.remove('opacity-50', 'cursor-not-allowed');
+                    if (icon) icon.className = 'bx bx-cloud-upload text-xl text-primary';
+                }
+            }
+        }
+
+        window.saveStep = async function () {
+            const id = ui.id.value;
+            const data = {
+                title: ui.title.value,
+                style: ui.style.value,
+                description: ui.desc.value,
+                order: parseInt(ui.order.value) || 0,
+                images: currentEditingImages,
+                updatedAt: serverTimestamp()
+            };
+
+            if (!data.title || !data.style) {
+                alert("Preencha título e estilo.");
+                return;
+            }
+
+            ui.btnSave.disabled = true;
+            ui.btnSave.textContent = "Salvando...";
+
+            try {
+                if (id) {
+                    // Update
+                    await updateDoc(doc(db, "briefing_steps", id), data);
+                } else {
+                    // Create
+                    await addDoc(collection(db, "briefing_steps"), data);
+                }
+                closeModal();
+                fetchSteps();
+            } catch (e) {
+                console.error("Error saving:", e);
+                alert("Erro ao salvar.");
+            } finally {
+                ui.btnSave.disabled = false;
+                ui.btnSave.textContent = "Salvar";
+            }
+        }
+
+        window.deleteStep = async function (id) {
+            if (confirm("Tem certeza que deseja excluir esta etapa?")) {
+                try {
+                    await deleteDoc(doc(db, "briefing_steps", id));
+                    fetchSteps();
+                } catch (e) {
+                    console.error("Error deleting:", e);
+                    alert("Erro ao excluir.");
+                }
+            }
+        }
+
+        // Initialize
+        init();
+
+    </script>
+</body>
+
+</html>
