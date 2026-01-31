@@ -32,24 +32,24 @@
             overflow: hidden;
         }
 
+        /* Mobile-First Responsive Container */
         #app-container {
             width: 100%;
-            max-width: 420px;
             height: 100%;
-            max-height: 900px;
-            background-color: var(--bg-app);
+            background-color: var(--surface);
             position: relative;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            margin: 0 auto;
         }
 
-        @media (min-width: 450px) {
+        /* Desktop Optimization: constrain width purely for readability, not as a device frame */
+        @media (min-width: 768px) {
             #app-container {
-                height: 90vh;
-                border-radius: 24px;
-                border: 8px solid #ffffff;
+                max-width: 600px;
+                box-shadow: 0 0 40px rgba(0, 0, 0, 0.05);
+                /* Soft shadow */
             }
         }
 
@@ -342,7 +342,8 @@
             <div id="card-container" class="slide-enter pb-24">
 
                 <!-- 1. Imagem e Overlay -->
-                <div class="brand-image-container relative group">
+                <div id="image-wrapper" class="brand-image-container relative group cursor-zoom-in"
+                    onclick="openImageZoom()">
                     <img id="brand-img" src="" alt="Exemplo de Identidade Visual">
 
                     <div
@@ -464,18 +465,31 @@
         </main>
 
         <!-- Navigation Footer -->
-        <footer class="bg-white p-6 border-t border-gray-100 z-10 flex gap-3 shrink-0">
+        <footer
+            class="bg-white px-6 py-4 border-t border-gray-100 z-10 flex gap-3 shrink-0 items-center justify-between shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
             <button id="prev-btn"
-                class="flex-1 bg-white border-2 border-gray-200 text-gray-500 py-3.5 rounded-xl font-bold active:scale-95 transition-transform flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none">
-                <i class='bx bx-left-arrow-alt text-xl'></i>
+                class="flex-1 bg-white border border-gray-200 text-gray-500 py-3 rounded-xl font-bold active:scale-95 transition-transform flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none shadow-sm hover:bg-gray-50 text-sm">
+                <i class='bx bx-left-arrow-alt text-lg'></i>
                 <span>Voltar</span>
             </button>
             <button id="next-btn"
-                class="flex-[2] bg-gray-900 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-gray-300 active:scale-95 transition-transform flex items-center justify-center gap-2">
+                class="flex-[2] bg-gray-900 text-white py-3 rounded-xl font-bold shadow-lg shadow-gray-300 active:scale-95 transition-transform flex items-center justify-center gap-2 text-sm hover:bg-gray-800">
                 <span>Próxima</span>
-                <i class='bx bx-right-arrow-alt text-xl'></i>
+                <i class='bx bx-right-arrow-alt text-lg'></i>
             </button>
         </footer>
+
+        <!-- Image Zoom Modal -->
+        <div id="zoom-modal"
+            class="fixed inset-0 bg-black/90 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity opacity-0"
+            onclick="closeImageZoom()">
+            <img id="zoomed-image" src=""
+                class="max-w-full max-h-full object-contain rounded-lg shadow-2xl scale-95 transition-transform duration-300">
+            <button
+                class="absolute top-4 right-4 bg-white/10 text-white p-2 rounded-full hover:bg-white/20 backdrop-blur-md">
+                <i class='bx bx-x text-2xl'></i>
+            </button>
+        </div>
 
         <!-- Modal de Instrução de Áudio -->
         <div id="audio-modal"
@@ -490,9 +504,9 @@
                         Sério demais?</p>
                 </div>
                 <div class="flex gap-3">
-                    <button onclick="closeAudioModal()"
+                    <button type="button" onclick="closeAudioModal()"
                         class="flex-1 py-3 text-gray-500 font-semibold text-sm hover:bg-gray-50 rounded-lg">Cancelar</button>
-                    <button onclick="confirmStartRecording()"
+                    <button type="button" onclick="confirmStartRecording(event)"
                         class="flex-1 py-3 bg-primary text-white font-bold rounded-lg shadow-md hover:opacity-90">Gravar
                         Agora</button>
                 </div>
@@ -518,7 +532,7 @@
 
         <!-- Finish Screen -->
         <div id="finish-screen"
-            class="absolute inset-0 bg-white z-50 transform translate-y-full transition-transform duration-500 flex flex-col">
+            class="hidden absolute inset-0 bg-white z-50 transform translate-y-full transition-transform duration-500 flex flex-col">
             <div
                 class="bg-primary p-8 pt-16 text-center text-white rounded-b-[3rem] shadow-xl relative overflow-hidden shrink-0">
                 <i class='bx bxs-badge-check text-6xl mb-2 relative z-10'></i>
@@ -918,7 +932,8 @@
             ui.audioModal.classList.add('hidden');
         }
 
-        function confirmStartRecording() {
+        function confirmStartRecording(e) {
+            if (e) e.stopPropagation();
             closeAudioModal();
             startRecording();
         }
@@ -1019,10 +1034,13 @@
         }
 
         function goNext() {
+            if (isRecording) return;
             saveData();
             if (currentStepIndex < steps.length - 1) { currentStepIndex++; renderStep(); } else { finishFlow(); }
-        } function
-            goBack() {
+        }
+
+        function goBack() {
+            if (isRecording) return;
             if (currentStepIndex > 0) {
                 currentStepIndex--;
                 renderStep();
@@ -1030,44 +1048,67 @@
         }
 
         function finishFlow() {
+            // Unhide first
+            ui.finishScreen.classList.remove('hidden');
+
+            // Force reflow
+            void ui.finishScreen.offsetWidth;
+
+            // Animate
             ui.finishScreen.style.transform = "translateY(0)";
 
-            // Save to Firebase
-            saveBriefingToFirebase();
-
-            ui.summaryList.innerHTML = userResponses.map((resp, index) => {
+            ui.summaryList.innerHTML = `
+                <div class="mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">Resumo Final</h3>
+                    <p class="text-sm text-gray-500">Revise suas respostas.</p>
+                </div>
+                
+                <div class="space-y-3 pb-32"> <!-- Padding for fixed footer -->
+                ${userResponses.map((resp, index) => {
                 if (!resp) return '';
                 return `
-                <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 flex gap-4 relative group">
-                    <button onclick="editResponse(${index})" class="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-primary hover:bg-white rounded-full transition-colors z-20" title="Editar comentário">
-                        <i class='bx bxs-pencil'></i>
-                    </button>
-
-                    <div class="h-20 w-20 rounded-lg bg-gray-200 overflow-hidden flex-shrink-0 border border-gray-200">
-                        <img src="${resp.imageUsed}" class="w-full h-full object-contain bg-white">
-                    </div>
-                    <div class="flex-1 min-w-0 pr-6">
-                        <div class="flex justify-between items-start">
-                            <h4 class="font-bold text-gray-800 text-sm">${resp.styleName}</h4>
-                            ${resp.liked ? '<i class="bx bxs-heart text-primary"></i>' : '<i class="bx bx-heart text-gray-300"></i>'}
+                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 flex gap-4 relative group">
+                        <button onclick="editResponse(${index})" class="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-primary hover:bg-white rounded-full transition-colors z-20 shadow-sm">
+                            <i class='bx bxs-pencil'></i>
+                        </button>
+    
+                        <div class="h-20 w-20 rounded-lg bg-white overflow-hidden flex-shrink-0 border border-gray-200">
+                            <img src="${resp.imageUsed}" class="w-full h-full object-contain">
                         </div>
-                        
-                        ${resp.comment ? `<div class="bg-white p-2 rounded-lg mt-2 border border-gray-100 text-xs text-gray-600">"${resp.comment}"</div>` : '<p class="text-xs text-gray-400 italic mt-1">Sem comentário</p>'}
-
-                        ${resp.hasAudio ? `
-                            <button onclick="new Audio('${resp.audioUrl}').play()" class="mt-2 text-xs bg-primary-light text-primary px-2 py-1.5 rounded-lg flex items-center gap-1 w-full justify-center font-bold hover:bg-opacity-80">
-                                <i class='bx bx-play text-base'></i> Ouvir nota (Local)
-                            </button>
-                        ` : ''}
-                    </div>
+                        <div class="flex-1 min-w-0 pr-6">
+                            <div class="flex justify-between items-start mb-1">
+                                <span class="bg-primary-light text-primary text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide">${resp.styleName}</span>
+                                ${resp.liked ? '<i class="bx bxs-heart text-primary"></i>' : ''}
+                            </div>
+                            
+                            <p class="text-sm text-gray-600 line-clamp-2 italic mb-2">"${resp.comment || 'Sem comentário'}"</p>
+    
+                            ${resp.hasAudio ? `
+                                <div class="inline-flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm text-xs font-semibold text-gray-700">
+                                    <i class='bx bxs-microphone text-primary'></i>
+                                    Áudio gravado
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>`;
+            }).join('')}
                 </div>
-            `}).join('');
+
+                <!-- Footer Fixed Actions -->
+                <div class="fixed bottom-0 left-0 w-full bg-white p-5 border-t border-gray-100 flex gap-3 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] z-50 rounded-t-2xl">
+                    <button onclick="location.reload()" class="flex-1 py-3.5 border border-gray-200 rounded-xl font-bold text-gray-500 hover:bg-gray-50 transition-colors text-sm">Cancelar</button>
+                    <button id="final-submit-btn" onclick="saveBriefingToFirebase()" class="flex-[2] py-3.5 bg-gray-900 text-white rounded-xl font-bold shadow-lg shadow-gray-400 active:scale-95 transition-transform flex items-center justify-center gap-2 text-sm">
+                        <span>Confirmar e Enviar</span>
+                        <i class='bx bx-check-circle text-lg'></i>
+                    </button>
+                </div>
+            `;
         }
 
         async function saveBriefingToFirebase() {
             try {
                 // Show loading state
-                const finishBtn = document.querySelector('#finish-screen button');
+                const finishBtn = document.querySelector('#final-submit-btn'); // Use ID selector
                 if (finishBtn) {
                     finishBtn.disabled = true;
                     finishBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Salvando...";
@@ -1156,6 +1197,36 @@
         window.stopRecording = stopRecording;
         window.prevImage = prevImage;
         window.nextImage = nextImage;
+
+        window.init = init;
+
+        // Image Zoom
+        window.openImageZoom = function () {
+            const modal = document.getElementById('zoom-modal');
+            const zoomedImg = document.getElementById('zoomed-image');
+            if (modal && zoomedImg) {
+                zoomedImg.src = ui.img.src;
+                modal.classList.remove('hidden');
+                requestAnimationFrame(() => {
+                    modal.classList.remove('opacity-0');
+                    zoomedImg.classList.remove('scale-95');
+                    zoomedImg.classList.add('scale-100');
+                });
+            }
+        };
+
+        window.closeImageZoom = function () {
+            const modal = document.getElementById('zoom-modal');
+            const zoomedImg = document.getElementById('zoomed-image');
+            if (modal) {
+                modal.classList.add('opacity-0');
+                if (zoomedImg) {
+                    zoomedImg.classList.remove('scale-100');
+                    zoomedImg.classList.add('scale-95');
+                }
+                setTimeout(() => { modal.classList.add('hidden'); }, 300);
+            }
+        };
 
         init();
 
