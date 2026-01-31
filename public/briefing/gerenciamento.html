@@ -83,6 +83,15 @@
         <!-- Cards will be injected here -->
     </div>
 
+    <!-- Responses Section -->
+    <div class="mt-12 mb-6 border-t border-gray-200 pt-8" id="responses-section">
+        <h2 class="text-xl font-bold text-slate-800 mb-4">Respostas dos Usuários</h2>
+        <div id="responses-list" class="space-y-4 hidden">
+            <!-- Responses will be injected here -->
+        </div>
+        <div id="no-responses" class="text-center text-gray-400 italic hidden">Nenhuma resposta encontrada.</div>
+    </div>
+
     <!-- Edit/Add Modal -->
     <div id="modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl">
@@ -233,6 +242,81 @@
             } finally {
                 ui.loading.classList.add('hidden');
                 ui.stepsList.classList.remove('hidden');
+                fetchResponses(); // Load responses after steps
+            }
+        }
+
+        async function fetchResponses() {
+            const responsesList = document.getElementById('responses-list');
+            const noResponses = document.getElementById('no-responses');
+            if (!responsesList) return;
+
+            try {
+                // Fetch responses ordered by timestamp
+                const q = query(collection(db, "briefing_responses"), orderBy("timestamp", "desc"));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    noResponses.classList.remove('hidden');
+                    responsesList.classList.add('hidden');
+                    return;
+                }
+
+                noResponses.classList.add('hidden');
+                responsesList.classList.remove('hidden');
+
+                responsesList.innerHTML = querySnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    const date = data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString() : 'Data desconhecida';
+                    const responsesArray = data.responses || [];
+
+                    return `
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <div class="flex justify-between items-center mb-4 border-b border-gray-50 pb-2">
+                            <div>
+                                <h4 class="font-bold text-gray-700">Resposta #${doc.id.slice(0, 6)}</h4>
+                                <span class="text-xs text-gray-400">${date}</span>
+                            </div>
+                            <span class="text-xs bg-slate-100 px-2 py-1 rounded text-gray-500 truncate max-w-[150px]" title="${data.userAgent}">${data.userAgent || 'Unknown'}</span>
+                        </div>
+
+                        <div class="space-y-4">
+                            ${responsesArray.map(resp => `
+                                <div class="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                                    <div class="flex gap-4 items-start">
+                                        <div class="w-20 h-20 rounded-md bg-white border border-gray-200 overflow-hidden flex-shrink-0">
+                                            <img src="${resp.imageUsed}" class="w-full h-full object-contain">
+                                        </div>
+                                        
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex justify-between items-center mb-2">
+                                                <span class="font-bold text-xs text-primary uppercase tracking-wide bg-primary-light px-2 py-1 rounded inline-block">${resp.styleName}</span>
+                                                ${resp.liked ? '<i class="bx bxs-heart text-primary text-xl"></i>' : ''}
+                                            </div>
+                                            
+                                            ${resp.comment ? `<p class="text-sm text-gray-700 bg-white p-2 rounded border border-gray-100 italic">"${resp.comment}"</p>` : '<p class="text-xs text-gray-400 italic">Sem comentário</p>'}
+                                        </div>
+                                    </div>
+
+                                    ${resp.audioUrl ? `
+                                        <div class="mt-3 pt-3 border-t border-gray-200">
+                                            <div class="flex items-center gap-3">
+                                                <div class="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white flex-shrink-0">
+                                                    <i class='bx bx-headphone'></i>
+                                                </div>
+                                                <audio controls src="${resp.audioUrl}" class="h-8 w-full max-w-md"></audio>
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error("Error loading responses:", error);
             }
         }
 

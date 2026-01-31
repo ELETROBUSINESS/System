@@ -552,9 +552,10 @@
     <!-- Logic -->
 
     <script type="module">
-        import { db, auth } from "../app/js/firebase-config.js";
+        import { db, auth, storage } from "../app/js/firebase-config.js";
         import { collection, addDoc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
         // --- Data ---
         let steps = [];
@@ -719,11 +720,32 @@
             const
                 data = steps[currentStepIndex]; currentImageIndex = (currentImageIndex - 1 + data.images.length) %
                     data.images.length; updateCarousel();
-        } function resetInputs() {
-            ui.likeBtn.classList.remove('like-active');
-            ui.textInput.value = ""; checkInput(); currentComment = ""; ui.commentDisplayArea.innerHTML = "";
-            ui.commentDisplayArea.classList.add('hidden'); deleteAudio();
-        } function checkInput() {
+            function resetInputs() {
+                ui.likeBtn.classList.remove('like-active');
+                ui.textInput.value = "";
+                checkInput();
+                currentComment = "";
+                ui.commentDisplayArea.innerHTML = "";
+                ui.commentDisplayArea.classList.add('hidden');
+                deleteAudio(); // Clear current visual state
+
+                // Restore if exists
+                if (userResponses[currentStepIndex]) {
+                    const resp = userResponses[currentStepIndex];
+                    if (resp.liked) ui.likeBtn.classList.add('like-active');
+                    if (resp.comment) {
+                        ui.textInput.value = resp.comment;
+                        sendComment();
+                    }
+                    // Restore audio state if it's a blob in memory (not uploaded yet)
+                    if (resp.audioBlob) {
+                        currentAudioBlob = resp.audioBlob;
+                        ui.audioFeedbackArea.classList.remove('hidden');
+                        ui.activeAudioUI.classList.remove('hidden');
+                        ui.recordingStatus.classList.add('hidden');
+                    }
+                }
+            }
             if
                 (ui.textInput.value.trim().length > 0) {
                 ui.sendBtn.classList.add('visible');
@@ -888,18 +910,17 @@
             const finalComment = currentComment || unsentComment;
 
             if (steps[currentStepIndex]) {
+                const currentResp = userResponses[currentStepIndex] || {};
                 userResponses[currentStepIndex] = {
+                    ...currentResp,
                     stepId: steps[currentStepIndex].id || null,
                     styleName: steps[currentStepIndex].style || "Unknown",
                     imageUsed: steps[currentStepIndex].images[currentImageIndex],
                     liked: ui.likeBtn.classList.contains('like-active'),
                     comment: finalComment,
                     hasAudio: !!currentAudioBlob,
-                    audioUrl: currentAudioBlob ? currentAudioBlob.url : null
-                    // Note: audioUrl is blob URL, won't persist across sessions.
-                    // To strictly persist audio, we need to upload currentAudioBlob.blob to Firebase Storage.
-                    // For now, let's stick to saving text/metadata as requested "connect firebase".
-                    // Uploading audio would require more robust logic (upload task).
+                    audioUrl: currentAudioBlob ? currentAudioBlob.url : null,
+                    audioBlob: currentAudioBlob // Store the full object {blob, url} for upload later
                 };
             }
         }
@@ -952,19 +973,67 @@
 
         async function saveBriefingToFirebase() {
             try {
+                // Show loading state
+                const finishBtn = document.querySelector('#finish-screen button');
+                if (finishBtn) {
+                    finishBtn.disabled = true;
+                    finishBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Salvando...";
+                }
+
                 // Filter out empty responses
-                const validResponses = userResponses.filter(r => r);
+                let validResponses = userResponses.filter(r => r);
+
+                // Upload Audios first
+                const uploadPromises = validResponses.map(async (resp, index) => {
+                    if (resp.audioBlob && resp.audioBlob.blob) {
+                        const filename = `audio_${Date.now()}_${index}.wav`;
+                        // Note: We need 'ref' and 'storage' available. 
+                        // They will be imported at the top of the file in the next step.
+                        const storageRef = ref(storage, 'briefing_responses_audio/' + filename);
+                        try {
+                            const snapshot = await uploadBytes(storageRef, resp.audioBlob.blob);
+                            const downloadURL = await getDownloadURL(snapshot.ref);
+
+                            // Return new object with permanent URL and NO blob
+                            return {
+                                ...resp,
+                                audioUrl: downloadURL,
+                                audioBlob: null // nullify
+                            };
+                        } catch (err) {
+                            console.error("Audio upload failed", err);
+                            return resp;
+                        }
+                    }
+                    return resp;
+                });
+
+                const finalResponses = await Promise.all(uploadPromises);
+
+                // Clean for Firestore (remove nulls or blobs if any remained)
+                const sanitizedResponses = finalResponses.map(r => {
+                    // Create copy without audioBlob property
+                    const { audioBlob, ...rest } = r;
+                    return rest;
+                });
 
                 await addDoc(collection(db, "briefing_responses"), {
-                    responses: validResponses,
+                    responses: sanitizedResponses,
                     timestamp: serverTimestamp(),
                     userAgent: navigator.userAgent
                 });
                 console.log("Briefing saved to Firebase!");
-                // Optionally show a toast
+
+                alert("Briefing enviado com sucesso! Obrigado.");
+                window.location.reload();
+
             } catch (e) {
                 console.error("Error saving briefing: ", e);
                 alert("Erro ao salvar respostas. Tente novamente.");
+                if (finishBtn) {
+                    finishBtn.disabled = false;
+                    finishBtn.innerText = "Finalizar";
+                }
             }
         }
 
