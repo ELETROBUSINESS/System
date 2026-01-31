@@ -809,41 +809,49 @@
             } else {
                 ui.carouselControls.classList.remove('hidden');
             }
-        } function nextImage() {
-            const data = steps[currentStepIndex];
-            currentImageIndex = (currentImageIndex + 1) % data.images.length; updateCarousel();
-        } function prevImage() {
-            const
-                data = steps[currentStepIndex]; currentImageIndex = (currentImageIndex - 1 + data.images.length) %
-                    data.images.length; updateCarousel();
-            function resetInputs() {
-                ui.likeBtn.classList.remove('like-active');
-                ui.textInput.value = "";
-                checkInput();
-                currentComment = "";
-                ui.commentDisplayArea.innerHTML = "";
-                ui.commentDisplayArea.classList.add('hidden');
-                deleteAudio(); // Clear current visual state
+        }
 
-                // Restore if exists
-                if (userResponses[currentStepIndex]) {
-                    const resp = userResponses[currentStepIndex];
-                    if (resp.liked) ui.likeBtn.classList.add('like-active');
-                    if (resp.comment) {
-                        ui.textInput.value = resp.comment;
-                        sendComment();
-                    }
-                    // Restore audio state if it's a blob in memory (not uploaded yet)
-                    if (resp.audioBlob) {
-                        currentAudioBlob = resp.audioBlob;
-                        ui.audioFeedbackArea.classList.remove('hidden');
-                        ui.activeAudioUI.classList.remove('hidden');
-                        ui.recordingStatus.classList.add('hidden');
-                    }
+        function nextImage() {
+            const data = steps[currentStepIndex];
+            currentImageIndex = (currentImageIndex + 1) % data.images.length;
+            updateCarousel();
+        }
+
+        function prevImage() {
+            const data = steps[currentStepIndex];
+            currentImageIndex = (currentImageIndex - 1 + data.images.length) % data.images.length;
+            updateCarousel();
+        }
+
+        function resetInputs() {
+            ui.likeBtn.classList.remove('like-active');
+            ui.textInput.value = "";
+            checkInput();
+            currentComment = "";
+            ui.commentDisplayArea.innerHTML = "";
+            ui.commentDisplayArea.classList.add('hidden');
+            deleteAudio(); // Clear current visual state
+
+            // Restore if exists
+            if (userResponses[currentStepIndex]) {
+                const resp = userResponses[currentStepIndex];
+                if (resp.liked) ui.likeBtn.classList.add('like-active');
+                if (resp.comment) {
+                    ui.textInput.value = resp.comment;
+                    sendComment();
+                }
+                // Restore audio state if it's a blob in memory (not uploaded yet)
+                if (resp.audioBlob) {
+                    currentAudioBlob = resp.audioBlob;
+                    ui.audioFeedbackArea.classList.remove('hidden');
+                    ui.activeAudioUI.classList.remove('hidden');
+                    ui.recordingStatus.classList.add('hidden');
                 }
             }
-            if
-                (ui.textInput.value.trim().length > 0) {
+        }
+
+        function checkInput() {
+            if (ui.textInput.value.trim().length > 0) {
                 ui.sendBtn.classList.add('visible');
             } else {
                 ui.sendBtn.classList.remove('visible');
