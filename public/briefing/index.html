@@ -774,35 +774,24 @@
         function updateCarousel() {
             const data = steps[currentStepIndex];
             const newSrc = data.images[currentImageIndex];
-            const container = ui.img.parentElement;
 
-            // Note: ui.img is the original static img. We will use dynamic images now.
-            // On first run, ui.img exists. We can replace it or just append over it.
-            // Best strategy: 
-            // 1. Create new img
-            const newImg = document.createElement('img');
-            newImg.src = newSrc;
-            newImg.className = "absolute inset-0 w-full h-full object-cover fade-enter z-20";
+            // Simple robust swap
+            ui.img.style.opacity = '0.5';
+            ui.img.src = newSrc;
 
-            // 2. Append
-            container.appendChild(newImg);
-
-            // 3. Find old images to remove
-            const oldImages = Array.from(container.querySelectorAll('img')).filter(img => img !== newImg);
-
-            oldImages.forEach(img => {
-                img.classList.remove('fade-enter');
-                img.classList.add('fade-exit');
-                img.style.zIndex = '10'; // Move behind new one
+            // Small transition effect via CSS opacity
+            requestAnimationFrame(() => {
                 setTimeout(() => {
-                    if (img.parentNode) img.remove();
-                }, 500);
+                    ui.img.style.opacity = '1';
+                }, 50);
             });
 
             // Dots
-            ui.carouselDots.innerHTML = data.images.map((_, idx) => `
-                <div class="dot ${idx === currentImageIndex ? 'active' : ''}"></div>
-            `).join('');
+            if (ui.carouselDots) {
+                ui.carouselDots.innerHTML = data.images.map((_, idx) => `
+                    <div class="dot ${idx === currentImageIndex ? 'active' : ''}"></div>
+                `).join('');
+            }
 
             if (data.images.length <= 1) {
                 ui.carouselControls.classList.add('hidden');
