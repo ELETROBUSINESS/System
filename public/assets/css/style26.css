@@ -1880,3 +1880,53 @@ body {
     opacity: 0.8;
     vertical-align: 1px;
 }
+
+/* Interaction States (Added Step 223) */
+.value-balloon {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.value-balloon.expanded {
+    background-color: #e5e7eb;
+    /* Slightly darker when expanded */
+    padding-right: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.value-balloon.expanded .balloon-info {
+    display: flex !important;
+    /* Force show */
+    animation: fadeIn 0.3s ease-in;
+    flex-direction: column;
+    margin-right: 12px;
+    margin-left: 4px;
+    line-height: 1.1;
+}
+
+.b-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #1f2937;
+    white-space: nowrap;
+}
+
+.b-legend {
+    font-size: 0.6rem !important;
+    color: #6b7280 !important;
+    white-space: nowrap !important;
+    margin-top: 1px !important;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}

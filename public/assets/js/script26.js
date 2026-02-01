@@ -530,6 +530,34 @@ function animateValue(obj, start, end, duration, isCurrency = false) {
     window.requestAnimationFrame(step);
 }
 
+// Balloon Interaction
+// Balloon Interaction
+window.toggleBalloon = function (el) {
+    // Clear any existing timer to prevent clashes
+    if (el._timer) {
+        clearTimeout(el._timer);
+        el._timer = null;
+    }
+
+    if (el.classList.contains('expanded')) {
+        el.classList.remove('expanded');
+    } else {
+        // Collapse others
+        document.querySelectorAll('.value-balloon.expanded').forEach(b => {
+            b.classList.remove('expanded');
+            if (b._timer) clearTimeout(b._timer);
+        });
+
+        el.classList.add('expanded');
+
+        // Auto-collapse after 20s
+        el._timer = setTimeout(() => {
+            el.classList.remove('expanded');
+            el._timer = null;
+        }, 20000);
+    }
+};
+
 // FORMATTER for Rich Currency (Small R$ and Small Cents)
 function formatRichCurrency(valueStr) {
     // Expected: "R$ 1.002,42" or "R$ 0,00"
@@ -1181,8 +1209,9 @@ async function fetchBalanceData(forceUpdate = false) {
             combinedData.receber = d.aReceber.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
             // 3. Faturamento
-            const fatStr = d.faturamento.toFixed(2).replace('.', ',');
-            const [intPart, decPart] = fatStr.split(',');
+            const fatNum = d.faturamento;
+            const fatFormat = fatNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const [intPart, decPart] = fatFormat.split(',');
             combinedData.faturamento = `R$ ${intPart}`;
             combinedData.faturamentoDecimal = `,${decPart}`;
 
@@ -1196,7 +1225,8 @@ async function fetchBalanceData(forceUpdate = false) {
             // "- crediário... todas vendas a receber".
             // Se a API não manda, vou deixar R$ 0,00 ou tentar pegar do Legacy se ele existir?
             // Vou manter 0,00 se não vier, mas vou deixar o campo pronto.
-            combinedData.credito = 'R$ 0,00';
+            // If new API assumes 0 for credit but legacy has it, let's allow overwrite later
+            combinedData.credito = d.credito || null; // Let it be null to trigger fallback or use 0 if explicitly sent
         }
 
         // Fetch Legacy (GET) em paralelo se precisar de extras (Ticket, Crediario Legacy?)
@@ -1228,9 +1258,26 @@ function renderDashboardData(data, animate = false) {
     if (data.credito) creditoOriginal = data.credito; // Crediario ID=cred-val-balloon
 
     if (data.faturamento) {
-        faturamentoOriginal = data.faturamento;
-        faturamentoDecimalOriginal = data.faturamentoDecimal || ',00';
+        if (data.faturamentoDecimal) {
+            faturamentoOriginal = data.faturamento;
+            faturamentoDecimalOriginal = data.faturamentoDecimal;
+        } else {
+            // Fallback parsing if decimal part missing
+            let rawFat = data.faturamento;
+            let numFat = (typeof rawFat === 'string') ? parseFloat(rawFat.replace(/[^\d.-]/g, '')) : rawFat;
+
+            if (!isNaN(numFat)) {
+                const fatFormat = numFat.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const [intPart, decPart] = fatFormat.split(',');
+                faturamentoOriginal = `R$ ${intPart}`;
+                faturamentoDecimalOriginal = `,${decPart}`;
+            }
+        }
     }
+
+    // Sync Legacy ID if present (Enable Legacy Value)
+    const legCred = document.getElementById('cred-val-legacy');
+    if (legCred && creditoOriginal) legCred.innerText = creditoOriginal;
 
     // 2. Animate
     if (isBalanceVisible) {
