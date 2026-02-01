@@ -74,17 +74,43 @@
                     <i class="bx bx-show" id="toggle-balance-icon"></i>
                 </div>
                 <div class="pending">
-                    <p>Vendas a receber: </p>
-                    <span id="valor2" class="">R$&nbsp;0,00</span>
+                    <div id="balloons-container" class="value-balloon-container">
+                        <!-- InfinitePay Balloon -->
+                        <div class="value-balloon infinite" onclick="toggleBalloon(this)">
+                            <img src="https://i.ibb.co/14pX8yx/Logo-Infinite-Pay.png" alt="InfinitePay"
+                                id="icon-infinite" style="height: 20px; width: auto; border-radius: 0;">
+                            <i class='bx bx-credit-card-front' style="color: #25D366; display: none;"
+                                id="icon-infinite-fallback"></i>
+
+                            <div class="balloon-info" style="display:none;">
+                                <span class="b-title">A receber</span>
+                                <span class="b-legend">Vendas a receber da infinitepay</span>
+                            </div>
+
+                            <span id="valor2">R$ 0,00</span>
+                        </div>
+                        <!-- Crediário Balloon -->
+                        <div class="value-balloon crediario" onclick="toggleBalloon(this)">
+                            <img src="https://blogger.googleusercontent.com/img/a/AVvXsEjh9HYsK8nD_NA8Hd5v0I1Hq2ObgdmzJHoG9-XB1gzug5LIFUchj2H0gzpnPyTWj4pqVtqZy92a2OUhhdKnvv3JKBuXQjlCBgKiP0Shqu-dpWwqtqsPDInrDyabTzQrbUeitDypok-NgZnvrhzzTvB8g6vvuCk7V3vjb39NrYueaYqRJkrRH-Ud7dF7bhQ"
+                                alt="Crediário" style="height: 20px; width: auto; border-radius: 0;">
+
+                            <div class="balloon-info" style="display:none;">
+                                <span class="b-title">Cartão Digital</span>
+                                <span class="b-legend">Valores a receber do Crediario Digital</span>
+                            </div>
+
+                            <span id="cred-val-balloon">R$ 0,00</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="filter-area mb-2 px-2 flex justify-end w-full">
             <select class="period-selector" id="period-select" onchange="updateMetricsDashboard()">
-                <option value="day" selected>Hoje</option>
-                <option value="week">Esta Semana</option>
-                <option value="month">Este Mês</option>
+                <option value="dia" selected>Hoje</option>
+                <option value="semana">Esta Semana</option>
+                <option value="mes">Este Mês</option>
             </select>
         </div>
 

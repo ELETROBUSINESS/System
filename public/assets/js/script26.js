@@ -26,40 +26,25 @@ const API_URLS = window.USER_API_CONFIG || {
 async function fetchBalanceData(forceUpdate = false) {
     if (!document.getElementById('valor1') && !document.getElementById('kpi-ticket')) return;
 
-    // Detectar Período (Prioridade: Select da página > Padrão 'dia')
+    // Detectar Período
     const periodSelect = document.getElementById('period-select');
     const selectedPeriod = periodSelect ? periodSelect.value : 'dia';
 
-    // Cache Key distinct for period (para não misturar 'dia' com 'semana')
-    const keyHybrid = `hybrid_dashboard_data_${selectedPeriod}`;
+    // ALWAYS Show Full Skeleton (No Cache Strategy)
+    toggleSkeleton(['valor1', 'valor2', 'cred-val-balloon', 'fat-int'], true, 'red');
+
+    // Default hasCache to false
+    let hasCache = false;
 
     // URL & Payload
-    // Nota: Forçamos 'DT#25' temporariamente para garantir compatibilidade com os dados atuais da planilha.
-    // Futuramente, pode-se usar: const storeId = pathParts.length > 3 ? pathParts[3] : 'DT#25';
-    const storeId = 'DT#25';
-
+    const storeId = 'DT#25'; // Fixed for now
     const urlNew = NEW_API;
     const payloadNew = { action: 'calcular', loja: storeId, periodo: selectedPeriod };
-
     const urlLegacy = API_URLS.PAGINA_1;
-
-    // Skeleton
-    if (!DataManager.get(keyHybrid) && !forceUpdate) {
-        toggleSkeleton(['valor1', 'valor2', 'cred-val', 'fat-int'], true, 'red');
-    }
 
     try {
         const [resNew, resLegacy] = await Promise.allSettled([
-            // NOVA API: Deve ser POST conforme doPost(e)
-            fetch(urlNew, {
-                method: 'POST',
-                // body: JSON.stringify(payloadNew), // Apps Script doPost lê postData.contents
-                // O padrão do navegador é text/plain para evitar preflight em simple requests,
-                // mas vamos enviar sem headers explícitos para o Apps Script aceitar.
-                body: JSON.stringify(payloadNew)
-            }).then(r => r.json()),
-
-            // LEGACY API: GET normal
+            fetch(urlNew, { method: 'POST', body: JSON.stringify(payloadNew) }).then(r => r.json()),
             fetch(urlLegacy).then(r => r.json())
         ]);
 
@@ -68,35 +53,51 @@ async function fetchBalanceData(forceUpdate = false) {
         // 3. Processa Nova API
         if (resNew.status === 'fulfilled' && resNew.value.success) {
             const d = resNew.value.resultados;
-
             combinedData.saldo = d.saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             combinedData.receber = d.aReceber.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-            const fatStr = d.faturamento.toFixed(2).replace('.', ',');
-            const [intPart, decPart] = fatStr.split(',');
+            const fatNum = d.faturamento;
+            const fatFormat = fatNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const [intPart, decPart] = fatFormat.split(',');
             combinedData.faturamento = `R$ ${intPart}`;
             combinedData.faturamentoDecimal = `,${decPart}`;
 
             combinedData.clientes = d.clientesAtendidos;
+            // Fallback crediario from new API if exists
+            combinedData.credito = d.credito || null;
         }
 
         // 4. Processa Legacy
         if (resLegacy.status === 'fulfilled') {
             const d = resLegacy.value;
-            combinedData.credito = d.valor3 || 'R$ 0,00';
+            // Only use legacy credit if new API didn't provide it
+            if (!combinedData.credito) combinedData.credito = d.valor3 || 'R$ 0,00';
+
             combinedData.ticket = d.valor4 || 'R$ 0,00';
             combinedData.lucro = d.valor5 || 'R$ 0,00';
             combinedData.nfceVal = d.valor6 || 'R$ 0,00';
             combinedData.nfceQtd = d.valor7 || '0';
         }
 
-        DataManager.set(keyHybrid, combinedData);
-        renderDashboardData(combinedData, true);
+        // Remove loading indicator
+        const balContainer = document.querySelector('.balance');
+        if (balContainer) balContainer.classList.remove('updating-values');
+
+        // Render Data
+        renderDashboardData(combinedData, true); // Animate update
 
     } catch (error) {
         console.error("Erro no fetch híbrido:", error);
-        const cached = DataManager.get(keyHybrid);
-        if (cached) renderDashboardData(cached, false);
+
+        // Remove loading indicator
+        const balContainer = document.querySelector('.balance');
+        if (balContainer) balContainer.classList.remove('updating-values');
+
+        // If we have cache, user is fine. If not, maybe show skeleton or error.
+        if (!hasCache) {
+            toggleSkeleton(['valor1', 'valor2', 'cred-val-balloon', 'fat-int'], false, 'red'); // Clear or keep?
+            // Keep skeleton or show error? For now, remove skeleton to avoid stuck state.
+        }
     }
 }
 
@@ -608,8 +609,8 @@ function applyBalanceVisibility() {
         if (fatInt) fatInt.innerText = faturamentoOriginal;
         if (fatDec) fatDec.innerText = faturamentoDecimalOriginal;
 
-        // Rich Formatting for Balloons
-        if (credVal) credVal.innerHTML = formatRichCurrency(creditoOriginal);
+        // Rich Formatting for Balloons - CONSTANT 0,00
+        if (credVal) credVal.innerHTML = formatRichCurrency('R$ 0,00');
 
         if (toggleIcon) toggleIcon.className = 'bx bx-show';
     } else {
@@ -1284,7 +1285,8 @@ function renderDashboardData(data, animate = false) {
         if (animate) {
             updateValueWithAnimation('valor1', valor1Original);
             updateValueWithAnimation('valor2', valor2Original);
-            updateValueWithAnimation('cred-val-balloon', creditoOriginal);
+            // BALLOON ALWAYS 0,00
+            updateValueWithAnimation('cred-val-balloon', 'R$ 0,00');
             // Fat
             const fatInt = document.getElementById('fat-int');
             const fatDec = document.getElementById('fat-dec');
@@ -1766,156 +1768,12 @@ function fetchMetricsDashboardData(forceUpdate = false) {
 }
 
 /* --- LÓGICA DE MÉTRICAS (DASHBOARD) --- */
+/* --- LÓGICA DE MÉTRICAS (DASHBOARD) --- */
 function updateMetricsDashboard() {
-    if (!fullMetricsData) {
-        fetchMetricsDashboardData();
-        return;
-    }
-    // ... existing logic ...
-
-    const selector = document.getElementById('period-select');
-    if (!selector) return;
-
-    if (selector.value !== 'day') {
-        alert('Filtro indisponível no momento.');
-        selector.value = 'day';
-        return;
-    }
-
-    const period = selector.value;
-    const now = new Date();
-
-    // Filtra dados com base no período
-    const filteredData = fullMetricsData.filter(item => {
-        if (!item.timestamp) return false;
-        // Parse dd/mm/yyyy
-        const parts = item.timestamp.split(' ');
-        const dateParts = parts[0].split('/');
-        // Note: Month is 0-indexed in JS Date
-        const tDate = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
-
-        if (period === 'day') {
-            return tDate.getDate() === now.getDate() && tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear();
-        } else if (period === 'week') {
-            // Últimos 7 dias
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(now.getDate() - 7);
-            return tDate >= sevenDaysAgo;
-        } else if (period === 'month') {
-            return tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear();
-        }
-        return true;
-    });
-
-    // Calcula KPIs
-    let faturamento = 0;
-    let saidas = 0;
-
-    filteredData.forEach(item => {
-        let val = typeof item.total === 'number' ? item.total : parseFloat(item.total.replace('R$', '').replace(/\./g, '').replace(',', '.').trim());
-        if (isNaN(val)) val = 0;
-
-        const type = item.type ? item.type.toLowerCase() : '';
-        if (type === 'entrada') {
-            faturamento += val;
-        } else if (type === 'saida') {
-            saidas += val;
-        }
-    });
-
-    const entradasCount = filteredData.filter(i => (i.type || '').toLowerCase() === 'entrada').length;
-    const ticket = entradasCount > 0 ? faturamento / entradasCount : 0;
-    const lucro = faturamento - saidas;
-    const totalNfce = entradasCount; // Assumindo Entradas como Vendas/Notas
-
-    // Atualiza KPIs
-    animateValue(0, faturamento, 800, v => {
-        const el = document.getElementById('kpi-faturamento');
-        if (el) el.innerText = `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-    });
-    // Ticket, Lucro e NFCe agora vêm do fetchDashboardOperational (valor4..7)
-    // animateValue(0, ticket, 800, v => {
-    //     const el = document.getElementById('kpi-ticket');
-    //     if (el) el.innerText = `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-    // });
-    // animateValue(0, lucro, 800, v => {
-    //     const el = document.getElementById('kpi-lucro');
-    //     if (el) el.innerText = `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`;
-    // });
-    // animateValue(0, totalNfce, 800, v => {
-    //     const el = document.getElementById('kpi-nfce-val');
-    //     if (el) el.innerText = `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`;
-    // });
-
-    // Populate Info Totals
-    animateValue(0, faturamento, 800, v => {
-        const el = document.getElementById('kpi-total-in');
-        if (el) el.innerText = `+ R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-    });
-    animateValue(0, saidas, 800, v => {
-        const el = document.getElementById('kpi-total-out');
-        if (el) el.innerText = `- R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-    });
-
-    // const qtdEl = document.getElementById('kpi-nfce-qtd');
-    // if (qtdEl) qtdEl.innerText = `${totalNfce} notas`;
-
-    // Atualiza Gráfico (Last 7 Days trend from filtered Data?)
-
-    const salesByDate = {};
-    filteredData.forEach(item => {
-        if ((item.type || '').toLowerCase() === 'entrada') {
-            const parts = item.timestamp.split(' ');
-            const dateParts = parts[0].split('/');
-            // Use date object to sort correctly later
-            const dKey = parts[0].substring(0, 5); // dd/mm (Simple key)
-            // Better key: YYYYMMDD
-            const sortKey = `${dateParts[2]}${dateParts[1]}${dateParts[0]}`;
-
-            let val = typeof item.total === 'number' ? item.total : parseFloat(item.total.replace('R$', '').replace(/\./g, '').replace(',', '.').trim());
-
-            if (!salesByDate[sortKey]) salesByDate[sortKey] = { val: 0, label: dKey };
-            salesByDate[sortKey].val += val;
-        }
-    });
-
-    // Converter para array e ordenar
-    let sortedKeys = Object.keys(salesByDate).sort();
-
-    // Se vazio, mock zero
-    if (sortedKeys.length === 0) {
-        // Mock empty chart
-        renderAreaChart([0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]);
-        const lbl = document.getElementById('chart-labels');
-        if (lbl) lbl.innerHTML = '';
-        return;
-    }
-
-    const chartLabels = sortedKeys.map(k => salesByDate[k].label);
-    const chartValues = sortedKeys.map(k => salesByDate[k].val);
-
-    // Mock OldValues (Zero for now or calculate previous period?)
-    const oldValues = chartValues.map(v => v * 0.9); // Simulado -10%
-
-    // Render Labels
-    const labelContainer = document.getElementById('chart-labels');
-    if (labelContainer) {
-        // Show last 7 or all if less
-        const showLabels = chartLabels.slice(-7);
-        labelContainer.innerHTML = showLabels.map(l => `<span>${l}</span>`).join('');
-    }
-
-    // Render Chart
-    // Ensure we have at least 2 points for line
-    let renderVals = chartValues;
-    let renderOld = oldValues;
-
-    if (renderVals.length < 2) {
-        renderVals.push(renderVals[0] || 0);
-        renderOld.push(renderOld[0] || 0);
-    }
-
-    renderAreaChart(renderVals.slice(-7), renderOld.slice(-7));
+    // Reduzida para usar exluisvamente a lógica da API de Transição via fetchBalanceData
+    // A fetchBalanceData lê o #period-select, envia para a API (calcularDashboard)
+    // E recebe { faturamento, saldo, aReceber } já calculados.
+    fetchBalanceData(true);
 }
 
 /* --- LÓGICA DA LISTA DE EXTRATO (BIBLIOTECA BASE) --- */
@@ -2193,4 +2051,26 @@ function createDot(x, y, index, currentSet, prevSet) {
 
     dotsGroup.appendChild(circle);
 }
+
+
+window.addEventListener('load', () => {
+    // Initial Loads
+    fetchBalanceData();
+    fetchMovements();
+    fetchNFCeData();
+    fetchLastBills();
+    fetchRevenueChart();
+
+    // Setup Auto-Refresh Interval (Every 5 minutes)
+    setInterval(() => {
+        console.log('[AutoRefresh] Updating financial data...');
+        fetchBalanceData(true);
+    }, 5 * 60 * 1000);
+
+    // Initial Fade In
+    setTimeout(() => {
+        document.body.classList.add('loaded');
+    }, 100);
+});
+
 

@@ -1919,6 +1919,26 @@ body {
     margin-top: 1px !important;
 }
 
+@keyframes pulseUpdate {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+.updating-values .saldo,
+.updating-values .pending,
+.updating-values .kpi-value {
+    animation: pulseUpdate 1.5s infinite ease-in-out;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;
