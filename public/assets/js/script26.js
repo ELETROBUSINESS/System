@@ -482,7 +482,13 @@ function updateValueWithAnimation(elementId, newValueStr) {
     if (startVal !== endVal) {
         animateValue(el, startVal, endVal, 1500, true);
     } else {
-        el.innerText = newValueStr; // Garante formatação exata
+        // Sem mudança -> Define valor direto
+        // CHECK RICH FORMAT
+        if (el.id === 'valor2' || el.id === 'cred-val-balloon') {
+            el.innerHTML = formatRichCurrency(newValueStr);
+        } else {
+            el.innerText = newValueStr;
+        }
     }
 }
 
@@ -508,11 +514,33 @@ function animateValue(obj, start, end, duration, isCurrency = false) {
             window.requestAnimationFrame(step);
         } else {
             // Finaliza com valor exato formatado (para evitar imprecisões de float na animação)
-            if (isCurrency) obj.innerHTML = end.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            if (isCurrency) {
+                let finalStr = end.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                obj.innerHTML = finalStr;
+
+                // --- RICH FORMATTING HOOK ---
+                // Se for um dos balões novos, aplica o formato Rich HTML
+                if (obj.id === 'valor2' || obj.id === 'cred-val-balloon') {
+                    obj.innerHTML = formatRichCurrency(finalStr);
+                }
+            }
             else obj.innerHTML = end;
         }
     };
     window.requestAnimationFrame(step);
+}
+
+// FORMATTER for Rich Currency (Small R$ and Small Cents)
+function formatRichCurrency(valueStr) {
+    // Expected: "R$ 1.002,42" or "R$ 0,00"
+    // Clean spaces
+    let clean = valueStr.trim().replace(/^R\$\s?/, '');
+    // Split integer and decimal
+    let parts = clean.split(',');
+    let intPart = parts[0];
+    let decPart = parts[1] || '00';
+
+    return `<span class="curr-sm">R$</span> <span class="curr-int">${intPart}</span><span class="curr-sm">,${decPart}</span>`;
 }
 
 /* --- SKELETON HELPERS --- */
@@ -545,10 +573,15 @@ function applyBalanceVisibility() {
 
     if (isBalanceVisible) {
         if (v1El) v1El.textContent = valor1Original;
-        if (v2El) v2El.textContent = valor2Original;
+
+        // Rich Formatting for Balloons
+        if (v2El) v2El.innerHTML = formatRichCurrency(valor2Original);
+
         if (fatInt) fatInt.innerText = faturamentoOriginal;
         if (fatDec) fatDec.innerText = faturamentoDecimalOriginal;
-        if (credVal) credVal.innerText = creditoOriginal;
+
+        // Rich Formatting for Balloons
+        if (credVal) credVal.innerHTML = formatRichCurrency(creditoOriginal);
 
         if (toggleIcon) toggleIcon.className = 'bx bx-show';
     } else {
@@ -1181,7 +1214,7 @@ async function fetchBalanceData(forceUpdate = false) {
 
     } catch (error) {
         console.error("Erro no fetch híbrido:", error);
-        toggleSkeleton(['valor1', 'valor2', 'cred-val-balloon', 'fat-int'], false);
+        toggleSkeleton(['valor1', 'valor2', 'cred-val-balloon', 'fat-int'], false, 'red');
     }
 }
 
@@ -1216,7 +1249,7 @@ function renderDashboardData(data, animate = false) {
     }
 
     // 3. Remove Skeleton
-    toggleSkeleton(['valor1', 'valor2', 'cred-val-balloon', 'fat-int', 'fat-dec'], false);
+    toggleSkeleton(['valor1', 'valor2', 'cred-val-balloon', 'fat-int', 'fat-dec'], false, 'red');
     applyBalanceVisibility();
 }
 
