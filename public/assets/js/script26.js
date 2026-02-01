@@ -41,11 +41,20 @@ async function fetchBalanceData(forceUpdate = false) {
     const urlNew = NEW_API;
     const payloadNew = { action: 'calcular', loja: storeId, periodo: selectedPeriod };
     const urlLegacy = API_URLS.PAGINA_1;
+    // [NOVO] URL da Previsão Financeira - Hardcoded Fallback para garantir funcionamento
+    const NFCE_URL = API_URLS.NFCE || "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
+    const urlPrevisao = `${NFCE_URL}?action=previsaoMensal`;
+
+    console.log("Fetching Previsao from:", urlPrevisao);
 
     try {
-        const [resNew, resLegacy] = await Promise.allSettled([
+        const [resNew, resLegacy, resPrevisao] = await Promise.allSettled([
             fetch(urlNew, { method: 'POST', body: JSON.stringify(payloadNew) }).then(r => r.json()),
-            fetch(urlLegacy).then(r => r.json())
+            fetch(urlLegacy).then(r => r.json()),
+            fetch(urlPrevisao, { method: 'GET', redirect: 'follow' }).then(r => {
+                if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
+                return r.json();
+            })
         ]);
 
         let combinedData = {};
@@ -63,20 +72,36 @@ async function fetchBalanceData(forceUpdate = false) {
             combinedData.faturamentoDecimal = `,${decPart}`;
 
             combinedData.clientes = d.clientesAtendidos;
-            // Fallback crediario from new API if exists
-            combinedData.credito = d.credito || null;
+            // REMOVIDO: Fallback de crédito da API Nova
         }
 
         // 4. Processa Legacy
         if (resLegacy.status === 'fulfilled') {
             const d = resLegacy.value;
-            // Only use legacy credit if new API didn't provide it
-            if (!combinedData.credito) combinedData.credito = d.valor3 || 'R$ 0,00';
+            // [CORREÇÃO] Recupera o "Crédito a Receber (Total)" da Legacy
+            combinedData.creditoTotal = d.valor3 || 'R$ 0,00';
 
             combinedData.ticket = d.valor4 || 'R$ 0,00';
             combinedData.lucro = d.valor5 || 'R$ 0,00';
             combinedData.nfceVal = d.valor6 || 'R$ 0,00';
             combinedData.nfceQtd = d.valor7 || '0';
+        }
+
+        // 5. [NOVO] Processa Previsão (FONTE ÚNICA para Cartão Digital - Balão)
+        if (resPrevisao.status === 'fulfilled') {
+            // console.log("Previsao Raw:", resPrevisao.value);
+            // Verifica 'status' ou se o objeto tem 'previsao' direto
+            if (resPrevisao.value.status === 'success' || resPrevisao.value.previsao !== undefined) {
+                const val = parseFloat(resPrevisao.value.previsao) || 0;
+                combinedData.credito = val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                // console.log("Previsao Aplicada:", combinedData.credito);
+            } else {
+                console.warn("Previsao: Formato inesperado", resPrevisao.value);
+                combinedData.credito = 'R$ 0,00';
+            }
+        } else {
+            console.error("Previsao Error:", resPrevisao.reason);
+            combinedData.credito = 'R$ 0,00';
         }
 
         // Remove loading indicator
@@ -110,25 +135,47 @@ function updateMetricsDashboard() {
 function renderDashboardData(data, animate = false) {
     if (!data) return;
 
-    // Globais para o toggle de privacidade (applyBalanceVisibility)
-    // Lógica Segura: Só sobrescreve se o dado veio. Se veio null/undefined, mantém o que estava ou usa padrão.
-    if (data.saldo) valor1Original = data.saldo;
-    if (data.receber) valor2Original = data.receber;
-    if (data.credito) creditoOriginal = data.credito;
+    // 1. Globais - SEMPRE sobrescreve (evita dados estagnados)
+    valor1Original = data.saldo || 'R$ 0,00';
+    valor2Original = data.receber || 'R$ 0,00'; // InfinitePay
+    creditoOriginal = data.credito || 'R$ 0,00'; // Crediario (Digital - Previsão Mensal)
 
-    // Faturamento tem partes Int e Dec
+    // [NOVO] Global para o Total (Legacy)
+    // Se não vier no data, mantém o anterior ou default? Melhor defaultar para evitar sujeira.
+    if (data.creditoTotal) window.creditoTotalOriginal = data.creditoTotal;
+    else if (!window.creditoTotalOriginal) window.creditoTotalOriginal = 'R$ 0,00';
+
     if (data.faturamento) {
-        faturamentoOriginal = data.faturamento;
-        faturamentoDecimalOriginal = data.faturamentoDecimal || ',00';
+        if (data.faturamentoDecimal) {
+            faturamentoOriginal = data.faturamento;
+            faturamentoDecimalOriginal = data.faturamentoDecimal;
+        } else {
+            // Fallback parsing if decimal part missing
+            let rawFat = data.faturamento;
+            let numFat = (typeof rawFat === 'string') ? parseFloat(rawFat.replace(/[^\d.-]/g, '')) : rawFat;
+
+            if (!isNaN(numFat)) {
+                const fatFormat = numFat.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const [intPart, decPart] = fatFormat.split(',');
+                faturamentoOriginal = `R$ ${intPart}`;
+                faturamentoDecimalOriginal = `,${decPart}`;
+            }
+        }
     }
 
-    // Se a privacidade estiver ativa (olho aberto), atualiza a tela
+    // Sync Legacy ID (Total) - Atualiza UI
+    const legCred = document.getElementById('cred-val-legacy');
+    if (legCred) legCred.innerText = window.creditoTotalOriginal;
+
+    // 2. Animate
     if (isBalanceVisible) {
         if (animate) {
             updateValueWithAnimation('valor1', valor1Original);
             updateValueWithAnimation('valor2', valor2Original);
-            updateValueWithAnimation('cred-val-balloon', creditoOriginal); // Updated ID
-            // Fat update no animation helper yet, direct set
+            // BALLOON CREDIT VALUE (Previsão Mensal)
+            // console.log("Renderizando Cartão Digital/Previsão:", creditoOriginal);
+            updateValueWithAnimation('cred-val-balloon', creditoOriginal);
+            // Fat
             const fatInt = document.getElementById('fat-int');
             const fatDec = document.getElementById('fat-dec');
             if (fatInt) fatInt.innerText = faturamentoOriginal;
@@ -139,9 +186,8 @@ function renderDashboardData(data, animate = false) {
         }
     }
 
-    // Sempre remove Skeleton ao final (se sucesso)
-    toggleSkeleton(['valor1', 'valor2', 'cred-val', 'fat-int'], false);
-
+    // 3. Remove Skeleton
+    toggleSkeleton(['valor1', 'valor2', 'cred-val-balloon', 'fat-int', 'fat-dec'], false, 'red');
     // Garante que o estado visual (*** ou Valor) esteja correto
     applyBalanceVisibility();
 
@@ -177,9 +223,17 @@ function fetchDashboardOperational(forceUpdate = false) {
 (function checkAuth() {
     if (window.USER_API_CONFIG || window.DISABLE_LEGACY_AUTH) return;
     const tokenString = localStorage.getItem('session_token');
-    const LOGIN_URL = '/login.html';
+
+    // Antigravity: Multi-Login Support
+    // Se estiver na pasta específica do admin/nb, redireciona para e-finance.html
+    let LOGIN_URL = '/login.html';
+    if (window.location.pathname.includes('/adm/nb/')) {
+        LOGIN_URL = '/users/e-finance.html';
+    }
+
     if (!tokenString) {
-        if (!window.location.pathname.includes('login.html')) {
+        // Evita loop se já estivermos na página de login correta
+        if (!window.location.pathname.includes('login.html') && !window.location.pathname.includes('e-finance.html')) {
             window.location.href = LOGIN_URL;
         }
         return;
@@ -598,6 +652,7 @@ function applyBalanceVisibility() {
     const fatInt = document.getElementById('fat-int');
     const fatDec = document.getElementById('fat-dec');
     const credVal = document.getElementById('cred-val-balloon'); // Updated to Balloon ID
+    const legCred = document.getElementById('cred-val-legacy'); // [NOVO] Legacy Total
     const toggleIcon = document.getElementById('toggle-balance-icon');
 
     if (isBalanceVisible) {
@@ -610,7 +665,10 @@ function applyBalanceVisibility() {
         if (fatDec) fatDec.innerText = faturamentoDecimalOriginal;
 
         // Rich Formatting for Balloons - CONSTANT 0,00
-        if (credVal) credVal.innerHTML = formatRichCurrency('R$ 0,00');
+        if (credVal) credVal.innerHTML = formatRichCurrency(creditoOriginal || 'R$ 0,00');
+
+        // Restore Legacy Total
+        if (legCred) legCred.innerText = window.creditoTotalOriginal || 'R$ 0,00';
 
         if (toggleIcon) toggleIcon.className = 'bx bx-show';
     } else {
@@ -620,6 +678,7 @@ function applyBalanceVisibility() {
         if (fatInt) fatInt.innerText = 'R$ ***';
         if (fatDec) fatDec.innerText = ',**';
         if (credVal) credVal.innerText = 'R$ ***,**';
+        if (legCred) legCred.innerText = 'R$ ***,**';
 
         if (toggleIcon) toggleIcon.className = 'bx bx-hide';
     }
@@ -1173,90 +1232,16 @@ window.onload = () => {
 
 /* --- FETCH SALDO (Página 1) --- */
 /* --- FETCH SALDO (Página 1) + FATURAMENTO --- */
-async function fetchBalanceData(forceUpdate = false) {
-    if (!document.getElementById('valor1')) return;
 
-    // Detectar Período e Loja
-    const periodSelect = document.getElementById('period-select');
-    const selectedPeriod = periodSelect ? periodSelect.value : 'dia';
-    const storeId = 'DT#25'; // Hardcoded as per previous fix
-
-    // Cache Key
-    const keyHybrid = `hybrid_dashboard_data_${selectedPeriod}`;
-
-    // Skeleton Toggle
-    if (!DataManager.get(keyHybrid) && !forceUpdate) {
-        toggleSkeleton(['valor1', 'valor2', 'cred-val-balloon', 'fat-int', 'fat-dec'], true, 'red');
-    }
-
-    const payloadNew = { action: 'calcular', loja: storeId, periodo: selectedPeriod };
-
-    try {
-        let combinedData = {};
-
-        // Fetch Nova API (POST)
-        const resNew = await fetch(NEW_API, {
-            method: 'POST',
-            body: JSON.stringify(payloadNew)
-        }).then(r => r.json());
-
-        if (resNew.success) {
-            const d = resNew.resultados;
-
-            // 1. Saldo
-            combinedData.saldo = d.saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-            // 2. A Receber (InfinitePay Balloon - valor2)
-            combinedData.receber = d.aReceber.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-            // 3. Faturamento
-            const fatNum = d.faturamento;
-            const fatFormat = fatNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            const [intPart, decPart] = fatFormat.split(',');
-            combinedData.faturamento = `R$ ${intPart}`;
-            combinedData.faturamentoDecimal = `,${decPart}`;
-
-            // 4. Crediário (Balloon)
-            // A API nova não retornou 'crediario' explicitamente no 'result' do API.js que vi.
-            // Mas o user disse "crediario (vai mostrar todas as vendas a receber no mês em vigor)".
-            // No API.js step 3, o retorno é: saldo, faturamento, aReceber, clientesAtendidos.
-            // Não tem 'crediario'. Vou usar placeholder ou logic?
-            // "Vendas a receber" no código antigo era 'aReceber'.
-            // O user disse: "- a receber... infinite... maquininha" -> Isso é o meu 'd.aReceber'.
-            // "- crediário... todas vendas a receber".
-            // Se a API não manda, vou deixar R$ 0,00 ou tentar pegar do Legacy se ele existir?
-            // Vou manter 0,00 se não vier, mas vou deixar o campo pronto.
-            // If new API assumes 0 for credit but legacy has it, let's allow overwrite later
-            combinedData.credito = d.credito || null; // Let it be null to trigger fallback or use 0 if explicitly sent
-        }
-
-        // Fetch Legacy (GET) em paralelo se precisar de extras (Ticket, Crediario Legacy?)
-        // Como o user falou q a API de transição é a URL nova, vou focar nela.
-        // Se precisar do valor do crediário vindo de outro lugar, teria que chamar a legacy.
-        // Vou chamar a legacy só para garantir o 'credito' se a nova não tiver.
-        try {
-            const resLegacy = await fetch(API_URLS.PAGINA_1).then(r => r.json());
-            if (resLegacy.valor3) combinedData.credito = resLegacy.valor3; // Valor3 era credito
-        } catch (e) { console.log('Legacy fetch fail'); }
-
-
-        DataManager.set(keyHybrid, combinedData);
-        renderDashboardData(combinedData, true);
-
-    } catch (error) {
-        console.error("Erro no fetch híbrido:", error);
-        toggleSkeleton(['valor1', 'valor2', 'cred-val-balloon', 'fat-int'], false, 'red');
-    }
-}
 
 // Renderizador unificado
 function renderDashboardData(data, animate = false) {
     if (!data) return;
 
-    // 1. Globais
-    if (data.saldo) valor1Original = data.saldo;
-    if (data.receber) valor2Original = data.receber; // InfinitePay ID=valor2
-    if (data.credito) creditoOriginal = data.credito; // Crediario ID=cred-val-balloon
+    // 1. Globais - SEMPRE sobrescreve (evita dados estagnados)
+    valor1Original = data.saldo || 'R$ 0,00';
+    valor2Original = data.receber || 'R$ 0,00'; // InfinitePay
+    creditoOriginal = data.credito || 'R$ 0,00'; // Crediario (Digital)
 
     if (data.faturamento) {
         if (data.faturamentoDecimal) {
@@ -1276,17 +1261,21 @@ function renderDashboardData(data, animate = false) {
         }
     }
 
+    // [NOVO] Global para o Total (Legacy)
+    if (data.creditoTotal) window.creditoTotalOriginal = data.creditoTotal;
+
     // Sync Legacy ID if present (Enable Legacy Value)
     const legCred = document.getElementById('cred-val-legacy');
-    if (legCred && creditoOriginal) legCred.innerText = creditoOriginal;
+    if (legCred) legCred.innerText = window.creditoTotalOriginal || 'R$ 0,00';
 
     // 2. Animate
     if (isBalanceVisible) {
         if (animate) {
             updateValueWithAnimation('valor1', valor1Original);
             updateValueWithAnimation('valor2', valor2Original);
-            // BALLOON ALWAYS 0,00
-            updateValueWithAnimation('cred-val-balloon', 'R$ 0,00');
+            // BALLOON CREDIT VALUE (Fixed)
+            console.log("Renderizando Cartão Digital/Previsão:", creditoOriginal);
+            updateValueWithAnimation('cred-val-balloon', creditoOriginal);
             // Fat
             const fatInt = document.getElementById('fat-int');
             const fatDec = document.getElementById('fat-dec');
@@ -2058,7 +2047,7 @@ window.addEventListener('load', () => {
     fetchBalanceData();
     fetchMovements();
     fetchNFCeData();
-    fetchLastBills();
+    fetchBills();
     fetchRevenueChart();
 
     // Setup Auto-Refresh Interval (Every 5 minutes)
