@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-br" data-view="mobile" data-minimized="false">
 
@@ -81,22 +82,8 @@
                     <i class="bx bx-eye" id="toggle-balance-icon"></i>
                 </div>
                 <div class="pending">
-                    <div id="balloons-container" class="value-balloon-container">
-                        <!-- InfinitePay Balloon -->
-                        <div class="value-balloon infinite">
-                            <img src="https://i.ibb.co/14pX8yx/Logo-Infinite-Pay.png" alt="InfinitePay"
-                                id="icon-infinite" style="height: 20px; width: auto; border-radius: 0;">
-                            <i class='bx bx-credit-card-front' style="color: #25D366; display: none;"
-                                id="icon-infinite-fallback"></i>
-                            <span id="valor2">R$ 0,00</span>
-                        </div>
-                        <!-- Crediário Balloon -->
-                        <div class="value-balloon crediario">
-                            <img src="https://blogger.googleusercontent.com/img/a/AVvXsEjh9HYsK8nD_NA8Hd5v0I1Hq2ObgdmzJHoG9-XB1gzug5LIFUchj2H0gzpnPyTWj4pqVtqZy92a2OUhhdKnvv3JKBuXQjlCBgKiP0Shqu-dpWwqtqsPDInrDyabTzQrbUeitDypok-NgZnvrhzzTvB8g6vvuCk7V3vjb39NrYueaYqRJkrRH-Ud7dF7bhQ"
-                                alt="Crediário" style="height: 20px; width: auto; border-radius: 0;">
-                            <span id="cred-val-balloon">R$ 0,00</span>
-                        </div>
-                    </div>
+                    <p>Vendas a receber: </p>
+                    <span id="valor2" class="">R$&nbsp;0,00</span>
                 </div>
             </div>
         </div>
@@ -132,8 +119,7 @@
                 <div class="flex items-center justify-between relative mb-2">
                     <div class="flex-1 section-content" id="fat-section">
                         <p class="text-[10px] font-semibold text-gray-400 uppercase mb-1">Faturamento</p>
-                        <!-- Fixed Layout issues: changed flex items-baseline to prevent wrapping -->
-                        <div class="flex items-baseline flex-nowrap whitespace-nowrap">
+                        <div class="flex items-baseline">
                             <span class="text-xl font-bold text-gray-800" id="fat-int">R$ 0</span>
                             <span class="text-[10px] ml-0.5 text-gray-400 font-bold" id="fat-dec">,00</span>
                         </div>
@@ -152,24 +138,12 @@
                         <div id="interaction-hint">Segure para trocar</div>
                     </div>
 
-                    <!-- Cred-section removed from here as per new layout request (moved to balloon) -->
-                    <!-- If user wanted to KEEP it here but just add balloon, I should probably keep it hidden or repurpose -->
-                    <!-- But request implies balloons replace the old 'Vendas a receber' text which was 'valor2'. 
-                             The 'cred-section' (Crédito a receber) was part of the toggle. -->
-                    <!-- Let's keep the structure but maybe hide it or let script handle visibility? 
-                             The user asked to change "Em a receber...". 
-                             If I remove 'cred-section' ID, script might break. Let's keep it but hidden effectively if needed, 
-                             OR better, update the script to target the new balloon for crediario values.
-                             Wait, the user said: "credito (vai mostrar todas as vendas a receber no mês em vigor)".
-                             Currently 'cred-section' shows 'cred-val'.
-                             I will duplicate the ID 'cred-val' issue if I am not careful. 
-                             Let's RENAME the old one to avoid conflict or just update script to target new one. 
-                             Script updates 'cred-val'. I will change the ID here to 'cred-val-legacy' and use 'cred-val' in the balloon.
-                        -->
-                    <div class="flex-1 text-right section-content section-disabled" id="cred-section"
-                        style="display:none">
+                    <div class="flex-1 text-right section-content section-disabled" id="cred-section">
                         <p class="text-[10px] font-semibold text-gray-400 uppercase mb-1">Crédito a receber</p>
-                        <span class="text-xl font-bold text-gray-800" id="cred-val-legacy">R$ 0k</span>
+                        <span class="text-xl font-bold text-gray-800" id="cred-val">R$ 0k</span>
+                        <div class="w-full bg-gray-100 h-1 rounded-full mt-2 overflow-hidden ml-auto max-w-[80px]">
+                            <div id="health-bar" class="h-full bg-red-500" style="width: 0%"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -194,9 +168,7 @@
                 </div>
             </div>
             <div class="mt-4 text-center">
-                <a class='text-[10px] font-bold text-class-gray-400 hover:text-red-500 uppercase tracking-widest transition-colors'
-                    href='/users/45692327000100/cd1/adm/nb/extrato' style='color: #9ca3af; text-decoration: none;'>Ver
-                    mais</a>
+                <a class='text-[10px] font-bold text-class-gray-400 hover:text-red-500 uppercase tracking-widest transition-colors' href='/users/45692327000100/cd1/adm/nb/extrato' style='color: #9ca3af; text-decoration: none;'>Ver mais</a>
             </div>
         </div>
 

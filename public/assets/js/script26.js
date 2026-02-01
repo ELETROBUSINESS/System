@@ -126,7 +126,7 @@ function renderDashboardData(data, animate = false) {
         if (animate) {
             updateValueWithAnimation('valor1', valor1Original);
             updateValueWithAnimation('valor2', valor2Original);
-            updateValueWithAnimation('cred-val', creditoOriginal);
+            updateValueWithAnimation('cred-val-balloon', creditoOriginal); // Updated ID
             // Fat update no animation helper yet, direct set
             const fatInt = document.getElementById('fat-int');
             const fatDec = document.getElementById('fat-dec');
@@ -540,7 +540,7 @@ function applyBalanceVisibility() {
     const v2El = document.getElementById('valor2');
     const fatInt = document.getElementById('fat-int');
     const fatDec = document.getElementById('fat-dec');
-    const credVal = document.getElementById('cred-val');
+    const credVal = document.getElementById('cred-val-balloon'); // Updated to Balloon ID
     const toggleIcon = document.getElementById('toggle-balance-icon');
 
     if (isBalanceVisible) {
@@ -1108,6 +1108,117 @@ window.onload = () => {
     // 2. Start Stepped Auto-Refresh Sequence
     scheduleAutoRefresh();
 };
+
+/* --- FETCH SALDO (Página 1) --- */
+/* --- FETCH SALDO (Página 1) + FATURAMENTO --- */
+async function fetchBalanceData(forceUpdate = false) {
+    if (!document.getElementById('valor1')) return;
+
+    // Detectar Período e Loja
+    const periodSelect = document.getElementById('period-select');
+    const selectedPeriod = periodSelect ? periodSelect.value : 'dia';
+    const storeId = 'DT#25'; // Hardcoded as per previous fix
+
+    // Cache Key
+    const keyHybrid = `hybrid_dashboard_data_${selectedPeriod}`;
+
+    // Skeleton Toggle
+    if (!DataManager.get(keyHybrid) && !forceUpdate) {
+        toggleSkeleton(['valor1', 'valor2', 'cred-val-balloon', 'fat-int', 'fat-dec'], true, 'red');
+    }
+
+    const payloadNew = { action: 'calcular', loja: storeId, periodo: selectedPeriod };
+
+    try {
+        let combinedData = {};
+
+        // Fetch Nova API (POST)
+        const resNew = await fetch(NEW_API, {
+            method: 'POST',
+            body: JSON.stringify(payloadNew)
+        }).then(r => r.json());
+
+        if (resNew.success) {
+            const d = resNew.resultados;
+
+            // 1. Saldo
+            combinedData.saldo = d.saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            // 2. A Receber (InfinitePay Balloon - valor2)
+            combinedData.receber = d.aReceber.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            // 3. Faturamento
+            const fatStr = d.faturamento.toFixed(2).replace('.', ',');
+            const [intPart, decPart] = fatStr.split(',');
+            combinedData.faturamento = `R$ ${intPart}`;
+            combinedData.faturamentoDecimal = `,${decPart}`;
+
+            // 4. Crediário (Balloon)
+            // A API nova não retornou 'crediario' explicitamente no 'result' do API.js que vi.
+            // Mas o user disse "crediario (vai mostrar todas as vendas a receber no mês em vigor)".
+            // No API.js step 3, o retorno é: saldo, faturamento, aReceber, clientesAtendidos.
+            // Não tem 'crediario'. Vou usar placeholder ou logic?
+            // "Vendas a receber" no código antigo era 'aReceber'.
+            // O user disse: "- a receber... infinite... maquininha" -> Isso é o meu 'd.aReceber'.
+            // "- crediário... todas vendas a receber".
+            // Se a API não manda, vou deixar R$ 0,00 ou tentar pegar do Legacy se ele existir?
+            // Vou manter 0,00 se não vier, mas vou deixar o campo pronto.
+            combinedData.credito = 'R$ 0,00';
+        }
+
+        // Fetch Legacy (GET) em paralelo se precisar de extras (Ticket, Crediario Legacy?)
+        // Como o user falou q a API de transição é a URL nova, vou focar nela.
+        // Se precisar do valor do crediário vindo de outro lugar, teria que chamar a legacy.
+        // Vou chamar a legacy só para garantir o 'credito' se a nova não tiver.
+        try {
+            const resLegacy = await fetch(API_URLS.PAGINA_1).then(r => r.json());
+            if (resLegacy.valor3) combinedData.credito = resLegacy.valor3; // Valor3 era credito
+        } catch (e) { console.log('Legacy fetch fail'); }
+
+
+        DataManager.set(keyHybrid, combinedData);
+        renderDashboardData(combinedData, true);
+
+    } catch (error) {
+        console.error("Erro no fetch híbrido:", error);
+        toggleSkeleton(['valor1', 'valor2', 'cred-val-balloon', 'fat-int'], false);
+    }
+}
+
+// Renderizador unificado
+function renderDashboardData(data, animate = false) {
+    if (!data) return;
+
+    // 1. Globais
+    if (data.saldo) valor1Original = data.saldo;
+    if (data.receber) valor2Original = data.receber; // InfinitePay ID=valor2
+    if (data.credito) creditoOriginal = data.credito; // Crediario ID=cred-val-balloon
+
+    if (data.faturamento) {
+        faturamentoOriginal = data.faturamento;
+        faturamentoDecimalOriginal = data.faturamentoDecimal || ',00';
+    }
+
+    // 2. Animate
+    if (isBalanceVisible) {
+        if (animate) {
+            updateValueWithAnimation('valor1', valor1Original);
+            updateValueWithAnimation('valor2', valor2Original);
+            updateValueWithAnimation('cred-val-balloon', creditoOriginal);
+            // Fat
+            const fatInt = document.getElementById('fat-int');
+            const fatDec = document.getElementById('fat-dec');
+            if (fatInt) fatInt.innerText = faturamentoOriginal;
+            if (fatDec) fatDec.innerText = faturamentoDecimalOriginal;
+        } else {
+            applyBalanceVisibility();
+        }
+    }
+
+    // 3. Remove Skeleton
+    toggleSkeleton(['valor1', 'valor2', 'cred-val-balloon', 'fat-int', 'fat-dec'], false);
+    applyBalanceVisibility();
+}
 
 /* --- FETCH MOVIMENTAÇÕES (Histórico) --- */
 function fetchMovements(forceUpdate = false) {
@@ -2003,13 +2114,3 @@ function createDot(x, y, index, currentSet, prevSet) {
     dotsGroup.appendChild(circle);
 }
 
-function animateValue(start, end, duration, callback) {
-    let startTimestamp = null;
-    const step = (timestamp) => {
-        if (!startTimestamp) startTimestamp = timestamp;
-        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-        callback(progress * (end - start) + start);
-        if (progress < 1) window.requestAnimationFrame(step);
-    };
-    window.requestAnimationFrame(step);
-}

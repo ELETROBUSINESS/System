@@ -798,6 +798,60 @@ form {
     box-shadow: 0 1px 4px hsla(0, 0%, 98%, 0.1);
 }
 
+/* --- Balloon Values Styles --- */
+.value-balloon-container {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+    /* Allows wrapping if screen is too small */
+}
+
+.value-balloon {
+    display: flex;
+    align-items: center;
+    background-color: #f3f4f6;
+    /* bg-gray-100 equivalent */
+    border-radius: 9999px;
+    /* rounded-full */
+    padding: 0.25rem 0.75rem;
+    /* py-1 px-3 */
+    gap: 0.5rem;
+    /* transition: all 0.2s ease; */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.value-balloon img {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    object-fit: contain;
+}
+
+.value-balloon i {
+    font-size: 1.2rem;
+    /* color: var(--main); */
+}
+
+.value-balloon span {
+    font-size: 0.875rem;
+    /* text-sm */
+    font-weight: 600;
+    color: #000000;
+    /* Force Black */
+}
+
+/* Specific styling for Crediário balloon if needed */
+.value-balloon.crediario i {
+    color: #8b5cf6;
+    /* Purple for Nubank-like or similar */
+}
+
+.value-balloon.infinite i,
+.value-balloon.infinite img {
+    /* Adjust if specific branding needed */
+}
+
 input {
     display: block;
     margin: 10px auto;
@@ -1035,7 +1089,9 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 
 /* Garante que itens de PC sumam */
-.desktop-only { display: none !important; }
+.desktop-only {
+    display: none !important;
+}
 
 .option {
     display: grid;
@@ -1154,7 +1210,7 @@ input[type="number"]::-webkit-inner-spin-button {
     border-radius: 10px;
 }
 
-.balance span {
+.balance span:not(.value-balloon span) {
     font-size: 22px;
     color: var(--secondary-color);
 }
@@ -1180,7 +1236,7 @@ input[type="number"]::-webkit-inner-spin-button {
     gap: 5px;
 }
 
-.pending span {
+.pending span:not(.value-balloon span) {
     font-size: 15px;
     color: var(--secondary-color);
 }
@@ -2223,10 +2279,12 @@ section {
 .mainContainer {
     padding: 20px;
 }
+
 .boletosContainer {
     display: flex;
     flex-direction: column;
-    gap: 12px; /* Adiciona um espaço consistente entre os cards */
+    gap: 12px;
+    /* Adiciona um espaço consistente entre os cards */
 }
 
 
@@ -2281,7 +2339,8 @@ section {
     gap: 10px;
     flex-shrink: 0;
 }
-.boleto-due-date i{
+
+.boleto-due-date i {
     font-size: 13px;
     color: white;
 }
@@ -2529,6 +2588,7 @@ section {
     font-size: 1.5em;
     color: #555;
 }
+
 /* ============================================= */
 /* SUGESTÃO DE MELHORIA v2 PARA EXTRATO          */
 /* ============================================= */
@@ -2623,18 +2683,24 @@ section {
 
 /* Garante que a data e a descrição fiquem na mesma linha */
 .extrato-data {
-    display: flex; /* Muda para flex para alinhar itens */
-    white-space: nowrap; /* Impede que o texto quebre para a linha de baixo */
-    overflow: hidden; /* Esconde o que passar do limite */
-    text-overflow: ellipsis; /* Adiciona "..." no final */
+    display: flex;
+    /* Muda para flex para alinhar itens */
+    white-space: nowrap;
+    /* Impede que o texto quebre para a linha de baixo */
+    overflow: hidden;
+    /* Esconde o que passar do limite */
+    text-overflow: ellipsis;
+    /* Adiciona "..." no final */
     font-size: 0.8rem;
     color: #6c757d;
 }
 
 /* Estilo específico para a descrição */
 .extrato-descricao {
-    margin-left: 5px; /* Pequeno espaço entre a hora e a descrição */
-    color: #888; /* Um cinza um pouco mais claro */
+    margin-left: 5px;
+    /* Pequeno espaço entre a hora e a descrição */
+    color: #888;
+    /* Um cinza um pouco mais claro */
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -2709,7 +2775,8 @@ section {
     font-size: 28px;
     font-weight: 600;
     color: #212121;
-    min-height: 42px; /* Altura para evitar pulo de layout durante o loading */
+    min-height: 42px;
+    /* Altura para evitar pulo de layout durante o loading */
 }
 
 .faturamento-display .metricas-link {
@@ -2745,42 +2812,68 @@ section {
 
 /* Animação de Fade-in e subida suave */
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .fade-in-up {
-  animation: fadeInUp 0.5s ease-out forwards;
+    animation: fadeInUp 0.5s ease-out forwards;
 }
 
 /* Aplicação com delay para um efeito escalonado */
 .card-option a {
-  animation: fadeInUp 0.5s ease-out forwards;
-  opacity: 0; /* Começa invisível */
+    animation: fadeInUp 0.5s ease-out forwards;
+    opacity: 0;
+    /* Começa invisível */
 }
 
 /* Adiciona um atraso diferente para cada botão */
-.card-option:nth-child(1) a { animation-delay: 0.1s; }
-.card-option:nth-child(2) a { animation-delay: 0.2s; }
-.card-option:nth-child(3) a { animation-delay: 0.3s; }
-.card-option:nth-child(4) a { animation-delay: 0.4s; }
-.card-option:nth-child(5) a { animation-delay: 0.5s; }
+.card-option:nth-child(1) a {
+    animation-delay: 0.1s;
+}
+
+.card-option:nth-child(2) a {
+    animation-delay: 0.2s;
+}
+
+.card-option:nth-child(3) a {
+    animation-delay: 0.3s;
+}
+
+.card-option:nth-child(4) a {
+    animation-delay: 0.4s;
+}
+
+.card-option:nth-child(5) a {
+    animation-delay: 0.5s;
+}
 
 /* Animação para a troca de valor do faturamento */
 @keyframes fade-in-out {
-  0% { opacity: 1; }
-  50% { opacity: 0; transform: translateY(-5px); }
-  100% { opacity: 1; transform: translateY(0); }
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .valor-faturamento-animando {
-  animation: fade-in-out 0.4s ease-in-out;
+    animation: fade-in-out 0.4s ease-in-out;
 }
 
 /* =================================================================== */
@@ -2791,7 +2884,8 @@ section {
 .card-optionSizeMain {
     overflow: hidden;
     position: relative;
-    min-height: 60px; /* Evita que o card "pule" durante a troca */
+    min-height: 60px;
+    /* Evita que o card "pule" durante a troca */
 }
 
 @keyframes slide-in-down {
@@ -2799,6 +2893,7 @@ section {
         opacity: 0;
         transform: translateY(-100%);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -2810,6 +2905,7 @@ section {
         opacity: 1;
         transform: translateY(0);
     }
+
     to {
         opacity: 0;
         transform: translateY(100%);
@@ -2839,21 +2935,39 @@ section {
     position: relative;
     min-height: 60px;
 }
+
 .card-optionSize {
     transition: transform 0.3s, opacity 0.3s;
 }
 
 @keyframes slide-in-down {
-    from { opacity: 0; transform: translateY(-100%); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(-100%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
+
 @keyframes slide-out-up {
-    from { opacity: 1; transform: translateY(0); }
-    to { opacity: 0; transform: translateY(100%); }
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(100%);
+    }
 }
+
 .slide-in-down {
     animation: slide-in-down 0.5s forwards cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
+
 .slide-out-up {
     animation: slide-out-up 0.25s forwards cubic-bezier(0.55, 0.085, 0.68, 0.53);
 }
@@ -2878,21 +2992,39 @@ section {
     position: relative;
     min-height: 60px;
 }
+
 .card-optionSize {
     transition: transform 0.3s, opacity 0.3s;
 }
 
 @keyframes slide-in-down {
-    from { opacity: 0; transform: translateY(-100%); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(-100%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
+
 @keyframes slide-out-up {
-    from { opacity: 1; transform: translateY(0); }
-    to { opacity: 0; transform: translateY(100%); }
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(100%);
+    }
 }
+
 .slide-in-down {
     animation: slide-in-down 0.5s forwards cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
+
 .slide-out-up {
     animation: slide-out-up 0.25s forwards cubic-bezier(0.55, 0.085, 0.68, 0.53);
 }
@@ -2916,21 +3048,39 @@ section {
     position: relative;
     min-height: 60px;
 }
+
 .card-optionSize {
     transition: transform 0.3s, opacity 0.3s;
 }
 
 @keyframes slide-in-down {
-    from { opacity: 0; transform: translateY(-100%); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(-100%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
+
 @keyframes slide-out-up {
-    from { opacity: 1; transform: translateY(0); }
-    to { opacity: 0; transform: translateY(100%); }
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(100%);
+    }
 }
+
 .slide-in-down {
     animation: slide-in-down 0.5s forwards cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
+
 .slide-out-up {
     animation: slide-out-up 0.25s forwards cubic-bezier(0.55, 0.085, 0.68, 0.53);
 }
@@ -2946,8 +3096,13 @@ section {
 /* =================================================================== */
 @media screen and (min-width: 992px) {
     @keyframes slide-in-sidebar {
-        from { transform: translateX(-100%); }
-        to { transform: translateX(0); }
+        from {
+            transform: translateX(-100%);
+        }
+
+        to {
+            transform: translateX(0);
+        }
     }
 
     /* Mostra o ícone de PDV no desktop */
@@ -2955,7 +3110,7 @@ section {
         display: block !important;
         width: 100% !important;
     }
-    
+
     /* ESTADO PADRÃO (EXPANDIDO) */
     body {
         padding-left: 260px;
@@ -2963,9 +3118,9 @@ section {
     }
 
     .balance i {
-    left: 740px;
-    top: 142px;
-}
+        left: 740px;
+        top: 142px;
+    }
 
     .navigation {
         position: fixed;
@@ -2993,10 +3148,11 @@ section {
         width: 100%;
         gap: 0.5rem;
     }
-    
+
     /* CORREÇÃO 2: Garante que o LI ocupe o espaço necessário */
     .navigation ul li {
-        width: 100%; /* Ocupa toda a largura da navbar */
+        width: 100%;
+        /* Ocupa toda a largura da navbar */
         height: auto;
     }
 
@@ -3008,7 +3164,7 @@ section {
         gap: 1rem;
         overflow: hidden;
     }
-    
+
     .navigation ul li a .text {
         position: static;
         opacity: 1;
@@ -3020,7 +3176,7 @@ section {
         white-space: nowrap;
         transition: opacity 0.2s ease, width 0.2s ease;
     }
-    
+
     .navigation ul li a .icon,
     .navigation ul li.active a .icon {
         transform: none !important;
@@ -3030,14 +3186,33 @@ section {
         flex-shrink: 0;
     }
 
-    .navigation ul li.active a { background-color: var(--bs-color); }
-    .navigation ul li.active a .icon, 
-    .navigation ul li.active a .text { color: var(--secondary-color); opacity: 1; }
-    
-    .navigation .indicator { display: none; }
-    .option { display: none; }
-    .main-content { max-width: 1100px; margin: 0 auto; padding: 2rem; }
-    .info { border-radius: 20px; }
+    .navigation ul li.active a {
+        background-color: var(--bs-color);
+    }
+
+    .navigation ul li.active a .icon,
+    .navigation ul li.active a .text {
+        color: var(--secondary-color);
+        opacity: 1;
+    }
+
+    .navigation .indicator {
+        display: none;
+    }
+
+    .option {
+        display: none;
+    }
+
+    .main-content {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .info {
+        border-radius: 20px;
+    }
 
     /* Mostra e estiliza o botão de recolher */
     .sidebar-toggle {
@@ -3058,7 +3233,7 @@ section {
         z-index: 1001;
         transition: transform 0.4s ease, right 0.4s ease;
     }
-    
+
     /* Mostra e estiliza as opções de desktop */
     .desktop-options {
         display: flex;
@@ -3071,21 +3246,25 @@ section {
         width: 120px;
         height: 100px;
     }
-    
+
     /* ESTADO RECOLHIDO */
     body.sidebar-collapsed {
         padding-left: 90px;
     }
+
     body.sidebar-collapsed .navigation {
         width: 90px;
     }
+
     body.sidebar-collapsed .sidebar-toggle {
         transform: rotate(180deg);
     }
+
     body.sidebar-collapsed .navigation ul li a .text {
         opacity: 0;
         width: 0;
     }
+
     body.sidebar-collapsed .navigation ul li a {
         justify-content: center;
     }
