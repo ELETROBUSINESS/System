@@ -70,6 +70,11 @@
                         <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                         <span class="text-[10px] font-bold tracking-widest text-slate-400">ONLINE</span>
                     </div>
+                    <!-- Badge Duração Total -->
+                    <div class="flex items-center gap-1.5 bg-white/50 px-3 py-1 rounded-full border border-slate-100 text-[10px] font-bold tracking-widest text-slate-400" title="Duração total da rodada">
+                        <i data-lucide="clock" class="w-3 h-3 text-slate-400"></i>
+                        <span id="playlist-total-duration">-- min</span>
+                    </div>
                 </div>
                 <div id="visualizer" class="flex items-end gap-1 h-5 paused">
                     <div class="bar w-1 bg-slate-800 rounded-full"></div>
@@ -194,6 +199,7 @@
                 // Se for a primeira vez, cria a playlist embaralhada e toca
                 if (PLAYLIST.length === 0 && RAW_DATA.length > 0) {
                     PLAYLIST = shuffleArray(RAW_DATA);
+                    calculateTotalTime(); // Calcula tempo total ao carregar
                     loadTrack(); 
                 }
                 
@@ -220,40 +226,47 @@
             // Tempo base: Agora
             let simulatedTime = new Date();
             
-            // Calcula tempo restante da música atual
+            // Calcula tempo restante da música ATUAL
             let currentRemaining = 0;
-            let durationSecCurrent = 180; // Default
+            
+            // Pega dados da música atual
+            let currentTrackData = PLAYLIST[currentIndex];
+            let currentTotalDuration = parseInt(currentTrackData.duration) || 180;
+            let currentStartSkip = parseInt(currentTrackData.start) || 0;
+            
+            // O tempo que a música VAI DURAR na programação é (Total - Skip)
+            let currentEffectiveDuration = Math.max(0, currentTotalDuration - currentStartSkip);
 
-            if (PLAYLIST[currentIndex]) {
-                durationSecCurrent = parseInt(PLAYLIST[currentIndex].duration) || 180;
+            // Tenta pegar o tempo real do player
+            if (player && typeof player.getCurrentTime === 'function' && typeof player.getDuration === 'function') {
+                const cur = player.getCurrentTime(); // Tempo decorrido no vídeo (ex: se pulou 10s, começa em 10)
+                const dur = player.getDuration();    // Duração total do vídeo
                 
-                // Se player estiver rodando, pega o tempo real
-                if (player && typeof player.getCurrentTime === 'function') {
-                    const cur = player.getCurrentTime();
-                    // Proteção contra NaN
-                    if (!isNaN(cur) && cur > 0) {
-                        currentRemaining = Math.max(0, durationSecCurrent - cur);
-                    } else {
-                        currentRemaining = durationSecCurrent;
-                    }
+                if (!isNaN(cur) && cur > 0 && dur > 0) {
+                    // Tempo restante real = Duração total do vídeo - Onde está agora
+                    currentRemaining = Math.max(0, dur - cur);
                 } else {
-                    currentRemaining = durationSecCurrent;
+                    // Se player não reporta, assume duração efetiva
+                    currentRemaining = currentEffectiveDuration;
                 }
+            } else {
+                currentRemaining = currentEffectiveDuration;
             }
 
             PLAYLIST.forEach((track, index) => {
-                // Filtro para mostrar apenas música atual e futuras (opcional, aqui mostra todas)
-                // Vamos focar no estilo "Playlist Completa"
-                
                 let startTimeDisplay = "--:--";
-                let durationSec = parseInt(track.duration);
-                if (isNaN(durationSec) || durationSec <= 0) durationSec = 180;
+                
+                // Calcula duração efetiva desta faixa (Duração Bruta - Pular Intro)
+                let rawDuration = parseInt(track.duration);
+                if (isNaN(rawDuration) || rawDuration <= 0) rawDuration = 180;
+                let skipSec = parseInt(track.start) || 0;
+                let effectiveDuration = Math.max(0, rawDuration - skipSec);
 
                 if (index === currentIndex) {
                     // Atual
                     startTimeDisplay = "Agora";
                     
-                    // Define o tempo base para a PRÓXIMA música
+                    // Define o tempo base para a PRÓXIMA música usando o restante da atual
                     if (!isNaN(simulatedTime.getTime())) {
                         let endData = new Date(simulatedTime.getTime() + (currentRemaining * 1000));
                         simulatedTime = endData; 
@@ -262,19 +275,22 @@
                     // Futura
                     if (!isNaN(simulatedTime.getTime())) {
                         startTimeDisplay = simulatedTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                        // Incrementa para a próxima
-                        simulatedTime = new Date(simulatedTime.getTime() + (durationSec * 1000));
+                        // Incrementa para a próxima música somando a DURAÇÃO EFETIVA desta
+                        simulatedTime = new Date(simulatedTime.getTime() + (effectiveDuration * 1000));
                     }
                 } else {
                     // Passada
                     startTimeDisplay = "Tocou";
                 }
 
-                // Visual
+                // Visual da duração na lista
+                const min = Math.floor(effectiveDuration / 60);
+                const sec = effectiveDuration % 60;
+                const durationStr = `${min}:${sec.toString().padStart(2,'0')}`;
+
                 const isActive = index === currentIndex;
                 const opacity = index < currentIndex ? 'opacity-40 grayscale' : 'opacity-100';
                 const bg = isActive ? 'bg-slate-50 border-slate-200 shadow-sm' : 'border-transparent hover:bg-white/50';
-                const durationStr = `${Math.floor(durationSec / 60)}:${(durationSec % 60).toString().padStart(2,'0')}`;
                 
                 const item = document.createElement('div');
                 item.className = `flex items-center gap-3 p-3 rounded-xl border transition-all ${opacity} ${bg}`;
@@ -291,9 +307,6 @@
                         <p class="text-xs text-slate-500 truncate">${track.artist} • ${durationStr}</p>
                     </div>
                 `;
-                
-                // Rola para a música atual se necessário (apenas na primeira renderização ou troca)
-                // Implementação simples: manter scroll manual
                 
                 container.appendChild(item);
             });
@@ -337,7 +350,7 @@
             if(player && player.loadVideoById) {
                 player.loadVideoById({
                     'videoId': track.id,
-                    'startSeconds': track.start || 0
+                    'startSeconds': track.start || 0 // Aqui aplica o pulo da intro no player
                 });
             }
             // Força render imediato para atualizar status "Agora"
@@ -465,6 +478,31 @@
             if(isNaN(s)) return "00:00";
             const m = Math.floor(s/60), sec = Math.floor(s%60);
             return `${m}:${sec<10?'0'+sec:sec}`;
+        }
+
+        function calculateTotalTime() {
+            if(PLAYLIST.length === 0) return;
+            
+            // Soma a duração EFETIVA (Duração Total - Intro Pulada)
+            let totalSeconds = PLAYLIST.reduce((acc, curr) => {
+                let dur = parseInt(curr.duration) || 180;
+                let start = parseInt(curr.start) || 0;
+                let effective = Math.max(0, dur - start);
+                return acc + effective;
+            }, 0);
+
+            let hours = Math.floor(totalSeconds / 3600);
+            let minutes = Math.floor((totalSeconds % 3600) / 60);
+            
+            let timeString = "";
+            if(hours > 0) {
+                timeString = `${hours}h ${minutes}min`;
+            } else {
+                timeString = `${minutes} min`;
+            }
+            
+            const el = document.getElementById('playlist-total-duration');
+            if(el) el.innerText = timeString;
         }
     </script>
 </body>
