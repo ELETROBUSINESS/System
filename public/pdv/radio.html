@@ -136,7 +136,7 @@
 
     <script>
         // --- CONFIGURAÇÃO ---
-        // INSIRA AQUI A URL DA SUA IMPLANTAÇÃO WEB DO APPS SCRIPT
+        // URL gerada pelo Google Apps Script
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxILsDDTVun9HEmQ5dNH0-MtjIlJ4CmY3GNMJz7p46Zp0ePtw-joI_2q-Kjt7ef1qOx7A/exec'; 
         
         // --- VARIÁVEIS DO SISTEMA ---
@@ -159,9 +159,8 @@
         // --- LÓGICA DE DADOS (PLANILHA) ---
         
         async function fetchPlaylistData() {
-            if (APPS_SCRIPT_URL.includes('INSIRA_SUA')) {
+            if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('INSIRA_SUA')) {
                 console.error("URL do Script não configurada.");
-                alert("Configure a URL do Apps Script no código HTML.");
                 return false;
             }
 
@@ -176,7 +175,6 @@
                     return false;
                 }
 
-                // Verifica se mudou algo na playlist (comparação simples por tamanho ou ID do último)
                 const isNew = JSON.stringify(data) !== JSON.stringify(PLAYLIST);
                 
                 if (isNew && PLAYLIST.length > 0) {
@@ -186,7 +184,6 @@
                 PLAYLIST = data;
                 document.getElementById('update-status').innerText = "Atualizado às " + new Date().toLocaleTimeString().slice(0,5);
                 
-                // Se for a primeira carga
                 if (queueIsEmpty()) {
                     loadTrack(); 
                 }
@@ -210,40 +207,57 @@
                 return;
             }
 
-            // Calcula horários
+            // CORREÇÃO: Inicializa data simulada com segurança
             let simulatedTime = new Date();
-            // Se estiver tocando, ajusta o "agora" baseando-se no tempo restante da atual
+            
+            // CORREÇÃO: Valida se o player está pronto para fornecer duração
             let currentRemaining = 0;
-            if (player && player.getCurrentTime && player.getDuration) {
-                currentRemaining = (player.getDuration() - player.getCurrentTime());
+            if (player && typeof player.getDuration === 'function' && typeof player.getCurrentTime === 'function') {
+                const dur = player.getDuration();
+                const cur = player.getCurrentTime();
+                // Só calcula se forem números válidos e maiores que 0
+                if (!isNaN(dur) && !isNaN(cur) && dur > 0) {
+                    currentRemaining = (dur - cur);
+                }
             }
 
             PLAYLIST.forEach((track, index) => {
-                // Lógica de tempo da timeline
-                let startTimeDisplay, endTimeDisplay;
+                let startTimeDisplay = "--:--";
+                let durationSec = parseInt(track.duration);
                 
+                // CORREÇÃO: Fallback se a duração na planilha for inválida (ex: texto)
+                if (isNaN(durationSec) || durationSec <= 0) {
+                    durationSec = 180; // 3 minutos padrão
+                }
+
                 if (index === currentIndex) {
                     // Música atual
                     startTimeDisplay = "Agora";
-                    // Tempo estimado de fim = Agora + Restante
-                    let endData = new Date(new Date().getTime() + (currentRemaining * 1000));
-                    endTimeDisplay = endData.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    
-                    // Atualiza o tempo base para a próxima música
-                    simulatedTime = endData;
+                    // Calcula fim = Agora + Restante
+                    if (!isNaN(simulatedTime.getTime())) {
+                        let endData = new Date(simulatedTime.getTime() + (currentRemaining * 1000));
+                        // Atualiza simulatedTime para o início da próxima
+                        simulatedTime = endData; 
+                    }
                 } else if (index > currentIndex) {
                     // Músicas futuras
-                    startTimeDisplay = simulatedTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    // Adiciona duração desta música ao acumulador
-                    simulatedTime = new Date(simulatedTime.getTime() + (track.duration * 1000));
-                    endTimeDisplay = simulatedTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    if (!isNaN(simulatedTime.getTime())) {
+                        startTimeDisplay = simulatedTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        // Incrementa acumulador
+                        simulatedTime = new Date(simulatedTime.getTime() + (durationSec * 1000));
+                    } else {
+                        startTimeDisplay = "Calc...";
+                    }
                 } else {
-                    // Músicas passadas
+                    // Passadas
                     startTimeDisplay = "Concluída";
-                    endTimeDisplay = "-";
                 }
 
-                // HTML do Item
+                // Formatação duração display
+                const min = Math.floor(durationSec / 60);
+                const sec = durationSec % 60;
+                const durationStr = `${min}:${sec.toString().padStart(2,'0')}`;
+
                 const isActive = index === currentIndex;
                 const opacity = index < currentIndex ? 'opacity-50 grayscale' : 'opacity-100';
                 const bg = isActive ? 'bg-slate-50 border-slate-200' : 'border-transparent hover:bg-white/50';
@@ -251,22 +265,18 @@
                 const item = document.createElement('div');
                 item.className = `flex items-center gap-3 p-3 rounded-xl border transition-all ${opacity} ${bg}`;
                 item.innerHTML = `
-                    <div class="text-xs font-mono text-slate-400 w-12 text-right">
+                    <div class="text-xs font-mono text-slate-400 w-14 text-right shrink-0">
                         ${startTimeDisplay}
                     </div>
                     <div class="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center shrink-0 overflow-hidden relative">
-                        <img src="https://img.youtube.com/vi/${track.id}/default.jpg" class="absolute inset-0 w-full h-full object-cover opacity-80">
+                        <img src="https://img.youtube.com/vi/${track.id}/default.jpg" class="absolute inset-0 w-full h-full object-cover opacity-80" onerror="this.src='https://via.placeholder.com/40'">
                         ${isActive ? '<div class="absolute inset-0 bg-slate-900/30 flex items-center justify-center"><div class="w-2 h-2 bg-white rounded-full animate-bounce"></div></div>' : ''}
                     </div>
                     <div class="flex-1 min-w-0">
                         <h4 class="text-sm font-bold text-slate-800 truncate">${track.title}</h4>
-                        <p class="text-xs text-slate-500 truncate">${track.artist} • ${Math.floor(track.duration/60)}:${(track.duration%60).toString().padStart(2,'0')}</p>
+                        <p class="text-xs text-slate-500 truncate">${track.artist} • ${durationStr}</p>
                     </div>
                 `;
-                
-                // Clica para tocar (opcional, só para admin)
-                // item.onclick = () => { currentIndex = index; loadTrack(); };
-                
                 container.appendChild(item);
             });
         }
@@ -276,7 +286,7 @@
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player', {
                 height: '100%', width: '100%',
-                videoId: '', // Inicia vazio até carregar a planilha
+                videoId: '', 
                 playerVars: {
                     'playsinline': 1, 'controls': 0, 'disablekb': 1, 'fs': 0, 
                     'iv_load_policy': 3, 'rel': 0, 'modestbranding': 1,
@@ -291,7 +301,6 @@
 
         function startRadio() {
             document.getElementById('start-overlay').style.display = 'none';
-            // Carrega dados iniciais e inicia polling
             fetchPlaylistData().then(() => {
                 startPolling();
                 if(player && PLAYLIST.length > 0) {
@@ -314,7 +323,8 @@
                     'startSeconds': track.start || 0
                 });
             }
-            renderTimeline(); // Atualiza visualmente quem está tocando
+            // Chama renderTimeline após pequeno delay para dar tempo do player iniciar status
+            setTimeout(renderTimeline, 500); 
         }
 
         function onPlayerStateChange(event) {
@@ -329,7 +339,7 @@
                 lucide.createIcons();
                 updateUI();
                 startTimer();
-                // Atualiza timeline a cada 30s para ajustar previsões
+                renderTimeline(); // Atualiza timeline quando começa a tocar
             } else {
                 isPlaying = false;
                 vis.classList.add('paused');
@@ -343,7 +353,6 @@
         }
 
         function changeTrack(direction) {
-            // Antes de mudar, verifica se tem dados novos
             fetchPlaylistData().then(() => {
                 currentIndex += direction;
                 if(currentIndex >= PLAYLIST.length) { currentIndex = 0; }
@@ -360,13 +369,11 @@
 
         function startPolling() {
             if(pollingInterval) clearInterval(pollingInterval);
-            // Verifica a cada 2 minutos (120000 ms)
             pollingInterval = setInterval(() => {
                 fetchPlaylistData();
-            }, 120000);
+            }, 120000); // 2 min
             
-            // Também atualiza a timeline a cada minuto para ajustar os horários previstos
-            setInterval(renderTimeline, 60000); 
+            setInterval(renderTimeline, 30000); // Atualiza timeline a cada 30s
         }
 
         function showNotification() {
@@ -391,10 +398,10 @@
         }
 
         function checkChannel() {
-            if(player && player.getVideoData) {
+            if(player && typeof player.getVideoData === 'function') {
                 const data = player.getVideoData();
                 const el = document.getElementById('player-container');
-                if(data.author && (data.author.includes('A Voz das Vendas') || data.author.includes('Voz das Vendas'))) {
+                if(data && data.author && (data.author.includes('A Voz das Vendas') || data.author.includes('Voz das Vendas'))) {
                     el.classList.add('hide-video');
                 } else {
                     el.classList.remove('hide-video');
@@ -421,13 +428,14 @@
         function startTimer() {
             stopTimer();
             progressInterval = setInterval(() => {
-                if(!player || !player.getCurrentTime) return;
-                const cur = player.getCurrentTime();
-                const dur = player.getDuration();
-                if(dur > 0) {
-                    document.getElementById('progress-bar').style.width = (cur/dur*100) + '%';
-                    document.getElementById('current-time').innerText = fmt(cur);
-                    document.getElementById('total-time').innerText = fmt(dur);
+                if(player && typeof player.getCurrentTime === 'function' && typeof player.getDuration === 'function') {
+                    const current = player.getCurrentTime();
+                    const total = player.getDuration();
+                    if(total > 0) {
+                        document.getElementById('progress-bar').style.width = (current/total*100) + '%';
+                        document.getElementById('current-time').innerText = fmt(current);
+                        document.getElementById('total-time').innerText = fmt(total);
+                    }
                 }
             }, 1000);
         }
@@ -437,11 +445,6 @@
             if(isNaN(s)) return "00:00";
             const m = Math.floor(s/60), sec = Math.floor(s%60);
             return `${m}:${sec<10?'0'+sec:sec}`;
-        }
-        
-        function openPopup() {
-            window.open(window.location.href, 'RadioLojaPlayer', 'width=1000,height=700,menubar=no,toolbar=no,location=no,status=no');
-            if(player && player.pauseVideo) player.pauseVideo();
         }
     </script>
 </body>
