@@ -43,6 +43,80 @@
             }
         })();
     </script>
+
+    <style>
+        /* Custom Card Styles */
+        .client-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            /* Minimal shadow */
+            border: 1px solid #f3f4f6;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .client-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border-color: #e5e7eb;
+        }
+
+        .client-avatar {
+            width: 48px;
+            height: 48px;
+            min-width: 48px;
+            border-radius: 12px;
+            background: #f9fafb;
+            /* Lighter minimal bg */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: #374151;
+            /* Darker gray */
+            font-weight: 600;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 4px;
+            /* Thinner */
+            background-color: #f3f4f6;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background-color: var(--brand-color);
+            /* Updated to Brand Color */
+            border-radius: 999px;
+            transition: width 1s ease-in-out;
+        }
+
+        .skeleton-pulse {
+            animation: pulse-bg 1.5s infinite;
+        }
+
+        @keyframes pulse-bg {
+            0% {
+                background-color: #f3f4f6;
+            }
+
+            50% {
+                background-color: #e5e7eb;
+            }
+
+            100% {
+                background-color: #f3f4f6;
+            }
+        }
+    </style>
 </head>
 
 <body style="--marker-x: 0%; --marker-y: 50%;">
@@ -66,7 +140,6 @@
                     <span id="total-receivable" class="">R$ 0,00</span>
                     <i class="bx bx-show" id="toggle-balance-icon"></i>
                 </div>
-                <!-- Pending removed from banner -->
             </div>
         </div>
 
@@ -82,68 +155,103 @@
         <!-- KPIs -->
         <div class="kpi-area grid-kpi cols-3 mb-6">
             <!-- Crédito a Receber -->
-            <div class="finance-card kpi-card">
+            <div class="finance-card kpi-card flex flex-col justify-center h-24">
                 <span class="kpi-label">Crédito a Receber</span>
-                <div class="flex items-baseline">
-                    <span class="kpi-value" id="kpi-cred-val">R$ 0</span>
+                <div class="flex items-baseline mt-1">
+                    <span class="kpi-value text-2xl text-gray-900" id="kpi-cred-val">R$ 0</span>
                     <span class="text-xs ml-0.5 text-gray-500 font-bold" id="kpi-cred-dec">,00</span>
                 </div>
-                <span class="kpi-trend text-green-500" id="trend-cred">Ativos</span>
             </div>
 
             <!-- Em Atraso (New) -->
-            <div class="finance-card kpi-card">
+            <div class="finance-card kpi-card flex flex-col justify-center h-24">
                 <span class="kpi-label">Em Atraso</span>
-                <div class="flex items-baseline">
-                    <span class="kpi-value" id="kpi-overdue-val">R$ 0</span>
+                <div class="flex items-baseline mt-1">
+                    <span class="kpi-value text-gray-900 text-2xl" id="kpi-overdue-val">R$ 0</span>
                     <span class="text-xs ml-0.5 text-gray-500 font-bold" id="kpi-overdue-dec">,00</span>
                 </div>
-                <span class="kpi-trend text-red-500" id="trend-overdue">Vencidos</span>
             </div>
 
             <!-- Quantidade de Clientes -->
-            <div class="finance-card kpi-card">
+            <div class="finance-card kpi-card flex flex-col justify-center h-24">
                 <span class="kpi-label">Carteira de Clientes</span>
-                <div class="flex items-baseline">
-                    <span class="kpi-value" id="kpi-clients-count">0</span>
+                <div class="flex items-baseline mt-1">
+                    <span class="kpi-value text-gray-900 text-2xl" id="kpi-clients-count">0</span>
                 </div>
-                <span class="kpi-trend text-blue-500" id="trend-clients">Cadastrados</span>
             </div>
         </div>
 
         <!-- Content -->
-        <div class="finance-card p-6 w-full max-w-full" style="min-height: 80vh;">
+        <div class="finance-card w-full max-w-full bg-transparent shadow-none border-none" style="padding: 0;">
             <!-- Header -->
-            <h3 class="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-4">Carteira de Crédito</h3>
-
-            <!-- Search Area -->
-            <div class="client-search-wrapper w-full mb-6 relative">
-                <i class='bx bx-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg'></i>
-                <input type="text" id="client-search-input"
-                    class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-full focus:outline-none focus:border-red-500 transition-colors"
-                    placeholder="Buscar por nome, apelido ou CPF..." autocomplete="off">
+            <div class="flex items-center justify-between mb-4 md:mb-6 px-1">
+                <h3 class="text-xs uppercase font-bold text-gray-400 tracking-widest">Carteira de Crédito</h3>
             </div>
 
-            <!-- Clients Table -->
-            <div class="crediario-table-container">
-                <table class="finance-table w-full">
-                    <thead>
-                        <tr>
-                            <th>Cliente</th>
-                            <th>Status Crediário</th>
-                            <th>Dívida Atual</th>
-                            <th>Próx. Venc.</th>
-                            <th class="text-right">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="clients-table-body">
-                        <tr>
-                            <td colspan="5" class="text-center py-8 text-gray-400">
-                                <i class='bx bx-loader-alt bx-spin text-2xl mb-2'></i><br>Carregando clientes...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <!-- Search Area -->
+            <div class="client-search-wrapper w-full mb-8 relative">
+                <i class='bx bx-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg'></i>
+                <input type="text" id="client-search-input"
+                    class="w-full pl-12 pr-4 py-4 border-none shadow-sm rounded-2xl focus:ring-2 focus:ring-gray-200 transition-all bg-white text-gray-700 placeholder-gray-400"
+                    placeholder="Buscar cliente..." autocomplete="off">
+            </div>
+
+            <!-- Clients Grid -->
+            <div id="clients-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-20">
+                <!-- SKELETON LOADING -->
+                <div class="client-card animate-pulse">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-gray-100"></div>
+                        <div class="flex-1">
+                            <div class="h-4 bg-gray-100 rounded w-3/4 mb-2"></div>
+                            <div class="h-3 bg-gray-100 rounded w-1/2"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="h-8 bg-gray-100 rounded w-full"></div>
+                        <div class="h-2 bg-gray-100 rounded-full w-full"></div>
+                        <div class="flex justify-between gap-2 mt-4">
+                            <div class="h-10 bg-gray-100 rounded w-1/2"></div>
+                            <div class="h-10 bg-gray-100 rounded w-1/2"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- More skeletons for visual -->
+                <div class="client-card animate-pulse hidden md:block">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-gray-100"></div>
+                        <div class="flex-1">
+                            <div class="h-4 bg-gray-100 rounded w-3/4 mb-2"></div>
+                            <div class="h-3 bg-gray-100 rounded w-1/2"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="h-8 bg-gray-100 rounded w-full"></div>
+                        <div class="h-2 bg-gray-100 rounded-full w-full"></div>
+                        <div class="flex justify-between gap-2 mt-4">
+                            <div class="h-10 bg-gray-100 rounded w-1/2"></div>
+                            <div class="h-10 bg-gray-100 rounded w-1/2"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- More skeletons for visual -->
+                <div class="client-card animate-pulse hidden lg:block">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-gray-100"></div>
+                        <div class="flex-1">
+                            <div class="h-4 bg-gray-100 rounded w-3/4 mb-2"></div>
+                            <div class="h-3 bg-gray-100 rounded w-1/2"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="h-8 bg-gray-100 rounded w-full"></div>
+                        <div class="h-2 bg-gray-100 rounded-full w-full"></div>
+                        <div class="flex justify-between gap-2 mt-4">
+                            <div class="h-10 bg-gray-100 rounded w-1/2"></div>
+                            <div class="h-10 bg-gray-100 rounded w-1/2"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -242,62 +350,104 @@
 
     <!-- Details Modal -->
     <div class="modal-overlay" id="cliente-details-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Ficha do Cliente</h3>
+        <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header sticky top-0 bg-white z-10 border-b border-gray-100 pb-4">
+                <h3 class="flex items-center gap-2"><i class='bx bx-id-card text-gray-400'></i> Ficha do Cliente</h3>
                 <button class="close-modal-btn" data-target="cliente-details-modal"><i class='bx bx-x'></i></button>
             </div>
-            <div class="modal-body">
-                <div class="client-profile-header">
-                    <div class="client-avatar-lg"><i class='bx bx-user'></i></div>
+            <div class="modal-body pt-4">
+                <div class="client-profile-header mb-6">
+                    <div
+                        class="client-avatar-lg bg-gray-100 text-gray-500 rounded-full w-16 h-16 flex items-center justify-center text-3xl">
+                        <span id="detail-cliente-avatar-text">U</span>
+                    </div>
                     <div style="flex-grow: 1;">
-                        <h4 id="detail-cliente-nome" class="text-lg font-bold">Carregando...</h4>
-                        <p id="detail-cliente-apelido" class="text-light text-sm">...</p>
-                    </div>
-                </div>
-                <div class="client-stats-grid">
-                    <div class="stat-box">
-                        <span class="stat-label">Saldo Devedor</span>
-                        <span class="stat-value danger" id="detail-cliente-saldo">R$ 0,00</span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="stat-label">Próximo Venc.</span>
-                        <span class="stat-value" id="detail-cliente-vencimento">--/--/----</span>
+                        <h4 id="detail-cliente-nome" class="text-xl font-bold text-gray-800">Carregando...</h4>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span id="detail-cliente-apelido"
+                                class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs font-semibold">...</span>
+                            <span id="detail-cliente-status-badge"></span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="limit-container">
-                    <div class="limit-header">
-                        <span>Limite de Crédito</span>
-                        <strong id="detail-cliente-limite-total">R$ 0,00</strong>
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="p-4 bg-gray-50 rounded-2xl border border-gray-200">
+                        <span class="block text-xs uppercase font-bold text-gray-400 mb-1">Saldo Devedor</span>
+                        <span class="block text-xl font-bold text-gray-900" id="detail-cliente-saldo">R$ 0,00</span>
                     </div>
-                    <div class="progress-track">
-                        <div class="progress-fill" id="detail-cliente-progress"></div>
-                    </div>
-                    <div class="limit-header mt-2 text-xs text-gray-400">
-                        <span id="detail-cliente-disponivel">Disp: R$ 0,00</span>
-                        <span id="detail-cliente-percentual">0%</span>
+                    <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                        <span class="block text-xs uppercase font-bold text-gray-400 mb-1">Próximo Venc.</span>
+                        <span class="block text-lg font-semibold text-gray-700"
+                            id="detail-cliente-vencimento">--/--</span>
                     </div>
                 </div>
 
-                <div class="history-section mt-6">
-                    <h4><i class='bx bx-history'></i> Histórico Recente</h4>
-                    <div id="detail-history-container">
-                        <!-- History Items -->
+                <div class="limit-container mb-8">
+                    <div class="flex justify-between items-end mb-2">
+                        <span class="text-sm font-semibold text-gray-700">Limite de Crédito</span>
+                        <strong id="detail-cliente-limite-total" class="text-sm text-gray-900">R$ 0,00</strong>
+                    </div>
+                    <div class="progress-track bg-gray-200 h-3 rounded-full overflow-hidden">
+                        <div class="progress-fill h-full bg-gray-900 transition-all duration-500"
+                            id="detail-cliente-progress" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between mt-2 text-xs text-gray-400 font-medium">
+                        <span id="detail-cliente-percentual">0% Utilizado</span>
+                        <span id="detail-cliente-disponivel" class="text-gray-600">Disp: R$ 0,00</span>
                     </div>
                 </div>
 
-                <div class="mt-6">
-                    <p class="text-xs font-bold text-gray-500 uppercase mb-2">Contato</p>
-                    <p class="text-sm text-gray-700 mb-1"><i class='bx bx-phone mr-2'></i> <span
-                            id="detail-cliente-telefone">--</span></p>
-                    <p class="text-sm text-gray-700"><i class='bx bx-map mr-2'></i> <span
-                            id="detail-cliente-endereco">--</span></p>
+                <!-- Tabs or Sections for History -->
+                <div class="border-t border-gray-100 pt-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="font-bold text-gray-800"><i class='bx bx-history text-gray-400 mr-1'></i> Histórico
+                            de Compras</h4>
+                        <button class="text-xs text-blue-600 font-semibold hover:underline">Ver completo</button>
+                    </div>
+
+                    <div id="detail-history-container" class="space-y-3">
+                        <!-- Mocked History Items for Visual -->
+                        <div class="p-3 rounded-xl border border-gray-100 bg-white flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center">
+                                    <i class='bx bx-cart'></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-800">Compra no PDV</p>
+                                    <p class="text-xs text-gray-400">Há 2 dias</p>
+                                </div>
+                            </div>
+                            <span class="font-bold text-gray-800">R$ 45,90</span>
+                        </div>
+                        <!-- Placeholder if empty -->
+                        <div class="text-center py-4 hidden">
+                            <p class="text-sm text-gray-400 italic">Nenhuma compra recente.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-gray-100">
+                    <p class="text-xs font-bold text-gray-400 uppercase mb-3">Dados de Contato</p>
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-3 text-sm text-gray-600">
+                            <i class='bx bx-phone w-5 text-center'></i>
+                            <span id="detail-cliente-telefone">--</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-sm text-gray-600">
+                            <i class='bx bx-map w-5 text-center'></i>
+                            <span id="detail-cliente-endereco">--</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary close-modal-btn" data-target="cliente-details-modal"
-                    style="width: auto;">Fechar</button>
+            <div class="modal-footer grid grid-cols-2 gap-3 mt-6">
+                <button class="btn btn-secondary w-full close-modal-btn"
+                    data-target="cliente-details-modal">Voltar</button>
+                <button class="btn btn-primary w-full bg-black text-white hover:bg-gray-800"
+                    onclick="alert('Funcionalidade em desenvolvimento')"><i class='bx bx-printer mr-1'></i>
+                    Extrato</button>
             </div>
         </div>
     </div>
@@ -311,32 +461,34 @@
             </div>
             <form id="cliente-pay-form">
                 <div class="modal-body">
-                    <p class="mb-4">Cliente: <strong id="pay-cliente-nome">...</strong></p>
-                    <div class="p-4 bg-red-50 rounded-lg border border-red-100 mb-4 text-center">
-                        <p class="text-xs text-red-600 font-bold uppercase">Dívida Total</p>
-                        <p class="text-2xl font-bold text-red-700" id="pay-cliente-saldo-atual">R$ 0,00</p>
+                    <p class="mb-4 text-gray-600">Recebendo de <strong id="pay-cliente-nome"
+                            class="text-gray-900">...</strong></p>
+                    <div class="p-6 bg-gray-50 rounded-2xl border border-gray-200 mb-6 text-center">
+                        <p class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Dívida Total Atual</p>
+                        <p class="text-3xl font-bold text-gray-900" id="pay-cliente-saldo-atual">R$ 0,00</p>
                     </div>
 
-                    <div class="form-group">
-                        <label>Valor a Receber (R$)</label>
+                    <div class="form-group mb-4">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Valor do Pagamento (R$)</label>
                         <input type="number" id="pay-valor" step="0.01" min="0.01" placeholder="0,00" required
-                            class="text-lg font-bold text-green-700">
+                            class="w-full text-2xl font-bold text-gray-900 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none transition-all">
                     </div>
 
                     <div class="form-group">
-                        <label>Forma de Pagamento</label>
-                        <select id="pay-metodo" required>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Forma de Pagamento</label>
+                        <select id="pay-metodo" required
+                            class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none">
                             <option value="Dinheiro">Dinheiro (Espécie)</option>
                             <option value="PIX">PIX</option>
                             <option value="Cartão">Cartão de Crédito/Débito</option>
                         </select>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary close-modal-btn" data-target="cliente-pay-modal"
-                        style="width: auto;">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" style="background:#16a34a;">Confirmar
-                        Recebimento</button>
+                <div class="modal-footer grid grid-cols-2 gap-3">
+                    <button type="button" class="btn btn-secondary w-full close-modal-btn"
+                        data-target="cliente-pay-modal">Cancelar</button>
+                    <button type="submit"
+                        class="btn btn-primary w-full bg-black text-white hover:bg-gray-800">Confirmar</button>
                 </div>
             </form>
         </div>
@@ -366,7 +518,6 @@
 
         // --- Configs & Globals ---
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
-        const REGISTRO_VENDA_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCCaxdYdC6J_QKsaoWTDquH915MHUnM9BykD39ZUujR2LB3lx9d9n5vAsHdJZJByaa7w/exec";
         let localClientCache = [];
         let selectedClientForPayment = null;
 
@@ -390,95 +541,115 @@
         };
 
         const simpleDate = (date) => {
-            if (!date) return '--/--/--';
+            if (!date) return '--/--';
             const d = new Date(date);
-            return d.toLocaleDateString('pt-BR');
+            return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        };
+
+        const getInitials = (name) => {
+            if (!name) return '?';
+            const parts = name.trim().split(' ');
+            if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
         };
 
         // --- Core Logic ---
 
         async function loadClientsFromFirebase() {
-            const tbody = document.getElementById('clients-table-body');
-            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-gray-400"><i class='bx bx-loader-alt bx-spin text-2xl mb-2'></i><br>Atualizando base de dados...</td></tr>`;
+            const grid = document.getElementById('clients-grid');
+            // Skeleton is already there by default static HTML, but if we reload:
+            renderSkeleton(grid);
 
             try {
-                // Corrected action from 'getClientes' to 'listarClientes' based on pdv/script.js
-                // Also parsing result.data as the API returns wrapped object {status: 'success', data: [...]}
                 const response = await fetch(`${SCRIPT_URL}?action=listarClientes`);
                 const result = await response.json();
 
                 if (result.status === 'success' && Array.isArray(result.data)) {
                     localClientCache = result.data; // Cache global
-                    renderTable(localClientCache);
+                    renderCards(localClientCache);
                     updateDashboardTotals();
                 } else {
                     throw new Error(result.message || "Formato inválido");
                 }
             } catch (error) {
                 console.error("Erro ao carregar clientes:", error);
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-red-400">Erro ao carregar dados: ${error.message}</td></tr>`;
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-gray-400">
+                        <i class='bx bx-error-circle text-4xl mb-2'></i>
+                        <p>Erro ao carregar dados. <button onclick="loadClientsFromFirebase()" class="underline text-red-500">Tentar novamente</button></p>
+                    </div>`;
             }
         }
 
-        function renderTable(clients) {
-            const tbody = document.getElementById('clients-table-body');
+        function renderSkeleton(container) {
+            // Generates 6 skeleton cards
+            let html = '';
+            for (let i = 0; i < 6; i++) {
+                html += `
+                <div class="client-card animate-pulse">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-gray-200"></div>
+                        <div class="flex-1">
+                            <div class="h-4 bg-gray-100 rounded w-3/4 mb-2"></div>
+                            <div class="h-3 bg-gray-100 rounded w-1/2"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="h-8 bg-gray-100 rounded w-full"></div>
+                        <div class="h-2 bg-gray-100 rounded-full w-full"></div>
+                        <div class="flex justify-between gap-2 mt-4">
+                            <div class="h-10 bg-gray-100 rounded w-1/2"></div>
+                            <div class="h-10 bg-gray-100 rounded w-1/2"></div>
+                        </div>
+                    </div>
+                </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function renderCards(clients) {
+            const grid = document.getElementById('clients-grid');
             const searchInput = document.getElementById('client-search-input');
             const searchVal = searchInput ? searchInput.value.toLowerCase() : '';
-            tbody.innerHTML = '';
+            grid.innerHTML = '';
 
             const filtered = clients.filter(c => {
                 const term = searchVal;
-                // Using 'nomeExibicao' as primary name field, fallback to 'nome'
                 const name = c.nomeExibicao || c.nome || '';
                 const apelido = c.apelido || '';
                 const cpf = c.cpf || '';
-
-                return name.toLowerCase().includes(term) ||
-                    apelido.toLowerCase().includes(term) ||
-                    cpf.includes(term);
+                return name.toLowerCase().includes(term) || apelido.toLowerCase().includes(term) || cpf.includes(term);
             });
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-gray-400">Nenhum cliente encontrado.</td></tr>`;
+                grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-400">Nenhum cliente encontrado.</div>`;
                 return;
             }
 
-            // Sort by debt desc
-            // Sort by "Positivist Model": Quitado -> Em Dia -> Atrasado (Smallest Delay First)
+            // Same sorting logic as before
             filtered.sort((a, b) => {
                 const getVars = (c) => {
                     const saldo = parseFloat(c.saldoDevedor || 0);
                     const venc = parseDataSegura(c.proximoVencimento);
-                    // Ensure valid date to prevent NaN in sort
                     const isValidDate = venc && !isNaN(venc.getTime());
                     const diffDays = isValidDate ? Math.ceil((venc - new Date()) / (1000 * 60 * 60 * 24)) : 0;
                     return { saldo, diffDays };
                 };
-
                 const dA = getVars(a);
                 const dB = getVars(b);
 
-                // 1. Quitado First
                 const isQuitadoA = dA.saldo <= 0.01;
                 const isQuitadoB = dB.saldo <= 0.01;
                 if (isQuitadoA && !isQuitadoB) return -1;
                 if (!isQuitadoA && isQuitadoB) return 1;
                 if (isQuitadoA && isQuitadoB) return (a.nome || '').localeCompare(b.nome || '');
 
-                // 2. Em Dia before Atrasado
                 const isAtrasadoA = dA.diffDays < 0;
                 const isAtrasadoB = dB.diffDays < 0;
                 if (!isAtrasadoA && isAtrasadoB) return -1;
                 if (isAtrasadoA && !isAtrasadoB) return 1;
 
-                // 3. Both Atrasado: Smallest Delay First (Closer to 0) => Descending diffDays
-                // Ex: -2 (2 days late) vs -10 (10 days late). We want -2 first.
-                // -10 - (-2) = -8 (A comes first)
-                if (isAtrasadoA && isAtrasadoB) {
-                    return dB.diffDays - dA.diffDays;
-                }
-
-                // 4. Both Em Dia: Closest Due Date First => Ascending diffDays
+                if (isAtrasadoA && isAtrasadoB) return dB.diffDays - dA.diffDays;
                 return dA.diffDays - dB.diffDays;
             });
 
@@ -487,33 +658,114 @@
                 const venc = parseDataSegura(client.proximoVencimento);
                 const diffDays = venc ? Math.ceil((venc - new Date()) / (1000 * 60 * 60 * 24)) : 0;
                 const clientName = client.nomeExibicao || client.nome || 'Cliente';
+                const initials = getInitials(clientName);
 
-                let statusBadge = '';
-                if (saldo <= 0.01) {
-                    statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-green-100 text-green-700 uppercase tracking-wider"><i class='bx bx-check mr-1'></i>Quitado</span>`;
-                } else if (diffDays < 0) {
-                    statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700 uppercase tracking-wider"><i class='bx bx-time mr-1'></i>Atrasado</span>`;
-                } else if (diffDays === 0) {
-                    statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-yellow-100 text-yellow-800 uppercase tracking-wider"><i class='bx bx-bell mr-1'></i>Hoje</span>`;
-                } else {
-                    statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-700 uppercase tracking-wider">Em dia</span>`;
+                // Limit Calculation for Mini Bar
+                const limite = parseFloat(client.limite || 0);
+                let percent = 0;
+                let barColor = 'bg-[var(--brand-color)]'; // Use brand color
+                if (limite > 0) {
+                    percent = Math.min(100, (saldo / limite) * 100);
                 }
 
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-            <td class="col-name">
-                <div class="font-bold text-gray-800">${clientName}</div>
-                <div class="text-xs text-gray-400">${client.apelido && client.apelido !== clientName ? client.apelido : ''}</div>
-            </td>
-            <td class="col-status">${statusBadge}</td>
-            <td class="col-debt font-bold ${saldo > 0 ? 'text-red-500' : 'text-green-600'}">${formatCurrency(saldo)}</td>
-            <td class="col-venc text-sm">${venc ? simpleDate(venc) : '-'}</td>
-            <td class="col-actions text-right">
-                <button class="btn-icon-small hover:bg-gray-100 p-2 rounded-full" onclick="openDetails('${client.idCliente}')" title="Detalhes"><i class='bx bx-zoom-in' style="font-size: 1.2rem;"></i></button>
-            </td>
-        `;
-                tbody.appendChild(tr);
+                const installmentText = (saldo > 0) ? `1x ${formatCurrency(saldo)}` : '--';
+
+                // Status Logic - Minimalist
+                let statusLabel = '';
+                let statusClass = '';
+                let statusIcon = '';
+
+                if (saldo <= 0.01) {
+                    statusLabel = 'Quitado';
+                    statusClass = 'bg-gray-50 text-gray-400';
+                    statusIcon = 'bx-check';
+                } else if (diffDays < 0) {
+                    statusLabel = `Atraso (${Math.abs(diffDays)}d)`;
+                    statusClass = 'bg-gray-100 text-gray-900 font-bold';
+                    statusIcon = 'bx-time';
+                } else if (diffDays === 0) {
+                    statusLabel = 'Vence Hoje';
+                    statusClass = 'bg-gray-100 text-gray-900 font-medium';
+                    statusIcon = 'bx-bell';
+                } else {
+                    statusLabel = 'Em Dia';
+                    statusClass = 'bg-transparent border border-gray-100 text-gray-500';
+                    statusIcon = 'bx-calendar';
+                }
+
+                const card = document.createElement('div');
+                card.className = 'client-card flex flex-col justify-between h-full';
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="client-avatar text-gray-500 bg-gray-50">
+                                    ${initials}
+                                </div>
+                                <div class="overflow-hidden">
+                                    <h4 class="font-bold text-gray-900 text-sm md:text-base truncate" title="${clientName}">${clientName}</h4>
+                                    <p class="text-xs text-gray-400 truncate">${client.apelido || 'Novo cliente'}</p>
+                                </div>
+                            </div>
+                            <span class="px-2 py-1 rounded text-[10px] uppercase tracking-wider flex items-center gap-1 ${statusClass}">
+                                <i class='bx ${statusIcon}'></i> ${statusLabel}
+                            </span>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <p class="text-[10px] text-gray-400 font-semibold uppercase mb-1">Saldo Devedor</p>
+                            <!-- New Line: Installment Info -->
+                            <p class="text-xs font-medium text-gray-500 mb-0.5">${installmentText}</p>
+                            
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-xl font-bold text-gray-900">${formatCurrency(saldo)}</span>
+                            </div>
+                            ${saldo > 0 ? `<p class="text-xs text-gray-400 mt-1"><i class='bx bx-calendar'></i> ${venc ? simpleDate(venc) : '--/--'}</p>` : ''}
+                        </div>
+
+                         ${limite > 0 ? `
+                        <div class="w-full h-1 bg-gray-100 rounded-full mb-1 overflow-hidden">
+                            <div class="h-full ${barColor}" style="width: ${percent}%"></div>
+                        </div>
+                        <p class="text-[10px] text-gray-400 text-right w-full mb-4">${percent.toFixed(0)}% do limite</p>
+                        ` : ''}
+                    </div>
+
+                    <div class="flex gap-2 mt-auto">
+                        <button onclick="openDetails('${client.idCliente}')" class="flex-1 py-3 rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-900 text-sm font-semibold transition-colors flex items-center justify-center gap-1 border border-transparent hover:border-gray-200">
+                            Detalhes
+                        </button>
+                        <button onclick="togglePaymentLock(this)" class="flex-1 py-3 rounded-xl bg-[#db0038] text-white hover:bg-red-700 text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-1 shadow-md shadow-red-100">
+                            <i class='bx bx-dollar-circle icon-state'></i> <span class="text-state">Receber</span>
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
             });
+        }
+
+        window.togglePaymentLock = (btn) => {
+            const isLocked = btn.classList.contains('locked-state');
+            const icon = btn.querySelector('.icon-state');
+            const text = btn.querySelector('.text-state');
+
+            if (!isLocked) {
+                // Change to Locked State
+                btn.classList.add('locked-state');
+                btn.classList.remove('bg-[#db0038]', 'hover:bg-red-700', 'shadow-red-100');
+                btn.classList.add('bg-black', 'hover:bg-gray-900', 'shadow-gray-200');
+
+                if (icon) icon.className = 'bx bx-lock-alt icon-state text-lg';
+                if (text) text.innerText = 'Bloqueado';
+            } else {
+                // Revert to Default State (Optional: if the user wants it to toggle back)
+                btn.classList.remove('locked-state');
+                btn.classList.remove('bg-black', 'hover:bg-gray-900', 'shadow-gray-200');
+                btn.classList.add('bg-[#db0038]', 'hover:bg-red-700', 'shadow-red-100');
+
+                if (icon) icon.className = 'bx bx-dollar-circle icon-state';
+                if (text) text.innerText = 'Receber';
+            }
         }
 
         function updateDashboardTotals() {
@@ -533,9 +785,8 @@
                 }
             });
 
-            // Update Top Balance (kept for compatibility if needed, but UI changed)
+            // Update Top Balance
             if (document.getElementById('total-receivable')) document.getElementById('total-receivable').innerText = formatCurrency(totalReceivable);
-            if (document.getElementById('total-overdue')) document.getElementById('total-overdue').innerText = formatCurrency(totalOverdue);
 
             // Update New KPI Cards
             const formattedTotal = totalReceivable.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -576,14 +827,27 @@
 
             document.getElementById('detail-cliente-nome').innerText = client.nome || 'Nome não inf.';
             document.getElementById('detail-cliente-apelido').innerText = client.apelido || '';
-            document.getElementById('detail-cliente-saldo').innerText = formatCurrency(client.saldoDevedor || 0);
+            document.getElementById('detail-cliente-avatar-text').innerText = getInitials(client.nome);
 
+            // Generate Status Badge
+            const saldo = parseFloat(client.saldoDevedor || 0);
             const venc = parseDataSegura(client.proximoVencimento);
-            document.getElementById('detail-cliente-vencimento').innerText = venc ? simpleDate(venc) : 'Não definido';
+            const diffDays = venc ? Math.ceil((venc - new Date()) / (1000 * 60 * 60 * 24)) : 0;
+            let badgeHtml = '';
+            if (saldo <= 0.01) {
+                badgeHtml = `<span class="bg-gray-100 text-gray-500 font-bold px-2 py-0.5 rounded text-xs uppercase">Quitado</span>`;
+            } else if (diffDays < 0) {
+                badgeHtml = `<span class="bg-gray-100 text-gray-900 font-bold px-2 py-0.5 rounded text-xs uppercase">Atrasado</span>`;
+            } else {
+                badgeHtml = `<span class="bg-gray-50 text-gray-900 font-bold px-2 py-0.5 rounded text-xs uppercase">Em Dia</span>`;
+            }
+            document.getElementById('detail-cliente-status-badge').innerHTML = badgeHtml;
+
+            document.getElementById('detail-cliente-saldo').innerText = formatCurrency(saldo);
+            document.getElementById('detail-cliente-vencimento').innerText = venc ? simpleDate(venc) : '--/--';
 
             // Limit Logic
             const limite = parseFloat(client.limite || 0);
-            const saldo = parseFloat(client.saldoDevedor || 0);
             const disponivel = Math.max(0, limite - saldo);
             let percent = 0;
             if (limite > 0) percent = Math.min(100, (saldo / limite) * 100);
@@ -594,17 +858,11 @@
 
             const bar = document.getElementById('detail-cliente-progress');
             bar.style.width = `${percent}%`;
-            bar.className = 'progress-fill';
-            if (percent > 90) bar.classList.add('danger');
-            else if (percent > 70) bar.classList.add('warning');
+            bar.className = 'progress-fill h-full transition-all duration-500 bg-[var(--brand-color)]'; // Brand Color
 
             // Contacts
             document.getElementById('detail-cliente-telefone').innerText = client.telefone || 'Sem contato';
             document.getElementById('detail-cliente-endereco').innerText = client.endereco || 'Sem endereço';
-
-            // History (Mock or Fetch from detailed endpoint if needed, but for now we show basic debt)
-            const histContainer = document.getElementById('detail-history-container');
-            histContainer.innerHTML = `<p class="text-sm text-gray-400 italic">Histórico detalhado disponível no PDV.</p>`;
 
             // Show Modal
             openModal('cliente-details-modal');
@@ -639,7 +897,7 @@
 
         // Search Listener
         document.getElementById('client-search-input').addEventListener('input', () => {
-            renderTable(localClientCache);
+            renderCards(localClientCache);
         });
 
         // Payment Form Submit
@@ -661,7 +919,6 @@
             btn.disabled = true;
 
             try {
-                // Construct Payload similar to PDV
                 const payload = {
                     action: 'registrarPagamento',
                     idCliente: selectedClientForPayment.idCliente || selectedClientForPayment.id,
@@ -670,21 +927,12 @@
                     origem: 'Painel Admin'
                 };
 
-                // Use URL encoded form data as PDV likely does
-                // actually PDV uses JSON or URL params? Looking at pdv/script.js:
-                // It usually posts to REGISTRO_VENDA_SCRIPT_URL or SCRIPT_URL. 
-                // Let's assume standard POST to SCRIPT_URL for client updates.
-
-                // Note: In provided context, `registrarPagamentoClienteAPI` uses `fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })`.
-
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
                     body: JSON.stringify(payload)
                 });
 
                 const resText = await response.text();
-                // Apps script often calls text() or json().
-
                 alert("Pagamento registrado com sucesso!");
                 document.getElementById('cliente-pay-modal').classList.remove('active');
                 loadClientsFromFirebase(); // Reload
