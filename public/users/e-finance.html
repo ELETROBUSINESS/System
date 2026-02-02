@@ -9,7 +9,7 @@
     <link rel="icon" href="/assets/img/iconWeb.png">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 
-    <!-- CSS INTEGRADO E MELHORADO -->
+    <!-- CSS INTEGRADO -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
@@ -112,7 +112,6 @@
         .input-box input {
             width: 100%;
             padding: 1rem 3.5rem 1rem 3rem;
-            /* Espaço para ícone esquerdo e direito */
             background: var(--input-bg);
             border: 1px solid transparent;
             border-radius: 0.5rem;
@@ -139,16 +138,6 @@
             font-size: 1.25rem;
             color: rgba(255, 255, 255, 0.7);
             pointer-events: none;
-        }
-
-        .password-toggle-icon {
-            position: absolute;
-            right: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 1.4rem;
         }
 
         .btn_form {
@@ -263,6 +252,78 @@
                 transform: rotate(360deg);
             }
         }
+
+        /* --- VISUAL PASSWORD BOXES --- */
+        .password-container {
+            position: relative;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            /* Reduced gap */
+            width: 100%;
+            /* Occupy full width like user-info */
+            max-width: 100%;
+        }
+
+        .password-toggle-icon {
+            /* Flex item now, to prevent overlap */
+            position: relative;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 1.5rem;
+            z-index: 20;
+            transition: color 0.3s;
+            padding: 5px;
+            margin-left: 8px;
+            /* Spacing from boxes */
+        }
+
+        .password-toggle-icon:hover {
+            color: white;
+        }
+
+        .pass-box {
+            width: 38px;
+            /* Slightly smaller to fit 6 + icon */
+            height: 50px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            /* Slightly smaller radius */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .pass-box.filled {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 10px rgba(255, 16, 79, 0.2);
+        }
+
+        .pass-box.active {
+            border-color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Hidden Input styling to cover the area but be invisible */
+        #hidden-password-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 10;
+        }
     </style>
 </head>
 
@@ -281,7 +342,8 @@
 
                 <div id="username-step">
                     <div class="input-box">
-                        <input type="text" placeholder="Usuário" id="login-username" name="username" required>
+                        <input type="text" placeholder="Usuário" id="login-username" name="username"
+                            autocomplete="username" required>
                         <i class="bx bxs-user input-icon"></i>
                     </div>
                     <button class="btn_form" type="button" id="continue-btn">
@@ -301,11 +363,21 @@
                             </button>
                         </div>
                     </div>
-                    <div class="input-box">
-                        <input type="password" placeholder="Senha" id="login-password" name="password" required>
-                        <i class="bx bxs-lock-alt input-icon"></i>
+
+                    <!-- NEW VISUAL PASSWORD BOXES -->
+                    <div class="password-container">
+                        <input type="password" inputmode="numeric" pattern="[0-9]*" id="hidden-password-input"
+                            name="password" autocomplete="current-password" maxlength="6">
+                        <div class="pass-box" onclick="document.getElementById('hidden-password-input').focus()"></div>
+                        <div class="pass-box" onclick="document.getElementById('hidden-password-input').focus()"></div>
+                        <div class="pass-box" onclick="document.getElementById('hidden-password-input').focus()"></div>
+                        <div class="pass-box" onclick="document.getElementById('hidden-password-input').focus()"></div>
+                        <div class="pass-box" onclick="document.getElementById('hidden-password-input').focus()"></div>
+                        <div class="pass-box" onclick="document.getElementById('hidden-password-input').focus()"></div>
+
                         <i class='bx bx-show password-toggle-icon' id="password-toggle"></i>
                     </div>
+
                     <button class="btn_form" type="submit">
                         <span>Entrar</span>
                         <i class='bx bx-log-in-circle'></i>
@@ -315,7 +387,15 @@
                 <div class="desc">
                     <p>* Ao entrar você concorda com nossas politicas e diretrizes</p>
                 </div>
-                <a href="/login.html">Sou colaborador</a>
+
+                <!-- Updated Collaborator Link -->
+                <div
+                    style="margin-top: 1.5rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
+                    <a href="/login.html"
+                        style="color: rgba(255,255,255,0.6); text-decoration: none; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 5px; transition: color 0.3s;">
+                        <i class="bx bxs-user-badge"></i> Acessar como Colaborador
+                    </a>
+                </div>
             </form>
         </div>
     </div>
@@ -339,17 +419,72 @@
             const usernameStep = document.getElementById("username-step");
             const passwordStep = document.getElementById("password-step");
             const usernameInput = document.getElementById("login-username");
-            const passwordInput = document.getElementById("login-password");
+
+            // Password Logic
+            const hiddenInput = document.getElementById("hidden-password-input");
+            const passBoxes = document.querySelectorAll(".pass-box");
+            const passwordToggle = document.getElementById("password-toggle");
+            let isPasswordVisible = false;
+
             const userAvatar = document.getElementById("user-avatar");
             const userName = document.getElementById("user-name");
             const continueBtn = document.getElementById("continue-btn");
             const changeUserBtn = document.getElementById("change-user-btn");
-            const passwordToggle = document.getElementById("password-toggle");
 
             const SESSION_EXPIRY_MS = 20 * 60 * 1000;
             const REMEMBER_ME_EXPIRY_MS = 120 * 24 * 60 * 60 * 1000;
 
             let currentUser = null;
+
+            // Update Visuals Function
+            const updatePassBoxes = () => {
+                const val = hiddenInput.value;
+                const isFocused = document.activeElement === hiddenInput;
+
+                passBoxes.forEach((box, idx) => {
+                    // Fill Logic
+                    if (idx < val.length) {
+                        box.classList.add("filled");
+                        box.innerText = isPasswordVisible ? val[idx] : "•";
+                    } else {
+                        box.classList.remove("filled");
+                        box.innerText = "";
+                    }
+
+                    // Active Logic
+                    if (isFocused && idx === val.length && val.length < 6) {
+                        box.classList.add("active");
+                    } else if (isFocused && idx === 5 && val.length === 6) {
+                        // Optional: Keep active on last if full? Or standard behavior: none active when full.
+                        // Let's remove active if full to indicate completion.
+                        box.classList.remove("active");
+                    } else {
+                        box.classList.remove("active");
+                    }
+                });
+            };
+
+            // Password Input VisualSync
+            hiddenInput.addEventListener("input", (e) => {
+                const val = e.target.value;
+                if (val.length > 6) e.target.value = val.slice(0, 6); // Hard limit
+                updatePassBoxes();
+            });
+
+            hiddenInput.addEventListener("focus", updatePassBoxes);
+            hiddenInput.addEventListener("blur", () => {
+                // Remove active from all on blur
+                passBoxes.forEach(b => b.classList.remove("active"));
+            });
+
+            // Toggle Visibility
+            passwordToggle.addEventListener("click", () => {
+                isPasswordVisible = !isPasswordVisible;
+                passwordToggle.className = isPasswordVisible ? 'bx bx-hide password-toggle-icon' : 'bx bx-show password-toggle-icon';
+                updatePassBoxes(); // Refresh view
+                hiddenInput.focus(); // Keep focus
+            });
+
 
             const createToken = (user, expiresInMs) => ({
                 username: user.username,
@@ -359,22 +494,23 @@
             });
 
             const showPasswordStep = (user) => {
-                // **BUG FIX AQUI**
-                // Define o valor do input de usuário escondido
                 usernameInput.value = user.username;
-
                 userAvatar.src = user.profilePic;
                 userName.textContent = user.username;
                 usernameStep.classList.add("hidden");
                 passwordStep.classList.remove("hidden");
-                setTimeout(() => passwordInput.focus(), 100);
+
+                // Clear and Focus Password
+                hiddenInput.value = "";
+                updatePassBoxes();
+                setTimeout(() => hiddenInput.focus(), 100);
             };
 
             const showUsernameStep = () => {
                 passwordStep.classList.add("hidden");
                 usernameStep.classList.remove("hidden");
                 usernameInput.value = "";
-                passwordInput.value = "";
+                hiddenInput.value = ""; // Reset hidden
                 currentUser = null;
                 localStorage.removeItem("session_token");
                 localStorage.removeItem("remember_me_token");
@@ -414,7 +550,8 @@
                     showUsernameStep();
                     return;
                 }
-                const passwordValue = passwordInput.value;
+
+                const passwordValue = hiddenInput.value; // Get from hidden input
                 if (!passwordValue) {
                     alert("Por favor, insira sua senha.");
                     return;
@@ -427,18 +564,13 @@
                     window.location.href = currentUser.redirect;
                 } else {
                     alert("Senha inválida.");
-                    passwordInput.focus();
+                    hiddenInput.value = "";
+                    passBoxes.forEach(b => { b.classList.remove("filled"); b.innerText = ""; });
+                    hiddenInput.focus();
                 }
             });
 
             changeUserBtn.addEventListener("click", showUsernameStep);
-
-            passwordToggle.addEventListener("click", () => {
-                const isPassword = passwordInput.type === "password";
-                passwordInput.type = isPassword ? "text" : "password";
-                passwordToggle.classList.toggle("bx-show");
-                passwordToggle.classList.toggle("bx-hide");
-            });
 
             function initializeLoginState() {
                 console.log("Verificando tokens existentes...");
@@ -472,8 +604,6 @@
                     } catch (e) { localStorage.removeItem("remember_me_token"); }
                 }
 
-                // **BUG FIX AQUI**
-                // Garante que a etapa de usuário seja mostrada E focada apenas se for o fallback final.
                 if (usernameStep.classList.contains("hidden")) {
                     showUsernameStep();
                 } else {
