@@ -42,7 +42,7 @@
         <div class="bg-emerald-500 rounded-full p-1"><i data-lucide="refresh-cw" class="w-4 h-4 text-white"></i></div>
         <div>
             <h4 class="font-bold text-sm">Novas músicas detectadas</h4>
-            <p class="text-xs text-slate-400">A programação foi atualizada.</p>
+            <p class="text-xs text-slate-400">Serão tocadas na próxima rodada.</p>
         </div>
     </div>
 
@@ -123,11 +123,10 @@
                     <i data-lucide="calendar-clock" class="w-5 h-5 text-slate-500"></i>
                     Programação
                 </h3>
-                <span id="update-status" class="text-[10px] text-slate-400 font-mono">Sincronizado</span>
+                <span id="update-status" class="text-[10px] text-slate-400 font-mono">Aleatório</span>
             </div>
             
             <div id="timeline-container" class="timeline-scroll flex-1 overflow-y-auto pr-2 space-y-3">
-                <!-- Itens da timeline serão injetados aqui via JS -->
                 <div class="text-center text-sm text-slate-400 py-10">Aguardando dados...</div>
             </div>
         </aside>
@@ -136,18 +135,16 @@
 
     <script>
         // --- CONFIGURAÇÃO ---
-        // URL gerada pelo Google Apps Script
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxILsDDTVun9HEmQ5dNH0-MtjIlJ4CmY3GNMJz7p46Zp0ePtw-joI_2q-Kjt7ef1qOx7A/exec'; 
         
         // --- VARIÁVEIS DO SISTEMA ---
-        let PLAYLIST = []; // Será preenchida pela planilha
+        let RAW_DATA = []; // Dados originais da planilha (Pool de músicas)
+        let PLAYLIST = []; // Playlist atual (embaralhada)
         let player, currentIndex = 0, isPlaying = false, progressInterval;
-        let pollingInterval;
+        let pollingInterval, timelineInterval;
 
         // --- INICIALIZAÇÃO ---
         lucide.createIcons();
-        
-        // Proteção
         window.addEventListener('beforeunload', e => { if (isPlaying) { e.preventDefault(); e.returnValue = ''; } });
 
         // API YouTube
@@ -156,14 +153,23 @@
         var firstScriptTag = document.getElementsByTagName('script')[0];
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-        // --- LÓGICA DE DADOS (PLANILHA) ---
-        
+        // --- ALGORITMO DE EMBARALHAMENTO (Fisher-Yates) ---
+        function shuffleArray(array) {
+            let shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // --- LÓGICA DE DADOS ---
         async function fetchPlaylistData() {
             if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('INSIRA_SUA')) {
                 console.error("URL do Script não configurada.");
                 return false;
             }
-
+            
             document.getElementById('update-status').innerText = "Buscando...";
             
             try {
@@ -175,97 +181,105 @@
                     return false;
                 }
 
-                const isNew = JSON.stringify(data) !== JSON.stringify(PLAYLIST);
+                // Detecta novas músicas (comparação simples)
+                const isNew = JSON.stringify(data) !== JSON.stringify(RAW_DATA);
                 
-                if (isNew && PLAYLIST.length > 0) {
+                if (isNew && RAW_DATA.length > 0) {
                     showNotification();
                 }
 
-                PLAYLIST = data;
-                document.getElementById('update-status').innerText = "Atualizado às " + new Date().toLocaleTimeString().slice(0,5);
+                RAW_DATA = data; // Atualiza o "banco" de músicas
+                document.getElementById('update-status').innerText = "Aleatório • " + RAW_DATA.length + " faixas";
                 
-                if (queueIsEmpty()) {
+                // Se for a primeira vez, cria a playlist embaralhada e toca
+                if (PLAYLIST.length === 0 && RAW_DATA.length > 0) {
+                    PLAYLIST = shuffleArray(RAW_DATA);
                     loadTrack(); 
                 }
                 
-                renderTimeline();
                 return true;
 
             } catch (e) {
                 console.error("Falha ao conectar:", e);
-                document.getElementById('update-status').innerText = "Erro de conexão";
                 return false;
             }
         }
 
         function renderTimeline() {
             const container = document.getElementById('timeline-container');
-            container.innerHTML = '';
-
+            
+            // Só redesenha se houver músicas
             if (PLAYLIST.length === 0) {
-                container.innerHTML = '<div class="text-center text-xs text-slate-400">Nenhuma música na planilha.</div>';
+                container.innerHTML = '<div class="text-center text-xs text-slate-400">Nenhuma música carregada.</div>';
                 return;
             }
 
-            // CORREÇÃO: Inicializa data simulada com segurança
+            // Limpa container (Idealmente faria diff, mas rebuild é mais seguro para tempo real)
+            container.innerHTML = '';
+
+            // Tempo base: Agora
             let simulatedTime = new Date();
             
-            // CORREÇÃO: Valida se o player está pronto para fornecer duração
+            // Calcula tempo restante da música atual
             let currentRemaining = 0;
-            if (player && typeof player.getDuration === 'function' && typeof player.getCurrentTime === 'function') {
-                const dur = player.getDuration();
-                const cur = player.getCurrentTime();
-                // Só calcula se forem números válidos e maiores que 0
-                if (!isNaN(dur) && !isNaN(cur) && dur > 0) {
-                    currentRemaining = (dur - cur);
+            let durationSecCurrent = 180; // Default
+
+            if (PLAYLIST[currentIndex]) {
+                durationSecCurrent = parseInt(PLAYLIST[currentIndex].duration) || 180;
+                
+                // Se player estiver rodando, pega o tempo real
+                if (player && typeof player.getCurrentTime === 'function') {
+                    const cur = player.getCurrentTime();
+                    // Proteção contra NaN
+                    if (!isNaN(cur) && cur > 0) {
+                        currentRemaining = Math.max(0, durationSecCurrent - cur);
+                    } else {
+                        currentRemaining = durationSecCurrent;
+                    }
+                } else {
+                    currentRemaining = durationSecCurrent;
                 }
             }
 
             PLAYLIST.forEach((track, index) => {
+                // Filtro para mostrar apenas música atual e futuras (opcional, aqui mostra todas)
+                // Vamos focar no estilo "Playlist Completa"
+                
                 let startTimeDisplay = "--:--";
                 let durationSec = parseInt(track.duration);
-                
-                // CORREÇÃO: Fallback se a duração na planilha for inválida (ex: texto)
-                if (isNaN(durationSec) || durationSec <= 0) {
-                    durationSec = 180; // 3 minutos padrão
-                }
+                if (isNaN(durationSec) || durationSec <= 0) durationSec = 180;
 
                 if (index === currentIndex) {
-                    // Música atual
+                    // Atual
                     startTimeDisplay = "Agora";
-                    // Calcula fim = Agora + Restante
+                    
+                    // Define o tempo base para a PRÓXIMA música
                     if (!isNaN(simulatedTime.getTime())) {
                         let endData = new Date(simulatedTime.getTime() + (currentRemaining * 1000));
-                        // Atualiza simulatedTime para o início da próxima
                         simulatedTime = endData; 
                     }
                 } else if (index > currentIndex) {
-                    // Músicas futuras
+                    // Futura
                     if (!isNaN(simulatedTime.getTime())) {
                         startTimeDisplay = simulatedTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                        // Incrementa acumulador
+                        // Incrementa para a próxima
                         simulatedTime = new Date(simulatedTime.getTime() + (durationSec * 1000));
-                    } else {
-                        startTimeDisplay = "Calc...";
                     }
                 } else {
-                    // Passadas
-                    startTimeDisplay = "Concluída";
+                    // Passada
+                    startTimeDisplay = "Tocou";
                 }
 
-                // Formatação duração display
-                const min = Math.floor(durationSec / 60);
-                const sec = durationSec % 60;
-                const durationStr = `${min}:${sec.toString().padStart(2,'0')}`;
-
+                // Visual
                 const isActive = index === currentIndex;
-                const opacity = index < currentIndex ? 'opacity-50 grayscale' : 'opacity-100';
-                const bg = isActive ? 'bg-slate-50 border-slate-200' : 'border-transparent hover:bg-white/50';
+                const opacity = index < currentIndex ? 'opacity-40 grayscale' : 'opacity-100';
+                const bg = isActive ? 'bg-slate-50 border-slate-200 shadow-sm' : 'border-transparent hover:bg-white/50';
+                const durationStr = `${Math.floor(durationSec / 60)}:${(durationSec % 60).toString().padStart(2,'0')}`;
                 
                 const item = document.createElement('div');
                 item.className = `flex items-center gap-3 p-3 rounded-xl border transition-all ${opacity} ${bg}`;
                 item.innerHTML = `
-                    <div class="text-xs font-mono text-slate-400 w-14 text-right shrink-0">
+                    <div class="text-xs font-mono text-slate-400 w-14 text-right shrink-0 font-medium">
                         ${startTimeDisplay}
                     </div>
                     <div class="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center shrink-0 overflow-hidden relative">
@@ -277,6 +291,10 @@
                         <p class="text-xs text-slate-500 truncate">${track.artist} • ${durationStr}</p>
                     </div>
                 `;
+                
+                // Rola para a música atual se necessário (apenas na primeira renderização ou troca)
+                // Implementação simples: manter scroll manual
+                
                 container.appendChild(item);
             });
         }
@@ -301,11 +319,10 @@
 
         function startRadio() {
             document.getElementById('start-overlay').style.display = 'none';
+            // Inicia busca e loops
             fetchPlaylistData().then(() => {
                 startPolling();
-                if(player && PLAYLIST.length > 0) {
-                    loadTrack();
-                }
+                startTimelineUpdater(); // Inicia atualização da linha do tempo
             });
         }
 
@@ -323,23 +340,21 @@
                     'startSeconds': track.start || 0
                 });
             }
-            // Chama renderTimeline após pequeno delay para dar tempo do player iniciar status
-            setTimeout(renderTimeline, 500); 
+            // Força render imediato para atualizar status "Agora"
+            setTimeout(renderTimeline, 200);
         }
 
         function onPlayerStateChange(event) {
             const vis = document.getElementById('visualizer');
             const btn = document.getElementById('play-btn');
-            checkChannel();
-
+            
             if (event.data == YT.PlayerState.PLAYING) {
                 isPlaying = true;
                 vis.classList.remove('paused');
                 btn.innerHTML = '<i data-lucide="pause" class="w-6 h-6 fill-current"></i>';
                 lucide.createIcons();
                 updateUI();
-                startTimer();
-                renderTimeline(); // Atualiza timeline quando começa a tocar
+                startTimer(); // Slider
             } else {
                 isPlaying = false;
                 vis.classList.add('paused');
@@ -347,16 +362,28 @@
                 lucide.createIcons();
                 stopTimer();
                 if(event.data == YT.PlayerState.ENDED) {
-                    changeTrack(1);
+                    changeTrack(1); // Auto next
                 }
             }
+            // Renderiza timeline para atualizar status pausado/tocando se quisermos
+            renderTimeline();
         }
 
         function changeTrack(direction) {
+            // Atualiza dados antes de mudar (opcional, mas garante frescor)
             fetchPlaylistData().then(() => {
                 currentIndex += direction;
-                if(currentIndex >= PLAYLIST.length) { currentIndex = 0; }
-                if(currentIndex < 0) currentIndex = PLAYLIST.length - 1;
+                
+                // CICLO INFINITO COM RE-EMBARALHAMENTO
+                if (currentIndex >= PLAYLIST.length) {
+                    // Fim da lista: Re-embaralha o pool original
+                    console.log("Reiniciando ciclo com nova ordem...");
+                    PLAYLIST = shuffleArray(RAW_DATA);
+                    currentIndex = 0;
+                } else if (currentIndex < 0) {
+                    currentIndex = PLAYLIST.length - 1;
+                }
+                
                 loadTrack();
             });
         }
@@ -365,15 +392,22 @@
             changeTrack(1);
         }
 
-        // --- UPDATE E NOTIFICAÇÃO ---
+        // --- LOOPS E UPDATES ---
 
         function startPolling() {
             if(pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(() => {
                 fetchPlaylistData();
-            }, 120000); // 2 min
-            
-            setInterval(renderTimeline, 30000); // Atualiza timeline a cada 30s
+            }, 120000); // 2 min verifica planilha
+        }
+
+        // Loop exclusivo para a Linha do Tempo (1s para ser preciso com pausas)
+        function startTimelineUpdater() {
+            if(timelineInterval) clearInterval(timelineInterval);
+            timelineInterval = setInterval(() => {
+                // Só renderiza se tiver playlist
+                if(PLAYLIST.length > 0) renderTimeline();
+            }, 1000);
         }
 
         function showNotification() {
@@ -385,8 +419,6 @@
         }
 
         // --- UTILITÁRIOS ---
-        function queueIsEmpty() { return PLAYLIST.length === 0; }
-        
         function onPlayerError(e) {
             console.log("Erro " + e.data + ". Pulando...");
             setTimeout(() => changeTrack(1), 1000);
@@ -395,18 +427,6 @@
         function togglePlay() {
             if(!player) return;
             isPlaying ? player.pauseVideo() : player.playVideo();
-        }
-
-        function checkChannel() {
-            if(player && typeof player.getVideoData === 'function') {
-                const data = player.getVideoData();
-                const el = document.getElementById('player-container');
-                if(data && data.author && (data.author.includes('A Voz das Vendas') || data.author.includes('Voz das Vendas'))) {
-                    el.classList.add('hide-video');
-                } else {
-                    el.classList.remove('hide-video');
-                }
-            }
         }
 
         function updateUI() {
@@ -437,7 +457,7 @@
                         document.getElementById('total-time').innerText = fmt(total);
                     }
                 }
-            }, 1000);
+            }, 500);
         }
 
         function stopTimer() { clearInterval(progressInterval); }
