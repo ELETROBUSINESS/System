@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,31 +9,113 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .glass-panel { background: rgba(255, 255, 255, 0.95); border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
         /* Animações */
-        .bar { animation: bounce 1s infinite ease-in-out; }
-        .bar:nth-child(2) { animation-delay: 0.1s; } .bar:nth-child(3) { animation-delay: 0.2s; } .bar:nth-child(4) { animation-delay: 0.3s; }
-        @keyframes bounce { 0%, 100% { height: 4px; } 50% { height: 16px; } }
-        .paused .bar { animation-play-state: paused; height: 4px; }
-        
+        .bar {
+            animation: bounce 1s infinite ease-in-out;
+        }
+
+        .bar:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .bar:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .bar:nth-child(4) {
+            animation-delay: 0.3s;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                height: 4px;
+            }
+
+            50% {
+                height: 16px;
+            }
+        }
+
+        .paused .bar {
+            animation-play-state: paused;
+            height: 4px;
+        }
+
         /* Slider e Player */
-        input[type=range] { -webkit-appearance: none; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #1e293b; cursor: pointer; margin-top: -6px; }
-        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #e2e8f0; border-radius: 2px; }
-        .ytp-chrome-top, .ytp-watermark { display: none !important; }
-        #player-container { filter: grayscale(100%); opacity: 0.5; pointer-events: none; transition: opacity 0.3s; }
-        .hide-video { opacity: 0.01 !important; }
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #1e293b;
+            cursor: pointer;
+            margin-top: -6px;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            background: #e2e8f0;
+            border-radius: 2px;
+        }
+
+        .ytp-chrome-top,
+        .ytp-watermark {
+            display: none !important;
+        }
+
+        #player-container {
+            filter: grayscale(100%);
+            opacity: 0.5;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .hide-video {
+            opacity: 0.01 !important;
+        }
 
         /* Timeline Scroll */
-        .timeline-scroll::-webkit-scrollbar { width: 4px; }
-        .timeline-scroll::-webkit-scrollbar-track { background: transparent; }
-        .timeline-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+        .timeline-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .timeline-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .timeline-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 2px;
+        }
 
         /* Notificação Toast */
-        #toast-notification { transform: translateY(150%); transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
-        #toast-notification.show { transform: translateY(0); }
+        #toast-notification {
+            transform: translateY(150%);
+            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+
+        #toast-notification.show {
+            transform: translateY(0);
+        }
 
         /* Efeito de Troca de Música (NOVO) */
         .track-info-wrapper {
@@ -40,6 +123,7 @@
             opacity: 1;
             transform: translateY(0);
         }
+
         .track-switching .track-info-wrapper {
             opacity: 0;
             transform: translateY(10px) scale(0.95);
@@ -47,10 +131,12 @@
         }
     </style>
 </head>
+
 <body class="h-screen flex flex-col items-center justify-center text-slate-800 overflow-hidden">
 
     <!-- Notificação de Nova Playlist -->
-    <div id="toast-notification" class="fixed bottom-8 z-50 bg-slate-900 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-4">
+    <div id="toast-notification"
+        class="fixed bottom-8 z-50 bg-slate-900 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-4">
         <div class="bg-emerald-500 rounded-full p-1"><i data-lucide="refresh-cw" class="w-4 h-4 text-white"></i></div>
         <div>
             <h4 class="font-bold text-sm">Novas músicas detectadas</h4>
@@ -59,20 +145,22 @@
     </div>
 
     <!-- Botão Início -->
-    <div id="start-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+    <div id="start-overlay"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
         <div class="bg-white p-8 rounded-2xl shadow-xl text-center">
             <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i data-lucide="radio" class="w-8 h-8 text-slate-700"></i>
             </div>
             <h1 class="text-xl font-bold mb-6">Rádio Eletrobusiness</h1>
-            <button onclick="startRadio()" class="bg-slate-900 text-white px-8 py-3 rounded-lg hover:bg-slate-800 transition flex items-center gap-2 mx-auto">
+            <button onclick="startRadio()"
+                class="bg-slate-900 text-white px-8 py-3 rounded-lg hover:bg-slate-800 transition flex items-center gap-2 mx-auto">
                 <i data-lucide="play" class="w-4 h-4"></i> Conectar
             </button>
         </div>
     </div>
 
     <div class="flex flex-col md:flex-row gap-6 max-w-5xl w-full p-4 h-[90vh]">
-        
+
         <!-- COLUNA 1: PLAYER PRINCIPAL -->
         <main class="w-full md:w-1/2 glass-panel rounded-3xl p-8 relative flex flex-col justify-between">
             <!-- Topo -->
@@ -83,7 +171,8 @@
                         <span class="text-[10px] font-bold tracking-widest text-slate-400">ONLINE</span>
                     </div>
                     <!-- Badge Duração Total -->
-                    <div class="flex items-center gap-1.5 bg-white/50 px-3 py-1 rounded-full border border-slate-100 text-[10px] font-bold tracking-widest text-slate-400" title="Duração total da rodada">
+                    <div class="flex items-center gap-1.5 bg-white/50 px-3 py-1 rounded-full border border-slate-100 text-[10px] font-bold tracking-widest text-slate-400"
+                        title="Duração total da rodada">
                         <i data-lucide="clock" class="w-3 h-3 text-slate-400"></i>
                         <span id="playlist-total-duration">-- min</span>
                     </div>
@@ -98,7 +187,9 @@
 
             <!-- YouTube -->
             <div class="relative w-full aspect-video bg-slate-900 rounded-xl overflow-hidden mb-6 shadow-inner">
-                <div id="player-container" class="w-full h-full"><div id="player"></div></div>
+                <div id="player-container" class="w-full h-full">
+                    <div id="player"></div>
+                </div>
                 <div class="absolute inset-0 flex items-center justify-center opacity-20">
                     <i data-lucide="music" class="w-12 h-12 text-white"></i>
                 </div>
@@ -107,7 +198,9 @@
             <!-- Infos (Com Wrapper para Animação) -->
             <div id="info-container" class="text-center mb-2 overflow-hidden">
                 <div class="track-info-wrapper">
-                    <h2 id="track-title" class="text-lg font-bold leading-tight line-clamp-2 h-14 flex items-center justify-center px-2">Carregando...</h2>
+                    <h2 id="track-title"
+                        class="text-lg font-bold leading-tight line-clamp-2 h-14 flex items-center justify-center px-2">
+                        Carregando...</h2>
                     <p id="track-artist" class="text-sm text-slate-500">Conectando...</p>
                 </div>
             </div>
@@ -116,7 +209,8 @@
             <div class="flex flex-col gap-6">
                 <div>
                     <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                        <div id="progress-bar" class="bg-slate-800 h-full w-0 transition-all duration-500 relative"></div>
+                        <div id="progress-bar" class="bg-slate-800 h-full w-0 transition-all duration-500 relative">
+                        </div>
                     </div>
                     <div class="flex justify-between mt-2 px-1 text-[10px] font-mono text-slate-400">
                         <span id="current-time">00:00</span>
@@ -124,9 +218,15 @@
                     </div>
                 </div>
                 <div class="flex items-center justify-center gap-8">
-                    <button onclick="changeTrack(-1)" class="p-3 text-slate-400 hover:text-slate-800 transform active:scale-95 transition-transform"><i data-lucide="skip-back" class="w-6 h-6 fill-current"></i></button>
-                    <button id="play-btn" onclick="togglePlay()" class="w-16 h-16 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all"><i data-lucide="play" class="w-6 h-6 fill-current ml-1"></i></button>
-                    <button onclick="manualNext()" class="p-3 text-slate-400 hover:text-slate-800 transform active:scale-95 transition-transform"><i data-lucide="skip-forward" class="w-6 h-6 fill-current"></i></button>
+                    <button onclick="changeTrack(-1)"
+                        class="p-3 text-slate-400 hover:text-slate-800 transform active:scale-95 transition-transform"><i
+                            data-lucide="skip-back" class="w-6 h-6 fill-current"></i></button>
+                    <button id="play-btn" onclick="togglePlay()"
+                        class="w-16 h-16 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all"><i
+                            data-lucide="play" class="w-6 h-6 fill-current ml-1"></i></button>
+                    <button onclick="manualNext()"
+                        class="p-3 text-slate-400 hover:text-slate-800 transform active:scale-95 transition-transform"><i
+                            data-lucide="skip-forward" class="w-6 h-6 fill-current"></i></button>
                 </div>
                 <div class="flex items-center gap-3">
                     <i id="vol-icon" data-lucide="volume-2" class="w-4 h-4 text-slate-400"></i>
@@ -144,7 +244,7 @@
                 </h3>
                 <span id="update-status" class="text-[10px] text-slate-400 font-mono">Aleatório</span>
             </div>
-            
+
             <div id="timeline-container" class="timeline-scroll flex-1 overflow-y-auto pr-2 space-y-3">
                 <div class="text-center text-sm text-slate-400 py-10">Aguardando dados...</div>
             </div>
@@ -154,8 +254,8 @@
 
     <script>
         // --- CONFIGURAÇÃO ---
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxILsDDTVun9HEmQ5dNH0-MtjIlJ4CmY3GNMJz7p46Zp0ePtw-joI_2q-Kjt7ef1qOx7A/exec'; 
-        
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxILsDDTVun9HEmQ5dNH0-MtjIlJ4CmY3GNMJz7p46Zp0ePtw-joI_2q-Kjt7ef1qOx7A/exec';
+
         // --- VARIÁVEIS DO SISTEMA ---
         let RAW_DATA = []; // Dados originais da planilha (Pool de músicas)
         let PLAYLIST = []; // Playlist atual (embaralhada)
@@ -184,41 +284,44 @@
 
         // --- LÓGICA DE DADOS ---
         async function fetchPlaylistData() {
-            if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('INSIRA_SUA')) {
-                console.error("URL do Script não configurada.");
-                return false;
-            }
-            
+            if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('INSIRA_SUA')) return false;
+
             document.getElementById('update-status').innerText = "Buscando...";
-            
+
             try {
-                // ADIÇÃO DE CACHE BUSTING: ?nocache=...
-                // Isso força o navegador a buscar dados frescos a cada requisição
                 const response = await fetch(APPS_SCRIPT_URL + '?nocache=' + new Date().getTime());
                 const data = await response.json();
-                
-                if (data.error) {
-                    console.error("Erro na planilha:", data.error);
-                    return false;
-                }
 
-                // Detecta novas músicas (comparação simples)
+                if (data.error) return false;
+
                 const isNew = JSON.stringify(data) !== JSON.stringify(RAW_DATA);
-                
-                if (isNew && RAW_DATA.length > 0) {
-                    showNotification();
+
+                if (isNew) {
+                    if (RAW_DATA.length > 0) showNotification();
+
+                    RAW_DATA = data;
+
+                    // --- CORREÇÃO AQUI ---
+                    // Se a planilha mudou, precisamos atualizar a PLAYLIST imediatamente
+                    if (PLAYLIST.length > 0) {
+                        const currentTrack = PLAYLIST[currentIndex];
+                        // Criamos uma nova playlist apenas com as músicas que REALMENTE estão na planilha agora
+                        let filteredNewData = RAW_DATA.filter(item => item.id !== currentTrack.id);
+                        let shuffledNew = shuffleArray(filteredNewData);
+
+                        // Montamos a nova lista: Música atual primeiro + o resto novo embaralhado
+                        PLAYLIST = [currentTrack, ...shuffledNew];
+                        currentIndex = 0; // A música atual agora é o índice 0 da nova lista
+                    } else {
+                        PLAYLIST = shuffleArray(RAW_DATA);
+                    }
+                    // ---------------------
+
+                    calculateTotalTime();
+                    if (PLAYLIST.length > 0 && !isPlaying) loadTrack();
                 }
 
-                RAW_DATA = data; // Atualiza o "banco" de músicas
                 document.getElementById('update-status').innerText = "Aleatório • " + RAW_DATA.length + " faixas";
-                
-                // Se for a primeira vez, cria a playlist embaralhada e toca
-                if (PLAYLIST.length === 0 && RAW_DATA.length > 0) {
-                    PLAYLIST = shuffleArray(RAW_DATA);
-                    calculateTotalTime(); // Calcula tempo total ao carregar
-                    loadTrack(); 
-                }
-                
                 return true;
 
             } catch (e) {
@@ -229,7 +332,7 @@
 
         function renderTimeline() {
             const container = document.getElementById('timeline-container');
-            
+
             // Só redesenha se houver músicas
             if (PLAYLIST.length === 0) {
                 container.innerHTML = '<div class="text-center text-xs text-slate-400">Nenhuma música carregada.</div>';
@@ -241,15 +344,15 @@
 
             // Tempo base: Agora
             let simulatedTime = new Date();
-            
+
             // Calcula tempo restante da música ATUAL
             let currentRemaining = 0;
-            
+
             // Pega dados da música atual
             let currentTrackData = PLAYLIST[currentIndex];
             let currentTotalDuration = parseInt(currentTrackData.duration) || 180;
             let currentStartSkip = parseInt(currentTrackData.start) || 0;
-            
+
             // O tempo que a música VAI DURAR na programação é (Total - Skip)
             let currentEffectiveDuration = Math.max(0, currentTotalDuration - currentStartSkip);
 
@@ -257,7 +360,7 @@
             if (player && typeof player.getCurrentTime === 'function' && typeof player.getDuration === 'function') {
                 const cur = player.getCurrentTime(); // Tempo decorrido no vídeo (ex: se pulou 10s, começa em 10)
                 const dur = player.getDuration();    // Duração total do vídeo
-                
+
                 if (!isNaN(cur) && cur > 0 && dur > 0) {
                     // Tempo restante real = Duração total do vídeo - Onde está agora
                     currentRemaining = Math.max(0, dur - cur);
@@ -271,7 +374,7 @@
 
             PLAYLIST.forEach((track, index) => {
                 let startTimeDisplay = "--:--";
-                
+
                 // Calcula duração efetiva desta faixa (Duração Bruta - Pular Intro)
                 let rawDuration = parseInt(track.duration);
                 if (isNaN(rawDuration) || rawDuration <= 0) rawDuration = 180;
@@ -281,16 +384,16 @@
                 if (index === currentIndex) {
                     // Atual
                     startTimeDisplay = "Agora";
-                    
+
                     // Define o tempo base para a PRÓXIMA música usando o restante da atual
                     if (!isNaN(simulatedTime.getTime())) {
                         let endData = new Date(simulatedTime.getTime() + (currentRemaining * 1000));
-                        simulatedTime = endData; 
+                        simulatedTime = endData;
                     }
                 } else if (index > currentIndex) {
                     // Futura
                     if (!isNaN(simulatedTime.getTime())) {
-                        startTimeDisplay = simulatedTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        startTimeDisplay = simulatedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                         // Incrementa para a próxima música somando a DURAÇÃO EFETIVA desta
                         simulatedTime = new Date(simulatedTime.getTime() + (effectiveDuration * 1000));
                     }
@@ -302,12 +405,12 @@
                 // Visual da duração na lista
                 const min = Math.floor(effectiveDuration / 60);
                 const sec = effectiveDuration % 60;
-                const durationStr = `${min}:${sec.toString().padStart(2,'0')}`;
+                const durationStr = `${min}:${sec.toString().padStart(2, '0')}`;
 
                 const isActive = index === currentIndex;
                 const opacity = index < currentIndex ? 'opacity-40 grayscale' : 'opacity-100';
                 const bg = isActive ? 'bg-slate-50 border-slate-200 shadow-sm' : 'border-transparent hover:bg-white/50';
-                
+
                 const item = document.createElement('div');
                 item.className = `flex items-center gap-3 p-3 rounded-xl border transition-all ${opacity} ${bg}`;
                 item.innerHTML = `
@@ -323,7 +426,7 @@
                         <p class="text-xs text-slate-500 truncate">${track.artist} • ${durationStr}</p>
                     </div>
                 `;
-                
+
                 container.appendChild(item);
             });
         }
@@ -333,11 +436,11 @@
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player', {
                 height: '100%', width: '100%',
-                videoId: '', 
+                videoId: '',
                 playerVars: {
-                    'playsinline': 1, 'controls': 0, 'disablekb': 1, 'fs': 0, 
+                    'playsinline': 1, 'controls': 0, 'disablekb': 1, 'fs': 0,
                     'iv_load_policy': 3, 'rel': 0, 'modestbranding': 1,
-                    'origin': window.location.origin 
+                    'origin': window.location.origin
                 },
                 events: {
                     'onStateChange': onPlayerStateChange,
@@ -357,16 +460,16 @@
 
         function loadTrack() {
             if (PLAYLIST.length === 0) return;
-            
+
             const track = PLAYLIST[currentIndex];
-            
+
             // UI Update (Sem animação, uso geral)
-            updateUI(); 
-            
+            updateUI();
+
             document.getElementById('progress-bar').style.width = '0%';
             document.getElementById('current-time').innerText = "00:00";
-            
-            if(player && player.loadVideoById) {
+
+            if (player && player.loadVideoById) {
                 player.loadVideoById({
                     'videoId': track.id,
                     'startSeconds': track.start || 0 // Aqui aplica o pulo da intro no player
@@ -379,7 +482,7 @@
         function onPlayerStateChange(event) {
             const vis = document.getElementById('visualizer');
             const btn = document.getElementById('play-btn');
-            
+
             if (event.data == YT.PlayerState.PLAYING) {
                 isPlaying = true;
                 vis.classList.remove('paused');
@@ -393,7 +496,7 @@
                 btn.innerHTML = '<i data-lucide="play" class="w-6 h-6 fill-current ml-1"></i>';
                 lucide.createIcons();
                 stopTimer();
-                if(event.data == YT.PlayerState.ENDED) {
+                if (event.data == YT.PlayerState.ENDED) {
                     changeTrack(1); // Auto next
                 }
             }
@@ -404,39 +507,39 @@
         function changeTrack(direction) {
             // 1. Efeito Visual de "Saindo"
             const container = document.getElementById('info-container');
-            if(container) container.classList.add('track-switching');
+            if (container) container.classList.add('track-switching');
 
             // 2. Mudança Lógica Imediata (Não espera fetch)
             setTimeout(() => {
                 currentIndex += direction;
-                
+
                 // CICLO INFINITO COM RE-EMBARALHAMENTO
                 if (currentIndex >= PLAYLIST.length) {
                     console.log("Reiniciando ciclo com nova ordem...");
                     PLAYLIST = shuffleArray(RAW_DATA); // Re-embaralha o que já temos
                     currentIndex = 0;
                     // Sincroniza em background
-                    fetchPlaylistData().catch(e => console.log("Sync background error", e)); 
+                    fetchPlaylistData().catch(e => console.log("Sync background error", e));
                 } else if (currentIndex < 0) {
                     currentIndex = PLAYLIST.length - 1;
                 }
-                
+
                 // Carrega a música
                 loadTrack();
 
                 // 3. Efeito Visual de "Chegando"
                 setTimeout(() => {
-                    if(container) container.classList.remove('track-switching');
+                    if (container) container.classList.remove('track-switching');
                 }, 150);
 
             }, 200); // Pequeno delay para a animação de saída ser vista
-            
+
             // Sincroniza em background se não for fim de ciclo
-            if(currentIndex < PLAYLIST.length - 1) {
-                 fetchPlaylistData().catch(e => console.log("Background sync", e));
+            if (currentIndex < PLAYLIST.length - 1) {
+                fetchPlaylistData().catch(e => console.log("Background sync", e));
             }
         }
-        
+
         function manualNext() {
             changeTrack(1);
         }
@@ -444,7 +547,7 @@
         // --- LOOPS E UPDATES ---
 
         function startPolling() {
-            if(pollingInterval) clearInterval(pollingInterval);
+            if (pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(() => {
                 fetchPlaylistData();
             }, 120000); // 2 min verifica planilha
@@ -452,10 +555,10 @@
 
         // Loop exclusivo para a Linha do Tempo (1s para ser preciso com pausas)
         function startTimelineUpdater() {
-            if(timelineInterval) clearInterval(timelineInterval);
+            if (timelineInterval) clearInterval(timelineInterval);
             timelineInterval = setInterval(() => {
                 // Só renderiza se tiver playlist
-                if(PLAYLIST.length > 0) renderTimeline();
+                if (PLAYLIST.length > 0) renderTimeline();
             }, 1000);
         }
 
@@ -474,22 +577,22 @@
         }
 
         function togglePlay() {
-            if(!player) return;
+            if (!player) return;
             isPlaying ? player.pauseVideo() : player.playVideo();
         }
 
         function updateUI() {
-            if(PLAYLIST.length === 0) return;
+            if (PLAYLIST.length === 0) return;
             const track = PLAYLIST[currentIndex];
             document.getElementById('track-title').innerText = track.title;
             document.getElementById('track-artist').innerText = track.artist;
         }
 
         function setVolume(val) {
-            if(player) player.setVolume(val);
+            if (player) player.setVolume(val);
             const icon = document.getElementById('vol-icon');
-            if(val == 0) icon.setAttribute('data-lucide', 'volume-x');
-            else if(val < 50) icon.setAttribute('data-lucide', 'volume-1');
+            if (val == 0) icon.setAttribute('data-lucide', 'volume-x');
+            else if (val < 50) icon.setAttribute('data-lucide', 'volume-1');
             else icon.setAttribute('data-lucide', 'volume-2');
             lucide.createIcons();
         }
@@ -497,11 +600,11 @@
         function startTimer() {
             stopTimer();
             progressInterval = setInterval(() => {
-                if(player && typeof player.getCurrentTime === 'function' && typeof player.getDuration === 'function') {
+                if (player && typeof player.getCurrentTime === 'function' && typeof player.getDuration === 'function') {
                     const current = player.getCurrentTime();
                     const total = player.getDuration();
-                    if(total > 0) {
-                        document.getElementById('progress-bar').style.width = (current/total*100) + '%';
+                    if (total > 0) {
+                        document.getElementById('progress-bar').style.width = (current / total * 100) + '%';
                         document.getElementById('current-time').innerText = fmt(current);
                         document.getElementById('total-time').innerText = fmt(total);
                     }
@@ -511,14 +614,14 @@
 
         function stopTimer() { clearInterval(progressInterval); }
         function fmt(s) {
-            if(isNaN(s)) return "00:00";
-            const m = Math.floor(s/60), sec = Math.floor(s%60);
-            return `${m}:${sec<10?'0'+sec:sec}`;
+            if (isNaN(s)) return "00:00";
+            const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+            return `${m}:${sec < 10 ? '0' + sec : sec}`;
         }
 
         function calculateTotalTime() {
-            if(PLAYLIST.length === 0) return;
-            
+            if (PLAYLIST.length === 0) return;
+
             // Soma a duração EFETIVA (Duração Total - Intro Pulada)
             let totalSeconds = PLAYLIST.reduce((acc, curr) => {
                 let dur = parseInt(curr.duration) || 180;
@@ -529,17 +632,18 @@
 
             let hours = Math.floor(totalSeconds / 3600);
             let minutes = Math.floor((totalSeconds % 3600) / 60);
-            
+
             let timeString = "";
-            if(hours > 0) {
+            if (hours > 0) {
                 timeString = `${hours}h ${minutes}min`;
             } else {
                 timeString = `${minutes} min`;
             }
-            
+
             const el = document.getElementById('playlist-total-duration');
-            if(el) el.innerText = timeString;
+            if (el) el.innerText = timeString;
         }
     </script>
 </body>
+
 </html>
