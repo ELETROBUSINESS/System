@@ -229,6 +229,29 @@
     <script>
         // Mini Extrato Logic for Conta.html
         document.addEventListener('DOMContentLoaded', () => {
+            // Antigravity: Check Role to Disable Chart for 'colaborador'
+            const userCache = localStorage.getItem('user_cache');
+            if (userCache) {
+                try {
+                    const user = JSON.parse(userCache);
+                    // Check logic: role is 'colaborador' (case insensitive just in case)
+                    if (user.role && user.role.toLowerCase() === 'colaborador') {
+                        const chartEl = document.getElementById('revenueChart');
+                        if (chartEl) {
+                            // Removing ID prevents script26.js from finding it and generating the chart
+                            chartEl.removeAttribute('id');
+                            chartEl.classList.remove('skeleton'); // Remove skeleton animation
+                            chartEl.style.display = 'flex';
+                            chartEl.style.alignItems = 'center';
+                            chartEl.style.justifyContent = 'center';
+                            chartEl.innerHTML = '<span class="text-xs text-gray-300 font-semibold uppercase tracking-widest">Acesso Restrito</span>';
+                        }
+                    }
+                } catch (e) {
+                    console.error("Erro ao verificar permissão de gráfico", e);
+                }
+            }
+
             loadMiniExtract();
         });
 

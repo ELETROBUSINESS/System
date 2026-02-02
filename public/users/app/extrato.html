@@ -296,7 +296,10 @@
         function renderTransactions(data) {
             transactionList.innerHTML = '';
 
-            data.forEach((item) => {
+            // Antigravity: Security Limit - Max 5 Transactions
+            const limitedData = data.slice(0, 5);
+
+            limitedData.forEach((item) => {
                 let valorDisplay = item.valor;
                 if (typeof item.valor === 'number') {
                     valorDisplay = item.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -323,6 +326,9 @@
 
                 transactionList.insertAdjacentHTML('beforeend', html);
             });
+
+            // Security Note
+            transactionList.insertAdjacentHTML('beforeend', '<div class="p-4 text-center text-[10px] text-gray-400 uppercase tracking-widest mt-2">Visualização limitada a 5 itens por segurança</div>');
         }
 
         function calculateTotals(data) {

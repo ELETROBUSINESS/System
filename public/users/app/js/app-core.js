@@ -35,15 +35,12 @@ document.addEventListener("DOMContentLoaded", () => {
             if (sessionToken) {
                 console.log("Sessão via Token detectada. Ignorando Auth Firebase.");
                 body.classList.remove('loading-auth');
-                console.log("Sessão via Token detectada. Permitindo acesso.");
-                body.classList.remove('loading-auth');
-                // Não redirecionamos mais, pos o token pode ser válido para esta área
-                // window.location.href = "/users/e-finance.html";
                 return;
             }
 
             console.warn("Sem sessão. Redirecionando...");
-            window.location.href = "/users/e-finance.html";
+            const isAdminArea = window.location.pathname.includes('/adm/nb/');
+            window.location.href = isAdminArea ? "/users/e-finance.html" : "/login.html";
         }
     });
 
@@ -62,19 +59,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Função Global de Logout (para usar em onClick inline)
 window.logoutApp = function () {
+    // Determina URL de Redirecionamento
+    // Se estiver na área administrativa específica, volta para e-finance
+    const isAdminArea = window.location.pathname.includes('/adm/nb/');
+    const redirectUrl = isAdminArea ? "/users/e-finance.html" : "/login.html";
+
     // Limpa tokens imediatamente para garantir
     localStorage.removeItem('user_cache');
     localStorage.removeItem('session_token');
 
+    // Limpa cache de dados
+    Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('acc_cache_')) localStorage.removeItem(key);
+    });
+
     // Tenta logout no Firebase e redireciona
     if (firebase.auth().currentUser) {
         auth.signOut().then(() => {
-            window.location.href = "/users/e-finance.html";
+            window.location.href = redirectUrl;
         }).catch(() => {
-            window.location.href = "/users/e-finance.html";
+            window.location.href = redirectUrl;
         });
     } else {
-        window.location.href = "/users/e-finance.html";
+        window.location.href = redirectUrl;
     }
 };
 
@@ -187,7 +194,9 @@ function createSessionTimer() {
                 div.innerText = "Sessão expirada";
                 div.style.color = "red";
                 // Redireciona se expirou
-                setTimeout(() => window.location.href = "/login.html", 1000);
+                const isAdminArea = window.location.pathname.includes('/adm/nb/');
+                const redirectUrl = isAdminArea ? "/users/e-finance.html" : "/login.html";
+                setTimeout(() => window.location.href = redirectUrl, 1000);
             } else {
                 const totalSeconds = Math.floor(diff / 1000);
                 const minutes = Math.floor(totalSeconds / 60);
