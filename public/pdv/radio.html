@@ -4,134 +4,97 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rádio Eletrobusiness</title>
-    <!-- Tailwind CSS (Estilo) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Fonte Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <!-- Ícones -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .glass-panel { background: rgba(255, 255, 255, 0.95); border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         
-        /* Estilo Vidro Clean */
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.95);
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Equalizador Simples */
+        /* Animações */
         .bar { animation: bounce 1s infinite ease-in-out; }
-        .bar:nth-child(2) { animation-delay: 0.1s; }
-        .bar:nth-child(3) { animation-delay: 0.2s; }
-        .bar:nth-child(4) { animation-delay: 0.3s; }
-        
-        @keyframes bounce {
-            0%, 100% { height: 4px; }
-            50% { height: 16px; }
-        }
+        .bar:nth-child(2) { animation-delay: 0.1s; } .bar:nth-child(3) { animation-delay: 0.2s; } .bar:nth-child(4) { animation-delay: 0.3s; }
+        @keyframes bounce { 0%, 100% { height: 4px; } 50% { height: 16px; } }
         .paused .bar { animation-play-state: paused; height: 4px; }
-
-        /* Slider Clean */
+        
+        /* Slider e Player */
         input[type=range] { -webkit-appearance: none; background: transparent; }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none; height: 16px; width: 16px;
-            border-radius: 50%; background: #1e293b; cursor: pointer; margin-top: -6px;
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%; height: 4px; background: #e2e8f0; border-radius: 2px;
-        }
-
-        /* Esconde elementos do YouTube */
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #1e293b; cursor: pointer; margin-top: -6px; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #e2e8f0; border-radius: 2px; }
         .ytp-chrome-top, .ytp-watermark { display: none !important; }
-        
-        /* Container do Player (Vídeo Escondido/Discreto) */
-        #player-container {
-            filter: grayscale(100%);
-            opacity: 0.5;
-            pointer-events: none;
-            transition: opacity 0.3s;
-        }
-        
-        /* Classe para esconder vídeo (Regra do canal) 
-           NOTA: Usamos 0.01 em vez de 0 para evitar que navegadores pausem o áudio em background
-        */
+        #player-container { filter: grayscale(100%); opacity: 0.5; pointer-events: none; transition: opacity 0.3s; }
         .hide-video { opacity: 0.01 !important; }
+
+        /* Timeline Scroll */
+        .timeline-scroll::-webkit-scrollbar { width: 4px; }
+        .timeline-scroll::-webkit-scrollbar-track { background: transparent; }
+        .timeline-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+
+        /* Notificação Toast */
+        #toast-notification { transform: translateY(150%); transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
+        #toast-notification.show { transform: translateY(0); }
     </style>
 </head>
 <body class="h-screen flex flex-col items-center justify-center text-slate-800 overflow-hidden">
 
-    <!-- Botão de Início (Necessário para áudio web) -->
+    <!-- Notificação de Nova Playlist -->
+    <div id="toast-notification" class="fixed bottom-8 z-50 bg-slate-900 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-4">
+        <div class="bg-emerald-500 rounded-full p-1"><i data-lucide="refresh-cw" class="w-4 h-4 text-white"></i></div>
+        <div>
+            <h4 class="font-bold text-sm">Novas músicas detectadas</h4>
+            <p class="text-xs text-slate-400">A programação foi atualizada.</p>
+        </div>
+    </div>
+
+    <!-- Botão Início -->
     <div id="start-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
         <div class="bg-white p-8 rounded-2xl shadow-xl text-center">
             <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i data-lucide="radio" class="w-8 h-8 text-slate-700"></i>
             </div>
-            <h1 class="text-xl font-bold mb-6">Rádio</h1>
+            <h1 class="text-xl font-bold mb-6">Rádio Eletrobusiness</h1>
             <button onclick="startRadio()" class="bg-slate-900 text-white px-8 py-3 rounded-lg hover:bg-slate-800 transition flex items-center gap-2 mx-auto">
-                <i data-lucide="play" class="w-4 h-4"></i> Iniciar Transmissão
+                <i data-lucide="play" class="w-4 h-4"></i> Conectar à Planilha
             </button>
         </div>
     </div>
 
-    <!-- Player Principal -->
-    <main class="w-full max-w-md p-4">
-        <div class="glass-panel rounded-3xl p-8 relative">
-            
-            <!-- Topo: Status, Duração e Pop-out -->
-            <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col md:flex-row gap-6 max-w-5xl w-full p-4 h-[90vh]">
+        
+        <!-- COLUNA 1: PLAYER PRINCIPAL -->
+        <main class="w-full md:w-1/2 glass-panel rounded-3xl p-8 relative flex flex-col justify-between">
+            <!-- Topo -->
+            <div class="flex justify-between items-center mb-4">
                 <div class="flex items-center gap-2">
-                    <!-- Status Badge -->
                     <div class="flex items-center gap-2 bg-white/50 px-3 py-1 rounded-full border border-slate-100">
                         <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                        <span class="text-[10px] font-bold tracking-widest text-slate-400">NO AR</span>
-                    </div>
-                    
-                    <!-- Duração Badge -->
-                    <div class="flex items-center gap-1.5 bg-white/50 px-3 py-1 rounded-full border border-slate-100 text-[10px] font-bold tracking-widest text-slate-400" title="Duração total da playlist">
-                        <i data-lucide="clock" class="w-3 h-3 text-slate-400"></i>
-                        <span id="playlist-total-duration">-- min</span>
+                        <span class="text-[10px] font-bold tracking-widest text-slate-400">ONLINE</span>
                     </div>
                 </div>
-
-                <div class="flex items-center gap-3">
-                    <!-- Equalizador -->
-                    <div id="visualizer" class="flex items-end gap-1 h-5 paused">
-                        <div class="bar w-1 bg-slate-800 rounded-full"></div>
-                        <div class="bar w-1 bg-slate-400 rounded-full"></div>
-                        <div class="bar w-1 bg-slate-600 rounded-full"></div>
-                        <div class="bar w-1 bg-slate-800 rounded-full"></div>
-                    </div>
-                    
-                    <!-- Botão Pop-out (Nova Janela) -->
-                    <button onclick="openPopup()" class="text-slate-400 hover:text-slate-800 transition-colors p-1" title="Abrir em janela separada (Não para a música)">
-                        <i data-lucide="external-link" class="w-4 h-4"></i>
-                    </button>
+                <div id="visualizer" class="flex items-end gap-1 h-5 paused">
+                    <div class="bar w-1 bg-slate-800 rounded-full"></div>
+                    <div class="bar w-1 bg-slate-400 rounded-full"></div>
+                    <div class="bar w-1 bg-slate-600 rounded-full"></div>
+                    <div class="bar w-1 bg-slate-800 rounded-full"></div>
                 </div>
             </div>
 
-            <!-- YouTube (Escondido/Fundo) -->
+            <!-- YouTube -->
             <div class="relative w-full aspect-video bg-slate-900 rounded-xl overflow-hidden mb-6 shadow-inner">
-                <div id="player-container" class="w-full h-full">
-                    <div id="player"></div>
-                </div>
-                <!-- Ícone Decorativo -->
+                <div id="player-container" class="w-full h-full"><div id="player"></div></div>
                 <div class="absolute inset-0 flex items-center justify-center opacity-20">
                     <i data-lucide="music" class="w-12 h-12 text-white"></i>
                 </div>
             </div>
 
             <!-- Infos -->
-            <div class="text-center mb-6">
-                <h2 id="track-title" class="text-lg font-bold leading-tight line-clamp-2 h-14 flex items-center justify-center px-2">
-                    Carregando...
-                </h2>
-                <p id="track-artist" class="text-sm text-slate-500">Aguardando</p>
+            <div class="text-center mb-2">
+                <h2 id="track-title" class="text-lg font-bold leading-tight line-clamp-2 h-14 flex items-center justify-center px-2">Carregando Planilha...</h2>
+                <p id="track-artist" class="text-sm text-slate-500">Conectando...</p>
             </div>
 
             <!-- Controles -->
             <div class="flex flex-col gap-6">
-                <!-- Progresso -->
                 <div>
                     <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
                         <div id="progress-bar" class="bg-slate-800 h-full w-0 transition-all duration-500 relative"></div>
@@ -141,83 +104,182 @@
                         <span id="total-time">00:00</span>
                     </div>
                 </div>
-
-                <!-- Botões -->
                 <div class="flex items-center justify-center gap-8">
-                    <button onclick="changeTrack(-1)" class="p-3 text-slate-400 hover:text-slate-800">
-                        <i data-lucide="skip-back" class="w-6 h-6 fill-current"></i>
-                    </button>
-                    
-                    <button id="play-btn" onclick="togglePlay()" class="w-16 h-16 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition">
-                        <i data-lucide="play" class="w-6 h-6 fill-current ml-1"></i>
-                    </button>
-                    
-                    <button onclick="changeTrack(1)" class="p-3 text-slate-400 hover:text-slate-800">
-                        <i data-lucide="skip-forward" class="w-6 h-6 fill-current"></i>
-                    </button>
+                    <button onclick="changeTrack(-1)" class="p-3 text-slate-400 hover:text-slate-800"><i data-lucide="skip-back" class="w-6 h-6 fill-current"></i></button>
+                    <button id="play-btn" onclick="togglePlay()" class="w-16 h-16 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition"><i data-lucide="play" class="w-6 h-6 fill-current ml-1"></i></button>
+                    <button onclick="manualNext()" class="p-3 text-slate-400 hover:text-slate-800"><i data-lucide="skip-forward" class="w-6 h-6 fill-current"></i></button>
                 </div>
-
-                <!-- Volume -->
                 <div class="flex items-center gap-3">
                     <i id="vol-icon" data-lucide="volume-2" class="w-4 h-4 text-slate-400"></i>
                     <input type="range" min="0" max="100" value="50" oninput="setVolume(this.value)" class="flex-1">
                 </div>
             </div>
+        </main>
+
+        <!-- COLUNA 2: LINHA DO TEMPO (Programação) -->
+        <aside class="w-full md:w-1/2 glass-panel rounded-3xl p-6 flex flex-col h-full overflow-hidden">
+            <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+                <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="calendar-clock" class="w-5 h-5 text-slate-500"></i>
+                    Programação
+                </h3>
+                <span id="update-status" class="text-[10px] text-slate-400 font-mono">Sincronizado</span>
+            </div>
             
-        </div>
-    </main>
+            <div id="timeline-container" class="timeline-scroll flex-1 overflow-y-auto pr-2 space-y-3">
+                <!-- Itens da timeline serão injetados aqui via JS -->
+                <div class="text-center text-sm text-slate-400 py-10">Aguardando dados...</div>
+            </div>
+        </aside>
+
+    </div>
 
     <script>
-        // CONFIGURAÇÃO DA PLAYLIST ORIGINAL
-        const PLAYLIST = [
-            { id: '9zWxHUWdoXE', title: 'Halo', artist: 'Beyoncé', duration: 225 },
-            { id: 'GVSS3lh_lCY', title: 'Poker Face', artist: 'Lady Gaga', duration: 237 },
-            { id: 'IyazT0gd8vQ', title: 'Just The Way You Are', artist: 'Bruno Mars', duration: 221 },
-            { id: '6p7RnpkrItc', title: 'Happy', artist: 'Pharrell Williams', duration: 248 },
-            { id: 'PLTECT3TR0s', title: 'Safe And Sound', artist: 'Capital Cities', duration: 193 },
-            { id: 't616WDzKOfQ', title: 'Little Talks', artist: 'Of Monsters And Men', duration: 252 },
-            { id: 'N9WB3dq4cGE', title: 'Pumped Up Kicks', artist: 'Foster The People', duration: 239 },
-            { id: 'f9NK93agbXU', title: 'Shape of You', artist: 'Ed Sheeran', duration: 264 },
-            { id: 'I60iMpnwaVc', title: 'Uptown Funk', artist: 'Mark Ronson', duration: 271 }
-        ];
+        // --- CONFIGURAÇÃO ---
+        // INSIRA AQUI A URL DA SUA IMPLANTAÇÃO WEB DO APPS SCRIPT
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbysCPkG6HnNaxfT4mx7NR5g3vpoS_oebaL8kUYmNx-IWSVPfP5pVZynSxQfraV2q6lQ/exec'; 
+        
+        // --- VARIÁVEIS DO SISTEMA ---
+        let PLAYLIST = []; // Será preenchida pela planilha
+        let player, currentIndex = 0, isPlaying = false, progressInterval;
+        let pollingInterval;
 
-        let player, queue = [], currentIndex = 0, isPlaying = false, progressInterval;
-
-        // Proteção contra fechamento acidental
-        window.addEventListener('beforeunload', function (e) {
-            if (isPlaying) {
-                e.preventDefault();
-                e.returnValue = ''; // Mensagem padrão do navegador
-            }
-        });
-
-        // Função para abrir em janela separada (Pop-out)
-        function openPopup() {
-            // Abre a URL atual em uma nova janela pequena
-            window.open(window.location.href, 'RadioLojaPlayer', 'width=400,height=700,menubar=no,toolbar=no,location=no,status=no');
-            // Opcional: Pausar o player atual para não tocar duplicado
-            if(player && player.pauseVideo) player.pauseVideo();
-        }
-
-        // Inicialização
+        // --- INICIALIZAÇÃO ---
         lucide.createIcons();
-        shuffleQueue();
-        calculateTotalTime();
+        
+        // Proteção
+        window.addEventListener('beforeunload', e => { if (isPlaying) { e.preventDefault(); e.returnValue = ''; } });
 
-        // Carrega API do YouTube
+        // API YouTube
         var tag = document.createElement('script');
         tag.src = "https://www.youtube.com/iframe_api";
         var firstScriptTag = document.getElementsByTagName('script')[0];
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
+        // --- LÓGICA DE DADOS (PLANILHA) ---
+        
+        async function fetchPlaylistData() {
+            if (APPS_SCRIPT_URL.includes('INSIRA_SUA')) {
+                console.error("URL do Script não configurada.");
+                alert("Configure a URL do Apps Script no código HTML.");
+                return false;
+            }
+
+            document.getElementById('update-status').innerText = "Buscando...";
+            
+            try {
+                const response = await fetch(APPS_SCRIPT_URL);
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error("Erro na planilha:", data.error);
+                    return false;
+                }
+
+                // Verifica se mudou algo na playlist (comparação simples por tamanho ou ID do último)
+                const isNew = JSON.stringify(data) !== JSON.stringify(PLAYLIST);
+                
+                if (isNew && PLAYLIST.length > 0) {
+                    showNotification();
+                }
+
+                PLAYLIST = data;
+                document.getElementById('update-status').innerText = "Atualizado às " + new Date().toLocaleTimeString().slice(0,5);
+                
+                // Se for a primeira carga
+                if (queueIsEmpty()) {
+                    loadTrack(); 
+                }
+                
+                renderTimeline();
+                return true;
+
+            } catch (e) {
+                console.error("Falha ao conectar:", e);
+                document.getElementById('update-status').innerText = "Erro de conexão";
+                return false;
+            }
+        }
+
+        function renderTimeline() {
+            const container = document.getElementById('timeline-container');
+            container.innerHTML = '';
+
+            if (PLAYLIST.length === 0) {
+                container.innerHTML = '<div class="text-center text-xs text-slate-400">Nenhuma música na planilha.</div>';
+                return;
+            }
+
+            // Calcula horários
+            let simulatedTime = new Date();
+            // Se estiver tocando, ajusta o "agora" baseando-se no tempo restante da atual
+            let currentRemaining = 0;
+            if (player && player.getCurrentTime && player.getDuration) {
+                currentRemaining = (player.getDuration() - player.getCurrentTime());
+            }
+
+            PLAYLIST.forEach((track, index) => {
+                // Lógica de tempo da timeline
+                let startTimeDisplay, endTimeDisplay;
+                
+                if (index === currentIndex) {
+                    // Música atual
+                    startTimeDisplay = "Agora";
+                    // Tempo estimado de fim = Agora + Restante
+                    let endData = new Date(new Date().getTime() + (currentRemaining * 1000));
+                    endTimeDisplay = endData.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    
+                    // Atualiza o tempo base para a próxima música
+                    simulatedTime = endData;
+                } else if (index > currentIndex) {
+                    // Músicas futuras
+                    startTimeDisplay = simulatedTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    // Adiciona duração desta música ao acumulador
+                    simulatedTime = new Date(simulatedTime.getTime() + (track.duration * 1000));
+                    endTimeDisplay = simulatedTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                } else {
+                    // Músicas passadas
+                    startTimeDisplay = "Concluída";
+                    endTimeDisplay = "-";
+                }
+
+                // HTML do Item
+                const isActive = index === currentIndex;
+                const opacity = index < currentIndex ? 'opacity-50 grayscale' : 'opacity-100';
+                const bg = isActive ? 'bg-slate-50 border-slate-200' : 'border-transparent hover:bg-white/50';
+                
+                const item = document.createElement('div');
+                item.className = `flex items-center gap-3 p-3 rounded-xl border transition-all ${opacity} ${bg}`;
+                item.innerHTML = `
+                    <div class="text-xs font-mono text-slate-400 w-12 text-right">
+                        ${startTimeDisplay}
+                    </div>
+                    <div class="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center shrink-0 overflow-hidden relative">
+                        <img src="https://img.youtube.com/vi/${track.id}/default.jpg" class="absolute inset-0 w-full h-full object-cover opacity-80">
+                        ${isActive ? '<div class="absolute inset-0 bg-slate-900/30 flex items-center justify-center"><div class="w-2 h-2 bg-white rounded-full animate-bounce"></div></div>' : ''}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="text-sm font-bold text-slate-800 truncate">${track.title}</h4>
+                        <p class="text-xs text-slate-500 truncate">${track.artist} • ${Math.floor(track.duration/60)}:${(track.duration%60).toString().padStart(2,'0')}</p>
+                    </div>
+                `;
+                
+                // Clica para tocar (opcional, só para admin)
+                // item.onclick = () => { currentIndex = index; loadTrack(); };
+                
+                container.appendChild(item);
+            });
+        }
+
+        // --- SISTEMA DE PLAYER ---
+
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player', {
                 height: '100%', width: '100%',
-                videoId: queue[currentIndex].id,
+                videoId: '', // Inicia vazio até carregar a planilha
                 playerVars: {
                     'playsinline': 1, 'controls': 0, 'disablekb': 1, 'fs': 0, 
                     'iv_load_policy': 3, 'rel': 0, 'modestbranding': 1,
-                    // Garante a compatibilidade no domínio real
                     'origin': window.location.origin 
                 },
                 events: {
@@ -229,13 +291,35 @@
 
         function startRadio() {
             document.getElementById('start-overlay').style.display = 'none';
-            if(player && player.playVideo) player.playVideo();
+            // Carrega dados iniciais e inicia polling
+            fetchPlaylistData().then(() => {
+                startPolling();
+                if(player && PLAYLIST.length > 0) {
+                    loadTrack();
+                }
+            });
+        }
+
+        function loadTrack() {
+            if (PLAYLIST.length === 0) return;
+            
+            const track = PLAYLIST[currentIndex];
+            updateUI();
+            document.getElementById('progress-bar').style.width = '0%';
+            document.getElementById('current-time').innerText = "00:00";
+            
+            if(player && player.loadVideoById) {
+                player.loadVideoById({
+                    'videoId': track.id,
+                    'startSeconds': track.start || 0
+                });
+            }
+            renderTimeline(); // Atualiza visualmente quem está tocando
         }
 
         function onPlayerStateChange(event) {
             const vis = document.getElementById('visualizer');
             const btn = document.getElementById('play-btn');
-            
             checkChannel();
 
             if (event.data == YT.PlayerState.PLAYING) {
@@ -245,40 +329,65 @@
                 lucide.createIcons();
                 updateUI();
                 startTimer();
+                // Atualiza timeline a cada 30s para ajustar previsões
             } else {
                 isPlaying = false;
                 vis.classList.add('paused');
                 btn.innerHTML = '<i data-lucide="play" class="w-6 h-6 fill-current ml-1"></i>';
                 lucide.createIcons();
                 stopTimer();
-                if(event.data == YT.PlayerState.ENDED) changeTrack(1);
+                if(event.data == YT.PlayerState.ENDED) {
+                    changeTrack(1);
+                }
             }
         }
 
-        // TRATAMENTO DE ERRO
+        function changeTrack(direction) {
+            // Antes de mudar, verifica se tem dados novos
+            fetchPlaylistData().then(() => {
+                currentIndex += direction;
+                if(currentIndex >= PLAYLIST.length) { currentIndex = 0; }
+                if(currentIndex < 0) currentIndex = PLAYLIST.length - 1;
+                loadTrack();
+            });
+        }
+        
+        function manualNext() {
+            changeTrack(1);
+        }
+
+        // --- UPDATE E NOTIFICAÇÃO ---
+
+        function startPolling() {
+            if(pollingInterval) clearInterval(pollingInterval);
+            // Verifica a cada 2 minutos (120000 ms)
+            pollingInterval = setInterval(() => {
+                fetchPlaylistData();
+            }, 120000);
+            
+            // Também atualiza a timeline a cada minuto para ajustar os horários previstos
+            setInterval(renderTimeline, 60000); 
+        }
+
+        function showNotification() {
+            const toast = document.getElementById('toast-notification');
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 5000);
+        }
+
+        // --- UTILITÁRIOS ---
+        function queueIsEmpty() { return PLAYLIST.length === 0; }
+        
         function onPlayerError(e) {
-            console.log("Erro " + e.data + " detectado. Tentando próxima...");
+            console.log("Erro " + e.data + ". Pulando...");
             setTimeout(() => changeTrack(1), 1000);
         }
 
         function togglePlay() {
             if(!player) return;
             isPlaying ? player.pauseVideo() : player.playVideo();
-        }
-
-        function changeTrack(direction) {
-            currentIndex += direction;
-            if(currentIndex >= queue.length) { shuffleQueue(); currentIndex = 0; }
-            if(currentIndex < 0) currentIndex = queue.length - 1;
-            
-            loadTrack();
-        }
-
-        function loadTrack() {
-            updateUI();
-            document.getElementById('progress-bar').style.width = '0%';
-            document.getElementById('current-time').innerText = "00:00";
-            if(player && player.loadVideoById) player.loadVideoById(queue[currentIndex].id);
         }
 
         function checkChannel() {
@@ -294,7 +403,8 @@
         }
 
         function updateUI() {
-            const track = queue[currentIndex];
+            if(PLAYLIST.length === 0) return;
+            const track = PLAYLIST[currentIndex];
             document.getElementById('track-title').innerText = track.title;
             document.getElementById('track-artist').innerText = track.artist;
         }
@@ -323,30 +433,15 @@
         }
 
         function stopTimer() { clearInterval(progressInterval); }
-        
-        function shuffleQueue() {
-            queue = [...PLAYLIST].sort(() => Math.random() - 0.5);
-        }
-
-        function calculateTotalTime() {
-            let totalSeconds = PLAYLIST.reduce((acc, curr) => acc + (curr.duration || 0), 0);
-            let hours = Math.floor(totalSeconds / 3600);
-            let minutes = Math.floor((totalSeconds % 3600) / 60);
-            
-            let timeString = "";
-            if(hours > 0) {
-                timeString = `${hours}h ${minutes}min`;
-            } else {
-                timeString = `${minutes} min`;
-            }
-            
-            document.getElementById('playlist-total-duration').innerText = timeString;
-        }
-        
         function fmt(s) {
             if(isNaN(s)) return "00:00";
             const m = Math.floor(s/60), sec = Math.floor(s%60);
             return `${m}:${sec<10?'0'+sec:sec}`;
+        }
+        
+        function openPopup() {
+            window.open(window.location.href, 'RadioLojaPlayer', 'width=1000,height=700,menubar=no,toolbar=no,location=no,status=no');
+            if(player && player.pauseVideo) player.pauseVideo();
         }
     </script>
 </body>
