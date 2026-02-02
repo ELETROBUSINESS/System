@@ -192,7 +192,9 @@
             document.getElementById('update-status').innerText = "Buscando...";
             
             try {
-                const response = await fetch(APPS_SCRIPT_URL);
+                // ADIÇÃO DE CACHE BUSTING: ?nocache=...
+                // Isso força o navegador a buscar dados frescos a cada requisição
+                const response = await fetch(APPS_SCRIPT_URL + '?nocache=' + new Date().getTime());
                 const data = await response.json();
                 
                 if (data.error) {
