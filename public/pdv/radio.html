@@ -33,6 +33,18 @@
         /* Notificação Toast */
         #toast-notification { transform: translateY(150%); transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
         #toast-notification.show { transform: translateY(0); }
+
+        /* Efeito de Troca de Música (NOVO) */
+        .track-info-wrapper {
+            transition: all 0.3s ease-out;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .track-switching .track-info-wrapper {
+            opacity: 0;
+            transform: translateY(10px) scale(0.95);
+            transition: all 0.2s ease-in;
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col items-center justify-center text-slate-800 overflow-hidden">
@@ -92,10 +104,12 @@
                 </div>
             </div>
 
-            <!-- Infos -->
-            <div class="text-center mb-2">
-                <h2 id="track-title" class="text-lg font-bold leading-tight line-clamp-2 h-14 flex items-center justify-center px-2">Carregando...</h2>
-                <p id="track-artist" class="text-sm text-slate-500">Conectando...</p>
+            <!-- Infos (Com Wrapper para Animação) -->
+            <div id="info-container" class="text-center mb-2 overflow-hidden">
+                <div class="track-info-wrapper">
+                    <h2 id="track-title" class="text-lg font-bold leading-tight line-clamp-2 h-14 flex items-center justify-center px-2">Carregando...</h2>
+                    <p id="track-artist" class="text-sm text-slate-500">Conectando...</p>
+                </div>
             </div>
 
             <!-- Controles -->
@@ -110,9 +124,9 @@
                     </div>
                 </div>
                 <div class="flex items-center justify-center gap-8">
-                    <button onclick="changeTrack(-1)" class="p-3 text-slate-400 hover:text-slate-800"><i data-lucide="skip-back" class="w-6 h-6 fill-current"></i></button>
-                    <button id="play-btn" onclick="togglePlay()" class="w-16 h-16 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition"><i data-lucide="play" class="w-6 h-6 fill-current ml-1"></i></button>
-                    <button onclick="manualNext()" class="p-3 text-slate-400 hover:text-slate-800"><i data-lucide="skip-forward" class="w-6 h-6 fill-current"></i></button>
+                    <button onclick="changeTrack(-1)" class="p-3 text-slate-400 hover:text-slate-800 transform active:scale-95 transition-transform"><i data-lucide="skip-back" class="w-6 h-6 fill-current"></i></button>
+                    <button id="play-btn" onclick="togglePlay()" class="w-16 h-16 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all"><i data-lucide="play" class="w-6 h-6 fill-current ml-1"></i></button>
+                    <button onclick="manualNext()" class="p-3 text-slate-400 hover:text-slate-800 transform active:scale-95 transition-transform"><i data-lucide="skip-forward" class="w-6 h-6 fill-current"></i></button>
                 </div>
                 <div class="flex items-center gap-3">
                     <i id="vol-icon" data-lucide="volume-2" class="w-4 h-4 text-slate-400"></i>
@@ -343,7 +357,10 @@
             if (PLAYLIST.length === 0) return;
             
             const track = PLAYLIST[currentIndex];
-            updateUI();
+            
+            // UI Update (Sem animação, uso geral)
+            updateUI(); 
+            
             document.getElementById('progress-bar').style.width = '0%';
             document.getElementById('current-time').innerText = "00:00";
             
@@ -383,22 +400,39 @@
         }
 
         function changeTrack(direction) {
-            // Atualiza dados antes de mudar (opcional, mas garante frescor)
-            fetchPlaylistData().then(() => {
+            // 1. Efeito Visual de "Saindo"
+            const container = document.getElementById('info-container');
+            if(container) container.classList.add('track-switching');
+
+            // 2. Mudança Lógica Imediata (Não espera fetch)
+            setTimeout(() => {
                 currentIndex += direction;
                 
                 // CICLO INFINITO COM RE-EMBARALHAMENTO
                 if (currentIndex >= PLAYLIST.length) {
-                    // Fim da lista: Re-embaralha o pool original
                     console.log("Reiniciando ciclo com nova ordem...");
-                    PLAYLIST = shuffleArray(RAW_DATA);
+                    PLAYLIST = shuffleArray(RAW_DATA); // Re-embaralha o que já temos
                     currentIndex = 0;
+                    // Sincroniza em background
+                    fetchPlaylistData().catch(e => console.log("Sync background error", e)); 
                 } else if (currentIndex < 0) {
                     currentIndex = PLAYLIST.length - 1;
                 }
                 
+                // Carrega a música
                 loadTrack();
-            });
+
+                // 3. Efeito Visual de "Chegando"
+                setTimeout(() => {
+                    if(container) container.classList.remove('track-switching');
+                }, 150);
+
+            }, 200); // Pequeno delay para a animação de saída ser vista
+            
+            // Sincroniza em background se não for fim de ciclo
+            if(currentIndex < PLAYLIST.length - 1) {
+                 fetchPlaylistData().catch(e => console.log("Background sync", e));
+            }
         }
         
         function manualNext() {
