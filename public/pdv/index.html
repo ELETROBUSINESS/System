@@ -93,11 +93,11 @@
     </div>
 
     <!-- Promo Banner Fixed -->
-    <div class="promo-banner-fixed">
+    <!-- <div class="promo-banner-fixed">
         <span class="promo-text-small">ATÉ</span>
         <span class="promo-text-large">10X</span>
         <span class="promo-text-sub">*Material escolar</span>
-    </div>
+    </div> -->
 
     <div id="sale-processing-notification" class="notification-sidebar">
         <div class="notif-icon-wrapper">
@@ -530,9 +530,20 @@
 
         <div class="app-header">
             <h1>Ponto de Venda</h1>
-            <button class="btn btn-danger" id="header-close-caixa-btn" style="display: none;">
-                <i class='bx  bxs-store-alt-2'></i> Fechar Loja
-            </button>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <button class="btn-radio" onclick="window.open('radio.html', '_blank')">
+                    <div class="sound-wave-icon">
+                        <span class="sound-wave-bar"></span>
+                        <span class="sound-wave-bar"></span>
+                        <span class="sound-wave-bar"></span>
+                        <span class="sound-wave-bar"></span>
+                    </div>
+                    Rádio
+                </button>
+                <button class="btn btn-danger" id="header-close-caixa-btn" style="display: none;">
+                    <i class='bx  bxs-store-alt-2'></i> Fechar Loja
+                </button>
+            </div>
         </div>
 
 
@@ -2395,6 +2406,269 @@
     </div>
 
     <script src="script.js"></script>
+    <!-- MINI RADIO PLAYER COMPONENT -->
+    <style>
+        #mini-radio-player {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 340px;
+            height: 80px;
+            background: #18181b;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            gap: 12px;
+            z-index: 9999;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            transform: translateY(150%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid #333;
+        }
+
+        #mini-radio-player.visible {
+            transform: translateY(0);
+        }
+
+        .mini-cover {
+            width: 56px;
+            height: 56px;
+            border-radius: 6px;
+            background: #333;
+            overflow: hidden;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .mini-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .mini-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .mini-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 2px;
+            color: #fff;
+        }
+
+        .mini-artist {
+            font-size: 0.75rem;
+            color: #a1a1aa;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .mini-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .mini-btn {
+            background: transparent;
+            border: none;
+            color: #a1a1aa;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 1.1rem;
+        }
+
+        .mini-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .mini-btn.active-like {
+            color: #ef4444;
+        }
+
+        .mini-btn.active-dislike {
+            color: #ef4444;
+        }
+
+        .mini-play-btn {
+            background: #fff;
+            color: #000;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin: 0 4px;
+            cursor: pointer;
+            border: none;
+        }
+
+        .mini-play-btn:hover {
+            transform: scale(1.05);
+            background: #f1f5f9;
+        }
+
+        .mini-wave-icon {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            display: flex;
+            gap: 2px;
+            align-items: flex-end;
+            height: 12px;
+        }
+
+        .mini-wave-bar {
+            width: 3px;
+            background: #10b981;
+            animation: mini-wave 1s infinite ease-in-out;
+            border-radius: 1px;
+        }
+
+        .mini-wave-bar:nth-child(1) {
+            height: 6px;
+            animation-delay: 0s;
+        }
+
+        .mini-wave-bar:nth-child(2) {
+            height: 12px;
+            animation-delay: 0.1s;
+        }
+
+        .mini-wave-bar:nth-child(3) {
+            height: 8px;
+            animation-delay: 0.2s;
+        }
+
+        @keyframes mini-wave {
+
+            0%,
+            100% {
+                height: 4px;
+            }
+
+            50% {
+                height: 100%;
+            }
+        }
+    </style>
+
+    <div id="mini-radio-player">
+        <div class="mini-cover">
+            <img id="mini-cover-img" src="" alt="Capa">
+            <div class="mini-wave-icon" id="mini-wave" style="display: none;">
+                <div class="mini-wave-bar"></div>
+                <div class="mini-wave-bar"></div>
+                <div class="mini-wave-bar"></div>
+            </div>
+        </div>
+        <div class="mini-info">
+            <div class="mini-title" id="mini-title">Conectando...</div>
+            <div class="mini-artist" id="mini-artist">Rádio Eletro</div>
+        </div>
+        <div class="mini-controls">
+            <button class="mini-btn" id="mini-like-btn" title="Curtir"><i class='bx bx-heart'></i></button>
+            <button class="mini-btn" id="mini-prev-btn"><i class='bx bx-skip-previous'></i></button>
+            <button class="mini-play-btn" id="mini-play-btn"><i class='bx bx-play'></i></button>
+            <button class="mini-btn" id="mini-next-btn"><i class='bx bx-skip-next'></i></button>
+            <button class="mini-btn" id="mini-dislike-btn" title="Não gostei"><i class='bx bx-dislike'></i></button>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const miniPlayer = document.getElementById('mini-radio-player');
+            const channel = new BroadcastChannel('radio_channel');
+
+            const ui = {
+                cover: document.getElementById('mini-cover-img'),
+                title: document.getElementById('mini-title'),
+                artist: document.getElementById('mini-artist'),
+                playBtn: document.getElementById('mini-play-btn'),
+                likeBtn: document.getElementById('mini-like-btn'),
+                dislikeBtn: document.getElementById('mini-dislike-btn'),
+                wave: document.getElementById('mini-wave')
+            };
+
+            let currentTrackId = null;
+
+            // Tenta obter estado inicial
+            channel.postMessage({ action: 'GET_STATE' });
+
+            channel.onmessage = (event) => {
+                if (event.data.type === 'UPDATE_STATE') {
+                    const state = event.data.payload;
+
+                    miniPlayer.classList.add('visible');
+
+                    if (currentTrackId !== state.id) {
+                        // Reset like states on track change
+                        ui.likeBtn.classList.remove('active-like');
+                        ui.likeBtn.querySelector('i').className = 'bx bx-heart';
+                        ui.dislikeBtn.classList.remove('active-dislike');
+                        ui.dislikeBtn.querySelector('i').className = 'bx bx-dislike';
+                        currentTrackId = state.id;
+                    }
+
+                    ui.title.innerText = state.title;
+                    ui.artist.innerText = state.artist;
+                    ui.cover.src = `https://img.youtube.com/vi/${state.id}/default.jpg`;
+
+                    if (state.isPlaying) {
+                        ui.playBtn.innerHTML = "<i class='bx bx-pause'></i>";
+                        ui.wave.style.display = 'flex';
+                    } else {
+                        ui.playBtn.innerHTML = "<i class='bx bx-play'></i>";
+                        ui.wave.style.display = 'none';
+                    }
+                }
+            };
+
+            ui.playBtn.onclick = () => channel.postMessage({ action: 'TOGGLE_PLAY' });
+            document.getElementById('mini-next-btn').onclick = () => channel.postMessage({ action: 'NEXT' });
+            document.getElementById('mini-prev-btn').onclick = () => channel.postMessage({ action: 'PREV' });
+
+            ui.likeBtn.onclick = () => {
+                channel.postMessage({ action: 'LIKE' });
+                // Feedback visual local imediato
+                ui.likeBtn.classList.add('active-like');
+                ui.likeBtn.querySelector('i').className = 'bx bxs-heart';
+                // Remove dislike
+                ui.dislikeBtn.classList.remove('active-dislike');
+                ui.dislikeBtn.querySelector('i').className = 'bx bx-dislike';
+            };
+
+            ui.dislikeBtn.onclick = () => {
+                channel.postMessage({ action: 'DESLIKE' });
+                // Feedback visual local imediato
+                ui.dislikeBtn.classList.add('active-dislike');
+                ui.dislikeBtn.querySelector('i').className = 'bx bxs-dislike';
+                // Remove like
+                ui.likeBtn.classList.remove('active-like');
+                ui.likeBtn.querySelector('i').className = 'bx bx-heart';
+            };
+        })();
+    </script>
 </body>
 
 </html>

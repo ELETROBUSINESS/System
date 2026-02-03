@@ -55,9 +55,71 @@
             height: 4px;
         }
 
+        /* Botões de Ação */
+        .action-btn {
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .action-btn:hover {
+            transform: scale(1.1);
+            background-color: rgba(241, 245, 249, 0.5);
+            /* slate-100/50 */
+        }
+
+        .action-btn:active {
+            transform: scale(0.9);
+        }
+
+        @keyframes like-bounce {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.4);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .animate-like {
+            animation: like-bounce 0.4s ease-out;
+        }
+
+        @keyframes dislike-shake {
+
+            0%,
+            100% {
+                transform: rotate(0deg);
+            }
+
+            25% {
+                transform: rotate(-15deg);
+            }
+
+            75% {
+                transform: rotate(15deg);
+            }
+        }
+
+        .animate-report {
+            animation: dislike-shake 0.4s ease-in-out;
+        }
+
+        .disliked-state {
+            color: #475569;
+            /* slate-600 */
+            background-color: #cbd5e1;
+            /* slate-300 */
+            transform: scale(0.95);
+        }
+
         /* Slider e Player */
         input[type=range] {
             -webkit-appearance: none;
+            appearance: none;
             background: transparent;
         }
 
@@ -202,7 +264,23 @@
                     <h2 id="track-title"
                         class="text-lg font-bold leading-tight line-clamp-2 h-14 flex items-center justify-center px-2">
                         Carregando...</h2>
-                    <p id="track-artist" class="text-sm text-slate-500">Conectando...</p>
+                    <p id="track-artist" class="text-sm text-slate-500 mb-3">Conectando...</p>
+
+                    <div class="flex items-center justify-center gap-6 pb-2">
+                        <button id="btn-report" onclick="reportTrack(this)"
+                            class="action-btn group flex items-center gap-2 px-4 py-2 rounded-full text-slate-400 bg-slate-100 hover:bg-slate-200 transition-all border border-transparent"
+                            title="Reportar / Deslike">
+                            <i data-lucide="thumbs-down" class="w-5 h-5 transition-colors"></i>
+                            <span id="count-dislikes" class="text-xs font-bold font-mono">0</span>
+                        </button>
+
+                        <button id="btn-like" onclick="toggleLike(this)"
+                            class="action-btn group flex items-center gap-2 px-4 py-2 rounded-full text-slate-400 bg-slate-100 hover:bg-slate-200 hover:text-red-500 transition-all border border-transparent"
+                            title="Amei">
+                            <i data-lucide="heart" class="w-5 h-5 transition-all"></i>
+                            <span id="count-likes" class="text-xs font-bold font-mono">0</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -254,18 +332,56 @@
     </div>
 
     <script>
-        // --- CONFIGURAÇÃO ---
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxILsDDTVun9HEmQ5dNH0-MtjIlJ4CmY3GNMJz7p46Zp0ePtw-joI_2q-Kjt7ef1qOx7A/exec';
+        // --- CONFIGURAÇÃO BROADCAST ---
+        const radioChannel = new BroadcastChannel('radio_channel');
+
+        // --- CONFIGURAÇÃO API ---
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyRzhA_XKpZwcGilIP_TqPCz-juSUESOdhETpapT5vcHXtIPOLQSEfmEI2JpxH5dPTxzA/exec';
 
         // --- VARIÁVEIS DO SISTEMA ---
-        let RAW_DATA = []; // Dados originais da planilha (Pool de músicas)
-        let PLAYLIST = []; // Playlist atual (embaralhada)
+        let RAW_DATA = [];
+        let PLAYLIST = [];
         let player, currentIndex = 0, isPlaying = false, progressInterval;
         let pollingInterval, timelineInterval;
 
         // --- INICIALIZAÇÃO ---
         lucide.createIcons();
         window.addEventListener('beforeunload', e => { if (isPlaying) { e.preventDefault(); e.returnValue = ''; } });
+
+        // Listener do Canal
+        radioChannel.onmessage = (event) => {
+            if (!event.data) return;
+            const action = event.data.action;
+
+            if (action === 'TOGGLE_PLAY') togglePlay();
+            if (action === 'NEXT') changeTrack(1);
+            if (action === 'PREV') changeTrack(-1);
+            if (action === 'LIKE') {
+                const btn = document.getElementById('btn-like');
+                if (btn) toggleLike(btn);
+            }
+            if (action === 'DESLIKE') { // Usando DESLIKE pois o frontend do PDV mandará isso
+                const btn = document.getElementById('btn-report');
+                if (btn) reportTrack(btn);
+            }
+            if (action === 'GET_STATE') broadcastState();
+        };
+
+        function broadcastState() {
+            if (PLAYLIST.length === 0) return;
+            const track = PLAYLIST[currentIndex];
+            radioChannel.postMessage({
+                type: 'UPDATE_STATE',
+                payload: {
+                    title: track.title,
+                    artist: track.artist,
+                    id: track.id,
+                    isPlaying: isPlaying,
+                    likes: track.likes || 0,
+                    dislikes: track.deslikes || 0
+                }
+            });
+        }
 
         // API YouTube
         var tag = document.createElement('script');
@@ -302,21 +418,15 @@
 
                     RAW_DATA = data;
 
-                    // --- CORREÇÃO AQUI ---
-                    // Se a planilha mudou, precisamos atualizar a PLAYLIST imediatamente
                     if (PLAYLIST.length > 0) {
                         const currentTrack = PLAYLIST[currentIndex];
-                        // Criamos uma nova playlist apenas com as músicas que REALMENTE estão na planilha agora
                         let filteredNewData = RAW_DATA.filter(item => item.id !== currentTrack.id);
                         let shuffledNew = shuffleArray(filteredNewData);
-
-                        // Montamos a nova lista: Música atual primeiro + o resto novo embaralhado
                         PLAYLIST = [currentTrack, ...shuffledNew];
-                        currentIndex = 0; // A música atual agora é o índice 0 da nova lista
+                        currentIndex = 0;
                     } else {
                         PLAYLIST = shuffleArray(RAW_DATA);
                     }
-                    // ---------------------
 
                     calculateTotalTime();
                     if (PLAYLIST.length > 0 && !isPlaying) loadTrack();
@@ -334,39 +444,26 @@
         function renderTimeline() {
             const container = document.getElementById('timeline-container');
 
-            // Só redesenha se houver músicas
             if (PLAYLIST.length === 0) {
                 container.innerHTML = '<div class="text-center text-xs text-slate-400">Nenhuma música carregada.</div>';
                 return;
             }
 
-            // Limpa container (Idealmente faria diff, mas rebuild é mais seguro para tempo real)
             container.innerHTML = '';
-
-            // Tempo base: Agora
             let simulatedTime = new Date();
-
-            // Calcula tempo restante da música ATUAL
             let currentRemaining = 0;
-
-            // Pega dados da música atual
             let currentTrackData = PLAYLIST[currentIndex];
             let currentTotalDuration = parseInt(currentTrackData.duration) || 180;
             let currentStartSkip = parseInt(currentTrackData.start) || 0;
-
-            // O tempo que a música VAI DURAR na programação é (Total - Skip)
             let currentEffectiveDuration = Math.max(0, currentTotalDuration - currentStartSkip);
 
-            // Tenta pegar o tempo real do player
             if (player && typeof player.getCurrentTime === 'function' && typeof player.getDuration === 'function') {
-                const cur = player.getCurrentTime(); // Tempo decorrido no vídeo (ex: se pulou 10s, começa em 10)
-                const dur = player.getDuration();    // Duração total do vídeo
+                const cur = player.getCurrentTime();
+                const dur = player.getDuration();
 
                 if (!isNaN(cur) && cur > 0 && dur > 0) {
-                    // Tempo restante real = Duração total do vídeo - Onde está agora
                     currentRemaining = Math.max(0, dur - cur);
                 } else {
-                    // Se player não reporta, assume duração efetiva
                     currentRemaining = currentEffectiveDuration;
                 }
             } else {
@@ -375,39 +472,29 @@
 
             PLAYLIST.forEach((track, index) => {
                 let startTimeDisplay = "--:--";
-
-                // Calcula duração efetiva desta faixa (Duração Bruta - Pular Intro)
                 let rawDuration = parseInt(track.duration);
                 if (isNaN(rawDuration) || rawDuration <= 0) rawDuration = 180;
                 let skipSec = parseInt(track.start) || 0;
                 let effectiveDuration = Math.max(0, rawDuration - skipSec);
 
                 if (index === currentIndex) {
-                    // Atual
                     startTimeDisplay = "Agora";
-
-                    // Define o tempo base para a PRÓXIMA música usando o restante da atual
                     if (!isNaN(simulatedTime.getTime())) {
                         let endData = new Date(simulatedTime.getTime() + (currentRemaining * 1000));
                         simulatedTime = endData;
                     }
                 } else if (index > currentIndex) {
-                    // Futura
                     if (!isNaN(simulatedTime.getTime())) {
                         startTimeDisplay = simulatedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                        // Incrementa para a próxima música somando a DURAÇÃO EFETIVA desta
                         simulatedTime = new Date(simulatedTime.getTime() + (effectiveDuration * 1000));
                     }
                 } else {
-                    // Passada
                     startTimeDisplay = "Tocou";
                 }
 
-                // Visual da duração na lista
                 const min = Math.floor(effectiveDuration / 60);
                 const sec = effectiveDuration % 60;
                 const durationStr = `${min}:${sec.toString().padStart(2, '0')}`;
-
                 const isActive = index === currentIndex;
                 const opacity = index < currentIndex ? 'opacity-40 grayscale' : 'opacity-100';
                 const bg = isActive ? 'bg-slate-50 border-slate-200 shadow-sm' : 'border-transparent hover:bg-white/50';
@@ -452,10 +539,9 @@
 
         function startRadio() {
             document.getElementById('start-overlay').style.display = 'none';
-            // Inicia busca e loops
             fetchPlaylistData().then(() => {
                 startPolling();
-                startTimelineUpdater(); // Inicia atualização da linha do tempo
+                startTimelineUpdater();
             });
         }
 
@@ -463,9 +549,7 @@
             if (PLAYLIST.length === 0) return;
 
             const track = PLAYLIST[currentIndex];
-
-            // UI Update (Sem animação, uso geral)
-            updateUI();
+            updateUI(); // Chama broadcast dentro do UI update
 
             document.getElementById('progress-bar').style.width = '0%';
             document.getElementById('current-time').innerText = "00:00";
@@ -473,10 +557,9 @@
             if (player && player.loadVideoById) {
                 player.loadVideoById({
                     'videoId': track.id,
-                    'startSeconds': track.start || 0 // Aqui aplica o pulo da intro no player
+                    'startSeconds': track.start || 0
                 });
             }
-            // Força render imediato para atualizar status "Agora"
             setTimeout(renderTimeline, 200);
         }
 
@@ -490,7 +573,7 @@
                 btn.innerHTML = '<i data-lucide="pause" class="w-6 h-6 fill-current"></i>';
                 lucide.createIcons();
                 updateUI();
-                startTimer(); // Slider
+                startTimer();
             } else {
                 isPlaying = false;
                 vis.classList.add('paused');
@@ -498,44 +581,37 @@
                 lucide.createIcons();
                 stopTimer();
                 if (event.data == YT.PlayerState.ENDED) {
-                    changeTrack(1); // Auto next
+                    changeTrack(1);
                 }
+                broadcastState(); // Importante avisar que pausou
             }
-            // Renderiza timeline para atualizar status pausado/tocando se quisermos
             renderTimeline();
         }
 
         function changeTrack(direction) {
-            // 1. Efeito Visual de "Saindo"
             const container = document.getElementById('info-container');
             if (container) container.classList.add('track-switching');
 
-            // 2. Mudança Lógica Imediata (Não espera fetch)
             setTimeout(() => {
                 currentIndex += direction;
 
-                // CICLO INFINITO COM RE-EMBARALHAMENTO
                 if (currentIndex >= PLAYLIST.length) {
                     console.log("Reiniciando ciclo com nova ordem...");
-                    PLAYLIST = shuffleArray(RAW_DATA); // Re-embaralha o que já temos
+                    PLAYLIST = shuffleArray(RAW_DATA);
                     currentIndex = 0;
-                    // Sincroniza em background
                     fetchPlaylistData().catch(e => console.log("Sync background error", e));
                 } else if (currentIndex < 0) {
                     currentIndex = PLAYLIST.length - 1;
                 }
 
-                // Carrega a música
                 loadTrack();
 
-                // 3. Efeito Visual de "Chegando"
                 setTimeout(() => {
                     if (container) container.classList.remove('track-switching');
                 }, 150);
 
-            }, 200); // Pequeno delay para a animação de saída ser vista
+            }, 200);
 
-            // Sincroniza em background se não for fim de ciclo
             if (currentIndex < PLAYLIST.length - 1) {
                 fetchPlaylistData().catch(e => console.log("Background sync", e));
             }
@@ -551,20 +627,38 @@
             if (pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(() => {
                 fetchPlaylistData();
-            }, 120000); // 2 min verifica planilha
+            }, 120000);
         }
 
-        // Loop exclusivo para a Linha do Tempo (1s para ser preciso com pausas)
         function startTimelineUpdater() {
             if (timelineInterval) clearInterval(timelineInterval);
             timelineInterval = setInterval(() => {
-                // Só renderiza se tiver playlist
                 if (PLAYLIST.length > 0) renderTimeline();
             }, 1000);
         }
 
-        function showNotification() {
+        function showNotification(msg) {
             const toast = document.getElementById('toast-notification');
+
+            if (msg) {
+                const title = toast.querySelector('h4');
+                const subtitle = toast.querySelector('p');
+                let originalTitle = title.innerText;
+
+                title.innerText = "Ação registrada";
+                subtitle.innerText = msg;
+
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => {
+                        title.innerText = "Novas músicas detectadas";
+                        subtitle.innerText = "Serão tocadas na próxima rodada.";
+                    }, 500);
+                }, 3000);
+                return;
+            }
+
             toast.classList.add('show');
             setTimeout(() => {
                 toast.classList.remove('show');
@@ -587,6 +681,32 @@
             const track = PLAYLIST[currentIndex];
             document.getElementById('track-title').innerText = track.title;
             document.getElementById('track-artist').innerText = track.artist;
+
+            const btnLike = document.getElementById('btn-like');
+            const btnReport = document.getElementById('btn-report');
+            const countLike = document.getElementById('count-likes');
+            const countDislike = document.getElementById('count-dislikes');
+
+            if (countLike) countLike.innerText = track.likes || 0;
+            if (countDislike) countDislike.innerText = track.deslikes || 0;
+
+            if (btnLike) {
+                btnLike.className = "action-btn group flex items-center gap-2 px-4 py-2 rounded-full text-slate-400 bg-slate-100 hover:bg-slate-200 hover:text-red-500 transition-all border border-transparent";
+                const icon = btnLike.querySelector('svg') || btnLike.querySelector('i');
+                if (icon) {
+                    icon.className = "w-5 h-5 transition-all";
+                    icon.classList.remove('fill-current');
+                }
+            }
+            if (btnReport) {
+                btnReport.className = "action-btn group flex items-center gap-2 px-4 py-2 rounded-full text-slate-400 bg-slate-100 hover:bg-slate-200 transition-all border border-transparent";
+                const icon = btnReport.querySelector('svg') || btnReport.querySelector('i');
+                if (icon) {
+                    icon.classList.remove('fill-current');
+                }
+            }
+
+            broadcastState(); // Envia estado atualizado
         }
 
         function setVolume(val) {
@@ -622,8 +742,6 @@
 
         function calculateTotalTime() {
             if (PLAYLIST.length === 0) return;
-
-            // Soma a duração EFETIVA (Duração Total - Intro Pulada)
             let totalSeconds = PLAYLIST.reduce((acc, curr) => {
                 let dur = parseInt(curr.duration) || 180;
                 let start = parseInt(curr.start) || 0;
@@ -643,6 +761,111 @@
 
             const el = document.getElementById('playlist-total-duration');
             if (el) el.innerText = timeString;
+        }
+
+        // --- AÇÕES DO USUÁRIO ---
+
+        async function postAction(type) {
+            if (PLAYLIST.length === 0) return null;
+            const track = PLAYLIST[currentIndex];
+            // Envia para API (Fire and forget visualmente, mas aguarda rede)
+            const url = `${APPS_SCRIPT_URL}?videoId=${track.id}&type=${type}`;
+            try {
+                await fetch(url, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                });
+                console.log(`Voto de ${type} enviado.`);
+                return true;
+            } catch (e) {
+                console.error('Action error:', e);
+                return null;
+            }
+        }
+
+        function toggleLike(btn) {
+            const track = PLAYLIST[currentIndex];
+            const isLiked = btn.classList.contains('text-red-500');
+            if (isLiked) return;
+
+            // 1. Remover Deslike se houver
+            const btnReport = document.getElementById('btn-report');
+            const isDisliked = btnReport.classList.contains('disliked-state');
+
+            if (isDisliked) {
+                const iconReport = btnReport.querySelector('svg') || btnReport.querySelector('i');
+                btnReport.classList.remove('animate-report', 'disliked-state');
+                btnReport.classList.add('text-slate-400', 'bg-slate-100');
+                if (iconReport) iconReport.classList.remove('fill-current');
+
+                track.deslikes = Math.max(0, (parseInt(track.deslikes) || 0) - 1);
+                const countDislike = document.getElementById('count-dislikes');
+                if (countDislike) countDislike.innerText = track.deslikes;
+            }
+
+            // 2. Adicionar Like
+            const icon = btn.querySelector('svg') || btn.querySelector('i');
+            btn.classList.remove('text-slate-400', 'hover:bg-slate-200');
+            btn.classList.add('text-red-500', 'bg-red-50', 'border-red-100');
+            if (icon) icon.classList.add('fill-current');
+
+            btn.classList.add('animate-like');
+            setTimeout(() => btn.classList.remove('animate-like'), 400);
+
+            // 3. Incremento Local
+            track.likes = (parseInt(track.likes) || 0) + 1;
+            const countLike = document.getElementById('count-likes');
+            if (countLike) countLike.innerText = track.likes;
+            showNotification("Você curtiu esta faixa!");
+
+            // 4. Update Mini Player via Broadcast
+            broadcastState();
+
+            // 5. Enviar Rede
+            postAction('like');
+        }
+
+        function reportTrack(btn) {
+            const track = PLAYLIST[currentIndex];
+            const isDisliked = btn.classList.contains('disliked-state');
+            if (isDisliked) return;
+
+            // 1. Remover Like se houver
+            const btnLike = document.getElementById('btn-like');
+            const isLiked = btnLike.classList.contains('text-red-500');
+
+            if (isLiked) {
+                const iconLike = btnLike.querySelector('svg') || btnLike.querySelector('i');
+                btnLike.classList.remove('text-red-500', 'bg-red-50', 'border-red-100', 'animate-like');
+                btnLike.classList.add('text-slate-400', 'hover:bg-slate-200');
+                if (iconLike) iconLike.classList.remove('fill-current');
+
+                track.likes = Math.max(0, (parseInt(track.likes) || 0) - 1);
+                const countLike = document.getElementById('count-likes');
+                if (countLike) countLike.innerText = track.likes;
+            }
+
+            // 2. Adicionar Deslike
+            const icon = btn.querySelector('svg') || btn.querySelector('i');
+            btn.classList.add('animate-report');
+            btn.classList.add('disliked-state');
+            btn.classList.remove('text-slate-400', 'bg-slate-100');
+            if (icon) icon.classList.add('fill-current');
+
+            setTimeout(() => btn.classList.remove('animate-report'), 400);
+
+            // 3. Incremento Local
+            track.deslikes = (parseInt(track.deslikes) || 0) + 1;
+            const countDislike = document.getElementById('count-dislikes');
+            if (countDislike) countDislike.innerText = track.deslikes;
+            showNotification("Voto registrado.");
+
+            // 4. Update Mini Player
+            broadcastState();
+
+            // 5. Enviar Rede
+            postAction('deslike');
         }
     </script>
 </body>
