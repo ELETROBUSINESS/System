@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conferência de Estoque - Business</title>
+    <title>Conferência de Estoque - ELETRO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Bibliotecas para geração de PDF -->
@@ -11,33 +12,98 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .success-bg { background-color: #f0fdf4 !important; }
-        .warning-bg { background-color: #fffbeb !important; }
-        .sent-row { opacity: 0.8; background-color: #f8fafc; border-left: 4px solid #cbd5e1; }
-        .loader { border-top-color: #3b82f6; animation: spinner 0.6s linear infinite; }
-        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        .btn-confirm { transition: all 0.2s ease; }
-        .btn-confirm:disabled { background-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
-        .btn-confirm:not(:disabled) { background-color: #2563eb; color: white; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2); }
-        .btn-confirm:not(:disabled):hover { background-color: #1d4ed8; transform: translateY(-1px); }
 
-        #initial-loader { backdrop-filter: blur(4px); transition: opacity 0.5s ease-out; }
-        .financial-badge { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
-        
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .success-bg {
+            background-color: #f0fdf4 !important;
+        }
+
+        .warning-bg {
+            background-color: #fffbeb !important;
+        }
+
+        .sent-row {
+            opacity: 0.8;
+            background-color: #f8fafc;
+            border-left: 4px solid #cbd5e1;
+        }
+
+        .loader {
+            border-top-color: #3b82f6;
+            animation: spinner 0.6s linear infinite;
+        }
+
+        @keyframes spinner {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .btn-confirm {
+            transition: all 0.2s ease;
+        }
+
+        .btn-confirm:disabled {
+            background-color: #e5e7eb;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .btn-confirm:not(:disabled) {
+            background-color: #2563eb;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+        }
+
+        .btn-confirm:not(:disabled):hover {
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        #initial-loader {
+            backdrop-filter: blur(4px);
+            transition: opacity 0.5s ease-out;
+        }
+
+        .financial-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
     </style>
 </head>
+
 <body class="p-4 md:p-8">
 
     <!-- Loader Inicial -->
-    <div id="initial-loader" class="fixed inset-0 bg-white/90 z-[100] flex flex-col items-center justify-center text-center p-6">
+    <div id="initial-loader"
+        class="fixed inset-0 bg-white/90 z-[100] flex flex-col items-center justify-center text-center p-6">
         <div class="loader w-12 h-12 border-4 border-gray-200 border-t-blue-600 rounded-full mb-4"></div>
         <h2 class="text-lg font-bold text-gray-800">Sincronizando por Nome...</h2>
-        <p class="text-sm text-gray-500 max-w-xs">Vinculando itens da matriz com os dados da planilha usando o nome do produto.</p>
+        <p class="text-sm text-gray-500 max-w-xs">Vinculando itens da matriz com os dados da planilha usando o nome do
+            produto.</p>
     </div>
 
     <div class="max-w-7xl mx-auto">
@@ -51,19 +117,23 @@
                     </h1>
                     <p class="text-gray-500 text-sm">Busca baseada no <b>Nome do Produto</b> (chave primária).</p>
                 </div>
-                
+
                 <div class="flex items-center gap-3">
                     <div class="relative w-full max-w-md">
                         <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
                             <i class="fas fa-search"></i>
                         </span>
-                        <input type="text" id="mainSearch" onkeyup="filterItems()" class="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm transition-all" placeholder="Pesquisar por nome ou código...">
+                        <input type="text" id="mainSearch" onkeyup="filterItems()"
+                            class="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm transition-all"
+                            placeholder="Pesquisar por nome ou código...">
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="downloadReport()" title="Baixar Relatório PDF" class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 text-gray-400 rounded-xl hover:text-red-600 transition-colors shadow-sm">
+                        <button onclick="downloadReport()" title="Baixar Relatório PDF"
+                            class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 text-gray-400 rounded-xl hover:text-red-600 transition-colors shadow-sm">
                             <i class="fas fa-file-pdf"></i>
                         </button>
-                        <button onclick="toggleConfig()" title="Importar/Copiar Dados" class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 text-gray-400 rounded-xl hover:text-blue-600 transition-colors shadow-sm">
+                        <button onclick="toggleConfig()" title="Importar/Copiar Dados"
+                            class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 text-gray-400 rounded-xl hover:text-blue-600 transition-colors shadow-sm">
                             <i class="fas fa-database"></i>
                         </button>
                     </div>
@@ -72,22 +142,29 @@
         </header>
 
         <!-- Config Section -->
-        <div id="configSection" class="hidden mb-8 bg-white p-6 rounded-2xl border-2 border-dashed border-gray-200 animate-in fade-in zoom-in duration-300">
+        <div id="configSection"
+            class="hidden mb-8 bg-white p-6 rounded-2xl border-2 border-dashed border-gray-200 animate-in fade-in zoom-in duration-300">
             <h3 class="font-bold text-gray-800 mb-2 flex items-center gap-2">
                 <i class="fas fa-file-csv text-emerald-600"></i>
                 Importar Dados CSV
             </h3>
-            <p class="text-xs text-gray-500 mb-4">Cole os dados do seu arquivo. O Nome será usado como chave de busca.</p>
-            <textarea id="csvInput" rows="5" class="w-full p-4 text-xs font-mono bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none mb-4" placeholder='Codigo_Barras_NCM;Produto;Fator;Qtd_Real;Val_Unit_NF;Encargos;Custo_Unit_Real;Venda_Sugerida'></textarea>
+            <p class="text-xs text-gray-500 mb-4">Cole os dados do seu arquivo. O Nome será usado como chave de busca.
+            </p>
+            <textarea id="csvInput" rows="5"
+                class="w-full p-4 text-xs font-mono bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none mb-4"
+                placeholder='Codigo_Barras_NCM;Produto;Fator;Qtd_Real;Val_Unit_NF;Encargos;Custo_Unit_Real;Venda_Sugerida'></textarea>
             <div class="flex justify-between items-center">
                 <div id="copyActionArea" class="hidden">
-                    <button onclick="copyFormattedData()" class="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 text-xs font-bold rounded-lg hover:bg-blue-100 transition-all border border-blue-200">
+                    <button onclick="copyFormattedData()"
+                        class="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 text-xs font-bold rounded-lg hover:bg-blue-100 transition-all border border-blue-200">
                         <i class="fas fa-copy"></i> Copiar para Banco de Dados
                     </button>
                 </div>
                 <div class="flex justify-end gap-2 ml-auto">
                     <button onclick="toggleConfig()" class="px-4 py-2 text-sm font-bold text-gray-500">Fechar</button>
-                    <button onclick="processCSV()" class="px-6 py-2 bg-emerald-600 text-white text-sm font-bold rounded-xl hover:bg-emerald-700 transition-all shadow-sm">Processar e Atualizar</button>
+                    <button onclick="processCSV()"
+                        class="px-6 py-2 bg-emerald-600 text-white text-sm font-bold rounded-xl hover:bg-emerald-700 transition-all shadow-sm">Processar
+                        e Atualizar</button>
                 </div>
             </div>
         </div>
@@ -108,7 +185,8 @@
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-8">
             <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
                 <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Itens em Conferência</h2>
-                <span class="px-2 py-1 bg-blue-100 text-blue-700 text-[10px] font-bold rounded italic">BUSCA POR NOME ATIVA</span>
+                <span class="px-2 py-1 bg-blue-100 text-blue-700 text-[10px] font-bold rounded italic">BUSCA POR NOME
+                    ATIVA</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-separate border-spacing-0">
@@ -153,23 +231,30 @@
     <!-- Modal de Confirmação Detalhada -->
     <div id="confirmChangesModal" class="fixed inset-0 bg-black/60 hidden z-[110] flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl text-center">
-            <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+            <div
+                class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
                 <i class="fas fa-edit"></i>
             </div>
             <h3 class="text-xl font-bold text-gray-800 mb-2">Confirmar Alterações?</h3>
-            <p id="modalDescription" class="text-gray-600 text-sm mb-6">O sistema identificou mudanças para este produto:</p>
-            
-            <div id="modalSummary" class="bg-gray-50 rounded-xl p-4 mb-6 text-left text-xs space-y-2 border border-gray-200"></div>
+            <p id="modalDescription" class="text-gray-600 text-sm mb-6">O sistema identificou mudanças para este
+                produto:</p>
+
+            <div id="modalSummary"
+                class="bg-gray-50 rounded-xl p-4 mb-6 text-left text-xs space-y-2 border border-gray-200"></div>
 
             <div class="grid grid-cols-2 gap-4">
-                <button onclick="closeChangesModal()" class="py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-colors">Cancelar</button>
-                <button id="finalConfirmBtn" class="py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors">Confirmar e Enviar</button>
+                <button onclick="closeChangesModal()"
+                    class="py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-colors">Cancelar</button>
+                <button id="finalConfirmBtn"
+                    class="py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors">Confirmar
+                    e Enviar</button>
             </div>
         </div>
     </div>
 
     <!-- Toast de Feedback -->
-    <div id="loadingToast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 opacity-0 pointer-events-none transition-all duration-300 z-50">
+    <div id="loadingToast"
+        class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 opacity-0 pointer-events-none transition-all duration-300 z-50">
         <div id="toastLoader" class="loader w-5 h-5 border-3 border-white/30 border-t-white rounded-full"></div>
         <i id="toastIcon" class="fas fa-check-circle text-emerald-400 hidden"></i>
         <span id="toastText" class="text-sm font-bold">Processando...</span>
@@ -215,13 +300,13 @@
                 const qtdReal = clean(parts[3]);
                 const custo = parseMoney(parts[6]);
                 const venda = parseMoney(parts[7]);
-                
+
                 newDatabase.push({
                     id, ncm: detectNCM(produto, id), produto, fator, qtdReal, custo, venda, brand: detectBrand(produto),
                     sent: false,
                     currentInput: '',
                     newPrice: venda,
-                    remotePrice: null 
+                    remotePrice: null
                 });
             }
 
@@ -229,7 +314,7 @@
             if (isInitial) {
                 await syncWithAPI();
                 const loader = document.getElementById('initial-loader');
-                if(loader) {
+                if (loader) {
                     loader.style.opacity = '0';
                     setTimeout(() => loader.classList.add('hidden'), 500);
                 }
@@ -251,12 +336,12 @@
                         if (p.name) remoteDataByName[String(p.name).trim().toUpperCase()] = p;
                     });
 
-                    itemsState.forEach(item => { 
+                    itemsState.forEach(item => {
                         const normalizedLocalName = String(item.produto).trim().toUpperCase();
                         const remoteMatch = remoteDataByName[normalizedLocalName];
-                        
+
                         if (remoteMatch) {
-                            item.sent = true; 
+                            item.sent = true;
                             item.remotePrice = remoteMatch.price;
                             // Preenche o código que já está na planilha como o input atual
                             item.currentInput = String(remoteMatch.id || '');
@@ -269,7 +354,7 @@
         function renderLists() {
             const pendingBody = document.getElementById('pendingTableBody');
             const sentBody = document.getElementById('sentTableBody');
-            if(!pendingBody || !sentBody) return;
+            if (!pendingBody || !sentBody) return;
 
             pendingBody.innerHTML = ''; sentBody.innerHTML = '';
             let countSent = 0; let countPending = 0;
@@ -341,7 +426,7 @@
         function updateInput(index, val) {
             const item = itemsState[index];
             item.currentInput = val.trim();
-            
+
             const row = document.getElementById(`row-${index}`);
             if (!row) return;
 
@@ -349,7 +434,7 @@
             const container = row.querySelector('.barcode-container');
             const pricingWrapper = document.getElementById(`pricing-wrapper-${index}`);
             const confirmBtn = document.getElementById(`confirm-btn-${index}`);
-            
+
             const hasInput = item.currentInput.length > 0;
             const isCorrectCode = item.currentInput === item.id;
 
@@ -392,7 +477,7 @@
             const item = itemsState[index];
             item.newPrice = parseFloat(value) || 0;
             const badge = document.getElementById(`markup-badge-${index}`);
-            if(badge) {
+            if (badge) {
                 const markup = (((item.newPrice - item.custo) / (item.custo || 1)) * 100).toFixed(1);
                 badge.innerText = `Mkup: ${markup}%`;
             }
@@ -514,7 +599,7 @@
             setTimeout(() => { toast.style.opacity = '0'; }, 2500);
         }
         function toggleToast(show) { document.getElementById('loadingToast').style.opacity = show ? '1' : '0'; }
-        
+
         /*
         async function updateAllSentItems() {
             const sentItems = itemsState.filter(i => i.sent);
@@ -534,8 +619,8 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('l', 'mm', 'a4');
             const pageWidth = doc.internal.pageSize.getWidth();
-            doc.setFontSize(16); doc.text("Relatório de Precificação - EletroBusiness", pageWidth/2, 15, {align:'center'});
-            doc.setFontSize(10); doc.text(`Gerado em: ${new Date().toLocaleString()}`, pageWidth/2, 22, {align:'center'});
+            doc.setFontSize(16); doc.text("Relatório de Precificação - EletroBusiness", pageWidth / 2, 15, { align: 'center' });
+            doc.setFontSize(10); doc.text(`Gerado em: ${new Date().toLocaleString()}`, pageWidth / 2, 22, { align: 'center' });
             const tableData = itemsState.map(i => [i.currentInput || i.id, i.produto, i.brand, i.fator, i.qtdReal, `R$ ${i.custo.toFixed(2)}`, `R$ ${i.newPrice.toFixed(2)}`, i.sent ? 'OK' : 'Pend']);
             doc.autoTable({ startY: 28, head: [['Código', 'Produto', 'Marca', 'Fator', 'Qtd', 'Custo', 'Venda', 'Status']], body: tableData, theme: 'striped', headStyles: { fillColor: [59, 130, 246] } });
             doc.save(`relatorio_${new Date().getTime()}.pdf`);
@@ -554,4 +639,5 @@
         }
     </script>
 </body>
+
 </html>
