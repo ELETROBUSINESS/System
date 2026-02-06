@@ -61,6 +61,38 @@
             }
         }
 
+        @keyframes slideNext {
+            from {
+                opacity: 0.5;
+                transform: translateX(100%);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slidePrev {
+            from {
+                opacity: 0.5;
+                transform: translateX(-100%);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .animate-story-next {
+            animation: slideNext 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .animate-story-prev {
+            animation: slidePrev 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
         /* Remove setas do input number */
         input[type=number]::-webkit-inner-spin-button,
         input[type=number]::-webkit-outer-spin-button {
@@ -448,7 +480,7 @@
                     return `
                     <div 
                         onclick="toggleSelection(${design.id})"
-                        class="group relative cursor-pointer bg-slate-100 aspect-square overflow-hidden"
+                        class="group relative cursor-pointer bg-slate-100 aspect-[3/4] overflow-hidden"
                     >
                         <img src="${design.url}" alt="${design.title}" class="w-full h-full object-cover transition-opacity hover:opacity-90">
                         
@@ -546,7 +578,7 @@
             clearInterval(storyInterval);
         }
 
-        function loadStory(index) {
+        function loadStory(index, direction = 'next') {
             if (index < 0) index = 0;
             if (index >= activeStoryList.length) {
                 index = 0;
@@ -554,13 +586,20 @@
             currentStoryIndex = index;
             const story = activeStoryList[index];
 
+            // Remove previous animations
+            storyImage.classList.remove('animate-story-next', 'animate-story-prev');
+            void storyImage.offsetWidth; // Trigger reflow
+
+            // Apply Animation
+            if (direction === 'next') {
+                storyImage.classList.add('animate-story-next');
+            } else {
+                storyImage.classList.add('animate-story-prev');
+            }
+
             // Update Image
-            storyImage.style.opacity = '0.5';
-            setTimeout(() => {
-                storyImage.src = story.url;
-                storyImage.onload = () => storyImage.style.opacity = '1';
-                storyImage.style.opacity = '1';
-            }, 50);
+            storyImage.src = story.url;
+            storyImage.style.opacity = '1';
 
             // Update Counter
             storyCounter.innerText = `${index + 1}/${activeStoryList.length}`;
@@ -578,20 +617,20 @@
 
         window.nextStory = function () {
             if (currentStoryIndex < activeStoryList.length - 1) {
-                loadStory(currentStoryIndex + 1);
+                loadStory(currentStoryIndex + 1, 'next');
                 resetTimer();
             } else {
-                loadStory(0);
+                loadStory(0, 'next');
                 resetTimer();
             }
         }
 
         window.prevStory = function () {
             if (currentStoryIndex > 0) {
-                loadStory(currentStoryIndex - 1);
+                loadStory(currentStoryIndex - 1, 'prev');
                 resetTimer();
             } else {
-                loadStory(activeStoryList.length - 1);
+                loadStory(activeStoryList.length - 1, 'prev');
                 resetTimer();
             }
         }
