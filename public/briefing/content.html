@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrega de Designs - Lívia</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Animações customizadas */
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .animate-spin-custom {
+            animation: spin 1s linear infinite;
+        }
+
+        .selection-active {
+            border-color: #b91c1c;
+            /* red-700 */
+            box-shadow: 0 10px 15px -3px rgba(185, 28, 28, 0.1), 0 4px 6px -2px rgba(185, 28, 28, 0.05);
+            transform: scale(1.01);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .slide-up {
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Remove setas do input number */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 font-sans selection:bg-red-100 min-h-screen relative pb-40">
+
+    <!-- Header Minimalista -->
+    <header class="bg-white border-b border-slate-100 sticky top-0 z-20">
+        <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-10 h-10 rounded-full bg-red-700 text-white flex items-center justify-center font-serif text-lg select-none shadow-sm">
+                    L
+                </div>
+                <div>
+                    <h1 class="text-sm font-semibold text-slate-900">Lívia</h1>
+                    <p class="text-xs text-slate-500 uppercase tracking-wider">Advogada</p>
+                </div>
+            </div>
+            <div class="text-xs font-medium text-slate-400 border border-slate-200 px-3 py-1 rounded-full select-none">
+                Entrega Final
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-6 py-10">
+
+        <!-- Intro Section -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-light text-slate-900 mb-2">Seus materiais estão prontos.</h2>
+            <p class="text-slate-500 max-w-lg">
+                Selecione os arquivos abaixo. O download é liberado imediatamente pela nossa parceria de confiança.
+            </p>
+        </div>
+
+        <!-- Abas de Categoria -->
+        <div class="flex items-center gap-4 mb-8 border-b border-slate-200">
+            <button onclick="setCategory('feed')" id="tab-feed"
+                class="pb-3 text-sm font-medium transition-colors border-b-2 border-transparent text-slate-500 hover:text-slate-800">
+                Feed / Post
+            </button>
+            <button onclick="setCategory('story')" id="tab-story"
+                class="pb-3 text-sm font-medium transition-colors border-b-2 border-transparent text-slate-500 hover:text-slate-800">
+                Stories
+            </button>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="flex justify-between items-center mb-6 select-none">
+            <button id="btn-select-all"
+                class="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-2 group">
+                <div id="checkbox-all"
+                    class="w-4 h-4 rounded border border-slate-300 flex items-center justify-center transition-colors">
+                    <span id="check-wrapper" class="flex items-center justify-center opacity-0 transition-opacity">
+                        <i data-lucide="check" class="text-white w-2.5 h-2.5"></i>
+                    </span>
+                </div>
+                <span id="text-select-all">Selecionar todos desta seção</span>
+            </button>
+            <span id="selection-count" class="text-sm text-slate-400">
+                0 selecionados
+            </span>
+        </div>
+
+        <!-- Grid de Designs -->
+        <div id="designs-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 min-h-[400px]">
+            <!-- Cards inseridos via JS -->
+        </div>
+
+    </main>
+
+    <!-- Floating Action Footer (Conceito Confiança) -->
+    <div
+        class="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white to-transparent pointer-events-none z-30">
+        <div class="max-w-xl mx-auto space-y-4 pointer-events-auto">
+
+            <!-- Card de Confiança -->
+            <div
+                class="bg-white/95 backdrop-blur-sm border border-emerald-100 rounded-lg p-4 shadow-sm flex items-start gap-4">
+                <div class="p-2 bg-emerald-50 text-emerald-600 rounded-full shrink-0">
+                    <i data-lucide="unlock" class="w-5 h-5" stroke-width="1.5"></i>
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-sm font-semibold text-slate-800">
+                        Download Desbloqueado por Confiança
+                    </h4>
+                    <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+                        Requisição de pagamento Pix será gerada após o download.
+                        Pela nossa parceria, o acesso é liberado imediatamente.
+                    </p>
+                </div>
+                <div class="hidden sm:block">
+                    <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400 opacity-50"></i>
+                </div>
+            </div>
+
+            <!-- Botão Principal (Preto quando ativo) -->
+            <button id="btn-action" disabled
+                class="w-full py-4 rounded-xl font-medium text-sm transition-all duration-300 flex items-center justify-center gap-3 shadow-xl bg-slate-200 text-slate-400 cursor-not-allowed">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>Selecione itens para baixar</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- TELA CHEIA DE CHECKOUT -->
+    <div id="fullscreen-checkout" class="fixed inset-0 z-50 bg-white hidden overflow-y-auto">
+
+        <!-- ETAPA 1: RESUMO DO PEDIDO -->
+        <div id="step-summary"
+            class="min-h-screen flex flex-col items-center justify-center p-6 slide-up w-full max-w-lg mx-auto">
+
+            <!-- Ícone de Sucesso/Download -->
+            <div class="flex justify-center mb-8">
+                <div
+                    class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center shadow-sm">
+                    <i data-lucide="check-circle-2" class="w-8 h-8"></i>
+                </div>
+            </div>
+
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-light text-slate-900 mb-3">Download Iniciado!</h2>
+                <p class="text-slate-500">
+                    Seus arquivos estão sendo baixados. Enquanto isso, você pode finalizar o pagamento do pacote
+                    contratado.
+                </p>
+            </div>
+
+            <!-- Card de Fatura -->
+            <div class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-6 mb-8 shadow-sm">
+                <div class="flex justify-between items-center mb-6 pb-6 border-b border-slate-200/60">
+                    <div>
+                        <p class="text-sm font-semibold text-slate-900">Pacote de Edição de Imagens</p>
+                        <p class="text-xs text-slate-500 mt-0.5">Prestação de Serviço</p>
+                    </div>
+                    <span class="text-lg font-bold text-slate-900">R$ 50,00</span>
+                </div>
+
+                <!-- Nota Fiscal -->
+                <div
+                    class="flex items-center justify-between bg-white border border-dashed border-slate-200 rounded-lg p-3 mb-2 opacity-70">
+                    <div class="flex items-center gap-2 text-slate-400">
+                        <i data-lucide="file-text" class="w-4 h-4"></i>
+                        <span class="text-xs font-medium uppercase tracking-wide">Nota Fiscal</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-400">
+                        <span>Disponível após pgto.</span>
+                        <i data-lucide="lock" class="w-3 h-3"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botão Continuar -->
+            <button onclick="goToStep2()"
+                class="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-medium text-lg shadow-xl shadow-slate-900/10 transition-all flex items-center justify-center gap-3">
+                <span>Continuar</span>
+                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            </button>
+
+            <p class="text-center text-xs text-slate-400 mt-6">
+                Etapa 1 de 2
+            </p>
+        </div>
+
+        <!-- ETAPA 2: GORJETA (Escondida Inicialmente) -->
+        <div id="step-tip" class="min-h-screen flex-col items-center justify-center p-6 w-full max-w-lg mx-auto hidden">
+
+            <div class="w-full text-center mb-12 fade-in">
+                <div
+                    class="w-14 h-14 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i data-lucide="coffee" class="w-7 h-7"></i>
+                </div>
+                <h2 class="text-2xl font-semibold text-slate-900 mb-3">Gostou do Atendimento Personalizado?</h2>
+                <p class="text-slate-500 text-sm leading-relaxed px-4">
+                    Nosso time se esforçou para entregar tudo no prazo. Se quiser, você pode adicionar uma gorjeta extra
+                    como agradecimento (opcional).
+                </p>
+            </div>
+
+            <!-- Input Gigante -->
+            <div class="w-full mb-12 relative fade-in" style="animation-delay: 0.1s;">
+                <label class="block text-center text-xs uppercase tracking-widest text-slate-400 mb-4 font-medium">Valor
+                    da Gorjeta (Opcional)</label>
+                <div class="relative max-w-[240px] mx-auto group">
+                    <span class="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 text-2xl font-light">R$</span>
+                    <input type="number" id="tip-input" oninput="updateTotal(this.value)" placeholder="0,00"
+                        class="w-full pl-16 pr-6 py-6 bg-white border-2 border-slate-100 rounded-2xl text-4xl text-slate-900 font-bold focus:outline-none focus:border-slate-900 focus:shadow-xl transition-all text-center placeholder:text-slate-200"
+                        min="0" step="0.01" autofocus>
+                </div>
+            </div>
+
+            <!-- Botão Finalizar -->
+            <div class="w-full space-y-4 fade-in" style="animation-delay: 0.2s;">
+                <button onclick="finalizePayment()" id="btn-final-pay"
+                    class="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-medium text-lg shadow-xl shadow-slate-900/10 transition-all flex items-center justify-center gap-3">
+                    <span>Pagar R$ 50,00</span>
+                    <i data-lucide="check" class="w-5 h-5"></i>
+                </button>
+
+                <button onclick="skipTip()"
+                    class="w-full py-3 text-sm text-slate-400 hover:text-slate-600 transition-colors">
+                    Pagar sem gorjeta
+                </button>
+            </div>
+
+        </div>
+
+        <!-- ETAPA 3: PIX (Gerado) -->
+        <div id="step-pix" class="min-h-screen flex-col items-center justify-center p-6 w-full max-w-lg mx-auto hidden">
+
+            <div class="w-full text-center mb-8 fade-in">
+                <div
+                    class="w-14 h-14 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i data-lucide="qr-code" class="w-7 h-7"></i>
+                </div>
+                <h2 class="text-2xl font-semibold text-slate-900 mb-2">Pagamento via Pix</h2>
+                <p class="text-slate-500 text-sm">Escaneie o QR Code ou use o Copia e Cola para finalizar.</p>
+            </div>
+
+            <!-- QR Code Container -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-8 fade-in relative group"
+                style="animation-delay: 0.1s;">
+                <div
+                    class="aspect-square bg-slate-50 rounded-lg overflow-hidden flex items-center justify-center relative">
+                    <img id="pix-qrcode-img"
+                        class="w-full h-full object-contain mix-blend-multiply transition-opacity duration-500" src=""
+                        alt="QR Code Pix">
+                    <div id="pix-loader" class="absolute inset-0 flex items-center justify-center bg-slate-50">
+                        <div
+                            class="w-8 h-8 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Copia e Cola -->
+            <div class="w-full mb-8 fade-in" style="animation-delay: 0.2s;">
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Pix Copia e
+                    Cola</label>
+                <div class="flex gap-2">
+                    <input type="text" id="pix-copypaste" readonly
+                        class="flex-1 bg-slate-50 border border-slate-200 text-slate-600 text-xs rounded-lg px-4 py-3 focus:outline-none font-mono truncate">
+                    <button onclick="copyPixCode()"
+                        class="bg-slate-900 text-white px-4 rounded-lg hover:bg-slate-800 transition-colors flex items-center justify-center">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Status do Pagamento -->
+            <div class="w-full bg-slate-50 rounded-xl p-4 flex items-center justify-between border border-slate-100 fade-in"
+                style="animation-delay: 0.3s;">
+                <div class="flex items-center gap-3">
+                    <div id="status-icon-container"
+                        class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
+                        <div id="status-spinner"
+                            class="w-4 h-4 border-2 border-slate-400/30 border-t-slate-500 rounded-full animate-spin">
+                        </div>
+                        <i id="status-check" data-lucide="check" class="w-4 h-4 text-white hidden"></i>
+                    </div>
+                    <div>
+                        <p id="status-text" class="text-xs font-bold text-slate-700">Aguardando pagamento...</p>
+                        <p class="text-[10px] text-slate-400">Atualização automática</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botão Concluir (Só aparece no final) -->
+            <button id="btn-finish-process" onclick="closeCheckout()"
+                class="w-full mt-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium text-lg shadow-xl shadow-emerald-900/10 transition-all flex items-center justify-center gap-3 hidden opacity-0 slide-up">
+                <span>Concluir e Fechar</span>
+                <i data-lucide="check-circle" class="w-5 h-5"></i>
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- STORY VIEWER OVERLAY -->
+    <div id="story-viewer" class="fixed inset-0 z-40 bg-black hidden flex-col items-center justify-center">
+        <!-- Progress Bars -->
+        <div id="story-progress-container" class="absolute top-4 left-4 right-4 flex gap-1 z-50">
+            <!-- Bars injected via JS -->
+        </div>
+
+        <!-- Header Controls -->
+        <div class="absolute top-8 left-0 right-0 p-4 z-50 flex justify-between items-center text-white/90">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center font-bold text-xs"
+                    id="story-avatar">L</div>
+                <span class="text-sm font-semibold text-shadow">Stories</span>
+                <span class="text-xs opacity-70 ml-2" id="story-counter">1/6</span>
+            </div>
+            <button onclick="closeStoryViewer()" class="p-2 hover:bg-white/10 rounded-full">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <!-- Story Content -->
+        <div class="relative w-full h-full max-w-md mx-auto flex items-center justify-center bg-black/20">
+            <!-- Image -->
+            <img id="story-image" src="" class="max-h-full max-w-full object-contain" alt="Story">
+
+            <!-- Navigation Tap Areas -->
+            <div class="absolute inset-y-0 left-0 w-1/3 z-20" onclick="prevStory()"></div>
+            <div class="absolute inset-y-0 right-0 w-1/3 z-20" onclick="nextStory()"></div>
+
+            <!-- Selection Overlay (Big Check) -->
+            <div id="story-selected-indicator"
+                class="absolute inset-0 z-10 flex items-center justify-center bg-black/40 hidden pointer-events-none">
+                <i data-lucide="check-circle-2"
+                    class="w-24 h-24 text-red-500 drop-shadow-lg animate-in fade-in zoom-in duration-300"></i>
+            </div>
+        </div>
+
+        <!-- Footer / Select Button -->
+        <div class="absolute bottom-10 z-50">
+            <button id="btn-story-select" onclick="toggleCurrentStory()"
+                class="px-8 py-3 rounded-full font-bold shadow-lg transition-all transform active:scale-95 flex items-center gap-2 text-sm bg-white text-slate-900 border-2 border-white">
+                <div id="story-btn-check-icon"
+                    class="w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center">
+                    <i data-lucide="check" class="w-3 h-3 opacity-0"></i>
+                </div>
+                <span>Selecionar para Baixar</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- Dados dos Designs ---
+        const designs = [
+            // CATEGORIA: FEED
+            { id: 1, category: 'feed', title: "Área de Atuação - Modelo 1", type: "Feed (1080x1350)", url: "area-de-atuacao-mdl1.png", downloadUrl: "area-de-atuacao-mdl1.png" },
+            { id: 2, category: 'feed', title: "Área de Atuação - Modelo 2", type: "Feed (1080x1350)", url: "area-de-atuacao-mdl2.png", downloadUrl: "area-de-atuacao-mdl2.png" },
+            { id: 3, category: 'feed', title: "Salário Maternidade", type: "Feed (1080x1350)", url: "salario-maternidade.png", downloadUrl: "salario-maternidade.png" },
+            { id: 4, category: 'feed', title: "Direito Previdenciário", type: "Feed (1080x1350)", url: "previdenciario.png", downloadUrl: "previdenciario.png" },
+
+            // CATEGORIA: STORY
+            { id: 5, category: 'story', title: "Story 01", type: "Story (1080x1920)", url: "1.png", downloadUrl: "1.png" },
+            { id: 6, category: 'story', title: "Story 02", type: "Story (1080x1920)", url: "2.png", downloadUrl: "2.png" },
+            { id: 7, category: 'story', title: "Story 03", type: "Story (1080x1920)", url: "3.png", downloadUrl: "3.png" },
+            { id: 8, category: 'story', title: "Story 04", type: "Story (1080x1920)", url: "4.png", downloadUrl: "4.png" },
+            { id: 9, category: 'story', title: "Story 05", type: "Story (1080x1920)", url: "5.png", downloadUrl: "5.png" },
+            { id: 10, category: 'story', title: "Story 06", type: "Story (1080x1920)", url: "6.png", downloadUrl: "6.png" }
+        ];
+
+        let selectedIds = [];
+        let currentCategory = 'feed';
+        let isDownloading = false;
+        let currentTip = 0;
+        const basePrice = 50;
+
+        // Elementos DOM
+        let gridContainer, btnSelectAll, checkboxAll, textSelectAll, selectionCount, btnAction;
+        let tabFeed, tabStory;
+        let fullscreenCheckout, checkWrapper, btnFinalPay;
+        let stepSummary, stepTip, stepPix;
+
+        // Story Viewer Elements
+        let storyViewer, storyImage, storyProgressContainer, storySelectedIndicator, btnStorySelect, storyCounter;
+        let storyInterval;
+        let currentStoryIndex = 0;
+        let activeStoryList = [];
+
+        // --- Renderização Principal ---
+        function renderGrid() {
+            if (!gridContainer) return;
+
+            if (currentCategory === 'feed') {
+                if (storyViewer) storyViewer.classList.add('hidden');
+                gridContainer.classList.remove('hidden');
+
+                // Configuração Grid Instagram (3 colunas)
+                gridContainer.className = "grid grid-cols-3 gap-1 md:gap-4 max-w-4xl mx-auto";
+
+                const filteredDesigns = designs.filter(d => d.category === 'feed');
+
+                gridContainer.innerHTML = filteredDesigns.map(design => {
+                    const isSelected = selectedIds.includes(design.id);
+                    return `
+                    <div 
+                        onclick="toggleSelection(${design.id})"
+                        class="group relative cursor-pointer bg-slate-100 aspect-square overflow-hidden"
+                    >
+                        <img src="${design.url}" alt="${design.title}" class="w-full h-full object-cover transition-opacity hover:opacity-90">
+                        
+                        <!-- Overlay de Seleção -->
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center transition-all duration-200 ${isSelected ? 'opacity-100' : 'opacity-0'}">
+                            <i data-lucide="check" class="text-white w-8 h-8 drop-shadow-md"></i>
+                        </div>
+                   
+                        <!-- Check icon canto superior -->
+                        ${isSelected ? '<div class="absolute top-2 right-2 bg-red-600 w-3 h-3 rounded-full border border-white"></div>' : ''}
+                    </div>
+                `}).join('');
+
+            } else if (currentCategory === 'story') {
+                gridContainer.innerHTML = "";
+                gridContainer.classList.add('hidden');
+                openStoryViewer();
+            }
+
+            if (window.lucide) window.lucide.createIcons();
+            updateUI();
+        }
+
+        // --- Lógica de Categorias ---
+        window.setCategory = function (cat) {
+            if (!tabFeed || !tabStory) return;
+            currentCategory = cat;
+
+            if (cat === 'feed') {
+                tabFeed.classList.add('text-red-700', 'border-red-700');
+                tabFeed.classList.remove('text-slate-500', 'border-transparent');
+                tabStory.classList.add('text-slate-500', 'border-transparent');
+                tabStory.classList.remove('text-red-700', 'border-red-700');
+                renderGrid();
+            } else {
+                tabStory.classList.add('text-red-700', 'border-red-700');
+                tabStory.classList.remove('text-slate-500', 'border-transparent');
+                tabFeed.classList.add('text-slate-500', 'border-transparent');
+                tabFeed.classList.remove('text-red-700', 'border-red-700');
+                renderGrid(); // Isso vai disparar o viewer
+            }
+        };
+
+        // --- Lógica de Seleção ---
+        window.toggleSelection = function (id) {
+            if (isDownloading) return;
+            if (selectedIds.includes(id)) {
+                selectedIds = selectedIds.filter(itemId => itemId !== id);
+            } else {
+                selectedIds.push(id);
+            }
+            // Apenas re-renderiza se estiver no feed, senao é o story viewer lidando
+            if (currentCategory === 'feed') renderGrid();
+            else updateStoryUI();
+
+            updateUI();
+        };
+
+        function handleSelectAll() {
+            if (isDownloading) return;
+            const items = designs.filter(d => d.category === currentCategory);
+            const currentIds = items.map(d => d.id);
+            const allSelected = currentIds.every(id => selectedIds.includes(id));
+
+            if (allSelected) {
+                selectedIds = selectedIds.filter(id => !currentIds.includes(id));
+            } else {
+                currentIds.forEach(id => {
+                    if (!selectedIds.includes(id)) selectedIds.push(id);
+                });
+            }
+
+            if (currentCategory === 'feed') renderGrid();
+            else updateStoryUI(); // Atualiza botão do viewer
+
+            updateUI();
+        }
+
+        // --- STORY VIEWER LOGIC ---
+
+        function openStoryViewer() {
+            activeStoryList = designs.filter(d => d.category === 'story');
+            if (activeStoryList.length === 0) return;
+
+            currentStoryIndex = 0;
+            storyViewer.classList.remove('hidden');
+            storyViewer.classList.add('flex');
+
+            loadStory(0);
+            resetTimer();
+        }
+
+        window.closeStoryViewer = function () {
+            setCategory('feed');
+            clearInterval(storyInterval);
+        }
+
+        function loadStory(index) {
+            if (index < 0) index = 0;
+            if (index >= activeStoryList.length) {
+                index = 0;
+            }
+            currentStoryIndex = index;
+            const story = activeStoryList[index];
+
+            // Update Image
+            storyImage.style.opacity = '0.5';
+            setTimeout(() => {
+                storyImage.src = story.url;
+                storyImage.onload = () => storyImage.style.opacity = '1';
+                storyImage.style.opacity = '1';
+            }, 50);
+
+            // Update Counter
+            storyCounter.innerText = `${index + 1}/${activeStoryList.length}`;
+
+            updateStoryUI();
+            renderProgressBars();
+        }
+
+        function resetTimer() {
+            clearInterval(storyInterval);
+            storyInterval = setInterval(() => {
+                nextStory();
+            }, 5000); // 5 segundos por story
+        }
+
+        window.nextStory = function () {
+            if (currentStoryIndex < activeStoryList.length - 1) {
+                loadStory(currentStoryIndex + 1);
+                resetTimer();
+            } else {
+                loadStory(0);
+                resetTimer();
+            }
+        }
+
+        window.prevStory = function () {
+            if (currentStoryIndex > 0) {
+                loadStory(currentStoryIndex - 1);
+                resetTimer();
+            } else {
+                loadStory(activeStoryList.length - 1);
+                resetTimer();
+            }
+        }
+
+        window.toggleCurrentStory = function () {
+            const story = activeStoryList[currentStoryIndex];
+            toggleSelection(story.id);
+        }
+
+        function updateStoryUI() {
+            const story = activeStoryList[currentStoryIndex];
+            if (!story) return;
+
+            const isSelected = selectedIds.includes(story.id);
+            const btnIcon = document.getElementById('story-btn-check-icon');
+            const btnSpan = btnStorySelect.querySelector('span');
+
+            if (isSelected) {
+                storySelectedIndicator.classList.remove('hidden');
+                btnStorySelect.classList.remove('bg-white', 'text-slate-900', 'border-white');
+                btnStorySelect.classList.add('bg-red-600', 'text-white', 'border-red-600');
+                btnSpan.innerText = "Selecionado";
+                if (btnIcon) {
+                    btnIcon.classList.remove('border-slate-300');
+                    btnIcon.classList.add('border-white', 'bg-white/20');
+                    const i = btnIcon.querySelector('i');
+                    if (i) i.classList.remove('opacity-0');
+                }
+            } else {
+                storySelectedIndicator.classList.add('hidden');
+                btnStorySelect.classList.add('bg-white', 'text-slate-900', 'border-white');
+                btnStorySelect.classList.remove('bg-red-600', 'text-white', 'border-red-600');
+                btnSpan.innerText = "Selecionar para Baixar";
+                if (btnIcon) {
+                    btnIcon.classList.add('border-slate-300');
+                    btnIcon.classList.remove('border-white', 'bg-white/20');
+                    const i = btnIcon.querySelector('i');
+                    if (i) i.classList.add('opacity-0');
+                }
+            }
+        }
+
+        function renderProgressBars() {
+            storyProgressContainer.innerHTML = activeStoryList.map((_, idx) => {
+                let bgClass = "bg-white/30";
+                if (idx < currentStoryIndex) bgClass = "bg-white";
+                if (idx === currentStoryIndex) bgClass = "bg-red-500 animate-pulse";
+
+                return `<div class="h-1 flex-1 rounded-full overflow-hidden ${bgClass} transition-colors duration-300"></div>`;
+            }).join('');
+        }
+
+        // --- Atualização da UI ---
+        function updateUI() {
+            if (selectionCount) selectionCount.innerText = `${selectedIds.length} selecionados (Total)`;
+
+            const currentIds = designs.filter(d => d.category === currentCategory).map(d => d.id);
+            const hasItems = currentIds.length > 0;
+            const allCurrentSelected = hasItems && currentIds.every(id => selectedIds.includes(id));
+
+            if (checkboxAll && checkWrapper) {
+                if (allCurrentSelected) {
+                    checkboxAll.classList.add('bg-slate-900', 'border-slate-900');
+                    checkboxAll.classList.remove('border-slate-300');
+                    checkWrapper.classList.remove('opacity-0');
+                    textSelectAll.innerText = "Desmarcar esta seção";
+                } else {
+                    checkboxAll.classList.remove('bg-slate-900', 'border-slate-900');
+                    checkboxAll.classList.add('border-slate-300');
+                    checkWrapper.classList.add('opacity-0');
+                    textSelectAll.innerText = "Selecionar todos desta seção";
+                }
+            }
+
+            if (btnAction) {
+                if (selectedIds.length > 0) {
+                    btnAction.disabled = false;
+                    btnAction.classList.remove('bg-slate-200', 'text-slate-400', 'cursor-not-allowed');
+                    btnAction.classList.add('bg-slate-900', 'text-white', 'hover:bg-slate-800', 'hover:shadow-2xl', 'hover:-translate-y-1', 'cursor-pointer');
+
+                    const countText = selectedIds.length === 1 ? 'arquivo' : 'arquivos';
+                    btnAction.innerHTML = `<i data-lucide="download" class="w-4 h-4"></i> <span>Baixar ${selectedIds.length} ${countText}</span>`;
+                } else {
+                    btnAction.disabled = true;
+                    btnAction.classList.add('bg-slate-200', 'text-slate-400', 'cursor-not-allowed');
+                    btnAction.classList.remove('bg-slate-900', 'text-white', 'hover:bg-slate-800', 'hover:shadow-2xl', 'hover:-translate-y-1', 'cursor-pointer');
+                    btnAction.innerHTML = `<i data-lucide="download" class="w-4 h-4"></i> <span>Selecione itens para baixar</span>`;
+                }
+            }
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        // --- FLUXO DE DOWNLOAD E PAGAMENTO ---
+
+        async function handleAction(e) {
+            if (e && e.preventDefault) e.preventDefault();
+
+            if (selectedIds.length === 0 || isDownloading) return;
+
+            isDownloading = true;
+
+            // Estado de Loading
+            btnAction.innerHTML = `
+                <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin-custom"></div>
+                <span>Iniciando Download...</span>
+            `;
+
+            // 1. Download
+            for (const id of selectedIds) {
+                const design = designs.find(d => d.id === id);
+                if (design) {
+                    const downloadUrl = design.downloadUrl || design.url;
+                    const filename = `Design-Livia-${design.title.replace(/\s+/g, '-')}.png`;
+
+                    try {
+                        const response = await fetch(downloadUrl);
+                        if (!response.ok) throw new Error('Network response was not ok');
+
+                        const blob = await response.blob();
+                        const blobUrl = window.URL.createObjectURL(blob);
+
+                        const link = document.createElement('a');
+                        link.href = blobUrl;
+                        link.download = filename;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+
+                        window.URL.revokeObjectURL(blobUrl);
+                    } catch (error) {
+                        console.warn("Falha no download direto, usando fallback nova aba:", error);
+                        const link = document.createElement('a');
+                        link.href = downloadUrl;
+                        link.download = filename;
+                        link.target = "_blank";
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }
+
+                    await new Promise(r => setTimeout(r, 800));
+                }
+            }
+
+            // 2. Abrir Tela de Checkout (Step 1) SE NÃO PAGO
+            const hasPaid = localStorage.getItem('hasPaidDesignsLivia') === 'true';
+
+            setTimeout(() => {
+                isDownloading = false;
+
+                if (!hasPaid) {
+                    fullscreenCheckout.classList.remove('hidden');
+                } else {
+                    // Feedback visual se já pago (opcional, ou apenas reseta UI)
+                    updateUI();
+                }
+            }, 800);
+        }
+
+        // --- Navegação entre Steps do Checkout ---
+
+        window.goToStep2 = function () {
+            stepSummary.classList.add('hidden');
+            stepTip.classList.remove('hidden');
+            stepTip.classList.add('flex'); // Precisa ser flex para centralizar
+
+            // Focar no input de gorjeta automaticamente
+            setTimeout(() => {
+                const input = document.getElementById('tip-input');
+                if (input) input.focus();
+            }, 100);
+        }
+
+        // --- Lógica de Gorjeta ---
+
+        window.updateTotal = function (val) {
+            const tip = parseFloat(val);
+            if (!isNaN(tip) && tip >= 0) {
+                currentTip = tip;
+            } else {
+                currentTip = 0;
+            }
+
+            const total = basePrice + currentTip;
+            if (btnFinalPay) {
+                btnFinalPay.innerHTML = `<span>Pagar R$ ${total.toFixed(2).replace('.', ',')}</span> <i data-lucide="check" class="w-5 h-5"></i>`;
+            }
+        };
+
+        window.skipTip = function () {
+            currentTip = 0;
+            finalizePayment();
+        }
+
+        // --- FLUXO DE PAGAMENTO REAL ELETRO/PIX ---
+        let pollInterval = null;
+
+        window.finalizePayment = async function () {
+            if (btnFinalPay) {
+                btnFinalPay.disabled = true;
+                btnFinalPay.innerHTML = `
+                    <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin-custom"></div>
+                    <span>Gerando Pix ELETRO...</span>
+                `;
+            }
+
+            try {
+                // 1. Gera ID único para o Pedido
+                const orderId = `Briefing_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+                const totalAmount = basePrice + currentTip;
+
+                // 2. Chama Backend (ELETRO)
+                const response = await fetch("https://us-central1-super-app25.cloudfunctions.net/createPayment", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        account: "default", // Alterado para default conforme pedido
+                        orderId: orderId,
+                        payment_data: {
+                            transaction_amount: totalAmount,
+                            payment_method_id: "pix",
+                            description: "Pacote Design - Lívia",
+                            payer: {
+                                email: "livia.designs@eletro.com", // Placeholder interno
+                                first_name: "Lívia",
+                                last_name: "Cliente"
+                            }
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errPath = await response.json();
+                    throw new Error(errPath.message || "Erro na geração do Pix");
+                }
+
+                const data = await response.json();
+
+                // 3. Extrai Dados do Pix
+                const qrCodeBase64 = data.point_of_interaction.transaction_data.qr_code_base64;
+                const qrCodeCopy = data.point_of_interaction.transaction_data.qr_code;
+
+                // 4. Mostra Interface Pix
+                showPixUI(qrCodeBase64, qrCodeCopy, orderId);
+
+            } catch (error) {
+                console.error(error);
+                alert("Erro ao criar pagamento: " + error.message);
+                if (btnFinalPay) {
+                    btnFinalPay.disabled = false;
+                    btnFinalPay.innerHTML = `<span>Tentar Novamente</span> <i data-lucide="refresh-cw" class="w-5 h-5"></i>`;
+                }
+            }
+        };
+
+        function showPixUI(base64, copyCode, orderId) {
+            stepTip.classList.add('hidden');
+            stepTip.classList.remove('flex');
+
+            stepPix.classList.remove('hidden');
+            stepPix.classList.add('flex');
+
+            const img = document.getElementById('pix-qrcode-img');
+            const loader = document.getElementById('pix-loader');
+            const input = document.getElementById('pix-copypaste');
+
+            if (img) {
+                img.src = `data:image/png;base64,${base64}`;
+                img.onload = () => {
+                    if (loader) loader.classList.add('hidden');
+                };
+            }
+            if (input) input.value = copyCode;
+
+            // Inicia Polling
+            startPolling(orderId);
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        window.copyPixCode = function () {
+            const input = document.getElementById('pix-copypaste');
+            if (input) {
+                input.select();
+                input.setSelectionRange(0, 99999);
+                navigator.clipboard.writeText(input.value);
+                alert("Código Pix copiado!");
+            }
+        }
+
+        function startPolling(orderId) {
+            if (pollInterval) clearInterval(pollInterval);
+
+            pollInterval = setInterval(async () => {
+                try {
+                    const res = await fetch(`https://us-central1-super-app25.cloudfunctions.net/checkPaymentStatus?orderId=${orderId}`);
+                    const data = await res.json();
+
+                    if (data.status === 'approved') {
+                        clearInterval(pollInterval);
+                        handlePaymentSuccess();
+                    }
+                } catch (e) { console.error("Polling error", e); }
+            }, 4000); // Checa a cada 4s
+        }
+
+        function handlePaymentSuccess() {
+            const statusBox = document.getElementById('status-icon-container');
+            const statusText = document.getElementById('status-text');
+            const spinner = document.getElementById('status-spinner');
+            const check = document.getElementById('status-check');
+            const btnFinish = document.getElementById('btn-finish-process');
+
+            if (statusBox) {
+                statusBox.classList.remove('bg-slate-200');
+                statusBox.classList.add('bg-emerald-500', 'text-white', 'shadow-lg', 'shadow-emerald-200');
+            }
+            if (spinner) spinner.classList.add('hidden');
+            if (check) check.classList.remove('hidden');
+
+            if (statusText) {
+                statusText.innerText = "Pagamento Confirmado!";
+                statusText.classList.add('text-emerald-600');
+            }
+
+            if (btnFinish) {
+                btnFinish.classList.remove('hidden');
+                // Trigger reflow for animation
+                void btnFinish.offsetWidth;
+                btnFinish.classList.remove('opacity-0', 'slide-up'); // Se existisse a classe slide-up antes
+                btnFinish.classList.add('animate-in', 'fade-in', 'slide-in-from-bottom-4');
+                btnFinish.style.opacity = '1';
+            }
+
+            // Persistir Pagamento
+            localStorage.setItem('hasPaidDesignsLivia', 'true');
+        }
+
+        window.closeCheckout = function () {
+            fullscreenCheckout.classList.add('hidden');
+            // Resetar UI se necessário ou recarregar
+            alert("Obrigado! Seus arquivos foram liberados definitivamente.");
+            window.location.reload();
+        }
+
+        // --- Inicialização ---
+        function init() {
+            gridContainer = document.getElementById('designs-grid');
+            btnSelectAll = document.getElementById('btn-select-all');
+            checkboxAll = document.getElementById('checkbox-all');
+            textSelectAll = document.getElementById('text-select-all');
+            selectionCount = document.getElementById('selection-count');
+            btnAction = document.getElementById('btn-action');
+            checkWrapper = document.getElementById('check-wrapper');
+
+            tabFeed = document.getElementById('tab-feed');
+            tabStory = document.getElementById('tab-story');
+
+            fullscreenCheckout = document.getElementById('fullscreen-checkout');
+            stepSummary = document.getElementById('step-summary');
+            stepTip = document.getElementById('step-tip');
+            stepPix = document.getElementById('step-pix');
+            btnFinalPay = document.getElementById('btn-final-pay');
+
+            storyViewer = document.getElementById('story-viewer');
+            storyImage = document.getElementById('story-image');
+            storyProgressContainer = document.getElementById('story-progress-container');
+            storySelectedIndicator = document.getElementById('story-selected-indicator');
+            btnStorySelect = document.getElementById('btn-story-select');
+            storyCounter = document.getElementById('story-counter');
+
+            // Listeners
+            if (btnSelectAll) btnSelectAll.addEventListener('click', handleSelectAll);
+            if (btnAction) btnAction.addEventListener('click', handleAction);
+
+            // Iniciar na aba feed
+            setCategory('feed');
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+
+    </script>
+</body>
+
+</html>
