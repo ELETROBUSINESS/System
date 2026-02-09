@@ -45,14 +45,14 @@ function salvarNoBanco(data) {
     const timestamp = new Date();
     const idVenda = data.id || "";
 
-    // Normaliza para salvar padronizado (opcional, mas bom para organização)
+    // Normaliza o tipo para salvar sempre minúsculo (ajuda na busca depois)
     const tipoSalvo = data.tipo ? data.tipo.toLowerCase() : "";
 
     const novaLinha = [
         data.loja,
         data.operador,
         data.cargo,
-        tipoSalvo, // Salva já em minúsculo se quiser
+        tipoSalvo,
         idVenda,
         data.pagamento,
         data.valor,
@@ -93,46 +93,58 @@ function calcularDashboard(data) {
     const msDiasPendentes = getDiasPendentes(hoje).map(d => d.getTime());
 
     dataRows.forEach(row => {
-        // 1. Filtro de Loja (Trim remove espaços acidentais)
+        // 1. Filtro de Loja
         if (String(row[COL.LOJA]).trim() != lojaAlvo) return;
 
         // 2. Normalização da Data
         const dataRow = normalizarData(row[COL.TIMESTAMP]);
         if (!dataRow) return;
 
-        // 3. Normalização de Texto (TUDO PARA MINÚSCULO)
-        // Isso resolve o problema de "entrada" vs "Entrada"
+        // 3. Normalização de Texto
         const tipo = String(row[COL.TIPO]).toLowerCase().trim();
         const pagto = String(row[COL.PAGAMENTO]).toLowerCase().trim();
         const total = parseFloat(row[COL.TOTAL]) || 0;
 
+        // Identifica se é Crediário
+        const isCrediario = pagto.includes('crediário') || pagto.includes('crediario');
+
+        // Verifica pendência
         const isPendente = msDiasPendentes.includes(dataRow.getTime());
 
-        // --- LÓGICA DE SALDO ---
-        if (tipo === 'saída' || tipo === 'saida') {
+        // --- LÓGICA DE SALDO (Dinheiro em Caixa) ---
+
+        // CASO 1: Saídas ou Ajustes Negativos (Retira do Saldo)
+        if (tipo === 'saída' || tipo === 'saida' || tipo === 'ajuste-') {
             saldo -= total;
         }
+        // CASO 2: Ajustes Positivos (Soma no Saldo, mas não é venda)
+        else if (tipo === 'ajuste+') {
+            saldo += total;
+        }
+        // CASO 3: Entradas de Vendas (Dinheiro ou Cartão Maturado)
         else if (tipo === 'entrada') {
-            // Dinheiro ou Pix QR (entradas imediatas)
+            // Dinheiro ou Pix QR
             if (pagto === 'dinheiro' || pagto === 'pixqr') {
                 saldo += total;
             }
-            // Se for Cartão/Crédito E já passou do prazo (não é pendente) -> Soma no Saldo
-            else if (isMetodoRecebivel(pagto) && !isPendente) {
+            // Se for Cartão e já caiu na conta (Maturado) e NÃO for Crediário
+            else if (isMetodoRecebivel(pagto) && !isPendente && !isCrediario) {
                 saldo += total;
             }
         }
 
-        // --- FILTRO DE PERÍODO ---
+        // --- FILTRO DE PERÍODO (Para Faturamento e Clientes) ---
         if (estaNoPeriodo(dataRow, hoje, periodo)) {
-            if (tipo === 'entrada') {
+            // SÓ SOMA SE FOR "ENTRADA" REAL (Ajustes são ignorados aqui)
+            if (tipo === 'entrada' && !isCrediario) {
                 faturamento += total;
                 clientesAtendidos++;
             }
         }
 
         // --- LÓGICA DE A RECEBER ---
-        if (tipo === 'entrada' && isMetodoRecebivel(pagto) && isPendente) {
+        // Apenas Entradas reais entram aqui (Ajustes são ignorados)
+        if (tipo === 'entrada' && isMetodoRecebivel(pagto) && isPendente && !isCrediario) {
             aReceber += total;
         }
     });
@@ -223,23 +235,18 @@ function subtrairDias(data, dias) {
 }
 
 function isMetodoRecebivel(pagamento) {
-    // Já recebe em minúsculo vindo da função principal
     const p = pagamento;
-
     if (p === 'dinheiro' || p === 'pixqr') return false;
 
     const termos = ['crédito', 'credito', 'visa', 'master', 'elo', 'débito', 'debito', 'pix'];
     return termos.some(t => p.includes(t));
 }
 
-// ==========================================
-// TESTE FINAL
-// ==========================================
 function testeFinal() {
     const req = {
         action: "calcular",
         loja: "DT#25",
-        periodo: "mes"
+        periodo: "dia"
     };
     console.log(JSON.stringify(calcularDashboard(req), null, 2));
 }

@@ -1,0 +1,126 @@
+/* ======================================== */
+/* == TOKEN INPUT & AUTH MODAL STYLES    == */
+/* ======================================== */
+
+.modal-content.modal-sm.text-center {
+    padding: 35px 25px !important;
+    text-align: center;
+}
+
+.token-input-container {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin: 24px 0;
+}
+
+.token-digit {
+    width: 48px;
+    height: 56px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    background: #f9fafb;
+    /* Cinza bem claro */
+    transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1);
+    color: var(--text-dark);
+}
+
+.token-digit:focus {
+    border-color: var(--text-dark);
+    /* Borda preta */
+    background: #fff;
+    outline: none;
+    transform: translateY(-4px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.token-digit.error {
+    border-color: var(--primary-red);
+    color: var(--primary-red);
+    background: #fff5f5;
+    animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
+}
+
+@keyframes shake {
+
+    10%,
+    90% {
+        transform: translate3d(-1px, 0, 0);
+    }
+
+    20%,
+    80% {
+        transform: translate3d(2px, 0, 0);
+    }
+
+    30%,
+    50%,
+    70% {
+        transform: translate3d(-4px, 0, 0);
+    }
+
+    40%,
+    60% {
+        transform: translate3d(4px, 0, 0);
+    }
+}
+
+/* Auth Error Message */
+.auth-error-message {
+    color: var(--primary-red);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 8px;
+    display: none;
+    /* Hidden by default */
+}
+
+/* Custom Black Button */
+.btn-black {
+    background-color: #111827;
+    /* Preto quase puro */
+    color: #fff;
+    border: none;
+    font-weight: 600;
+    padding: 10px 24px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 140px;
+    /* Garante largura para texto 'Verificando...' */
+    justify-content: center;
+}
+
+.btn-black:hover {
+    background-color: #000;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-black:disabled {
+    background-color: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Loading State (Pode usar um spinner ou bolinhas) */
+.btn-black.loading {
+    cursor: wait;
+    opacity: 0.9;
+}
+
+/* Success State (Vermelho) */
+.btn-black.success {
+    background-color: var(--success-green);
+    /* Verde para sucesso talvez? O user pediu vermelho, mas sucesso geralmente é verde. User disse "o botão fica vermelho". Pode ser o vermelho da marca. Vou usar primary-red */
+    background-color: var(--primary-red) !important;
+    border-color: var(--primary-red) !important;
+}

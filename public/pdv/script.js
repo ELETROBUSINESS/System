@@ -31,6 +31,8 @@ const FISCAL_API_URL = "https://emitirnfce-xsy57wqb6q-rj.a.run.app";
 
 // Variáveis de Pedidos Online (Globais para evitar o erro ReferenceError)
 let activeOrdersData = [];
+// --- Cache Global de Produtos ---
+let localProductCache = null; // Movido para escopo global para acesso por listeners
 let currentOrderStatusFilter = 'pendente';
 
 // Configuração e Inicialização Imediata do Firebase
@@ -276,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedCrediarioClient = null; // Para armazenar o cliente selecionado no pagamento
 
     // --- Estado da Aplicação ---
-    let localProductCache = null;
+    // localProductCache moved to global scope
     let localClientCache = null;
     let cart = [];
     let lastScannedBarcode = null;
@@ -315,8 +317,191 @@ document.addEventListener('DOMContentLoaded', () => {
     const discountInputR = document.getElementById('discount-input-r');
     const percBtnContainer = document.getElementById('perc-btn-container');
     const removeDiscountBtn = document.getElementById('remove-discount-btn');
-    const effectiveDiscountDisplay = document.getElementById('effective-discount-display');
+    const effectiveDiscountDisplay = document.getElementById('discount-effective-label');
     const discountPercentageText = document.getElementById('discount-percentage-text');
+
+    // --- LÓGICA DO BOTÃO DE LÁPIS (DESCONTO MANUAL EM R$) ---
+    const btnEditDiscount = document.getElementById('btn-edit-discount');
+    const modalDiscountAuth = document.getElementById('discount-auth-modal');
+    const discountAuthInputs = modalDiscountAuth ? modalDiscountAuth.querySelectorAll('.auth-box') : [];
+    const btnConfirmAuth = document.getElementById('btn-confirm-discount-auth');
+    const authErrorMsg = document.getElementById('auth-error-msg');
+    const btnTogglePass = document.getElementById('auth-toggle-pass');
+
+    // 1. Alternar Modo Manual (Sem Token Inicial)
+    let isManualMode = false;
+    window.isDiscountAuthorized = false; // Controle global de autorização
+
+    if (btnEditDiscount) {
+        btnEditDiscount.addEventListener('click', (e) => {
+            e.stopPropagation();
+
+            isManualMode = !isManualMode;
+            const percBtnContainer = document.getElementById('perc-btn-container'); // Container para animação
+            const icon = btnEditDiscount.querySelector('i');
+
+            if (isManualMode) {
+                // MODO MANUAL ATIVO
+                if (discountInputR) {
+                    discountInputR.disabled = false;
+                    discountInputR.value = ''; // Limpa para digitar do zero
+                    discountInputR.placeholder = "R$ 0,00";
+                    discountInputR.classList.add('unlocked-input');
+                    setTimeout(() => discountInputR.focus(), 100);
+                }
+
+                // Esconde botões de porcentagem com animação
+                if (percBtnContainer) percBtnContainer.classList.add('hidden');
+
+                // Altera ícone para 'X' (Fechar/Cancelar edição)
+                if (icon) {
+                    icon.className = 'bx bx-x';
+                    icon.style.fontSize = '1.2rem'; // Ajuste visual se necessário
+                }
+
+            } else {
+                // MODO PADRÃO (PORCENTAGEM)
+                if (discountInputR) {
+                    discountInputR.disabled = true;
+                    discountInputR.value = ''; // Limpa valor
+                    discountInputR.placeholder = "0,00";
+                    discountInputR.classList.remove('unlocked-input');
+
+                    // Reseta desconto global ao sair do modo manual
+                    discount = 0;
+                    if (effectiveDiscountDisplay) effectiveDiscountDisplay.textContent = "0%";
+                    updateSummary();
+                }
+
+                // Mostra botões
+                if (percBtnContainer) percBtnContainer.classList.remove('hidden');
+
+                // Restaura ícone Lápis
+                if (icon) {
+                    icon.className = 'bx bx-pencil';
+                    icon.style.removeProperty('font-size');
+                }
+            }
+        });
+    }
+
+    // 2. Lógica dos Inputs de Senha (Auto-focus)
+    if (discountAuthInputs.length > 0) {
+        discountAuthInputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                const val = e.target.value;
+
+                // Pula para o próximo
+                if (val.length === 1 && index < discountAuthInputs.length - 1) {
+                    discountAuthInputs[index + 1].focus();
+                }
+
+                // Verifica se completou a senha
+                const code = Array.from(discountAuthInputs).map(i => i.value).join('');
+                if (btnConfirmAuth) btnConfirmAuth.disabled = (code.length < 4);
+
+                // Ativa botão se completou
+                if (code.length === 4 && btnConfirmAuth) btnConfirmAuth.focus();
+            });
+
+            input.addEventListener('keydown', (e) => {
+                // Voltar com Backspace
+                if (e.key === 'Backspace' && e.target.value === '' && index > 0) {
+                    discountAuthInputs[index - 1].focus();
+                }
+            });
+        });
+    }
+
+    // 3. Toggle ver senha
+    if (btnTogglePass) {
+        btnTogglePass.addEventListener('click', () => {
+            const type = discountAuthInputs[0].type === 'password' ? 'tel' : 'password';
+            discountAuthInputs.forEach(input => input.type = type);
+            btnTogglePass.classList.toggle('bx-show');
+            btnTogglePass.classList.toggle('bx-hide');
+        });
+    }
+
+    // 4. Confirmar Autorização
+    if (btnConfirmAuth) {
+        btnConfirmAuth.addEventListener('click', () => {
+            const code = Array.from(discountAuthInputs).map(i => i.value).join('');
+
+            if (code === '0425') {
+                closeModal(modalDiscountAuth);
+                window.isDiscountAuthorized = true; // Marca como autorizado
+
+                // Aplica o valor pendente se houver
+                if (window.pendingDiscountValue !== undefined) {
+                    if (discountInputR) {
+                        discountInputR.value = window.pendingDiscountValue;
+                        // Dispara input para atualizar discount e summary
+                        discountInputR.dispatchEvent(new Event('input'));
+                    }
+                    window.pendingDiscountValue = null;
+                }
+
+                if (typeof showCustomToast === 'function') {
+                    showCustomToast("Desconto Alto Autorizado!");
+                }
+
+                // Retorna foco
+                if (discountInputR) setTimeout(() => discountInputR.focus(), 100);
+
+            } else {
+                if (authErrorMsg) {
+                    authErrorMsg.style.display = 'block';
+                    authErrorMsg.textContent = "Senha incorreta!";
+                }
+                discountAuthInputs.forEach(i => i.value = '');
+                discountAuthInputs[0].focus();
+            }
+        });
+    }
+
+    // 5. Listener para Atualizar Desconto ao Digitar Manualmente
+    /*
+    if (discountInputR) {
+        discountInputR.addEventListener('input', (e) => {
+            // Remove seleção dos botões de porcentagem
+            document.querySelectorAll('.perc-btn').forEach(btn => btn.classList.remove('active'));
+
+            let val = parseFloat(parseValueFirebase(e.target.value));
+            if (isNaN(val)) val = 0;
+
+            const subtotal = getSubtotal();
+            const perc = subtotal > 0 ? (val / subtotal) * 100 : 0;
+
+            // --- Lógica de Autorização para Descontos > 10% ---
+            if (perc > 10 && !window.isDiscountAuthorized) {
+                // Bloqueia e abre modal
+                // e.target.blur(); // Remove foco para evitar continuar digitando?
+                openModal(modalDiscountAuth);
+
+                // Salva o valor pendente para aplicar depois se autorizado
+                window.pendingDiscountValue = val;
+
+                return; // Interrompe aplicação do desconto
+            }
+
+            // Se autorizado ou menor que 10%, aplica
+            if (val >= 0) {
+                discount = val;
+
+                if (effectiveDiscountDisplay) {
+                    effectiveDiscountDisplay.textContent = `Manual (${perc.toFixed(1)}%)`;
+                }
+            } else {
+                discount = 0;
+                if (effectiveDiscountDisplay) effectiveDiscountDisplay.textContent = "0%";
+            }
+
+            updateSummary();
+        });
+    }
+    */
+
     const paymentToggleRow = document.getElementById('payment-toggle-row');
     const summaryPaymentMethod = document.getElementById('summary-payment-method');
     const finishSaleBtn = document.getElementById('finish-sale-btn');
@@ -389,7 +574,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeCaixaNotasInput = document.getElementById('close-caixa-notas');
     const closeCaixaMoedasInput = document.getElementById('close-caixa-moedas');
     const closeCaixaCartaoInput = document.getElementById('close-caixa-cartao');
-    const closeCaixaPixInput = document.getElementById('close-caixa-pix');
     const closeCaixaDepositoInput = document.getElementById('close-caixa-deposito');
     const closeCaixaFicaInput = document.getElementById('close-caixa-fica');
     const closeCaixaAssinaturaInput = document.getElementById('close-caixa-assinatura');
@@ -915,7 +1099,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 1. Resetar controles globais (sempre permitidos agora)
         if (cart.length > 0) {
-            discountInputR.disabled = false;
+            // discountInputR.disabled = false; // Mantém desativado até autorização
             discountInputR.placeholder = "0,00";
             document.querySelectorAll('.perc-btn').forEach(b => b.disabled = false);
 
@@ -2276,7 +2460,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Funções de Desconto ---
     const getSubtotal = () => cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-    const applyDiscount = (requestedDiscount, isPercentage = false) => { const subtotal = getSubtotal(); if (subtotal === 0) { if (requestedDiscount !== 0) { showCustomAlert("Vazio", "Adicione itens."); } return; } let calculatedDiscount = isPercentage ? subtotal * (requestedDiscount / 100) : requestedDiscount; const newTotal = subtotal - calculatedDiscount; const roundedTotal = isSmartRoundingEnabled ? Math.round(newTotal * 2) / 2 : newTotal; const finalDiscount = subtotal - roundedTotal; discount = (finalDiscount > subtotal) ? subtotal : ((finalDiscount < 0) ? 0 : finalDiscount); discountInputR.value = discount > 0 ? discount.toFixed(2) : ''; updateSummary(); };
+    const applyDiscount = (requestedDiscount, isPercentage = false, fromInput = false) => {
+        const subtotal = getSubtotal();
+        if (subtotal === 0) {
+            if (requestedDiscount !== 0) { showCustomAlert("Vazio", "Adicione itens."); }
+            return;
+        }
+        let calculatedDiscount = isPercentage ? subtotal * (requestedDiscount / 100) : requestedDiscount;
+
+        // AUTH CHECK (>10%)
+        const percCheck = subtotal > 0 ? (calculatedDiscount / subtotal) * 100 : 0;
+        if (percCheck > 10 && !window.isDiscountAuthorized) {
+            const authModal = document.getElementById('discount-auth-modal');
+            if (authModal && typeof openModal === 'function') {
+                openModal(authModal);
+                window.pendingDiscountValue = calculatedDiscount;
+                return; // Bloqueia aplicação
+            }
+        }
+
+        const newTotal = subtotal - calculatedDiscount;
+        const roundedTotal = isSmartRoundingEnabled ? Math.round(newTotal * 2) / 2 : newTotal;
+        const finalDiscount = subtotal - roundedTotal;
+
+        discount = (finalDiscount > subtotal) ? subtotal : ((finalDiscount < 0) ? 0 : finalDiscount);
+
+        // Only update input if NOT typing manually
+        if (!fromInput && discountInputR) {
+            discountInputR.value = discount > 0 ? discount.toFixed(2).replace('.', ',') : '';
+        }
+
+        // Update Effective Discount Label
+        const perc = subtotal > 0 ? (discount / subtotal) * 100 : 0;
+        if (typeof effectiveDiscountDisplay !== 'undefined' && effectiveDiscountDisplay) {
+            effectiveDiscountDisplay.textContent = `Desconto efetivo: ${perc.toFixed(2).replace('.', ',')}%`;
+        }
+
+        updateSummary();
+    };
     const removeDiscount = () => { discount = 0; discountInputR.value = ''; updateSummary(); };
 
 
@@ -2497,7 +2718,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 limparToken(); bloquearSistema("Caixa fechado! Recarregue a página (F5) para reabrir."); // Mensagem atualizada
                 showCustomAlert("Sucesso!", result.message || "Caixa fechado!"); closeModal(closeCaixaModal);
             } else { throw new Error(result.message || "Erro API."); }
-        } catch (error) { console.error("Erro fechar caixa:", error); showCustomAlert("Erro Fechar Caixa", error.message); } finally { closeCaixaSaveBtn.disabled = false; closeCaixaSaveBtn.innerHTML = "<i class='bx bx-lock-alt'></i> Confirmar"; }
+        } catch (error) { console.error("Erro fechar caixa:", error); showCustomAlert("Erro Fechar Caixa", error.message); } finally { closeCaixaSaveBtn.disabled = false; closeCaixaSaveBtn.innerHTML = "<i class='bx bx-store'></i> Confirmar"; }
     }
 
     // --- Funções para controlar UI (baseado no token) ---
@@ -2804,13 +3025,139 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const updateSplitRemaining = () => { const total = lastSaleData?.total || 0; const val1 = parseFloat(splitValue1.value) || 0; const val2 = parseFloat(splitValue2.value) || 0; const sum = val1 + val2; const remaining = total - sum; currentSplitPayments.remaining = remaining; currentSplitPayments.totalSaleValue = total; splitPaymentRemaining.textContent = `Restante: ${formatCurrency(remaining)}`; confirmSplitPaymentBtn.disabled = !(Math.abs(remaining) < 0.01 && splitMethod1.value && val1 > 0 && splitMethod2.value && val2 > 0 && splitMethod1.value !== splitMethod2.value); splitPaymentRemaining.style.color = remaining < -0.01 ? 'var(--warning-red)' : 'var(--primary-red)'; };
-    const navigateFecharCaixaSteps = (direction) => { const nextStep = currentFecharCaixaStep + direction; if (direction === 1) { if (currentFecharCaixaStep === 1 && !validateFecharCaixaStep1()) return; if (currentFecharCaixaStep === 2 && !validateFecharCaixaStep2()) return; if (currentFecharCaixaStep === 3 && !validateFecharCaixaStep3()) return; } if (nextStep >= 1 && nextStep <= 4) { document.querySelectorAll('#close-caixa-form .form-step').forEach(el => el.classList.remove('active')); document.getElementById(`close-caixa-step-${nextStep}`).classList.add('active'); currentFecharCaixaStep = nextStep; updateFecharCaixaModalUI(); } };
-    const updateFecharCaixaModalUI = () => { const progress = currentFecharCaixaStep * 25; closeCaixaProgress.style.width = `${progress}%`; closeCaixaPrevBtn.style.display = currentFecharCaixaStep === 1 ? "none" : "inline-flex"; closeCaixaNextBtn.style.display = currentFecharCaixaStep === 4 ? "none" : "inline-flex"; closeCaixaSaveBtn.style.display = currentFecharCaixaStep === 4 ? "inline-flex" : "none"; const firstInput = document.querySelector(`#close-caixa-step-${currentFecharCaixaStep} [data-primary-focus="true"], #close-caixa-step-${currentFecharCaixaStep} input`); if (firstInput) setTimeout(() => firstInput.focus(), 150); };
-    const validateFecharCaixaStep1 = () => { let isValid = true;[closeCaixaNotasInput, closeCaixaMoedasInput].forEach(input => { const val = parseFloat(input.value); if (input.value.trim() === '' || isNaN(val) || val < 0) { input.classList.add('input-error'); isValid = false; } else { input.classList.remove('input-error'); } }); if (!isValid) showCustomAlert("Inválido", "Notas e Moedas devem ser >= 0."); return isValid; }; // Exige preenchimento
-    const validateFecharCaixaStep2 = () => { let isValid = true;[closeCaixaCartaoInput].forEach(input => { const val = parseFloat(input.value); if (input.value.trim() === '' || isNaN(val) || val < 0) { input.classList.add('input-error'); isValid = false; } else { input.classList.remove('input-error'); } }); const pixVal = parseFloat(closeCaixaPixInput.value); if (closeCaixaPixInput.value && (isNaN(pixVal) || pixVal < 0)) { closeCaixaPixInput.classList.add('input-error'); isValid = false; } else { closeCaixaPixInput.classList.remove('input-error'); } if (!isValid) showCustomAlert("Inválido", "Cartão e Pix (se preenchido) >= 0."); return isValid; }; // Exige preenchimento cartão
-    const validateFecharCaixaStep3 = () => { let isValid = true; const finalNotas = parseFloat(closeCaixaNotasInput.value) || 0; const finalMoedas = parseFloat(closeCaixaMoedasInput.value) || 0; const deposito = parseFloat(closeCaixaDepositoInput.value); const fica = parseFloat(closeCaixaFicaInput.value); const totalContado = finalNotas + finalMoedas; const totalDestinado = deposito + fica;[closeCaixaDepositoInput, closeCaixaFicaInput].forEach(input => { const val = parseFloat(input.value); if (input.value.trim() === '' || isNaN(val) || val < 0) { input.classList.add('input-error'); isValid = false; } else { input.classList.remove('input-error'); } }); if (isValid && Math.abs(totalContado - totalDestinado) > 0.01) { closeCaixaDepositoInput.classList.add('input-error'); closeCaixaFicaInput.classList.add('input-error'); isValid = false; showCustomAlert("Incompatível", `Soma Depósito+Fica (${formatCurrency(totalDestinado)}) != Total Contado (${formatCurrency(totalContado)}).`); } if (!isValid && Math.abs(totalContado - totalDestinado) <= 0.01) showCustomAlert("Inválido", "Depósito e Fica Caixa >= 0."); return isValid; }; // Exige preenchimento
-    const validateFecharCaixaStep4 = () => { let isValid = true; if (!closeCaixaAssinaturaInput.value.trim()) { closeCaixaAssinaturaInput.classList.add('input-error'); isValid = false; } else { closeCaixaAssinaturaInput.classList.remove('input-error'); } if (!isValid) showCustomAlert("Obrigatório", "Informe responsável."); return isValid; };
-    const resetFecharCaixaModal = () => { closeCaixaForm.reset(); document.querySelectorAll('#close-caixa-form .input-error').forEach(el => el.classList.remove('input-error')); currentFecharCaixaStep = 1; document.querySelectorAll('#close-caixa-form .form-step').forEach(el => el.classList.remove('active')); document.getElementById('close-caixa-step-1').classList.add('active'); updateFecharCaixaModalUI(); };
+    const updateCloseCaixaNextBtnState = () => {
+        let isStepValid = false;
+        if (currentFecharCaixaStep === 1) {
+            const v1 = parseFloat(closeCaixaNotasInput.value);
+            const v2 = parseFloat(closeCaixaMoedasInput.value);
+            isStepValid = (v1 > 0 || v2 > 0);
+        } else if (currentFecharCaixaStep === 2) {
+            const v1 = parseFloat(closeCaixaCartaoInput.value);
+            isStepValid = (v1 >= 0); // Allow zero but require input
+        } else if (currentFecharCaixaStep === 3) {
+            const v1 = parseFloat(closeCaixaDepositoInput.value);
+            const v2 = parseFloat(closeCaixaFicaInput.value);
+            isStepValid = (v1 >= 0 && v2 >= 0);
+        } else if (currentFecharCaixaStep === 4) {
+            isStepValid = closeCaixaAssinaturaInput.value.trim().length > 0;
+        }
+
+        if (isStepValid) {
+            closeCaixaNextBtn.disabled = false;
+            closeCaixaNextBtn.classList.add('btn-primary');
+            closeCaixaSaveBtn.disabled = false;
+        } else {
+            closeCaixaNextBtn.disabled = true;
+            closeCaixaNextBtn.classList.remove('btn-primary');
+            closeCaixaSaveBtn.disabled = true;
+        }
+    };
+
+    const navigateFecharCaixaSteps = (direction) => {
+        const nextStep = currentFecharCaixaStep + direction;
+        if (direction === 1) {
+            if (currentFecharCaixaStep === 1 && !validateFecharCaixaStep1()) return;
+            if (currentFecharCaixaStep === 2 && !validateFecharCaixaStep2()) return;
+            if (currentFecharCaixaStep === 3 && !validateFecharCaixaStep3()) return;
+        }
+        if (nextStep >= 1 && nextStep <= 4) {
+            document.querySelectorAll('#close-caixa-form .form-step').forEach(el => el.classList.remove('active'));
+            document.getElementById(`close-caixa-step-${nextStep}`).classList.add('active');
+            currentFecharCaixaStep = nextStep;
+            updateFecharCaixaModalUI();
+        }
+    };
+
+    const updateFecharCaixaModalUI = () => {
+        const progress = currentFecharCaixaStep * 25;
+        closeCaixaProgress.style.width = `${progress}%`;
+        closeCaixaPrevBtn.style.display = currentFecharCaixaStep === 1 ? "none" : "inline-flex";
+        closeCaixaNextBtn.style.display = currentFecharCaixaStep === 4 ? "none" : "inline-flex";
+        closeCaixaSaveBtn.style.display = currentFecharCaixaStep === 4 ? "inline-flex" : "none";
+
+        updateCloseCaixaNextBtnState();
+
+        const firstInput = document.querySelector(`#close-caixa-step-${currentFecharCaixaStep} [data-primary-focus="true"], #close-caixa-step-${currentFecharCaixaStep} input`);
+        if (firstInput) setTimeout(() => firstInput.focus(), 150);
+    };
+
+    const validateFecharCaixaStep1 = () => {
+        const v1 = parseFloat(closeCaixaNotasInput.value) || 0;
+        const v2 = parseFloat(closeCaixaMoedasInput.value) || 0;
+        if (v1 <= 0 && v2 <= 0) {
+            showCustomAlert("Atenção", "Informe o valor em notas ou moedas.");
+            return false;
+        }
+        return true;
+    };
+
+    const validateFecharCaixaStep2 = () => {
+        const val = parseFloat(closeCaixaCartaoInput.value);
+        if (isNaN(val) || val < 0) {
+            closeCaixaCartaoInput.classList.add('input-error');
+            showCustomAlert("Inválido", "Informe o valor total das vendas na maquininha.");
+            return false;
+        }
+        closeCaixaCartaoInput.classList.remove('input-error');
+        return true;
+    };
+
+    const validateFecharCaixaStep3 = () => {
+        let isValid = true;
+        const finalNotas = parseFloat(closeCaixaNotasInput.value) || 0;
+        const finalMoedas = parseFloat(closeCaixaMoedasInput.value) || 0;
+        const depositoValue = closeCaixaDepositoInput.value.replace(',', '.');
+        const ficaValue = closeCaixaFicaInput.value.replace(',', '.');
+        const deposito = parseFloat(depositoValue);
+        const fica = parseFloat(ficaValue);
+
+        const totalContado = Number((finalNotas + finalMoedas).toFixed(2));
+        const totalDestinado = Number((deposito + fica).toFixed(2));
+
+        [closeCaixaDepositoInput, closeCaixaFicaInput].forEach(input => {
+            const val = parseFloat(input.value.replace(',', '.'));
+            if (input.value.trim() === '' || isNaN(val) || val < 0) {
+                input.classList.add('input-error');
+                isValid = false;
+            } else {
+                input.classList.remove('input-error');
+            }
+        });
+
+        if (isValid && Math.abs(totalContado - totalDestinado) > 0.01) {
+            closeCaixaDepositoInput.classList.add('input-error');
+            closeCaixaFicaInput.classList.add('input-error');
+
+            const msg = `Discrepância nos valores!\n\nDinheiro Contado: ${formatCurrency(totalContado)}\nDestino Informado: ${formatCurrency(totalDestinado)}\n\nA soma para Depósito + Fica deve ser igual ao total contado no Passo 1. Deseja prosseguir mesmo assim?`;
+
+            if (!confirm(msg)) {
+                return false;
+            }
+            // Se confirmou, removemos o erro visual e permitimos
+            closeCaixaDepositoInput.classList.remove('input-error');
+            closeCaixaFicaInput.classList.remove('input-error');
+        }
+        return isValid;
+    };
+
+    const validateFecharCaixaStep4 = () => {
+        if (!closeCaixaAssinaturaInput.value.trim()) {
+            closeCaixaAssinaturaInput.classList.add('input-error');
+            showCustomAlert("Obrigatório", "Informe o responsável.");
+            return false;
+        }
+        closeCaixaAssinaturaInput.classList.remove('input-error');
+        return true;
+    };
+
+    const resetFecharCaixaModal = () => {
+        closeCaixaForm.reset();
+        document.querySelectorAll('#close-caixa-form .input-error').forEach(el => el.classList.remove('input-error'));
+        currentFecharCaixaStep = 1;
+        document.querySelectorAll('#close-caixa-form .form-step').forEach(el => el.classList.remove('active'));
+        document.getElementById('close-caixa-step-1').classList.add('active');
+        updateFecharCaixaModalUI();
+    };
 
 
     // --- Event Listeners ---
@@ -2850,7 +3197,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     discountToggleRow.addEventListener('click', () => { discountPopover.classList.toggle('active'); });
     percBtnContainer.addEventListener('click', (e) => { const button = e.target.closest('.perc-btn'); if (button && button.dataset.perc) { applyDiscount(parseFloat(button.dataset.perc), true); } });
-    discountInputR.addEventListener('input', (e) => { applyDiscount(parseFloat(e.target.value) || 0, false); });
+    discountInputR.addEventListener('input', (e) => {
+        let valStr = e.target.value.replace(',', '.');
+        let val = parseFloat(valStr);
+        if (isNaN(val)) val = 0;
+        applyDiscount(val, false, true);
+    });
     // Porcentagem input removed
     removeDiscountBtn.addEventListener('click', removeDiscount);
     paymentToggleRow.addEventListener('click', () => { if (cart.length > 0) { splitPaymentArea.style.display = 'none'; singlePaymentOptions.style.display = 'grid'; splitPaymentToggleBtn.innerHTML = "<i class='bx bx-columns'></i> Dividir Pagamento"; splitPaymentToggleBtn.classList.remove('active'); splitValue1.value = ''; splitValue2.value = ''; splitMethod1.value = ''; splitMethod2.value = ''; confirmSplitPaymentBtn.disabled = true; updateSplitRemaining(); openModal(paymentModal); } else { showCustomAlert("Vazio", "Adicione itens."); } });
@@ -3897,8 +4249,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Campos antigos de compra inicial (se ainda usar):
                 valorCompra: compraValorInput.value,
-                // Nota: 'primeiroVencimento' não é mais tão útil se o sistema calcula automático, 
-                // mas se quiser manter para a compra inicial, ok. 
+                // Nota: 'primeiroVencimento' não é mais tão útil se o sistema calcula automático,
+                // mas se quiser manter para a compra inicial, ok.
                 // O backend atualizado (item 1B acima) precisa estar preparado para ignorar ou usar isso.
             };
 
@@ -3961,9 +4313,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Listeners para Navegação Fechar Caixa
-    closeCaixaNextBtn.addEventListener('click', () => navigateFecharCaixaSteps(1));
-    closeCaixaPrevBtn.addEventListener('click', () => navigateFecharCaixaSteps(-1));
+    // Event listeners já consolidados no final do arquivo
+    // closeCaixaNextBtn.addEventListener('click', ...);
 
     // Submit Fechar Caixa (agora no botão Salvar)
     closeCaixaForm.addEventListener('submit', (e) => {
@@ -3978,7 +4329,7 @@ document.addEventListener('DOMContentLoaded', () => {
             valorFinalNotas: (parseFloat(closeCaixaNotasInput.value) || 0).toFixed(2),
             valorFinalMoedas: (parseFloat(closeCaixaMoedasInput.value) || 0).toFixed(2),
             vendaCartao: (parseFloat(closeCaixaCartaoInput.value) || 0).toFixed(2),
-            vendaPixFixo: (parseFloat(closeCaixaPixInput.value) || 0).toFixed(2),
+            vendaPixFixo: "0.00",
             valorDeposito: (parseFloat(closeCaixaDepositoInput.value) || 0).toFixed(2),
             valorFicaCaixa: (parseFloat(closeCaixaFicaInput.value) || 0).toFixed(2),
             assinatura: closeCaixaAssinaturaInput.value.trim()
@@ -4067,7 +4418,7 @@ document.addEventListener('DOMContentLoaded', () => {
         openModal(openCaixaModal);
     }
 
-    // Define a aba ativa inicial e ajusta o highlight 
+    // Define a aba ativa inicial e ajusta o highlight
     const initialActivePage = 'pdv';
     const initialActiveNavbarItem = document.querySelector(`.navbar-item[data-page="${initialActivePage}"]`);
     if (initialActiveNavbarItem) {
@@ -4420,7 +4771,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 solicitarAcessoAdm(function () {
                     const modalReneg = document.getElementById('modal-renegociar');
                     modalReneg.setAttribute('data-cliente-nome', nomeCliente);
-                    // Preenche dados atuais 
+                    // Preenche dados atuais
                     const saldoEl = document.getElementById('detail-cliente-saldo');
                     const vencEl = document.getElementById('detail-cliente-vencimento');
                     if (modalReneg) {
@@ -4849,7 +5200,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let margem = 0;
         if (venda > 0) margem = (lucro / venda) * 100;
 
-        // Cálculo do Markup (Venda / Custo) - ou (Lucro / Custo), depende da sua regra. 
+        // Cálculo do Markup (Venda / Custo) - ou (Lucro / Custo), depende da sua regra.
         // Geralmente Markup é um índice multiplicador sobre o custo.
         let markup = 0;
         if (custo > 0) markup = ((venda - custo) / custo) * 100;
@@ -5081,7 +5432,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return `
             <div class="adv-product-card">
                 ${imgHTML}
-                
+
                 <div class="adv-card-body">
                     <h4 class="adv-card-title" title="${p.name}">${p.name}</h4>
                     <span class="adv-card-subtitle">#${p.id} ${p.brand ? '• ' + p.brand : ''}</span>
@@ -5112,6 +5463,35 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof showCustomToast === 'function') showCustomToast("Produto Adicionado!");
         }
     };
+
+    // --- LÓGICA DE MONITORAMENTO DO FECHAMENTO DE CAIXA ---
+    const inputsFecharCaixa = [
+        'close-caixa-notas', 'close-caixa-moedas',
+        'close-caixa-cartao',
+        'close-caixa-deposito', 'close-caixa-fica',
+        'close-caixa-assinatura'
+    ];
+
+    inputsFecharCaixa.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', () => {
+                updateCloseCaixaNextBtnState();
+            });
+        }
+    });
+
+    if (closeCaixaNextBtn) {
+        closeCaixaNextBtn.addEventListener('click', () => {
+            navigateFecharCaixaSteps(1);
+        });
+    }
+
+    if (closeCaixaPrevBtn) {
+        closeCaixaPrevBtn.addEventListener('click', () => {
+            navigateFecharCaixaSteps(-1);
+        });
+    }
 
 });
 
@@ -5250,7 +5630,7 @@ document.addEventListener('click', function (e) {
             if (vencEl) {
                 const partes = vencEl.innerText.trim().split('/');
                 if (partes.length === 3) {
-                    try { document.getElementById('input-novo-vencimento').value = `${partes[2]}-${partes[1]}-${partes[0]}`; } catch (e) { }
+                    try { document.getElementById('input-novo-vencimento').value = `${partes[2]} -${partes[1]} -${partes[0]} `; } catch (e) { }
                 }
             }
 
@@ -5289,7 +5669,7 @@ document.addEventListener('click', function (e) {
                     novaData: novaData
                 });
 
-                const response = await fetch(`${SCRIPT_URL}?${params.toString()}`);
+                const response = await fetch(`${SCRIPT_URL}?${params.toString()} `);
                 const result = await response.json();
 
                 if (result.status === 'success') {
@@ -5301,7 +5681,7 @@ document.addEventListener('click', function (e) {
                     const vencEl = document.getElementById('detail-cliente-vencimento');
                     if (vencEl) {
                         const partes = novaData.split('-');
-                        vencEl.innerText = `${partes[2]}/${partes[1]}/${partes[0]}`;
+                        vencEl.innerText = `${partes[2]} /${partes[1]}/${partes[0]} `;
                     }
 
                     // Dispara evento de "refresh" se existir, ou apenas alerta.
@@ -5332,7 +5712,7 @@ document.addEventListener('click', function (e) {
                 .replace(/[^a-z0-9]/g, "");
 
             const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/')) + "/meuacesso.html";
-            const linkCompleto = `${baseUrl}?q=${nomeParam}`;
+            const linkCompleto = `${baseUrl}?q = ${nomeParam} `;
 
             const qrContainer = document.getElementById('qrcode-container');
             const linkText = document.getElementById('link-acesso-text');
@@ -5345,7 +5725,7 @@ document.addEventListener('click', function (e) {
 
             if (linkText) {
                 linkText.style.display = "block";
-                linkText.innerHTML = `<a href="${linkCompleto}" target="_blank">ABRIR LINK</a>`;
+                linkText.innerHTML = `< a href = "${linkCompleto}" target = "_blank" > ABRIR LINK</a > `;
             }
         });
     }
@@ -5395,7 +5775,7 @@ document.addEventListener('click', function (e) {
             try {
                 // USA A URL GLOBAL (SCRIPT_URL) que contém a lógica do Code.js fornecido
                 // Envia o NOME na variavel idCliente (o backend já sabe lidar com isso)
-                const response = await fetch(`${SCRIPT_URL}?action=renegociarSaldo&idCliente=${encodeURIComponent(nomeParaBuscar)}&novaData=${novaData}&parcelas=${qtdParcelas}`);
+                const response = await fetch(`${SCRIPT_URL}?action = renegociarSaldo & idCliente=${encodeURIComponent(nomeParaBuscar)}& novaData=${novaData}& parcelas=${qtdParcelas} `);
                 const json = await response.json();
 
                 if (json.status === 'success') {
@@ -5629,5 +6009,376 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Aplica também ao modal de Produtos (garante funcionamento para ambos)
     setupMaximizeModal('btn-maximize-modal', '#edit-product-modal .modal-content');
+
+
+    // --- LÓGICA DE RECUPERAÇÃO FISCAL (XML) ---
+    const recoveryModal = document.getElementById('recovery-xml-modal');
+    const btnOpenRecovery = document.getElementById('btn-open-recovery-modal');
+    const btnProcessRecovery = document.getElementById('btn-process-recovery');
+    const recoveryStatusArea = document.getElementById('recovery-status-area');
+    const recoveryStatusMsg = document.getElementById('recovery-status-msg');
+
+    if (btnOpenRecovery && recoveryModal) {
+        btnOpenRecovery.addEventListener('click', () => {
+            // Reset fields
+            document.getElementById('recovery-chave').value = '';
+            document.getElementById('recovery-items-text').value = '';
+
+            recoveryStatusArea.style.display = 'none';
+            recoveryModal.classList.add('active');
+            recoveryModal.style.display = 'flex';
+        });
+    }
+
+    if (btnProcessRecovery) {
+        btnProcessRecovery.addEventListener('click', async () => {
+            const chave = document.getElementById('recovery-chave').value.trim();
+            const itemsText = document.getElementById('recovery-items-text').value.trim();
+            const paymentMethod = document.getElementById('recovery-payment-method').value;
+            // O valor agora é calculado automaticamente da soma dos itens
+
+            if (chave.length !== 44) {
+                alert("A chave deve ter 44 dígitos numéricos.");
+                return;
+            }
+
+            if (!itemsText) {
+                alert("Cole a lista de itens.");
+                return;
+            }
+
+            // 1. Parse Itens
+            const itens = parseItemsString(itemsText);
+            if (itens.length === 0) {
+                alert("Não foi possível identificar itens no texto. Tente o formato: '1x NOME DO PRODUTO'");
+                return;
+            }
+
+            // Validação de Total (Agora é o total calculado)
+            const paymentValue = itens.reduce((acc, it) => acc + (it.qCom * it.vUnCom), 0);
+
+            if (paymentValue <= 0) {
+                alert("O valor total dos itens é zero. Verifique se os produtos foram encontrados no cadastro.");
+                return;
+            }
+
+            // Confirmar total com o usuário
+            if (!confirm(`Confirma a recuperação com ${itens.length} itens no valor total de R$ ${paymentValue.toFixed(2)}?`)) {
+                return;
+            }
+
+            // UI Feedback
+            btnProcessRecovery.disabled = true;
+            btnProcessRecovery.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Processando...";
+            recoveryStatusArea.style.display = 'block';
+            recoveryStatusMsg.textContent = "Reconstruindo XML...";
+            recoveryStatusMsg.className = "";
+
+            try {
+                const payload = {
+                    chNFe: chave,
+                    itens: itens,
+                    ambiente: 1, // 1 = Produção
+                    payment: {
+                        method: paymentMethod, // '01', '03', '04', '17'
+                        value: paymentValue
+                    }
+                };
+
+                const response = await fetch("https://southamerica-east1-super-app25.cloudfunctions.net/reconstruirNfce", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error("Erro na função cloud: " + response.statusText);
+
+                const result = await response.text(); // XML String
+
+                // Download
+                const blob = new Blob([result], { type: "application/xml" });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `${chave}-procNFe.xml`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                recoveryStatusMsg.textContent = "Sucesso! Download iniciado.";
+                recoveryStatusMsg.style.color = "green";
+                recoveryModal.classList.remove('active');
+                recoveryModal.style.display = 'none';
+
+            } catch (error) {
+                console.error(error);
+                recoveryStatusMsg.textContent = "Erro: " + error.message;
+                recoveryStatusMsg.style.color = "red";
+            } finally {
+                btnProcessRecovery.disabled = false;
+                btnProcessRecovery.innerHTML = "<i class='bx bx-cog'></i> Processar e Gerar XML";
+            }
+        });
+    }
+
+    // Helper para parsear texto (Ex "1x VELA MACARON CANDY COLOR C/6UN - COLORIDO;")
+    function parseItemsString(text) {
+        // Normaliza quebras de linha e separadores (ponto e vírgula vira quebra para processar)
+        const lines = text.replace(/;/g, '\n').split('\n');
+        const parsed = [];
+
+        lines.forEach(line => {
+            line = line.trim();
+            if (!line) return;
+
+            // Tenta capturar "QTD x NOME"
+            // Suporta: "1x PRODUTO", "1 x PRODUTO", "10X PRODUTO - DETALHE"
+            const match = line.match(/^(\d+)\s*[xX]\s+(.+)/);
+
+            if (match) {
+                const qtd = parseFloat(match[1]);
+                let nomeRaw = match[2].trim();
+
+                // Se houver preço no final (ex: " - 10,00"), tentar extrair (opcional)
+                // Mas o foco agora é buscar no cadastro pelo NOME
+
+                // Remove traços ou caracteres irrelevantes do final se for preço
+                // Mas o exemplo do usuário é " - COLORIDO", parte do nome.
+                // Vamos assumir que tudo é nome e buscar a melhor correspondência.
+
+                let product = null;
+                let price = 0;
+
+                if (localProductCache) {
+                    const term = nomeRaw.toLowerCase();
+
+                    // 1. Busca Exata
+                    product = localProductCache.find(p => p.name.toLowerCase() === term);
+
+                    // 2. Busca Contém (se não achou exata)
+                    if (!product) {
+                        product = localProductCache.find(p => p.name.toLowerCase().includes(term));
+                    }
+
+                    // 3. Tenta limpar sufixos comuns como " - " se não achou
+                    if (!product && term.includes(' - ')) {
+                        const cleanTerm = term.split(' - ')[0];
+                        product = localProductCache.find(p => p.name.toLowerCase().includes(cleanTerm));
+                    }
+                }
+
+                if (product) {
+                    price = parseFloat(product.price);
+                } else {
+                    // Se não achou produto, tenta extrair preço do texto se existir "R$ 10,00" ou similar?
+                    // User pediu para garantir que carrega. Se não achar, vai 0.
+                    console.warn("Produto não encontrado no cache:", nomeRaw);
+                }
+
+                parsed.push({
+                    code: product ? (product.code || product.id || product.codigo) : '99999',
+                    description: product ? product.name : nomeRaw, // Use nome cadastrado se achar
+                    ncm: product ? product.ncm : '00000000',
+                    cest: product ? (product.cest || '') : '',
+                    cfop: product ? product.cfop : '5102',
+                    uCom: product ? (product.unit || 'UN') : 'UN',
+                    qCom: qtd,
+                    vUnCom: price,
+                    vProd: price * qtd,
+                    vTotTrib: (price * qtd) * 0.04
+                });
+            }
+        });
+
+        return parsed;
+    }
+
 });
+/* ======================================== */
+/* == LÓGICA DE SAÍDA DE CAIXA (SANGRIA) == */
+/* ======================================== */
+document.addEventListener('DOMContentLoaded', () => {
+    const btnSangria = document.getElementById('btn-sangria');
+    const modalSaidaCaixa = document.getElementById('modal-saida-caixa');
+    const formSaidaCaixa = document.getElementById('form-saida-caixa');
+    const saidaDeclarationSelect = document.getElementById('saidaDeclarationSelect');
+
+    if (btnSangria && modalSaidaCaixa) {
+        btnSangria.addEventListener('click', () => {
+            // Reset fields
+            document.getElementById('saida-valor').value = '';
+            document.getElementById('saida-descricao').value = '';
+            document.getElementById('saida-declaracao').value = '';
+            if (saidaDeclarationSelect) {
+                saidaDeclarationSelect.querySelector('.selected').innerHTML = "<i class='bx bx-purchase-tag-alt'></i> Selecione...";
+                saidaDeclarationSelect.classList.remove('active');
+            }
+
+            // Open Modal Manually (Fallback if openModal is missing)
+            if (typeof openModal === 'function') {
+                openModal(modalSaidaCaixa);
+            } else {
+                modalSaidaCaixa.classList.add('active');
+                modalSaidaCaixa.style.display = 'flex';
+            }
+
+            // Focus on valor
+            setTimeout(() => document.getElementById('saida-valor').focus(), 100);
+        });
+
+        // Close button logic for this specific modal
+        const closeBtns = modalSaidaCaixa.querySelectorAll('.close-modal-btn');
+        closeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (typeof closeModal === 'function') {
+                    closeModal(modalSaidaCaixa);
+                } else {
+                    modalSaidaCaixa.classList.remove('active');
+                    modalSaidaCaixa.style.display = 'none';
+                }
+            });
+        });
+    }
+
+    // Custom Select Logic
+    if (saidaDeclarationSelect) {
+        const selected = saidaDeclarationSelect.querySelector('.selected');
+        const options = saidaDeclarationSelect.querySelector('.options');
+        const hiddenInfo = document.getElementById('saida-declaracao');
+
+        selected.addEventListener('click', (e) => {
+            e.stopPropagation();
+            saidaDeclarationSelect.classList.toggle('active');
+        });
+
+        options.querySelectorAll('div').forEach(opt => {
+            opt.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selected.innerHTML = opt.innerHTML;
+                hiddenInfo.value = opt.getAttribute('data-value');
+                saidaDeclarationSelect.classList.remove('active');
+            });
+        });
+
+        // Close on click outside
+        document.addEventListener('click', (e) => {
+            if (!saidaDeclarationSelect.contains(e.target)) {
+                saidaDeclarationSelect.classList.remove('active');
+            }
+        });
+    }
+
+    // Input Valor Formatting
+    const inputSaidaValor = document.getElementById('saida-valor');
+    if (inputSaidaValor) {
+        inputSaidaValor.addEventListener('input', (e) => {
+            let v = e.target.value.replace(/\D/g, '');
+            e.target.value = 'R$ ' + (parseInt(v || 0) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+        });
+    }
+
+    // Form Submission
+    if (formSaidaCaixa) {
+        formSaidaCaixa.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const btnSubmit = formSaidaCaixa.querySelector('button[type="submit"]');
+
+            const valorRaw = inputSaidaValor.value.replace(/\D/g, ''); // 1234
+            const valor = parseFloat(valorRaw) / 100; // 12.34
+            const declaracao = document.getElementById('saida-declaracao').value;
+            const descricao = document.getElementById('saida-descricao').value.trim();
+
+            if (valor <= 0) {
+                if (typeof showCustomAlert === 'function') showCustomAlert("Erro", "Informe um valor válido.");
+                else alert("Informe um valor válido.");
+                return;
+            }
+
+            if (!declaracao) {
+                if (typeof showCustomAlert === 'function') showCustomAlert("Atenção", "Selecione o motivo da saída.");
+                else alert("Selecione o motivo da saída.");
+                return;
+            }
+
+            if (!descricao) {
+                if (typeof showCustomAlert === 'function') showCustomAlert("Atenção", "A descrição é obrigatória.");
+                else alert("A descrição é obrigatória.");
+                return;
+            }
+
+            // UI Loading
+            const originalBtnText = btnSubmit.innerHTML;
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Registrando...";
+
+            try {
+                // Get Operator Info
+                const operadorNome = document.getElementById('summary-seller-name')?.textContent || "Caixa Principal";
+                const cargo = operadorNome === "Nubia" ? "ADM" : "Caixa";
+                const lojaId = 'DT#25'; // Loja atualizada para o padrão da API
+
+                const payload = {
+                    "loja": lojaId,
+                    "operador": operadorNome,
+                    "cargo": cargo,
+                    "tipo": "saída",
+                    "id": "",
+                    "pagamento": "dinheiro",
+                    "valor": valor,
+                    "desconto": 0,
+                    "taxas": 0,
+                    "total": valor,
+                    "descricao": `${declaracao}: ${descricao}`
+                };
+
+                const TARGET_API_URL = CENTRAL_API_URL;
+
+                // Envio 'no-cors' para evitar bloqueio, enviando como string text/plain mas formato JSON
+                await fetch(TARGET_API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                // Success Handling (Assumed success due to no-cors)
+                console.log("Saída Registrada API (JSON):", payload);
+
+                if (typeof showCustomAlert === 'function') {
+                    showCustomAlert("Sucesso", "Saída registrada com sucesso!");
+                } else {
+                    alert("Saída registrada com sucesso!");
+                }
+
+                if (typeof closeModal === 'function') {
+                    closeModal(modalSaidaCaixa);
+                } else {
+                    modalSaidaCaixa.classList.remove('active');
+                    modalSaidaCaixa.style.display = 'none';
+                }
+
+                // Clear Form
+                document.getElementById('saida-valor').value = '';
+                document.getElementById('saida-descricao').value = '';
+                if (saidaDeclarationSelect) {
+                    saidaDeclarationSelect.querySelector('.selected').innerHTML = "<i class='bx bx-purchase-tag-alt'></i> Selecione...";
+                }
+                document.getElementById('saida-declaracao').value = '';
+
+            } catch (error) {
+                console.error("Erro ao registrar saída:", error);
+                if (typeof showCustomAlert === 'function') showCustomAlert("Erro", "Falha ao comunicar com o servidor.");
+                else alert("Falha ao comunicar com o servidor.");
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = originalBtnText;
+            }
+        });
+    }
+});
+
 

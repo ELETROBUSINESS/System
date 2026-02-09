@@ -531,17 +531,13 @@
         <div class="app-header">
             <h1>Ponto de Venda</h1>
             <div style="display: flex; gap: 12px; align-items: center;">
-                <button class="btn-radio" onclick="window.open('radio.html', '_blank')">
-                    <div class="sound-wave-icon">
-                        <span class="sound-wave-bar"></span>
-                        <span class="sound-wave-bar"></span>
-                        <span class="sound-wave-bar"></span>
-                        <span class="sound-wave-bar"></span>
-                    </div>
-                    Rádio
+                <button class="btn btn-header-icon" id="btn-sangria" data-tooltip="Saída de Caixa"
+                    style="margin-top: 0;">
+                    <i class='bx bx-message-edit'></i>
                 </button>
-                <button class="btn btn-danger" id="header-close-caixa-btn" style="display: none;">
-                    <i class='bx  bxs-store-alt-2'></i> Fechar Loja
+                <button class="btn btn-header-icon" id="header-close-caixa-btn" style="display: none;"
+                    data-tooltip="Fechar Loja">
+                    <i class='bx bx-store'></i>
                 </button>
             </div>
         </div>
@@ -724,16 +720,23 @@
                             <div class="popover-inner">
                                 <label>Valor em R$</label>
                                 <div class="input-group-modern">
-                                    <input type="number" id="discount-input-r" placeholder="0,00" step="0.01">
+                                    <input type="text" inputmode="decimal" id="discount-input-r" placeholder="0,00"
+                                        disabled>
                                 </div>
 
-                                <!-- Porcentagem removed as requested -->
-                                <label style="margin-top: 10px;">Rápido</label>
-                                <div class="discount-perc-buttons" id="perc-btn-container">
-                                    <button class="perc-btn" data-perc="3">3%</button>
-                                    <button class="perc-btn" data-perc="5">5%</button>
-                                    <button class="perc-btn" data-perc="7">7%</button>
-                                    <button class="perc-btn" data-perc="10">10%</button>
+                                <!-- Porcentagem updated -->
+                                <label style="margin-top: 10px;" id="discount-effective-label">Desconto efetivo:
+                                    0%</label>
+                                <div style="display: flex; gap: 8px; align-items: flex-start;">
+                                    <div class="discount-perc-buttons" id="perc-btn-container" style="flex: 1;">
+                                        <button class="perc-btn" data-perc="1">1%</button>
+                                        <button class="perc-btn" data-perc="3">3%</button>
+                                        <button class="perc-btn" data-perc="5">5%</button>
+                                        <button class="perc-btn" data-perc="7">7%</button>
+                                    </div>
+                                    <button class="btn" id="btn-edit-discount"
+                                        style="width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px;"
+                                        title="Digitar Manual"><i class='bx bx-pencil'></i></button>
                                 </div>
                                 <button class="btn-remove-discount" id="remove-discount-btn">Remover</button>
                             </div>
@@ -1360,6 +1363,16 @@
                         <i class='bx bx-sync'></i> Recarregar
                     </button>
                 </div>
+
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <h3>Recuperação Fiscal</h3>
+                        <p>Reconstruir XMLs perdidos usando Chave de Acesso e lista de itens.</p>
+                    </div>
+                    <button class="btn btn-secondary btn-auto" id="btn-open-recovery-modal">
+                        <i class='bx bx-file-find'></i> Recuperar XML
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -1432,6 +1445,32 @@
             </div>
         </div>
     </div>
+    <!-- Modal de Senha para Desconto -->
+    <div class="modal-overlay" id="discount-auth-modal" style="z-index: 10002;">
+        <div class="modal-content modal-sm text-center">
+            <h3>Autorização Necessária</h3>
+            <p>Descontos acima de 10% exigem senha de gerente.</p>
+
+            <div class="password-container">
+                <input type="tel" class="auth-box" maxlength="1" placeholder="0">
+                <input type="tel" class="auth-box" maxlength="1" placeholder="0">
+                <input type="tel" class="auth-box" maxlength="1" placeholder="0">
+                <input type="tel" class="auth-box" maxlength="1" placeholder="0">
+
+                <i class='bx bx-show password-toggle-icon-pdv' id="auth-toggle-pass" title="Mostrar Senha"></i>
+            </div>
+
+            <p id="auth-error-msg" class="auth-error-message">Senha incorreta. Tente novamente.</p>
+
+            <div class="modal-buttons" style="margin-top: 25px; justify-content: center; gap: 12px;">
+                <button class="btn btn-secondary close-modal-btn" data-target="discount-auth-modal">Cancelar</button>
+                <button class="btn-black" id="btn-confirm-discount-auth" disabled>
+                    <i class='bx bx-lock-alt'></i> Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="modal-confirm-fiscal" style="z-index: 10000;">
         <div class="modal-content modal-lg">
             <div class="modal-header">
@@ -1500,6 +1539,8 @@
             </div>
         </div>
     </div>
+
+
 
     <div class="modal-overlay" id="edit-product-modal">
         <div class="modal-content modal-lg transition-all">
@@ -2167,13 +2208,13 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label>Total em Notas (R$)</label>
-                                <input type="number" id="close-caixa-notas" step="0.01" min="0" placeholder="0,00"
-                                    required data-primary-focus="true" style="font-size: 1.2rem; font-weight: 700;">
+                                <input type="number" id="close-caixa-notas" step="0.01" min="0" placeholder="R$ 100,00"
+                                    data-primary-focus="true" style="font-size: 1.2rem; font-weight: 700;">
                             </div>
                             <div class="form-group">
                                 <label>Total em Moedas (R$)</label>
-                                <input type="number" id="close-caixa-moedas" step="0.01" min="0" placeholder="0,00"
-                                    required style="font-size: 1.2rem; font-weight: 700;">
+                                <input type="number" id="close-caixa-moedas" step="0.01" min="0" placeholder="R$ 3,55"
+                                    style="font-size: 1.2rem; font-weight: 700;">
                             </div>
                         </div>
                     </div>
@@ -2183,19 +2224,13 @@
                             <div class="modal-icon info"
                                 style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 10px;"><i
                                     class='bx bx-credit-card'></i></div>
-                            <h4>Conferência Digital</h4>
+                            <h4>Venda na maquininha</h4>
                             <p class="text-sm">Consulte o relatório da maquininha.</p>
                         </div>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>Vendas no Cartão (R$)</label>
-                                <input type="number" id="close-caixa-cartao" step="0.01" min="0" placeholder="0,00"
-                                    required>
-                            </div>
-                            <div class="form-group">
-                                <label>Pix QR Code (Se houver)</label>
-                                <input type="number" id="close-caixa-pix" step="0.01" min="0" placeholder="0,00">
-                            </div>
+                        <div class="form-group">
+                            <label>Vendas na Maquininha (Cartão + Pix)</label>
+                            <input type="number" id="close-caixa-cartao" step="0.01" min="0" placeholder="R$ 100,00"
+                                required>
                         </div>
                     </div>
 
@@ -2209,7 +2244,7 @@
                         </div>
                         <div class="form-grid">
                             <div class="form-group">
-                                <label>Vai para Sangria/Depósito</label>
+                                <label>Vai para Depósito</label>
                                 <input type="number" id="close-caixa-deposito" step="0.01" min="0" placeholder="0,00"
                                     required>
                             </div>
@@ -2241,7 +2276,7 @@
                 <button class="btn btn-secondary" id="close-caixa-prev-btn" style="display: none; width: auto;">
                     <i class='bx bx-chevron-left'></i> Voltar
                 </button>
-                <button class="btn btn-primary" id="close-caixa-next-btn" style="width: auto;">
+                <button class="btn" id="close-caixa-next-btn" style="width: auto;" disabled>
                     Próximo <i class='bx bx-chevron-right'></i>
                 </button>
                 <button type="submit" form="close-caixa-form" class="btn btn-danger" id="close-caixa-save-btn"
@@ -2405,7 +2440,69 @@
         </div>
     </div>
 
+    <!-- CORE SCRIPTS -->
     <script src="script.js"></script>
+
+    <!-- Modal Recuperação Fiscal (XML) -->
+    <div class="modal-overlay" id="recovery-xml-modal">
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h3><i class='bx bx-file-find'></i> Recuperar XML (NFC-e)</h3>
+                <button class="close-modal-btn" data-target="recovery-xml-modal"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert-box mb-16"
+                    style="background: #fff7ed; border: 1px solid #ffedd5; color: #9a3412; padding: 12px; border-radius: 8px; font-size: 0.9rem;">
+                    <i class='bx bx-info-circle'></i> Esta ferramenta reconstrói o XML para arquivamento fiscal. O valor
+                    total deve bater com o da venda original.
+                </div>
+
+                <div class="form-group">
+                    <label>Chave de Acesso (44 dígitos)</label>
+                    <input type="text" id="recovery-chave" class="form-input" placeholder="Cole a chave aqui..."
+                        maxlength="44">
+                    <small style="color: #666;">Apenas números</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Lista de Itens (Cole do WhatsApp/Texto)</label>
+                    <textarea id="recovery-items-text" class="form-input" rows="6" placeholder="Ex:
+1x Coca Cola 2L - 10.00
+2x Biscoito Oreo - 5.00"></textarea>
+                </div>
+
+                <hr class="separator my-16">
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 12px;">Dados do Pagamento</h4>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Forma de Pagamento</label>
+                        <select id="recovery-payment-method" class="form-input">
+                            <option value="01">Dinheiro</option>
+                            <option value="17">PIX</option>
+                            <option value="03" selected>Cartão de Crédito</option>
+                            <option value="04">Cartão de Débito</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="form-group mt-16">
+                    <button id="btn-process-recovery" class="btn btn-primary" style="width: 100%;">
+                        <i class='bx bx-cog'></i> Processar e Gerar XML
+                    </button>
+                </div>
+
+                <div id="recovery-status-area"
+                    style="display: none; margin-top: 15px; padding: 10px; border-radius: 6px; background: #f3f4f6; font-size: 0.9rem;">
+                    <p style="margin:0;"><strong>Status:</strong> <span id="recovery-status-msg">Aguardando...</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MINI RADIO PLAYER COMPONENT -->
     <style>
         #mini-radio-player {
@@ -2669,6 +2766,52 @@
             };
         })();
     </script>
+    <!-- MODAL SAÍDA DE CAIXA (SANTGRIA) -->
+    <div class="modal-overlay" id="modal-saida-caixa">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3><i class='bx bx-trending-down'></i> Nova Saída</h3>
+                <button class="close-modal-btn" data-target="modal-saida-caixa"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-saida-caixa">
+                    <label style="font-weight: 500; font-size: 0.9rem;">Valor da Saída</label>
+                    <input type="tel" id="saida-valor" class="modal-saida-input" required placeholder="R$ 0,00"
+                        inputmode="numeric">
+
+                    <div class="custom-select-wrapper">
+                        <label
+                            style="display:block; margin-top:15px; margin-bottom:5px; font-size:0.9rem; font-weight:500;">Motivo
+                            / Categoria</label>
+                        <div class="custom-select" id="saidaDeclarationSelect">
+                            <div class="selected">
+                                <i class='bx bx-purchase-tag-alt'></i> Selecione...
+                            </div>
+                            <div class="options">
+                                <div data-value="Alimentação"><i class='bx bx-restaurant'></i> Alimentação</div>
+                                <div data-value="Pagamento de Fornecedor"><i class='bx bx-package'></i> Pagamento de
+                                    Fornecedor</div>
+                                <div data-value="Despesa Operacional"><i class='bx bx-wrench'></i> Despesa Operacional
+                                </div>
+                                <div data-value="Vale Funcionário"><i class='bx bx-user'></i> Vale Funcionário</div>
+                                <div data-value="Outros"><i class='bx bx-dots-horizontal-rounded'></i> Outros</div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="saida-declaracao">
+                    </div>
+
+                    <label style="display:block; margin-top:15px; font-weight: 500; font-size: 0.9rem;">Descrição
+                        (Obrigatório)</label>
+                    <input type="text" id="saida-descricao" class="modal-saida-input" required
+                        placeholder="Ex: Lanche da tarde ref. X...">
+
+                    <button type="submit" class="btn-submit-saida">
+                        <i class='bx bx-check'></i> Registrar Saída
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>
