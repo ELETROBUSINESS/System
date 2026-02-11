@@ -705,6 +705,13 @@
             resetPaymentContent(isRental);
 
             document.getElementById('modalPagamento').style.display = 'flex';
+
+            // Auto-select if only one option or forced
+            if (currentItem.installments === 1 || currentItem.maxInstallments === 1) {
+                if (currentItem.allowInstallments) {
+                    selectInstallments(1);
+                }
+            }
         }
 
         function resetPaymentContent(isRental) {
@@ -804,10 +811,10 @@
                         <div class="ml-auto">
                             <i class='bx bxs-check-circle text-blue-600 text-lg'></i>
                         </div>
-                    </div>
+                     </div>
                 </div>
 
-                <button id="btnGerarPix" onclick="startPurchaseAnimation()" ${isRental ? '' : 'disabled'} class="w-full mt-6 ${isRental ? 'bg-blue-900 hover:opacity-90' : 'bg-gray-300 cursor-not-allowed'} text-white py-4 rounded-xl font-bold text-base shadow-lg transition-all flex items-center justify-center gap-2">
+                <button id="btnGerarPix" onclick="startPurchaseAnimation()" ${currentItem.installments > 0 ? '' : 'disabled'} class="w-full mt-6 ${currentItem.installments > 0 ? 'bg-blue-900 hover:opacity-90' : 'bg-gray-300 cursor-not-allowed'} text-white py-4 rounded-xl font-bold text-base shadow-lg transition-all flex items-center justify-center gap-2">
                     <i class='bx bx-lock-alt'></i> Comprar Agora
                 </button>
                 
@@ -885,14 +892,18 @@
             optEl.classList.remove('border-gray-200');
             optEl.classList.add('border-blue-600', 'bg-blue-50');
 
-            document.getElementById(`radio-${option}x`).querySelector('div').classList.remove('hidden');
+            const radio = document.getElementById(`radio-${option}x`);
+            if (radio) {
+                const dot = radio.querySelector('div');
+                if (dot) dot.classList.remove('hidden');
+            }
 
             // Update Logic
             currentItem.installments = option;
             if (option === 1) {
-                currentItem.finalPrice = currentItem.price * 0.98;
+                currentItem.finalPrice = Number((currentItem.price * 0.98).toFixed(2));
             } else {
-                currentItem.finalPrice = currentItem.price / option;
+                currentItem.finalPrice = Number((currentItem.price / option).toFixed(2));
             }
 
             // Update Total Display
@@ -1025,10 +1036,6 @@
                                 <i class='bx bx-copy'></i> Copiar Código Pix
                             </button>
 
-                            <button onclick="confirmarPagamento()" class="w-full bg-green-500 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg mb-3 hover:bg-green-600 transition-colors">
-                                <i class='bx bx-check-circle'></i> Já realizei o pagamento
-                            </button>
-
                             <p class="text-[10px] text-gray-500 flex items-center justify-center gap-1">
                                 <i class='bx bx-timer'></i> Expira em 30 minutos
                             </p>
@@ -1064,7 +1071,7 @@
             t.style.fontSize = '0.9rem';
             t.style.fontWeight = '600';
             t.style.boxShadow = '0 5px 15px rgba(0,0,0,0.2)';
-            t.innerHTML = `<span>${msg}</span>`;
+            t.innerHTML = `< span > ${msg}</span > `;
             toastContainer.appendChild(t);
             // Animation handled by CSS in simple implementations or here
             t.animate([{ transform: 'translateY(20px)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }], { duration: 300, fill: 'forwards' });
@@ -1081,7 +1088,7 @@
             // Save Order
             const orders = JSON.parse(localStorage.getItem('myOrders') || '[]');
             const newOrder = {
-                name: `${currentItem.quantity}x ${currentItem.name}`,
+                name: `${currentItem.quantity}x ${currentItem.name} `,
                 price: currentItem.finalPrice,
                 installments: currentItem.installments,
                 status: 'Em separação',
@@ -1111,11 +1118,11 @@
             orders.forEach(order => {
                 const isInstallments = order.installments > 1;
                 const priceText = isInstallments
-                    ? `${order.installments}x ${order.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
+                    ? `${order.installments}x ${order.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} `
                     : order.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
                 html += `
-                <div class="bg-white rounded-2xl p-5 shadow-sm mb-4 border border-yellow-100">
+                        < div class="bg-white rounded-2xl p-5 shadow-sm mb-4 border border-yellow-100" >
                     <div class="flex gap-4">
                         <div class="w-16 h-16 bg-yellow-50 rounded-xl flex items-center justify-center text-yellow-600">
                             <i class='bx bx-package text-2xl'></i>
@@ -1136,7 +1143,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </div >
                 `;
             });
 
