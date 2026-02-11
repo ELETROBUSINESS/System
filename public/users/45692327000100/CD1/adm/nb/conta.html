@@ -134,6 +134,33 @@
             </div>
         </div>
 
+        <!-- Anúncio Ofertas (Minimalist) -->
+        <div class="finance-card mb-4 cursor-pointer relative overflow-hidden group hover:shadow-lg transition-all duration-300"
+            onclick="window.location.href='ofertas.html'"
+            style="height: 70px; display: flex; align-items: center; padding: 0 20px;">
+
+
+
+            <div class="flex-1 flex items-center justify-between pl-2">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                        <img src="/assets/img/icon-radio.png" alt="Logo" class="w-5 h-5 object-contain">
+                    </div>
+                    <div>
+                        <h3 class="text-xs font-bold text-gray-800 uppercase tracking-wide">Loja ELETRO</h3>
+                        <p class="text-[10px] text-gray-400 font-medium">Ofertas exclusivas para você</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <span
+                        class="text-[10px] font-bold text-[var(--bs-color)] bg-red-50 px-2 py-1 rounded-full">NOVO</span>
+                    <i
+                        class='bx bx-chevron-right text-gray-300 text-xl group-hover:translate-x-1 transition-transform'></i>
+                </div>
+            </div>
+        </div>
+
         <!-- 2. Resumo Operacional (Toggle Faturamento/Carteira) -->
         <div class="finance-card resumo-venda-area">
             <div class="p-6">
@@ -257,6 +284,12 @@
                 </div>
                 <span class="shortcut-label-free">Crediário</span>
             </div>
+            <div class="shortcut-item-free" id="btn-access-key" onclick="openAccessKeyModal()">
+                <div class="shortcut-icon-free">
+                    <i class='bx bx-key' style="font-size: 28px;"></i>
+                </div>
+                <span class="shortcut-label-free">Chave</span>
+            </div>
         </div>
     </div>
 
@@ -336,6 +369,13 @@
                     <span class="nav-label">Crediário</span>
                 </div>
 
+                <div class="nav-item desktop-only" onclick="openAccessKeyModal()">
+                    <div class="nav-icon">
+                        <i class='bx bx-key' style="font-size: 24px;"></i>
+                    </div>
+                    <span class="nav-label">Chave de Acesso</span>
+                </div>
+
                 <div class="nav-item"
                     onclick="localStorage.removeItem('session_token'); window.location.href='/users/e-finance.html'">
                     <div class="nav-icon">
@@ -352,8 +392,95 @@
         </nav>
     </div>
 
+    <!-- Modal Chave de Acesso -->
+    <div id="access-key-modal" class="modal-overlay-access">
+        <div class="modal-access-content">
+            <span class="close-modal-access" onclick="closeAccessKeyModal()">&times;</span>
+            <div class="modal-title-access">Chave de Acesso</div>
+            <div class="modal-subtitle-access">Use este código para validar a operação</div>
+
+            <div class="token-container">
+                <input type="text" readonly class="token-digit" id="digit-1">
+                <input type="text" readonly class="token-digit" id="digit-2">
+                <input type="text" readonly class="token-digit" id="digit-3">
+                <input type="text" readonly class="token-digit" id="digit-4">
+            </div>
+
+            <div class="progress-ring-container">
+                <svg class="progress-ring" width="60" height="60">
+                    <circle class="progress-ring__circle" stroke-width="4" fill="transparent" r="26" cx="30" cy="30"
+                        style="stroke-dasharray: 163.36; stroke-dashoffset: 0;" />
+                </svg>
+                <span id="timer-text" class="timer-text">30</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Script Unificado -->
     <script src="/assets/js/script26.js"></script>
+
+    <script>
+        let accessKeyInterval;
+        let accessKeyTimerInterval;
+        const FULL_DASH_ARRAY = 163.36;
+        const TIME_LIMIT = 30;
+        let timePassed = 0;
+        let timeLeft = TIME_LIMIT;
+
+        function openAccessKeyModal() {
+            document.getElementById('access-key-modal').classList.add('show');
+            generateToken();
+            startTimer();
+        }
+
+        function closeAccessKeyModal() {
+            document.getElementById('access-key-modal').classList.remove('show');
+            stopTimer();
+        }
+
+        function generateToken() {
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById(`digit-${i}`).value = Math.floor(Math.random() * 10);
+            }
+        }
+
+        function startTimer() {
+            stopTimer();
+            timePassed = 0;
+            timeLeft = TIME_LIMIT;
+            updateTimerDisplay();
+            setCircleDashoffset();
+
+            accessKeyTimerInterval = setInterval(() => {
+                timePassed++;
+                timeLeft = TIME_LIMIT - timePassed;
+
+                updateTimerDisplay();
+                setCircleDashoffset();
+
+                if (timeLeft <= 0) {
+                    generateToken();
+                    timePassed = 0;
+                    timeLeft = TIME_LIMIT;
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(accessKeyTimerInterval);
+        }
+
+        function updateTimerDisplay() {
+            document.getElementById('timer-text').innerText = timeLeft;
+        }
+
+        function setCircleDashoffset() {
+            const circle = document.querySelector('.progress-ring__circle');
+            const rawTimeFraction = timeLeft / TIME_LIMIT;
+            const offset = FULL_DASH_ARRAY - (rawTimeFraction * FULL_DASH_ARRAY);
+            circle.style.strokeDashoffset = offset;
+        }
+    </script>
 </body>
 
 </html>

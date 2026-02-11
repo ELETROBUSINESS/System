@@ -98,10 +98,17 @@ body {
 
 /* Atalhos em linha no mobile */
 .shortcut-grid-free {
-    display: flex !important;
-    flex-direction: row !important;
-    justify-content: space-around;
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
     width: auto !important;
+    justify-items: center;
+}
+
+@media (max-width: 380px) {
+    .shortcut-grid-free {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
 
 /* Mapeamento de áreas para o Grid Desktop */
@@ -762,7 +769,7 @@ body {
     align-items: center;
     gap: 12px;
     cursor: pointer;
-    flex: 1;
+    width: 100%;
 }
 
 .shortcut-icon-free {
@@ -1949,4 +1956,120 @@ body {
         opacity: 1;
         transform: translateX(0);
     }
+}
+
+/* --- MODAL CHAVE DE ACESSO --- */
+.modal-overlay-access {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(5px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay-access.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-access-content {
+    background: white;
+    padding: 30px;
+    border-radius: 24px;
+    text-align: center;
+    position: relative;
+    width: 90%;
+    max-width: 350px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-overlay-access.show .modal-access-content {
+    transform: scale(1);
+}
+
+.close-modal-access {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #9ca3af;
+    transition: color 0.2s;
+}
+
+.close-modal-access:hover {
+    color: var(--brand-color);
+}
+
+.token-container {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 25px 0;
+}
+
+.token-digit {
+    width: 50px;
+    height: 60px;
+    font-size: 32px;
+    text-align: center;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-weight: 700;
+    color: #1f2937;
+    background: #f9fafb;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.token-digit:focus {
+    border-color: var(--brand-color);
+}
+
+.progress-ring-container {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-ring__circle {
+    transition: stroke-dashoffset 1s linear;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    stroke: var(--brand-color);
+}
+
+.timer-text {
+    position: absolute;
+    font-weight: 700;
+    font-size: 18px;
+    color: #374151;
+}
+
+.modal-title-access {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: 0.5rem;
+}
+
+.modal-subtitle-access {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 1rem;
 }

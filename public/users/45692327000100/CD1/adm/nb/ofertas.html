@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-view="mobile">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loja ELETRO | D'TUDO</title>
+    <link rel="icon" href="/assets/img/iconWeb.png">
+
+    <!-- Bibliotecas Externas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href='https://cdn-uicons.flaticon.com/2.6.0/uicons-solid-straight/css/uicons-solid-straight.css'
+        rel='stylesheet'>
+    <link href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'
+        rel='stylesheet'>
+
+    <!-- Estilos Unificados e Main -->
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/style26.css">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+            /* Consistent background */
+            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', sans-serif;
+            padding-bottom: 90px;
+        }
+
+        .product-card {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:active {
+            transform: scale(0.98);
+        }
+
+        .highlight-price {
+            color: var(--bs-color);
+            font-weight: 800;
+        }
+
+        .rent-badge {
+            background-color: #e0f2fe;
+            color: var(--main);
+            border-radius: 8px;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .trust-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            color: #16a34a;
+            background: #dcfce7;
+            padding: 4px 10px;
+            border-radius: 20px;
+            width: fit-content;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header Simples -->
+    <header
+        class="fixed top-0 w-full bg-white/90 backdrop-blur-md z-50 px-6 py-4 shadow-sm flex items-center justify-between">
+        <div class="flex items-center gap-3" onclick="window.history.back()">
+            <i class='bx bx-arrow-back text-2xl text-gray-700 cursor-pointer'></i>
+            <div>
+                <h1 class="text-lg font-bold text-gray-800 tracking-wide">ELETRO</h1>
+                <p class="text-[10px] text-gray-400 font-medium tracking-wider uppercase">Loja Oficial</p>
+            </div>
+        </div>
+        <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+            <i class='bx bx-cart text-gray-600'></i>
+        </div>
+    </header>
+
+    <div id="shop-page" class="pt-24 px-4 max-w-[600px] mx-auto animate-[fadeIn_0.3s_ease]">
+
+        <!-- Seção: Itens Essenciais (Subsidiados) -->
+        <!-- Seção: Itens Adquiridos -->
+        <div class="product-card mb-6">
+            <h3 class="text-xs font-bold text-gray-800 uppercase tracking-widest mb-4 border-b border-gray-100 pb-2">
+                Itens Adquiridos</h3>
+
+            <!-- Item 1 -->
+            <div class="flex items-center gap-4 py-3 border-b border-gray-50 last:border-0">
+                <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                    <i class='bx bx-barcode text-xl'></i>
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-sm font-bold text-gray-800">Leitor de código de Barras c/fio</h4>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-xs text-gray-400 line-through">Mensal: R$ 13,90</span>
+                        <span class="text-xs font-bold text-blue-600">R$ 0,00</span>
+                    </div>
+                    <p class="text-[10px] text-blue-500 font-medium mt-2">Benefício de subsídio | Gilvan</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm font-bold text-gray-800">R$ 99,90</p>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Adquirido</span>
+                </div>
+            </div>
+
+            <!-- Item 2 -->
+            <div class="flex items-center gap-4 py-3">
+                <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                    <i class='bx bx-purchase-tag-alt text-xl'></i>
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-sm font-bold text-gray-800">Etiquetadora de preços</h4>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-xs text-gray-400 line-through">Mensal: R$ 9,90</span>
+                        <span class="text-xs font-bold text-blue-600">R$ 0,00</span>
+                    </div>
+                    <p class="text-[10px] text-blue-500 font-medium mt-2">Benefício de subsídio | Gilvan</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm font-bold text-gray-800">R$ 79,90</p>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Adquirido</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção: Uso em loja -->
+        <div class="mb-4 mt-6">
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest px-2">Uso em loja</h3>
+        </div>
+
+        <!-- Produto 1 -->
+        <div class="product-card">
+            <div class="mb-4 flex gap-4">
+                <div class="w-24 h-24 bg-white rounded-lg flex items-center justify-center p-2 border border-gray-100">
+                    <img src="https://http2.mlstatic.com/D_Q_NP_669652-MLA99474119254_112025-O.webp"
+                        class="w-full h-full object-contain mix-blend-multiply">
+                </div>
+                <div class="flex-1">
+                    <h2 class="text-sm font-bold text-gray-800 leading-tight mb-1">Leitor Código De Barras Fixo
+                        Basic-model</h2>
+                    <p class="text-xs text-gray-500 mb-2">Agilidade e precisão para seu caixa.</p>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-100 pt-3">
+                <div class="flex justify-between items-end mb-2">
+                    <div>
+                        <p class="text-[10px] text-gray-400 line-through">R$ 234,90 à vista</p>
+                        <p class="text-lg highlight-price text-black">2x R$ 117,45</p>
+                    </div>
+                    <button onclick="comprarProduto('Leitor Fixo Basic-model', 234.90)"
+                        class="bg-[var(--bs-color)] text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md hover:opacity-90 transition-opacity">
+                        Comprar
+                    </button>
+                </div>
+
+                <!-- Rent Option -->
+                <div class="bg-gray-50 p-3 rounded-lg mt-3 border border-gray-100">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs font-semibold text-gray-700">Opção de Aluguel</span>
+                        <span class="text-xs font-bold text-black">R$ 16,90/mês</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] text-gray-500">Pague agora (Pro-rata):</span>
+                        <span class="text-sm font-bold text-black" id="rent-1-val">Calculando...</span>
+                    </div>
+                    <p class="text-[9px] text-gray-400 mt-1">*Renova todo dia 23</p>
+                    <button onclick="comprarAluguel('Leitor Código De Barras Fixo Basic-model - Aluguel', 16.90)"
+                        class="w-full mt-2 border border-blue-200 text-blue-600 bg-white py-1.5 rounded-md text-xs font-bold hover:bg-blue-50">
+                        Assinar Aluguel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Produto 2 -->
+        <div class="product-card">
+            <div class="mb-4 flex gap-4">
+                <div class="w-24 h-24 bg-white rounded-lg flex items-center justify-center p-2 border border-gray-100">
+                    <img src="https://images.tcdn.com.br/img/img_prod/1214924/leitor_de_codigo_de_barra_sem_fio_a_1484_24110_2_6d75d135ebccafeb787ef6452efded8b.jpg"
+                        class="w-full h-full object-contain mix-blend-multiply">
+                </div>
+                <div class="flex-1">
+                    <h2 class="text-sm font-bold text-gray-800 leading-tight mb-1">Leitor Código De Barras Sem Fio
+                        Livre-Avance</h2>
+                    <p class="text-xs text-gray-500 mb-2">Liberdade de movimento no balcão.</p>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-100 pt-3">
+                <div class="flex justify-between items-end mb-2">
+                    <div>
+                        <p class="text-[10px] text-gray-400 line-through">R$ 199,99 à vista</p>
+                        <p class="text-lg highlight-price text-black">2x R$ 99,99</p>
+                    </div>
+                    <button onclick="comprarProduto('Leitor Sem Fio Livre-Avance', 199.99)"
+                        class="bg-[var(--bs-color)] text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md hover:opacity-90 transition-opacity">
+                        Comprar
+                    </button>
+                </div>
+
+                <!-- Rent Option -->
+                <div class="bg-gray-50 p-3 rounded-lg mt-3 border border-gray-100">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs font-semibold text-gray-700">Opção de Aluguel</span>
+                        <span class="text-xs font-bold text-black">R$ 12,90/mês</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] text-gray-500">Pague agora (Pro-rata):</span>
+                        <span class="text-sm font-bold text-black" id="rent-2-val">Calculando...</span>
+                    </div>
+                    <p class="text-[9px] text-gray-400 mt-1">*Renova todo dia 23</p>
+                    <button onclick="comprarAluguel('Leitor Código De Barras Sem Fio Livre-Avance - Aluguel', 12.90)"
+                        class="w-full mt-2 border border-blue-200 text-blue-600 bg-white py-1.5 rounded-md text-xs font-bold hover:bg-blue-50">
+                        Assinar Aluguel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Produto 3 -->
+        <div class="product-card">
+            <div class="mb-4 flex gap-4">
+                <div class="w-24 h-24 bg-white rounded-lg flex items-center justify-center p-2 border border-gray-100">
+                    <img src="https://http2.mlstatic.com/D_Q_NP_735713-MLA99973706633_112025-F.webp"
+                        class="w-full h-full object-contain mix-blend-multiply">
+                </div>
+                <div class="flex-1">
+                    <h2 class="text-sm font-bold text-gray-800 leading-tight mb-1">Kit Teclado e Mouse Sem Fio Logtech
+                    </h2>
+                    <p class="text-xs text-gray-500 mb-2">Conforto e durabilidade.</p>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-100 pt-3">
+                <div class="flex justify-between items-end">
+                    <div>
+                        <p class="text-xs text-gray-400 line-through font-medium">De: R$ 179,90</p>
+                        <p class="text-lg highlight-price text-black">Por: R$ 164,90</p>
+                    </div>
+                    <button onclick="comprarProduto('Kit Teclado e Mouse Logtech', 164.90)"
+                        class="bg-[var(--bs-color)] text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md hover:opacity-90 transition-opacity">
+                        Comprar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Produto 4 -->
+        <div class="product-card">
+            <div class="mb-4 flex gap-4">
+                <div
+                    class="w-24 h-24 bg-white rounded-lg flex items-center justify-center p-2 border border-gray-100 overflow-hidden">
+                    <img src="https://blogger.googleusercontent.com/img/a/AVvXsEjfF_2HVi3Cb--rTz-wnIG5NobrMX3oid8J0cecE_wOcqhF1rsibATsVTnThQshupdNtvPeTO1LETgWiMgGhNXTlVpLHO0Na-iGcO-GAdXmbEwolZFun8hI7rNdZ_6JOuW03ZR8EkAK_z8QRqHpGZn5Wo9EbVGj21_e0MSy1CJRwf1pVmV-bOXvaCDnIxY"
+                        class="w-full h-full object-cover">
+                </div>
+                <div class="flex-1">
+                    <h2 class="text-sm font-bold text-gray-800 leading-tight mb-1">Crachá Personalizado D'Tudo</h2>
+                    <p class="text-xs text-gray-500 mb-2">Identificação profissional.</p>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-100 pt-3">
+                <div class="flex justify-between items-end">
+                    <div>
+                        <p class="text-lg highlight-price text-black">R$ 29,90 <span
+                                class="text-xs text-gray-500 font-normal">un</span></p>
+                    </div>
+                    <button onclick="comprarProduto('Crachá Personalizado', 29.90)"
+                        class="bg-[var(--bs-color)] text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md hover:opacity-90 transition-opacity">
+                        Comprar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção: Revenda -->
+        <div class="mt-8 mb-4">
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest px-2">Revenda</h3>
+            <div
+                class="p-8 text-center text-gray-300 text-sm italic border-2 border-dashed border-gray-100 rounded-xl mt-4">
+                Em breve novidades
+            </div>
+        </div>
+
+        <!-- Toast Container -->
+        <div id="toast-container"
+            style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 3000; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 350px; pointer-events: none;">
+        </div>
+
+        <!-- Modal Pagamento -->
+        <div id="modalPagamento" class="modal"
+            style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000; align-items: flex-end; justify-content: center;">
+            <div
+                class="bg-white w-full max-w-[500px] rounded-t-3xl p-6 shadow-2xl animate-[slideInUp_0.3s_ease] relative">
+
+                <!-- Close Button -->
+                <button onclick="fecharModal()"
+                    class="absolute top-4 right-4 p-2 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 transition-colors">
+                    <i class='bx bx-x text-xl'></i>
+                </button>
+
+                <div class="text-center mb-6 mt-2">
+                    <div
+                        class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 text-blue-600">
+                        <i class='bx bx-check-shield text-2xl'></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800">Finalizar Compra</h2>
+                    <p class="text-xs text-gray-500 mt-1">Ambiente seguro verificado</p>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded-xl mb-6 border border-gray-100">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Produto</p>
+                            <h3 id="pagamento-descricao" class="text-sm font-semibold text-gray-800 leading-tight">...
+                            </h3>
+                        </div>
+                    </div>
+                    <div class="border-t border-gray-200 my-3"></div>
+                    <div class="flex justify-between items-end">
+                        <span class="text-xs font-medium text-gray-500">Total a pagar:</span>
+                        <h2 id="pagamento-valor" class="text-2xl font-bold text-black leading-none">...</h2>
+                    </div>
+                </div>
+
+                <div id="payment-area">
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-3 p-3 border border-blue-200 bg-blue-50 rounded-lg">
+                            <i class='bx bx-qr text-2xl text-blue-600'></i>
+                            <div>
+                                <p class="text-sm font-bold text-gray-800">Pix Instantâneo</p>
+                                <p class="text-[10px] text-blue-700">Aprovação imediata</p>
+                            </div>
+                            <div class="ml-auto">
+                                <i class='bx bxs-check-circle text-blue-600 text-lg'></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="btnGerarPix" onclick="gerarPagamento()"
+                        class="w-full mt-6 bg-[var(--bs-color)] text-white py-4 rounded-xl font-bold text-base shadow-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">
+                        <i class='bx bx-lock-alt'></i> Comprar Agora
+                    </button>
+
+                    <p class="text-[10px] text-center text-gray-400 mt-4 flex items-center justify-center gap-1">
+                        <i class='bx bx-shield-quarter'></i> Seus dados estão protegidos.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div> <!-- End of Shop Page -->
+
+    <!-- Orders Page -->
+    <div id="orders-page" class="pt-24 px-4 max-w-[600px] mx-auto hidden animate-[fadeIn_0.3s_ease]">
+        <h2 class="text-lg font-bold text-gray-800 mb-4 px-2">Meus Pedidos</h2>
+
+        <!-- Order 1 -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm mb-4 border border-gray-100">
+            <div class="flex gap-4">
+                <div class="w-16 h-16 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500">
+                    <i class='bx bx-cube text-2xl'></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-[10px] uppercase font-bold text-green-600 mb-1 tracking-wide">Em Trânsito</p>
+                    <h3 class="text-sm font-bold text-gray-800 leading-tight">ELETRO • Suporte A.AQUA V83B PT</h3>
+                    <p class="text-xs text-gray-500 mt-1">2x R$ 114,95</p>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-4 border-t border-gray-100">
+                <div class="flex items-start gap-3">
+                    <div class="flex flex-col items-center gap-1 mt-1">
+                        <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+                        <div class="w-0.5 h-6 bg-gray-200"></div>
+                        <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                    </div>
+                    <div class="flex-1 space-y-4">
+                        <div>
+                            <p class="text-xs font-bold text-gray-700">Localização Atual</p>
+                            <p class="text-xs text-gray-500">Galpão Logístico em Belém</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-gray-700">Previsão de Entrega</p>
+                            <p class="text-xs text-gray-500">16 a 19 de fevereiro</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order 2 -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm mb-4 border border-gray-100 opacity-80">
+            <div class="flex gap-4">
+                <div class="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center text-gray-500">
+                    <i class='bx bx-check text-2xl'></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-[10px] uppercase font-bold text-gray-500 mb-1 tracking-wide">Entregue</p>
+                    <h3 class="text-sm font-bold text-gray-800 leading-tight">Adaptador Bluetooth Conector Pc</h3>
+                    <p class="text-xs text-gray-500 mt-1">R$ 35,00</p>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-4 border-t border-gray-100">
+                <div class="mb-3">
+                    <p class="text-xs font-bold text-gray-700">Entregue em:</p>
+                    <p class="text-xs text-gray-500">D'Tudo Variedades, Jarbas Passarinho, Ipixuna do Pará.</p>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-gray-700">Local da nota fiscal:</p>
+                    <div class="flex items-center gap-2 mt-1">
+                        <i class='bx bxs-file-pdf text-red-500'></i>
+                        <span class="text-xs text-gray-500">Nota Fiscal (R$ 35,00)</span>
+                        <span class="text-xs text-gray-500">Nota Fiscal (R$ 35,00)</span>
+                        <button onclick="openInvoice()"
+                            class="text-[10px] font-bold text-blue-600 uppercase ml-auto hover:underline cursor-pointer bg-transparent border-none p-0">Visualizar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Navbar -->
+    <div
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur-md border border-white/20 shadow-xl rounded-full px-6 py-3 flex items-center gap-8 z-40">
+        <button onclick="switchPage('shop')" id="nav-shop"
+            class="flex flex-col items-center gap-1 text-[var(--bs-color)] transition-colors">
+            <i class='bx bxs-store text-xl'></i>
+        </button>
+        <div class="w-px h-6 bg-gray-300"></div>
+        <button onclick="switchPage('orders')" id="nav-orders"
+            class="flex flex-col items-center gap-1 text-gray-400 hover:text-[var(--bs-color)] transition-colors">
+            <i class='bx bxs-package text-xl'></i>
+        </button>
+    </div>
+
+    <!-- Purchase Animation Overlay -->
+    <div id="purchase-overlay" class="fixed inset-0 z-[3000] hidden items-center justify-center overflow-hidden">
+        <!-- Expanding Sphere -->
+        <div id="purchase-sphere"
+            class="absolute w-10 h-10 bg-[var(--bs-color)] rounded-full transform scale-0 transition-transform duration-700 ease-in-out">
+        </div>
+
+        <!-- Content -->
+        <div id="purchase-content"
+            class="relative z-10 flex flex-col items-center text-white opacity-0 transition-opacity duration-500 delay-300">
+            <h2 class="text-3xl font-bold text-center px-4">Já é quase seu...</h2>
+            <div class="mt-6 w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+        </div>
+    </div>
+
+    <!-- Invoice Viewer Modal -->
+    <div id="modalInvoice"
+        class="fixed inset-0 z-[2500] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-[fadeIn_0.3s_ease]">
+        <div class="bg-white w-full h-full max-w-4xl rounded-2xl overflow-hidden flex flex-col relative shadow-2xl">
+            <!-- Header -->
+            <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-white z-10">
+                <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2">
+                    <i class='bx bxs-file-pdf text-red-500 text-lg'></i> Visualizar Nota Fiscal
+                </h3>
+                <button onclick="closeInvoice()"
+                    class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors">
+                    <i class='bx bx-x text-xl'></i>
+                </button>
+            </div>
+
+            <!-- PDF Viewer -->
+            <div class="flex-1 bg-gray-100 relative">
+                <iframe src="https://drive.google.com/file/d/1GQjQOw7xq9Y52B-NY9p8gtPr9HK4eGzE/preview" width="100%"
+                    height="100%" allow="autoplay" style="border:none;"></iframe>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+        let currentItem = { name: '', price: 0 };
+
+        function calculateProRata(monthlyPrice) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const currentYear = today.getFullYear();
+            const currentMonth = today.getMonth();
+
+            let targetDate = new Date(currentYear, currentMonth, 23);
+            targetDate.setHours(0, 0, 0, 0);
+
+            if (today.getTime() > targetDate.getTime()) {
+                targetDate = new Date(currentYear, currentMonth + 1, 23);
+                targetDate.setHours(0, 0, 0, 0);
+            }
+
+            const diffTime = Math.abs(targetDate - today);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            const dailyRate = monthlyPrice / 30;
+            const finalPrice = dailyRate * diffDays;
+
+            return {
+                days: diffDays,
+                price: finalPrice
+            };
+        }
+
+        function updatePrices() {
+            const rent1 = calculateProRata(16.90);
+            document.getElementById('rent-1-val').innerText = rent1.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            const rent2 = calculateProRata(12.90);
+            document.getElementById('rent-2-val').innerText = rent2.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        // --- Payment Logic ---
+
+        function comprarAluguel(nome, valorMensal) {
+            const proRata = calculateProRata(valorMensal);
+            comprarProduto(nome, proRata.price, true);
+        }
+
+        function comprarProduto(nome, valor, isRental = false) {
+            currentItem = { name: nome, price: valor };
+
+            // Setup Description with Rental Tag if needed
+            const descEl = document.getElementById('pagamento-descricao');
+            descEl.innerHTML = isRental
+                ? `${nome} <span class="bg-blue-100 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded ml-2">ALUGUEL</span>`
+                : nome;
+
+            document.getElementById('pagamento-valor').textContent = valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            // Reset Payment Area
+            document.getElementById('payment-area').innerHTML = `
+                <div class="space-y-3">
+                        <div class="flex items-center gap-3 p-3 border border-blue-200 bg-blue-50 rounded-lg">
+                        <i class='bx bx-qr text-2xl text-blue-600'></i>
+                        <div>
+                            <p class="text-sm font-bold text-gray-800">Pix Instantâneo</p>
+                            <p class="text-[10px] text-blue-700">Aprovação imediata</p>
+                        </div>
+                        <div class="ml-auto">
+                            <i class='bx bxs-check-circle text-blue-600 text-lg'></i>
+                        </div>
+                        </div>
+                </div>
+
+                <button id="btnGerarPix" onclick="startPurchaseAnimation()" class="w-full mt-6 bg-[var(--bs-color)] text-white py-4 rounded-xl font-bold text-base shadow-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">
+                    <i class='bx bx-lock-alt'></i> Comprar Agora
+                </button>
+                
+                <p class="text-[10px] text-center text-gray-400 mt-4 flex items-center justify-center gap-1">
+                    <i class='bx bx-shield-quarter'></i> Seus dados estão protegidos.
+                </p>
+            `;
+
+            document.getElementById('modalPagamento').style.display = 'flex';
+        }
+
+        function fecharModal() {
+            document.getElementById('modalPagamento').style.display = 'none';
+        }
+
+        // Invoice Modal Logic
+        function openInvoice() {
+            const m = document.getElementById('modalInvoice');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function closeInvoice() {
+            const m = document.getElementById('modalInvoice');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        async function startPurchaseAnimation() {
+            const overlay = document.getElementById('purchase-overlay');
+            const sphere = document.getElementById('purchase-sphere');
+            const content = document.getElementById('purchase-content');
+
+            // Reset state
+            sphere.style.transform = 'scale(0)';
+            content.classList.remove('opacity-100');
+            content.classList.add('opacity-0');
+
+            // Show Overlay
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+
+            // Trigger Animation (Force reflow)
+            void sphere.offsetWidth;
+            sphere.style.transform = 'scale(150)'; // Expands to fill screen
+
+            // Show content
+            setTimeout(() => {
+                content.classList.remove('opacity-0');
+                content.classList.add('opacity-100');
+            }, 100);
+
+            // Wait 3 seconds
+            await new Promise(resolve => setTimeout(resolve, 3000));
+
+            // Hide Opacity
+            content.classList.remove('opacity-100');
+            content.classList.add('opacity-0');
+
+            // Generate Payment while fading out
+            await gerarPagamento();
+
+            // Reset Overlay
+            setTimeout(() => {
+                sphere.style.transform = 'scale(0)';
+                setTimeout(() => {
+                    overlay.classList.add('hidden');
+                    overlay.classList.remove('flex');
+                }, 700);
+            }, 300);
+        }
+
+        async function gerarPagamento() {
+            const area = document.getElementById('payment-area');
+            area.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px;"><i class='bx bx-loader-alt bx-spin' style="font-size:2rem;"></i><p style="margin-top:10px;">Estamos preparando tudo... já é quase seu!</p></div>`;
+
+            try {
+                // Determine order ID based on timestamp
+                const orderId = 'VENDA-' + Date.now();
+
+                const payload = {
+                    orderId: orderId,
+                    transaction_amount: currentItem.price,
+                    payment_method_id: 'pix',
+                    description: currentItem.name,
+                    payment_data: {
+                        transaction_amount: currentItem.price,
+                        payment_method_id: 'pix',
+                        description: currentItem.name, // Important for display in Bank App
+                        payer: { email: 'cliente@eletrobusiness.com.br' }
+                    },
+                    customPayer: {
+                        email: 'cliente@eletrobusiness.com.br',
+                        first_name: 'Dona',
+                        last_name: 'Nubia'
+                    }
+                };
+
+                const res = await fetch('https://us-central1-super-app25.cloudfunctions.net/createPayment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (res.ok && (data.status === 'pending' || data.status === 'created' || data.point_of_interaction)) {
+                    const qrCode = data.point_of_interaction.transaction_data.qr_code;
+                    const qrBase64 = data.point_of_interaction.transaction_data.qr_code_base64;
+
+                    area.innerHTML = `
+                        <div class="text-center animate-[slideInUp_0.3s_ease]">
+                            <div class="relative bg-white p-2 rounded-xl mb-4 border border-gray-200 inline-block shadow-sm">
+                                <img src="data:image/png;base64,${qrBase64}" class="w-48 h-48 mx-auto rounded-lg">
+                            </div>
+                            
+                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 mb-4 text-left">
+                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wide mb-1">Código Pix Copia e Cola</p>
+                                <div class="flex gap-2">
+                                    <input readonly value="${qrCode}" class="w-full bg-white border border-gray-200 rounded px-2 py-1 text-xs text-gray-500 font-mono focus:outline-none">
+                                    <button onclick="navigator.clipboard.writeText('${qrCode}'); showToast('Código copiado!', 'success')" class="text-blue-600 hover:text-blue-800 p-1">
+                                        <i class='bx bx-copy text-xl'></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <button onclick="navigator.clipboard.writeText('${qrCode}'); showToast('Pix Copiado!', 'success')" class="w-full bg-blue-500 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg mb-3 hover:bg-blue-600 transition-colors">
+                                <i class='bx bx-copy'></i> Copiar Código Pix
+                            </button>
+
+                            <p class="text-[10px] text-gray-500 flex items-center justify-center gap-1">
+                                <i class='bx bx-timer'></i> Expira em 30 minutos
+                            </p>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(data.message || data.error || "Erro ao gerar Pix");
+                }
+            } catch (e) {
+                console.error(e);
+                area.innerHTML = `
+                    <div class="text-center p-4">
+                        <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-3 text-red-500">
+                            <i class='bx bx-error text-3xl'></i>
+                        </div>
+                        <h3 class="font-bold text-gray-800">Erro no Pagamento</h3>
+                        <p class="text-xs text-gray-500 mt-2 mb-4">${e.message || "Não foi comunicar com o banco."}</p>
+                        <button onclick="fecharModal()" class="px-6 py-2 bg-gray-100 text-gray-600 rounded-lg text-xs font-bold font-bold">Tentar Novamente</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Utils
+        const toastContainer = document.getElementById('toast-container');
+        function showToast(msg, type) {
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.style.background = type === 'success' ? '#22c55e' : '#ef4444';
+            t.style.color = 'white';
+            t.style.padding = '12px 20px';
+            t.style.borderRadius = '50px';
+            t.style.fontSize = '0.9rem';
+            t.style.fontWeight = '600';
+            t.style.boxShadow = '0 5px 15px rgba(0,0,0,0.2)';
+            t.innerHTML = `<span>${msg}</span>`;
+            toastContainer.appendChild(t);
+            // Animation handled by CSS in simple implementations or here
+            t.animate([{ transform: 'translateY(20px)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }], { duration: 300, fill: 'forwards' });
+            setTimeout(() => {
+                t.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: 'forwards' }).onfinish = () => t.remove();
+            }, 3000);
+        }
+
+        // Executar ao carregar
+        updatePrices();
+
+        // Page Switch Logic
+        function switchPage(page) {
+            const shopPage = document.getElementById('shop-page');
+            const ordersPage = document.getElementById('orders-page');
+            const navShop = document.getElementById('nav-shop');
+            const navOrders = document.getElementById('nav-orders');
+
+            if (page === 'shop') {
+                shopPage.classList.remove('hidden');
+                ordersPage.classList.add('hidden');
+
+                navShop.classList.add('text-[var(--bs-color)]');
+                navShop.classList.remove('text-gray-400');
+
+                navOrders.classList.remove('text-[var(--bs-color)]');
+                navOrders.classList.add('text-gray-400');
+            } else {
+                shopPage.classList.add('hidden');
+                ordersPage.classList.remove('hidden');
+
+                navShop.classList.remove('text-[var(--bs-color)]');
+                navShop.classList.add('text-gray-400');
+
+                navOrders.classList.add('text-[var(--bs-color)]');
+                navOrders.classList.remove('text-gray-400');
+            }
+        }
+    </script>
+
+</body>
+
+</html>
