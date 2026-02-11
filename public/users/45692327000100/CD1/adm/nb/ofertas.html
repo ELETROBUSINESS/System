@@ -160,7 +160,7 @@
                         <p class="text-lg highlight-price text-black">2x R$ 117,45</p>
                     </div>
                     <button onclick="comprarProduto('Leitor Fixo Basic-model', 234.90)"
-                        class="bg-[var(--bs-color)] text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md hover:opacity-90 transition-opacity">
+                        class="bg-blue-900 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md hover:opacity-90 transition-opacity">
                         Comprar
                     </button>
                 </div>
@@ -205,7 +205,7 @@
                         <p class="text-lg highlight-price text-black">2x R$ 99,99</p>
                     </div>
                     <button onclick="comprarProduto('Leitor Sem Fio Livre-Avance', 199.99)"
-                        class="bg-[var(--bs-color)] text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md hover:opacity-90 transition-opacity">
+                        class="bg-blue-900 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md hover:opacity-90 transition-opacity">
                         Comprar
                     </button>
                 </div>
@@ -250,7 +250,7 @@
                         <p class="text-lg highlight-price text-black">Por: R$ 164,90</p>
                     </div>
                     <button onclick="comprarProduto('Kit Teclado e Mouse Logtech', 164.90)"
-                        class="bg-[var(--bs-color)] text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md hover:opacity-90 transition-opacity">
+                        class="bg-blue-900 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md hover:opacity-90 transition-opacity">
                         Comprar
                     </button>
                 </div>
@@ -278,7 +278,7 @@
                                 class="text-xs text-gray-500 font-normal">un</span></p>
                     </div>
                     <button onclick="comprarProduto('Crachá Personalizado', 29.90)"
-                        class="bg-[var(--bs-color)] text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md hover:opacity-90 transition-opacity">
+                        class="bg-blue-900 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md hover:opacity-90 transition-opacity">
                         Comprar
                     </button>
                 </div>
@@ -366,6 +366,8 @@
     <div id="orders-page" class="pt-24 px-4 max-w-[600px] mx-auto hidden animate-[fadeIn_0.3s_ease]">
         <h2 class="text-lg font-bold text-gray-800 mb-4 px-2">Meus Pedidos</h2>
 
+        <div id="dynamic-orders"></div>
+
         <!-- Order 1 -->
         <div class="bg-white rounded-2xl p-5 shadow-sm mb-4 border border-gray-100">
             <div class="flex gap-4">
@@ -421,7 +423,7 @@
                 <div>
                     <p class="text-xs font-bold text-gray-700">Local da nota fiscal:</p>
                     <div class="flex items-center gap-2 mt-1">
-                        <i class='bx bxs-file-pdf text-red-500'></i>
+                        <i class='bx bxs-file-pdf text-blue-900'></i>
                         <span class="text-xs text-gray-500">Nota Fiscal (R$ 35,00)</span>
                         <span class="text-xs text-gray-500">Nota Fiscal (R$ 35,00)</span>
                         <button onclick="openInvoice()"
@@ -436,12 +438,12 @@
     <div
         class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur-md border border-white/20 shadow-xl rounded-full px-6 py-3 flex items-center gap-8 z-40">
         <button onclick="switchPage('shop')" id="nav-shop"
-            class="flex flex-col items-center gap-1 text-[var(--bs-color)] transition-colors">
+            class="flex flex-col items-center gap-1 text-blue-900 transition-colors">
             <i class='bx bxs-store text-xl'></i>
         </button>
         <div class="w-px h-6 bg-gray-300"></div>
         <button onclick="switchPage('orders')" id="nav-orders"
-            class="flex flex-col items-center gap-1 text-gray-400 hover:text-[var(--bs-color)] transition-colors">
+            class="flex flex-col items-center gap-1 text-gray-400 hover:text-blue-900 transition-colors">
             <i class='bx bxs-package text-xl'></i>
         </button>
     </div>
@@ -450,7 +452,7 @@
     <div id="purchase-overlay" class="fixed inset-0 z-[3000] hidden items-center justify-center overflow-hidden">
         <!-- Expanding Sphere -->
         <div id="purchase-sphere"
-            class="absolute w-10 h-10 bg-[var(--bs-color)] rounded-full transform scale-0 transition-transform duration-700 ease-in-out">
+            class="absolute w-10 h-10 bg-blue-900 rounded-full transform scale-0 transition-transform duration-700 ease-in-out">
         </div>
 
         <!-- Content -->
@@ -468,7 +470,7 @@
             <!-- Header -->
             <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-white z-10">
                 <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2">
-                    <i class='bx bxs-file-pdf text-red-500 text-lg'></i> Visualizar Nota Fiscal
+                    <i class='bx bxs-file-pdf text-blue-900 text-lg'></i> Visualizar Nota Fiscal
                 </h3>
                 <button onclick="closeInvoice()"
                     class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors">
@@ -487,7 +489,7 @@
 
 
     <script>
-        let currentItem = { name: '', price: 0, finalPrice: 0, installments: 1 };
+        let currentItem = { name: '', unitPrice: 0, price: 0, finalPrice: 0, installments: 1, quantity: 1 };
 
         function calculateProRata(monthlyPrice) {
             const today = new Date();
@@ -532,7 +534,7 @@
         }
 
         function comprarProduto(nome, valor, isRental = false) {
-            currentItem = { name: nome, price: valor, finalPrice: valor, installments: 1 };
+            currentItem = { name: nome, unitPrice: valor, price: valor, finalPrice: valor, installments: isRental ? 1 : 0, quantity: 1 };
 
             // Setup Description with Rental Tag if needed
             const descEl = document.getElementById('pagamento-descricao');
@@ -551,52 +553,86 @@
 
         function resetPaymentContent(isRental) {
             const area = document.getElementById('payment-area');
-            const price1x = currentItem.price * 0.98; // 2% discount
-            const price2x = currentItem.price;
+            let html = '';
 
-            // Prepare HTML based on Rental vs Purchase
-            // Rentals might not have installments logic requested, but assuming consistency or applying only to products if needed. 
-            // User said "definimos parcelamento em até 2 vezes", implying for products usually. 
-            // But if it's rental pro-rata (usually small value), maybe 1x only. 
-            // However, sticking to User Request: "perguntar se o cliente quer pagar em duas vezes ou à vista".
+            if (isRental) {
+                // Rental: Force 1x, No Discount logic needed since it's pro-rata
+                currentItem.finalPrice = currentItem.price;
+                currentItem.installments = 1;
 
-            // Let's enable for all for now, or check value? usually rentals are small. 
-            // If isRental, maybe force 1x? The pro-rata is small.
-            // Let's assume generic logic first.
+                // Update display immediately
+                document.getElementById('pagamento-valor').textContent = currentItem.finalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-            let html = `
+                html += `
+                    <div class="mb-4">
+                        <p class="text-xs font-bold text-gray-700 mb-2">Resumo do Pagamento</p>
+                        <div class="payment-option border border-blue-600 bg-blue-50 rounded-xl p-3">
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-4 h-4 rounded-full border border-gray-300 flex items-center justify-center">
+                                        <div class="w-2 h-2 rounded-full bg-blue-600"></div>
+                                    </div>
+                                    <span class="text-xs font-bold text-gray-800">Pix (À Vista)</span>
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-gray-500 mt-1 pl-6">Total: ${currentItem.finalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Product: Show Options
+                const price1x = currentItem.price * 0.98; // 2% discount
+                const installmentValue = currentItem.price / 2;
+
+                // Check default selection state
+                const is1xSelected = currentItem.installments === 1;
+                const is2xSelected = currentItem.installments === 2;
+
+                html += `
+                <!-- Quantity Selector -->
+                <div class="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100 flex items-center justify-between">
+                    <span class="text-xs font-bold text-gray-700">Quantidade</span>
+                    <div class="flex items-center gap-3 bg-white border border-gray-200 rounded-lg px-2 py-1">
+                        <button onclick="updateQuantity(-1)" class="w-6 h-6 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded text-lg font-bold">-</button>
+                        <span id="qty-display" class="w-6 text-center text-sm font-bold text-gray-800">${currentItem.quantity}</span>
+                        <button onclick="updateQuantity(1)" class="w-6 h-6 flex items-center justify-center text-blue-600 hover:bg-blue-50 rounded text-lg font-bold">+</button>
+                    </div>
+                </div>
+
                 <div class="mb-4">
                     <p class="text-xs font-bold text-gray-700 mb-2">Como deseja pagar?</p>
                     <div class="space-y-2">
                         <!-- Option 1x -->
-                        <div id="opt-1x" onclick="selectInstallments(1)" class="payment-option border border-gray-200 rounded-xl p-3 cursor-pointer hover:bg-gray-50 transition-all">
+                        <div id="opt-1x" onclick="selectInstallments(1)" class="payment-option border ${is1xSelected ? 'border-blue-600 bg-blue-50' : 'border-gray-200'} rounded-xl p-3 cursor-pointer hover:bg-gray-50 transition-all">
                             <div class="flex justify-between items-center">
                                 <div class="flex items-center gap-2">
                                     <div class="w-4 h-4 rounded-full border border-gray-300 flex items-center justify-center" id="radio-1x">
-                                        <div class="w-2 h-2 rounded-full bg-[var(--bs-color)] hidden"></div>
+                                        <div class="w-2 h-2 rounded-full bg-blue-600 ${is1xSelected ? '' : 'hidden'}"></div>
                                     </div>
                                     <span class="text-xs font-bold text-gray-800">1x Pix (À Vista)</span>
                                 </div>
                                 <span class="text-xs font-bold text-green-600">-2% OFF</span>
                             </div>
-                            <p class="text-[10px] text-gray-500 mt-1 pl-6">Total: ${price1x.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                            <p id="desc-1x" class="text-[10px] text-gray-500 mt-1 pl-6">Total: ${price1x.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                         </div>
 
                         <!-- Option 2x -->
-                        <div id="opt-2x" onclick="selectInstallments(2)" class="payment-option border border-gray-200 rounded-xl p-3 cursor-pointer hover:bg-gray-50 transition-all">
+                        <div id="opt-2x" onclick="selectInstallments(2)" class="payment-option border ${is2xSelected ? 'border-blue-600 bg-blue-50' : 'border-gray-200'} rounded-xl p-3 cursor-pointer hover:bg-gray-50 transition-all">
                             <div class="flex justify-between items-center">
                                 <div class="flex items-center gap-2">
                                     <div class="w-4 h-4 rounded-full border border-gray-300 flex items-center justify-center" id="radio-2x">
-                                        <div class="w-2 h-2 rounded-full bg-[var(--bs-color)] hidden"></div>
+                                        <div class="w-2 h-2 rounded-full bg-blue-600 ${is2xSelected ? '' : 'hidden'}"></div>
                                     </div>
                                     <span class="text-xs font-bold text-gray-800">2x no Pix (Sem juros)</span>
                                 </div>
                             </div>
-                            <p class="text-[10px] text-gray-500 mt-1 pl-6">Total: ${price2x.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                            <p id="desc-2x" class="text-[10px] text-gray-500 mt-1 pl-6">2x de ${installmentValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                         </div>
                     </div>
-                </div>
+                </div>`;
+            }
 
+            html += `
                 <div class="space-y-3">
                      <div class="flex items-center gap-3 p-3 border border-blue-200 bg-blue-50 rounded-lg">
                         <i class='bx bx-qr text-2xl text-blue-600'></i>
@@ -610,7 +646,7 @@
                     </div>
                 </div>
 
-                <button id="btnGerarPix" onclick="startPurchaseAnimation()" disabled class="w-full mt-6 bg-gray-300 text-white py-4 rounded-xl font-bold text-base shadow-lg transition-all flex items-center justify-center gap-2 cursor-not-allowed">
+                <button id="btnGerarPix" onclick="startPurchaseAnimation()" ${isRental ? '' : 'disabled'} class="w-full mt-6 ${isRental ? 'bg-blue-900 hover:opacity-90' : 'bg-gray-300 cursor-not-allowed'} text-white py-4 rounded-xl font-bold text-base shadow-lg transition-all flex items-center justify-center gap-2">
                     <i class='bx bx-lock-alt'></i> Comprar Agora
                 </button>
                 
@@ -622,10 +658,36 @@
             area.innerHTML = html;
         }
 
+        function updateQuantity(change) {
+            const newQty = currentItem.quantity + change;
+            if (newQty < 1) return;
+
+            currentItem.quantity = newQty;
+            currentItem.price = currentItem.unitPrice * newQty;
+
+            // Re-render to update calculations
+            // Optimization: Just update text nodes instead of full re-render for smoother feel.
+            document.getElementById('qty-display').innerText = newQty;
+
+            const price1x = currentItem.price * 0.98;
+            const installmentValue = currentItem.price / 2;
+
+            document.getElementById('desc-1x').innerText = `Total: ${price1x.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+            document.getElementById('desc-2x').innerText = `2x de ${installmentValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+
+            // Refresh current selection value
+            selectInstallments(currentItem.installments);
+        }
+
         function selectInstallments(option) {
+            // Check if Elements Exist (Might not on rentals)
+            const opt1xEl = document.getElementById('opt-1x');
+            const opt2xEl = document.getElementById('opt-2x');
+            if (!opt1xEl || !opt2xEl) return; // Exit if elements are not present (e.g., for rentals)
+
             // Reset Styles
             document.querySelectorAll('.payment-option').forEach(el => {
-                el.classList.remove('border-[var(--bs-color)]', 'bg-blue-50');
+                el.classList.remove('border-blue-600', 'bg-blue-50');
                 el.classList.add('border-gray-200');
             });
             document.getElementById('radio-1x').querySelector('div').classList.add('hidden');
@@ -634,7 +696,7 @@
             // Apply Selection
             const selectedEl = document.getElementById(`opt-${option}x`);
             selectedEl.classList.remove('border-gray-200');
-            selectedEl.classList.add('border-[var(--bs-color)]', 'bg-blue-50');
+            selectedEl.classList.add('border-blue-600', 'bg-blue-50');
 
             document.getElementById(`radio-${option}x`).querySelector('div').classList.remove('hidden');
 
@@ -643,7 +705,7 @@
             if (option === 1) {
                 currentItem.finalPrice = currentItem.price * 0.98;
             } else {
-                currentItem.finalPrice = currentItem.price;
+                currentItem.finalPrice = currentItem.price / 2;
             }
 
             // Update Total Display
@@ -653,7 +715,7 @@
             const btn = document.getElementById('btnGerarPix');
             btn.disabled = false;
             btn.classList.remove('bg-gray-300', 'cursor-not-allowed');
-            btn.classList.add('bg-[var(--bs-color)]', 'hover:opacity-90');
+            btn.classList.add('bg-blue-900', 'hover:opacity-90');
         }
 
         function fecharModal() {
@@ -730,11 +792,11 @@
                     orderId: orderId,
                     transaction_amount: currentItem.finalPrice, // Use Final Price (Discounted or Full)
                     payment_method_id: 'pix',
-                    description: `${currentItem.name} (${currentItem.installments}x)`,
+                    description: `${currentItem.quantity}x ${currentItem.name} (${currentItem.installments}x)`,
                     payment_data: {
                         transaction_amount: currentItem.finalPrice,
                         payment_method_id: 'pix',
-                        description: `${currentItem.name} (${currentItem.installments}x)`,
+                        description: `${currentItem.quantity}x ${currentItem.name} (${currentItem.installments}x)`,
                         payer: { email: 'cliente@eletrobusiness.com.br' }
                     },
                     customPayer: {
@@ -776,6 +838,10 @@
                                 <i class='bx bx-copy'></i> Copiar Código Pix
                             </button>
 
+                            <button onclick="confirmarPagamento()" class="w-full bg-green-500 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg mb-3 hover:bg-green-600 transition-colors">
+                                <i class='bx bx-check-circle'></i> Já realizei o pagamento
+                            </button>
+
                             <p class="text-[10px] text-gray-500 flex items-center justify-center gap-1">
                                 <i class='bx bx-timer'></i> Expira em 30 minutos
                             </p>
@@ -788,7 +854,7 @@
                 console.error(e);
                 area.innerHTML = `
                     <div class="text-center p-4">
-                        <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-3 text-red-500">
+                        <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-3 text-blue-900">
                             <i class='bx bx-error text-3xl'></i>
                         </div>
                         <h3 class="font-bold text-gray-800">Erro no Pagamento</h3>
@@ -804,7 +870,7 @@
         function showToast(msg, type) {
             const t = document.createElement('div');
             t.className = 'toast';
-            t.style.background = type === 'success' ? '#22c55e' : '#ef4444';
+            t.style.background = type === 'success' ? '#22c55e' : '#1e3a8a';
             t.style.color = 'white';
             t.style.padding = '12px 20px';
             t.style.borderRadius = '50px';
@@ -822,6 +888,73 @@
 
         // Executar ao carregar
         updatePrices();
+        loadOrders();
+
+        function confirmarPagamento() {
+            // Save Order
+            const orders = JSON.parse(localStorage.getItem('myOrders') || '[]');
+            const newOrder = {
+                name: `${currentItem.quantity}x ${currentItem.name}`,
+                price: currentItem.finalPrice,
+                installments: currentItem.installments,
+                status: 'Em separação',
+                date: new Date().toLocaleDateString('pt-BR'),
+                id: 'ORD-' + Date.now()
+            };
+            orders.unshift(newOrder);
+            localStorage.setItem('myOrders', JSON.stringify(orders));
+
+            // UI Actions
+            fecharModal();
+            loadOrders();
+            switchPage('orders');
+            showToast('Pedido realizado com sucesso!', 'success');
+        }
+
+        function loadOrders() {
+            const orders = JSON.parse(localStorage.getItem('myOrders') || '[]');
+            const container = document.getElementById('dynamic-orders');
+
+            if (orders.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            orders.forEach(order => {
+                const isTwoTimes = order.installments === 2;
+                const priceText = isTwoTimes
+                    ? `2x ${order.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
+                    : order.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+                html += `
+                <div class="bg-white rounded-2xl p-5 shadow-sm mb-4 border border-yellow-100">
+                    <div class="flex gap-4">
+                        <div class="w-16 h-16 bg-yellow-50 rounded-xl flex items-center justify-center text-yellow-600">
+                            <i class='bx bx-package text-2xl'></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-[10px] uppercase font-bold text-yellow-600 mb-1 tracking-wide">Em separação</p>
+                            <h3 class="text-sm font-bold text-gray-800 leading-tight">${order.name}</h3>
+                            <p class="text-xs text-gray-500 mt-1">${priceText}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-4 border-t border-gray-100">
+                         <div>
+                            <p class="text-xs font-bold text-gray-700">Status atual:</p>
+                            <div class="flex items-center gap-2 mt-1">
+                                <i class='bx bx-loader-alt bx-spin text-yellow-500'></i>
+                                <span class="text-xs text-gray-500">Estamos separando seu pedido.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
 
         // Page Switch Logic
         function switchPage(page) {
@@ -834,19 +967,19 @@
                 shopPage.classList.remove('hidden');
                 ordersPage.classList.add('hidden');
 
-                navShop.classList.add('text-[var(--bs-color)]');
+                navShop.classList.add('text-blue-900');
                 navShop.classList.remove('text-gray-400');
 
-                navOrders.classList.remove('text-[var(--bs-color)]');
+                navOrders.classList.remove('text-blue-900');
                 navOrders.classList.add('text-gray-400');
             } else {
                 shopPage.classList.add('hidden');
                 ordersPage.classList.remove('hidden');
 
-                navShop.classList.remove('text-[var(--bs-color)]');
+                navShop.classList.remove('text-blue-900');
                 navShop.classList.add('text-gray-400');
 
-                navOrders.classList.add('text-[var(--bs-color)]');
+                navOrders.classList.add('text-blue-900');
                 navOrders.classList.remove('text-gray-400');
             }
         }
