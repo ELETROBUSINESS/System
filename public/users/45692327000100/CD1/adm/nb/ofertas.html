@@ -192,7 +192,8 @@
                         class="w-full h-full object-contain mix-blend-multiply">
                 </div>
                 <div class="flex-1">
-                    <h2 class="text-sm font-bold text-gray-800 leading-tight mb-1">6 Rolos Bobina Impressora Térmica Epson Tm-t20x
+                    <h2 class="text-sm font-bold text-gray-800 leading-tight mb-1">6 Rolos Bobina Impressora Térmica
+                        Epson Tm-t20x
                     </h2>
                     <p class="text-xs text-gray-500 mb-2">Qualidade</p>
                 </div>
@@ -204,7 +205,36 @@
                         <p class="text-xs text-gray-400 line-through font-medium">De: R$ 99,90</p>
                         <p class="text-lg highlight-price text-black">Por: R$ 87,90</p>
                     </div>
-                    <button onclick="comprarProduto('6 Rolos Bobina Impressora Térmica Epson Tm-t20x', 87.90, false, 2, false)"
+                    <button
+                        onclick="comprarProduto('6 Rolos Bobina Impressora Térmica Epson Tm-t20x', 87.90, false, 2, false)"
+                        class="bg-blue-900 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md hover:opacity-90 transition-opacity">
+                        Comprar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Produto * -->
+        <div class="product-card">
+            <div class="mb-4 flex gap-4">
+                <div class="w-24 h-24 bg-white rounded-lg flex items-center justify-center p-2 border border-gray-100">
+                    <img src="https://m.magazineluiza.com.br/a-static/420x420/computador-completo-intel-core-i5-8gb-hd-500gb-monitor-hdmi-19-5-windows-10-quantum-flex/3greentechnology/39851/1fc652c085a4844458a3cd9e01f200ab.jpeg"
+                        class="w-full h-full object-contain mix-blend-multiply">
+                </div>
+                <div class="flex-1">
+                    <h2 class="text-sm font-bold text-gray-800 leading-tight mb-1">Kit Computador p/ Ponto de Venda
+                    </h2>
+                    <p class="text-xs text-gray-500 mb-2">Acompanha: Gabinete completo + Monitor + Mouse + Teclado</p>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-100 pt-3">
+                <div class="flex justify-between items-end">
+                    <div>
+                        <p class="text-xs text-gray-400 line-through font-medium">De: R$ 1.300,90</p>
+                        <p class="text-lg highlight-price text-black">Por: R$ 1.097,90</p>
+                    </div>
+                    <button onclick="comprarProduto('Kit Computador p/ Ponto de Venda', 1097.90, false, 1, true, 4)"
                         class="bg-blue-900 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md hover:opacity-90 transition-opacity">
                         Comprar
                     </button>
@@ -649,7 +679,7 @@
             comprarProduto(nome, proRata.price, true);
         }
 
-        function comprarProduto(nome, valor, isRental = false, maxQty = 99, allowInstallments = true) {
+        function comprarProduto(nome, valor, isRental = false, maxQty = 99, allowInstallments = true, maxInstallments = 2) {
             currentItem = {
                 name: nome,
                 unitPrice: valor,
@@ -658,7 +688,8 @@
                 installments: (isRental || !allowInstallments) ? 1 : 0,
                 quantity: 1,
                 maxQty: maxQty,
-                allowInstallments: allowInstallments
+                allowInstallments: allowInstallments,
+                maxInstallments: maxInstallments
             };
 
             // Setup Description with Rental Tag if needed
@@ -741,18 +772,23 @@
                             <p id="desc-1x" class="text-[10px] text-gray-500 mt-1 pl-6">Total: ${price1x.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                         </div>
 
-                        <!-- Option 2x -->
-                        <div id="opt-2x" onclick="selectInstallments(2)" class="payment-option border ${is2xSelected ? 'border-blue-600 bg-blue-50' : 'border-gray-200'} rounded-xl p-3 cursor-pointer hover:bg-gray-50 transition-all">
-                            <div class="flex justify-between items-center">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-4 h-4 rounded-full border border-gray-300 flex items-center justify-center" id="radio-2x">
-                                        <div class="w-2 h-2 rounded-full bg-blue-600 ${is2xSelected ? '' : 'hidden'}"></div>
+                        ${Array.from({ length: currentItem.maxInstallments - 1 }, (_, i) => i + 2).map(n => {
+                    const isSelected = currentItem.installments === n;
+                    const instVal = currentItem.price / n;
+                    return `
+                                <div id="opt-${n}x" onclick="selectInstallments(${n})" class="payment-option border ${isSelected ? 'border-blue-600 bg-blue-50' : 'border-gray-200'} rounded-xl p-3 cursor-pointer hover:bg-gray-50 transition-all">
+                                    <div class="flex justify-between items-center">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-4 h-4 rounded-full border border-gray-300 flex items-center justify-center" id="radio-${n}x">
+                                                <div class="w-2 h-2 rounded-full bg-blue-600 ${isSelected ? '' : 'hidden'}"></div>
+                                            </div>
+                                            <span class="text-xs font-bold text-gray-800">${n}x no Pix (Sem juros)</span>
+                                        </div>
                                     </div>
-                                    <span class="text-xs font-bold text-gray-800">2x no Pix (Sem juros)</span>
+                                    <p id="desc-${n}x" class="text-[10px] text-gray-500 mt-1 pl-6">${n}x de ${instVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                                 </div>
-                            </div>
-                            <p id="desc-2x" class="text-[10px] text-gray-500 mt-1 pl-6">2x de ${installmentValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-                        </div>
+                            `;
+                }).join('')}
                     </div>
                 </div>`;
             }
@@ -809,10 +845,15 @@
             }
 
             const price1x = currentItem.price * 0.98;
-            const installmentValue = currentItem.price / 2;
-
             document.getElementById('desc-1x').innerText = `Total: ${price1x.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
-            document.getElementById('desc-2x').innerText = `2x de ${installmentValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+
+            for (let n = 2; n <= currentItem.maxInstallments; n++) {
+                const installmentValue = currentItem.price / n;
+                const descEl = document.getElementById(`desc-${n}x`);
+                if (descEl) {
+                    descEl.innerText = `${n}x de ${installmentValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+                }
+            }
 
             // Refresh current selection value
             if (currentItem.installments > 0) {
@@ -822,22 +863,27 @@
 
         function selectInstallments(option) {
             // Check if Elements Exist (Might not on rentals)
-            const opt1xEl = document.getElementById('opt-1x');
-            const opt2xEl = document.getElementById('opt-2x');
-            if (!opt1xEl || !opt2xEl) return; // Exit if elements are not present (e.g., for rentals)
+            const optEl = document.getElementById(`opt-${option}x`);
+            if (!optEl) return; // Exit if element is not present
 
             // Reset Styles
             document.querySelectorAll('.payment-option').forEach(el => {
                 el.classList.remove('border-blue-600', 'bg-blue-50');
                 el.classList.add('border-gray-200');
             });
-            document.getElementById('radio-1x').querySelector('div').classList.add('hidden');
-            document.getElementById('radio-2x').querySelector('div').classList.add('hidden');
+
+            // Hide all radio dots
+            for (let n = 1; n <= currentItem.maxInstallments; n++) {
+                const radio = document.getElementById(`radio-${n}x`);
+                if (radio) {
+                    const dot = radio.querySelector('div');
+                    if (dot) dot.classList.add('hidden');
+                }
+            }
 
             // Apply Selection
-            const selectedEl = document.getElementById(`opt-${option}x`);
-            selectedEl.classList.remove('border-gray-200');
-            selectedEl.classList.add('border-blue-600', 'bg-blue-50');
+            optEl.classList.remove('border-gray-200');
+            optEl.classList.add('border-blue-600', 'bg-blue-50');
 
             document.getElementById(`radio-${option}x`).querySelector('div').classList.remove('hidden');
 
@@ -846,7 +892,7 @@
             if (option === 1) {
                 currentItem.finalPrice = currentItem.price * 0.98;
             } else {
-                currentItem.finalPrice = currentItem.price / 2;
+                currentItem.finalPrice = currentItem.price / option;
             }
 
             // Update Total Display
@@ -1063,9 +1109,9 @@
 
             let html = '';
             orders.forEach(order => {
-                const isTwoTimes = order.installments === 2;
-                const priceText = isTwoTimes
-                    ? `2x ${order.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
+                const isInstallments = order.installments > 1;
+                const priceText = isInstallments
+                    ? `${order.installments}x ${order.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
                     : order.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
                 html += `
