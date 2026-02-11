@@ -83,6 +83,61 @@ const mapStatusFirebaseToUI = (fbStatus) => {
     return fbStatus;
 };
 
+// --- Modal Helpers ---
+window.openModal = (modal) => {
+    if (modal) {
+        modal.style.display = 'flex';
+        // Small timeout to allow display change to register before adding active class for transition
+        setTimeout(() => modal.classList.add('active'), 10);
+    }
+};
+
+window.closeModal = (modal) => {
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => {
+            if (!modal.classList.contains('active')) modal.style.display = 'none';
+        }, 300);
+    }
+};
+
+window.showCustomAlert = (title, message) => {
+    const modal = document.getElementById('alert-modal');
+    if (modal) {
+        document.getElementById('alert-modal-title').innerText = title;
+        document.getElementById('alert-modal-message').innerText = message;
+        openModal(modal);
+    } else {
+        alert(`${title}: ${message}`);
+    }
+};
+
+window.showCustomConfirm = (title, message, callback) => {
+    const modal = document.getElementById('confirm-modal');
+    if (modal) {
+        document.getElementById('confirm-modal-title').innerText = title;
+        document.getElementById('confirm-modal-message').innerText = message;
+
+        const confirmBtn = document.getElementById('confirm-modal-btn');
+        // Remove listeners antigos cloning node
+        const newBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+
+        newBtn.addEventListener('click', () => {
+            closeModal(modal);
+            if (callback) callback();
+        });
+
+        openModal(modal);
+        // Focus confirm for quick access
+        setTimeout(() => newBtn.focus(), 100);
+    } else {
+        if (confirm(`${title}: ${message}`)) {
+            if (callback) callback();
+        }
+    }
+};
+
 // ============================================================
 // 2. FUNÇÕES GLOBAIS DE PEDIDOS (Para o HTML acessar)
 // ============================================================
@@ -530,11 +585,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const quickAddName = document.getElementById('quick-product-name');
     const quickAddPrice = document.getElementById('quick-product-price');
     const quickAddSubmitBtn = document.getElementById('quick-add-submit-btn');
-    const alertTitle = document.getElementById('alert-title');
-    const alertMessage = document.getElementById('alert-message');
-    const confirmTitle = document.getElementById('confirm-title');
-    const confirmMessage = document.getElementById('confirm-message');
-    const confirmActionBtn = document.getElementById('confirm-action-btn');
+    const alertTitle = document.getElementById('alert-modal-title');
+    const alertMessage = document.getElementById('alert-modal-message');
+    const confirmTitle = document.getElementById('confirm-modal-title');
+    const confirmMessage = document.getElementById('confirm-modal-message');
+    const confirmActionBtn = document.getElementById('confirm-modal-btn');
     const mainNavbar = document.getElementById('main-navbar');
     const navbarItems = document.querySelectorAll('.navbar-item');
     const navbarHighlight = document.getElementById('navbar-highlight');
@@ -2703,6 +2758,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function abaterEstoquePlanilha(itensVendidos) {
+        try {
+            const itensFormatados = itensVendidos.map(item => ({
+                id: item.barcode || item.id, // Usa barcode ou id do item no carrinho
+                qty: item.quantity
+            }));
+
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'abaterEstoqueLote',
+                    itens: itensFormatados
+                })
+            });
+            const result = await response.json();
+            console.log("Estoque Planilha:", result.message);
+        } catch (e) {
+            console.error("Erro ao abater estoque na planilha:", e);
+        }
+    }
+
     async function carregarClientesDaAPI() { clientesListContainer.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px 0;"><i class="bx bx-loader-alt bx-spin"></i> Carregando...</p>'; localClientCache = null; try { const response = await fetch(SCRIPT_URL + "?action=listarClientes"); if (!response.ok) throw new Error("Erro rede."); const result = await response.json(); if (result.status === 'success') { localClientCache = result.data; console.log(`Cache cli: ${localClientCache.length}`); renderClientesPage(); } else { throw new Error(result.message || "Erro API."); } } catch (error) { console.error("Erro carregar cli:", error); clientesListContainer.innerHTML = `<p style="text-align: center; color: var(--warning-red); padding: 20px 0;">${error.message}</p>`; localClientCache = []; } }
     async function salvarClienteNaAPI(clienteData) { clienteSaveBtn.disabled = true; clienteSaveBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Salvando..."; try { const params = new URLSearchParams({ action: 'cadastrarCliente', ...clienteData }); const response = await fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET' }); if (!response.ok) throw new Error("Erro rede."); const result = await response.json(); if (result.status === 'success') { showCustomAlert("Sucesso!", result.message || "Cliente cadastrado!"); closeModal(addClienteModal); if (localClientCache !== null) { localClientCache.push(result.data); localClientCache.sort((a, b) => (a.apelido || a.nomeExibicao).localeCompare(b.apelido || b.nomeExibicao)); } renderClientesPage(); } else { throw new Error(result.message || "Erro API."); } } catch (error) { console.error("Erro salvar cli:", error); showCustomAlert("Erro Salvar", error.message); } finally { clienteSaveBtn.disabled = false; clienteSaveBtn.innerHTML = "<i class='bx bx-save'></i> Salvar"; } }
     async function abrirCaixaAPI(data) {
@@ -3732,7 +3808,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     totalDesconto
                 ),
                 salvarVendaNoHistorico(dadosVendaInterna),
-                abaterEstoqueFirebase(items)
+                abaterEstoqueFirebase(items),
+                abaterEstoquePlanilha(items)
             ];
 
             if (String(metodoPagamento).toLowerCase().includes('crediário')) {
@@ -6378,6 +6455,175 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnSubmit.innerHTML = originalBtnText;
             }
         });
+    }
+});
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    // --- Lógica Modal Atualizar Produto ---
+    const btnUpdateProduct = document.getElementById('btn-update-product');
+    const updateProductModal = document.getElementById('update-product-modal');
+    const updateProdBarcode = document.getElementById('update-prod-barcode');
+    const btnSearchUpdateProd = document.getElementById('btn-search-update-prod');
+    const updateProdLoader = document.getElementById('update-prod-loader');
+    const updateProdForm = document.getElementById('update-prod-form');
+    const btnSaveUpdateProd = document.getElementById('btn-save-update-prod');
+
+    // Inputs do Form
+    const upImg = document.getElementById('update-prod-img');
+    const upImgPreview = document.getElementById('update-prod-img-preview');
+    const upName = document.getElementById('update-prod-name');
+    const upPrice = document.getElementById('update-prod-price');
+    const upStock = document.getElementById('update-prod-stock');
+    const upUnit = document.getElementById('update-prod-unit');
+    const upCat = document.getElementById('update-prod-category');
+
+    let currentEditingProduct = null;
+
+    if (btnUpdateProduct && updateProductModal) {
+        btnUpdateProduct.addEventListener('click', () => {
+            openModal(updateProductModal);
+            updateProdForm.style.display = 'none';
+            updateProdLoader.style.display = 'none';
+            updateProdBarcode.value = '';
+            updateProdBarcode.focus();
+            currentEditingProduct = null;
+        });
+
+        const searchProductForUpdate = async () => {
+            const code = updateProdBarcode.value.trim();
+            if (!code) return;
+
+            updateProdLoader.style.display = 'block';
+            updateProdForm.style.display = 'none';
+
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=buscarProduto&codigo=${code}`);
+                const result = await response.json();
+
+                updateProdLoader.style.display = 'none';
+
+                if (result.status === 'success' && result.data) {
+                    // Produto Encontrado
+                    fillUpdateForm(result.data);
+                } else {
+                    // Produto Não Encontrado
+                    if (confirm(`Produto ${code} não encontrado. Deseja cadastrar agora?`)) {
+                        // Modo Criação
+                        currentEditingProduct = { id: code, isNew: true };
+                        clearUpdateForm();
+                        updateProdForm.style.display = 'block';
+                        upName.focus();
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+                updateProdLoader.style.display = 'none';
+                showCustomAlert("Erro", "Falha ao buscar produto.");
+            }
+        };
+
+        btnSearchUpdateProd.addEventListener('click', searchProductForUpdate);
+        updateProdBarcode.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') searchProductForUpdate();
+        });
+
+        upImg.addEventListener('change', () => {
+            if (upImg.value) {
+                upImgPreview.src = upImg.value;
+                upImgPreview.style.display = 'block';
+            } else {
+                upImgPreview.style.display = 'none';
+            }
+        });
+
+        btnSaveUpdateProd.addEventListener('click', async () => {
+            if (!currentEditingProduct) return;
+
+            const originalText = btnSaveUpdateProd.innerHTML;
+            btnSaveUpdateProd.disabled = true;
+            btnSaveUpdateProd.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Salvando...";
+
+            try {
+                const payload = {
+                    action: 'saveProduct',
+                    data: {
+                        id: currentEditingProduct.id,
+                        name: upName.value.trim(),
+                        price: upPrice.value,
+                        stock: upStock.value,
+                        unit: upUnit.value,
+                        category: upCat.value,
+                        imgUrl: upImg.value,
+                        // Preserva ou define padrão
+                        costPrice: currentEditingProduct.isNew ? 0 : currentEditingProduct.costPrice,
+                        brand: currentEditingProduct.isNew ? '' : currentEditingProduct.brand,
+                        ncm: currentEditingProduct.isNew ? '' : currentEditingProduct.ncm,
+                        cest: currentEditingProduct.isNew ? '' : currentEditingProduct.cest,
+                        cfop: currentEditingProduct.isNew ? '5102' : currentEditingProduct.cfop,
+                        origem: currentEditingProduct.isNew ? '0' : currentEditingProduct.origem,
+                        csosn: currentEditingProduct.isNew ? '102' : currentEditingProduct.csosn
+                    }
+                };
+
+                const options = {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                };
+
+                const response = await fetch(SCRIPT_URL, options);
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    showCustomAlert("Sucesso", result.message);
+                    updateProdForm.style.display = 'none';
+                    updateProdBarcode.value = '';
+                    updateProdBarcode.focus();
+
+                    // Recarrega cache discretamente
+                    if (window.carregarCacheDeProdutos) window.carregarCacheDeProdutos();
+                } else {
+                    // showCustomAlert("Erro", result.message);
+                }
+
+            } catch (e) {
+                showCustomAlert("Erro", "Erro ao salvar: " + e.toString());
+            } finally {
+                btnSaveUpdateProd.disabled = false;
+                btnSaveUpdateProd.innerHTML = originalText;
+            }
+        });
+    }
+
+    function fillUpdateForm(prod) {
+        currentEditingProduct = prod;
+        updateProdForm.style.display = 'block';
+
+        upImg.value = prod.imgUrl || '';
+        if (prod.imgUrl) {
+            upImgPreview.src = prod.imgUrl;
+            upImgPreview.style.display = 'block';
+        } else {
+            upImgPreview.style.display = 'none';
+        }
+
+        upName.value = prod.name || '';
+        upPrice.value = prod.price || '';
+        // prod.stock de listarTodosProdutos
+        upStock.value = prod.stock !== undefined ? prod.stock : '';
+        upUnit.value = prod.unit || 'UN';
+        upCat.value = prod.category || 'Geral';
+    }
+
+    function clearUpdateForm() {
+        upImg.value = '';
+        upImgPreview.style.display = 'none';
+        upName.value = '';
+        upPrice.value = '';
+        upStock.value = '';
+        upUnit.value = 'UN';
+        upCat.value = 'Geral';
     }
 });
 

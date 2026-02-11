@@ -535,6 +535,10 @@
                     style="margin-top: 0;">
                     <i class='bx bx-message-edit'></i>
                 </button>
+                <button class="btn btn-header-icon" id="btn-update-product" data-tooltip="Atualizar Produto"
+                    style="margin-top: 0;">
+                    <i class='bx bx-barcode-reader'></i>
+                </button>
                 <button class="btn btn-header-icon" id="header-close-caixa-btn" style="display: none;"
                     data-tooltip="Fechar Loja">
                     <i class='bx bx-store'></i>
@@ -2073,33 +2077,7 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="confirm-modal">
-        <div class="modal-content">
-            <div class="modal-body centered">
-                <div class="modal-icon danger"><i class='bx bx-error-alt font-40'></i></div>
-                <h3 class="font-1-5rem mb-8" id="confirm-title">Tem certeza?</h3>
-                <p id="confirm-message">Esta ação não pode ser desfeita.</p>
-                <div class="modal-footer justify-center">
-                    <button class="btn btn-secondary close-modal-btn" data-target="confirm-modal">Cancelar</button>
-                    <button class="btn btn-danger" id="confirm-action-btn" data-primary-focus="true">Confirmar</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="modal-overlay" id="alert-modal">
-        <div class="modal-content">
-            <div class="modal-body centered">
-                <div class="modal-icon info"><i class='bx bx-info-circle font-40'></i></div>
-                <h3 class="font-1-5rem mb-8" id="alert-title">Atenção</h3>
-                <p id="alert-message">Ocorreu um erro.</p>
-                <div class="modal-footer justify-center">
-                    <button class="btn btn-primary close-modal-btn" data-target="alert-modal"
-                        data-primary-focus="true">Entendi</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <div class="modal-overlay" id="add-cliente-modal">
         <div class="modal-content modal-md">
@@ -2406,7 +2384,7 @@
         <div class="brand-row">
             <img src="assets/sistema.png" alt="Logo" class="brand-img-icon">
 
-            <span class="brand-name-text">ELETRO<span class="highlight-dot">. 1.0.0.43.5</span></span>
+            <span class="brand-name-text">ELETRO<span class="highlight-dot">. 1.0.0.44</span></span>
         </div>
     </div>
     <div class="pn">
@@ -2812,6 +2790,123 @@
             </div>
         </div>
     </div>
+    </div>
+    </div>
+    </div>
+
+    <!-- MODAL ATUALIZAR PRODUTO (RÁPIDO) -->
+    <div class="modal-overlay" id="update-product-modal">
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h3>Atualizar Produto</h3>
+                <button class="close-modal-btn" data-target="update-product-modal"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Código de Barras (Scan)</label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="update-prod-barcode" class="form-input" placeholder="Escaneie..."
+                            autofocus>
+                        <button id="btn-search-update-prod" class="btn btn-primary"><i
+                                class='bx bx-search'></i></button>
+                    </div>
+                </div>
+
+                <div id="update-prod-loader" style="display:none; text-align:center; padding:20px;">
+                    <i class='bx bx-loader-alt bx-spin' style="font-size:2rem;"></i>
+                    <p>Buscando...</p>
+                </div>
+
+                <div id="update-prod-form" style="display:none; margin-top:20px;">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Foto (URL)</label>
+                            <input type="text" id="update-prod-img" class="form-input" placeholder="http://...">
+                        </div>
+                        <div class="form-group" style="display:flex; align-items:center; justify-content:center;">
+                            <img id="update-prod-img-preview" src=""
+                                style="max-width: 50px; max-height: 50px; object-fit: contain; display:none;">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nome do Produto</label>
+                        <input type="text" id="update-prod-name" class="form-input">
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Preço Venda (R$)</label>
+                            <input type="number" id="update-prod-price" class="form-input" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Estoque Atual</label>
+                            <input type="number" id="update-prod-stock" class="form-input" step="0.001">
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Unidade</label>
+                            <select id="update-prod-unit" class="form-input">
+                                <option value="UN">UN</option>
+                                <option value="KG">KG</option>
+                                <option value="CX">CX</option>
+                                <option value="PCT">PCT</option>
+                                <option value="L">L</option>
+                                <option value="M">M</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Categoria</label>
+                            <input type="text" id="update-prod-category" class="form-input">
+                        </div>
+                    </div>
+
+                    <button id="btn-save-update-prod" class="btn btn-success" style="width:100%; margin-top:15px;">
+                        <i class='bx bx-save'></i> Salvar Alterações
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal de Alerta Customizado -->
+    <div class="modal-overlay" id="alert-modal" style="z-index: 10002;">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3 id="alert-modal-title">Atenção</h3>
+                <button class="close-modal-btn" onclick="closeModal(document.getElementById('alert-modal'))"><i
+                        class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <p id="alert-modal-message" style="font-size: 1rem; color: #333; margin-bottom: 20px;">Mensagem...</p>
+                <button class="btn btn-primary" style="width: 100%;"
+                    onclick="closeModal(document.getElementById('alert-modal'))">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação Customizado -->
+    <div class="modal-overlay" id="confirm-modal" style="z-index: 10002;">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3 id="confirm-modal-title">Confirmação</h3>
+                <button class="close-modal-btn" onclick="closeModal(document.getElementById('confirm-modal'))"><i
+                        class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-modal-message" style="font-size: 1rem; color: #333; margin-bottom: 20px;">Deseja
+                    continuar?</p>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-secondary" style="flex: 1;"
+                        onclick="closeModal(document.getElementById('confirm-modal'))">Cancelar</button>
+                    <button class="btn btn-primary" id="confirm-modal-btn" style="flex: 1;">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 
 </html>

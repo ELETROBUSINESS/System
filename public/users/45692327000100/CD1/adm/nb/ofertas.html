@@ -184,6 +184,34 @@
             </div>
         </div>
 
+        <!-- Produto * -->
+        <div class="product-card">
+            <div class="mb-4 flex gap-4">
+                <div class="w-24 h-24 bg-white rounded-lg flex items-center justify-center p-2 border border-gray-100">
+                    <img src="https://http2.mlstatic.com/D_NQ_NP_2X_884338-MLB92318976611_092025-F.webp"
+                        class="w-full h-full object-contain mix-blend-multiply">
+                </div>
+                <div class="flex-1">
+                    <h2 class="text-sm font-bold text-gray-800 leading-tight mb-1">6 Rolos Bobina Impressora Térmica Epson Tm-t20x
+                    </h2>
+                    <p class="text-xs text-gray-500 mb-2">Qualidade</p>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-100 pt-3">
+                <div class="flex justify-between items-end">
+                    <div>
+                        <p class="text-xs text-gray-400 line-through font-medium">De: R$ 99,90</p>
+                        <p class="text-lg highlight-price text-black">Por: R$ 87,90</p>
+                    </div>
+                    <button onclick="comprarProduto('6 Rolos Bobina Impressora Térmica Epson Tm-t20x', 87.90, false, 2, false)"
+                        class="bg-blue-900 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md hover:opacity-90 transition-opacity">
+                        Comprar
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Produto 2 -->
         <div class="product-card">
             <div class="mb-4 flex gap-4">
@@ -350,103 +378,104 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Revenda Produto 3 -->
-        <div class="product-card mt-4">
-            <div class="mb-4 flex gap-4">
-                <div class="w-24 h-24 bg-white rounded-lg flex items-center justify-center p-2 border border-gray-100">
-                    <img src="https://www.papelariaartnova.com.br/img/products/caneta-marcador-permanente-ponta-dupla-estojo-c-48-cores-touch_1_600.png"
-                        class="w-full h-full object-contain mix-blend-multiply">
-                </div>
-                <div class="flex-1">
-                    <h2 class="text-sm font-bold text-gray-800 leading-tight mb-1">Canetinha Touch 48 Un</h2>
-                    <p class="text-[10px] text-blue-600 mb-1 font-bold"><i class='bx bxs-badge-check'></i> SUPREO</p>
-                    <p class="text-[9px] text-gray-400 mb-2">+500mil vendas</p>
-                </div>
-            </div>
-
-            <div class="border-t border-gray-100 pt-3">
-                <div class="flex justify-between items-end">
-                    <div>
-                        <p class="text-[10px] text-gray-400">Limite: 5 unidades</p>
-                        <p class="text-lg highlight-price text-black">R$ 29,90 <span
-                                class="text-xs text-gray-500 font-normal">un</span></p>
+            <!-- Revenda Produto 3 -->
+            <div class="product-card mt-4">
+                <div class="mb-4 flex gap-4">
+                    <div
+                        class="w-24 h-24 bg-white rounded-lg flex items-center justify-center p-2 border border-gray-100">
+                        <img src="https://www.papelariaartnova.com.br/img/products/caneta-marcador-permanente-ponta-dupla-estojo-c-48-cores-touch_1_600.png"
+                            class="w-full h-full object-contain mix-blend-multiply">
                     </div>
-                    <button onclick="comprarProduto('Canetinha Touch 48 Un', 29.90, false, 5, false)"
-                        class="bg-blue-900 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md hover:opacity-90 transition-opacity">
-                        Comprar
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast Container -->
-    <div id="toast-container"
-        style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 3000; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 350px; pointer-events: none;">
-    </div>
-
-    <!-- Modal Pagamento -->
-    <div id="modalPagamento" class="modal"
-        style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000; align-items: flex-end; justify-content: center;">
-        <div class="bg-white w-full max-w-[500px] rounded-t-3xl p-6 shadow-2xl animate-[slideInUp_0.3s_ease] relative">
-
-            <!-- Close Button -->
-            <button onclick="fecharModal()"
-                class="absolute top-4 right-4 p-2 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 transition-colors">
-                <i class='bx bx-x text-xl'></i>
-            </button>
-
-            <div class="text-center mb-6 mt-2">
-                <div
-                    class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 text-blue-600">
-                    <i class='bx bx-check-shield text-2xl'></i>
-                </div>
-                <h2 class="text-xl font-bold text-gray-800">Finalizar Compra</h2>
-                <p class="text-xs text-gray-500 mt-1">Ambiente seguro verificado</p>
-            </div>
-
-            <div class="bg-gray-50 p-4 rounded-xl mb-6 border border-gray-100">
-                <div class="flex justify-between items-start mb-2">
-                    <div>
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Produto</p>
-                        <h3 id="pagamento-descricao" class="text-sm font-semibold text-gray-800 leading-tight">...
-                        </h3>
+                    <div class="flex-1">
+                        <h2 class="text-sm font-bold text-gray-800 leading-tight mb-1">Canetinha Touch 48 Un</h2>
+                        <p class="text-[10px] text-blue-600 mb-1 font-bold"><i class='bx bxs-badge-check'></i> SUPREO
+                        </p>
+                        <p class="text-[9px] text-gray-400 mb-2">+500mil vendas</p>
                     </div>
                 </div>
-                <div class="border-t border-gray-200 my-3"></div>
-                <div class="flex justify-between items-end">
-                    <span class="text-xs font-medium text-gray-500">Total a pagar:</span>
-                    <h2 id="pagamento-valor" class="text-2xl font-bold text-black leading-none">...</h2>
-                </div>
-            </div>
 
-            <div id="payment-area">
-                <div class="space-y-3">
-                    <div class="flex items-center gap-3 p-3 border border-blue-200 bg-blue-50 rounded-lg">
-                        <i class='bx bx-qr text-2xl text-blue-600'></i>
+                <div class="border-t border-gray-100 pt-3">
+                    <div class="flex justify-between items-end">
                         <div>
-                            <p class="text-sm font-bold text-gray-800">Pix Instantâneo</p>
-                            <p class="text-[10px] text-blue-700">Aprovação imediata</p>
+                            <p class="text-[10px] text-gray-400">Limite: 5 unidades</p>
+                            <p class="text-lg highlight-price text-black">R$ 29,90 <span
+                                    class="text-xs text-gray-500 font-normal">un</span></p>
                         </div>
-                        <div class="ml-auto">
-                            <i class='bx bxs-check-circle text-blue-600 text-lg'></i>
-                        </div>
+                        <button onclick="comprarProduto('Canetinha Touch 48 Un', 29.90, false, 5, false)"
+                            class="bg-blue-900 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md hover:opacity-90 transition-opacity">
+                            Comprar
+                        </button>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <button id="btnGerarPix" onclick="gerarPagamento()"
-                    class="w-full mt-6 bg-[var(--bs-color)] text-white py-4 rounded-xl font-bold text-base shadow-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">
-                    <i class='bx bx-lock-alt'></i> Comprar Agora
+        <!-- Toast Container -->
+        <div id="toast-container"
+            style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 3000; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 350px; pointer-events: none;">
+        </div>
+
+        <!-- Modal Pagamento -->
+        <div id="modalPagamento" class="modal"
+            style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000; align-items: flex-end; justify-content: center;">
+            <div
+                class="bg-white w-full max-w-[500px] rounded-t-3xl p-6 shadow-2xl animate-[slideInUp_0.3s_ease] relative">
+
+                <!-- Close Button -->
+                <button onclick="fecharModal()"
+                    class="absolute top-4 right-4 p-2 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 transition-colors">
+                    <i class='bx bx-x text-xl'></i>
                 </button>
 
-                <p class="text-[10px] text-center text-gray-400 mt-4 flex items-center justify-center gap-1">
-                    <i class='bx bx-shield-quarter'></i> Seus dados estão protegidos.
-                </p>
+                <div class="text-center mb-6 mt-2">
+                    <div
+                        class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 text-blue-600">
+                        <i class='bx bx-check-shield text-2xl'></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800">Finalizar Compra</h2>
+                    <p class="text-xs text-gray-500 mt-1">Ambiente seguro verificado</p>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded-xl mb-6 border border-gray-100">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Produto</p>
+                            <h3 id="pagamento-descricao" class="text-sm font-semibold text-gray-800 leading-tight">...
+                            </h3>
+                        </div>
+                    </div>
+                    <div class="border-t border-gray-200 my-3"></div>
+                    <div class="flex justify-between items-end">
+                        <span class="text-xs font-medium text-gray-500">Total a pagar:</span>
+                        <h2 id="pagamento-valor" class="text-2xl font-bold text-black leading-none">...</h2>
+                    </div>
+                </div>
+
+                <div id="payment-area">
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-3 p-3 border border-blue-200 bg-blue-50 rounded-lg">
+                            <i class='bx bx-qr text-2xl text-blue-600'></i>
+                            <div>
+                                <p class="text-sm font-bold text-gray-800">Pix Instantâneo</p>
+                                <p class="text-[10px] text-blue-700">Aprovação imediata</p>
+                            </div>
+                            <div class="ml-auto">
+                                <i class='bx bxs-check-circle text-blue-600 text-lg'></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="btnGerarPix" onclick="gerarPagamento()"
+                        class="w-full mt-6 bg-[var(--bs-color)] text-white py-4 rounded-xl font-bold text-base shadow-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">
+                        <i class='bx bx-lock-alt'></i> Comprar Agora
+                    </button>
+
+                    <p class="text-[10px] text-center text-gray-400 mt-4 flex items-center justify-center gap-1">
+                        <i class='bx bx-shield-quarter'></i> Seus dados estão protegidos.
+                    </p>
+                </div>
             </div>
         </div>
-    </div>
     </div> <!-- End of Shop Page -->
 
     <!-- Orders Page -->

@@ -135,7 +135,7 @@
         </div>
 
         <!-- Anúncio Ofertas (Minimalist) -->
-        <div class="finance-card mb-4 cursor-pointer relative overflow-hidden group hover:shadow-lg transition-all duration-300"
+        <div class="finance-card cursor-pointer relative overflow-hidden group hover:shadow-lg transition-all duration-300"
             onclick="window.location.href='ofertas.html'"
             style="height: 70px; display: flex; align-items: center; padding: 0 20px;">
 
@@ -178,36 +178,12 @@
                         </div>
                     </div>
 
-                    <div class="divider-container flex items-center justify-center w-[100px]">
-                        <div class="toggle-switch" id="main-toggle" onmousedown="startHold()" onmouseup="endHold()"
-                            ontouchstart="startHold()" ontouchend="endHold()">
-                            <div class="toggle-fill">
-                                <div class="wind-line" style="top: 25%;"></div>
-                                <div class="wind-line" style="top: 50%;"></div>
-                                <div class="wind-line" style="top: 75%;"></div>
-                            </div>
-                            <div class="toggle-thumb" id="thumb"><i class='bx bx-chevron-right'></i></div>
-                        </div>
-                        <div id="interaction-hint">Segure para trocar</div>
-                    </div>
-
-                    <!-- Cred-section removed from here as per new layout request (moved to balloon) -->
-                    <!-- If user wanted to KEEP it here but just add balloon, I should probably keep it hidden or repurpose -->
-                    <!-- But request implies balloons replace the old 'Vendas a receber' text which was 'valor2'. 
-                             The 'cred-section' (Crédito a receber) was part of the toggle. -->
-                    <!-- Let's keep the structure but maybe hide it or let script handle visibility? 
-                             The user asked to change "Em a receber...". 
-                             If I remove 'cred-section' ID, script might break. Let's keep it but hidden effectively if needed, 
-                             OR better, update the script to target the new balloon for crediario values.
-                             Wait, the user said: "credito (vai mostrar todas as vendas a receber no mês em vigor)".
-                             Currently 'cred-section' shows 'cred-val'.
-                             I will duplicate the ID 'cred-val' issue if I am not careful. 
-                             Let's RENAME the old one to avoid conflict or just update script to target new one. 
-                             Script updates 'cred-val'. I will change the ID here to 'cred-val-legacy' and use 'cred-val' in the balloon.
-                        -->
-                    <div class="flex-1 text-right section-content section-disabled" id="cred-section">
-                        <p class="text-[10px] font-semibold text-gray-400 uppercase mb-1">Crédito a receber</p>
-                        <span class="text-xl font-bold text-gray-800" id="cred-val-legacy">R$ 0k</span>
+                    <div class="divider-container flex items-center justify-end w-[130px]">
+                        <button onclick="openClosingModal()"
+                            class="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-2 rounded-full hover:bg-red-100 transition-colors">
+                            <i class='bx bx-check-double text-lg'></i>
+                            <span class="text-[10px] font-bold uppercase tracking-wide">Fechar</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -289,6 +265,25 @@
                     <i class='bx bx-key' style="font-size: 28px;"></i>
                 </div>
                 <span class="shortcut-label-free">Chave</span>
+            </div>
+        </div>
+
+
+        <!-- 5. Estoque em Loja (Card Financeiro) -->
+        <div class="finance-card estoque-area mt-4">
+            <div class="p-6">
+                <!-- Header (Optional for this card, kept minimal as requested initially, but can be centered if ref implies exact copy) 
+                     Actually, the user asked to 'use a como referencia' for the card structure.
+                     Original was minimal. Let's make it consistent.
+                -->
+                <div class="flex flex-col">
+                    <h3 class="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-1">Mercadoria em Loja
+                    </h3>
+                    <div class="flex items-baseline flex-nowrap whitespace-nowrap">
+                        <span class="text-xl font-bold text-gray-800">R$ 0,00</span>
+                    </div>
+                    <p class="text-[9px] text-gray-400 mt-1">Campanha de Registro de Estoque</p>
+                </div>
             </div>
         </div>
     </div>
@@ -416,6 +411,28 @@
         </div>
     </div>
 
+    <!-- Modal Fechamento Caixa (Simples) -->
+    <div id="closing-modal" class="modal-overlay-access">
+        <div class="modal-access-content" style="max-width: 380px;">
+            <span class="close-modal-access" onclick="closeClosingModal()">&times;</span>
+            <div class="flex flex-col items-center">
+                <div class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-3">
+                    <i class='bx bx-time-five text-2xl text-red-600'></i>
+                </div>
+            </div>
+
+            <div class="text-center mb-4">
+                <p class="text-gray-800 font-bold text-lg">Horário de fechamento</p>
+                <p class="text-gray-500 text-sm mt-1">agendado para 20h</p>
+            </div>
+
+            <button onclick="closeClosingModal()"
+                class="w-full bg-red-600 text-white font-bold py-3 rounded-lg text-sm hover:bg-red-700 transition-colors shadow-lg shadow-red-200">
+                ENTENDI
+            </button>
+        </div>
+    </div>
+
     <!-- Script Unificado -->
     <script src="/assets/js/script26.js"></script>
 
@@ -479,6 +496,22 @@
             const rawTimeFraction = timeLeft / TIME_LIMIT;
             const offset = FULL_DASH_ARRAY - (rawTimeFraction * FULL_DASH_ARRAY);
             circle.style.strokeDashoffset = offset;
+        }
+
+        // --- Logic For Closing Modal (Simple) ---
+        function openClosingModal() {
+            const modal = document.getElementById('closing-modal');
+            modal.classList.add('show');
+        }
+
+        function closeClosingModal() {
+            document.getElementById('closing-modal').classList.remove('show');
+        }
+
+        function confirmClosing() {
+            // Logic to verify/close
+            alert("Caixa fechado e validado com sucesso!");
+            closeClosingModal();
         }
     </script>
 </body>
