@@ -93,11 +93,20 @@
     </div>
 
     <!-- Promo Banner Fixed -->
-    <!-- <div class="promo-banner-fixed">
-        <span class="promo-text-small">ATÉ</span>
-        <span class="promo-text-large">10X</span>
-        <span class="promo-text-sub">*Material escolar</span>
-    </div> -->
+    <div class="promo-banner-fixed">
+        <div class="confetti confetti-1"></div>
+        <div class="confetti confetti-2"></div>
+        <div class="confetti confetti-3"></div>
+        <div class="confetti confetti-4"></div>
+        <div class="confetti confetti-5"></div>
+        <div class="confetti confetti-6"></div>
+        <div class="confetti confetti-7"></div>
+        <div class="confetti confetti-8"></div>
+        <i class='bx bxs-mask promo-mask-icon'></i>
+        <span class="promo-text-small">Carnaval de</span>
+        <span class="promo-text-large">Ofertas</span>
+        <span class="promo-text-sub">até 40% OFF</span>
+    </div>
 
     <div id="sale-processing-notification" class="notification-sidebar">
         <div class="notif-icon-wrapper">
@@ -531,6 +540,10 @@
         <div class="app-header">
             <h1>Ponto de Venda</h1>
             <div style="display: flex; gap: 12px; align-items: center;">
+                <button class="btn btn-header-icon" id="btn-festa-promo" data-tooltip="Festa"
+                    style="margin-top: 0; background: #db0038; color: white;">
+                    <i class='bx bx-party'></i>
+                </button>
                 <button class="btn btn-header-icon" id="btn-sangria" data-tooltip="Saída de Caixa"
                     style="margin-top: 0;">
                     <i class='bx bx-message-edit'></i>
@@ -876,6 +889,10 @@
                     </div>
 
                     <div class="filter-capsules" id="product-filters">
+                        <button class="filter-cap" data-filter="offers" style="border-color: #db0038; color: #db0038;">
+                            <i class='bx bx-party'></i> Ofertas <span class="badge-count" id="count-offers"
+                                style="background: rgba(219, 0, 56, 0.1); color: #db0038;">0</span>
+                        </button>
                         <button class="filter-cap active" data-filter="all">
                             Todos <span class="badge-count" id="count-all">0</span>
                         </button>
@@ -2870,7 +2887,69 @@
             </div>
         </div>
     </div>
-    <!-- Modal de Alerta Customizado -->
+    <!-- MODAL FESTA (PROMOÇÃO) -->
+    <div class="modal-overlay" id="modal-festa-promo">
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h3><i class='bx bx-party'></i> Carnaval de Ofertas</h3>
+                <button class="close-modal-btn" data-target="modal-festa-promo"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Código de Barras</label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="festa-barcode-input" class="form-input"
+                            placeholder="Escaneie o produto..." autofocus>
+                        <button id="btn-festa-search" class="btn btn-primary"><i class='bx bx-search'></i></button>
+                    </div>
+                </div>
+
+                <div id="festa-product-info" style="display:none; margin-top:20px;">
+                    <div class="product-info-card"
+                        style="display:flex; gap:15px; align-items:center; background:#f9fafb; padding:15px; border-radius:12px; margin-bottom:20px; border: 1px solid #e5e7eb;">
+                        <div class="festa-img-wrapper"
+                            style="width:70px; height:70px; background:white; border-radius:10px; display:flex; align-items:center; justify-content:center; border: 1px solid #eee; overflow:hidden;">
+                            <img id="festa-prod-img" src="" style="width:100%; height:100%; object-fit:contain;">
+                        </div>
+                        <div style="flex:1;">
+                            <h4 id="festa-prod-name" style="margin:0; font-size:1.1rem; color:#111;">Nome do Produto
+                            </h4>
+                            <p id="festa-prod-price-orig" style="margin:5px 0 0; color:#6b7280; font-weight:600;">Preço
+                                Atual: R$ 0,00</p>
+                        </div>
+                    </div>
+
+                    <div class="form-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                        <div class="form-group">
+                            <label>Preço de Oferta (R$)</label>
+                            <input type="number" id="festa-offer-price" class="form-input" step="0.01"
+                                placeholder="0,00">
+                        </div>
+                        <div class="form-group">
+                            <label>Desconto (%)</label>
+                            <div style="position:relative;">
+                                <input type="text" id="festa-discount-perc" class="form-input" readonly
+                                    style="background:#f3f4f6; padding-right:35px; font-weight:700; color:#db0038;">
+                                <span
+                                    style="position:absolute; right:12px; top:50%; transform:translateY(-50%); color:#9ca3af;">%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="btn-save-festa-promo" class="btn btn-success"
+                        style="width:100%; margin-top:20px; background:#db0038; border:none; height:45px; font-weight:700; color: white;">
+                        <i class='bx bx-check-double'></i> CADASTRAR OFERTA
+                    </button>
+                </div>
+
+                <div id="festa-loader" style="display:none; text-align:center; padding:30px;">
+                    <i class='bx bx-loader-alt bx-spin' style="font-size:2.5rem; color:#db0038;"></i>
+                    <p style="margin-top:10px; color:#6b7280;">Buscando base de dados...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="alert-modal" style="z-index: 10002;">
         <div class="modal-content modal-sm">
             <div class="modal-header">

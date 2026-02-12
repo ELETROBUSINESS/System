@@ -337,7 +337,7 @@ function doGet(e) {
             if (!sheet || sheet.getLastRow() <= 1) {
                 response = [];
             } else {
-                const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 15).getValues();
+                const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 17).getValues();
                 response = data.map(row => {
                     let unidadeCrua = String(row[12] || "UN").toUpperCase().trim();
                     let unidadeFinal = mapaUnidades[unidadeCrua] || "UN";
@@ -354,7 +354,8 @@ function doGet(e) {
                         cfop: row[11] || "",
                         unit: unidadeFinal,
                         origem: row[13] || "",
-                        csosn: row[14] || ""
+                        csosn: row[14] || "",
+                        promoPrice: row[16] // Coluna Q
                     };
                 });
             }
@@ -625,7 +626,8 @@ function listarTodosProdutos() {
                 cfop: String(item.cfop || ""),
                 unit: String(item.unidade || "UN"),
                 origem: String(item.origem || "0"),
-                csosn: String(item.csosn || "")
+                csosn: String(item.csosn || ""),
+                promoPrice: parseFloat(item.promocional) || 0
             };
         }).filter(p => p.id && p.id !== "");
 
@@ -1922,9 +1924,10 @@ function saveProduct(data) {
             "ncm": String(data.ncm || ""),
             "cest": String(data.cest || ""),
             "cfop": String(data.cfop || "5102"),
-            "unidade": data.unit || 'UN',
-            "origem": data.origem || '0',
-            "csosn": data.csosn || '102'
+            unit: data.unit || 'UN',
+            origem: data.origem || '0',
+            csosn: data.csosn || '102',
+            "promocional": parseFloat(data.promoPrice) || 0
             // O campo 'cadastrado' (ou TRUE) não parece ter header padrão no getSheet, verifique se precisa
         };
 

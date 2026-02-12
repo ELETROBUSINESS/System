@@ -1171,10 +1171,17 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // --- VALIDAÇÃO DE OFERTA NO RENDER ---
+        const isOfferApplicable = (!selectedPaymentMethod || selectedPaymentMethod === 'Dinheiro' || selectedPaymentMethod === 'PIX');
+
         // 2. Loop para desenhar os itens
         cart.forEach(item => {
             const tr = document.createElement('tr');
             tr.dataset.id = item.id;
+
+            // Define se a oferta está "ativa" visualmente
+            const showOfferVisuals = item.hasOffer && isOfferApplicable;
+            const itemDisplayPrice = showOfferVisuals ? item.price : item.originalPrice;
 
             // Define ícone base (pode melhorar se tiver imagem real)
             const iconHtml = item.imgUrl
@@ -1187,7 +1194,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="prod-icon-box">${iconHtml}</div>
                         <div class="prod-info-box">
                             <span class="prod-name">${item.name}</span>
-                            <span class="prod-barcode">#${item.id}</span>
+                            <div style="display:flex; gap:6px; align-items:center;">
+                                <span class="prod-barcode">#${item.id}</span>
+                                ${item.hasOffer ? `
+                                    <span class="carnaval-tag" style="padding: 1px 6px; font-size: 0.6rem; background:${showOfferVisuals ? '#db0038' : '#e5e7eb'}; color:${showOfferVisuals ? 'white' : '#9ca3af'}; border-radius:10px; font-weight:700; ${!showOfferVisuals ? 'text-decoration:line-through;' : ''}">
+                                        <i class='bx bx-party'></i> Carnaval
+                                    </span>
+                                ` : ''}
+                            </div>
                         </div>
                     </div>
                 </td>
@@ -1201,24 +1215,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 </td>
                 
                 <td class="text-center">
-                    <span class="unit-price-display">${formatCurrency(item.originalPrice)}</span>
+                    <div style="display:flex; flex-direction:column; align-items:center;">
+                        <span class="unit-price-display" style="${showOfferVisuals ? 'color:#db0038; font-weight:700;' : ''}">${formatCurrency(itemDisplayPrice)}</span>
+                        ${showOfferVisuals ? `<small style="text-decoration:line-through; color:#9ca3af; font-size:0.7rem;">${formatCurrency(item.originalPrice)}</small>` : ''}
+                        ${item.hasOffer && !isOfferApplicable ? `<small style="color:#ef4444; font-size:0.6rem; font-weight:600;">(Só p/ Dinheiro/PIX)</small>` : ''}
+                    </div>
                 </td>
                 
                 <td class="text-center">
-    <div class="discount-capsule" title="Clique para editar">
-        <input type="number" 
-               class="discount-input-embedded" 
-               value="${item.discountPercent || ''}" 
-               placeholder="0" 
-               min="0" max="100"
-               onchange="updateCartItem('${item.id}', 'discountPercent', this.value)"
-               onclick="this.select()">
-        <span class="discount-symbol">%</span>
-    </div>
-</td>
+                    <div class="discount-capsule" title="${item.hasOffer ? 'Oferta Carnaval' : 'Clique para editar'}">
+                        <input type="number" 
+                               class="discount-input-embedded" 
+                               value="${showOfferVisuals ? (item.discountPercent ? parseFloat(item.discountPercent).toFixed(0) : '') : '0'}" 
+                               placeholder="0" 
+                               min="0" max="100"
+                               ${item.hasOffer ? 'readonly disabled style="background:transparent; cursor:default;"' : `onchange="updateCartItem('${item.id}', 'discountPercent', this.value)"`}
+                               onclick="this.select()">
+                        <span class="discount-symbol">%</span>
+                    </div>
+                </td>
                 
                 <td class="text-right" style="padding-right: 20px;">
-                    <span class="total-price-display">${formatCurrency(item.price * item.quantity)}</span>
+                    <span class="total-price-display">${formatCurrency(itemDisplayPrice * item.quantity)}</span>
                 </td>
                 
                 <td class="text-center">
@@ -1250,9 +1268,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const updateSummary = () => {
+        // --- LÓGICA DE VALIDAÇÃO DE OFERTA POR PAGAMENTO ---
+        // A oferta de "Carnaval" (promocional) só é válida para Dinheiro ou PIX
+        const isOfferApplicable = (!selectedPaymentMethod || selectedPaymentMethod === 'Dinheiro' || selectedPaymentMethod === 'PIX');
+
         // 1. Cálculos (Mantidos)
         const subtotalGross = cart.reduce((acc, item) => acc + (item.originalPrice * item.quantity), 0);
-        const totalNetItems = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+        const totalNetItems = cart.reduce((acc, item) => {
+            let itemPrice = item.price;
+
+            // Se o item tem oferta mas o pagamento não permite, usa o preço original
+            if (item.hasOffer && !isOfferApplicable) {
+                // Se existe um desconto manual (não vindo da oferta), poderíamos aplicar, 
+                // mas como bloqueamos a edição de itens com oferta, usamos o cheio.
+                itemPrice = item.originalPrice;
+            }
+
+            return acc + (itemPrice * item.quantity);
+        }, 0);
+
         const totalDiscount = (subtotalGross - totalNetItems) + discount;
         const finalTotal = subtotalGross - totalDiscount;
 
@@ -1385,11 +1420,14 @@ document.addEventListener('DOMContentLoaded', () => {
         ).length;
 
         const pending = total - ok;
+        const offers = localProductCache.filter(p => p.promoPrice && parseFloat(p.promoPrice) > 0).length;
 
         document.getElementById('count-all').textContent = total;
         document.getElementById('count-ok').textContent = ok;
         document.getElementById('count-pending').textContent = pending;
+        if (document.getElementById('count-offers')) document.getElementById('count-offers').textContent = offers;
     };
+    window.updateProductCounters = updateProductCounters;
 
     // 1. Função Renderizar (COM PAGINAÇÃO)
     const renderProdutosPage = () => {
@@ -1428,6 +1466,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (currentProductFilter === 'fiscal_ok' && !isFiscalOk) return false;
             if (currentProductFilter === 'fiscal_pending' && isFiscalOk) return false;
+            if (currentProductFilter === 'offers' && !(p.promoPrice && parseFloat(p.promoPrice) > 0)) return false;
 
             return true;
         });
@@ -1470,9 +1509,10 @@ document.addEventListener('DOMContentLoaded', () => {
         table.innerHTML = `
         <thead>
             <tr>
-                <th width="45%">Produto / Marca</th>
+                <th width="40%">Produto / Marca</th>
                 <th width="15%">Preço</th>
-                <th width="25%">Situação Fiscal</th>
+                <th width="15%">Desc. %</th>
+                <th width="20%">Situação Fiscal</th>
                 <th width="10%" class="text-center">Ações</th>
             </tr>
         </thead>
@@ -1512,6 +1552,18 @@ document.addEventListener('DOMContentLoaded', () => {
             <td>
                 <div style="font-weight:600; color:var(--text-dark);">${formatCurrency(prod.price)}</div>
                 ${prod.costPrice > 0 ? `<small style="color:var(--text-light); font-size:0.7rem;">Custo: ${formatCurrency(prod.costPrice)}</small>` : ''}
+            </td>
+            <td>
+                ${prod.promoPrice && prod.promoPrice > 0 ? `
+                    <div class="carnaval-tag-wrapper">
+                        <span class="carnaval-tag">
+                            <i class='bx bx-party'></i> Carnaval
+                        </span>
+                        <div class="carnaval-value">
+                            ${(((prod.price - prod.promoPrice) / prod.price) * 100).toFixed(0)}% OFF
+                        </div>
+                    </div>
+                ` : '<span style="color:var(--text-light); font-size:0.8rem;">---</span>'}
             </td>
             <td>
                 ${statusHtml}
@@ -1584,6 +1636,7 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = '';
         container.appendChild(table);
     };
+    window.renderProdutosPage = renderProdutosPage;
 
     // --- FUNÇÃO RENDERIZAR CLIENTES (VERSÃO EMBLEMAS + CORREÇÃO DATA) ---
     // --- SUBSTITUA A FUNÇÃO renderClientesPage POR ESTA ---
@@ -2421,9 +2474,11 @@ document.addEventListener('DOMContentLoaded', () => {
             let discountPct = 0;
             let isOffer = false;
 
-            // Se for Firebase e tiver oferta válida, calcula o preço final
-            if (product.isFirebase && product.priceOffer > 0 && product.priceOffer < basePrice) {
-                finalPrice = product.priceOffer;
+            // Se tiver oferta (Planilha ou Firebase)
+            const offerPrice = product.promoPrice || product.priceOffer || 0;
+
+            if (offerPrice > 0 && offerPrice < basePrice) {
+                finalPrice = parseFloat(offerPrice);
                 discountPct = ((basePrice - finalPrice) / basePrice) * 100;
                 isOffer = true;
             }
@@ -2860,6 +2915,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // ------------------------------
 
             updateSummary();
+            renderCart(); // Garante que as tags de oferta atualizem visualmente
             closeModal(paymentModal);
         } else {
             showCustomAlert("Atenção", "Confirme ou cancele a divisão de pagamento.");
@@ -5496,7 +5552,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         searchResultsGrid.innerHTML = results.map(p => {
             const hasImage = p.imgUrl && p.imgUrl.length > 10;
-            const preco = parseFloat(p.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            const hasOffer = p.promoPrice && parseFloat(p.promoPrice) > 0;
+            const actualPrice = hasOffer ? parseFloat(p.promoPrice) : parseFloat(p.price || 0);
+            const originalPriceFormatted = parseFloat(p.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            const finalPriceFormatted = actualPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
             // Image or Icon Logic
             let imgHTML = '';
@@ -5507,20 +5566,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             return `
-            <div class="adv-product-card">
+            <div class="adv-product-card ${hasOffer ? 'has-offer-card' : ''}">
                 ${imgHTML}
 
                 <div class="adv-card-body">
                     <h4 class="adv-card-title" title="${p.name}">${p.name}</h4>
-                    <span class="adv-card-subtitle">#${p.id} ${p.brand ? '• ' + p.brand : ''}</span>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span class="adv-card-subtitle">#${p.id}</span>
+                        ${hasOffer ? `<span class="carnaval-tag" style="font-size: 0.55rem; padding: 1px 6px; background:#db0038; color:white; border-radius:10px; font-weight:700;"><i class='bx bx-party'></i> Carnaval</span>` : ''}
+                    </div>
                 </div>
 
                 <div class="adv-card-price-box">
-                    <div class="adv-card-price">${preco}</div>
+                    <div class="adv-card-price" style="${hasOffer ? 'color:#db0038; font-weight:800;' : ''}">${finalPriceFormatted}</div>
+                    ${hasOffer ? `<small class="adv-card-original-price" style="text-decoration:line-through;">${originalPriceFormatted}</small>` : ''}
                 </div>
 
                 <div class="adv-card-actions">
-                     <button class="btn-adv-action-icon btn-add" title="Adicionar" onclick="event.stopPropagation(); addToCartByCode('${p.id}')">
+                     <button class="btn-adv-action-icon btn-add" title="Adicionar" onclick="event.stopPropagation(); window.addToCartByCode('${p.id}')">
                         <i class='bx bx-plus'></i>
                      </button>
                      <button class="btn-adv-action-icon btn-details" title="Detalhes" onclick="event.stopPropagation(); if(typeof openEditProductModal === 'function') openEditProductModal('${p.id}');">
@@ -6624,6 +6687,173 @@ document.addEventListener('DOMContentLoaded', () => {
         upStock.value = '';
         upUnit.value = 'UN';
         upCat.value = 'Geral';
+    }
+
+    // =======================================================
+    // == LÓGICA DO MODAL FESTA (PROMOÇÃO) ==
+    // =======================================================
+    const btnFestaPromo = document.getElementById('btn-festa-promo');
+    const modalFestaPromo = document.getElementById('modal-festa-promo');
+    const festaBarcode = document.getElementById('festa-barcode-input');
+    const btnFestaSearch = document.getElementById('btn-festa-search');
+    const festaLoader = document.getElementById('festa-loader');
+    const festaProductInfo = document.getElementById('festa-product-info');
+    const btnSaveFesta = document.getElementById('btn-save-festa-promo');
+
+    let currentFestaProduct = null;
+
+    if (btnFestaPromo) {
+        btnFestaPromo.addEventListener('click', () => {
+            if (typeof openModal === 'function') openModal(modalFestaPromo);
+            else modalFestaPromo.style.display = 'flex';
+
+            if (festaBarcode) {
+                festaBarcode.value = '';
+                setTimeout(() => festaBarcode.focus(), 300);
+            }
+            if (festaProductInfo) festaProductInfo.style.display = 'none';
+        });
+    }
+
+    const searchProductForFesta = async () => {
+        const code = festaBarcode ? festaBarcode.value.trim() : '';
+        if (!code) return;
+
+        if (festaLoader) festaLoader.style.display = 'block';
+        if (festaProductInfo) festaProductInfo.style.display = 'none';
+        currentFestaProduct = null;
+
+        try {
+            // Primeiro busca no cache local se houver
+            let prod = localProductCache ? localProductCache.find(p => String(p.id) === code) : null;
+
+            if (!prod) {
+                // Se não achou no cache, busca na API
+                const response = await fetch(`${SCRIPT_URL}?action=buscarProduto&codigo=${code}`);
+                const result = await response.json();
+                if (result.status === 'success') prod = result.data;
+            }
+
+            if (festaLoader) festaLoader.style.display = 'none';
+
+            if (prod) {
+                currentFestaProduct = prod;
+                const prodImg = document.getElementById('festa-prod-img');
+                const prodName = document.getElementById('festa-prod-name');
+                const prodPriceOrig = document.getElementById('festa-prod-price-orig');
+                const offerPriceField = document.getElementById('festa-offer-price');
+                const discountPercField = document.getElementById('festa-discount-perc');
+
+                if (prodImg) prodImg.src = prod.imgUrl || 'https://placehold.co/70x70?text=S/F';
+                if (prodName) prodName.textContent = prod.name;
+                if (prodPriceOrig) prodPriceOrig.textContent = `Preço Atual: ${formatCurrency(prod.price)}`;
+
+                if (offerPriceField) {
+                    offerPriceField.value = '';
+                    setTimeout(() => offerPriceField.focus(), 100);
+                }
+                if (discountPercField) discountPercField.value = '0';
+
+                if (festaProductInfo) festaProductInfo.style.display = 'block';
+            } else {
+                if (confirm(`Produto ${code} não encontrado. Deseja cadastrar agora?`)) {
+                    if (typeof closeModal === 'function') closeModal(modalFestaPromo);
+                    else modalFestaPromo.style.display = 'none';
+
+                    const btnUpdate = document.getElementById('btn-update-product');
+                    if (btnUpdate) btnUpdate.click();
+
+                    setTimeout(() => {
+                        const codeInput = document.getElementById('update-product-barcode');
+                        if (codeInput) {
+                            codeInput.value = code;
+                            const event = new KeyboardEvent('keydown', { key: 'Enter' });
+                            codeInput.dispatchEvent(event);
+                        }
+                    }, 500);
+                }
+            }
+        } catch (e) {
+            console.error(e);
+            if (festaLoader) festaLoader.style.display = 'none';
+            if (window.showCustomAlert) window.showCustomAlert("Erro", "Erro ao buscar produto.");
+        }
+    };
+
+    if (btnFestaSearch) btnFestaSearch.addEventListener('click', searchProductForFesta);
+    if (festaBarcode) {
+        festaBarcode.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchProductForFesta();
+            }
+        });
+    }
+
+    const offerPriceInput = document.getElementById('festa-offer-price');
+    if (offerPriceInput) {
+        offerPriceInput.addEventListener('input', (e) => {
+            const offerPrice = parseFloat(e.target.value);
+            const discountPercField = document.getElementById('festa-discount-perc');
+            if (currentFestaProduct && offerPrice > 0) {
+                const original = parseFloat(currentFestaProduct.price);
+                const discountPercent = ((original - offerPrice) / original) * 100;
+                if (discountPercField) discountPercField.value = discountPercent.toFixed(1);
+            } else {
+                if (discountPercField) discountPercField.value = '0';
+            }
+        });
+    }
+
+    if (btnSaveFesta) {
+        btnSaveFesta.addEventListener('click', async () => {
+            if (!currentFestaProduct) return;
+            const offerPrice = document.getElementById('festa-offer-price').value;
+            if (!offerPrice) {
+                if (window.showCustomAlert) window.showCustomAlert("Atenção", "Informe o preço de oferta.");
+                return;
+            }
+
+            const originalText = btnSaveFesta.innerHTML;
+            btnSaveFesta.disabled = true;
+            btnSaveFesta.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Gravando...";
+
+            try {
+                const payload = {
+                    action: 'saveProduct',
+                    data: {
+                        ...currentFestaProduct,
+                        promoPrice: parseFloat(offerPrice)
+                    }
+                };
+
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    // Atualiza cache local
+                    const idx = localProductCache.findIndex(p => String(p.id) === String(currentFestaProduct.id));
+                    if (idx !== -1) localProductCache[idx].promoPrice = parseFloat(offerPrice);
+
+                    if (window.showCustomAlert) window.showCustomAlert("Sucesso", "Produto cadastrado na promoção!");
+                    if (typeof closeModal === 'function') closeModal(modalFestaPromo);
+                    else modalFestaPromo.style.display = 'none';
+
+                    renderProdutosPage(); // Atualiza a lista e contadores
+                } else {
+                    if (window.showCustomAlert) window.showCustomAlert("Erro", "Falha ao salvar: " + result.message);
+                }
+            } catch (e) {
+                console.error(e);
+                if (window.showCustomAlert) window.showCustomAlert("Erro", "Falha na conexão com o servidor.");
+            } finally {
+                btnSaveFesta.disabled = false;
+                btnSaveFesta.innerHTML = originalText;
+            }
+        });
     }
 });
 
