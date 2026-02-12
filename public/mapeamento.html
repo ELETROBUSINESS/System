@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Alcance - Pará</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 600px;
+            width: 100%;
+            border-radius: 0.75rem;
+            z-index: 1;
+            background: #f1f5f9;
+        }
+
+        .info {
+            padding: 10px 14px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border-radius: 8px;
+            color: #1e293b;
+            border: 1px solid #e2e8f0;
+        }
+
+        .info h4 {
+            margin: 0 0 5px;
+            color: #064e3b;
+            font-weight: bold;
+        }
+
+        .legend {
+            line-height: 20px;
+            color: #475569;
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 10px;
+            opacity: 0.8;
+            border-radius: 4px;
+        }
+
+        .pulse-marker {
+            background: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 0 rgba(16, 185, 129, 0.4);
+            animation: pulse 2s infinite;
+            border: 2px solid white;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 15px rgba(16, 185, 129, 0);
+            }
+
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        #loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            border-radius: 0.75rem;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 font-sans text-slate-900">
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-emerald-900">Mapeamento de Alcance: Pará</h1>
+                <p class="text-slate-600">Visualização de performance comercial por município.</p>
+            </div>
+            <div class="flex gap-4">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center min-w-[180px]">
+                    <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-emerald-600" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 uppercase font-bold tracking-tight">Total de Clientes</p>
+                        <p class="text-xl font-bold text-slate-800" id="total-clients">0</p>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center min-w-[180px]">
+                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 uppercase font-bold tracking-tight">Cidades Ativas</p>
+                        <p class="text-xl font-bold text-slate-800" id="cities-count">0</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Sidebar Stats -->
+            <div class="lg:col-span-1 space-y-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-slate-800 mb-4 border-b pb-2 text-sm uppercase tracking-wider">Top
+                        Municípios</h3>
+                    <ul id="city-list" class="space-y-3">
+                        <li class="p-2 bg-slate-50 rounded animate-pulse h-10"></li>
+                    </ul>
+                </div>
+
+                <div class="bg-emerald-900 p-6 rounded-xl shadow-lg text-white">
+                    <h3 class="font-bold mb-2">Monitoramento Ativo</h3>
+                    <p class="text-emerald-100 text-sm leading-relaxed" id="focus-info">
+                        Aguardando mapa...
+                    </p>
+                    <div class="mt-4 space-y-2">
+                        <button id="btn-focus-leader" onclick="zoomToMaxCity()"
+                            class="text-xs bg-emerald-700 hover:bg-emerald-600 text-white py-2 px-4 rounded transition-colors w-full font-semibold border border-emerald-600 shadow-sm disabled:opacity-50">
+                            Focar na Cidade Líder
+                        </button>
+                        <button onclick="resetToParalimit()"
+                            class="text-xs bg-emerald-800 hover:bg-emerald-700 text-white py-2 px-4 rounded transition-colors w-full border border-emerald-700">
+                            Ver todo o Estado
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map Area -->
+            <div class="lg:col-span-3">
+                <div class="bg-white p-2 rounded-2xl shadow-md border border-slate-200 relative">
+                    <div id="loading-overlay">
+                        <div class="flex flex-col items-center">
+                            <div
+                                class="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-2">
+                            </div>
+                            <p class="text-sm font-medium text-slate-600">Sincronizando cidades...</p>
+                        </div>
+                    </div>
+                    <div id="map"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Configurações
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
+
+        // Lista Base (Garante que estas sempre apareçam, mesmo com 0)
+        const targetCities = [
+            { cidade: "Ipixuna do Pará", clientes: 0, ibge: "1503457" },
+            { cidade: "Aurora do Pará", clientes: 0, ibge: "1500958" },
+            { cidade: "Mãe do Rio", clientes: 0, ibge: "1504059" },
+            { cidade: "Tomé-Açu", clientes: 0, ibge: "1508001" },
+            { cidade: "Paragominas", clientes: 0, ibge: "1505502" },
+            { cidade: "Belém", clientes: 0, ibge: "1501402" }
+        ];
+
+        let clientData = [...targetCities];
+        let map, geojson;
+        let markersLayer = L.layerGroup();
+        let layerLookup = new Map();
+        let maxClientData = { cidade: "Nenhuma", clientes: 0, ibge: "" };
+
+        function normalizeString(str) {
+            if (!str) return "";
+            return str.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+        }
+
+        async function fetchRealClientData() {
+            try {
+                // 1. Buscar Municípios do PA no IBGE para mapeamento completo
+                const municipiosRes = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/15/municipios');
+                const municipios = await municipiosRes.json();
+
+                // 2. Buscar Clientes do Banco de Dados
+                const response = await fetch(SCRIPT_URL + "?action=listarClientes");
+                const result = await response.json();
+
+                if (result.status !== 'success') throw new Error(result.message);
+
+                const clients = result.data;
+
+                // Reinicia os contadores no clientData
+                clientData.forEach(c => c.clientes = 0);
+
+                // 3. Processar e Agrupar Clientes (Mapeamento Inteligente)
+                clients.forEach(c => {
+                    const endereco = normalizeString(c.endereco || "");
+                    if (!endereco) return;
+
+                    const municipioMatch = municipios.find(m => {
+                        const mName = normalizeString(m.nome);
+                        if (endereco.includes(mName)) return true;
+
+                        // Fallback: Tenta a primeira palavra se for longa (evita falso positivo com "do", "da")
+                        const shortName = mName.split(" ")[0];
+                        if (shortName.length > 4 && endereco.includes(shortName)) return true;
+
+                        return false;
+                    });
+
+                    if (municipioMatch) {
+                        const mId = municipioMatch.id.toString();
+                        let cityEntry = clientData.find(cd => cd.ibge === mId || (cd.ibge && cd.ibge.substring(0, 6) === mId.substring(0, 6)));
+
+                        if (!cityEntry) {
+                            cityEntry = { cidade: municipioMatch.nome, clientes: 0, ibge: mId };
+                            clientData.push(cityEntry);
+                        }
+                        cityEntry.clientes++;
+                    }
+                });
+
+                // 4. Ordenar e calcular líder
+                clientData.sort((a, b) => b.clientes - a.clientes);
+                maxClientData = clientData.reduce((prev, current) => (prev.clientes >= current.clientes) ? prev : current);
+
+                // 5. Inicializar
+                initDashboard();
+                initMap();
+
+            } catch (err) {
+                console.error("Erro na sincronização:", err);
+                initDashboard();
+                initMap();
+                const focusInfo = document.getElementById('focus-info');
+                if (focusInfo) focusInfo.textContent = "Aviso: Mostrando dados locais/base.";
+            }
+        }
+
+        function initDashboard() {
+            const total = clientData.reduce((acc, curr) => acc + curr.clientes, 0);
+            const reached = clientData.filter(c => c.clientes > 0).length;
+
+            document.getElementById('total-clients').textContent = total;
+            document.getElementById('cities-count').textContent = reached;
+
+            const listEl = document.getElementById('city-list');
+            listEl.innerHTML = '';
+
+            clientData.forEach(item => {
+                const li = document.createElement('li');
+                const isLeader = item.clientes > 0 && item.clientes === maxClientData.clientes;
+                li.className = `flex justify-between items-center text-sm p-3 hover:bg-slate-50 rounded-lg transition-all cursor-pointer border-l-4 ${isLeader ? "border-emerald-600 bg-emerald-50 shadow-sm" : (item.clientes > 0 ? "border-emerald-400" : "border-slate-200")}`;
+                li.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="text-slate-800 font-bold">${item.cidade}</span>
+                        <span class="text-[10px] text-slate-500 uppercase tracking-widest">${item.clientes > 0 ? 'Alcance Ativo' : 'Planejado'}</span>
+                    </div>
+                    <span class="font-bold py-1 px-3 ${isLeader ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-700'} rounded-full text-xs">${item.clientes}</span>
+                `;
+                li.onclick = () => focusOnCity(item.ibge, item.cidade);
+                listEl.appendChild(li);
+            });
+        }
+
+        function initMap() {
+            if (map) map.remove();
+            map = L.map('map', { center: [-3.7, -52.5], zoom: 6, zoomSnap: 0.5 });
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO' }).addTo(map);
+            markersLayer = L.layerGroup().addTo(map);
+            loadGeoJSON();
+        }
+
+        function getColor(d) {
+            return d >= 10 ? '#064e3b' : d >= 5 ? '#059669' : d >= 1 ? '#10b981' : '#f8fafc';
+        }
+
+        function getClientDataForFeature(feature) {
+            const props = feature.properties || {};
+            const id = (feature.id || props.codarea || props.codmun || props.CD_MUN || "").toString();
+            const name = normalizeString(props.nome || props.name || props.NM_MUN || "");
+            return clientData.find(c => c.ibge === id || (c.ibge && c.ibge.substring(0, 6) === id.substring(0, 6)) || normalizeString(c.cidade) === name);
+        }
+
+        function style(feature) {
+            const data = getClientDataForFeature(feature);
+            const count = data ? data.clientes : 0;
+            return {
+                fillColor: getColor(count),
+                weight: count > 0 ? 1.5 : 0.5,
+                opacity: 1,
+                color: count > 0 ? '#065f46' : '#e2e8f0',
+                dashArray: count > 0 ? '' : '3',
+                fillOpacity: count > 0 ? 0.8 : 0.4
+            };
+        }
+
+        const info = L.control();
+        info.onAdd = function (map) { this._div = L.DomUtil.create('div', 'info'); this.update(); return this._div; };
+        info.update = function (props) {
+            let content = '<h4>Indicadores</h4>';
+            if (props) {
+                const data = getClientDataForFeature({ properties: props });
+                const c = data ? data.clientes : 0;
+                content += `<div class="mt-2"><span class="text-lg font-bold text-slate-800">${props.nome || props.NM_MUN || "Município"}</span><br/><span class="text-emerald-700 font-semibold">${c} Clientes Registrados</span></div>`;
+            } else { content += 'Interaja com o mapa'; }
+            this._div.innerHTML = content;
+        };
+
+        function onEachFeature(feature, layer) {
+            const props = feature.properties || {};
+            const id = (feature.id || props.codarea || props.codmun || props.CD_MUN || "").toString();
+            const name = normalizeString(props.nome || props.name || props.NM_MUN || "");
+            if (id) { layerLookup.set(id, layer); if (id.length === 7) layerLookup.set(id.substring(0, 6), layer); }
+            if (name) layerLookup.set(name, layer);
+
+            const data = getClientDataForFeature(feature);
+            if (data && data.clientes > 0) {
+                const center = layer.getBounds().getCenter();
+                if (data.clientes === maxClientData.clientes) {
+                    const pulseIcon = L.divIcon({ className: 'pulse-marker', iconSize: [14, 14], iconAnchor: [7, 7] });
+                    L.marker(center, { icon: pulseIcon }).addTo(markersLayer).bindTooltip(`<b>${data.cidade}</b>`, { permanent: true, direction: 'top' });
+                } else {
+                    L.circleMarker(center, { radius: 6, fillColor: "#10b981", color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(markersLayer);
+                }
+            }
+
+            layer.on({
+                mouseover: (e) => { e.target.setStyle({ weight: 3, color: '#1e293b', fillOpacity: 0.9 }); info.update(e.target.feature.properties); },
+                mouseout: (e) => { geojson.resetStyle(e.target); info.update(); },
+                click: (e) => { map.fitBounds(e.target.getBounds(), { padding: [150, 150] }); }
+            });
+        }
+
+        async function loadGeoJSON() {
+            const ibgeUrl = 'https://servicodados.ibge.gov.br/api/v3/malhas/estados/15?formato=application/vnd.geo+json&intrapais=municipio';
+            try {
+                const response = await fetch(ibgeUrl);
+                const data = await response.json();
+                geojson = L.geoJson(data, { style: style, onEachFeature: onEachFeature }).addTo(map);
+                info.addTo(map);
+                document.getElementById('loading-overlay').style.display = 'none';
+                document.getElementById('focus-info').textContent = `Monitorando alcance em ${clientData.length} municípios.`;
+                setTimeout(zoomToMaxCity, 1000);
+                addLegend();
+            } catch (err) {
+                console.error("Erro IBGE:", err);
+                document.getElementById('loading-overlay').innerHTML = `<p class='text-red-500 font-bold'>Erro ao carregar mapa.</p>`;
+            }
+        }
+
+        function zoomToMaxCity() { if (maxClientData.clientes > 0) focusOnCity(maxClientData.ibge, maxClientData.cidade); }
+        function focusOnCity(code, name) {
+            const normName = normalizeString(name);
+            const layer = layerLookup.get(code) || layerLookup.get(code ? code.toString().substring(0, 6) : "") || layerLookup.get(normName);
+            if (layer) { map.fitBounds(layer.getBounds(), { padding: [250, 250], animate: true }); info.update(layer.feature.properties); layer.fire('mouseover'); }
+            else { resetToParalimit(); }
+        }
+        function resetToParalimit() { if (geojson) map.fitBounds(geojson.getBounds(), { padding: [20, 20] }); }
+        function addLegend() {
+            const legend = L.control({ position: 'bottomright' });
+            legend.onAdd = function (map) {
+                const div = L.DomUtil.create('div', 'info legend'), grades = [0, 1, 5, 10];
+                div.innerHTML += '<p class="font-bold text-xs mb-2">Clientes</p>';
+                for (let i = 0; i < grades.length; i++) {
+                    div.innerHTML += '<i style="background:' + getColor(grades[i]) + '"></i> ' + grades[i] + (grades[i + 1] ? '&ndash;' + (grades[i + 1] - 1) + '<br>' : '+');
+                }
+                return div;
+            };
+            legend.addTo(map);
+        }
+        document.addEventListener('DOMContentLoaded', fetchRealClientData);
+    </script>
+</body>
+
+</html>
