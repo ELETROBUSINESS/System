@@ -34,6 +34,7 @@ let activeOrdersData = [];
 // --- Cache Global de Produtos ---
 let localProductCache = null; // Movido para escopo global para acesso por listeners
 let currentOrderStatusFilter = 'pendente';
+let selectedProductIds = new Set(); // Armazena IDs dos produtos selecionados para download
 
 // Configuração e Inicialização Imediata do Firebase
 const firebaseConfig = {
@@ -1509,6 +1510,9 @@ document.addEventListener('DOMContentLoaded', () => {
         table.innerHTML = `
         <thead>
             <tr>
+                <th width="30px" class="text-center">
+                    <input type="checkbox" id="select-all-products" ${produtosDaPagina.length > 0 && produtosDaPagina.every(p => selectedProductIds.has(String(p.id))) ? 'checked' : ''}>
+                </th>
                 <th width="40%">Produto / Marca</th>
                 <th width="15%">Preço</th>
                 <th width="15%">Desc. %</th>
@@ -1524,6 +1528,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Renderiza os produtos da página atual
         produtosDaPagina.forEach(prod => {
             const tr = document.createElement('tr');
+            const prodIdStr = String(prod.id);
+            const isChecked = selectedProductIds.has(prodIdStr);
 
             const isFiscalOk = (prod.ncm && prod.cfop);
             const statusHtml = isFiscalOk
@@ -1537,6 +1543,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const brandHtml = prod.brand ? `<span class="brand-tag">${prod.brand}</span>` : '';
 
             tr.innerHTML = `
+            <td class="text-center">
+                <input type="checkbox" class="product-checkbox" data-id="${prod.id}" ${isChecked ? 'checked' : ''}>
+            </td>
             <td>
                 <div class="product-cell-wrapper">
                     ${imgHtml}
@@ -1579,6 +1588,36 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             tbody.appendChild(tr);
         });
+
+        // Event listeners para os checkboxes
+        table.querySelectorAll('.product-checkbox').forEach(cb => {
+            cb.addEventListener('change', (e) => {
+                const id = String(e.target.dataset.id);
+                if (e.target.checked) {
+                    selectedProductIds.add(id);
+                } else {
+                    selectedProductIds.delete(id);
+                }
+                updateDownloadButtonState();
+            });
+        });
+
+        const selectAllCb = table.querySelector('#select-all-products');
+        if (selectAllCb) {
+            selectAllCb.addEventListener('change', (e) => {
+                const checked = e.target.checked;
+                produtosDaPagina.forEach(p => {
+                    const id = String(p.id);
+                    if (checked) {
+                        selectedProductIds.add(id);
+                    } else {
+                        selectedProductIds.delete(id);
+                    }
+                });
+                renderProdutosPage(); // Re-renderiza para atualizar os checkboxes individuais
+                updateDownloadButtonState();
+            });
+        }
 
         // 3. Rodapé com Paginação
         if (totalPages > 1) {
@@ -2669,6 +2708,176 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Função Principal de Carregamento (Híbrida)
     // --- CORREÇÃO 2: Desbloqueio do PDV após carregar ---
+    // --- LÓGICA DE DOWNLOAD DE PREÇOS ---
+    window.updateDownloadButtonState = () => {
+        const btn = document.getElementById('btn-download-prices');
+        const countSpan = document.getElementById('selected-count');
+
+        if (btn && countSpan) {
+            const count = selectedProductIds.size;
+            countSpan.textContent = count;
+            btn.style.display = count > 0 ? 'inline-flex' : 'none';
+        }
+    };
+
+    document.getElementById('btn-download-prices')?.addEventListener('click', () => {
+        if (selectedProductIds.size === 0) return;
+        generateA4Prices();
+    });
+
+    const generateA4Prices = () => {
+        const productsToPrint = localProductCache.filter(p => selectedProductIds.has(String(p.id)));
+        if (productsToPrint.length === 0) return;
+
+        // Dividir em grupos de 5 (5 por folha)
+        const chunks = [];
+        for (let i = 0; i < productsToPrint.length; i += 5) {
+            chunks.push(productsToPrint.slice(i, i + 5));
+        }
+
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'fixed';
+        iframe.style.right = '0';
+        iframe.style.bottom = '0';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = '0';
+        document.body.appendChild(iframe);
+
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    @page { size: A4; margin: 0; }
+                    body { margin: 0; font-family: 'Inter', sans-serif; background: #fff; }
+                    .page {
+                        width: 210mm;
+                        height: 297mm;
+                        overflow: hidden;
+                        page-break-after: always;
+                    }
+                    .tag {
+                        width: 210mm;
+                        height: 59.4mm;
+                        background: #db0038;
+                        color: #fff;
+                        display: flex;
+                        flex-direction: column;
+                        box-sizing: border-box;
+                        padding: 4mm 8mm;
+                        border-bottom: 0.2mm dashed rgba(255,255,255,0.4);
+                        position: relative;
+                        overflow: hidden;
+                    }
+                    .tag:last-child { border-bottom: none; }
+                    .product-name {
+                        font-size: 20pt;
+                        font-weight: 800;
+                        text-transform: uppercase;
+                        line-height: 1.1;
+                        margin: 0;
+                        display: -webkit-box;
+                        -webkit-line-clamp: 2;
+                        -webkit-box-orient: vertical;
+                        overflow: hidden;
+                    }
+                    .tag-body {
+                        flex: 1;
+                        display: flex;
+                        align-items: flex-end;
+                        justify-content: space-between;
+                        margin-top: 1mm;
+                    }
+                    .barcode-container {
+                        background: #fff;
+                        padding: 2mm 5mm;
+                        border-radius: 3mm;
+                        display: flex;
+                        align-items: center;
+                    }
+                    .barcode-container svg { height: 14mm; max-width: 65mm; }
+                    .price-container {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: flex-end;
+                        line-height: 1;
+                    }
+                    .old-price {
+                        font-size: 16pt;
+                        text-decoration: line-through;
+                        opacity: 0.8;
+                        font-weight: 500;
+                        margin-bottom: -1mm;
+                    }
+                    .new-price {
+                        font-size: 68pt;
+                        font-weight: 950;
+                        margin: 0;
+                        letter-spacing: -2pt;
+                        white-space: nowrap;
+                        display: flex;
+                        align-items: baseline;
+                    }
+                    .new-price small {
+                        font-size: 22pt;
+                        margin-right: 1mm;
+                        font-weight: 800;
+                    }
+                </style>
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;800;900&display=swap" rel="stylesheet">
+            </head>
+            <body>
+        `);
+
+        chunks.forEach(chunk => {
+            doc.write('<div class="page">');
+            chunk.forEach(prod => {
+                const promoPrice = prod.promoPrice || 0;
+                const finalPrice = promoPrice > 0 ? promoPrice : prod.price;
+                const formattedFinal = formatCurrency(finalPrice);
+                const priceValue = formattedFinal.replace('R$', '').trim();
+                const oldPriceValue = formatCurrency(prod.price);
+                doc.write(`
+                    <div class="tag">
+                        <div class="tag-header"><h2 class="product-name">${prod.name}</h2></div>
+                        <div class="tag-body">
+                            <div class="barcode-container">
+                                <svg class="barcode" jsbarcode-value="${prod.id}" jsbarcode-textmargin="0" jsbarcode-displayvalue="true" jsbarcode-fontoptions="bold"></svg>
+                            </div>
+                            <div class="price-container">
+                                ${promoPrice > 0 ? `<div class="old-price">${oldPriceValue}</div>` : ''}
+                                <div class="new-price"><small>R$</small>${priceValue}</div>
+                            </div>
+                        </div>
+                    </div>
+                `);
+            });
+            doc.write('</div>');
+        });
+
+        doc.write(`
+            <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+            <script>
+                window.onload = function() {
+                    JsBarcode(".barcode").init();
+                    setTimeout(() => {
+                        window.print();
+                        setTimeout(() => {
+                            window.parent.document.body.removeChild(window.frameElement);
+                        }, 100);
+                    }, 500);
+                };
+            </script>
+            </body>
+            </html>
+        `);
+        doc.close();
+    };
+
+
     window.carregarCacheDeProdutos = async () => {
         const container = document.getElementById('produtos-table-container');
         const pdvInput = document.getElementById('barcode-input'); // Seleciona o input do PDV
