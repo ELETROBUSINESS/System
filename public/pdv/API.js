@@ -324,41 +324,8 @@ function doGet(e) {
         }
 
         else if (action === "getProducts") {
-            const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("produtos");
-            const mapaUnidades = {
-                "UNIDADE": "UN", "UN": "UN", "UND": "UN",
-                "CAIXA": "CX", "CX": "CX",
-                "PACOTE": "PC", "PEÇA": "PC", "PECA": "PC", "PC": "PC",
-                "QUILO": "KG", "KG": "KG", "KILO": "KG",
-                "LITRO": "L", "L": "L",
-                "METRO": "M", "M": "M"
-            };
-
-            if (!sheet || sheet.getLastRow() <= 1) {
-                response = [];
-            } else {
-                const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 17).getValues();
-                response = data.map(row => {
-                    let unidadeCrua = String(row[12] || "UN").toUpperCase().trim();
-                    let unidadeFinal = mapaUnidades[unidadeCrua] || "UN";
-                    return {
-                        id: row[0],
-                        name: String(row[1] || ""),
-                        price: row[2],
-                        costPrice: row[4],
-                        category: row[5],
-                        imgUrl: row[7] || "",
-                        brand: row[8] || "",
-                        ncm: row[9] || "",
-                        cest: row[10] || "",
-                        cfop: row[11] || "",
-                        unit: unidadeFinal,
-                        origem: row[13] || "",
-                        csosn: row[14] || "",
-                        promoPrice: row[16] // Coluna Q
-                    };
-                });
-            }
+            const result = listarTodosProdutos();
+            response = result.status === "success" ? result.data : [];
         }
 
         else if (action === "buscarProduto") {
@@ -576,6 +543,8 @@ function formatSheetData(sheet) {
                 obj[header] = value;
             }
         });
+        // Guarda a linha bruta para fallbacks de emergência (como buscar pela coluna P/index 15)
+        obj["__raw_row"] = row;
         return obj;
     });
 }
@@ -595,6 +564,15 @@ function listarTodosProdutos() {
             return { status: "success", data: [] };
         }
 
+        const mapaUnidades = {
+            "UNIDADE": "UN", "UN": "UN", "UND": "UN",
+            "CAIXA": "CX", "CX": "CX",
+            "PACOTE": "PC", "PEÇA": "PC", "PECA": "PC", "PC": "PC",
+            "QUILO": "KG", "KG": "KG", "KILO": "KG",
+            "LITRO": "L", "L": "L",
+            "METRO": "M", "M": "M"
+        };
+
         const produtos = data.map(item => {
             // Tratamento de Preço
             let precoNum = 0;
@@ -605,29 +583,52 @@ function listarTodosProdutos() {
                 precoNum = parseFloat(pString) || 0;
             }
 
-            // Tratamento de Estoque (pode vir como 'estoque atual' ou 'estoque')
-            // O formatSheetData converte para minúsculo.
-            // Se o header for "Estoque Atual", vira "estoque atual".
-            const stockVal = parseFloat(item["estoque atual"]) || parseFloat(item["estoque"]) || 0;
+            // Mapeamento de Estoque (Prioridade absoluta para Coluna P / Index 15 conforme informado pelo usuário)
+            const raw = item["__raw_row"] || [];
+            let stockVal = 0;
+
+            if (raw.length >= 16) {
+                stockVal = parseFloat(raw[15]) || 0;
+            } else {
+                // Fallback via Header se a linha tiver menos de 16 colunas
+                let stockKey = Object.keys(item).find(k => k === "estoque atual") ||
+                    Object.keys(item).find(k => k === "estoque") ||
+                    Object.keys(item).find(k => k.includes("estoque") && !k.includes("minimo"));
+                stockVal = stockKey ? parseFloat(item[stockKey]) : 0;
+            }
+            if (isNaN(stockVal)) stockVal = 0;
+
+            // Busca Inteligente de Estoque Mínimo
+            let minStockKey = Object.keys(item).find(k => k === "estoque minimo") ||
+                Object.keys(item).find(k => k === "estoque_minimo") ||
+                Object.keys(item).find(k => (k.includes("estoque") || k.includes("stock")) && k.includes("minimo"));
+
+            let minStockVal = minStockKey ? parseFloat(item[minStockKey]) : 0;
+            if (isNaN(minStockVal)) minStockVal = 0;
+
+            // Tratamento de Unidade
+            let unidadeCrua = String(item.unidade || "UN").toUpperCase().trim();
+            let unidadeFinal = mapaUnidades[unidadeCrua] || "UN";
 
             return {
                 id: String(item.codigo || ""),
                 name: String(item.nome || ""),
                 price: precoNum,
                 costPrice: parseFloat(item.custo) || 0,
-                stock: stockVal, // <--- ADICIONADO
-                category: String(item.categoria || "Geral"),
-                imgUrl: String(item.imgurl || ""),
-                brand: String(item.marca || ""),
+                stock: stockVal,
+                minStock: minStockVal, // <--- ADICIONADO
+                category: String(item.categoria || item.category || "Geral"),
+                imgUrl: String(item.imgurl || item.imgUrl || ""),
+                brand: String(item.marca || item.brand || ""),
 
                 // Dados Fiscais
                 ncm: String(item.ncm || ""),
                 cest: String(item.cest || ""),
                 cfop: String(item.cfop || ""),
-                unit: String(item.unidade || "UN"),
+                unit: unidadeFinal,
                 origem: String(item.origem || "0"),
                 csosn: String(item.csosn || ""),
-                promoPrice: parseFloat(item.promocional) || 0
+                promoPrice: parseFloat(item.promocional || item.promoPrice) || 0
             };
         }).filter(p => p.id && p.id !== "");
 
@@ -672,7 +673,7 @@ function cadastrarNovoProduto(codigo, nome, preco) {
         sheet.appendRow(newRow);
         SpreadsheetApp.flush();
 
-        const novoProduto = { id: codigo.toString(), name: nome, price: precoNum };
+        const novoProduto = { id: codigo.toString(), name: nome, price: precoNum, stock: 0, minStock: 0, unit: 'UN' };
         Logger.log("Produto cadastrado: " + JSON.stringify(novoProduto));
         return { status: "success", data: novoProduto, message: "Produto cadastrado!" };
 

@@ -783,7 +783,23 @@
 
             document.getElementById('modal-prod-name').innerText = product.name;
             document.getElementById('modal-prod-barcode').innerText = `#${product.id}`;
-            document.getElementById('modal-prod-stock').innerText = `Estoque: ${product.stock || 0} ${product.unit || 'UN'}`;
+            const stockLabel = document.getElementById('modal-prod-stock');
+            const currentStock = parseFloat(product.stock) || 0;
+            const minStock = parseFloat(product.minStock) || 0;
+
+            stockLabel.innerText = `Estoque: ${currentStock} ${product.unit || 'UN'}`;
+
+            if (currentStock <= 0) {
+                stockLabel.style.background = 'rgba(239, 68, 68, 0.1)';
+                stockLabel.style.color = '#ef4444';
+                stockLabel.innerText = `SEM ESTOQUE: 0 ${product.unit || 'UN'}`;
+            } else if (currentStock <= minStock) {
+                stockLabel.style.background = 'rgba(245, 158, 11, 0.1)';
+                stockLabel.style.color = '#f59e0b';
+            } else {
+                stockLabel.style.background = 'rgba(16, 185, 129, 0.1)';
+                stockLabel.style.color = 'var(--success)';
+            }
             document.getElementById('modal-prod-price').value = product.price || 0;
             document.getElementById('modal-prod-category').value = product.category || "";
             document.getElementById('modal-edit-stock').value = "";
