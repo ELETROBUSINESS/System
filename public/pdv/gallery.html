@@ -689,25 +689,7 @@
         </div>
     </div>
 
-    <main>
-        <div id="panorama"></div>
 
-        <div class="viewer-tools">
-            <button class="tool-btn" onclick="viewer.setFullscreen(true)" title="Tela Cheia"><i
-                    class='bx bx-fullscreen'></i></button>
-            <button class="tool-btn" id="btn-auto" onclick="toggleAutoRotate()" title="Auto Rotação"><i
-                    class='bx bx-sync'></i></button>
-        </div>
-
-        <aside class="gallery-panel">
-            <div class="gallery-header">
-                <h2>Selecione o Local</h2>
-            </div>
-            <div class="scene-list" id="scene-list">
-                <!-- Cards via JS -->
-            </div>
-        </aside>
-    </main>
 
     <script>
         const TOUR_API_URL = "https://script.google.com/macros/s/AKfycbznf7SeuiwZ_vtmV1w6u3KfRMRt-EettfRv9TccBUA8qtZTWb_j_h6E6PkaQdkUU1dt/exec";
@@ -846,11 +828,10 @@
                     const newProd = result.data || { id: barcode, name, price: parseFloat(price), stock: 0, unit: 'UN' };
                     localProductCache.push(newProd);
 
-                    // Salva no mapa
-                    await saveMarkToMap(name);
-
                     closeModal('register-modal');
-                    alert("Produto cadastrado e mapeado!");
+
+                    // Abre automaticamente o modal de produto para atualizar o estoque e finalizar o mapeamento
+                    showProductModal(newProd);
                 } else {
                     alert("Erro: " + result.message);
                 }
