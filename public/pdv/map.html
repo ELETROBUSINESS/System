@@ -2,69 +2,101 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Eletro Business - Estúdio de Mapeamento</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central de Mapeamento 3D</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css"/>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
     <style>
-        #panorama { width: 100%; height: 80vh; }
-        #controls { padding: 20px; background: #222; color: white; font-family: sans-serif; }
-        .btn-salvar { background: #db0038; color: white; border: none; padding: 10px; cursor: pointer; }
+        body { margin: 0; font-family: sans-serif; background: #f0f0f0; display: flex; flex-direction: column; height: 100vh; }
+        #header { background: #333; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        #container { flex: 1; position: relative; }
+        #panorama { width: 100%; height: 100%; }
+        #lista-produtos { position: absolute; right: 10px; top: 10px; width: 200px; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 5px; max-height: 80%; overflow-y: auto; display: none; }
+        .instrucoes { font-size: 14px; color: #ccc; }
     </style>
 </head>
 <body>
 
-<div id="panorama"></div>
+<div id="header">
+    <div>
+        <strong>Passo 1:</strong> <input type="file" id="upload-foto" accept="image/*">
+    </div>
+    <div class="instrucoes">Gire a foto e clique no produto para mapear</div>
+</div>
 
-<div id="controls">
-    <h3>Modo de Edição</h3>
-    <p>1. Gire a imagem até o produto.<br>2. <strong>Clique no produto</strong> na foto para marcar.</p>
-    <div id="status-click">Aguardando clique...</div>
+<div id="container">
+    <div id="panorama"></div>
+    <div id="lista-produtos">
+        <strong>Produtos Mapeados:</strong>
+        <ul id="itens"></ul>
+    </div>
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbznf7SeuiwZ_vtmV1w6u3KfRMRt-EettfRv9TccBUA8qtZTWb_j_h6E6PkaQdkUU1dt/exec";
-const CENA_ATUAL = "entrada"; // ID que está na sua planilha de Cenas
-
-const viewer = pannellum.viewer('panorama', {
-    "type": "equirectangular",
-    "panorama": "URL_DA_SUA_FOTO_360.jpg",
-    "autoLoad": true,
-    "hotSpotDebug": true // Isso permite capturar as coordenadas ao clicar
-});
-
-// Quando o usuário clica na foto
-viewer.on('mousedown', function(event) {
-    // Transforma o clique na tela em coordenadas 3D (pitch/yaw)
-    const coords = viewer.mouseEventToCoords(event);
-    const pitch = coords[0];
-    const yaw = coords[1];
-
-    const nomeProduto = prompt("Qual produto você está marcando aqui?");
+    // 1. INSIRA AQUI A URL DO SEU GOOGLE APPS SCRIPT
+    const API_URL = "https://script.google.com/macros/s/AKfycbznf7SeuiwZ_vtmV1w6u3KfRMRt-EettfRv9TccBUA8qtZTWb_j_h6E6PkaQdkUU1dt/exec";
     
-    if (nomeProduto) {
-        const novoMarcador = {
-            cena_pai: CENA_ATUAL,
-            texto: nomeProduto,
-            pitch: pitch.toFixed(2),
-            yaw: yaw.toFixed(2)
+    let viewer = null;
+    const listaUI = document.getElementById('lista-produtos');
+
+    // Função para carregar a imagem selecionada
+    document.getElementById('upload-foto').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const imgURL = URL.createObjectURL(file);
+        
+        if (viewer) viewer.destroy();
+
+        viewer = pannellum.viewer('panorama', {
+            "type": "equirectangular",
+            "panorama": imgURL,
+            "autoLoad": true,
+            "hotSpotDebug": false 
+        });
+
+        listaUI.style.display = 'block';
+
+        // Evento de clique para mapear
+        viewer.on('mousedown', function(event) {
+            const coords = viewer.mouseEventToCoords(event);
+            const pitch = coords[0];
+            const yaw = coords[1];
+
+            const nome = prompt("Qual o nome deste produto/setor?");
+            if (nome) {
+                salvarNoSheets(nome, pitch, yaw);
+            }
+        });
+    });
+
+    function salvarNoSheets(nome, p, y) {
+        const dados = {
+            cena_pai: "entrada", // você pode mudar isso dinamicamente depois
+            texto: nome,
+            pitch: p.toFixed(2),
+            yaw: y.toFixed(2)
         };
 
-        // Envia para o Google Sheets
+        // Adiciona visualmente no mapa imediatamente
+        viewer.addHotSpot({
+            "pitch": p,
+            "yaw": y,
+            "type": "info",
+            "text": nome
+        });
+
+        // Adiciona na lista lateral
+        const li = document.createElement('li');
+        li.innerText = nome;
+        document.getElementById('itens').appendChild(li);
+
+        // Envia para a planilha
         fetch(API_URL, {
             method: 'POST',
-            body: JSON.stringify(novoMarcador)
-        }).then(() => {
-            // Adiciona visualmente na hora para dar feedback
-            viewer.addHotSpot({
-                "pitch": pitch,
-                "yaw": yaw,
-                "type": "info",
-                "text": nomeProduto
-            });
-            alert("Gravado na planilha!");
-        });
+            body: JSON.stringify(dados)
+        }).then(() => console.log("Salvo na planilha"));
     }
-});
 </script>
 </body>
 </html>
