@@ -43,7 +43,6 @@
             position: relative;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
             border-radius: 8px;
-            overflow: hidden;
             display: inline-block;
             background: white;
             transition: transform 0.3s ease;
@@ -194,7 +193,7 @@
         </div>
         <!-- PDF VIEWER CONTAINER -->
         <div id="pdf-viewer-container"
-            class="relative bg-slate-100 rounded-2xl overflow-hidden border border-slate-200 min-h-[600px] mb-12">
+            class="relative bg-slate-100 rounded-2xl border border-slate-200 min-h-[600px] mb-12">
             <div id="pdf-loader-status"
                 class="absolute inset-0 flex flex-col items-center justify-center bg-white z-10 transition-opacity">
                 <div class="w-10 h-10 border-4 border-slate-200 border-t-red-600 rounded-full animate-spin">
@@ -494,6 +493,11 @@
                 <div>
                     <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Link SVG</label>
                     <input type="text" id="input-marker-link-svg" placeholder="Link do arquivo SVG"
+                        class="w-full px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:border-red-600 transition-colors text-sm">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Link DOCX</label>
+                    <input type="text" id="input-marker-link-docx" placeholder="Link do arquivo Word/DOCX"
                         class="w-full px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:border-red-600 transition-colors text-sm">
                 </div>
             </div>
@@ -980,13 +984,14 @@
                 const linkPng = document.getElementById('input-marker-link-png').value;
                 const linkPdf = document.getElementById('input-marker-link-pdf').value;
                 const linkSvg = document.getElementById('input-marker-link-svg').value;
+                const linkDocx = document.getElementById('input-marker-link-docx').value;
 
-                if (!linkPng && !linkPdf && !linkSvg) {
+                if (!linkPng && !linkPdf && !linkSvg && !linkDocx) {
                     alert("Preencha ao menos um link!");
                     return;
                 }
 
-                newMarker.links = { png: linkPng, pdf: linkPdf, svg: linkSvg };
+                newMarker.links = { png: linkPng, pdf: linkPdf, svg: linkSvg, docx: linkDocx };
             } else {
                 const text = document.getElementById('input-marker-text').value;
                 if (!text) {
@@ -1004,6 +1009,7 @@
             document.getElementById('input-marker-link-png').value = '';
             document.getElementById('input-marker-link-pdf').value = '';
             document.getElementById('input-marker-link-svg').value = '';
+            document.getElementById('input-marker-link-docx').value = '';
             document.getElementById('input-marker-text').value = '';
             setMarkerType('file');
         }
