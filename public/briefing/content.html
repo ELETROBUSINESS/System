@@ -885,6 +885,53 @@
             });
             if (window.lucide) window.lucide.createIcons();
         }
+        async function downloadFile(url, filename) {
+            if (!url) return;
+            let finalUrl = url;
+
+            // Converter links do Google Drive para link de download direto
+            if (url.includes('drive.google.com')) {
+                const driveId = url.includes('id=') ? url.split('id=').pop().split('&')[0] : url.split('/d/')[1]?.split('/')[0];
+                if (driveId) {
+                    finalUrl = `https://drive.google.com/uc?export=download&id=${driveId}`;
+                }
+            }
+
+            try {
+                // Tenta download via fetch/blob para manter na mesma página
+                const response = await fetch(finalUrl);
+                if (!response.ok) throw new Error('CORS or network error');
+
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = blobUrl;
+                a.download = filename || 'download';
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(blobUrl);
+                }, 100);
+            } catch (error) {
+                console.warn("Download via fetch falhou, usando fallback de link direto:", error);
+                const a = document.createElement('a');
+                a.href = finalUrl;
+                a.download = filename || 'download';
+                // Para links do Drive com uc?export=download, o browser geralmente
+                // dispara o download sem sair da página mesmo com target="_blank"
+                if (finalUrl.includes('drive.google.com')) {
+                    a.target = "_blank";
+                } else {
+                    a.target = "_self";
+                }
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => document.body.removeChild(a), 100);
+            }
+        }
+
         function showMarkerDetails(marker) {
             document.getElementById('modal-marker-title').innerText = marker.name;
 
@@ -921,7 +968,11 @@
                 btn.className = "w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-bold flex items-center justify-center gap-3 transition-all";
                 const label = format.toUpperCase();
                 btn.innerHTML = `<i data-lucide="download" class="w-5 h-5"></i> Baixar em ${label}`;
-                btn.onclick = () => window.open(url, '_blank');
+
+                const safeName = marker.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                const filename = `${safeName}.${format}`;
+
+                btn.onclick = () => downloadFile(url, filename);
                 container.appendChild(btn);
             });
 
@@ -1319,38 +1370,10 @@
                 const design = designs.find(d => d.id === id);
 
                 if (design) {
-                    const downloadUrl = design.downloadUrl || design.url;
-
+                    const url = design.downloadUrl || design.url;
                     const filename = `Design-Livia-${design.title.replace(/\s+/g, '-')}.png`;
 
-                    try {
-                        const response = await fetch(downloadUrl);
-                        if (!response.ok) throw new Error('Network response was not ok');
-
-                        const blob = await response.blob();
-                        const blobUrl = window.URL.createObjectURL(blob);
-
-                        const link = document.createElement('a');
-                        link.href = blobUrl;
-                        link.download = filename;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-
-                        window.URL.revokeObjectURL(blobUrl);
-                    }
-
-                    catch (error) {
-                        console.warn("Falha no download direto, usando fallback nova aba:", error);
-                        const link = document.createElement('a');
-                        link.href = downloadUrl;
-                        link.download = filename;
-                        link.target = "_blank";
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                    }
-
+                    await downloadFile(url, filename);
                     await new Promise(r => setTimeout(r, 800));
                 }
             }
