@@ -240,10 +240,19 @@
     <div
         class="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white to-transparent pointer-events-none z-30">
         <div class="max-w-xl mx-auto space-y-4 pointer-events-auto">
-            <!-- Botão Principal (Preto quando ativo) --><button id="btn-action" disabled
-                class="w-full py-4 rounded-xl font-medium text-sm transition-all duration-300 flex items-center justify-center gap-3 shadow-xl bg-slate-200 text-slate-400 cursor-not-allowed"><i
-                    data-lucide="download" class="w-4 h-4"></i><span>Selecione itens
-                    para baixar</span></button>
+            <!-- Botão de Download (Para Feed e Stories) -->
+            <button id="btn-action" disabled
+                class="w-full py-4 rounded-xl font-medium text-sm transition-all duration-300 flex items-center justify-center gap-3 shadow-xl bg-slate-200 text-slate-400 cursor-not-allowed hidden">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>Selecione itens para baixar</span>
+            </button>
+
+            <!-- Botão de Pagamento (Apenas para Brandbook) -->
+            <button id="btn-payment" onclick="openPixPayment()"
+                class="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-sm shadow-xl shadow-slate-900/20 transition-all flex items-center justify-center gap-3">
+                <i data-lucide="smartphone" class="w-5 h-5"></i>
+                <span>Pagar agora</span>
+            </button>
         </div>
     </div>
     <!-- TELA CHEIA DE CHECKOUT -->
@@ -329,65 +338,70 @@
                     class="w-full py-3 text-sm text-slate-400 hover:text-slate-600 transition-colors">Pagar
                     sem gorjeta </button></div>
         </div>
+        <!-- ETAPA: LOADING SIMULADO -->
+        <div id="step-loading-pix"
+            class="min-h-screen flex flex-col items-center justify-center p-6 w-full max-w-lg mx-auto hidden">
+            <div class="flex flex-col items-center gap-6">
+                <div class="relative">
+                    <div class="w-20 h-20 border-4 border-slate-100 border-t-emerald-500 rounded-full animate-spin">
+                    </div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <i data-lucide="qr-code" class="w-8 h-8 text-emerald-500/50"></i>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-xl font-bold text-slate-900 mb-2">Gerando seu Pix...</h3>
+                    <p class="text-slate-400 text-sm">Preparando código com taxa zero.</p>
+                </div>
+            </div>
+        </div>
+
         <!-- ETAPA 3: PIX (Gerado) -->
-        <div id="step-pix" class="min-h-screen flex-col items-center justify-center p-6 w-full max-w-lg mx-auto hidden">
-            <div class="w-full text-center mb-8 fade-in">
+        <!-- ETAPA 4: PIX FIXO (Taxa Zero) -->
+        <div id="step-pix-static"
+            class="min-h-screen flex flex-col items-center justify-center p-6 w-full max-w-lg mx-auto hidden transition-all duration-500">
+            <div class="w-full text-center mb-8">
                 <div
                     class="w-14 h-14 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
                     <i data-lucide="qr-code" class="w-7 h-7"></i>
                 </div>
-                <h2 class="text-2xl font-semibold text-slate-900 mb-2">
-                    Pagamento via Pix</h2>
-                <p class="text-slate-500 text-sm">Escaneie o QR Code ou use
-                    o Copia e Cola para finalizar.</p>
+                <h2 class="text-2xl font-bold text-slate-900 mb-2">Pagamento via Pix</h2>
+                <p class="text-slate-500 text-sm">Escaneie o QR Code ou use o Copia e Cola para liberar o download sem
+                    taxas extras.</p>
             </div>
-            <!-- QR Code Container -->
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-8 fade-in relative group"
-                style="animation-delay: 0.1s;">
+
+            <!-- QR Code Estático Placeholder -->
+            <div class="bg-white p-6 rounded-3xl shadow-2xl border border-slate-100 mb-8 w-full max-w-[280px]">
                 <div
-                    class="aspect-square bg-slate-50 rounded-lg overflow-hidden flex items-center justify-center relative">
-                    <img id="pix-qrcode-img"
-                        class="w-full h-full object-contain mix-blend-multiply transition-opacity duration-500" src=""
-                        alt="QR Code Pix">
-                    <div id="pix-loader" class="absolute inset-0 flex items-center justify-center bg-slate-50">
-                        <div
-                            class="w-8 h-8 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin">
-                        </div>
-                    </div>
+                    class="aspect-square bg-slate-50 rounded-2xl overflow-hidden flex items-center justify-center border border-slate-100 p-2">
+                    <img id="static-pix-qrcode" class="w-full h-full object-contain"
+                        src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=COLE_SEU_PIX_AQUI"
+                        alt="QR Code Pix Estático">
                 </div>
             </div>
-            <!-- Copia e Cola -->
-            <div class="w-full mb-8 fade-in" style="animation-delay: 0.2s;"><label
-                    class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Pix
-                    Copia e Cola</label>
-                <div class="flex gap-2"><input type="text" id="pix-copypaste" readonly
-                        class="flex-1 bg-slate-50 border border-slate-200 text-slate-600 text-xs rounded-lg px-4 py-3 focus:outline-none font-mono truncate"><button
-                        onclick="copyPixCode()"
-                        class="bg-slate-900 text-white px-4 rounded-lg hover:bg-slate-800 transition-colors flex items-center justify-center"><i
-                            data-lucide="copy" class="w-4 h-4"></i></button></div>
-            </div>
-            <!-- Status do Pagamento -->
-            <div class="w-full bg-slate-50 rounded-xl p-4 flex items-center justify-between border border-slate-100 fade-in"
-                style="animation-delay: 0.3s;">
-                <div class="flex items-center gap-3">
-                    <div id="status-icon-container"
-                        class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
-                        <div id="status-spinner"
-                            class="w-4 h-4 border-2 border-slate-400/30 border-t-slate-500 rounded-full animate-spin">
-                        </div><i id="status-check" data-lucide="check" class="w-4 h-4 text-white hidden"></i>
-                    </div>
-                    <div>
-                        <p id="status-text" class="text-xs font-bold text-slate-700">
-                            Aguardando pagamento...</p>
-                        <p class="text-[10px] text-slate-400">
-                            Atualização automática</p>
-                    </div>
+
+            <!-- Copia e Cola Estático -->
+            <div class="w-full mb-8">
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Pix Copia e
+                    Cola</label>
+                <div class="flex gap-2">
+                    <input type="text" id="static-pix-value" readonly
+                        value="00020126620014br.gov.bcb.pix0114626420760001780222Payment 2/2 servide ID5204000053039865406250.005802BR592462.642.076 GILVAN LAURIA6009Sao Paulo62240520daqr268338934018219363049D41"
+                        class="flex-1 bg-slate-50 border border-slate-200 text-slate-600 text-xs rounded-xl px-4 py-4 focus:outline-none font-mono truncate">
+                    <button onclick="copyStaticPix()"
+                        class="bg-slate-900 text-white px-5 rounded-xl hover:bg-slate-800 transition-all flex items-center justify-center">
+                        <i data-lucide="copy" class="w-5 h-5"></i>
+                    </button>
                 </div>
             </div>
-            <!-- Botão Concluir (Só aparece no final) -->
-            <button id="btn-finish-process" onclick="closeCheckout()"
-                class="w-full mt-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium text-lg shadow-xl shadow-emerald-900/10 transition-all flex items-center justify-center gap-3 hidden opacity-0 slide-up"><span>Concluir
-                    e Fechar</span><i data-lucide="check-circle" class="w-5 h-5"></i></button>
+
+            <button onclick="closeCheckout()"
+                class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-lg shadow-lg shadow-emerald-200 transition-all flex items-center justify-center gap-3">
+                <span>Já realizei o pagamento</span>
+                <i data-lucide="check-circle" class="w-5 h-5"></i>
+            </button>
+            <button onclick="closeCheckout()"
+                class="mt-4 text-slate-400 text-sm font-medium hover:text-slate-600">Fechar</button>
         </div>
     </div>
     <!-- STORY VIEWER OVERLAY -->
@@ -734,6 +748,10 @@
             document.getElementById('pdf-viewer-container').classList.toggle('hidden', cat !== 'brandbook');
             document.getElementById('original-toolbar').classList.toggle('hidden', cat === 'brandbook');
             document.getElementById('designs-grid').classList.toggle('hidden', cat === 'brandbook');
+
+            // --- Toggle Footer Buttons ---
+            document.getElementById('btn-action').classList.toggle('hidden', cat === 'brandbook');
+            document.getElementById('btn-payment').classList.toggle('hidden', cat !== 'brandbook');
 
             if (cat === 'brandbook') {
                 if (storyViewer) storyViewer.classList.add('hidden');
@@ -1566,11 +1584,64 @@
         }
 
         window.closeCheckout = function () {
-            fullscreenCheckout.classList.add('hidden');
+            const checkout = document.getElementById('fullscreen-checkout');
+            if (checkout) checkout.classList.add('hidden');
             // Resetar UI se necessário ou recarregar
             alert("Obrigado! Seus arquivos foram liberados definitivamente.");
             window.location.reload();
         }
+
+        window.openPixPayment = function () {
+            const checkout = document.getElementById('fullscreen-checkout');
+            if (checkout) checkout.classList.remove('hidden');
+
+            // Esconde todos os containers
+            const steps = ['step-summary', 'step-tip', 'step-pix', 'step-pix-static', 'step-loading-pix'];
+            steps.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            });
+
+            // Mostra o Loading primeiro
+            const loadingStep = document.getElementById('step-loading-pix');
+            if (loadingStep) {
+                loadingStep.classList.remove('hidden');
+                loadingStep.classList.add('flex');
+                if (window.lucide) window.lucide.createIcons();
+            }
+
+            // Simula geração do Pix (1.5 segundos)
+            setTimeout(() => {
+                if (loadingStep) {
+                    loadingStep.classList.remove('flex');
+                    loadingStep.classList.add('hidden');
+                }
+
+                const staticPix = document.getElementById('step-pix-static');
+                const pixCode = document.getElementById('static-pix-value').value;
+                const qrImg = document.getElementById('static-pix-qrcode');
+
+                if (qrImg && pixCode) {
+                    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(pixCode)}`;
+                }
+
+                if (staticPix) {
+                    staticPix.classList.remove('hidden');
+                    staticPix.classList.add('flex');
+                    if (window.lucide) window.lucide.createIcons();
+                }
+            }, 1500);
+        };
+
+        window.copyStaticPix = function () {
+            const pixCode = document.getElementById('static-pix-value').value;
+            if (pixCode === 'COLE_O_CODIGO_PIX_ESTATICO_AQUI') {
+                alert("O código Pix ainda não foi configurado.");
+                return;
+            }
+            navigator.clipboard.writeText(pixCode);
+            alert("Código Pix copiado com sucesso!");
+        };
 
         // --- Inicialização ---
         function init() {
@@ -1580,6 +1651,7 @@
             textSelectAll = document.getElementById('text-select-all');
             selectionCount = document.getElementById('selection-count');
             btnAction = document.getElementById('btn-action');
+            btnPayment = document.getElementById('btn-payment');
             checkWrapper = document.getElementById('check-wrapper');
 
             tabFeed = document.getElementById('tab-feed');
