@@ -889,18 +889,39 @@
             if (!url) return;
             let finalUrl = url;
 
-            // Converter links do Google Drive para link de download direto
+            // Converter links do Google Drive para links de conteúdo direto altamente eficientes
             if (url.includes('drive.google.com')) {
                 const driveId = url.includes('id=') ? url.split('id=').pop().split('&')[0] : url.split('/d/')[1]?.split('/')[0];
                 if (driveId) {
-                    finalUrl = `https://drive.google.com/uc?export=download&id=${driveId}`;
+                    const isImage = filename && (filename.toLowerCase().endsWith('.png') || filename.toLowerCase().endsWith('.jpg') || filename.toLowerCase().endsWith('.jpeg') || filename.toLowerCase().endsWith('.svg'));
+
+                    if (isImage) {
+                        // O domínio lh3 é otimizado para entrega de imagem e costuma ignorar prompts de login se o arquivo for público
+                        finalUrl = `https://lh3.googleusercontent.com/d/${driveId}`;
+                    } else {
+                        // confirm=t ajuda a evitar a tela de "arquivo grande" para downloads automáticos
+                        finalUrl = `https://drive.google.com/uc?export=download&id=${driveId}&confirm=t`;
+                    }
                 }
             }
 
+            // Fallback robusto via Iframe invisível (Garante que o usuário não saia da página mesmo se o Drive pedir login/confirmação)
+            const triggerIframeDownload = (dUrl) => {
+                const iframeId = 'hidden-download-iframe';
+                let iframe = document.getElementById(iframeId);
+                if (!iframe) {
+                    iframe = document.createElement('iframe');
+                    iframe.id = iframeId;
+                    iframe.style.display = 'none';
+                    document.body.appendChild(iframe);
+                }
+                iframe.src = dUrl;
+            };
+
             try {
-                // Tenta download via fetch/blob para manter na mesma página
-                const response = await fetch(finalUrl);
-                if (!response.ok) throw new Error('CORS or network error');
+                // Tentativa via Fetch/Blob (Funciona se o CORS permitir ou for mesma origem)
+                const response = await fetch(finalUrl, { mode: 'cors' });
+                if (!response.ok) throw new Error('CORS fail');
 
                 const blob = await response.blob();
                 const blobUrl = window.URL.createObjectURL(blob);
@@ -915,20 +936,9 @@
                     window.URL.revokeObjectURL(blobUrl);
                 }, 100);
             } catch (error) {
-                console.warn("Download via fetch falhou, usando fallback de link direto:", error);
-                const a = document.createElement('a');
-                a.href = finalUrl;
-                a.download = filename || 'download';
-                // Para links do Drive com uc?export=download, o browser geralmente
-                // dispara o download sem sair da página mesmo com target="_blank"
-                if (finalUrl.includes('drive.google.com')) {
-                    a.target = "_blank";
-                } else {
-                    a.target = "_self";
-                }
-                document.body.appendChild(a);
-                a.click();
-                setTimeout(() => document.body.removeChild(a), 100);
+                console.warn("Download via fetch falhou (CORS), disparando via Iframe silencioso:", error);
+                // Via Iframe é o método mais eficiente para disparar downloads do Drive sem abrir novas abas ou redirecionar
+                triggerIframeDownload(finalUrl);
             }
         }
 
