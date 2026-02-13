@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galeria 360 | Eletro Business</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css" />
+    <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        :root {
+            --primary: #db0038;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text: #f8fafc;
+            --text-light: #94a3b8;
+            --success: #10b981;
+            --info: #3b82f6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            padding: 15px 40px;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 900;
+            letter-spacing: -1px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .logo i {
+            color: var(--primary);
+        }
+
+        .map-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        /* Main Layout */
+        main {
+            flex: 1;
+            display: flex;
+            position: relative;
+        }
+
+        #panorama {
+            flex: 1;
+            background: #000;
+            cursor: crosshair;
+        }
+
+        /* Sidebar Gallery */
+        .gallery-panel {
+            width: 320px;
+            background: var(--surface);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .gallery-header h2 {
+            font-size: 14px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+
+        .scene-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .scene-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .scene-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .scene-card.active {
+            border-color: var(--primary);
+            background: rgba(219, 0, 56, 0.1);
+        }
+
+        .scene-icon {
+            width: 35px;
+            height: 35px;
+            background: var(--bg);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: var(--primary);
+        }
+
+        .scene-info h3 {
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+
+        .scene-info p {
+            font-size: 10px;
+            font-weight: 600;
+            opacity: 0.5;
+            text-transform: uppercase;
+        }
+
+        /* Toolbar */
+        .viewer-tools {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            display: flex;
+            gap: 10px;
+            z-index: 50;
+        }
+
+        .tool-btn {
+            height: 42px;
+            padding: 0 20px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            gap: 8px;
+        }
+
+        .tool-btn i {
+            font-size: 18px;
+        }
+
+        .tool-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .tool-btn.primary {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .btn-mode {
+            opacity: 0.6;
+        }
+
+        .btn-mode.active {
+            opacity: 1 !important;
+            box-shadow: 0 0 20px rgba(219, 0, 56, 0.4);
+            background: var(--primary);
+            border-color: white;
+        }
+
+        /* Modals and Forms */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            width: 100%;
+            max-width: 450px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 18px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 0, 0, 0.2);
+            color: #ff4d4d;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-light);
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.05);
+            border-radius: 14px;
+            padding: 14px 18px;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .barcode-input-container {
+            position: relative;
+        }
+
+        .barcode-input-container i {
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            color: var(--primary);
+        }
+
+        .btn-modal {
+            width: 100%;
+            height: 54px;
+            border: none;
+            border-radius: 16px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-modal.primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-modal.primary:hover {
+            background: #f00042;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(219, 0, 56, 0.3);
+        }
+
+        /* Product Info Inside Modal */
+        .product-preview-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 18px;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .prod-img-box {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: #ccc;
+            overflow: hidden;
+        }
+
+        .prod-img-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .prod-details h4 {
+            font-size: 16px;
+            font-weight: 800;
+            margin-bottom: 6px;
+            line-height: 1.2;
+        }
+
+        .prod-details p {
+            font-size: 13px;
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        .stock-edit-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 24px;
+        }
+
+        .stock-badge {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        /* Loading Overlay */
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 5000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s;
+        }
+
+        .spin {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: rotate 1s linear infinite;
+        }
+
+        @keyframes rotate {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Zonas de Produto */
+        .pnlm-hotspot-zone {
+            background: rgba(16, 185, 129, 0.15) !important;
+            border: 2px solid rgba(16, 185, 129, 0.3) !important;
+            width: 120px !important;
+            height: 120px !important;
+            border-radius: 20px !important;
+            margin-top: -60px !important;
+            margin-left: -60px !important;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pnlm-hotspot-zone::after {
+            content: "\eb04";
+            font-family: 'boxicons';
+            font-size: 40px;
+            color: rgba(16, 185, 129, 0.4);
+            transition: all 0.3s;
+        }
+
+        .pnlm-hotspot-zone:hover {
+            background: rgba(16, 185, 129, 0.3) !important;
+            transform: scale(1.1);
+            border-color: var(--success) !important;
+        }
+
+        .pnlm-hotspot-zone:hover::after {
+            color: var(--success);
+            transform: scale(1.2);
+        }
+
+        #status-bar {
+            position: absolute;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 10px 24px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            border: 1px solid var(--primary);
+            display: none;
+            z-index: 1000;
+            pointer-events: none;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            color: white;
+        }
+
+        /* Hotspot Info */
+        .pnlm-hotspot-label {
+            background: rgba(15, 23, 42, 0.9) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            padding: 8px 16px !important;
+            border-radius: 12px !important;
+            color: white !important;
+            font-weight: 700 !important;
+            font-size: 14px !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+            backdrop-filter: blur(5px) !important;
+        }
+
+        .pnlm-hotspot-marker {
+            background: var(--primary) !important;
+            width: 24px !important;
+            height: 24px !important;
+            border-radius: 50% !important;
+            border: 3px solid white !important;
+            box-shadow: 0 0 15px var(--primary) !important;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .pnlm-hotspot-marker:hover {
+            transform: scale(1.3);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="loader">
+        <div class="spin"></div>
+        <p style="margin-top: 20px; font-weight: 800; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;">
+            Sincronizando Sistema...</p>
+    </div>
+
+    <div id="status-bar">MODO MAPEAMENTO ATIVO</div>
+
+    <header>
+        <div class="logo" onclick="location.href='index.html'">
+            <i class='bx bx-cube-alt'></i>
+            <span>D'TUDO <small style="font-weight: 300; opacity: 0.6;">SISTEMA 360</small></span>
+        </div>
+
+        <div class="map-controls">
+            <button class="tool-btn btn-mode" id="btn-marcar" onclick="setMode('MARCADOR')">
+                <i class='bx bx-barcode-reader'></i> MAPEAR PRODUTO
+            </button>
+            <button class="tool-btn btn-mode" id="btn-zona" onclick="setMode('ZONA')">
+                <i class='bx bx-grid-alt'></i> DEFINIR ZONA
+            </button>
+            <button class="tool-btn btn-mode" id="btn-vincular" onclick="setMode('VINCULO')">
+                <i class='bx bx-git-branch'></i> CRIAR ROTA
+            </button>
+        </div>
+
+        <div style="display: flex; gap: 12px;">
+            <button class="tool-btn" onclick="addSetor()" title="Adicionar Novo Setor">
+                <i class='bx bx-plus'></i> SETOR
+            </button>
+            <button class="tool-btn" style="background: transparent;" onclick="location.reload()">
+                <i class='bx bx-refresh'></i>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <div id="panorama"></div>
+
+        <div class="viewer-tools">
+            <button class="tool-btn" onclick="viewer.setFullscreen(true)" title="Tela Cheia"><i
+                    class='bx bx-fullscreen'></i></button>
+            <button class="tool-btn" id="btn-auto" onclick="toggleAutoRotate()" title="Auto Rotação"><i
+                    class='bx bx-sync'></i></button>
+        </div>
+
+        <aside class="gallery-panel">
+            <div class="gallery-header">
+                <h2>Setores Mapeados</h2>
+            </div>
+            <div class="scene-list" id="scene-list">
+                <!-- Cards via JS -->
+            </div>
+        </aside>
+    </main>
+
+    <!-- BARCODE MODAL -->
+    <div class="modal-overlay" id="barcode-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class='bx bx-barcode-reader' style="color: var(--primary);"></i> Ler Código de Barras</h3>
+                <button class="close-btn" onclick="closeModal('barcode-modal')"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Escaneie ou Digite o Código</label>
+                    <div class="barcode-input-container">
+                        <input type="text" id="barcode-input" class="form-input" placeholder="0000000000..." autofocus>
+                        <i class='bx bx-barcode'></i>
+                    </div>
+                </div>
+                <button class="btn-modal primary" onclick="searchBarcode()">
+                    <i class='bx bx-search'></i> BUSCAR PRODUTO
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRODUCT MODAL -->
+    <div class="modal-overlay" id="product-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class='bx bx-package' style="color: var(--success);"></i> Produto Encontrado</h3>
+                <button class="close-btn" onclick="closeModal('product-modal')"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="product-preview-card">
+                    <div class="prod-img-box" id="modal-prod-img">
+                        <i class='bx bx-image'></i>
+                    </div>
+                    <div class="prod-details">
+                        <h4 id="modal-prod-name">Nome do Produto</h4>
+                        <p id="modal-prod-barcode">#00000000</p>
+                        <div style="margin-top: 8px;">
+                            <span class="stock-badge" id="modal-prod-stock">Estoque: 0 UN</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stock-edit-grid">
+                    <div class="form-group">
+                        <label>Preço (R$)</label>
+                        <input type="number" id="modal-prod-price" class="form-input" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Categoria</label>
+                        <input type="text" id="modal-prod-category" class="form-input" placeholder="Categoria">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Ajustar Estoque (Soma ao atual)</label>
+                    <input type="number" id="modal-edit-stock" class="form-input" step="1"
+                        placeholder="Ex: 10 para somar">
+                </div>
+
+                <button class="btn-modal primary" onclick="confirmProductMarking()" id="btn-save-mark">
+                    <i class='bx bx-pin'></i> SALVAR NO MAPA
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- REGISTER MODAL -->
+    <div class="modal-overlay" id="register-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class='bx bx-plus-circle' style="color: var(--info);"></i> Produto não cadastrado</h3>
+                <button class="close-btn" onclick="closeModal('register-modal')"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 14px; opacity: 0.7; margin-bottom: 20px;">Deseja realizar o cadastro rápido deste
+                    código: <strong id="reg-barcode-display"></strong>?</p>
+
+                <div class="form-group">
+                    <label>Nome do Produto</label>
+                    <input type="text" id="reg-name" class="form-input" placeholder="Ex: Cerveja Brahma 350ml">
+                </div>
+                <div class="form-group">
+                    <label>Preço de Venda (R$)</label>
+                    <input type="number" id="reg-price" class="form-input" step="0.01" placeholder="0.00">
+                </div>
+
+                <button class="btn-modal primary" onclick="quickRegisterAndMark()">
+                    <i class='bx bx-check-circle'></i> CADASTRAR E MAPEAR
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <main>
+        <div id="panorama"></div>
+
+        <div class="viewer-tools">
+            <button class="tool-btn" onclick="viewer.setFullscreen(true)" title="Tela Cheia"><i
+                    class='bx bx-fullscreen'></i></button>
+            <button class="tool-btn" id="btn-auto" onclick="toggleAutoRotate()" title="Auto Rotação"><i
+                    class='bx bx-sync'></i></button>
+        </div>
+
+        <aside class="gallery-panel">
+            <div class="gallery-header">
+                <h2>Selecione o Local</h2>
+            </div>
+            <div class="scene-list" id="scene-list">
+                <!-- Cards via JS -->
+            </div>
+        </aside>
+    </main>
+
+    <script>
+        const TOUR_API_URL = "https://script.google.com/macros/s/AKfycbznf7SeuiwZ_vtmV1w6u3KfRMRt-EettfRv9TccBUA8qtZTWb_j_h6E6PkaQdkUU1dt/exec";
+        const PRODUCT_API_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
+
+        let viewer = null;
+        let isAutoRotating = false;
+        let currentMode = 'NAVEGAR';
+        let currentData = null;
+        let localProductCache = [];
+        let pendingClickCoords = { pitch: 0, yaw: 0 };
+        let selectedProduct = null;
+
+        // --- UI HELPERS ---
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) {
+                modal.classList.add('active');
+                const input = modal.querySelector('input');
+                if (input) setTimeout(() => input.focus(), 300);
+            }
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) modal.classList.remove('active');
+        }
+
+        function setMode(mode) {
+            currentMode = (currentMode === mode) ? 'NAVEGAR' : mode;
+            updateUI();
+        }
+
+        function updateUI() {
+            const bar = document.getElementById('status-bar');
+            bar.style.display = currentMode !== 'NAVEGAR' ? 'block' : 'none';
+            bar.innerText = `MODO: ${currentMode} - CLIQUE NO MAPA PARA MARCAR`;
+
+            document.querySelectorAll('.btn-mode').forEach(b => b.classList.remove('active'));
+            if (currentMode === 'MARCADOR') document.getElementById('btn-marcar').classList.add('active');
+            if (currentMode === 'VINCULO') document.getElementById('btn-vincular').classList.add('active');
+            if (currentMode === 'ZONA') document.getElementById('btn-zona').classList.add('active');
+        }
+
+        // --- PRODUCT LOGIC ---
+        async function loadProductCache() {
+            try {
+                const response = await fetch(`${PRODUCT_API_URL}?action=getProducts`);
+                const data = await response.json();
+                localProductCache = Array.isArray(data) ? data : (data.data || []);
+                console.log("Cache de produtos carregado:", localProductCache.length);
+            } catch (error) {
+                console.error("Erro ao carregar produtos:", error);
+            }
+        }
+
+        function searchBarcode() {
+            const barcode = document.getElementById('barcode-input').value.trim();
+            if (!barcode) return;
+
+            const product = localProductCache.find(p => String(p.id).trim() === barcode);
+
+            if (product) {
+                showProductModal(product);
+            } else {
+                showRegisterModal(barcode);
+            }
+        }
+
+        function showProductModal(product) {
+            selectedProduct = product;
+            closeModal('barcode-modal');
+
+            document.getElementById('modal-prod-name').innerText = product.name;
+            document.getElementById('modal-prod-barcode').innerText = `#${product.id}`;
+            document.getElementById('modal-prod-stock').innerText = `Estoque: ${product.stock || 0} ${product.unit || 'UN'}`;
+            document.getElementById('modal-prod-price').value = product.price || 0;
+            document.getElementById('modal-prod-category').value = product.category || "";
+            document.getElementById('modal-edit-stock').value = "";
+
+            const imgBox = document.getElementById('modal-prod-img');
+            if (product.imgUrl) {
+                imgBox.innerHTML = `<img src="${product.imgUrl}" alt="${product.name}">`;
+            } else {
+                imgBox.innerHTML = `<i class='bx bx-image'></i>`;
+            }
+
+            openModal('product-modal');
+        }
+
+        function showRegisterModal(barcode) {
+            closeModal('barcode-modal');
+            document.getElementById('reg-barcode-display').innerText = barcode;
+            document.getElementById('reg-name').value = "";
+            document.getElementById('reg-price').value = "";
+            openModal('register-modal');
+        }
+
+        async function quickRegisterAndMark() {
+            const barcode = document.getElementById('reg-barcode-display').innerText;
+            const name = document.getElementById('reg-name').value.trim();
+            const price = document.getElementById('reg-price').value;
+
+            if (!name || !price) {
+                alert("Preencha todos os campos.");
+                return;
+            }
+
+            const btn = document.querySelector('#register-modal .btn-modal');
+            btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> CADASTRANDO...";
+            btn.disabled = true;
+
+            try {
+                const url = `${PRODUCT_API_URL}?action=cadastrarProduto&codigo=${barcode}&nome=${encodeURIComponent(name)}&preco=${price}`;
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    // Adiciona ao cache local
+                    const newProd = result.data || { id: barcode, name, price: parseFloat(price), stock: 0, unit: 'UN' };
+                    localProductCache.push(newProd);
+
+                    // Salva no mapa
+                    await saveMarkToMap(name);
+
+                    closeModal('register-modal');
+                    alert("Produto cadastrado e mapeado!");
+                } else {
+                    alert("Erro: " + result.message);
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Erro ao cadastrar produto.");
+            } finally {
+                btn.innerHTML = "<i class='bx bx-check-circle'></i> CADASTRAR E MAPEAR";
+                btn.disabled = false;
+            }
+        }
+
+        async function confirmProductMarking() {
+            const price = document.getElementById('modal-prod-price').value;
+            const category = document.getElementById('modal-prod-category').value;
+            const extraStock = document.getElementById('modal-edit-stock').value;
+
+            const btn = document.getElementById('btn-save-mark');
+            btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> SALVANDO...";
+            btn.disabled = true;
+
+            try {
+                // Se algum dado mudou ou estoque foi adicionado, atualiza na planilha
+                if (price != selectedProduct.price || category != selectedProduct.category || extraStock) {
+                    const updateData = {
+                        action: "saveProduct",
+                        data: {
+                            id: selectedProduct.id,
+                            name: selectedProduct.name,
+                            price: price,
+                            category: category,
+                            stock: (parseFloat(selectedProduct.stock) || 0) + (parseFloat(extraStock) || 0),
+                            imgUrl: selectedProduct.imgUrl,
+                            brand: selectedProduct.brand,
+                            ncm: selectedProduct.ncm,
+                            cfop: selectedProduct.cfop,
+                            unit: selectedProduct.unit
+                        }
+                    };
+
+                    await fetch(PRODUCT_API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify(updateData)
+                    });
+
+                    // Atualiza cache local
+                    selectedProduct.price = price;
+                    selectedProduct.category = category;
+                    selectedProduct.stock = updateData.data.stock;
+                }
+
+                await saveMarkToMap(selectedProduct.name);
+                closeModal('product-modal');
+                setMode('NAVEGAR');
+            } catch (error) {
+                console.error(error);
+                alert("Erro ao salvar dados do produto.");
+            } finally {
+                btn.innerHTML = "<i class='bx bx-pin'></i> SALVAR NO MAPA";
+                btn.disabled = false;
+            }
+        }
+
+        async function saveMarkToMap(text) {
+            const cena_pai = viewer.getScene();
+            const dados = {
+                tipo: "MARCADOR",
+                cena_pai: cena_pai,
+                texto: text,
+                pitch: pendingClickCoords.pitch.toFixed(2),
+                yaw: pendingClickCoords.yaw.toFixed(2)
+            };
+
+            await fetch(TOUR_API_URL, {
+                method: 'POST',
+                body: JSON.stringify(dados)
+            });
+
+            viewer.addHotSpot({
+                "pitch": pendingClickCoords.pitch,
+                "yaw": pendingClickCoords.yaw,
+                "type": "info",
+                "text": text
+            });
+        }
+
+        // --- CORE VIEWER LOGIC ---
+        function handleMapClick(pitch, yaw) {
+            pendingClickCoords = { pitch, yaw };
+
+            if (currentMode === 'MARCADOR') {
+                document.getElementById('barcode-input').value = "";
+                openModal('barcode-modal');
+            } else if (currentMode === 'VINCULO') {
+                const destino = prompt("Para qual setor (ID) este caminho leva?");
+                if (destino && currentData.scenes[destino]) {
+                    const dados = { tipo: "MARCADOR", cena_pai: viewer.getScene(), texto: `🔗 Ir para: ${destino}`, pitch: pitch.toFixed(2), yaw: yaw.toFixed(2) };
+                    fetch(TOUR_API_URL, { method: 'POST', body: JSON.stringify(dados) }).then(() => {
+                        viewer.addHotSpot({ "pitch": pitch, "yaw": yaw, "type": "scene", "sceneId": destino, "text": `Ir para ${currentData.scenes[destino].title}` });
+                        setMode('NAVEGAR');
+                    });
+                }
+            } else if (currentMode === 'ZONA') {
+                const nome = prompt("O que contém nesta zona?");
+                if (nome) {
+                    const dados = { tipo: "MARCADOR", cena_pai: viewer.getScene(), texto: `🟩 Zona: ${nome}`, pitch: pitch.toFixed(2), yaw: yaw.toFixed(2) };
+                    fetch(TOUR_API_URL, { method: 'POST', body: JSON.stringify(dados) }).then(() => {
+                        viewer.addHotSpot({ "pitch": pitch, "yaw": yaw, "type": "info", "text": nome, "cssClass": "pnlm-hotspot-zone" });
+                        setMode('NAVEGAR');
+                    });
+                }
+            }
+        }
+
+        function converterLink(link) {
+            if (!link || typeof link !== 'string') return link;
+            const id = link.match(/[-\w]{25,}/);
+            if (id && (link.includes('drive.google.com') || link.includes('docs.google.com') || link.includes('googleusercontent.com'))) {
+                return `https://lh3.googleusercontent.com/d/${id[0]}`;
+            }
+            return link;
+        }
+
+        function getDimensions(url) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.onload = () => resolve({ w: img.width, h: img.height });
+                img.onerror = () => resolve({ w: 0, h: 0 });
+                img.src = url;
+            });
+        }
+
+        async function init() {
+            try {
+                // Sincroniza cache de produtos em paralelo
+                loadProductCache();
+
+                const response = await fetch(TOUR_API_URL);
+                currentData = await response.json();
+                const listContainer = document.getElementById('scene-list');
+                listContainer.innerHTML = "";
+
+                if (currentData.scenes) {
+                    const sceneIds = Object.keys(currentData.scenes);
+
+                    for (const id of sceneIds) {
+                        const scene = currentData.scenes[id];
+                        scene.panorama = converterLink(scene.panorama);
+
+                        const dims = await getDimensions(scene.panorama);
+                        if (dims.w > 0) {
+                            const aspect = dims.h / dims.w;
+                            if (aspect < 0.48 || aspect > 0.52) {
+                                scene.vaov = (dims.h / (dims.w / 2)) * 180;
+                                scene.maxPitch = scene.vaov / 2;
+                                scene.minPitch = -scene.vaov / 2;
+                            }
+                        }
+
+                        if (scene.hotSpots) {
+                            scene.hotSpots.forEach(hs => {
+                                if (hs.text && hs.text.startsWith("🔗")) {
+                                    const targetId = hs.text.replace("🔗 Ir para: ", "").trim();
+                                    hs.type = "scene";
+                                    hs.sceneId = targetId;
+                                    hs.text = `Ir para: ${currentData.scenes[targetId]?.title || targetId}`;
+                                } else if (hs.text && hs.text.startsWith("🟩")) {
+                                    hs.cssClass = "pnlm-hotspot-zone";
+                                    hs.text = hs.text.replace("🟩 Zona: ", "");
+                                }
+                            });
+                        }
+
+                        const card = document.createElement('div');
+                        card.className = 'scene-card';
+                        card.id = `card-${id}`;
+                        card.onclick = () => switchScene(id);
+                        card.innerHTML = `
+                            <div class="scene-icon"><i class='bx bx-map-pin'></i></div>
+                            <div class="scene-info"><h3>${scene.title}</h3><p>${id}</p></div>
+                        `;
+                        listContainer.appendChild(card);
+                    }
+
+                    currentData.autoLoad = true;
+                    if (viewer) viewer.destroy();
+                    viewer = pannellum.viewer('panorama', currentData);
+
+                    viewer.on('load', () => {
+                        const current = viewer.getScene();
+                        updateActiveCard(current);
+                    });
+
+                    viewer.on('mousedown', (e) => {
+                        if (currentMode === 'NAVEGAR') return;
+                        const coords = viewer.mouseEventToCoords(e);
+                        handleMapClick(coords[0], coords[1]);
+                    });
+
+                    setTimeout(() => {
+                        document.getElementById('loader').style.opacity = '0';
+                        setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+                    }, 1000);
+                }
+            } catch (error) { console.error(error); }
+        }
+
+        function addSetor() {
+            const id = prompt("ID (ex: corredor1):");
+            const tit = prompt("Nome:");
+            const urlRaw = prompt("Link do Drive:");
+            if (id && tit && urlRaw) {
+                const dados = { tipo: "CENA", id: id, titulo: tit, url: converterLink(urlRaw) };
+                fetch(TOUR_API_URL, { method: 'POST', body: JSON.stringify(dados) }).then(() => location.reload());
+            }
+        }
+
+        function switchScene(id) { if (viewer) { viewer.loadScene(id); updateActiveCard(id); } }
+        function updateActiveCard(id) {
+            document.querySelectorAll('.scene-card').forEach(c => c.classList.remove('active'));
+            const activeCard = document.getElementById(`card-${id}`);
+            if (activeCard) {
+                activeCard.classList.add('active');
+                activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function toggleAutoRotate() {
+            isAutoRotating = !isAutoRotating;
+            if (isAutoRotating) {
+                viewer.startAutoRotate(-2);
+                document.getElementById('btn-auto').style.background = 'var(--primary)';
+            } else {
+                viewer.stopAutoRotate();
+                document.getElementById('btn-auto').style.background = '';
+            }
+        }
+
+        // --- LISTENERS ---
+        document.getElementById('barcode-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchBarcode();
+        });
+
+        init();
+    </script>
+</body>
+
+</html>

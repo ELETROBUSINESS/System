@@ -75,6 +75,24 @@
             color: white;
             border: 1px solid #666;
         }
+
+        /* Estilo para a Zona de Produtos (Quadrado Verde Semi-transparente) */
+        .pnlm-hotspot-zone {
+            background: rgba(0, 255, 0, 0.25) !important;
+            border: 2px solid rgba(0, 255, 0, 0.5) !important;
+            width: 80px !important;
+            height: 80px !important;
+            border-radius: 8px !important;
+            margin-top: -40px !important;
+            margin-left: -40px !important;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .pnlm-hotspot-zone:hover {
+            background: rgba(0, 255, 0, 0.45) !important;
+            transform: scale(1.1);
+        }
     </style>
 </head>
 
@@ -88,6 +106,8 @@
             <div style="font-size: 10px; color: #aaa; padding-left: 5px;" id="info-status">Modo: Navegação</div>
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn" style="background: #111;" onclick="window.location.href='gallery.html'"> Ver
+                Galeria</button>
             <button class="btn" style="background: #6c757d;" onclick="triggerCamera()"
                 title="Tirar foto com o celular">📸 Câmera</button>
             <button class="btn" onclick="addSetor()">+ Novo Setor</button>
@@ -96,6 +116,8 @@
                 style="background: #28a745; opacity: 0.6;">📍 Marcar Item (P)</button>
             <button class="btn btn-mode" id="btn-vincular" onclick="setMode('VINCULO')"
                 style="background: #007bff; opacity: 0.6;">🔗 Criar Caminho (V)</button>
+            <button class="btn btn-mode" id="btn-zona" onclick="setMode('ZONA')"
+                style="background: #10b981; opacity: 0.6;">🟩 Mapear Zona (Z)</button>
         </div>
         <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;"
             onchange="handleCameraUpload(this)">
@@ -120,6 +142,7 @@
             document.getElementById('info-status').innerText = `Modo: ${currentMode}`;
             document.getElementById('btn-marcar').style.opacity = currentMode === 'MARCADOR' ? '1' : '0.6';
             document.getElementById('btn-vincular').style.opacity = currentMode === 'VINCULO' ? '1' : '0.6';
+            document.getElementById('btn-zona').style.opacity = currentMode === 'ZONA' ? '1' : '0.6';
             document.getElementById('crosshair').style.display = currentMode !== 'NAVEGAR' ? 'block' : 'none';
         }
 
@@ -189,6 +212,9 @@
                                     hs.type = "scene";
                                     hs.sceneId = targetId;
                                     hs.text = `Ir para: ${currentData.scenes[targetId]?.title || targetId}`;
+                                } else if (hs.text && hs.text.startsWith("🟩")) {
+                                    hs.cssClass = "pnlm-hotspot-zone";
+                                    hs.text = hs.text.replace("🟩 Zona: ", "");
                                 }
                             });
                         }
@@ -242,12 +268,34 @@
                         setMode('NAVEGAR');
                     });
                 }
+            } else if (currentMode === 'ZONA') {
+                const nome = prompt("O que contém nesta zona? (Ex: Prateleira de Arroz)");
+                if (nome) {
+                    const dados = {
+                        tipo: "MARCADOR",
+                        cena_pai: viewer.getScene(),
+                        texto: `🟩 Zona: ${nome}`,
+                        pitch: viewer.getPitch().toFixed(2),
+                        yaw: viewer.getYaw().toFixed(2)
+                    };
+                    fetch(API_URL, { method: 'POST', body: JSON.stringify(dados) }).then(() => {
+                        viewer.addHotSpot({
+                            "pitch": viewer.getPitch(),
+                            "yaw": viewer.getYaw(),
+                            "type": "info",
+                            "text": nome,
+                            "cssClass": "pnlm-hotspot-zone"
+                        });
+                        setMode('NAVEGAR');
+                    });
+                }
             }
         });
 
         window.addEventListener('keydown', e => {
             if (e.key.toLowerCase() === 'p') setMode('MARCADOR');
             if (e.key.toLowerCase() === 'v') setMode('VINCULO');
+            if (e.key.toLowerCase() === 'z') setMode('ZONA');
             if (e.key.toLowerCase() === 'escape') setMode('NAVEGAR');
         });
 
