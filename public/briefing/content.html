@@ -532,11 +532,15 @@
             window.fs.onSnapshot(q, (snapshot) => {
                 markers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 if (pdfDoc) {
-                    // Re-render markers for all current pages
                     for (let i = 1; i <= pdfDoc.numPages; i++) {
                         const wrapper = document.getElementById(`page-wrapper-${i}`);
                         if (wrapper) renderMarkers(i);
                     }
+                }
+            }, (error) => {
+                console.error("Erro na sincronização Firebase:", error);
+                if (error.code === 'permission-denied') {
+                    console.warn("Acesso negado: Verifique as regras do Firestore no Console do Firebase.");
                 }
             });
         }
