@@ -483,6 +483,69 @@
                 transform: rotate(360deg);
             }
         }
+
+        /* Meta de Cadastro - Versão Inferior */
+        .registration-goal-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            border-radius: 12px;
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .goal-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .goal-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .goal-stats {
+            font-size: 0.85rem;
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .goal-stats strong {
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: var(--primary-red);
+        }
+
+        .goal-progress-track {
+            height: 8px;
+            background: #f1f5f9;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #f1f5f9;
+        }
+
+        .goal-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #34d399);
+            width: 0%;
+            transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+        }
+
+        .goal-footer-msg {
+            font-size: 0.65rem;
+            color: #94a3b8;
+            margin-top: 6px;
+            text-align: center;
+        }
     </style>
 
     <div id="system-update-banner">
@@ -818,6 +881,19 @@
                             <button class="btn btn-secondary-icon" id="cancel-sale-btn" title="Cancelar Venda">
                                 <i class='bx bx-trash'></i>
                             </button>
+                        </div>
+
+                        <!-- Meta de Cadastro (Nova Posição Inferior) -->
+                        <div class="registration-goal-card" id="registration-goal-box">
+                            <div class="goal-header-row">
+                                <span class="goal-title"><i class='bx bx-target-lock'></i> Meta <span
+                                        id="current-shift-name">Manhã</span></span>
+                                <span class="goal-stats"><strong id="registered-count">0</strong> / 70</span>
+                            </div>
+                            <div class="goal-progress-track">
+                                <div class="goal-progress-fill" id="goal-progress-fill" style="width: 0%"></div>
+                            </div>
+                            <p class="goal-footer-msg">Produtos registrados neste turno</p>
                         </div>
 
                     </div>

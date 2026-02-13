@@ -22,6 +22,8 @@ function doPost(e) {
 
         if (data.action === 'calcular') {
             response = calcularDashboard(data);
+        } else if (data.action === 'registrar_log') {
+            response = registrarLog(data);
         } else {
             response = salvarNoBanco(data);
         }
@@ -34,6 +36,37 @@ function doPost(e) {
             success: false,
             message: "Erro no servidor: " + error.toString()
         })).setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+// ==========================================
+// FUNÇÃO: REGISTRAR LOG (ANTIGRAVITY)
+// ==========================================
+function registrarLog(data) {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName('logs');
+
+    if (!sheet) {
+        sheet = ss.insertSheet('logs');
+        sheet.appendRow(['Data/Hora', 'Loja', 'Operador', 'Cargo', 'Ação', 'Quantidade', 'Detalhes']);
+    }
+
+    const timestamp = new Date();
+    const novaLinha = [
+        timestamp,
+        data.loja || "DT#25",
+        data.operador || "",
+        data.cargo || "",
+        data.acao || "Registro",
+        data.quantidade || 0,
+        data.detalhes || ""
+    ];
+
+    try {
+        sheet.appendRow(novaLinha);
+        return { success: true, message: "Log registrado com sucesso!" };
+    } catch (e) {
+        return { success: false, message: e.message };
     }
 }
 
@@ -70,6 +103,8 @@ function salvarNoBanco(data) {
         return { success: false, message: e.message };
     }
 }
+
+
 
 // ==========================================
 // FUNÇÃO 2: SISTEMA DE CÁLCULO (DASHBOARD)
@@ -200,6 +235,8 @@ function calcularDashboard(data) {
         }
     };
 }
+
+
 
 // ==========================================
 // FUNÇÕES AUXILIARES

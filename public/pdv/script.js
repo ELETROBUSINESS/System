@@ -266,6 +266,90 @@ document.addEventListener('DOMContentLoaded', () => {
     // Inicia o listener de pedidos imediatamente
     startOrderPolling();
 
+    // ==========================================
+    // LÓGICA DE METAS DE CADASTRO (ANTIGRAVITY)
+    // ==========================================
+    const GOAL_CONFIG = {
+        morning: { name: "Manhã", start: 0, end: 12, target: 70 },
+        afternoon: { name: "Tarde/Noite", start: 12, end: 24, target: 70 }
+    };
+
+    function getCurrentShift() {
+        const hour = new Date().getHours();
+        return (hour >= 0 && hour < 12) ? 'morning' : 'afternoon';
+    }
+
+    async function registrarLogAtividadePDV(acao, quantidade = 1, detalhes = "") {
+        try {
+            const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+            const data = {
+                action: "registrar_log",
+                operador: userData.nome || "PDV Alpha",
+                cargo: userData.cargo || "Operador",
+                loja: "DT#25",
+                acao: acao,
+                quantidade: quantidade,
+                detalhes: detalhes
+            };
+
+            await fetch(CENTRAL_API_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+        } catch (e) {
+            console.error("Erro ao registrar log:", e);
+        }
+    }
+
+    function updateGoalUI() {
+        const shift = getCurrentShift();
+        const config = GOAL_CONFIG[shift];
+        const lastReset = localStorage.getItem('registration_goal_reset');
+        const nowStr = new Date().toDateString() + "_" + shift;
+
+        // Resetar se mudou o dia ou o turno
+        if (lastReset !== nowStr) {
+            localStorage.setItem('registration_goal_count', '0');
+            localStorage.setItem('registration_goal_ids', JSON.stringify([]));
+            localStorage.setItem('registration_goal_reset', nowStr);
+        }
+
+        const count = parseInt(localStorage.getItem('registration_goal_count') || '0');
+        const fillPerc = Math.min((count / config.target) * 100, 100);
+
+        const fillEl = document.getElementById('goal-progress-fill');
+        const countEl = document.getElementById('registered-count');
+        const shiftNameEl = document.getElementById('current-shift-name');
+
+        if (fillEl) fillEl.style.width = fillPerc + '%';
+        if (countEl) countEl.innerText = count;
+        if (shiftNameEl) shiftNameEl.innerText = config.name;
+    }
+
+    // Exporta para ser usado na função de salvar produto
+    window.trackProductRegistration = async (productId) => {
+        const shift = getCurrentShift();
+        const registeredIds = JSON.parse(localStorage.getItem('registration_goal_ids') || '[]');
+
+        if (!registeredIds.includes(productId)) {
+            registeredIds.push(productId);
+            const newCount = registeredIds.length;
+
+            localStorage.setItem('registration_goal_ids', JSON.stringify(registeredIds));
+            localStorage.setItem('registration_goal_count', newCount.toString());
+
+            updateGoalUI();
+
+            // Logar a atividade
+            await registrarLogAtividadePDV("Cadastro de Produto", 1, `Produto: ${productId}`);
+        }
+    };
+
+    updateGoalUI();
+    setInterval(updateGoalUI, 60000); // Atualiza turno se passar das 12h
+
     // --- Constantes Locais de UI ---
     const TOKEN_KEY = 'caixaToken';
     const TOKEN_EXPIRATION_KEY = 'caixaTokenExpiration';
@@ -6851,10 +6935,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     showCustomAlert("Sucesso", result.message);
                     updateProdForm.style.display = 'none';
                     updateProdBarcode.value = '';
-                    updateProdBarcode.focus();
-
                     // Recarrega cache discretamente
                     if (window.carregarCacheDeProdutos) window.carregarCacheDeProdutos();
+
+                    // [ADICIONADO] Rastreia meta de cadastro
+                    if (window.trackProductRegistration) window.trackProductRegistration(currentEditingProduct.id);
                 } else {
                     // showCustomAlert("Erro", result.message);
                 }
@@ -7047,11 +7132,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     const idx = localProductCache.findIndex(p => String(p.id) === String(currentFestaProduct.id));
                     if (idx !== -1) localProductCache[idx].promoPrice = parseFloat(offerPrice);
 
-                    if (window.showCustomAlert) window.showCustomAlert("Sucesso", "Produto cadastrado na promoção!");
                     if (typeof closeModal === 'function') closeModal(modalFestaPromo);
                     else modalFestaPromo.style.display = 'none';
 
                     renderProdutosPage(); // Atualiza a lista e contadores
+
+                    // [ADICIONADO] Rastreia meta de cadastro (como edição de promo conta como atividade)
+                    if (window.trackProductRegistration) window.trackProductRegistration(currentFestaProduct.id);
                 } else {
                     if (window.showCustomAlert) window.showCustomAlert("Erro", "Falha ao salvar: " + result.message);
                 }

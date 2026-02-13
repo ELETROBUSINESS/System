@@ -111,6 +111,9 @@ async function fetchBalanceData(forceUpdate = false) {
         // Render Data
         renderDashboardData(combinedData, true); // Animate update
 
+        // [ADICIONADO] Busca Resumo de Estoque
+        fetchStockSummary();
+
     } catch (error) {
         console.error("Erro no fetch híbrido:", error);
 
@@ -208,13 +211,44 @@ function renderDashboardData(data, animate = false) {
 }
 
 function fetchDashboardOperational(forceUpdate = false) {
-    // Reutiliza a mesma chamada da Nova API (pois ela traz tudo: Saldo + Faturamento)
-    // Se a página chamar fetchDashboardOperational, redirecionamos para fetchBalanceData
-    // ou apenas garantimos que o update de UI ocorra.
-
     // Como fetchBalanceData já atualiza 'faturamentoOriginal', basta chamá-la.
     // Mas para manter compatibilidade se forem chamadas separadas:
     fetchBalanceData(forceUpdate);
+}
+
+/**
+ * [ADICIONADO] Busca Resumo de Estoque (ANTIGRAVITY)
+ */
+async function fetchStockSummary() {
+    const stockValEl = document.getElementById('stock-value');
+    const stockQtyEl = document.getElementById('stock-qty');
+    const stockAvgEl = document.getElementById('stock-avg');
+
+    if (!stockValEl && !stockQtyEl && !stockAvgEl) return;
+
+    try {
+        const url = API_URLS.NFCE || "";
+        if (!url) return;
+
+        const response = await fetch(`${url}?action=get_stock_summary`);
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            const data = result.resultados;
+
+            if (stockValEl) {
+                stockValEl.innerText = data.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            }
+            if (stockQtyEl) {
+                stockQtyEl.innerText = data.totalItens.toLocaleString('pt-BR');
+            }
+            if (stockAvgEl) {
+                stockAvgEl.innerText = data.ticketMedio.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            }
+        }
+    } catch (e) {
+        console.error("Erro ao buscar resumo de estoque:", e);
+    }
 }
 
 /**
