@@ -2963,6 +2963,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     window.carregarCacheDeProdutos = async () => {
+        const loaderOverlay = document.getElementById('custom-loader-overlay');
+        if (loaderOverlay) loaderOverlay.style.display = 'flex';
+
         const container = document.getElementById('produtos-table-container');
         const pdvInput = document.getElementById('barcode-input'); // Seleciona o input do PDV
         const pdvHint = document.getElementById('barcode-hint');   // Seleciona o texto de ajuda
@@ -3021,6 +3024,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (pdvHint) {
                 pdvHint.innerHTML = "<span style='color:red'>Erro ao carregar produtos. Recarregue a página.</span>";
             }
+        } finally {
+            if (loaderOverlay) loaderOverlay.style.display = 'none';
         }
     };
 
@@ -4549,39 +4554,42 @@ document.addEventListener('DOMContentLoaded', () => {
     smartRoundingToggle.addEventListener('change', (e) => { isSmartRoundingEnabled = e.target.checked; if (discount > 0) { applyDiscount(discount, false); } });
     reloadCacheBtn.addEventListener('click', () => { showCustomConfirm("Recarregar Produtos", "Buscar lista recente?", () => { closeModal(confirmModal); carregarCacheDeProdutos(); }); });
 
-    // Lógica da Navbar SPA (Atualizada)
-    const updateNavbarHighlight = (activeItem) => { if (!activeItem) return; const itemRect = activeItem.getBoundingClientRect(); const navbarRect = mainNavbar.getBoundingClientRect(); navbarHighlight.style.width = `${itemRect.width}px`; navbarHighlight.style.left = `${itemRect.left - navbarRect.left}px`; };
+    // Função para atualizar a posição do marcador vermelho
+    const updateNavbarHighlight = (activeItem) => {
+        if (!activeItem || !navbarHighlight || !mainNavbar) return;
 
-    // --- CORREÇÃO DA NAVBAR (EVITA O ERRO RESOURCE EXHAUSTED) ---
-    // --- Navegação SPA (Navbar) - CORRIGIDA ---
-    // --- NOVO SISTEMA DE NAVEGAÇÃO OTIMIZADO ---
+        const itemRect = activeItem.getBoundingClientRect();
+        const navbarRect = mainNavbar.getBoundingClientRect();
 
-    // Certifique-se de que estas linhas estão no topo do seu escopo de UI
+        // Calcula a posição relativa do item dentro da navbar
+        const left = itemRect.left - navbarRect.left;
+        const width = itemRect.width;
+
+        // Aplica os valores
+        navbarHighlight.style.width = `${width}px`;
+        navbarHighlight.style.left = `${left}px`;
+    };
+
+    // --- Navegação SPA (Navbar) - CORRIGIDA E OTIMIZADA ---
     const moreMenuBtn = document.getElementById('more-menu-btn');
     const moreMenuModal = document.getElementById('more-menu-modal');
-    const moreMenuIcon = document.getElementById('more-menu-icon'); // Verifique esta linha
+    const moreMenuIcon = document.getElementById('more-menu-icon');
 
-    // 1. Lógica do Dropdown (Abre/Fecha) corrigida
     if (moreMenuBtn && moreMenuModal) {
         moreMenuBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             const isShowing = moreMenuModal.classList.toggle('show');
-
-            // O uso de ?. evita o erro se o ícone for nulo
             if (moreMenuIcon) {
                 moreMenuIcon.style.transform = isShowing ? 'rotate(180deg)' : 'rotate(0deg)';
             }
         });
     }
 
-    // Fechar ao clicar em qualquer lugar da tela
     document.addEventListener('click', () => {
-        moreMenuModal.classList.remove('show');
-        moreMenuIcon.style.transform = 'rotate(0deg)';
+        if (moreMenuModal) moreMenuModal.classList.remove('show');
+        if (moreMenuIcon) moreMenuIcon.style.transform = 'rotate(0deg)';
     });
 
-    // 2. Lógica de Troca de Páginas (Unificada)
-    // Selecionamos todos os itens da navbar E os itens de dentro do modal
     const allNavTriggers = document.querySelectorAll('.navbar-item:not(#more-menu-btn), .more-menu-item');
 
     allNavTriggers.forEach(trigger => {
@@ -4589,25 +4597,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const page = trigger.dataset.page;
             if (!page) return;
 
-            // --- Limpeza Visual ---
-            // Remove 'active' de todos os itens principais
+            // Remove active de tudo
             document.querySelectorAll('.navbar-item').forEach(el => el.classList.remove('active', 'active-parent'));
-            // Remove 'active' de itens do modal
             document.querySelectorAll('.more-menu-item').forEach(el => el.classList.remove('active'));
 
-            // --- Lógica de Destaque ---
             if (trigger.classList.contains('more-menu-item')) {
-                // Se clicou no modal, ativa o item e destaca o pai (Gerenciamento)
                 trigger.classList.add('active');
-                moreMenuBtn.classList.add('active-parent');
-                updateNavbarHighlight(moreMenuBtn); // A linha vermelha corre para o botão "Gerenciamento"
+                if (moreMenuBtn) {
+                    moreMenuBtn.classList.add('active-parent');
+                    updateNavbarHighlight(moreMenuBtn);
+                }
             } else {
-                // Se clicou na navbar principal
                 trigger.classList.add('active');
                 updateNavbarHighlight(trigger);
             }
 
-            // --- Troca de Conteúdo (Sua lógica original) ---
             const pageId = page + '-page';
             const targetPage = document.getElementById(pageId);
 
@@ -4616,23 +4620,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 targetPage.style.display = 'block';
             }
 
-            // --- Gatilhos de Carregamento (Sua lógica original) ---
-            if (page === 'pedidos') {
-                // Reseta abas de pedidos... (seu código atual)
-                renderDummyOrders();
-            }
+            if (page === 'pedidos') renderDummyOrders();
             if (pageId === 'produtos-page' && !localProductCache) carregarCacheDeProdutos();
             if (pageId === 'clientes-page' && !localClientCache) carregarClientesDaAPI();
             if (pageId === 'historico-page') carregarHistorico();
 
-            // Fecha o modal após o clique
-            moreMenuModal.classList.remove('show');
-            moreMenuIcon.style.transform = 'rotate(0deg)';
+            if (moreMenuModal) moreMenuModal.classList.remove('show');
+            if (moreMenuIcon) moreMenuIcon.style.transform = 'rotate(0deg)';
         });
     });
 
-
-    window.addEventListener('resize', () => { updateNavbarHighlight(document.querySelector('.navbar-item.active')); });
+    // Resize listener - atualiza a posição do marcador
+    window.addEventListener('resize', () => {
+        const active = document.querySelector('.navbar-item.active');
+        if (active) updateNavbarHighlight(active);
+    });
 
     // Listeners do Modal Adicionar Cliente
     if (addClienteBtn) {
@@ -4846,17 +4848,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Define a aba ativa inicial e ajusta o highlight
     const initialActivePage = 'pdv';
-    const initialActiveNavbarItem = document.querySelector(`.navbar-item[data-page="${initialActivePage}"]`);
+
+    // Primeiro tenta encontrar pelo data-page, senão pega o que já tem active no HTML
+    let initialActiveNavbarItem = document.querySelector(`.navbar-item[data-page="${initialActivePage}"]`);
+    if (!initialActiveNavbarItem) {
+        initialActiveNavbarItem = document.querySelector('.navbar-item.active');
+    }
+
     if (initialActiveNavbarItem) {
+        // Garante que só o PDV está ativo
         navbarItems.forEach(item => item.classList.remove('active'));
         initialActiveNavbarItem.classList.add('active');
-        setTimeout(() => {
-            updateNavbarHighlight(initialActiveNavbarItem);
-            if (verificarToken()) {
-                allPages.forEach(page => page.style.display = 'none');
-                document.getElementById(initialActivePage + '-page').style.display = 'block';
-            }
-        }, 50);
+
+        // Aguarda fontes carregarem e DOM estar pronto
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(() => {
+                setTimeout(() => {
+                    updateNavbarHighlight(initialActiveNavbarItem);
+                }, 50);
+            });
+        } else {
+            // Fallback para navegadores sem suporte a document.fonts
+            setTimeout(() => {
+                updateNavbarHighlight(initialActiveNavbarItem);
+            }, 200);
+        }
+
+        if (verificarToken()) {
+            allPages.forEach(page => page.style.display = 'none');
+            document.getElementById(initialActivePage + '-page').style.display = 'block';
+        }
     }
 
     // --- Novas Variáveis Globais ---
