@@ -247,14 +247,6 @@
                 <span>Selecione itens para baixar</span>
             </button>
 
-            <!--
-            Botão de Pagamento (Apenas para Brandbook)
-            <button id="btn-payment" onclick="openPixPayment()"
-                class="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-sm shadow-xl shadow-slate-900/20 transition-all flex items-center justify-center gap-3">
-                <i data-lucide="smartphone" class="w-5 h-5"></i>
-                <span>Pagar agora</span>
-            </button>
-            -->
         </div>
     </div>
     <!-- TELA CHEIA DE CHECKOUT -->
@@ -752,8 +744,11 @@
             document.getElementById('designs-grid').classList.toggle('hidden', cat === 'brandbook');
 
             // --- Toggle Footer Buttons ---
-            document.getElementById('btn-action').classList.toggle('hidden', cat === 'brandbook');
-            document.getElementById('btn-payment').classList.toggle('hidden', cat !== 'brandbook');
+            const btnAction = document.getElementById('btn-action');
+            if (btnAction) btnAction.classList.toggle('hidden', cat === 'brandbook');
+
+            const btnPayment = document.getElementById('btn-payment');
+            if (btnPayment) btnPayment.classList.toggle('hidden', cat !== 'brandbook');
 
             if (cat === 'brandbook') {
                 if (storyViewer) storyViewer.classList.add('hidden');
@@ -1686,7 +1681,6 @@
             textSelectAll = document.getElementById('text-select-all');
             selectionCount = document.getElementById('selection-count');
             btnAction = document.getElementById('btn-action');
-            btnPayment = document.getElementById('btn-payment');
             checkWrapper = document.getElementById('check-wrapper');
 
             tabFeed = document.getElementById('tab-feed');
