@@ -1177,68 +1177,75 @@
             }
 
             container.innerHTML = `
-                <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center justify-between mb-8 max-w-6xl mx-auto w-full px-4 lg:px-0">
                      <h2 class="text-2xl font-bold text-gray-800">Meu Carrinho</h2>
                      <span class="bg-blue-100 text-blue-800 text-sm font-bold px-4 py-1.5 rounded-full">${cart.length} item(s)</span>
                 </div>
 
-                <div class="grid grid-cols-1 gap-6 mb-32">
-                    ${itemsHtml}
+                <div class="flex flex-col lg:flex-row gap-8 mb-32 max-w-6xl mx-auto w-full px-4 lg:px-0">
+                    <!-- Items List (Left) -->
+                    <div class="flex-1 space-y-6">
+                        ${itemsHtml}
+                    </div>
                     
-                    <div class="bg-white p-6 rounded-3xl shadow-lg border border-gray-100">
-                        <div class="space-y-3 mb-6">
-                            <div class="flex justify-between items-center text-gray-500 text-sm">
-                                <span>Valor dos produtos</span>
-                                <span class="font-medium">${totalDueNow.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                    <!-- Summary Card (Right - Sticky on Desktop) -->
+                    <div class="w-full lg:w-[380px] shrink-0">
+                        <div class="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 sticky top-4">
+                            <div class="space-y-3 mb-6">
+                                <div class="flex justify-between items-center text-gray-500 text-sm">
+                                    <span>Valor dos produtos</span>
+                                    <span class="font-medium">${totalDueNow.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                                </div>
+                                
+                                <div class="flex justify-between items-center text-emerald-600 text-sm">
+                                    <span>Descontos / Economia</span>
+                                    <span class="font-bold">-${totalSavings.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                                </div>
+
+                                <div class="flex justify-between items-center text-gray-500 text-sm">
+                                    <span>Frete</span>
+                                    <span class="text-emerald-600 font-bold">Grátis</span>
+                                </div>
                             </div>
                             
-                            <div class="flex justify-between items-center text-emerald-600 text-sm">
-                                <span>Descontos / Economia</span>
-                                <span class="font-bold">-${totalSavings.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                            ${totalCashback > 0 ? `
+                            <div class="flex justify-between items-center mb-6 bg-yellow-50 p-4 rounded-2xl border border-yellow-100">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-yellow-200 flex items-center justify-center text-yellow-700">
+                                        <i class='bx bx-coin-stack text-lg'></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-yellow-800 font-bold">Cashback a receber</p>
+                                        <p class="text-[10px] text-yellow-600">Creditado após confirmação</p>
+                                    </div>
+                                </div>
+                                <span class="text-lg font-bold text-yellow-700 tracking-tight">+${totalCashback.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                            </div>
+                            ` : ''}
+                            
+                            <div class="border-t border-gray-100 my-6"></div>
+                            
+                            <div class="flex justify-between items-end mb-8">
+                                <span class="text-base font-bold text-gray-600">${mainTotalLabel}</span>
+                                <div class="text-right">
+                                    <h2 class="text-3xl font-black text-blue-900 leading-none">${mainTotalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} ${mainTotalSuffix}</h2>
+                                    <p class="text-xs text-gray-400 mt-1 font-medium">${paymentMethodText}</p>
+                                </div>
                             </div>
 
-                            <div class="flex justify-between items-center text-gray-500 text-sm">
-                                <span>Frete</span>
-                                <span class="text-emerald-600 font-bold">Grátis</span>
+                            ${monthlyBreakdownHtml}
+                            
+                            <div id="payment-area">
+                                <button id="btnGerarPix" onclick="startPurchaseAnimation()" class="w-full bg-blue-900 text-white py-4 rounded-xl font-bold text-lg shadow-xl shadow-blue-200 hover:shadow-blue-300 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-3 group">
+                                    <i class='bx bx-check-double text-2xl group-hover:animate-pulse'></i>
+                                    <span>Pagar com Pix</span>
+                                </button>
                             </div>
+                            
+                            <p class="text-[10px] text-center text-gray-400 mt-6 flex items-center justify-center gap-1 opacity-70">
+                                <i class='bx bx-shield-quarter'></i> Ambiente seguro e certificado
+                            </p>
                         </div>
-                        
-                        ${totalCashback > 0 ? `
-                        <div class="flex justify-between items-center mb-6 bg-yellow-50 p-4 rounded-2xl border border-yellow-100">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-full bg-yellow-200 flex items-center justify-center text-yellow-700">
-                                    <i class='bx bx-coin-stack text-lg'></i>
-                                </div>
-                                <div>
-                                    <p class="text-xs text-yellow-800 font-bold">Cashback a receber</p>
-                                    <p class="text-[10px] text-yellow-600">Creditado após confirmação</p>
-                                </div>
-                            </div>
-                            <span class="text-lg font-bold text-yellow-700 tracking-tight">+${totalCashback.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                        </div>
-                        ` : ''}
-                        
-                        <div class="border-t border-gray-100 my-6"></div>
-                        
-                        <div class="flex justify-between items-end mb-8">
-                            <span class="text-base font-bold text-gray-600">${mainTotalLabel}</span>
-                            <div class="text-right">
-                                <h2 class="text-3xl font-black text-blue-900 leading-none">${mainTotalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} ${mainTotalSuffix}</h2>
-                                <p class="text-xs text-gray-400 mt-1 font-medium">${paymentMethodText}</p>
-                            </div>
-                        </div>
-
-                        ${monthlyBreakdownHtml}
-                        
-                         <div id="payment-area">
-                            <button id="btnGerarPix" onclick="startPurchaseAnimation()" class="w-full bg-blue-900 text-white py-4 rounded-xl font-bold text-lg shadow-xl shadow-blue-200 hover:shadow-blue-300 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-3">
-                                <i class='bx bx-check-double'></i> Pagar com Pix
-                            </button>
-                        </div>
-                        
-                        <p class="text-[10px] text-center text-gray-400 mt-6 flex items-center justify-center gap-1 opacity-70">
-                            <i class='bx bx-shield-quarter'></i> Ambiente seguro e certificado
-                        </p>
                     </div>
                 </div>
             `;
@@ -1344,39 +1351,40 @@
     <div id="pix-payment-page"
         class="fixed inset-0 z-[100] hidden flex-col bg-slate-50 overflow-y-auto animate-[fadeIn_0.3s_ease]">
         <!-- Header -->
-        <div class="bg-white shadow-sm p-4 sticky top-0 z-10">
+        <div class="bg-white shadow-sm p-4 sticky top-0 z-10 w-full">
             <div class="flex items-center justify-between max-w-lg mx-auto w-full">
                 <button onclick="closePixPage()"
-                    class="text-slate-400 hover:text-slate-600 transition-colors p-2 -ml-2">
+                    class="text-slate-400 hover:text-slate-600 transition-colors p-2 -ml-2 rounded-full hover:bg-slate-100">
                     <i class='bx bx-chevron-left text-3xl'></i>
                 </button>
-                <h1 class="text-lg font-bold text-slate-800">Finalizar Pagamento</h1>
-                <div class="w-8"></div> <!-- Spacer -->
+                <h1 class="text-base font-bold text-slate-800">Finalizar Pagamento</h1>
+                <div class="w-8"></div>
             </div>
         </div>
 
         <!-- Content -->
-        <div class="flex-1 flex flex-col items-center justify-center p-6 max-w-md mx-auto w-full">
+        <div class="flex-1 flex flex-col items-center justify-center p-4 md:p-8 max-w-md mx-auto w-full">
 
-            <h2 class="text-2xl font-bold text-slate-800 text-center mb-8 leading-tight">Pagamento via Pix</h2>
+            <h2 class="text-xl md:text-2xl font-bold text-slate-800 text-center mb-6 leading-tight">Pagamento via Pix
+            </h2>
 
-            <!-- Status Badge (Updated Text) -->
+            <!-- Status Badge -->
             <div id="payment-status-badge"
-                class="inline-flex items-center gap-2 px-6 py-2 bg-blue-50 text-blue-700 rounded-full text-xs font-bold mb-8 border border-blue-100 shadow-sm text-center">
-                <div class="w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse"></div>
+                class="inline-flex items-center gap-2 px-4 py-3 bg-blue-50 text-blue-700 rounded-2xl text-xs font-bold mb-8 border border-blue-100 shadow-sm text-center max-w-xs leading-relaxed">
+                <div class="w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse shrink-0"></div>
                 <span id="payment-status-text">Pague agora e tenha mais agilidade na entrega!</span>
             </div>
 
             <!-- QR Code Card -->
             <div
-                class="bg-white p-6 rounded-2xl shadow-lg shadow-slate-200/50 w-full mb-8 border border-slate-100 relative overflow-hidden group">
+                class="bg-white p-6 rounded-3xl shadow-xl shadow-slate-200/60 w-full mb-8 border border-slate-100 relative overflow-hidden group">
                 <div
                     class="absolute inset-0 bg-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                 </div>
 
-                <div class="flex justify-center mb-6 relative min-h-[220px]">
+                <div class="flex justify-center mb-6 relative min-h-[200px]">
                     <img id="pix-qr-image" src=""
-                        class="w-56 h-56 object-contain opacity-50 transition-all duration-500 scale-95"
+                        class="w-56 h-56 object-contain opacity-50 transition-all duration-500 scale-95 mix-blend-multiply"
                         alt="QR Code Pix">
                     <div id="pix-qr-loading"
                         class="absolute inset-0 flex flex-col items-center justify-center bg-white z-10 transition-opacity duration-300">
@@ -1387,7 +1395,7 @@
 
                 <!-- Copy Paste -->
                 <div class="relative">
-                    <label class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Pix Copia e
+                    <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-wider">Pix Copia e
                         Cola</label>
                     <div
                         class="flex shadow-sm rounded-xl overflow-hidden border border-slate-200 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
@@ -1395,21 +1403,22 @@
                             class="w-full bg-slate-50 text-slate-600 text-xs py-3.5 px-4 font-mono truncate focus:outline-none focus:bg-white"
                             value="Carregando...">
                         <button onclick="copyPixCode()"
-                            class="bg-white px-4 border-l border-slate-100 text-blue-600 hover:bg-blue-50 transition-colors font-medium text-sm flex items-center gap-1 active:scale-95 duration-100">
+                            class="bg-white px-5 border-l border-slate-100 text-blue-600 hover:bg-blue-50 transition-colors font-bold text-xs flex items-center gap-1 active:bg-blue-100">
                             <i class='bx bx-copy'></i>
-                            Copiar
+                            COPIAR
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Value Display (Minimalist) -->
-            <div class="w-full mb-6 flex flex-col items-center justify-center text-center">
-                <p class="text-sm text-slate-400 font-medium mb-1">Valor a pagar este mês</p>
-                <p id="pix-value-display" class="text-3xl font-bold text-slate-800 tracking-tight">R$ 0,00</p>
+            <!-- Value Display -->
+            <div class="w-full mb-8 flex flex-col items-center justify-center text-center">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Valor a pagar este mês</p>
+                <p id="pix-value-display" class="text-4xl font-black text-slate-800 tracking-tight">R$ 0,00</p>
             </div>
 
-            <p class="text-xs text-slate-400 text-center max-w-xs">
+            <p class="text-xs text-slate-400 text-center max-w-[250px] leading-relaxed">
+                <i class='bx bx-info-circle align-middle mr-1'></i>
                 A confirmação é automática. Assim que o pagamento for identificado, você será redirecionado.
             </p>
 
