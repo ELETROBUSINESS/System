@@ -143,6 +143,14 @@ window.showCustomConfirm = (title, message, callback) => {
 // 2. FUNÇÕES GLOBAIS DE PEDIDOS (Para o HTML acessar)
 // ============================================================
 
+// Helper para obter subtotal (bruto)
+const getSubtotal = () => {
+    // Se o carrinho estiver vazio, retorna 0
+    if (!cart || cart.length === 0) return 0;
+    // Soma preço original * quantidade (Bruto)
+    return cart.reduce((acc, item) => acc + (item.originalPrice * item.quantity), 0);
+};
+
 // Função de Renderização (Movemos para fora do DOMContentLoaded)
 const renderDummyOrders = () => {
     const container = document.getElementById('orders-grid-container');
@@ -267,88 +275,9 @@ document.addEventListener('DOMContentLoaded', () => {
     startOrderPolling();
 
     // ==========================================
-    // LÓGICA DE METAS DE CADASTRO (ANTIGRAVITY)
+    // LÓGICA DE METAS DE CADASTRO (REMOVIDO)
     // ==========================================
-    const GOAL_CONFIG = {
-        morning: { name: "Manhã", start: 0, end: 12, target: 70 },
-        afternoon: { name: "Tarde/Noite", start: 12, end: 24, target: 70 }
-    };
 
-    function getCurrentShift() {
-        const hour = new Date().getHours();
-        return (hour >= 0 && hour < 12) ? 'morning' : 'afternoon';
-    }
-
-    async function registrarLogAtividadePDV(acao, quantidade = 1, detalhes = "") {
-        try {
-            const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-            const data = {
-                action: "registrar_log",
-                operador: userData.nome || "PDV Alpha",
-                cargo: userData.cargo || "Operador",
-                loja: "DT#25",
-                acao: acao,
-                quantidade: quantidade,
-                detalhes: detalhes
-            };
-
-            await fetch(CENTRAL_API_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-        } catch (e) {
-            console.error("Erro ao registrar log:", e);
-        }
-    }
-
-    function updateGoalUI() {
-        const shift = getCurrentShift();
-        const config = GOAL_CONFIG[shift];
-        const lastReset = localStorage.getItem('registration_goal_reset');
-        const nowStr = new Date().toDateString() + "_" + shift;
-
-        // Resetar se mudou o dia ou o turno
-        if (lastReset !== nowStr) {
-            localStorage.setItem('registration_goal_count', '0');
-            localStorage.setItem('registration_goal_ids', JSON.stringify([]));
-            localStorage.setItem('registration_goal_reset', nowStr);
-        }
-
-        const count = parseInt(localStorage.getItem('registration_goal_count') || '0');
-        const fillPerc = Math.min((count / config.target) * 100, 100);
-
-        const fillEl = document.getElementById('goal-progress-fill');
-        const countEl = document.getElementById('registered-count');
-        const shiftNameEl = document.getElementById('current-shift-name');
-
-        if (fillEl) fillEl.style.width = fillPerc + '%';
-        if (countEl) countEl.innerText = count;
-        if (shiftNameEl) shiftNameEl.innerText = config.name;
-    }
-
-    // Exporta para ser usado na função de salvar produto
-    window.trackProductRegistration = async (productId) => {
-        const shift = getCurrentShift();
-        const registeredIds = JSON.parse(localStorage.getItem('registration_goal_ids') || '[]');
-
-        if (!registeredIds.includes(productId)) {
-            registeredIds.push(productId);
-            const newCount = registeredIds.length;
-
-            localStorage.setItem('registration_goal_ids', JSON.stringify(registeredIds));
-            localStorage.setItem('registration_goal_count', newCount.toString());
-
-            updateGoalUI();
-
-            // Logar a atividade
-            await registrarLogAtividadePDV("Cadastro de Produto", 1, `Produto: ${productId}`);
-        }
-    };
-
-    updateGoalUI();
-    setInterval(updateGoalUI, 60000); // Atualiza turno se passar das 12h
 
     // --- Constantes Locais de UI ---
     const TOKEN_KEY = 'caixaToken';
@@ -601,13 +530,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 5. Listener para Atualizar Desconto ao Digitar Manualmente
-    /*
     if (discountInputR) {
         discountInputR.addEventListener('input', (e) => {
             // Remove seleção dos botões de porcentagem
             document.querySelectorAll('.perc-btn').forEach(btn => btn.classList.remove('active'));
+            isManualMode = true; // Força modo manual para evitar arredondamento automático
 
-            let val = parseFloat(parseValueFirebase(e.target.value));
+            // Lógica de parser manual para garantir pequenas quantias (0,01)
+            let rawValue = e.target.value;
+            // Remove R$ e espaços
+            rawValue = rawValue.replace(/[^\d.,]/g, '');
+            // Troca virgula por ponto
+            rawValue = rawValue.replace(',', '.');
+
+            let val = parseFloat(rawValue);
             if (isNaN(val)) val = 0;
 
             const subtotal = getSubtotal();
@@ -615,22 +551,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // --- Lógica de Autorização para Descontos > 10% ---
             if (perc > 10 && !window.isDiscountAuthorized) {
-                // Bloqueia e abre modal
-                // e.target.blur(); // Remove foco para evitar continuar digitando?
                 openModal(modalDiscountAuth);
-
-                // Salva o valor pendente para aplicar depois se autorizado
-                window.pendingDiscountValue = val;
-
-                return; // Interrompe aplicação do desconto
+                window.pendingDiscountValue = val.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                // Reset visual para o máximo permitido ou zero? 
+                // Por enquanto deixa o usuário tentar, mas não aplica
+                // return; 
+                // Melhor: reseta o desconto para 0 até autorizar
+                discount = 0;
+                if (effectiveDiscountDisplay) effectiveDiscountDisplay.textContent = "Aguardando Autorização...";
+                updateSummary();
+                return;
             }
 
-            // Se autorizado ou menor que 10%, aplica
+            // Aplica o desconto se for válido
             if (val >= 0) {
                 discount = val;
-
                 if (effectiveDiscountDisplay) {
-                    effectiveDiscountDisplay.textContent = `Manual (${perc.toFixed(1)}%)`;
+                    // Mostra porcentagem com até 2 casas decimais para valores pequenos (ex: 0.16%)
+                    effectiveDiscountDisplay.textContent = `Manual (${perc.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%)`;
                 }
             } else {
                 discount = 0;
@@ -640,7 +578,6 @@ document.addEventListener('DOMContentLoaded', () => {
             updateSummary();
         });
     }
-    */
 
     const paymentToggleRow = document.getElementById('payment-toggle-row');
     const summaryPaymentMethod = document.getElementById('summary-payment-method');
@@ -980,11 +917,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const roundingDiff = currentTotal - targetTotal;
         let finalTroco = troco;
 
-        // 2. Aplica o arredondamento se necessário
-        if (roundingDiff > 0.009) {
+        // 2. Aplica o arredondamento se necessário (SÓ SE NÃO FOR DESCONTO MANUAL)
+        if (roundingDiff > 0.009 && !isManualMode) {
             // Atualiza o desconto global adicionando a diferença
             discount += roundingDiff;
-            discountInputR.value = discount.toFixed(2);
+            discountInputR.value = discount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }); // Format nicely
 
             // Recalcula o troco com base no NOVO total (menor)
             // Ex: Total 19.99 (Pago 20) -> Troco 0.01
@@ -1156,9 +1093,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const card = document.getElementById('summary-client-card');
         const nameText = document.getElementById('summary-client-name-text');
         const creditInfo = document.getElementById('client-credit-info');
-        const btnRemove = document.getElementById('btn-remove-client');
+        const btnRemoveClient = document.getElementById('btn-remove-client');
         const limitFill = document.getElementById('summary-limit-fill');
         const limitValue = document.getElementById('summary-limit-value');
+
 
         // Se existe um cliente selecionado (global selectedCrediarioClient)
         if (selectedCrediarioClient) {
@@ -1170,7 +1108,7 @@ document.addEventListener('DOMContentLoaded', () => {
             nameText.style.color = "var(--text-dark)";
 
             // 1. MOSTRA o botão de remover (SEMPRE que tiver cliente)
-            if (btnRemove) btnRemove.style.display = 'inline-flex';
+            if (btnRemoveClient) btnRemoveClient.style.display = 'inline-flex';
 
             // Lógica da Barra de Crédito
             const limite = parseFloat(selectedCrediarioClient.limite) || 0;
@@ -1212,7 +1150,7 @@ document.addEventListener('DOMContentLoaded', () => {
             nameText.style.color = "#94a3b8";
 
             // ESCONDE o botão de remover
-            if (btnRemove) btnRemove.style.display = 'none';
+            if (btnRemoveClient) btnRemoveClient.style.display = 'none';
 
             // Esconde info de crédito
             creditInfo.style.display = 'none';
@@ -1264,9 +1202,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const tr = document.createElement('tr');
             tr.dataset.id = item.id;
 
-            // Define se a oferta está "ativa" visualmente
-            const showOfferVisuals = item.hasOffer && isOfferApplicable;
-            const itemDisplayPrice = showOfferVisuals ? item.price : item.originalPrice;
+            // Lógica de Exibição
+            // Se tiver desconto manual (percentual definido), ele sempre vence.
+            // Se tiver oferta e for aplicável (Dinheiro/Pix), mostra visual de oferta.
+            const hasManualDiscount = (item.discountPercent && parseFloat(item.discountPercent) > 0);
+            const showOfferVisuals = (item.hasOffer && isOfferApplicable) || hasManualDiscount;
+
+            // O preço a exibir é o original se tiver oferta mas não for aplicável E não tiver desconto manual
+            // Caso contrário, mostra o preço atual do item (que já contabiliza desconto manual ou oferta base)
+            let itemDisplayPrice = item.price;
+            if (item.hasOffer && !isOfferApplicable && !hasManualDiscount) {
+                itemDisplayPrice = item.originalPrice;
+            }
 
             // Define ícone base (pode melhorar se tiver imagem real)
             const iconHtml = item.imgUrl
@@ -1294,29 +1241,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td class="text-center">
                     <div class="qty-capsule">
                         <button class="qty-btn" data-action="decrease" data-id="${item.id}">-</button>
-                        <span class="qty-display">${item.quantity}</span>
+                        <input type="number" class="qty-input-embedded" value="${item.quantity}" data-id="${item.id}" min="1" onchange="updateCartItem('${item.id}', 'quantity', this.value)">
                         <button class="qty-btn" data-action="increase" data-id="${item.id}">+</button>
                     </div>
                 </td>
                 
                 <td class="text-center">
-                    <div style="display:flex; flex-direction:column; align-items:center;">
+                    <div style="display:flex; flex-direction:column;">
                         <span class="unit-price-display" style="${showOfferVisuals ? 'color:#db0038; font-weight:700;' : ''}">${formatCurrency(itemDisplayPrice)}</span>
                         ${showOfferVisuals ? `<small style="text-decoration:line-through; color:#9ca3af; font-size:0.7rem;">${formatCurrency(item.originalPrice)}</small>` : ''}
-                        ${item.hasOffer && !isOfferApplicable ? `<small style="color:#ef4444; font-size:0.6rem; font-weight:600;">(Só p/ Dinheiro/PIX)</small>` : ''}
+                        ${item.hasOffer && !isOfferApplicable && !hasManualDiscount ? `<small style="color:#ef4444; font-size:0.6rem; font-weight:600;">(Só p/ Dinheiro/PIX)</small>` : ''}
                     </div>
                 </td>
                 
                 <td class="text-center">
-                    <div class="discount-capsule" title="${item.hasOffer ? 'Oferta Carnaval' : 'Clique para editar'}">
+                    <div class="qty-capsule">
+                        <button class="qty-btn" onclick="adjustItemDiscount('${item.id}', -1)">-</button>
                         <input type="number" 
-                               class="discount-input-embedded" 
-                               value="${showOfferVisuals ? (item.discountPercent ? parseFloat(item.discountPercent).toFixed(0) : '') : '0'}" 
+                               class="qty-input-embedded" 
+                               value="${parseFloat(item.discountPercent || 0).toFixed(0)}" 
                                placeholder="0" 
                                min="0" max="100"
-                               ${item.hasOffer ? 'readonly disabled style="background:transparent; cursor:default;"' : `onchange="updateCartItem('${item.id}', 'discountPercent', this.value)"`}
+                               onchange="updateCartItem('${item.id}', 'discountPercent', this.value)"
                                onclick="this.select()">
-                        <span class="discount-symbol">%</span>
+                        <button class="qty-btn" onclick="adjustItemDiscount('${item.id}', 1)">+</button>
                     </div>
                 </td>
                 
@@ -1341,6 +1289,60 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         updateSummary();
+    };
+
+    // --- FUNÇÕES DE EDIÇÃO DO CARRINHO (NOVAS) ---
+    window.updateCartItem = (id, field, value) => {
+        const cartIndex = cart.findIndex(i => String(i.id) === String(id));
+        if (cartIndex === -1) return;
+        const item = cart[cartIndex];
+
+        if (field === 'quantity') {
+            let qty = parseInt(value);
+            if (isNaN(qty) || qty < 1) qty = 1;
+            item.quantity = qty;
+        } else if (field === 'discountPercent') {
+            // Se o usuário está alterando o desconto manualmente, ignoramos arredondamento aqui?
+            // Não, o arredondamento inteligente é no total.
+            let disc = parseFloat(value);
+            if (isNaN(disc)) disc = 0;
+            if (disc < 0) disc = 0;
+            if (disc > 100) disc = 100;
+
+            item.discountPercent = disc;
+
+            // Aplica o desconto percentual sobre o PREÇO ORIGINAL
+            if (disc > 0) {
+                const discountValue = item.originalPrice * (disc / 100);
+                item.price = item.originalPrice - discountValue;
+            } else {
+                item.price = item.originalPrice;
+            }
+        }
+
+        renderCart();
+    };
+
+    window.adjustItemDiscount = (id, delta) => {
+        const item = cart.find(i => String(i.id) === String(id));
+        if (!item) return;
+
+        let currentDisc = parseFloat(item.discountPercent || 0);
+
+        // Se currentDisc for 0 mas tem preço promocional, pega o implícito
+        if (currentDisc == 0 && item.price < item.originalPrice) {
+            // Arredonda para evitar dízimas (ex: 33.33333) e facilitar a edição
+            currentDisc = Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100);
+        }
+
+        let newDisc = currentDisc + delta;
+        if (newDisc < 0) newDisc = 0;
+        if (newDisc > 100) newDisc = 100;
+
+        // Mantém inteiro para facilitar a vida do caixa
+        newDisc = Math.round(newDisc);
+
+        updateCartItem(id, 'discountPercent', newDisc);
     };
 
     // Abre o modal de transparência tributária ao clicar no card
@@ -7172,6 +7174,82 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+    // =======================================================
+    // == LÓGICA DO BOTÃO DE EXPANSÃO DO CLIENTE ==
+    // =======================================================
+    const btnExpandClient = document.getElementById('btn-expand-client-register');
+    const quickClientArea = document.getElementById('quick-client-register-area');
+    const iconExpandClient = document.getElementById('icon-expand-client');
+
+    if (btnExpandClient && quickClientArea) {
+        console.log("Botão de expansão de cliente encontrado e listener ativado.");
+
+        // Remove style display inline inicial se houver, para deixar o CSS controlar
+        quickClientArea.style.display = '';
+
+        btnExpandClient.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+
+            // Toggle via classe para animação CSS
+            const isExpanded = quickClientArea.classList.contains('expanded');
+
+            if (isExpanded) {
+                quickClientArea.classList.remove('expanded');
+                iconExpandClient.className = 'bx bx-chevron-down';
+            } else {
+                quickClientArea.classList.add('expanded');
+                iconExpandClient.className = 'bx bx-chevron-up';
+            }
+        });
+
+        // Impede que clicar nos inputs feche ou propague algo indesejado
+        quickClientArea.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        // =======================================================
+        // == LÓGICA DE ATUALIZAÇÃO EM TEMPO REAL DO NOME DO CLIENTE ==
+        // =======================================================
+        const quickNameInput = document.getElementById('quick-client-name'); // Input do cadastro rápido
+        const summaryNameText = document.getElementById('summary-client-name-text'); // H3 do nome
+
+        if (quickNameInput && summaryNameText) {
+            quickNameInput.addEventListener('input', (e) => {
+                const val = e.target.value.trim(); // Texto digitado
+
+                if (val.length > 0) {
+                    // Atualiza o texto do h3 com o que foi digitado
+                    // Lógica de Truncamento: Se passar de 30 chars, corta e adiciona ...
+                    if (val.length > 30) {
+                        summaryNameText.textContent = val.substring(0, 30) + '...';
+                    } else {
+                        summaryNameText.textContent = val;
+                    }
+
+                    // Altera a cor para escuro (ativo)
+                    summaryNameText.style.color = "var(--text-dark)";
+
+                    // Adiciona uma classe animada se desejar (opcional)
+                    summaryNameText.classList.add('typing-active');
+                } else {
+                    // Se limpar o campo:
+                    // Verifica se tem um cliente do CREDIÁRIO selecionado
+                    if (typeof selectedCrediarioClient !== 'undefined' && selectedCrediarioClient) {
+                        // Restaura o nome do crediário
+                        summaryNameText.textContent = selectedCrediarioClient.nomeExibicao || selectedCrediarioClient.nomeCompleto;
+                        summaryNameText.style.color = "var(--text-dark)";
+                    } else {
+                        // Se não tem crediário, volta para Consumidor Final
+                        summaryNameText.textContent = "Consumidor Final";
+                        summaryNameText.style.color = "#94a3b8"; // Cor cinza inativo
+                        summaryNameText.classList.remove('typing-active');
+                    }
+                }
+            });
+        }
+    }
 });
+
 
 

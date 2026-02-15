@@ -7650,6 +7650,300 @@ input:checked+.slider:before {
     transition: background 0.2s;
 }
 
-.btn-submit-saida:hover {
-    background: var(--primary-red-dark);
+
+/* Estilos para o formulário rápido de cliente */
+.form-group-sm {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.form-group-sm label {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.input-sm {
+    padding: 6px 8px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: var(--text-dark);
+    background: #fff;
+    width: 100%;
+}
+
+.input-sm:focus {
+    outline: none;
+    border-color: var(--primary-red);
+    box-shadow: 0 0 0 2px rgba(219, 0, 56, 0.1);
+}
+
+/* Animação do Formulário de Cliente */
+#quick-client-register-area {
+    /* Estado Inicial: Escondido */
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0 !important;
+    /* Força sobre o inline */
+    padding-top: 0 !important;
+    border-top: 0px solid transparent;
+    /* Remove borda inicialmente */
+
+    /* Transição suave */
+    transition:
+        max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.4s ease-out,
+        margin 0.3s ease,
+        padding 0.3s ease,
+        border 0.3s ease;
+}
+
+#quick-client-register-area.expanded {
+    max-height: 500px;
+    /* Valor seguro e grande o suficiente */
+    opacity: 1;
+    margin-top: 12px !important;
+    padding-top: 12px !important;
+    border-top: 1px dashed #e5e7eb;
+}
+
+/* Stagger Animation para os campos */
+#quick-client-register-area.expanded .form-group-sm,
+#quick-client-register-area.expanded .form-row-sm {
+    opacity: 0;
+    animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+#quick-client-register-area.expanded .form-group-sm:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+#quick-client-register-area.expanded .form-row-sm {
+    animation-delay: 0.2s;
+}
+
+#quick-client-register-area.expanded .form-group-sm:last-child {
+    animation-delay: 0.3s;
+}
+
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Efeito de Digitação Ativa */
+.typing-active {
+    transition: color 0.3s ease;
+    animation: textPulse 0.3s ease-in-out;
+}
+
+@keyframes textPulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.02);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+
+/* Garantia de Layout Fixo para Nome do Cliente */
+#summary-client-name-text {
+    display: inline-block;
+    max-width: 220px;
+    /* Largura segura para não empurrar elementos */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
+}
+
+/* ======================================== */
+/* == NOVOS ESTILOS DE PDV (Cart Table) == */
+/* ======================================== */
+
+/* Estilos Modernos para Célula de Produto */
+.product-cell-modern {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.prod-icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    font-size: 1.5rem;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.prod-info-box {
+    display: flex;
+    flex-direction: column;
+}
+
+.prod-name {
+    font-weight: 600;
+    color: var(--text-dark);
+    font-size: 0.95rem;
+    line-height: 1.2;
+    margin-bottom: 2px;
+}
+
+.prod-barcode {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    font-family: monospace;
+}
+
+/* Cápsula de Quantidade (Agora com Input) */
+.qty-capsule {
+    display: inline-flex;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 2px;
+}
+
+.qty-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: var(--text-light);
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.qty-btn:hover {
+    background: #e2e8f0;
+    color: var(--text-dark);
+}
+
+.qty-input-embedded {
+    width: 40px;
+    border: none;
+    background: transparent;
+    text-align: center;
+    font-weight: 700;
+    color: var(--text-dark);
+    font-size: 0.95rem;
+    padding: 0;
+    -moz-appearance: textfield;
+    /* Remove setas Firefox */
+}
+
+.qty-input-embedded::-webkit-outer-spin-button,
+.qty-input-embedded::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.qty-input-embedded:focus {
+    outline: none;
+    color: var(--primary-red);
+}
+
+/* Cápsula de Desconto (Estilo Moderno) */
+.discount-capsule-modern {
+    display: inline-flex;
+    align-items: center;
+    /* background: #fff; */
+    /* border: 1px solid #e2e8f0; */
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+}
+
+.qty-btn-xs {
+    width: 24px;
+    height: 24px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #94a3b8;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.qty-btn-xs:hover {
+    border-color: #cbd5e1;
+    color: var(--text-dark);
+    background: #f8fafc;
+}
+
+.relative-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 55px;
+    /* Tamanho fixo */
+}
+
+.discount-input-embedded {
+    width: 100%;
+    border: none;
+    background: transparent;
+    text-align: center;
+    font-weight: 600;
+    color: #64748b;
+    font-size: 0.9rem;
+    padding-right: 14px;
+    /* Espaço para o % */
+}
+
+.discount-input-embedded:focus {
+    outline: none;
+    color: var(--primary-red);
+    border-bottom: 2px solid var(--primary-red);
+    /* Indicador de foco */
+}
+
+.discount-symbol {
+    position: absolute;
+    right: 2px;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    pointer-events: none;
+}
+
+/* Ajustes de Preço */
+.unit-price-display {
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+.total-price-display {
+    font-weight: 700;
+    color: var(--text-dark);
+    font-size: 1rem;
 }

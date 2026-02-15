@@ -765,8 +765,15 @@
                                     <button class="btn-icon-small" id="btn-change-summary-client" title="Pesquisar">
                                         <i class='bx bx-search'></i>
                                     </button>
+                                    <!-- Botão de Expansão para Cadastro Rápido -->
+                                    <button class="btn-icon-small" id="btn-expand-client-register"
+                                        title="Cadastro Rápido (CPF na Nota)">
+                                        <i class='bx bx-chevron-down' id="icon-expand-client"></i>
+                                    </button>
                                 </div>
                             </div>
+
+                            <!-- Área de Crédito (Mantida) -->
                             <div id="client-credit-info" style="display: none; margin-top: 10px;">
                                 <div class="summary-limit-bar">
                                     <div class="summary-limit-fill" id="summary-limit-fill"></div>
@@ -774,6 +781,32 @@
                                 <div class="summary-limit-text">
                                     <span id="summary-limit-label">Limite Disp.</span>
                                     <span id="summary-limit-value">R$ 0,00</span>
+                                </div>
+                            </div>
+
+                            <!-- Formulário de Cadastro Rápido na Nota (Expandable) -->
+                            <div id="quick-client-register-area"
+                                style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #e5e7eb;">
+                                <div class="form-group-sm">
+                                    <label>Nome Completo</label>
+                                    <input type="text" id="quick-client-name" class="input-sm" maxlength="80"
+                                        placeholder="Nome do Cliente">
+                                </div>
+                                <div class="form-row-sm" style="display: flex; gap: 8px; margin-top: 8px;">
+                                    <div class="form-group-sm" style="flex: 1;">
+                                        <label>CPF</label>
+                                        <input type="text" id="quick-client-cpf" class="input-sm"
+                                            placeholder="000.000.000-00">
+                                    </div>
+                                    <div class="form-group-sm" style="flex: 1;">
+                                        <label>Nascimento</label>
+                                        <input type="date" id="quick-client-dob" class="input-sm">
+                                    </div>
+                                </div>
+                                <div class="form-group-sm" style="margin-top: 8px;">
+                                    <label>Endereço</label>
+                                    <input type="text" id="quick-client-address" class="input-sm"
+                                        placeholder="Rua, Número, Bairro">
                                 </div>
                             </div>
                         </div>
@@ -889,18 +922,7 @@
                             </button>
                         </div>
 
-                        <!-- Meta de Cadastro (Nova Posição Inferior) -->
-                        <div class="registration-goal-card" id="registration-goal-box">
-                            <div class="goal-header-row">
-                                <span class="goal-title"><i class='bx bx-target-lock'></i> Meta <span
-                                        id="current-shift-name">Manhã</span></span>
-                                <span class="goal-stats"><strong id="registered-count">0</strong> / 70</span>
-                            </div>
-                            <div class="goal-progress-track">
-                                <div class="goal-progress-fill" id="goal-progress-fill" style="width: 0%"></div>
-                            </div>
-                            <p class="goal-footer-msg">Produtos registrados neste turno</p>
-                        </div>
+
 
                     </div>
                 </aside>
