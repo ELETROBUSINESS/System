@@ -1580,6 +1580,19 @@
             await gerarPagamento();
         }
 
+        function copyPixCode() {
+            const copyText = document.getElementById("pix-copy-paste");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value).then(() => {
+                showToast('Código Pix copiado!', 'success');
+            }).catch(err => {
+                // Fallback
+                document.execCommand('copy');
+                showToast('Código Pix copiado!', 'success');
+            });
+        }
+
         async function gerarPagamento() {
             // 1. Calculate Total
             let totalToPayNow = 0;
@@ -1600,6 +1613,11 @@
                     priceNew: unitPrice * quantity
                 });
             });
+
+            if (useCashback) {
+                totalToPayNow -= userCashbackBalance;
+                if (totalToPayNow < 0) totalToPayNow = 0;
+            }
 
             // 2. Prepare UI (Target NEW Page IDs)
             const page = document.getElementById('pix-payment-page');
