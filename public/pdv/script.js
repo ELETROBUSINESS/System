@@ -3137,7 +3137,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function abrirCaixaAPI(data) {
         openCaixaSaveBtn.disabled = true; openCaixaSaveBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Abrindo..."; try {
             const params = new URLSearchParams({ action: 'abrirCaixa', ...data }); const response = await fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET' }); if (!response.ok) throw new Error("Erro rede."); const result = await response.json(); if (result.status === 'success') {
-                salvarToken(); liberarSistema(); showCustomAlert("Sucesso!", result.message || "Caixa aberto!"); closeModal(openCaixaModal);
+                salvarToken(); liberarSistema(); closeModal(openCaixaModal);
             } else { throw new Error(result.message || "Erro API."); }
         } catch (error) { console.error("Erro abrir caixa:", error); showCustomAlert("Erro Abrir Caixa", error.message); } finally { openCaixaSaveBtn.disabled = false; openCaixaSaveBtn.innerHTML = "<i class='bx bx-check'></i> Confirmar"; }
     }
