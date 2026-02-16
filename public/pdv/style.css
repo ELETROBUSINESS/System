@@ -221,8 +221,11 @@ body {
 }
 
 .discount-popover.active {
-    max-height: 300px;
-    padding: 16px 16px;
+    max-height: 500px;
+    padding: 16px;
+    opacity: 1;
+    transform: translateY(0);
+    display: block !important;
 }
 
 .discount-popover label {
@@ -8131,4 +8134,60 @@ input:checked+.slider:before {
     font-weight: 700;
     color: var(--text-dark);
     font-size: 1rem;
+}
+
+/* ======================================== */
+/* == OFFLINE & SYNC INDICATORS          == */
+/* ======================================== */
+
+/* Barra Superior Offline */
+.offline-bar {
+    background-color: #f59e0b;
+    /* Amber-500 */
+    color: white;
+    text-align: center;
+    padding: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 9999;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: transform 0.3s ease;
+}
+
+.offline-bar.hidden {
+    transform: translateY(-100%);
+}
+
+/* Badge de Sincronização */
+.sync-badge {
+    position: fixed;
+    bottom: 80px;
+    /* Acima do footer */
+    right: 20px;
+    background-color: var(--info-blue);
+    color: white;
+    padding: 10px 16px;
+    border-radius: 50px;
+    font-weight: 500;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 9990;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.sync-badge.hidden {
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
 }

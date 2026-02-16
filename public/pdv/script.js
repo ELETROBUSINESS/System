@@ -59,14 +59,26 @@ var TAX_COMPOSITION_2026 = [
 ];
 var currentTaxDisplay = 0; // Armazena o valor atual para a animação de contagem
 
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-} else {
-    firebase.app();
+// Firebase Safe Init (Offline Support)
+var isFirebaseOnline = false;
+try {
+    if (typeof firebase !== 'undefined' && firebase.apps) {
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        } else {
+            firebase.app();
+        }
+        db = firebase.firestore();
+        isFirebaseOnline = true;
+        console.log("Firebase inicializado globalmente!");
+    } else {
+        console.warn("Firebase lib não carregada (Modo Offline).");
+        db = null; // db nulo indica offline
+    }
+} catch (e) {
+    console.warn("Erro ao iniciar Firebase (Modo Offline):", e);
+    db = null;
 }
-
-db = firebase.firestore(); // db agora existe globalmente
-console.log("Firebase inicializado globalmente!");
 
 // Credenciais e URLs
 var FIREBASE_CONFIG_ID = 'floralchic-loja';
@@ -105,10 +117,12 @@ window.closeModal = (modal) => {
 };
 
 window.showCustomAlert = (title, message) => {
-    const modal = document.getElementById('alert-modal');
-    if (modal) {
-        document.getElementById('alert-modal-title').innerText = title;
-        document.getElementById('alert-modal-message').innerText = message;
+    const modal = document.getElementById('custom-alert-modal');
+    const t = document.getElementById('custom-alert-title');
+    const msg = document.getElementById('custom-alert-message');
+    if (modal && t && msg) {
+        t.textContent = title;
+        msg.textContent = message;
         openModal(modal);
     } else {
         alert(`${title}: ${message}`);
@@ -116,24 +130,24 @@ window.showCustomAlert = (title, message) => {
 };
 
 window.showCustomConfirm = (title, message, callback) => {
-    const modal = document.getElementById('confirm-modal');
-    if (modal) {
-        document.getElementById('confirm-modal-title').innerText = title;
-        document.getElementById('confirm-modal-message').innerText = message;
+    const modal = document.getElementById('custom-confirm-modal');
+    const t = document.getElementById('custom-confirm-title');
+    const msg = document.getElementById('custom-confirm-message');
+    const confirmBtn = document.getElementById('custom-confirm-yes-btn');
 
-        const confirmBtn = document.getElementById('confirm-modal-btn');
-        // Remove listeners antigos cloning node
+    if (modal && t && msg && confirmBtn) {
+        t.textContent = title;
+        msg.textContent = message;
+
         const newBtn = confirmBtn.cloneNode(true);
         confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
 
-        newBtn.addEventListener('click', () => {
+        newBtn.onclick = () => {
             closeModal(modal);
             if (callback) callback();
-        });
+        };
 
         openModal(modal);
-        // Focus confirm for quick access
-        setTimeout(() => newBtn.focus(), 100);
     } else {
         if (confirm(`${title}: ${message}`)) {
             if (callback) callback();
@@ -2256,9 +2270,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Lógica de Seleção de Vendedor ---
-    sellerToggleRow.addEventListener('click', () => {
-        sellerPopover.classList.toggle('active');
-    });
+    // sellerToggleRow.addEventListener('click', () => {
+    //     sellerPopover.classList.toggle('active');
+    // });
 
     sellerButtons.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -2576,9 +2590,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Funções de Modal com Acessibilidade
     const openModal = (modalEl) => { elementToRestoreFocus = document.activeElement; modalEl.classList.add('active'); const primaryFocus = modalEl.querySelector('[data-primary-focus="true"]'); if (primaryFocus) { setTimeout(() => primaryFocus.focus(), 100); } };
     const closeModal = (modalEl) => { modalEl.classList.remove('active'); if (elementToRestoreFocus && elementToRestoreFocus.focus) { try { elementToRestoreFocus.focus(); } catch (e) { console.warn("Não foi possível restaurar o foco:", e); } } elementToRestoreFocus = null; };
-    const showCustomAlert = (title, message) => {
-        alertTitle.textContent = title; alertMessage.textContent = message; openModal(alertModal);
-    };
+
+
     const showCustomToast = (message) => {
         // Cria o elemento
         const toast = document.createElement('div');
@@ -2616,7 +2629,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 300);
         }, 3000);
     };
-    const showCustomConfirm = (title, message, onConfirm) => { confirmTitle.textContent = title; confirmMessage.textContent = message; confirmCallback = onConfirm; openModal(confirmModal); };
+
+
     const resetPaymentMethod = () => { selectedPaymentMethod = null; summaryPaymentMethod.textContent = "Não selecionado"; summaryPaymentMethod.style.fontWeight = '500'; summaryPaymentMethod.style.color = 'var(--text-light)'; updateSummary(); };
 
     // --- Funções de Desconto ---
@@ -2895,8 +2909,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (loaderOverlay) loaderOverlay.style.display = 'flex';
 
         const container = document.getElementById('produtos-table-container');
-        const pdvInput = document.getElementById('barcode-input'); // Seleciona o input do PDV
-        const pdvHint = document.getElementById('barcode-hint');   // Seleciona o texto de ajuda
+        const pdvInput = document.getElementById('barcode-input');
+        const pdvHint = document.getElementById('barcode-hint');
 
         // Feedback visual na tela de produtos
         if (container) {
@@ -2906,9 +2920,13 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // Busca os dados do Backend
             const response = await fetch(SCRIPT_URL + "?action=getProducts");
+            if (!response.ok) throw new Error("Erro na rede");
             const json = await response.json();
 
             localProductCache = json; // Salva na memória
+
+            // SALVA NO BANCO OFFLINE (Background)
+            offlineDB.saveProducts(json).catch(e => console.warn("Erro ao salvar cache offline:", e));
 
             // Popula o Cache de Marcas
             const marcasExistentes = [...new Set(localProductCache.map(p => p.brand).filter(b => b && b.trim() !== ""))];
@@ -2916,9 +2934,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 brandsCache = marcasExistentes.sort();
             }
 
-            renderProdutosPage(); // Renderiza a tabela
+            renderProdutosPage();
 
-            // === A CORREÇÃO DO PDV ESTÁ AQUI ===
             // Destrava o campo de busca do PDV e muda o texto
             if (pdvInput) {
                 pdvInput.disabled = false;
@@ -2932,25 +2949,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 pdvHint.textContent = "Digite para buscar ou use o leitor";
             }
 
-            // Verifica se a função toast existe antes de chamar (para evitar aquele erro anterior)
             if (typeof showCustomToast === 'function') {
                 runFiscalSanityCheck();
-                showCustomToast("Sistema Carregado!");
+                showCustomToast("Sistema Carregado (Online)!");
             } else {
                 console.log("Produtos carregados.");
             }
 
         } catch (error) {
-            console.error("Erro ao carregar produtos:", error);
+            console.error("Erro ao carregar produtos (Online):", error);
 
-            // Exibe erro na tela de produtos
-            if (container) {
-                container.innerHTML = `<div class="empty-state text-danger"><i class='bx bx-error'></i><p>Erro ao sincronizar. Verifique a conexão.</p><button class="btn btn-sm btn-secondary mt-2" onclick="carregarCacheDeProdutos()">Tentar Novamente</button></div>`;
+            // TENTATIVA OFFLINE
+            try {
+                const offlineProducts = await offlineDB.getProducts();
+                if (offlineProducts && offlineProducts.length > 0) {
+                    localProductCache = offlineProducts;
+                    renderProdutosPage();
+
+                    if (pdvInput) {
+                        pdvInput.disabled = false;
+                        pdvInput.placeholder = "Busca Offline...";
+                    }
+                    if (pdvHint) pdvHint.innerHTML = "<span style='color:orange'><i class='bx bx-wifi-off'></i> Modo Offline</span>";
+
+                    if (typeof showCustomToast === 'function') showCustomToast("Modo Offline: Produtos Carregados!");
+                    return; // Sucesso Offline
+                }
+            } catch (dbError) {
+                console.error("Erro ao recuperar cache offline:", dbError);
             }
 
-            // Avisa no PDV que deu erro
+            // Se falhar tudo
+            if (container) {
+                container.innerHTML = `<div class="empty-state text-danger"><i class='bx bx-error'></i><p>Erro ao sincronizar e sem cache offline.</p><button class="btn btn-sm btn-secondary mt-2" onclick="carregarCacheDeProdutos()">Tentar Novamente</button></div>`;
+            }
             if (pdvHint) {
-                pdvHint.innerHTML = "<span style='color:red'>Erro ao carregar produtos. Recarregue a página.</span>";
+                pdvHint.innerHTML = "<span style='color:red'>Erro fatal de conexão.</span>";
             }
         } finally {
             if (loaderOverlay) loaderOverlay.style.display = 'none';
@@ -2990,22 +3024,132 @@ document.addEventListener('DOMContentLoaded', () => {
             Timestamp: timestamp
         };
 
-        const fetchPromises = payments.map(payment => {
+        const fetchPromises = payments.map(async (payment) => {
             const paymentData = { ...baseData, payment: payment.method || 'N/A', total: payment.value.toFixed(2) };
             const formData = new URLSearchParams(paymentData);
-            console.log("Enviando parte registro:", formData.toString());
-            return fetch(REGISTRO_VENDA_SCRIPT_URL, { redirect: "follow", method: "POST", body: formData.toString(), headers: { "Content-Type": "application/x-www-form-urlencoded" }, });
+
+            // Tenta enviar se estiver online
+            if (navigator.onLine) {
+                try {
+                    console.log("Enviando parte registro:", formData.toString());
+                    const res = await fetch(REGISTRO_VENDA_SCRIPT_URL, {
+                        redirect: "follow",
+                        method: "POST",
+                        body: formData.toString(),
+                        headers: { "Content-Type": "application/x-www-form-urlencoded" }
+                    });
+                    if (!res.ok) throw new Error("Erro HTTP: " + res.status);
+                    return { ok: true };
+                } catch (e) {
+                    console.warn("Falha no fetch, salvando offline:", e);
+                    // Falhou online, cai para o offline
+                }
+            }
+
+            // Lógica Offline
+            try {
+                await offlineDB.savePendingSale(paymentData);
+                console.log("Venda salva na fila offline.");
+                return { ok: true, offline: true };
+            } catch (dbError) {
+                console.error("ERRO FATAL: Falha ao salvar offline", dbError);
+                throw dbError; // Propaga erro se não conseguir nem salvar offline
+            }
         });
 
         const responses = await Promise.all(fetchPromises);
-        const allOk = responses.every(response => response.ok);
-        if (allOk) { console.log("Registro OK!"); } else {
-            const firstErrorResponse = responses.find(response => !response.ok);
-            let errorText = `Falha registro. Status: ${firstErrorResponse?.status || '?'}`;
-            try { if (firstErrorResponse) errorText = await firstErrorResponse.text(); } catch (readError) { }
-            throw new Error(errorText);
+
+        // Verifica se algum falhou de verdade (nem online nem offline)
+        // Como o fallback offline retorna {ok:true}, só teremos erro se o DB falhar.
+
+        const offlineCount = responses.filter(r => r.offline).length;
+        if (offlineCount > 0) {
+            if (typeof showCustomToast === 'function') showCustomToast(`⚠️ ${offlineCount} registros salvos OFFLINE.`);
+        } else {
+            console.log("Registro OK (Online)!");
         }
     }
+
+    // --- GERENCIADOR OFFLINE / SYNC (UI Conectada) ---
+    async function syncPendingSales() {
+        if (!navigator.onLine) return;
+
+        const syncBadge = document.getElementById('sync-status-badge');
+
+        try {
+            const pending = await offlineDB.getPendingSales();
+            if (!pending || pending.length === 0) return;
+
+            console.log(`[Sync] Encontrados ${pending.length} registros pendentes.`);
+
+            // MOSTRA BADGE DE SYNC
+            if (syncBadge) syncBadge.classList.remove('hidden');
+
+            let successCount = 0;
+
+            for (const sale of pending) {
+                const { localId, ...saleData } = sale; // Remove ID local
+                const formData = new URLSearchParams(saleData);
+
+                try {
+                    const res = await fetch(REGISTRO_VENDA_SCRIPT_URL, {
+                        redirect: "follow",
+                        method: "POST",
+                        body: formData.toString(),
+                        headers: { "Content-Type": "application/x-www-form-urlencoded" }
+                    });
+
+                    if (res.ok) {
+                        await offlineDB.deletePendingSale(localId);
+                        successCount++;
+                    }
+                } catch (err) {
+                    console.error("[Sync] Erro ao enviar item:", err);
+                    // Não deleta, tenta de novo na próxima
+                }
+            }
+
+            if (successCount > 0) {
+                if (typeof showCustomToast === 'function') showCustomToast(`✅ ${successCount} vendas sincronizadas!`);
+            }
+
+        } catch (e) {
+            console.error("[Sync] Erro geral:", e);
+        } finally {
+            // ESCONDE BADGE DE SYNC
+            if (syncBadge) syncBadge.classList.add('hidden');
+        }
+    }
+
+    // Listener de Rede
+    window.addEventListener('online', () => {
+        console.log("Conexão restaurada! Tentando sincronizar...");
+        syncPendingSales();
+        updateNetworkStatusUI();
+    });
+    window.addEventListener('offline', () => {
+        console.log("Sem conexão.");
+        updateNetworkStatusUI();
+    });
+
+    function updateNetworkStatusUI() {
+        const statusText = document.getElementById('network-status-text');
+        const footer = document.querySelector('.pn');
+        const offlineBar = document.getElementById('offline-status-bar');
+
+        if (navigator.onLine) {
+            if (statusText) statusText.textContent = "ONLINE";
+            if (footer) footer.classList.remove('offline');
+            if (offlineBar) offlineBar.classList.add('hidden'); // Esconde barra superior
+        } else {
+            if (statusText) statusText.textContent = "OFFLINE";
+            if (footer) footer.classList.add('offline');
+            if (offlineBar) offlineBar.classList.remove('hidden'); // Mostra barra superior
+        }
+    }
+
+    // Tenta Sync ao iniciar
+    setTimeout(syncPendingSales, 5000);
 
     // Função para abater estoque no Firebase
     async function abaterEstoqueFirebase(itensVendidos) {
@@ -3060,7 +3204,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function carregarClientesDaAPI() { clientesListContainer.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px 0;"><i class="bx bx-loader-alt bx-spin"></i> Carregando...</p>'; localClientCache = null; try { const response = await fetch(SCRIPT_URL + "?action=listarClientes"); if (!response.ok) throw new Error("Erro rede."); const result = await response.json(); if (result.status === 'success') { localClientCache = result.data; console.log(`Cache cli: ${localClientCache.length}`); renderClientesPage(); } else { throw new Error(result.message || "Erro API."); } } catch (error) { console.error("Erro carregar cli:", error); clientesListContainer.innerHTML = `<p style="text-align: center; color: var(--warning-red); padding: 20px 0;">${error.message}</p>`; localClientCache = []; } }
+    async function carregarClientesDaAPI() {
+        clientesListContainer.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px 0;"><i class="bx bx-loader-alt bx-spin"></i> Carregando Clientes...</p>';
+        localClientCache = null;
+
+        try {
+            const response = await fetch(SCRIPT_URL + "?action=listarClientes");
+            if (!response.ok) throw new Error("Erro rede.");
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                localClientCache = result.data;
+                console.log(`Cache cli: ${localClientCache.length}`);
+
+                // SALVA OFFLINE
+                offlineDB.saveClients(localClientCache).catch(e => console.warn("Erro save offline clients:", e));
+
+                renderClientesPage();
+            } else {
+                throw new Error(result.message || "Erro API.");
+            }
+        } catch (error) {
+            console.error("Erro carregar cli:", error);
+
+            // TENTATIVA OFFLINE
+            try {
+                const offlineClients = await offlineDB.getClients();
+                if (offlineClients && offlineClients.length > 0) {
+                    localClientCache = offlineClients;
+                    console.log(`Cache cli (OFFLINE): ${localClientCache.length}`);
+                    renderClientesPage();
+                    if (typeof showCustomToast === 'function') showCustomToast("Clientes: Modo Offline");
+                    return;
+                }
+            } catch (dbErr) {
+                console.error("Erro offline clientes:", dbErr);
+            }
+
+            clientesListContainer.innerHTML = `<p style="text-align: center; color: var(--warning-red); padding: 20px 0;">Erro: ${error.message} (Sem cache)</p>`;
+            localClientCache = [];
+        }
+    }
     async function salvarClienteNaAPI(clienteData) { clienteSaveBtn.disabled = true; clienteSaveBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Salvando..."; try { const params = new URLSearchParams({ action: 'cadastrarCliente', ...clienteData }); const response = await fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET' }); if (!response.ok) throw new Error("Erro rede."); const result = await response.json(); if (result.status === 'success') { showCustomAlert("Sucesso!", result.message || "Cliente cadastrado!"); closeModal(addClienteModal); if (localClientCache !== null) { localClientCache.push(result.data); localClientCache.sort((a, b) => (a.apelido || a.nomeExibicao).localeCompare(b.apelido || b.nomeExibicao)); } renderClientesPage(); } else { throw new Error(result.message || "Erro API."); } } catch (error) { console.error("Erro salvar cli:", error); showCustomAlert("Erro Salvar", error.message); } finally { clienteSaveBtn.disabled = false; clienteSaveBtn.innerHTML = "<i class='bx bx-save'></i> Salvar"; } }
     async function abrirCaixaAPI(data) {
         openCaixaSaveBtn.disabled = true; openCaixaSaveBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Abrindo..."; try {
@@ -3549,11 +3733,86 @@ document.addEventListener('DOMContentLoaded', () => {
 
     barcodeInput.addEventListener('input', () => {
         debounce(() => {
-            if (barcodeInput.value.length >= 8) handleScan();
+            const val = barcodeInput.value;
+            if (val.length >= 8 && /^\d+$/.test(val)) handleScan();
         }, 500);
     });
 
-    discountToggleRow.addEventListener('click', () => { discountPopover.classList.toggle('active'); });
+    // --- LÓGICA DE PESQUISA POR NOME (TEXTO) ---
+    barcodeInput.addEventListener('input', (e) => {
+        const val = e.target.value;
+        const hasLetters = /[a-zA-Z]/.test(val);
+        const resultsEl = document.getElementById('barcode-search-results');
+        const iconEl = document.getElementById('barcode-icon');
+
+        if (hasLetters && val.length > 2) {
+            if (iconEl) iconEl.className = 'bx bx-search';
+
+            const terms = val.toLowerCase().split(' ').filter(t => t);
+            let results = [];
+
+            if (typeof localProductCache !== 'undefined' && localProductCache) {
+                results = localProductCache.filter(p => {
+                    const name = (p.name || '').toLowerCase();
+                    return terms.every(term => name.includes(term));
+                }).slice(0, 10);
+            }
+
+            if (resultsEl) {
+                if (results.length > 0) {
+                    resultsEl.innerHTML = results.map(p => {
+                        const imgHtml = p.imgUrl && p.imgUrl.length > 10
+                            ? `<img src="${p.imgUrl}" class="result-thumb">`
+                            : `<div class="result-thumb"><i class='bx bx-package'></i></div>`;
+
+                        return `
+                            <div class="search-result-item" onclick="quickAddFromSearch('${p.id}')">
+                                ${imgHtml}
+                                <div class="result-info">
+                                    <div class="result-name">${p.name}</div>
+                                    <div class="result-meta">
+                                        <span class="result-code">#${p.id}</span>
+                                        <span class="result-price">${formatCurrency(p.price)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    resultsEl.classList.add('expanded');
+                } else {
+                    resultsEl.innerHTML = `<div class="search-result-item" style="justify-content: center; color: #6b7280; font-size: 0.9rem;">Nenhum produto encontrado.</div>`;
+                    resultsEl.classList.add('expanded');
+                }
+            }
+        } else {
+            if (iconEl) iconEl.className = 'bx bx-barcode-reader';
+            if (resultsEl) {
+                resultsEl.classList.remove('expanded');
+                resultsEl.innerHTML = '';
+            }
+        }
+    });
+
+    window.quickAddFromSearch = (id) => {
+        if (typeof addToCart === 'function' && typeof localProductCache !== 'undefined') {
+            const product = localProductCache.find(p => String(p.id) === String(id));
+            if (product) {
+                addToCart(product);
+                const input = document.getElementById('barcode-input');
+                const results = document.getElementById('barcode-search-results');
+                const icon = document.getElementById('barcode-icon');
+
+                if (input) input.value = '';
+                if (results) {
+                    results.classList.remove('expanded');
+                    results.innerHTML = '';
+                }
+                if (icon) icon.className = 'bx bx-barcode-reader';
+            }
+        }
+    };
+
+    // discountToggleRow.addEventListener('click', () => { discountPopover.classList.toggle('active'); });
     percBtnContainer.addEventListener('click', (e) => { const button = e.target.closest('.perc-btn'); if (button && button.dataset.perc) { applyDiscount(parseFloat(button.dataset.perc), true); } });
     discountInputR.addEventListener('input', (e) => {
         let valStr = e.target.value.replace(',', '.');
@@ -3563,7 +3822,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     // Porcentagem input removed
     removeDiscountBtn.addEventListener('click', removeDiscount);
-    paymentToggleRow.addEventListener('click', () => { if (cart.length > 0) { splitPaymentArea.style.display = 'none'; singlePaymentOptions.style.display = 'grid'; splitPaymentToggleBtn.innerHTML = "<i class='bx bx-columns'></i> Dividir Pagamento"; splitPaymentToggleBtn.classList.remove('active'); splitValue1.value = ''; splitValue2.value = ''; splitMethod1.value = ''; splitMethod2.value = ''; confirmSplitPaymentBtn.disabled = true; updateSplitRemaining(); openModal(paymentModal); } else { showCustomAlert("Vazio", "Adicione itens."); } });
+    // paymentToggleRow.addEventListener('click', () => { if (cart.length > 0) { splitPaymentArea.style.display = 'none'; singlePaymentOptions.style.display = 'grid'; splitPaymentToggleBtn.innerHTML = "<i class='bx bx-columns'></i> Dividir Pagamento"; splitPaymentToggleBtn.classList.remove('active'); splitValue1.value = ''; splitValue2.value = ''; splitMethod1.value = ''; splitMethod2.value = ''; confirmSplitPaymentBtn.disabled = true; updateSplitRemaining(); openModal(paymentModal); } else { showCustomAlert("Vazio", "Adicione itens."); } });
     splitPaymentToggleBtn.addEventListener('click', () => { const isActive = splitPaymentArea.style.display !== 'none'; splitPaymentArea.style.display = isActive ? 'none' : 'block'; singlePaymentOptions.style.display = isActive ? 'grid' : 'none'; splitPaymentToggleBtn.innerHTML = isActive ? "<i class='bx bx-columns'></i> Dividir Pagamento" : "<i class='bx bx-x'></i> Cancelar Divisão"; splitPaymentToggleBtn.classList.toggle('active'); if (!isActive) { currentSplitPayments.totalSaleValue = lastSaleData?.total || 0; updateSplitRemaining(); splitMethod1.focus(); } else { confirmSplitPaymentBtn.disabled = true; } });
     [splitValue1, splitValue2, splitMethod1, splitMethod2].forEach(el => { el.addEventListener('input', updateSplitRemaining); el.addEventListener('change', updateSplitRemaining); });
     confirmSplitPaymentBtn.addEventListener('click', () => { if (Math.abs(currentSplitPayments.remaining) >= 0.01) { showCustomAlert("Erro", "Soma não bate."); return; } if (!splitMethod1.value || !splitMethod2.value || splitMethod1.value === splitMethod2.value) { showCustomAlert("Erro", "Selecione 2 formas diferentes."); return; } currentSplitPayments.method1 = splitMethod1.value; currentSplitPayments.value1 = parseFloat(splitValue1.value) || 0; currentSplitPayments.method2 = splitMethod2.value; currentSplitPayments.value2 = parseFloat(splitValue2.value) || 0; selectedPaymentMethod = `Dividido (${currentSplitPayments.method1} + ${currentSplitPayments.method2})`; summaryPaymentMethod.textContent = selectedPaymentMethod; summaryPaymentMethod.style.fontWeight = '600'; summaryPaymentMethod.style.color = 'var(--text-dark)'; updateSummary(); closeModal(paymentModal); });
@@ -3894,82 +4153,124 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // --- FUNÇÃO DE MIGRAÇÃO (ENVIO PARA NOVA API CENTRAL) ---
+    // --- FUNÇÃO CENTRAL DE REGISTRO (OFFLINE CAPABLE) ---
     async function sendToCentralApi(saleData) {
+        console.log("Iniciando envio para API Central...");
+
+        // 1. CONSTRUÇÃO DO PAYLOAD
+        const operadorNome = saleData.operador || "Caixa";
+        const cargo = operadorNome === "Nubia" ? "ADM" : "Caixa";
+        const taxaStr = saleData.taxaString || "0";
+        const taxaVal = parseFloat(taxaStr.replace('R$', '').replace(/\./g, '').replace(',', '.').trim()) || 0;
+
+        let pagamentoDetalhe = saleData.metodoPagamento;
+        if (pagamentoDetalhe === 'C. Crédito') {
+            const flag = saleData.cardFlag || '';
+            const inst = saleData.installments || '';
+            if (flag && inst) {
+                pagamentoDetalhe = `Crédito ${inst}x ${flag}`;
+            }
+        } else if (pagamentoDetalhe === 'PIX') {
+            if (saleData.pixType === 'maquininha') {
+                pagamentoDetalhe = 'PixQr';
+            } else {
+                pagamentoDetalhe = 'PIX';
+            }
+        }
+
+        const valorNetoVenda = saleData.valorTotal;
+        const valorBrutoVenda = valorNetoVenda + (saleData.discount || 0);
+        const totalLiquidoComTaxas = valorNetoVenda - taxaVal;
+        const listaItens = saleData.items.map(i => `${i.quantity}x ${i.name}`).join('; ');
+        const descricaoFinal = listaItens || "Venda no PDV";
+
+        const payload = {
+            loja: "DT#25",
+            operador: operadorNome,
+            cargo: cargo,
+            tipo: "entrada",
+            id: saleData.saleId,
+            pagamento: pagamentoDetalhe,
+            valor: valorBrutoVenda,
+            desconto: saleData.discount || 0,
+            taxas: taxaVal,
+            total: totalLiquidoComTaxas,
+            descricao: descricaoFinal
+        };
+
+        // 2. TENTATIVA DE ENVIO (ONLINE)
+        if (navigator.onLine) {
+            try {
+                await fetch(CENTRAL_API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                console.log("✅ Venda enviada para API Central (Online).");
+                return true;
+            } catch (e) {
+                console.warn("Falha no envio Online, tentando salvar Offline...", e);
+            }
+        }
+
+        // 3. FALLBACK OFFLINE
         try {
-            console.log("Iniciando envio para API Central (Migração)...");
+            // Salva o payload pronto para envio
+            await offlineDB.savePendingSale(payload);
+            console.log("⚠️ Venda salva na fila OFFLINE (Central API).");
+            if (typeof showCustomToast === 'function') showCustomToast("⚠️ Salvo Offline (Sincronizará depois).");
+            return true;
+        } catch (dbError) {
+            console.error("ERRO CRÍTICO: Falha ao salvar offline!", dbError);
+            if (typeof showCustomToast === 'function') showCustomToast("❌ Erro ao salvar venda!");
+            throw dbError;
+        }
+    }
 
-            const operadorNome = saleData.operador || "Caixa";
-            // Regra: Nubia = ADM, outros = Caixa
-            const cargo = operadorNome === "Nubia" ? "ADM" : "Caixa";
+    // --- GERENCIADOR DE SINCRONIZAÇÃO (ATUALIZADO PARA CENTRAL API) ---
+    async function syncPendingSales() {
+        if (!navigator.onLine) return;
 
-            // Tratamento da Taxa
-            const taxaStr = saleData.taxaString || "0";
-            // Remove R$, pontos e substitui virgula por ponto
-            const taxaVal = parseFloat(taxaStr.replace('R$', '').replace(/\./g, '').replace(',', '.').trim()) || 0;
+        const syncBadge = document.getElementById('sync-status-badge');
 
-            // Tratamento do Pagamento
-            let pagamentoDetalhe = saleData.metodoPagamento;
-            if (pagamentoDetalhe === 'C. Crédito') {
-                const flag = saleData.cardFlag || '';
-                const inst = saleData.installments || '';
-                if (flag && inst) {
-                    pagamentoDetalhe = `Crédito ${inst}x ${flag}`;
-                }
-            } else if (pagamentoDetalhe === 'PIX') {
-                // Mapeamento PIX Migração
-                if (saleData.pixType === 'maquininha') {
-                    pagamentoDetalhe = 'PixQr';
-                } else {
-                    // qrcode ou null(default)
-                    pagamentoDetalhe = 'PIX';
+        try {
+            const pending = await offlineDB.getPendingSales();
+            if (!pending || pending.length === 0) return;
+
+            console.log(`[Sync] Sincronizando ${pending.length} vendas pendentes...`);
+            if (syncBadge) syncBadge.classList.remove('hidden');
+
+            let successCount = 0;
+
+            for (const sale of pending) {
+                const { localId, ...payload } = sale; // O payload já está pronto
+
+                try {
+                    await fetch(CENTRAL_API_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    // Como é no-cors, assumimos sucesso se não der erro de rede
+                    await offlineDB.deletePendingSale(localId);
+                    successCount++;
+
+                } catch (err) {
+                    console.error("[Sync] Erro de rede ao enviar item:", err);
                 }
             }
 
-            // Tratamento do Valor Total (Neto) e Bruto
-            // saleData.valorTotal já é (items - desconto)
-            // Precisamos do Bruto para o campo 'valor' (item 6)
-            // item 9 'total' = Valor da Operação (Neto) - Taxas
-
-            const valorNetoVenda = saleData.valorTotal;
-            const valorBrutoVenda = valorNetoVenda + (saleData.discount || 0);
-
-            const totalLiquidoComTaxas = valorNetoVenda - taxaVal;
-
-            // Tratamento da Descrição (Lista de Itens)
-            const listaItens = saleData.items.map(i => `${i.quantity}x ${i.name}`).join('; ');
-            const descricaoFinal = listaItens || "Venda no PDV";
-
-            const payload = {
-                loja: "DT#25",      // 1. Loja (Fixo)
-                operador: operadorNome, // 2. Operador
-                cargo: cargo,       // 3. Cargo
-                tipo: "entrada",    // 4. Tipo (Fixo)
-                id: saleData.saleId,// 5. ID (Novo)
-                pagamento: pagamentoDetalhe, // 6. Pagamento (Formatado)
-                valor: valorBrutoVenda,      // 7. Valor
-                desconto: saleData.discount || 0, // 8. Desconto
-                taxas: taxaVal,     // 9. Taxas
-                total: totalLiquidoComTaxas, // 10. Total
-                descricao: descricaoFinal    // 11. Descrição (Lista de itens)
-                // Timestamp vai ser gerado pelo Google Script (new Date())
-            };
-
-            // Envio 'no-cors' para evitar bloqueio, enviando como string text/plain mas formato JSON
-            await fetch(CENTRAL_API_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: {
-                    'Content-Type': 'text/plain;charset=utf-8'
-                },
-                body: JSON.stringify(payload)
-            });
-
-            console.log("Dados enviados para API Central com sucesso!");
+            if (successCount > 0) {
+                if (typeof showCustomToast === 'function') showCustomToast(`✅ ${successCount} vendas sincronizadas!`);
+            }
 
         } catch (e) {
-            console.error("Erro na migração API Central:", e);
-            // Silencioso para o usuário final
+            console.error("[Sync] Erro geral:", e);
+        } finally {
+            if (syncBadge) syncBadge.classList.add('hidden');
         }
     }
 
@@ -4081,18 +4382,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 metodoPagamento: metodoPagamento
             };
 
-            const promisesParaExecutar = [
-                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "salvarNotaFiscal", data: dadosFiscal }) }),
-                // Pass Gross Subtotal and Total Discount to match legacy behavior
-                registrarVendaAtual(
-                    [{ method: metodoPagamento, value: totalGeralVenda }],
-                    subtotalBruto,
-                    totalDesconto
-                ),
-                salvarVendaNoHistorico(dadosVendaInterna),
-                abaterEstoqueFirebase(items),
-                abaterEstoquePlanilha(items)
+            // Função auxiliar para evitar falha total se uma promessa não essencial falhar
+            const safeExec = async (promise, name) => {
+                try {
+                    await promise;
+                } catch (e) {
+                    console.warn(`[Offline/Falha] Ignorando erro em ${name}:`, e);
+                }
+            };
+
+            // Lista de tarefas secundárias (podem falhar offline sem travar a venda principal)
+            const tarefasSecundarias = [
+                safeExec(fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "salvarNotaFiscal", data: dadosFiscal }) }), "Salvar Nota Fiscal"),
+                safeExec(salvarVendaNoHistorico(dadosVendaInterna), "Histórico Firebase"),
+                safeExec(abaterEstoqueFirebase(items), "Estoque Firebase"),
+                safeExec(abaterEstoquePlanilha(items), "Estoque Planilha")
             ];
+
+            // TAREFA PRINCIPAL: Envio para API CENTRAL (Definitiva)
+            // Agora aguardamos ela, pois ela gerencia o offline queue se falhar
+            await sendToCentralApi(saleData);
+
+            // Executa secundários em paralelo
+            Promise.all(tarefasSecundarias);
 
             if (String(metodoPagamento).toLowerCase().includes('crediário')) {
                 const idCli = client ? client.idCliente : null;
@@ -4105,14 +4417,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         parcelas: tempInstallments || 1,
                         isEntrada: 'false'
                     });
-                    promisesParaExecutar.push(fetch(`${SCRIPT_URL}?${params.toString()}`));
+                    safeExec(fetch(`${SCRIPT_URL}?${params.toString()}`), "Registro Crediário");
                 }
             }
-
-            // --- DISPARO DA MIGRAÇÃO (EM PARALELO) ---
-            promisesParaExecutar.push(sendToCentralApi(saleData));
-
-            await Promise.allSettled(promisesParaExecutar);
 
             updateNotificationStatus(90, "Finalizando...");
 
@@ -5828,403 +6135,404 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-});
 
-// =======================================================
-// LÓGICA DE ADMINISTRADOR (CORRIGIDA E CONSOLIDADA)
-// =======================================================
 
-var ADMIN_PASS = "ADM25-PASS";
-var acaoPendenteAposSenha = null; // Variável global para guardar o callback
 
-// --- 1. FUNÇÕES DO MODAL DE SENHA ---
+    // =======================================================
+    // LÓGICA DE ADMINISTRADOR (CORRIGIDA E CONSOLIDADA)
+    // =======================================================
 
-function solicitarAcessoAdm(callbackSucesso) {
-    const modalAuth = document.getElementById('modal-admin-auth');
-    const inputSenha = document.getElementById('admin-password-input');
-    const msgErro = document.getElementById('auth-error-msg');
+    var ADMIN_PASS = "ADM25-PASS";
+    var acaoPendenteAposSenha = null; // Variável global para guardar o callback
 
-    if (!modalAuth) {
-        alert("ERRO: Modal de autenticação não encontrado no HTML.");
-        return;
-    }
+    // --- 1. FUNÇÕES DO MODAL DE SENHA ---
 
-    // Reseta estado do modal
-    inputSenha.value = "";
-    msgErro.style.display = "none";
+    function solicitarAcessoAdm(callbackSucesso) {
+        const modalAuth = document.getElementById('modal-admin-auth');
+        const inputSenha = document.getElementById('admin-password-input');
+        const msgErro = document.getElementById('auth-error-msg');
 
-    // GUARDA A FUNÇÃO (CALLBACK) PARA SER EXECUTADA DEPOIS
-    acaoPendenteAposSenha = callbackSucesso;
-
-    // Abre modal (adiciona classe active se usar css de transição ou display flex)
-    modalAuth.style.display = "flex";
-    modalAuth.classList.add('active'); // Garante compatibilidade
-
-    setTimeout(() => inputSenha.focus(), 100);
-}
-
-function fecharModalAuth() {
-    const modalAuth = document.getElementById('modal-admin-auth');
-    if (modalAuth) {
-        modalAuth.style.display = "none";
-        modalAuth.classList.remove('active');
-    }
-    acaoPendenteAposSenha = null; // Limpa a ação pendente
-}
-
-function verificarSenhaAdm() {
-    const inputSenha = document.getElementById('admin-password-input');
-    const msgErro = document.getElementById('auth-error-msg');
-
-    if (inputSenha.value === ADMIN_PASS) {
-        // --- CORREÇÃO DE ORDEM ---
-        // 1. Salva a ação numa variável local antes de fechar o modal
-        const acaoParaExecutar = acaoPendenteAposSenha;
-
-        // 2. Fecha o modal (isso vai limpar a variável global acaoPendenteAposSenha)
-        fecharModalAuth();
-
-        // 3. Executa a ação salva (se existir)
-        if (acaoParaExecutar && typeof acaoParaExecutar === 'function') {
-            acaoParaExecutar();
+        if (!modalAuth) {
+            alert("ERRO: Modal de autenticação não encontrado no HTML.");
+            return;
         }
-    } else {
-        msgErro.style.display = "block";
+
+        // Reseta estado do modal
         inputSenha.value = "";
-        inputSenha.focus();
+        msgErro.style.display = "none";
+
+        // GUARDA A FUNÇÃO (CALLBACK) PARA SER EXECUTADA DEPOIS
+        acaoPendenteAposSenha = callbackSucesso;
+
+        // Abre modal (adiciona classe active se usar css de transição ou display flex)
+        modalAuth.style.display = "flex";
+        modalAuth.classList.add('active'); // Garante compatibilidade
+
+        setTimeout(() => inputSenha.focus(), 100);
     }
-}
 
-// --- 2. LISTENERS GLOBAIS UNIFICADOS ---
+    function fecharModalAuth() {
+        const modalAuth = document.getElementById('modal-admin-auth');
+        if (modalAuth) {
+            modalAuth.style.display = "none";
+            modalAuth.classList.remove('active');
+        }
+        acaoPendenteAposSenha = null; // Limpa a ação pendente
+    }
 
-// Eventos de clique (Delegação para evitar conflitos)
-document.addEventListener('click', function (e) {
-    const target = e.target;
+    function verificarSenhaAdm() {
+        const inputSenha = document.getElementById('admin-password-input');
+        const msgErro = document.getElementById('auth-error-msg');
 
-    // Identifica botões principais (suporta clique no ícone interno)
-    const btnLapis = target.closest('#btn-admin-edit');
-    const btnQrCode = target.closest('#btn-gerar-acesso');
-    const btnCloseReneg = target.closest('#close-renegociar');
+        if (inputSenha.value === ADMIN_PASS) {
+            // --- CORREÇÃO DE ORDEM ---
+            // 1. Salva a ação numa variável local antes de fechar o modal
+            const acaoParaExecutar = acaoPendenteAposSenha;
 
-    // Identifica botões do modal de senha
-    const btnConfirmAuth = target.closest('#btn-confirm-auth');
-    const btnCancelAuth = target.closest('#btn-cancel-auth');
+            // 2. Fecha o modal (isso vai limpar a variável global acaoPendenteAposSenha)
+            fecharModalAuth();
 
-    // >>> CLIQUE NO LÁPIS (RENEGOCIAR) <<<
-    if (btnLapis) {
-        e.preventDefault();
+            // 3. Executa a ação salva (se existir)
+            if (acaoParaExecutar && typeof acaoParaExecutar === 'function') {
+                acaoParaExecutar();
+            }
+        } else {
+            msgErro.style.display = "block";
+            inputSenha.value = "";
+            inputSenha.focus();
+        }
+    }
 
-        solicitarAcessoAdm(function () {
-            // Esta função roda SÓ DEPOIS da senha correta
+    // --- 2. LISTENERS GLOBAIS UNIFICADOS ---
+
+    // Eventos de clique (Delegação para evitar conflitos)
+    document.addEventListener('click', function (e) {
+        const target = e.target;
+
+        // Identifica botões principais (suporta clique no ícone interno)
+        const btnLapis = target.closest('#btn-admin-edit');
+        const btnQrCode = target.closest('#btn-gerar-acesso');
+        const btnCloseReneg = target.closest('#close-renegociar');
+
+        // Identifica botões do modal de senha
+        const btnConfirmAuth = target.closest('#btn-confirm-auth');
+        const btnCancelAuth = target.closest('#btn-cancel-auth');
+
+        // >>> CLIQUE NO LÁPIS (RENEGOCIAR) <<<
+        if (btnLapis) {
+            e.preventDefault();
+
+            solicitarAcessoAdm(function () {
+                // Esta função roda SÓ DEPOIS da senha correta
+                const modalReneg = document.getElementById('modal-renegociar');
+                const nomeEl = document.getElementById('detail-cliente-nome');
+                const saldoEl = document.getElementById('detail-cliente-saldo');
+                const vencEl = document.getElementById('detail-cliente-vencimento');
+
+                // Pega o nome visível AGORA
+                const nomeAtual = nomeEl ? nomeEl.innerText.trim() : "";
+
+                if (!nomeAtual || nomeAtual === "Carregando...") {
+                    alert("Erro: O nome do cliente ainda não carregou.");
+                    return;
+                }
+
+                // PASSAGEM DE DADOS: Guarda o nome no modal de renegociação
+                modalReneg.setAttribute('data-cliente-nome', nomeAtual);
+
+                // Preenche visualmente
+                document.getElementById('reneg-saldo-atual').innerText = saldoEl ? saldoEl.innerText : "R$ 0,00";
+                document.getElementById('reneg-vencimento-atual').value = vencEl ? vencEl.innerText : "";
+
+                // Data sugerida (Hoje + 30 dias)
+                try {
+                    const hoje = new Date();
+                    hoje.setDate(hoje.getDate() + 30);
+                    document.getElementById('reneg-nova-data').valueAsDate = hoje;
+                } catch (e) { }
+
+                // Abre o modal de renegociação
+                modalReneg.style.display = 'flex';
+                modalReneg.classList.add('active');
+            });
+        }
+
+        // >>> CLIQUE NO LÁPIS (EDITAR VENCIMENTO MANUAL) <<<
+        const btnEditVenc = target.closest('#btn-edit-vencimento');
+        if (btnEditVenc) {
+            e.preventDefault();
+            solicitarAcessoAdm(function () {
+                const modalDate = document.getElementById('modal-alterar-vencimento');
+                const nomeEl = document.getElementById('detail-cliente-nome');
+                const nomeAtual = nomeEl ? nomeEl.innerText.trim() : "";
+                if (!nomeAtual || nomeAtual === "Carregando...") { alert("Erro: Nome não carregado."); return; }
+
+                modalDate.setAttribute('data-cliente-nome', nomeAtual);
+                // Tenta preencher a data atual
+                const vencEl = document.getElementById('detail-cliente-vencimento');
+                if (vencEl) {
+                    const partes = vencEl.innerText.trim().split('/');
+                    if (partes.length === 3) {
+                        try { document.getElementById('input-novo-vencimento').value = `${partes[2]} -${partes[1]} -${partes[0]} `; } catch (e) { }
+                    }
+                }
+
+                modalDate.style.display = 'flex';
+                modalDate.classList.add('active');
+            });
+        }
+
+        // >>> CLIQUE NO FECHAR MODAL DATA <<<
+        if (target.closest('[data-target="modal-alterar-vencimento"]')) {
+            const m = document.getElementById('modal-alterar-vencimento');
+            if (m) { m.style.display = 'none'; m.classList.remove('active'); }
+        }
+
+        // >>> CONFIRMAR ALTERAÇÃO DATA MANUAL (API) <<<
+        const btnConfirmDate = target.closest('#btn-confirmar-vencimento');
+        if (btnConfirmDate) {
+            e.preventDefault();
+            const modalDate = document.getElementById('modal-alterar-vencimento');
+            const nomeParaBuscar = modalDate.getAttribute('data-cliente-nome');
+            const novaData = document.getElementById('input-novo-vencimento').value;
+
+            if (!novaData) { alert("Selecione uma data."); return; }
+            if (!nomeParaBuscar) { alert("Erro nome cliente."); return; }
+
+            const btn = btnConfirmDate;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Salvando...";
+            btn.disabled = true;
+
+            (async () => {
+                try {
+                    const params = new URLSearchParams({
+                        action: "alterarVencimentoManual",
+                        idCliente: nomeParaBuscar,
+                        novaData: novaData
+                    });
+
+                    const response = await fetch(`${SCRIPT_URL}?${params.toString()} `);
+                    const result = await response.json();
+
+                    if (result.status === 'success') {
+                        alert("Data alterada com sucesso!");
+                        modalDate.style.display = 'none';
+                        modalDate.classList.remove('active');
+
+                        // Atualiza visualmente se o modal estiver aberto (está, por baixo)
+                        const vencEl = document.getElementById('detail-cliente-vencimento');
+                        if (vencEl) {
+                            const partes = novaData.split('-');
+                            vencEl.innerText = `${partes[2]} /${partes[1]}/${partes[0]} `;
+                        }
+
+                        // Dispara evento de "refresh" se existir, ou apenas alerta.
+                    } else {
+                        alert("Erro: " + result.message);
+                    }
+                } catch (e) {
+                    alert("Erro de conexão: " + e.message);
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            })();
+        }
+
+        // >>> CLIQUE NO GERAR ACESSO (QR CODE) <<<
+        if (btnQrCode) {
+            e.preventDefault();
+
+            solicitarAcessoAdm(function () {
+                const nomeElement = document.getElementById('detail-cliente-nome');
+                const nomeCompleto = nomeElement ? nomeElement.innerText : "";
+
+                if (!nomeCompleto || nomeCompleto === "Carregando...") return;
+
+                const nomeParam = nomeCompleto.toLowerCase()
+                    .normalize('NFD').replace(/[\u0300-\u036f]/g, "")
+                    .replace(/[^a-z0-9]/g, "");
+
+                const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/')) + "/meuacesso.html";
+                const linkCompleto = `${baseUrl}?q = ${nomeParam} `;
+
+                const qrContainer = document.getElementById('qrcode-container');
+                const linkText = document.getElementById('link-acesso-text');
+
+                if (qrContainer) {
+                    qrContainer.innerHTML = "";
+                    qrContainer.style.display = "flex";
+                    new QRCode(qrContainer, { text: linkCompleto, width: 150, height: 150 });
+                }
+
+                if (linkText) {
+                    linkText.style.display = "block";
+                    linkText.innerHTML = `< a href = "${linkCompleto}" target = "_blank" > ABRIR LINK</a > `;
+                }
+            });
+        }
+
+        // >>> CONTROLES DO MODAL DE SENHA <<<
+        if (btnConfirmAuth) verificarSenhaAdm();
+        if (btnCancelAuth) fecharModalAuth();
+
+        // >>> FECHAR MODAL DE RENEGOCIAÇÃO <<<
+        if (btnCloseReneg) {
             const modalReneg = document.getElementById('modal-renegociar');
-            const nomeEl = document.getElementById('detail-cliente-nome');
-            const saldoEl = document.getElementById('detail-cliente-saldo');
-            const vencEl = document.getElementById('detail-cliente-vencimento');
+            modalReneg.style.display = 'none';
+            modalReneg.classList.remove('active');
+        }
 
-            // Pega o nome visível AGORA
-            const nomeAtual = nomeEl ? nomeEl.innerText.trim() : "";
+        // >>> CONFIRMAR RENEGOCIAÇÃO (ENVIO API) <<<
+        const btnConfirmarRenegDelegate = target.closest('#btn-confirmar-renegociacao');
+        if (btnConfirmarRenegDelegate) {
+            e.preventDefault(); // Evita reload se for form
 
-            if (!nomeAtual || nomeAtual === "Carregando...") {
-                alert("Erro: O nome do cliente ainda não carregou.");
+            const modalReneg = document.getElementById('modal-renegociar');
+            const novaDataEl = document.getElementById('reneg-nova-data');
+            const parcelasEl = document.getElementById('reneg-parcelas');
+
+            const novaData = novaDataEl ? novaDataEl.value : "";
+            const qtdParcelas = parcelasEl ? parcelasEl.value : "1";
+
+            // RECUPERA O NOME GUARDADO NO ATRIBUTO
+            const nomeParaBuscar = modalReneg.getAttribute('data-cliente-nome');
+
+            if (!novaData) {
+                alert("Selecione uma nova data de vencimento.");
+                return;
+            }
+            if (!nomeParaBuscar) {
+                alert("Erro Técnico: Nome do cliente se perdeu. Feche e abra a ficha novamente.");
                 return;
             }
 
-            // PASSAGEM DE DADOS: Guarda o nome no modal de renegociação
-            modalReneg.setAttribute('data-cliente-nome', nomeAtual);
+            const btn = btnConfirmarRenegDelegate;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Salvando...";
+            btn.disabled = true;
 
-            // Preenche visualmente
-            document.getElementById('reneg-saldo-atual').innerText = saldoEl ? saldoEl.innerText : "R$ 0,00";
-            document.getElementById('reneg-vencimento-atual').value = vencEl ? vencEl.innerText : "";
+            // Função assíncrona auto-executável para suportar await dentro do listener
+            (async () => {
+                try {
+                    // USA A URL GLOBAL (SCRIPT_URL) que contém a lógica do Code.js fornecido
+                    // Envia o NOME na variavel idCliente (o backend já sabe lidar com isso)
+                    const response = await fetch(`${SCRIPT_URL}?action = renegociarSaldo & idCliente=${encodeURIComponent(nomeParaBuscar)}& novaData=${novaData}& parcelas=${qtdParcelas} `);
+                    const json = await response.json();
 
-            // Data sugerida (Hoje + 30 dias)
-            try {
-                const hoje = new Date();
-                hoje.setDate(hoje.getDate() + 30);
-                document.getElementById('reneg-nova-data').valueAsDate = hoje;
-            } catch (e) { }
+                    if (json.status === 'success') {
+                        alert("✅ Renegociação realizada com sucesso!");
+                        modalReneg.style.display = 'none';
+                        modalReneg.classList.remove('active');
 
-            // Abre o modal de renegociação
-            modalReneg.style.display = 'flex';
-            modalReneg.classList.add('active');
-        });
-    }
+                        // Fecha a ficha do cliente para forçar atualização visual
+                        const ficha = document.getElementById('cliente-details-modal');
+                        if (ficha) {
+                            ficha.classList.remove('active');
+                            ficha.style.display = 'none';
+                        }
 
-    // >>> CLIQUE NO LÁPIS (EDITAR VENCIMENTO MANUAL) <<<
-    const btnEditVenc = target.closest('#btn-edit-vencimento');
-    if (btnEditVenc) {
-        e.preventDefault();
-        solicitarAcessoAdm(function () {
-            const modalDate = document.getElementById('modal-alterar-vencimento');
-            const nomeEl = document.getElementById('detail-cliente-nome');
-            const nomeAtual = nomeEl ? nomeEl.innerText.trim() : "";
-            if (!nomeAtual || nomeAtual === "Carregando...") { alert("Erro: Nome não carregado."); return; }
-
-            modalDate.setAttribute('data-cliente-nome', nomeAtual);
-            // Tenta preencher a data atual
-            const vencEl = document.getElementById('detail-cliente-vencimento');
-            if (vencEl) {
-                const partes = vencEl.innerText.trim().split('/');
-                if (partes.length === 3) {
-                    try { document.getElementById('input-novo-vencimento').value = `${partes[2]} -${partes[1]} -${partes[0]} `; } catch (e) { }
-                }
-            }
-
-            modalDate.style.display = 'flex';
-            modalDate.classList.add('active');
-        });
-    }
-
-    // >>> CLIQUE NO FECHAR MODAL DATA <<<
-    if (target.closest('[data-target="modal-alterar-vencimento"]')) {
-        const m = document.getElementById('modal-alterar-vencimento');
-        if (m) { m.style.display = 'none'; m.classList.remove('active'); }
-    }
-
-    // >>> CONFIRMAR ALTERAÇÃO DATA MANUAL (API) <<<
-    const btnConfirmDate = target.closest('#btn-confirmar-vencimento');
-    if (btnConfirmDate) {
-        e.preventDefault();
-        const modalDate = document.getElementById('modal-alterar-vencimento');
-        const nomeParaBuscar = modalDate.getAttribute('data-cliente-nome');
-        const novaData = document.getElementById('input-novo-vencimento').value;
-
-        if (!novaData) { alert("Selecione uma data."); return; }
-        if (!nomeParaBuscar) { alert("Erro nome cliente."); return; }
-
-        const btn = btnConfirmDate;
-        const originalText = btn.innerHTML;
-        btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Salvando...";
-        btn.disabled = true;
-
-        (async () => {
-            try {
-                const params = new URLSearchParams({
-                    action: "alterarVencimentoManual",
-                    idCliente: nomeParaBuscar,
-                    novaData: novaData
-                });
-
-                const response = await fetch(`${SCRIPT_URL}?${params.toString()} `);
-                const result = await response.json();
-
-                if (result.status === 'success') {
-                    alert("Data alterada com sucesso!");
-                    modalDate.style.display = 'none';
-                    modalDate.classList.remove('active');
-
-                    // Atualiza visualmente se o modal estiver aberto (está, por baixo)
-                    const vencEl = document.getElementById('detail-cliente-vencimento');
-                    if (vencEl) {
-                        const partes = novaData.split('-');
-                        vencEl.innerText = `${partes[2]} /${partes[1]}/${partes[0]} `;
-                    }
-
-                    // Dispara evento de "refresh" se existir, ou apenas alerta.
-                } else {
-                    alert("Erro: " + result.message);
-                }
-            } catch (e) {
-                alert("Erro de conexão: " + e.message);
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
-        })();
-    }
-
-    // >>> CLIQUE NO GERAR ACESSO (QR CODE) <<<
-    if (btnQrCode) {
-        e.preventDefault();
-
-        solicitarAcessoAdm(function () {
-            const nomeElement = document.getElementById('detail-cliente-nome');
-            const nomeCompleto = nomeElement ? nomeElement.innerText : "";
-
-            if (!nomeCompleto || nomeCompleto === "Carregando...") return;
-
-            const nomeParam = nomeCompleto.toLowerCase()
-                .normalize('NFD').replace(/[\u0300-\u036f]/g, "")
-                .replace(/[^a-z0-9]/g, "");
-
-            const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/')) + "/meuacesso.html";
-            const linkCompleto = `${baseUrl}?q = ${nomeParam} `;
-
-            const qrContainer = document.getElementById('qrcode-container');
-            const linkText = document.getElementById('link-acesso-text');
-
-            if (qrContainer) {
-                qrContainer.innerHTML = "";
-                qrContainer.style.display = "flex";
-                new QRCode(qrContainer, { text: linkCompleto, width: 150, height: 150 });
-            }
-
-            if (linkText) {
-                linkText.style.display = "block";
-                linkText.innerHTML = `< a href = "${linkCompleto}" target = "_blank" > ABRIR LINK</a > `;
-            }
-        });
-    }
-
-    // >>> CONTROLES DO MODAL DE SENHA <<<
-    if (btnConfirmAuth) verificarSenhaAdm();
-    if (btnCancelAuth) fecharModalAuth();
-
-    // >>> FECHAR MODAL DE RENEGOCIAÇÃO <<<
-    if (btnCloseReneg) {
-        const modalReneg = document.getElementById('modal-renegociar');
-        modalReneg.style.display = 'none';
-        modalReneg.classList.remove('active');
-    }
-
-    // >>> CONFIRMAR RENEGOCIAÇÃO (ENVIO API) <<<
-    const btnConfirmarRenegDelegate = target.closest('#btn-confirmar-renegociacao');
-    if (btnConfirmarRenegDelegate) {
-        e.preventDefault(); // Evita reload se for form
-
-        const modalReneg = document.getElementById('modal-renegociar');
-        const novaDataEl = document.getElementById('reneg-nova-data');
-        const parcelasEl = document.getElementById('reneg-parcelas');
-
-        const novaData = novaDataEl ? novaDataEl.value : "";
-        const qtdParcelas = parcelasEl ? parcelasEl.value : "1";
-
-        // RECUPERA O NOME GUARDADO NO ATRIBUTO
-        const nomeParaBuscar = modalReneg.getAttribute('data-cliente-nome');
-
-        if (!novaData) {
-            alert("Selecione uma nova data de vencimento.");
-            return;
-        }
-        if (!nomeParaBuscar) {
-            alert("Erro Técnico: Nome do cliente se perdeu. Feche e abra a ficha novamente.");
-            return;
-        }
-
-        const btn = btnConfirmarRenegDelegate;
-        const originalText = btn.innerHTML;
-        btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Salvando...";
-        btn.disabled = true;
-
-        // Função assíncrona auto-executável para suportar await dentro do listener
-        (async () => {
-            try {
-                // USA A URL GLOBAL (SCRIPT_URL) que contém a lógica do Code.js fornecido
-                // Envia o NOME na variavel idCliente (o backend já sabe lidar com isso)
-                const response = await fetch(`${SCRIPT_URL}?action = renegociarSaldo & idCliente=${encodeURIComponent(nomeParaBuscar)}& novaData=${novaData}& parcelas=${qtdParcelas} `);
-                const json = await response.json();
-
-                if (json.status === 'success') {
-                    alert("✅ Renegociação realizada com sucesso!");
-                    modalReneg.style.display = 'none';
-                    modalReneg.classList.remove('active');
-
-                    // Fecha a ficha do cliente para forçar atualização visual
-                    const ficha = document.getElementById('cliente-details-modal');
-                    if (ficha) {
-                        ficha.classList.remove('active');
-                        ficha.style.display = 'none';
-                    }
-
-                    // Recarrega lista
-                    if (typeof renderClientesPage === 'function') {
-                        if (typeof localClientCache !== 'undefined') localClientCache = null; // Limpa cache
-                        renderClientesPage();
+                        // Recarrega lista
+                        if (typeof renderClientesPage === 'function') {
+                            if (typeof localClientCache !== 'undefined') localClientCache = null; // Limpa cache
+                            renderClientesPage();
+                        } else {
+                            location.reload();
+                        }
                     } else {
-                        location.reload();
+                        alert("Erro do Sistema: " + json.message);
                     }
+
+                } catch (error) {
+                    alert("Erro de conexão: " + error.message);
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            })();
+        }
+    });
+
+    // =======================================================
+    // == LÓGICA DE PESQUISA RÁPIDA NO CAMPO DE BARCODE ==
+    // =======================================================
+    var barcodeInputEl = document.getElementById('barcode-input');
+    var barcodeIconEl = document.getElementById('barcode-icon');
+    var barcodeResultsEl = document.getElementById('barcode-search-results');
+
+    if (barcodeInputEl && barcodeIconEl && barcodeResultsEl) {
+
+        // Função para adicionar direto da pesquisa
+        // Nota: 'cart' e 'localProductCache' são globais agora.
+        window.quickAddFromSearch = (id) => {
+            const prod = localProductCache.find(p => String(p.id) === String(id));
+            if (prod) {
+                // Lógica de Adicionar ao Carrinho 
+                const existingItemIndex = cart.findIndex(item => String(item.id) === String(prod.id));
+
+                if (existingItemIndex !== -1) {
+                    cart[existingItemIndex].quantity += 1;
                 } else {
-                    alert("Erro do Sistema: " + json.message);
+                    cart.push({
+                        ...prod,
+                        quantity: 1,
+                        discountPercent: 0,
+                        originalPrice: parseFloat(prod.price),
+                        isNew: true // Flag para animação
+                    });
                 }
 
-            } catch (error) {
-                alert("Erro de conexão: " + error.message);
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
+                // Atualiza UI
+                renderCart();
+                updateSummary();
+
+                // Força a exibição da tabela caso o renderCart falhe em algo específico
+                const itemListTable = document.getElementById('item-list-table');
+                const emptyState = document.getElementById('empty-state');
+                const cartItemsBody = document.getElementById('cart-items-body'); // Para scroll
+
+                if (itemListTable && emptyState) {
+                    itemListTable.style.display = 'table';
+                    emptyState.style.display = 'none';
+                }
+
+                // Scroll para o último item adicionado
+                if (cartItemsBody) {
+                    // Pequeno delay para garantir renderização
+                    setTimeout(() => {
+                        cartItemsBody.firstElementChild?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 50);
+                }
+
+                // Limpa pesquisa
+                barcodeInputEl.value = '';
+                barcodeResultsEl.innerHTML = '';
+                barcodeResultsEl.classList.remove('expanded');
+                barcodeIconEl.className = 'bx bx-barcode-reader';
+                barcodeInputEl.focus();
             }
-        })();
-    }
-});
+        };
 
-// =======================================================
-// == LÓGICA DE PESQUISA RÁPIDA NO CAMPO DE BARCODE ==
-// =======================================================
-var barcodeInputEl = document.getElementById('barcode-input');
-var barcodeIconEl = document.getElementById('barcode-icon');
-var barcodeResultsEl = document.getElementById('barcode-search-results');
+        barcodeInputEl.addEventListener('input', (e) => {
+            const val = e.target.value;
+            const hasLetters = /[a-zA-Z]/.test(val);
 
-if (barcodeInputEl && barcodeIconEl && barcodeResultsEl) {
-
-    // Função para adicionar direto da pesquisa
-    // Nota: 'cart' e 'localProductCache' são globais agora.
-    window.quickAddFromSearch = (id) => {
-        const prod = localProductCache.find(p => String(p.id) === String(id));
-        if (prod) {
-            // Lógica de Adicionar ao Carrinho 
-            const existingItemIndex = cart.findIndex(item => String(item.id) === String(prod.id));
-
-            if (existingItemIndex !== -1) {
-                cart[existingItemIndex].quantity += 1;
-            } else {
-                cart.push({
-                    ...prod,
-                    quantity: 1,
-                    discountPercent: 0,
-                    originalPrice: parseFloat(prod.price),
-                    isNew: true // Flag para animação
+            if (val.length > 2 && hasLetters) {
+                barcodeIconEl.className = 'bx bx-search';
+                const terms = val.toLowerCase().split(' ').filter(t => t);
+                const results = localProductCache.filter(p => {
+                    const name = (p.name || '').toLowerCase();
+                    return terms.every(term => name.includes(term));
                 });
-            }
 
-            // Atualiza UI
-            renderCart();
-            updateSummary();
+                if (results.length > 0) {
+                    barcodeResultsEl.innerHTML = results.map(p => {
+                        const imgHtml = p.imgUrl && p.imgUrl.length > 10
+                            ? `<img src="${p.imgUrl}" class="result-thumb">`
+                            : `<div class="result-thumb"><i class='bx bx-package'></i></div>`;
 
-            // Força a exibição da tabela caso o renderCart falhe em algo específico
-            const itemListTable = document.getElementById('item-list-table');
-            const emptyState = document.getElementById('empty-state');
-            const cartItemsBody = document.getElementById('cart-items-body'); // Para scroll
-
-            if (itemListTable && emptyState) {
-                itemListTable.style.display = 'table';
-                emptyState.style.display = 'none';
-            }
-
-            // Scroll para o último item adicionado
-            if (cartItemsBody) {
-                // Pequeno delay para garantir renderização
-                setTimeout(() => {
-                    cartItemsBody.firstElementChild?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 50);
-            }
-
-            // Limpa pesquisa
-            barcodeInputEl.value = '';
-            barcodeResultsEl.innerHTML = '';
-            barcodeResultsEl.classList.remove('expanded');
-            barcodeIconEl.className = 'bx bx-barcode-reader';
-            barcodeInputEl.focus();
-        }
-    };
-
-    barcodeInputEl.addEventListener('input', (e) => {
-        const val = e.target.value;
-        const hasLetters = /[a-zA-Z]/.test(val);
-
-        if (val.length > 2 && hasLetters) {
-            barcodeIconEl.className = 'bx bx-search';
-            const terms = val.toLowerCase().split(' ').filter(t => t);
-            const results = localProductCache.filter(p => {
-                const name = (p.name || '').toLowerCase();
-                return terms.every(term => name.includes(term));
-            });
-
-            if (results.length > 0) {
-                barcodeResultsEl.innerHTML = results.map(p => {
-                    const imgHtml = p.imgUrl && p.imgUrl.length > 10
-                        ? `<img src="${p.imgUrl}" class="result-thumb">`
-                        : `<div class="result-thumb"><i class='bx bx-package'></i></div>`;
-
-                    return `
+                        return `
                         <div class="search-result-item" onclick="quickAddFromSearch('${p.id}')">
                             ${imgHtml}
                             <div class="result-info">
@@ -6236,212 +6544,211 @@ if (barcodeInputEl && barcodeIconEl && barcodeResultsEl) {
                             </div>
                         </div>
                     `}).join('');
-                barcodeResultsEl.classList.add('expanded');
+                    barcodeResultsEl.classList.add('expanded');
+                } else {
+                    barcodeResultsEl.innerHTML = `<div class="search-result-item" style="justify-content: center; color: #6b7280; font-size: 0.9rem;">Nenhum produto encontrado.</div>`;
+                    barcodeResultsEl.classList.add('expanded');
+                }
             } else {
-                barcodeResultsEl.innerHTML = `<div class="search-result-item" style="justify-content: center; color: #6b7280; font-size: 0.9rem;">Nenhum produto encontrado.</div>`;
-                barcodeResultsEl.classList.add('expanded');
+                barcodeIconEl.className = 'bx bx-barcode-reader';
+                barcodeResultsEl.classList.remove('expanded');
+                setTimeout(() => { if (!barcodeResultsEl.classList.contains('expanded')) barcodeResultsEl.innerHTML = ''; }, 300);
             }
-        } else {
-            barcodeIconEl.className = 'bx bx-barcode-reader';
-            barcodeResultsEl.classList.remove('expanded');
-            setTimeout(() => { if (!barcodeResultsEl.classList.contains('expanded')) barcodeResultsEl.innerHTML = ''; }, 300);
-        }
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!barcodeInputEl.contains(e.target) && !barcodeResultsEl.contains(e.target)) {
-            barcodeResultsEl.classList.remove('expanded');
-        }
-    });
-
-    barcodeInputEl.addEventListener('focus', () => {
-        const val = barcodeInputEl.value;
-        if (val.length > 2 && /[a-zA-Z]/.test(val)) barcodeInputEl.dispatchEvent(new Event('input'));
-    });
-}
-
-
-
-// Listener de Tecla Enter no Input de Senha
-var inputAuth = document.getElementById('admin-password-input');
-if (inputAuth) {
-    inputAuth.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') verificarSenhaAdm();
-    });
-}
-
-// --- 3. CONFIRMAR RENEGOCIAÇÃO (ENVIO API) ---
-
-
-// FUNÇÃO DE DIAGNÓSTICO (PLANO B)
-window.testefiscal = async () => {
-    console.log("🚀 Iniciando Teste Fiscal Isolado...");
-
-    const itemTeste = [{
-        id: "7897252260367",
-        name: "PRODUTO TESTE FISCAL",
-        price: 10.00,
-        quantity: 1,
-        ncm: "95030099", // NCM Genérico de brinquedo (o mesmo do seu erro)
-        cfop: "5102",
-        unit: "UN",
-        csosn: "102",
-        origem: "0"
-    }];
-
-    try {
-        const response = await fetch(`${FISCAL_API_URL}/emitirNfce`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                items: itemTeste,
-                totalPagamento: 10.00,
-                saleId: "TESTE-" + Date.now()
-            })
         });
 
-        const data = await response.json();
-        if (response.ok) {
-            console.log("✅ TESTE BEM SUCEDIDO:", data);
-            alert("Conexão Fiscal OK! Chave: " + data.chave);
-        } else {
-            console.error("❌ ERRO NO TESTE:", data);
-            alert("Erro no Servidor: " + data.message);
-        }
-    } catch (err) {
-        console.error("❌ FALHA NA REQUISIÇÃO:", err);
-        alert("Falha de rede/DNS. Verifique a URL do Cloud Run.");
+        document.addEventListener('click', (e) => {
+            if (!barcodeInputEl.contains(e.target) && !barcodeResultsEl.contains(e.target)) {
+                barcodeResultsEl.classList.remove('expanded');
+            }
+        });
+
+        barcodeInputEl.addEventListener('focus', () => {
+            const val = barcodeInputEl.value;
+            if (val.length > 2 && /[a-zA-Z]/.test(val)) barcodeInputEl.dispatchEvent(new Event('input'));
+        });
     }
-};
 
-// Função para fechar o aviso localmente
-function closeAnnouncement() {
-    document.getElementById('announcement-modal').classList.remove('active');
-}
 
-// Ouvinte em tempo real para avisos do sistema
-// Ouvinte em tempo real para avisos do sistema - REMOVIDO
-function listenForSystemAnnouncements() {
-    console.log("Sistema: Monitoramento de avisos desativado.");
-}
 
-// Inicie a escuta junto com as outras inicializações do DOM
-document.addEventListener('DOMContentLoaded', () => {
-    // ... suas inicializações existentes ...
+    // Listener de Tecla Enter no Input de Senha
+    var inputAuth = document.getElementById('admin-password-input');
+    if (inputAuth) {
+        inputAuth.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') verificarSenhaAdm();
+        });
+    }
+
+    // --- 3. CONFIRMAR RENEGOCIAÇÃO (ENVIO API) ---
+
+
+    // FUNÇÃO DE DIAGNÓSTICO (PLANO B)
+    window.testefiscal = async () => {
+        console.log("🚀 Iniciando Teste Fiscal Isolado...");
+
+        const itemTeste = [{
+            id: "7897252260367",
+            name: "PRODUTO TESTE FISCAL",
+            price: 10.00,
+            quantity: 1,
+            ncm: "95030099", // NCM Genérico de brinquedo (o mesmo do seu erro)
+            cfop: "5102",
+            unit: "UN",
+            csosn: "102",
+            origem: "0"
+        }];
+
+        try {
+            const response = await fetch(`${FISCAL_API_URL}/emitirNfce`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    items: itemTeste,
+                    totalPagamento: 10.00,
+                    saleId: "TESTE-" + Date.now()
+                })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                console.log("✅ TESTE BEM SUCEDIDO:", data);
+                alert("Conexão Fiscal OK! Chave: " + data.chave);
+            } else {
+                console.error("❌ ERRO NO TESTE:", data);
+                alert("Erro no Servidor: " + data.message);
+            }
+        } catch (err) {
+            console.error("❌ FALHA NA REQUISIÇÃO:", err);
+            alert("Falha de rede/DNS. Verifique a URL do Cloud Run.");
+        }
+    };
+
+    // Função para fechar o aviso localmente
+    function closeAnnouncement() {
+        document.getElementById('announcement-modal').classList.remove('active');
+    }
+
+    // Ouvinte em tempo real para avisos do sistema
+    // Ouvinte em tempo real para avisos do sistema - REMOVIDO
+    function listenForSystemAnnouncements() {
+        console.log("Sistema: Monitoramento de avisos desativado.");
+    }
+
+    // Inicie a escuta junto com as outras inicializações do DOM
     listenForSystemAnnouncements();
-});
 
-// --- SISTEMA DE STATUS DE CONEXÃO E RELÓGIO ---
 
-function initSystemFooter() {
-    const footer = document.querySelector('.pn');
-    const statusText = document.getElementById('network-status-text');
-    const timeDisplay = document.getElementById('horario');
+    // --- SISTEMA DE STATUS DE CONEXÃO E RELÓGIO ---
 
-    // 1. Lógica de Rede
-    function updateNetworkStatus() {
-        if (navigator.onLine) {
-            statusText.textContent = "ONLINE";
-            footer.classList.remove('offline');
-        } else {
-            statusText.textContent = "OFFLINE";
-            footer.classList.add('offline');
+    function initSystemFooter() {
+        const footer = document.querySelector('.pn');
+        const statusText = document.getElementById('network-status-text');
+        const timeDisplay = document.getElementById('horario');
+
+        // 1. Lógica de Rede
+        function updateNetworkStatus() {
+            if (navigator.onLine) {
+                statusText.textContent = "ONLINE";
+                footer.classList.remove('offline');
+            } else {
+                statusText.textContent = "OFFLINE";
+                footer.classList.add('offline');
+            }
         }
+
+        // Ouvintes de evento (dispara quando cai ou volta a net)
+        window.addEventListener('online', updateNetworkStatus);
+        window.addEventListener('offline', updateNetworkStatus);
+
+        // Verificação inicial
+        updateNetworkStatus();
     }
 
-    // Ouvintes de evento (dispara quando cai ou volta a net)
-    window.addEventListener('online', updateNetworkStatus);
-    window.addEventListener('offline', updateNetworkStatus);
+    // Inicia ao carregar a página
+    document.addEventListener("DOMContentLoaded", initSystemFooter);
 
-    // Verificação inicial
-    updateNetworkStatus();
-}
+    function verificarEspaçoLocalStorage() {
+        let totalCotas = 5120; // Limite padrão de ~5MB em KB
+        let totalUsado = 0;
 
-// Inicia ao carregar a página
-document.addEventListener("DOMContentLoaded", initSystemFooter);
+        for (let i = 0; i < localStorage.length; i++) {
+            let chave = localStorage.key(i);
+            let valor = localStorage.getItem(chave);
+            // Cada caractere em JS ocupa 2 bytes (UTF-16)
+            totalUsado += ((chave.length + valor.length) * 2) / 1024; // Convertendo para KB
+        }
 
-function verificarEspaçoLocalStorage() {
-    let totalCotas = 5120; // Limite padrão de ~5MB em KB
-    let totalUsado = 0;
+        let percentual = ((totalUsado / totalCotas) * 100).toFixed(2);
+        let livre = (totalCotas - totalUsado).toFixed(2);
 
-    for (let i = 0; i < localStorage.length; i++) {
-        let chave = localStorage.key(i);
-        let valor = localStorage.getItem(chave);
-        // Cada caractere em JS ocupa 2 bytes (UTF-16)
-        totalUsado += ((chave.length + valor.length) * 2) / 1024; // Convertendo para KB
+        // Log detalhado no console
+        console.log(`--- MONITOR DE ARMAZENAMENTO ---`);
+        console.log(`Usado: ${totalUsado.toFixed(2)} KB`);
+        console.log(`Livre: ${livre} KB`);
+        console.log(`Percentual: ${percentual}%`);
+
+        // Retorna os dados para uso visual se necessário
+        return { usado: totalUsado, percentual: percentual, livre: livre };
     }
 
-    let percentual = ((totalUsado / totalCotas) * 100).toFixed(2);
-    let livre = (totalCotas - totalUsado).toFixed(2);
+    // Função para renderizar uma barrinha no rodapé (PN)
+    function renderizarBarraArmazenamento() {
+        const info = verificarEspaçoLocalStorage();
+        const footer = document.querySelector('.pn');
 
-    // Log detalhado no console
-    console.log(`--- MONITOR DE ARMAZENAMENTO ---`);
-    console.log(`Usado: ${totalUsado.toFixed(2)} KB`);
-    console.log(`Livre: ${livre} KB`);
-    console.log(`Percentual: ${percentual}%`);
+        if (!footer) return;
 
-    // Retorna os dados para uso visual se necessário
-    return { usado: totalUsado, percentual: percentual, livre: livre };
-}
+        // Remove barra antiga se existir
+        const antiga = document.getElementById('storage-monitor');
+        if (antiga) antiga.remove();
 
-// Função para renderizar uma barrinha no rodapé (PN)
-function renderizarBarraArmazenamento() {
-    const info = verificarEspaçoLocalStorage();
-    const footer = document.querySelector('.pn');
+        const div = document.createElement('div');
+        div.id = 'storage-monitor';
+        div.style = "font-size: 10px; color: #fff; margin-left: 15px; display: flex; align-items: center; gap: 8px;";
 
-    if (!footer) return;
-
-    // Remove barra antiga se existir
-    const antiga = document.getElementById('storage-monitor');
-    if (antiga) antiga.remove();
-
-    const div = document.createElement('div');
-    div.id = 'storage-monitor';
-    div.style = "font-size: 10px; color: #fff; margin-left: 15px; display: flex; align-items: center; gap: 8px;";
-
-    div.innerHTML = `
+        div.innerHTML = `
         <span>DB: ${info.percentual}%</span>
         <div style="width: 50px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden;">
             <div style="width: ${info.percentual}%; height: 100%; background: ${info.percentual > 80 ? '#ef4444' : '#10b981'}; transition: 0.3s;"></div>
         </div>
     `;
 
-    footer.appendChild(div);
-}
+        footer.appendChild(div);
+    }
 
-// Chame ao carregar a página
-document.addEventListener('DOMContentLoaded', renderizarBarraArmazenamento);
-
-
+    // Chame ao carregar a página
+    document.addEventListener('DOMContentLoaded', renderizarBarraArmazenamento);
 
 
-// --- Função Reutilizável de Maximização de Modais ---
-function setupMaximizeModal(btnId, modalSelector) {
-    const btn = document.getElementById(btnId);
-    const modal = document.querySelector(modalSelector);
-    if (!btn || !modal) return;
 
-    // Remove listeners antigos (clone hack)
-    const newBtn = btn.cloneNode(true);
-    btn.parentNode.replaceChild(newBtn, btn);
 
-    newBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        modal.classList.toggle('maximized');
-        const icon = newBtn.querySelector('i');
-        if (icon) {
-            if (modal.classList.contains('maximized')) {
-                icon.className = 'bx bx-exit-fullscreen';
-                newBtn.title = "Restaurar janela";
-            } else {
-                icon.className = 'bx bx-expand';
-                newBtn.title = "Expandir janela";
+    // --- Função Reutilizável de Maximização de Modais ---
+    function setupMaximizeModal(btnId, modalSelector) {
+        const btn = document.getElementById(btnId);
+        const modal = document.querySelector(modalSelector);
+        if (!btn || !modal) return;
+
+        // Remove listeners antigos (clone hack)
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+
+        newBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            modal.classList.toggle('maximized');
+            const icon = newBtn.querySelector('i');
+            if (icon) {
+                if (modal.classList.contains('maximized')) {
+                    icon.className = 'bx bx-exit-fullscreen';
+                    newBtn.title = "Restaurar janela";
+                } else {
+                    icon.className = 'bx bx-expand';
+                    newBtn.title = "Expandir janela";
+                }
             }
-        }
-    });
-}
+        });
+    }
 
-document.addEventListener('DOMContentLoaded', () => {
+
+
     // Aplica a lógica ao modal de Cliente
     setupMaximizeModal('btn-maximize-client-modal', '#cliente-details-modal .modal-content');
 
@@ -6632,11 +6939,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return parsed;
     }
 
-});
-/* ======================================== */
-/* == LÓGICA DE SAÍDA DE CAIXA (SANGRIA) == */
-/* ======================================== */
-document.addEventListener('DOMContentLoaded', () => {
+
+
+    /* ======================================== */
+    /* == LÓGICA DE SAÍDA DE CAIXA (SANGRIA) == */
+    /* ======================================== */
+
+
     const btnSangria = document.getElementById('btn-sangria');
     const modalSaidaCaixa = document.getElementById('modal-saida-caixa');
     const formSaidaCaixa = document.getElementById('form-saida-caixa');
@@ -6817,11 +7126,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-});
 
 
 
-document.addEventListener('DOMContentLoaded', () => {
+
+
+
+
     // --- Lógica Modal Atualizar Produto ---
     const btnUpdateProduct = document.getElementById('btn-update-product');
     const updateProductModal = document.getElementById('update-product-modal');
@@ -7156,281 +7467,333 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+
+
+
+
+
+
     // =======================================================
-    // == LÓGICA DO BOTÃO DE EXPANSÃO DO CLIENTE ==
+    // == LÓGICA DE INTERATIVIDADE DO PDV (AÇÕES DA VENDA) ==
     // =======================================================
-    const btnExpandClient = document.getElementById('btn-expand-client-register');
-    const quickClientArea = document.getElementById('quick-client-register-area');
-    const iconExpandClient = document.getElementById('icon-expand-client');
+    var pdvDiscountRow = document.getElementById('discount-toggle-row');
+    var pdvSellerRow = document.getElementById('seller-toggle-row');
+    var pdvDiscountPopover = document.getElementById('discount-popover');
+    var pdvSellerPopover = document.getElementById('seller-popover');
+    var pdvBtnExpandClient = document.getElementById('btn-expand-client-register');
+    var pdvQuickClientArea = document.getElementById('quick-client-register-area');
+    var pdvIconExpandClient = document.getElementById('icon-expand-client');
 
-    if (btnExpandClient && quickClientArea) {
-        console.log("Botão de expansão de cliente encontrado e listener ativado.");
-
-        // Remove style display inline inicial se houver, para deixar o CSS controlar
-        quickClientArea.style.display = '';
-
-        btnExpandClient.addEventListener('click', (e) => {
+    // Toggle Desconto
+    if (pdvDiscountRow && pdvDiscountPopover) {
+        pdvDiscountRow.addEventListener('click', (e) => {
             e.stopPropagation();
-            e.preventDefault();
+            if (pdvSellerPopover) pdvSellerPopover.classList.remove('active');
+            pdvDiscountPopover.classList.toggle('active');
+            console.log("Discount toggle clicked. Active:", pdvDiscountPopover.classList.contains('active'));
+        });
+    }
 
-            // Toggle via classe para animação CSS
-            const isExpanded = quickClientArea.classList.contains('expanded');
+    // Toggle Vendedor
+    if (pdvSellerRow && pdvSellerPopover) {
+        pdvSellerRow.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (pdvDiscountPopover) pdvDiscountPopover.classList.remove('active');
+            pdvSellerPopover.classList.toggle('active');
+            console.log("Seller toggle clicked. Active:", pdvSellerPopover.classList.contains('active'));
+        });
+    }
 
-            if (isExpanded) {
-                quickClientArea.classList.remove('expanded');
-                iconExpandClient.className = 'bx bx-chevron-down';
+    // Toggle Pagamento (Restaurado)
+    var pdvPaymentRow = document.getElementById('payment-toggle-row');
+    if (pdvPaymentRow) {
+        pdvPaymentRow.addEventListener('click', () => {
+            if (cart.length > 0) {
+                // Seletores locais para garantir acesso
+                var splitPaymentArea = document.getElementById('split-payment-area');
+                var singlePaymentOptions = document.getElementById('single-payment-options');
+                var splitPaymentToggleBtn = document.getElementById('toggle-split-payment-btn');
+                var splitValue1 = document.getElementById('split-value-1');
+                var splitValue2 = document.getElementById('split-value-2');
+                var splitMethod1 = document.getElementById('split-method-1');
+                var splitMethod2 = document.getElementById('split-method-2');
+                var confirmSplitPaymentBtn = document.getElementById('confirm-split-payment-btn');
+                var paymentModal = document.getElementById('payment-modal');
+
+                if (splitPaymentArea) splitPaymentArea.style.display = 'none';
+                if (singlePaymentOptions) singlePaymentOptions.style.display = 'grid';
+                if (splitPaymentToggleBtn) {
+                    splitPaymentToggleBtn.innerHTML = "<i class='bx bx-columns'></i> Dividir Pagamento";
+                    splitPaymentToggleBtn.classList.remove('active');
+                }
+                if (splitValue1) splitValue1.value = '';
+                if (splitValue2) splitValue2.value = '';
+                if (splitMethod1) splitMethod1.value = '';
+                if (splitMethod2) splitMethod2.value = '';
+                if (confirmSplitPaymentBtn) confirmSplitPaymentBtn.disabled = true;
+
+                if (typeof updateSplitRemaining === 'function') updateSplitRemaining();
+                if (typeof openModal === 'function' && paymentModal) openModal(paymentModal);
             } else {
-                quickClientArea.classList.add('expanded');
-                iconExpandClient.className = 'bx bx-chevron-up';
+                if (typeof showCustomAlert === 'function') showCustomAlert("Vazio", "Adicione itens.");
+                else alert("Adicione itens ao carrinho.");
             }
         });
+    }
 
-        // Impede que clicar nos inputs feche ou propague algo indesejado
-        quickClientArea.addEventListener('click', (e) => {
-            e.stopPropagation();
+    // Fechar popovers ao clicar fora
+    document.addEventListener('click', () => {
+        if (pdvDiscountPopover) pdvDiscountPopover.classList.remove('active');
+        if (pdvSellerPopover) pdvSellerPopover.classList.remove('active');
+    });
+
+    // Impedir fechamento ao clicar dentro do popover
+    if (pdvDiscountPopover) pdvDiscountPopover.addEventListener('click', (e) => e.stopPropagation());
+    if (pdvSellerPopover) pdvSellerPopover.addEventListener('click', (e) => e.stopPropagation());
+
+    // Seleção de Vendedor
+    var pdvSellerBtns = document.querySelectorAll('.seller-btn');
+    var pdvSummarySellerName = document.getElementById('summary-seller-name');
+    pdvSellerBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            var name = btn.getAttribute('data-name');
+            if (pdvSummarySellerName) {
+                pdvSummarySellerName.textContent = name;
+                pdvSummarySellerName.style.color = "var(--text-dark)";
+            }
+            if (pdvSellerPopover) pdvSellerPopover.classList.remove('active');
+            if (typeof showCustomToast === 'function') showCustomToast(`Vendedor: ${name}`);
         });
+    });
 
-        // =======================================================
-        // == LÓGICA DE ATUALIZAÇÃO EM TEMPO REAL DO NOME DO CLIENTE ==
-        // =======================================================
-        const quickNameInput = document.getElementById('quick-client-name'); // Input do cadastro rápido
-        const summaryNameText = document.getElementById('summary-client-name-text'); // H3 do nome
+    // Botões de Desconto em Porcentagem (1%, 3%, 5%, 7%)
+    var pdvPercBtns = document.querySelectorAll('.perc-btn[data-perc]');
+    pdvPercBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            var p = parseFloat(btn.getAttribute('data-perc'));
+            if (typeof applyDiscount === 'function') {
+                applyDiscount(p, true);
+                // if (pdvDiscountPopover) pdvDiscountPopover.classList.remove('active'); // O usuário pediu para manter aberto
+            }
+        });
+    });
 
-        if (quickNameInput && summaryNameText) {
-            quickNameInput.addEventListener('input', (e) => {
-                const val = e.target.value.trim(); // Texto digitado
+    // Botão Editar Manual de Desconto
+    var pdvBtnEditDisc = document.getElementById('btn-edit-discount');
+    var pdvDiscInputR = document.getElementById('discount-input-r');
+    if (pdvBtnEditDisc && pdvDiscInputR) {
+        pdvBtnEditDisc.addEventListener('click', () => {
+            pdvDiscInputR.disabled = false;
+            pdvDiscInputR.focus();
+            pdvDiscInputR.select();
+        });
+    }
 
-                if (val.length > 0) {
-                    // Atualiza o texto do h3 com o que foi digitado
-                    // Lógica de Truncamento: Se passar de 30 chars, corta e adiciona ...
-                    if (val.length > 30) {
-                        summaryNameText.textContent = val.substring(0, 30) + '...';
-                    } else {
-                        summaryNameText.textContent = val;
-                    }
+    // Remover Desconto
+    var pdvBtnRemoveDisc = document.getElementById('remove-discount-btn');
+    if (pdvBtnRemoveDisc) {
+        pdvBtnRemoveDisc.addEventListener('click', () => {
+            if (typeof removeDiscount === 'function') {
+                removeDiscount();
+                if (pdvDiscountPopover) pdvDiscountPopover.classList.remove('active');
+            }
+        });
+    }
 
-                    // Altera a cor para escuro (ativo)
-                    summaryNameText.style.color = "var(--text-dark)";
+    // Lógica do Botão de Expansão do Cliente (Consumidor Final)
+    if (pdvBtnExpandClient && pdvQuickClientArea) {
+        // Remove style display inline inicial para deixar o CSS controlar
+        pdvQuickClientArea.style.display = '';
 
-                    // Adiciona uma classe animada se desejar (opcional)
-                    summaryNameText.classList.add('typing-active');
+        pdvBtnExpandClient.addEventListener('click', (e) => {
+            e.stopPropagation();
+            var isExpanded = pdvQuickClientArea.classList.contains('expanded');
+            if (isExpanded) {
+                pdvQuickClientArea.classList.remove('expanded');
+                if (pdvIconExpandClient) pdvIconExpandClient.className = 'bx bx-chevron-down';
+            } else {
+                pdvQuickClientArea.classList.add('expanded');
+                if (pdvIconExpandClient) pdvIconExpandClient.className = 'bx bx-chevron-up';
+            }
+            console.log("Client expansion clicked. Expanded:", pdvQuickClientArea.classList.contains('expanded'));
+        });
+    }
+
+
+
+
+
+    // ============================================================
+    // LÓGICA DE VENDAS ESTACIONADAS (SALES LIST)
+    // ============================================================
+
+
+    // Helpers para Modais Customizados (Renomeados para evitar conflitos)
+    function openAlertModal(message, title = "Atenção") {
+        const modal = document.getElementById('alert-modal');
+        const msgEl = document.getElementById('alert-modal-message');
+        const titleEl = document.getElementById('alert-modal-title');
+
+        if (modal && msgEl) {
+            msgEl.textContent = message;
+            if (titleEl) titleEl.textContent = title;
+            openModal(modal);
+        } else {
+            alert(message);
+        }
+    }
+
+    function openConfirmModal(message, onConfirm, onCancel, title = "Confirmação") {
+        const modal = document.getElementById('confirm-modal');
+        const msgEl = document.getElementById('confirm-modal-message');
+        const titleEl = document.getElementById('confirm-modal-title');
+        const confirmBtn = document.getElementById('confirm-modal-btn');
+        const cancelBtn = modal.querySelector('.btn-secondary');
+
+        if (modal && msgEl && confirmBtn) {
+            msgEl.textContent = message;
+            if (titleEl) titleEl.textContent = title;
+
+            // Limpa ouvintes
+            const newConfirmBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+            const newCancelBtn = cancelBtn.cloneNode(true);
+            cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
+            newConfirmBtn.addEventListener('click', () => {
+                closeModal(modal);
+                if (onConfirm) onConfirm();
+            });
+
+            newCancelBtn.addEventListener('click', () => {
+                closeModal(modal);
+                if (onCancel) onCancel();
+            });
+
+            openModal(modal);
+        } else {
+            if (confirm(message)) {
+                if (onConfirm) onConfirm();
+            } else {
+                if (onCancel) onCancel();
+            }
+        }
+    }
+
+    // Carrega vendas salvas ao iniciar
+    // Função de inicialização do Menu de Vendas
+    function initSalesMenu() {
+        console.log("Inicializando Menu de Vendas...");
+
+        // Carrega dados iniciais
+        const storedSales = localStorage.getItem('parkedSales');
+        if (storedSales) {
+            try {
+                parkedSales = JSON.parse(storedSales);
+                updateParkedSalesUI();
+            } catch (e) {
+                console.error("Erro ao carregar vendas estacionadas", e);
+                parkedSales = [];
+            }
+        }
+
+        // Elementos
+        const btnQuickNewSale = document.getElementById('btn-quick-new-sale');
+        const salesMenuBtn = document.getElementById('sales-menu-btn');
+        const salesMenuModal = document.getElementById('sales-menu-modal');
+
+        // Listener Botão "+"
+        if (btnQuickNewSale) {
+            // Remove ouvintes anteriores para evitar duplicação (clone)
+            const newBtn = btnQuickNewSale.cloneNode(true);
+            btnQuickNewSale.parentNode.replaceChild(newBtn, btnQuickNewSale);
+
+            newBtn.addEventListener('click', () => {
+                if (cart.length > 0) {
+                    parkCurrentSale(true);
                 } else {
-                    // Se limpar o campo:
-                    // Verifica se tem um cliente do CREDIÁRIO selecionado
-                    if (typeof selectedCrediarioClient !== 'undefined' && selectedCrediarioClient) {
-                        // Restaura o nome do crediário
-                        summaryNameText.textContent = selectedCrediarioClient.nomeExibicao || selectedCrediarioClient.nomeCompleto;
-                        summaryNameText.style.color = "var(--text-dark)";
-                    } else {
-                        // Se não tem crediário, volta para Consumidor Final
-                        summaryNameText.textContent = "Consumidor Final";
-                        summaryNameText.style.color = "#94a3b8"; // Cor cinza inativo
-                        summaryNameText.classList.remove('typing-active');
-                    }
+                    if (typeof showCustomToast === 'function') showCustomToast("O caixa já está livre.");
+                    document.getElementById('barcode-input')?.focus();
                 }
             });
-        }
-    }
-
-    // =======================================================
-    // == LÓGICA DE PESQUISA RÁPIDA NO CAMPO DE BARCODE ==
-    // =======================================================
-    const barcodeInputEl = document.getElementById('barcode-input');
-    const barcodeIconEl = document.getElementById('barcode-icon');
-    const barcodeResultsEl = document.getElementById('barcode-search-results');
-
-    if (barcodeInputEl && barcodeIconEl && barcodeResultsEl) {
-
-        // Esconde resultados se clicar fora
-        document.addEventListener('click', (e) => {
-            if (!barcodeInputEl.contains(e.target) && !barcodeResultsEl.contains(e.target)) {
-                barcodeResultsEl.classList.remove('expanded');
-            }
-        });
-
-        // Se focar e tiver texto, abre de novo
-        barcodeInputEl.addEventListener('focus', () => {
-            const val = barcodeInputEl.value;
-            // Dispara evento input manualmente se tiver conteúdo relevante
-            if (val.length > 2 && /[a-zA-Z]/.test(val)) {
-                barcodeInputEl.dispatchEvent(new Event('input'));
-            }
-        });
-
-    }
-
-});
-
-// ============================================================
-// LÓGICA DE VENDAS ESTACIONADAS (SALES LIST)
-// ============================================================
-
-
-// Helpers para Modais Customizados (Renomeados para evitar conflitos)
-function openAlertModal(message, title = "Atenção") {
-    const modal = document.getElementById('alert-modal');
-    const msgEl = document.getElementById('alert-modal-message');
-    const titleEl = document.getElementById('alert-modal-title');
-
-    if (modal && msgEl) {
-        msgEl.textContent = message;
-        if (titleEl) titleEl.textContent = title;
-        openModal(modal);
-    } else {
-        alert(message);
-    }
-}
-
-function openConfirmModal(message, onConfirm, onCancel, title = "Confirmação") {
-    const modal = document.getElementById('confirm-modal');
-    const msgEl = document.getElementById('confirm-modal-message');
-    const titleEl = document.getElementById('confirm-modal-title');
-    const confirmBtn = document.getElementById('confirm-modal-btn');
-    const cancelBtn = modal.querySelector('.btn-secondary');
-
-    if (modal && msgEl && confirmBtn) {
-        msgEl.textContent = message;
-        if (titleEl) titleEl.textContent = title;
-
-        // Limpa ouvintes
-        const newConfirmBtn = confirmBtn.cloneNode(true);
-        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-
-        const newCancelBtn = cancelBtn.cloneNode(true);
-        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-
-        newConfirmBtn.addEventListener('click', () => {
-            closeModal(modal);
-            if (onConfirm) onConfirm();
-        });
-
-        newCancelBtn.addEventListener('click', () => {
-            closeModal(modal);
-            if (onCancel) onCancel();
-        });
-
-        openModal(modal);
-    } else {
-        if (confirm(message)) {
-            if (onConfirm) onConfirm();
         } else {
-            if (onCancel) onCancel();
+            console.warn("Botão Quick Sale não encontrado.");
+        }
+
+        // Listener Menu Vendas
+        if (salesMenuBtn && salesMenuModal) {
+            // Remove ouvintes anteriores
+            const newMenuBtn = salesMenuBtn.cloneNode(true);
+            salesMenuBtn.parentNode.replaceChild(newMenuBtn, salesMenuBtn);
+
+            newMenuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                console.log("Clique no Menu Vendas");
+                salesMenuModal.classList.toggle('show');
+            });
+
+            // Fechar ao clicar fora
+            document.addEventListener('click', (e) => {
+                if (!newMenuBtn.contains(e.target) && !salesMenuModal.contains(e.target)) {
+                    salesMenuModal.classList.remove('show');
+                }
+            });
+        } else {
+            console.warn("Menu Vendas ou Modal não encontrado.");
         }
     }
-}
 
-// Carrega vendas salvas ao iniciar
-// Função de inicialização do Menu de Vendas
-function initSalesMenu() {
-    console.log("Inicializando Menu de Vendas...");
+    // Inicializa quando o DOM estiver pronto
+    document.addEventListener('DOMContentLoaded', initSalesMenu);
+    // Fallback para caso o script rode depois do DOM
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        setTimeout(initSalesMenu, 100);
+    }
 
-    // Carrega dados iniciais
-    const storedSales = localStorage.getItem('parkedSales');
-    if (storedSales) {
-        try {
-            parkedSales = JSON.parse(storedSales);
-            updateParkedSalesUI();
-        } catch (e) {
-            console.error("Erro ao carregar vendas estacionadas", e);
-            parkedSales = [];
+    function updateParkedSalesUI() {
+        const listContainer = document.getElementById('parked-sales-list');
+        const badge = document.getElementById('sales-count-badge');
+
+        if (!listContainer) return;
+
+        // Atualiza Badge
+        if (badge) {
+            badge.innerText = parkedSales.length;
+            badge.style.display = parkedSales.length > 0 ? 'block' : 'none';
+
+            // Animação do badge
+            badge.classList.remove('pop-animation');
+            void badge.offsetWidth; // trigger reflow
+            badge.classList.add('pop-animation');
         }
-    }
 
-    // Elementos
-    const btnQuickNewSale = document.getElementById('btn-quick-new-sale');
-    const salesMenuBtn = document.getElementById('sales-menu-btn');
-    const salesMenuModal = document.getElementById('sales-menu-modal');
+        // Renderiza Lista
+        listContainer.innerHTML = '';
 
-    // Listener Botão "+"
-    if (btnQuickNewSale) {
-        // Remove ouvintes anteriores para evitar duplicação (clone)
-        const newBtn = btnQuickNewSale.cloneNode(true);
-        btnQuickNewSale.parentNode.replaceChild(newBtn, btnQuickNewSale);
-
-        newBtn.addEventListener('click', () => {
-            if (cart.length > 0) {
-                parkCurrentSale(true);
-            } else {
-                if (typeof showCustomToast === 'function') showCustomToast("O caixa já está livre.");
-                document.getElementById('barcode-input')?.focus();
-            }
-        });
-    } else {
-        console.warn("Botão Quick Sale não encontrado.");
-    }
-
-    // Listener Menu Vendas
-    if (salesMenuBtn && salesMenuModal) {
-        // Remove ouvintes anteriores
-        const newMenuBtn = salesMenuBtn.cloneNode(true);
-        salesMenuBtn.parentNode.replaceChild(newMenuBtn, salesMenuBtn);
-
-        newMenuBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            console.log("Clique no Menu Vendas");
-            salesMenuModal.classList.toggle('show');
-        });
-
-        // Fechar ao clicar fora
-        document.addEventListener('click', (e) => {
-            if (!newMenuBtn.contains(e.target) && !salesMenuModal.contains(e.target)) {
-                salesMenuModal.classList.remove('show');
-            }
-        });
-    } else {
-        console.warn("Menu Vendas ou Modal não encontrado.");
-    }
-}
-
-// Inicializa quando o DOM estiver pronto
-document.addEventListener('DOMContentLoaded', initSalesMenu);
-// Fallback para caso o script rode depois do DOM
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    setTimeout(initSalesMenu, 100);
-}
-
-function updateParkedSalesUI() {
-    const listContainer = document.getElementById('parked-sales-list');
-    const badge = document.getElementById('sales-count-badge');
-
-    if (!listContainer) return;
-
-    // Atualiza Badge
-    if (badge) {
-        badge.innerText = parkedSales.length;
-        badge.style.display = parkedSales.length > 0 ? 'block' : 'none';
-
-        // Animação do badge
-        badge.classList.remove('pop-animation');
-        void badge.offsetWidth; // trigger reflow
-        badge.classList.add('pop-animation');
-    }
-
-    // Renderiza Lista
-    listContainer.innerHTML = '';
-
-    if (parkedSales.length === 0) {
-        listContainer.innerHTML = `
+        if (parkedSales.length === 0) {
+            listContainer.innerHTML = `
             <div class="empty-sales-list" style="padding: 20px; text-align: center; color: #9ca3b8;">
                 <i class='bx bx-list-ul' style="font-size: 1.5rem;"></i>
                 <p style="font-size: 0.85rem; margin-top: 5px;">Nenhuma venda salva.</p>
             </div>`;
-        return;
-    }
+            return;
+        }
 
-    parkedSales.forEach((sale, index) => {
-        const div = document.createElement('div');
-        div.className = 'parked-sale-item';
+        parkedSales.forEach((sale, index) => {
+            const div = document.createElement('div');
+            div.className = 'parked-sale-item';
 
-        // Formata data
-        const date = new Date(sale.timestamp);
-        const timeStr = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+            // Formata data
+            const date = new Date(sale.timestamp);
+            const timeStr = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 
-        // Nome Clientes
-        const clientName = sale.clientName || 'Consumidor Final';
-        const itemCount = sale.cart ? sale.cart.reduce((acc, item) => acc + item.quantity, 0) : 0;
+            // Nome Clientes
+            const clientName = sale.clientName || 'Consumidor Final';
+            const itemCount = sale.cart ? sale.cart.reduce((acc, item) => acc + item.quantity, 0) : 0;
 
-        div.innerHTML = `
+            div.innerHTML = `
             <div class="parked-info" onclick="restoreSale(${index})">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <strong>Venda #${index + 1}</strong>
@@ -7443,173 +7806,179 @@ function updateParkedSalesUI() {
                 <i class='bx bx-trash'></i>
             </button>
         `;
-        listContainer.appendChild(div);
-    });
-}
-
-function parkCurrentSale(isQuickAdd = false) {
-    if (cart.length === 0) {
-        // Se chamado manualmente e vazio
-        if (!isQuickAdd && typeof showCustomToast === 'function') showCustomToast("Nada para salvar!");
-        return;
+            listContainer.appendChild(div);
+        });
     }
 
-    const currentTotal = document.getElementById('summary-total')?.innerText || 'R$ 0,00';
-    const clientName = document.getElementById('summary-client-name-text')?.innerText;
+    function parkCurrentSale(isQuickAdd = false) {
+        if (cart.length === 0) {
+            // Se chamado manualmente e vazio
+            if (!isQuickAdd && typeof showCustomToast === 'function') showCustomToast("Nada para salvar!");
+            return;
+        }
 
-    // Captura estado atual
-    const saleState = {
-        timestamp: Date.now(),
-        cart: JSON.parse(JSON.stringify(cart)), // Deep copy
-        discount: discount,
-        selectedCrediarioClient: selectedCrediarioClient ? JSON.parse(JSON.stringify(selectedCrediarioClient)) : null,
-        clientName: clientName,
-        totalDisplay: currentTotal,
-        selectedPaymentMethod: selectedPaymentMethod
-    };
+        const currentTotal = document.getElementById('summary-total')?.innerText || 'R$ 0,00';
+        const clientName = document.getElementById('summary-client-name-text')?.innerText;
 
-    parkedSales.push(saleState);
-    localStorage.setItem('parkedSales', JSON.stringify(parkedSales));
+        // Captura estado atual
+        const saleState = {
+            timestamp: Date.now(),
+            cart: JSON.parse(JSON.stringify(cart)), // Deep copy
+            discount: discount,
+            selectedCrediarioClient: selectedCrediarioClient ? JSON.parse(JSON.stringify(selectedCrediarioClient)) : null,
+            clientName: clientName,
+            totalDisplay: currentTotal,
+            selectedPaymentMethod: selectedPaymentMethod
+        };
 
-    // Limpa tela
-    clearSaleUI();
+        parkedSales.push(saleState);
+        localStorage.setItem('parkedSales', JSON.stringify(parkedSales));
 
-    updateParkedSalesUI();
+        // Limpa tela
+        clearSaleUI();
 
-    if (typeof showCustomToast === 'function') {
-        showCustomToast("Venda salva em 'Vendas'!");
-    }
-}
+        updateParkedSalesUI();
 
-function restoreSale(index) {
-    // 1. Verifica se tem algo na tela atual para salvar (Swap)
-    if (cart.length > 0) {
-        openConfirmModal(
-            "Existe uma venda em andamento. Deseja salvá-la antes de abrir a outra?",
-            () => {
-                // Confirmou: Salva a atual e abre a outra
-                parkCurrentSale();
-                proceedRestoreSale(index);
-            },
-            () => {
-                // Cancelou (Não quer salvar): Apenas abre a outra (sobrescrevendo)
-                // Behavior original do 'confirm' negativo era prosseguir sem salvar? 
-                // Revisando código antigo: 'if (confirm) park() else {}' -> e depois executava restore.
-                // Então sim, se disser 'não vou salvar', ele continua e perde a venda atual. 
-                // Mas talvez o usuário queira CANCELAR a restauração. 
-                // O texto diz "Deseja salvá-la?". Se responder não, entende-se que não quer salvar, mas quer abrir a outra.
-                // Vou manter o comportamento de prosseguir.
-                proceedRestoreSale(index);
-            },
-            "Venda em Andamento"
-        );
-    } else {
-        proceedRestoreSale(index);
-    }
-}
-
-function proceedRestoreSale(index) {
-    // 2. Recupera a venda alvo
-    const saleToRestore = parkedSales[index];
-    if (!saleToRestore) return;
-
-    // 3. Remove a venda recuperada da lista (ela vai pra tela)
-    parkedSales.splice(index, 1);
-    localStorage.setItem('parkedSales', JSON.stringify(parkedSales));
-    updateParkedSalesUI();
-
-    // 4. Restaura Estado
-    cart = saleToRestore.cart || [];
-    discount = saleToRestore.discount || 0;
-    selectedCrediarioClient = saleToRestore.selectedCrediarioClient;
-    selectedPaymentMethod = saleToRestore.selectedPaymentMethod || null;
-
-    // 5. Atualiza UI
-    renderCart();
-
-    const discountInputR = document.getElementById('discount-input-r');
-    if (discountInputR) {
-        if (discount > 0) {
-            discountInputR.value = discount.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-            discountInputR.disabled = false;
-        } else {
-            discountInputR.value = '';
+        if (typeof showCustomToast === 'function') {
+            showCustomToast("Venda salva em 'Vendas'!");
         }
     }
 
-    // Payment Method UI
-    const paymentLabel = document.getElementById('summary-payment-method');
-    if (paymentLabel) {
-        if (selectedPaymentMethod) {
-            paymentLabel.innerText = selectedPaymentMethod;
-            paymentLabel.classList.add('selected');
+    function restoreSale(index) {
+        // 1. Verifica se tem algo na tela atual para salvar (Swap)
+        if (cart.length > 0) {
+            openConfirmModal(
+                "Existe uma venda em andamento. Deseja salvá-la antes de abrir a outra?",
+                () => {
+                    // Confirmou: Salva a atual e abre a outra
+                    parkCurrentSale();
+                    proceedRestoreSale(index);
+                },
+                () => {
+                    // Cancelou (Não quer salvar): Apenas abre a outra (sobrescrevendo)
+                    // Behavior original do 'confirm' negativo era prosseguir sem salvar? 
+                    // Revisando código antigo: 'if (confirm) park() else {}' -> e depois executava restore.
+                    // Então sim, se disser 'não vou salvar', ele continua e perde a venda atual. 
+                    // Mas talvez o usuário queira CANCELAR a restauração. 
+                    // O texto diz "Deseja salvá-la?". Se responder não, entende-se que não quer salvar, mas quer abrir a outra.
+                    // Vou manter o comportamento de prosseguir.
+                    proceedRestoreSale(index);
+                },
+                "Venda em Andamento"
+            );
         } else {
+            proceedRestoreSale(index);
+        }
+    }
+
+    function proceedRestoreSale(index) {
+        // 2. Recupera a venda alvo
+        const saleToRestore = parkedSales[index];
+        if (!saleToRestore) return;
+
+        // 3. Remove a venda recuperada da lista (ela vai pra tela)
+        parkedSales.splice(index, 1);
+        localStorage.setItem('parkedSales', JSON.stringify(parkedSales));
+        updateParkedSalesUI();
+
+        // 4. Restaura Estado
+        cart = saleToRestore.cart || [];
+        discount = saleToRestore.discount || 0;
+        selectedCrediarioClient = saleToRestore.selectedCrediarioClient;
+        selectedPaymentMethod = saleToRestore.selectedPaymentMethod || null;
+
+        // 5. Atualiza UI
+        renderCart();
+
+        const discountInputR = document.getElementById('discount-input-r');
+        if (discountInputR) {
+            if (discount > 0) {
+                discountInputR.value = discount.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                discountInputR.disabled = false;
+            } else {
+                discountInputR.value = '';
+            }
+        }
+
+        // Payment Method UI
+        const paymentLabel = document.getElementById('summary-payment-method');
+        if (paymentLabel) {
+            if (selectedPaymentMethod) {
+                paymentLabel.innerText = selectedPaymentMethod;
+                paymentLabel.classList.add('selected');
+            } else {
+                paymentLabel.innerText = 'Escolher';
+                paymentLabel.classList.remove('selected');
+            }
+        }
+
+        // Restaura Cliente na UI
+        if (selectedCrediarioClient) {
+            updateSummaryClientCard();
+        } else {
+            const clientNameEl = document.getElementById('summary-client-name-text');
+            if (clientNameEl) clientNameEl.innerText = saleToRestore.clientName || 'Consumidor Final';
+            const btnRemove = document.getElementById('btn-remove-client');
+            if (btnRemove) btnRemove.style.display = saleToRestore.clientName && saleToRestore.clientName !== 'Consumidor Final' ? 'flex' : 'none';
+        }
+
+        updateSummary();
+
+        if (typeof showCustomToast === 'function') showCustomToast("Venda restaurada!");
+    }
+
+    function deleteParkedSale(index) {
+        openConfirmModal(
+            "Tem certeza que deseja excluir esta venda salva?",
+            () => {
+                parkedSales.splice(index, 1);
+                localStorage.setItem('parkedSales', JSON.stringify(parkedSales));
+                updateParkedSalesUI();
+                if (typeof showCustomToast === 'function') showCustomToast("Venda removida!");
+            },
+            () => { },
+            "Excluir Venda"
+        );
+    }
+    // Expose functions to global scope
+    window.restoreSale = restoreSale;
+    window.deleteParkedSale = deleteParkedSale;
+
+
+    // Helper para limpar UI (Reusa lógica de cancelar venda ou cria nova)
+    function clearSaleUI() {
+        // Reseta variaveis
+        cart = [];
+        discount = 0;
+        selectedCrediarioClient = null;
+        selectedPaymentMethod = null;
+
+        // Reseta Inputs
+        const barcodeInput = document.getElementById('barcode-input');
+        if (barcodeInput) {
+            barcodeInput.value = '';
+            barcodeInput.focus();
+        }
+
+        const discountInputR = document.getElementById('discount-input-r');
+        if (discountInputR) {
+            discountInputR.value = '';
+            discountInputR.disabled = true;
+        }
+
+        const paymentLabel = document.getElementById('summary-payment-method');
+        if (paymentLabel) {
             paymentLabel.innerText = 'Escolher';
             paymentLabel.classList.remove('selected');
         }
-    }
 
-    // Restaura Cliente na UI
-    if (selectedCrediarioClient) {
-        updateSummaryClientCard();
-    } else {
+        // Reseta UI Cliente
         const clientNameEl = document.getElementById('summary-client-name-text');
-        if (clientNameEl) clientNameEl.innerText = saleToRestore.clientName || 'Consumidor Final';
+        if (clientNameEl) clientNameEl.innerText = 'Consumidor Final';
         const btnRemove = document.getElementById('btn-remove-client');
-        if (btnRemove) btnRemove.style.display = saleToRestore.clientName && saleToRestore.clientName !== 'Consumidor Final' ? 'flex' : 'none';
+        // UI Updates
+        renderCart();
+        updateSummary();
     }
 
-    updateSummary();
-
-    if (typeof showCustomToast === 'function') showCustomToast("Venda restaurada!");
-}
-
-function deleteParkedSale(index) {
-    openConfirmModal(
-        "Tem certeza que deseja excluir esta venda salva?",
-        () => {
-            parkedSales.splice(index, 1);
-            localStorage.setItem('parkedSales', JSON.stringify(parkedSales));
-            updateParkedSalesUI();
-            if (typeof showCustomToast === 'function') showCustomToast("Venda removida!");
-        },
-        null,
-        "Excluir Venda"
-    );
-}
-
-// Helper para limpar UI (Reusa lógica de cancelar venda ou cria nova)
-function clearSaleUI() {
-    // Reseta variaveis
-    cart = [];
-    discount = 0;
-    selectedCrediarioClient = null;
-    selectedPaymentMethod = null;
-
-    // Reseta Inputs
-    const barcodeInput = document.getElementById('barcode-input');
-    if (barcodeInput) {
-        barcodeInput.value = '';
-        barcodeInput.focus();
-    }
-
-    const discountInputR = document.getElementById('discount-input-r');
-    if (discountInputR) {
-        discountInputR.value = '';
-        discountInputR.disabled = true;
-    }
-
-    const paymentLabel = document.getElementById('summary-payment-method');
-    if (paymentLabel) {
-        paymentLabel.innerText = 'Escolher';
-        paymentLabel.classList.remove('selected');
-    }
-
-    // Reseta UI Cliente
-    const clientNameEl = document.getElementById('summary-client-name-text');
-    if (clientNameEl) clientNameEl.innerText = 'Consumidor Final';
-    const btnRemove = document.getElementById('btn-remove-client');
-    // UI Updates
-    renderCart();
-    updateSummary();
-}
+});

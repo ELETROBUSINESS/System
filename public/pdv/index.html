@@ -5,6 +5,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/assets/img/iconWeb.png">
+    <link rel="manifest" href="manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((registration) => {
+                        console.log('ServiceWorker registered with scope:', registration.scope);
+                    })
+                    .catch((err) => {
+                        console.log('ServiceWorker registration failed:', err);
+                    });
+            });
+        }
+    </script>
     <title>Ponto de Venda | ELETRO</title>
 
     <link rel="stylesheet" href="style.css?v=3">
@@ -36,6 +50,18 @@
 
 <body>
 
+
+    <!-- Offline Status Bar -->
+    <div id="offline-status-bar" class="offline-bar hidden">
+        <i class='bx bx-wifi-off'></i>
+        <span>VOCÊ ESTÁ OFFLINE. As vendas serão salvas localmente.</span>
+    </div>
+
+    <!-- Sync Badge -->
+    <div id="sync-status-badge" class="sync-badge hidden">
+        <i class='bx bx-loader-alt bx-spin'></i>
+        <span>Sincronizando...</span>
+    </div>
 
     <div class="modal-overlay" id="print-selection-modal">
         <div class="modal-content modal-md">
@@ -2157,6 +2183,39 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="custom-alert-modal">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3 id="custom-alert-title">Aviso</h3>
+                <button class="close-modal-btn" data-target="custom-alert-modal"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="modal-icon info" style="margin-bottom: 10px;"><i class='bx bx-info-circle'></i></div>
+                <p id="custom-alert-message" style="margin-bottom: 20px; color: var(--text-dark);"></p>
+                <button class="btn btn-secondary close-modal-btn" data-target="custom-alert-modal"
+                    style="width: 100%;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="custom-confirm-modal">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3 id="custom-confirm-title">Confirmação</h3>
+                <button class="close-modal-btn" data-target="custom-confirm-modal"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="modal-icon warning" style="margin-bottom: 10px;"><i class='bx bx-help-circle'></i></div>
+                <p id="custom-confirm-message" style="margin-bottom: 20px; color: var(--text-dark);"></p>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-secondary close-modal-btn" data-target="custom-confirm-modal"
+                        style="flex: 1;">Cancelar</button>
+                    <button class="btn btn-primary" id="custom-confirm-yes-btn" style="flex: 1;">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="order-details-modal">
         <div class="modal-content modal-lg">
             <div class="modal-header">
@@ -2576,7 +2635,7 @@
     </div>
 
     <!-- CORE SCRIPTS -->
-    <script src="script.js"></script>
+
 
     <!-- Modal Recuperação Fiscal (XML) -->
     <div class="modal-overlay" id="recovery-xml-modal">
@@ -3090,22 +3149,6 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="alert-modal" style="z-index: 10002;">
-        <div class="modal-content modal-sm">
-            <div class="modal-header">
-                <h3 id="alert-modal-title">Atenção</h3>
-                <button class="close-modal-btn" onclick="closeModal(document.getElementById('alert-modal'))"><i
-                        class='bx bx-x'></i></button>
-            </div>
-            <div class="modal-body">
-                <p id="alert-modal-message" style="font-size: 1rem; color: #333; margin-bottom: 20px;">Mensagem...</p>
-                <button class="btn btn-primary" style="width: 100%;"
-                    onclick="closeModal(document.getElementById('alert-modal'))">OK</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Confirmação Customizado -->
     <div class="modal-overlay" id="confirm-modal" style="z-index: 10002;">
         <div class="modal-content modal-sm">
             <div class="modal-header">
@@ -3125,6 +3168,7 @@
         </div>
     </div>
 
+    <script src="offline-db.js"></script>
     <script src="script.js"></script>
     <style>
         .loader {
