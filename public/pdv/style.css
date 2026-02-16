@@ -441,7 +441,7 @@ body {
     border-radius: 12px;
     box-shadow: var(--shadow-lg);
     padding: 8px;
-    z-index: 1000;
+    z-index: 2000;
 
     /* Substitua display: none por isso para permitir animaÃ§Ãµes */
     opacity: 0;
@@ -454,8 +454,7 @@ body {
 
 /* Classe de AtivaÃ§Ã£o (O que o JS vai alternar) */
 .more-menu-modal.show {
-    display: block;
-    /* Caso prefira manter o display, certifique-se que esta classe existe */
+    display: block !important;
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
@@ -577,7 +576,85 @@ body {
 }
 
 
-/* Container do Modal */
+/* --- Navbar Right Actions --- */
+.navbar-right-container {
+    height: 100%;
+}
+
+
+
+.menu-badge {
+    position: absolute;
+    top: -5px;
+    right: -10px;
+    background-color: var(--primary-red);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 99px;
+    box-shadow: 0 2px 4px rgba(219, 0, 56, 0.3);
+}
+
+/* --- Parked Sales List --- */
+.parked-sale-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    border-bottom: 1px solid var(--border-subtle);
+    transition: background-color 0.2s ease;
+}
+
+.parked-sale-item:last-child {
+    border-bottom: none;
+}
+
+.parked-sale-item:hover {
+    background-color: #f9fafb;
+}
+
+.parked-info {
+    flex-grow: 1;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+}
+
+.parked-info strong {
+    font-size: 0.9rem;
+    color: var(--text-dark);
+}
+
+.parked-info span {
+    font-size: 0.75rem;
+    color: var(--text-light);
+}
+
+.btn-delete-sale {
+    background: none;
+    border: none;
+    color: #ef4444;
+    /* Red for danger */
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-delete-sale:hover {
+    background-color: #fee2e2;
+}
+
+/* Ajuste no container do Menu Vendas para permitir scroll se houver muitas */
+#sales-menu-modal {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
 .sale-details-modern {
     border-radius: 16px !important;
     overflow: hidden;
@@ -7776,6 +7853,114 @@ input:checked+.slider:before {
 /* ======================================== */
 /* == NOVOS ESTILOS DE PDV (Cart Table) == */
 /* ======================================== */
+
+/* Resultados da Pesquisa Rápida (Barcode) */
+.barcode-scanner {
+    position: relative;
+    /* Container relativo para o absoluto */
+    z-index: 1000;
+}
+
+.barcode-search-results {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    position: absolute;
+    width: 100%;
+    z-index: 999;
+    top: 100%;
+    left: 0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.barcode-search-results.expanded {
+    max-height: 60vh;
+    /* Permite muitos itens com scroll */
+    opacity: 1;
+    overflow-y: auto;
+    border-top: 1px solid #e5e7eb;
+    margin-top: 4px;
+}
+
+.search-result-item {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background-color 0.2s;
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-item:hover {
+    background-color: #f3f4f6;
+    /* Hover cinza claro */
+}
+
+.result-thumb {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    object-fit: cover;
+    background-color: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    display: flex;
+    /* Para centralizar ícone */
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    font-size: 1.5rem;
+}
+
+.result-info {
+    flex-grow: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.result-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.result-meta {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.result-code {
+    font-family: monospace;
+    background: #e5e7eb;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+.result-price {
+    font-weight: 700;
+    color: var(--text-dark);
+    /* Antes era red */
+    font-size: 0.9rem;
+}
 
 /* Estilos Modernos para Célula de Produto */
 .product-cell-modern {

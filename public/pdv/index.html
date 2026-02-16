@@ -689,6 +689,38 @@
             </div>
 
             <div class="navbar-highlight" id="navbar-highlight"></div>
+
+            <!-- Right Side Container -->
+            <div class="navbar-right-container"
+                style="margin-left: auto; display: flex; gap: 10px; align-items: center; padding-right: 20px;">
+
+                <button class="btn-icon-small" id="btn-quick-new-sale" title="Nova Venda (Salvar Atual)">
+                    <i class='bx bx-plus'></i>
+                </button>
+
+                <div class="navbar-more-container">
+                    <div class="navbar-item" id="sales-menu-btn" style="padding-right: 0;">
+                        Vendas
+                        <span class="menu-badge" id="sales-count-badge" style="display: none;">0</span>
+                        <i class='bx bx-chevron-down' id="sales-menu-icon"></i>
+                    </div>
+
+                    <div class="more-menu-modal" id="sales-menu-modal" style="right: 0; left: auto; width: 320px;">
+                        <div class="menu-header-hint"
+                            style="padding: 8px 12px; font-size: 0.75rem; color: #9ca3af; border-bottom: 1px solid #f3f4f6;">
+                            Vendas em Aberto
+                        </div>
+                        <div id="parked-sales-list">
+                            <!-- Lista Vazia Inicialmente -->
+                            <div class="empty-sales-list" style="padding: 20px; text-align: center; color: #9ca3af;">
+                                <i class='bx bx-list-ul' style="font-size: 1.5rem;"></i>
+                                <p style="font-size: 0.85rem; margin-top: 5px;">Nenhuma venda salva.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </nav>
 
 
@@ -699,15 +731,14 @@
                     <div class="scan-search-container">
                         <div class="tooltip" style="flex-grow: 1;">
                             <div class="barcode-scanner">
-                                <i class='bx bx-barcode-reader'></i>
+                                <i class='bx bx-barcode-reader' id="barcode-icon"></i>
                                 <input type="text" id="barcode-input" placeholder="Carregando produtos..." disabled
                                     autocomplete="off">
                             </div>
+                            <!-- Resultados da Pesquisa Rápida (Barcode) -->
+                            <div id="barcode-search-results" class="barcode-search-results"></div>
                             <span class="tooltip-text">Digite o código</span>
                         </div>
-                        <button class="btn-search-pdv" id="btn-open-adv-search" title="Pesquisar Produto (F2)">
-                            <i class='bx bx-search'></i>
-                        </button>
                     </div>
                     <p class="shortcut-hint" id="barcode-hint">Carregando produtos...</p>
 

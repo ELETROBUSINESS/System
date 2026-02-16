@@ -1,11 +1,8 @@
-
-
-
 // ============================================================
 // 1. ESCOPO GLOBAL (VARIÁVEIS E BANCO DE DADOS)
 // ============================================================
 
-const infinitePayRates = {
+var infinitePayRates = {
     "pix": 0.00,
     "debit": 0.85,
     "credit_spot": 2.89,
@@ -22,22 +19,27 @@ const infinitePayRates = {
     "movecard": 8.00
 };
 
-let db; // Variável do Banco de Dados
-let realtimeOrdersUnsubscribe = null;
-let areValuesHidden = false;
+var db; // Variável do Banco de Dados
+var realtimeOrdersUnsubscribe = null;
+var areValuesHidden = false;
 
-let fiscalHistory = []; // Armazena { idVenda, data, status, xml, itensEmitidos, itensPendentes }
-const FISCAL_API_URL = "https://emitirnfce-xsy57wqb6q-rj.a.run.app";
+var fiscalHistory = []; // Armazena { idVenda, data, status, xml, itensEmitidos, itensPendentes }
+var FISCAL_API_URL = "https://emitirnfce-xsy57wqb6q-rj.a.run.app";
 
 // Variáveis de Pedidos Online (Globais para evitar o erro ReferenceError)
-let activeOrdersData = [];
+var activeOrdersData = [];
 // --- Cache Global de Produtos ---
-let localProductCache = null; // Movido para escopo global para acesso por listeners
-let currentOrderStatusFilter = 'pendente';
-let selectedProductIds = new Set(); // Armazena IDs dos produtos selecionados para download
+var localProductCache = null; // Movido para escopo global para acesso por listeners
+var cart = []; // Movido para escopo global
+var discount = 0; // Desconto global
+var selectedCrediarioClient = null; // Cliente selecionado
+var selectedPaymentMethod = null; // Método de pagamento selecionado
+var currentOrderStatusFilter = 'pendente';
+var selectedProductIds = new Set(); // Armazena IDs dos produtos selecionados para download
+var parkedSales = []; // Vendas estacionadas (Cache)
 
 // Configuração e Inicialização Imediata do Firebase
-const firebaseConfig = {
+var firebaseConfig = {
     apiKey: "AIzaSyAVQ3tf6Qu4_9PajpJclZAJjVvRgB4ZE2I",
     authDomain: "super-app25.firebaseapp.com",
     projectId: "super-app25",
@@ -47,7 +49,7 @@ const firebaseConfig = {
 };
 
 // Configuração da Composição 2026 (Simples Nacional 1ª Faixa - 4%)
-const TAX_COMPOSITION_2026 = [
+var TAX_COMPOSITION_2026 = [
     { label: 'CPP (Previdência)', perc: 1.66 }, // 41.5% de 4.0%
     { label: 'ICMS (Estado)', perc: 1.36 },    // 34.0% de 4.0%
     { label: 'COFINS (Federal)', perc: 0.51 }, // 12.74% de 4.0%
@@ -55,7 +57,7 @@ const TAX_COMPOSITION_2026 = [
     { label: 'CSLL', perc: 0.14 },             // 3.5% de 4.0%
     { label: 'PIS/Pasep', perc: 0.11 }         // 2.76% de 4.0%
 ];
-let currentTaxDisplay = 0; // Armazena o valor atual para a animação de contagem
+var currentTaxDisplay = 0; // Armazena o valor atual para a animação de contagem
 
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
@@ -67,16 +69,16 @@ db = firebase.firestore(); // db agora existe globalmente
 console.log("Firebase inicializado globalmente!");
 
 // Credenciais e URLs
-const FIREBASE_CONFIG_ID = 'floralchic-loja';
-const STORE_OWNER_UID = "3zYT9Y6hXWeJSuvmEYP4FMZa5gI2";
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
-const REGISTRO_VENDA_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCCaxdYdC6J_QKsaoWTDquH915MHUnM9BykD39ZUujR2LB3lx9d9n5vAsHdJZJByaa7w/exec";
-const CENTRAL_API_URL = "https://script.google.com/macros/s/AKfycbyZtUsI44xA4MQQLZWJ6K93t6ZaSaN6hw7YQw9EclZG9E85kM6yOWQCQ0D-ZJpGmyq4/exec"; // URL de Migração
+var FIREBASE_CONFIG_ID = 'floralchic-loja';
+var STORE_OWNER_UID = "3zYT9Y6hXWeJSuvmEYP4FMZa5gI2";
+var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
+var REGISTRO_VENDA_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCCaxdYdC6J_QKsaoWTDquH915MHUnM9BykD39ZUujR2LB3lx9d9n5vAsHdJZJByaa7w/exec";
+var CENTRAL_API_URL = "https://script.google.com/macros/s/AKfycbyZtUsI44xA4MQQLZWJ6K93t6ZaSaN6hw7YQw9EclZG9E85kM6yOWQCQ0D-ZJpGmyq4/exec"; // URL de Migração
 
 // Funções Auxiliares Globais (Necessárias para as funções abaixo)
-const formatCurrency = (value) => { const n = Number(value); if (isNaN(n)) return 'R$ 0,00'; return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); };
-const formatTime = (date) => { const pad = (n) => n < 10 ? '0' + n : n; return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`; };
-const mapStatusFirebaseToUI = (fbStatus) => {
+var formatCurrency = (value) => { const n = Number(value); if (isNaN(n)) return 'R$ 0,00'; return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); };
+var formatTime = (date) => { const pad = (n) => n < 10 ? '0' + n : n; return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`; };
+var mapStatusFirebaseToUI = (fbStatus) => {
     if (fbStatus === 'approved') return 'pendente';
     if (fbStatus === 'preparation') return 'preparando';
     if (fbStatus === 'shipped') return 'enviado';
@@ -144,7 +146,7 @@ window.showCustomConfirm = (title, message, callback) => {
 // ============================================================
 
 // Helper para obter subtotal (bruto)
-const getSubtotal = () => {
+var getSubtotal = () => {
     // Se o carrinho estiver vazio, retorna 0
     if (!cart || cart.length === 0) return 0;
     // Soma preço original * quantidade (Bruto)
@@ -152,7 +154,7 @@ const getSubtotal = () => {
 };
 
 // Função de Renderização (Movemos para fora do DOMContentLoaded)
-const renderDummyOrders = () => {
+var renderDummyOrders = () => {
     const container = document.getElementById('orders-grid-container');
     const badgeNavbar = document.getElementById('pedidos-badge');
 
@@ -209,61 +211,9 @@ const renderDummyOrders = () => {
 // Função de Polling (Escuta do Firebase)
 // Função de Polling (Escuta do Firebase) - ATUALIZADA COM ENDEREÇO DE COLETA
 // Função de Polling (Escuta do Firebase) - ATUALIZADA
+// Função de Polling (Escuta do Firebase) - REMOVIDA POR SOLICITAÇÃO
 function startOrderPolling() {
-    if (realtimeOrdersUnsubscribe) realtimeOrdersUnsubscribe();
-
-    const q = db.collection('orders').orderBy('createdAt', 'desc').limit(50);
-
-    console.log("Iniciando monitoramento de pedidos...");
-
-    realtimeOrdersUnsubscribe = q.onSnapshot((snapshot) => {
-        const fetchedOrders = [];
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            if (data.status === 'pending_payment' || data.status === 'cancelled' || data.status === 'rejected') return;
-
-            const dateObj = data.createdAt ? data.createdAt.toDate() : new Date();
-            let itemsStr = "Sem itens";
-            if (data.items && Array.isArray(data.items)) itemsStr = data.items.map(i => `${i.quantity}x ${i.name}`).join(', ');
-
-            // --- LÓGICA DE EXIBIÇÃO DO ENDEREÇO ---
-            let addressDisplay = 'Endereço não informado';
-            let shippingMode = data.shipping?.mode || 'delivery';
-
-            if (data.shipping) {
-                if (shippingMode === 'pickup') {
-                    // Limpa a string para pegar só o nome da cidade/loja
-                    // Ex: "Retirada: Ipixuna" vira "Ipixuna"
-                    const storeName = (data.shipping.address || '').replace('Retirada: ', '') || 'Loja';
-                    addressDisplay = `<i class='bx bxs-store' style="color:var(--info-blue)"></i> Coleta na loja de ${storeName}`;
-                } else {
-                    // Entrega normal
-                    addressDisplay = `<i class='bx bxs-truck' style="color:#666"></i> ${data.shipping.address}`;
-                }
-            }
-            // --------------------------------------
-
-            fetchedOrders.push({
-                id: doc.id,
-                displayId: data.orderId || doc.id.substring(0, 6),
-                time: formatTime(dateObj),
-                client: data.client ? data.client.name : 'Cliente Online',
-                address: addressDisplay, // HTML formatado
-                rawAddress: data.shipping?.address || '', // Endereço puro para lógica interna
-                status: mapStatusFirebaseToUI(data.status),
-                total: formatCurrency(data.total || 0),
-                items: itemsStr,
-                shippingMode: shippingMode,
-                paymentMethod: data.paymentMethod || 'Pix'
-            });
-        });
-
-        activeOrdersData = fetchedOrders;
-        renderDummyOrders();
-
-    }, (error) => {
-        console.error("Erro pedidos:", error);
-    });
+    console.log("Monitoramento de pedidos desativado.");
 }
 
 // ============================================================
@@ -293,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Define a variável global 'db' que o nosso script do PDV usa
-    const db = firebase.firestore();
+    db = firebase.firestore();
 
     console.log("Firebase inicializado com sucesso!");
 
@@ -302,45 +252,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const updateBtn = document.getElementById('btn-update-refresh');
 
     if (updateBanner && updateBtn) {
+        // Monitoramento de update desativado
+        console.log("Monitoramento de update desativado.");
+        /*
         db.collection('system_alerts').doc('update-notice').onSnapshot((doc) => {
-            if (doc.exists) {
-                const data = doc.data();
-                const serverVersion = data.version || 'default';
-                const localVersion = localStorage.getItem('pdv_update_version');
-
-                if (data.show === true && serverVersion !== localVersion) {
-                    updateBanner.classList.add('visible'); // Slide Down
-                    updateBtn.dataset.pendingVersion = serverVersion;
-                    document.body.style.paddingTop = "70px"; // Empurra o conteúdo para baixo
-                } else {
-                    updateBanner.classList.remove('visible');
-                    document.body.style.paddingTop = "0px"; // Restaura
-                }
-            }
+            // Lógica removida
         }, (error) => {
             console.error("Erro ao monitorar alertas:", error);
         });
+        */
 
         updateBtn.addEventListener('click', () => {
-            const versionToConfirm = updateBtn.dataset.pendingVersion;
-
-            updateBtn.disabled = true;
-            updateBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Atualizando...";
-
-            if (versionToConfirm) {
-                localStorage.setItem('pdv_update_version', versionToConfirm);
-
-                db.collection('system_alerts').doc('update-notice').update({
-                    updated_count: firebase.firestore.FieldValue.increment(1)
-                }).then(() => {
-                    window.location.reload();
-                }).catch(err => {
-                    console.error("Erro:", err);
-                    window.location.reload();
-                });
-            } else {
-                window.location.reload();
-            }
+            // Mantendo apenas reload simples
+            window.location.reload();
         });
     }
 
@@ -349,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Estado da Aplicação ---
     // localProductCache moved to global scope
     let localClientCache = null;
-    let cart = [];
+    // cart moved to global scope
     let lastScannedBarcode = null;
     let confirmCallback = null;
     let discount = 0;
@@ -1285,11 +1209,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 delete item.isNew;
             }
 
-            cartItemsBody.appendChild(tr);
+            cartItemsBody.prepend(tr);
         });
 
         updateSummary();
     };
+    window.renderCart = renderCart;
 
     // --- FUNÇÕES DE EDIÇÃO DO CARRINHO (NOVAS) ---
     window.updateCartItem = (id, field, value) => {
@@ -1467,6 +1392,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateSummaryClientCard();
     };
+    window.updateSummary = updateSummary;
 
 
     function parseDataSegura(dataStr) {
@@ -5699,55 +5625,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function runFiscalSanityCheck() {
-        if (!localProductCache || localProductCache.length === 0) {
-            console.error("❌ Cache de produtos vazio.");
-            return null;
-        }
-
-        const comNcm = localProductCache.filter(prod => prod.ncm && String(prod.ncm).trim() !== "");
-
-        const prontosParaEmissao = comNcm.filter(prod => {
-            const ncmValido = String(prod.ncm).trim().length === 8;
-            const temCfop = prod.cfop && String(prod.cfop).trim() !== "";
-            const temNome = prod.nome || prod.name;
-            const temUnidade = prod.unidade || prod.unit;
-            return ncmValido && temCfop && temNome && temUnidade;
-        });
-
-        const resultado = {
-            stats: {
-                totalSistema: localProductCache.length,
-                totalComNcm: comNcm.length,
-                totalProntos: prontosParaEmissao.length,
-                totalComErro: comNcm.length - prontosParaEmissao.length
-            },
-            listas: { prontos: prontosParaEmissao }
-        };
-
-        console.log("%c📊 RELATÓRIO DE SAÚDE FISCAL (v7.5.0)", "color: white; background: #222; padding: 5px; border-radius: 3px;");
-        console.table(resultado.stats);
-
-        if (resultado.listas.prontos.length > 0) {
-            console.log("%c🚀 DADOS FISCAIS PARA TESTE (Simulação itensAptos):", "color: #00ff00; font-weight: bold;");
-
-            // Mapeia EXATAMENTE o que vai para o backend no processFinalSale
-            const payloadSimulado = resultado.listas.prontos.slice(0, 3).map(item => {
-                const ncmLimpo = (item.ncm || "").toString().replace(/\D/g, '');
-                return {
-                    id: item.id || item.codigo,
-                    name: item.name || item.nome,
-                    price: Number(item.price || item.preco),
-                    quantity: 1, // Simulação de 1 unidade
-                    ncm: ncmLimpo,
-                    cfop: item.cfop,
-                    unit: item.unit || item.unidade || 'UN',
-                    csosn: item.csosn || '102',
-                    origem: item.origem || '0'
-                };
-            });
-            console.table(payloadSimulado);
-        }
-        return resultado;
+        // Relatório removido
+        return null;
     }
 
     // --- LÓGICA DE NAVEGAÇÃO ENTRE ABAS (EMITIDAS / PENDENTES) ---
@@ -5955,8 +5834,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // LÓGICA DE ADMINISTRADOR (CORRIGIDA E CONSOLIDADA)
 // =======================================================
 
-const ADMIN_PASS = "ADM25-PASS";
-let acaoPendenteAposSenha = null; // Variável global para guardar o callback
+var ADMIN_PASS = "ADM25-PASS";
+var acaoPendenteAposSenha = null; // Variável global para guardar o callback
 
 // --- 1. FUNÇÕES DO MODAL DE SENHA ---
 
@@ -6267,8 +6146,124 @@ document.addEventListener('click', function (e) {
     }
 });
 
+// =======================================================
+// == LÓGICA DE PESQUISA RÁPIDA NO CAMPO DE BARCODE ==
+// =======================================================
+var barcodeInputEl = document.getElementById('barcode-input');
+var barcodeIconEl = document.getElementById('barcode-icon');
+var barcodeResultsEl = document.getElementById('barcode-search-results');
+
+if (barcodeInputEl && barcodeIconEl && barcodeResultsEl) {
+
+    // Função para adicionar direto da pesquisa
+    // Nota: 'cart' e 'localProductCache' são globais agora.
+    window.quickAddFromSearch = (id) => {
+        const prod = localProductCache.find(p => String(p.id) === String(id));
+        if (prod) {
+            // Lógica de Adicionar ao Carrinho 
+            const existingItemIndex = cart.findIndex(item => String(item.id) === String(prod.id));
+
+            if (existingItemIndex !== -1) {
+                cart[existingItemIndex].quantity += 1;
+            } else {
+                cart.push({
+                    ...prod,
+                    quantity: 1,
+                    discountPercent: 0,
+                    originalPrice: parseFloat(prod.price),
+                    isNew: true // Flag para animação
+                });
+            }
+
+            // Atualiza UI
+            renderCart();
+            updateSummary();
+
+            // Força a exibição da tabela caso o renderCart falhe em algo específico
+            const itemListTable = document.getElementById('item-list-table');
+            const emptyState = document.getElementById('empty-state');
+            const cartItemsBody = document.getElementById('cart-items-body'); // Para scroll
+
+            if (itemListTable && emptyState) {
+                itemListTable.style.display = 'table';
+                emptyState.style.display = 'none';
+            }
+
+            // Scroll para o último item adicionado
+            if (cartItemsBody) {
+                // Pequeno delay para garantir renderização
+                setTimeout(() => {
+                    cartItemsBody.firstElementChild?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 50);
+            }
+
+            // Limpa pesquisa
+            barcodeInputEl.value = '';
+            barcodeResultsEl.innerHTML = '';
+            barcodeResultsEl.classList.remove('expanded');
+            barcodeIconEl.className = 'bx bx-barcode-reader';
+            barcodeInputEl.focus();
+        }
+    };
+
+    barcodeInputEl.addEventListener('input', (e) => {
+        const val = e.target.value;
+        const hasLetters = /[a-zA-Z]/.test(val);
+
+        if (val.length > 2 && hasLetters) {
+            barcodeIconEl.className = 'bx bx-search';
+            const terms = val.toLowerCase().split(' ').filter(t => t);
+            const results = localProductCache.filter(p => {
+                const name = (p.name || '').toLowerCase();
+                return terms.every(term => name.includes(term));
+            });
+
+            if (results.length > 0) {
+                barcodeResultsEl.innerHTML = results.map(p => {
+                    const imgHtml = p.imgUrl && p.imgUrl.length > 10
+                        ? `<img src="${p.imgUrl}" class="result-thumb">`
+                        : `<div class="result-thumb"><i class='bx bx-package'></i></div>`;
+
+                    return `
+                        <div class="search-result-item" onclick="quickAddFromSearch('${p.id}')">
+                            ${imgHtml}
+                            <div class="result-info">
+                                <div class="result-name">${p.name}</div>
+                                <div class="result-meta">
+                                    <span class="result-code">#${p.id}</span>
+                                    <span class="result-price">${formatCurrency(p.price)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `}).join('');
+                barcodeResultsEl.classList.add('expanded');
+            } else {
+                barcodeResultsEl.innerHTML = `<div class="search-result-item" style="justify-content: center; color: #6b7280; font-size: 0.9rem;">Nenhum produto encontrado.</div>`;
+                barcodeResultsEl.classList.add('expanded');
+            }
+        } else {
+            barcodeIconEl.className = 'bx bx-barcode-reader';
+            barcodeResultsEl.classList.remove('expanded');
+            setTimeout(() => { if (!barcodeResultsEl.classList.contains('expanded')) barcodeResultsEl.innerHTML = ''; }, 300);
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!barcodeInputEl.contains(e.target) && !barcodeResultsEl.contains(e.target)) {
+            barcodeResultsEl.classList.remove('expanded');
+        }
+    });
+
+    barcodeInputEl.addEventListener('focus', () => {
+        const val = barcodeInputEl.value;
+        if (val.length > 2 && /[a-zA-Z]/.test(val)) barcodeInputEl.dispatchEvent(new Event('input'));
+    });
+}
+
+
+
 // Listener de Tecla Enter no Input de Senha
-const inputAuth = document.getElementById('admin-password-input');
+var inputAuth = document.getElementById('admin-password-input');
 if (inputAuth) {
     inputAuth.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') verificarSenhaAdm();
@@ -6325,22 +6320,9 @@ function closeAnnouncement() {
 }
 
 // Ouvinte em tempo real para avisos do sistema
+// Ouvinte em tempo real para avisos do sistema - REMOVIDO
 function listenForSystemAnnouncements() {
-    // Caminho no Firestore: Coleção 'system_alerts' -> Documento 'global_notice'
-    db.collection("system_alerts").doc("global_notice")
-        .onSnapshot((doc) => {
-            const data = doc.data();
-            // Se 'show' for verdadeiro no Firebase, o modal aparece para todos
-            if (data && data.show === true) {
-                const modal = document.getElementById('announcement-modal');
-                modal.classList.add('active');
-
-                // Opcional: Tocar um alerta sonoro discreto
-                console.log("Sistema: Novo aviso de atualização recebido.");
-            }
-        }, (error) => {
-            console.error("Erro ao escutar avisos:", error);
-        });
+    console.log("Sistema: Monitoramento de avisos desativado.");
 }
 
 // Inicie a escuta junto com as outras inicializações do DOM
@@ -7249,7 +7231,385 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+
+    // =======================================================
+    // == LÓGICA DE PESQUISA RÁPIDA NO CAMPO DE BARCODE ==
+    // =======================================================
+    const barcodeInputEl = document.getElementById('barcode-input');
+    const barcodeIconEl = document.getElementById('barcode-icon');
+    const barcodeResultsEl = document.getElementById('barcode-search-results');
+
+    if (barcodeInputEl && barcodeIconEl && barcodeResultsEl) {
+
+        // Esconde resultados se clicar fora
+        document.addEventListener('click', (e) => {
+            if (!barcodeInputEl.contains(e.target) && !barcodeResultsEl.contains(e.target)) {
+                barcodeResultsEl.classList.remove('expanded');
+            }
+        });
+
+        // Se focar e tiver texto, abre de novo
+        barcodeInputEl.addEventListener('focus', () => {
+            const val = barcodeInputEl.value;
+            // Dispara evento input manualmente se tiver conteúdo relevante
+            if (val.length > 2 && /[a-zA-Z]/.test(val)) {
+                barcodeInputEl.dispatchEvent(new Event('input'));
+            }
+        });
+
+    }
+
 });
 
+// ============================================================
+// LÓGICA DE VENDAS ESTACIONADAS (SALES LIST)
+// ============================================================
 
 
+// Helpers para Modais Customizados (Renomeados para evitar conflitos)
+function openAlertModal(message, title = "Atenção") {
+    const modal = document.getElementById('alert-modal');
+    const msgEl = document.getElementById('alert-modal-message');
+    const titleEl = document.getElementById('alert-modal-title');
+
+    if (modal && msgEl) {
+        msgEl.textContent = message;
+        if (titleEl) titleEl.textContent = title;
+        openModal(modal);
+    } else {
+        alert(message);
+    }
+}
+
+function openConfirmModal(message, onConfirm, onCancel, title = "Confirmação") {
+    const modal = document.getElementById('confirm-modal');
+    const msgEl = document.getElementById('confirm-modal-message');
+    const titleEl = document.getElementById('confirm-modal-title');
+    const confirmBtn = document.getElementById('confirm-modal-btn');
+    const cancelBtn = modal.querySelector('.btn-secondary');
+
+    if (modal && msgEl && confirmBtn) {
+        msgEl.textContent = message;
+        if (titleEl) titleEl.textContent = title;
+
+        // Limpa ouvintes
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
+        newConfirmBtn.addEventListener('click', () => {
+            closeModal(modal);
+            if (onConfirm) onConfirm();
+        });
+
+        newCancelBtn.addEventListener('click', () => {
+            closeModal(modal);
+            if (onCancel) onCancel();
+        });
+
+        openModal(modal);
+    } else {
+        if (confirm(message)) {
+            if (onConfirm) onConfirm();
+        } else {
+            if (onCancel) onCancel();
+        }
+    }
+}
+
+// Carrega vendas salvas ao iniciar
+// Função de inicialização do Menu de Vendas
+function initSalesMenu() {
+    console.log("Inicializando Menu de Vendas...");
+
+    // Carrega dados iniciais
+    const storedSales = localStorage.getItem('parkedSales');
+    if (storedSales) {
+        try {
+            parkedSales = JSON.parse(storedSales);
+            updateParkedSalesUI();
+        } catch (e) {
+            console.error("Erro ao carregar vendas estacionadas", e);
+            parkedSales = [];
+        }
+    }
+
+    // Elementos
+    const btnQuickNewSale = document.getElementById('btn-quick-new-sale');
+    const salesMenuBtn = document.getElementById('sales-menu-btn');
+    const salesMenuModal = document.getElementById('sales-menu-modal');
+
+    // Listener Botão "+"
+    if (btnQuickNewSale) {
+        // Remove ouvintes anteriores para evitar duplicação (clone)
+        const newBtn = btnQuickNewSale.cloneNode(true);
+        btnQuickNewSale.parentNode.replaceChild(newBtn, btnQuickNewSale);
+
+        newBtn.addEventListener('click', () => {
+            if (cart.length > 0) {
+                parkCurrentSale(true);
+            } else {
+                if (typeof showCustomToast === 'function') showCustomToast("O caixa já está livre.");
+                document.getElementById('barcode-input')?.focus();
+            }
+        });
+    } else {
+        console.warn("Botão Quick Sale não encontrado.");
+    }
+
+    // Listener Menu Vendas
+    if (salesMenuBtn && salesMenuModal) {
+        // Remove ouvintes anteriores
+        const newMenuBtn = salesMenuBtn.cloneNode(true);
+        salesMenuBtn.parentNode.replaceChild(newMenuBtn, salesMenuBtn);
+
+        newMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            console.log("Clique no Menu Vendas");
+            salesMenuModal.classList.toggle('show');
+        });
+
+        // Fechar ao clicar fora
+        document.addEventListener('click', (e) => {
+            if (!newMenuBtn.contains(e.target) && !salesMenuModal.contains(e.target)) {
+                salesMenuModal.classList.remove('show');
+            }
+        });
+    } else {
+        console.warn("Menu Vendas ou Modal não encontrado.");
+    }
+}
+
+// Inicializa quando o DOM estiver pronto
+document.addEventListener('DOMContentLoaded', initSalesMenu);
+// Fallback para caso o script rode depois do DOM
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(initSalesMenu, 100);
+}
+
+function updateParkedSalesUI() {
+    const listContainer = document.getElementById('parked-sales-list');
+    const badge = document.getElementById('sales-count-badge');
+
+    if (!listContainer) return;
+
+    // Atualiza Badge
+    if (badge) {
+        badge.innerText = parkedSales.length;
+        badge.style.display = parkedSales.length > 0 ? 'block' : 'none';
+
+        // Animação do badge
+        badge.classList.remove('pop-animation');
+        void badge.offsetWidth; // trigger reflow
+        badge.classList.add('pop-animation');
+    }
+
+    // Renderiza Lista
+    listContainer.innerHTML = '';
+
+    if (parkedSales.length === 0) {
+        listContainer.innerHTML = `
+            <div class="empty-sales-list" style="padding: 20px; text-align: center; color: #9ca3b8;">
+                <i class='bx bx-list-ul' style="font-size: 1.5rem;"></i>
+                <p style="font-size: 0.85rem; margin-top: 5px;">Nenhuma venda salva.</p>
+            </div>`;
+        return;
+    }
+
+    parkedSales.forEach((sale, index) => {
+        const div = document.createElement('div');
+        div.className = 'parked-sale-item';
+
+        // Formata data
+        const date = new Date(sale.timestamp);
+        const timeStr = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+
+        // Nome Clientes
+        const clientName = sale.clientName || 'Consumidor Final';
+        const itemCount = sale.cart ? sale.cart.reduce((acc, item) => acc + item.quantity, 0) : 0;
+
+        div.innerHTML = `
+            <div class="parked-info" onclick="restoreSale(${index})">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong>Venda #${index + 1}</strong>
+                    <span style="font-size: 0.7rem; background: #f3f4f6; padding: 2px 6px; border-radius: 4px;">${timeStr}</span>
+                </div>
+                <span>${clientName} • ${itemCount} itens</span>
+                <span style="color: var(--primary-red); font-weight: 600;">${sale.totalDisplay}</span>
+            </div>
+            <button class="btn-delete-sale" onclick="deleteParkedSale(${index})" title="Descartar Venda">
+                <i class='bx bx-trash'></i>
+            </button>
+        `;
+        listContainer.appendChild(div);
+    });
+}
+
+function parkCurrentSale(isQuickAdd = false) {
+    if (cart.length === 0) {
+        // Se chamado manualmente e vazio
+        if (!isQuickAdd && typeof showCustomToast === 'function') showCustomToast("Nada para salvar!");
+        return;
+    }
+
+    const currentTotal = document.getElementById('summary-total')?.innerText || 'R$ 0,00';
+    const clientName = document.getElementById('summary-client-name-text')?.innerText;
+
+    // Captura estado atual
+    const saleState = {
+        timestamp: Date.now(),
+        cart: JSON.parse(JSON.stringify(cart)), // Deep copy
+        discount: discount,
+        selectedCrediarioClient: selectedCrediarioClient ? JSON.parse(JSON.stringify(selectedCrediarioClient)) : null,
+        clientName: clientName,
+        totalDisplay: currentTotal,
+        selectedPaymentMethod: selectedPaymentMethod
+    };
+
+    parkedSales.push(saleState);
+    localStorage.setItem('parkedSales', JSON.stringify(parkedSales));
+
+    // Limpa tela
+    clearSaleUI();
+
+    updateParkedSalesUI();
+
+    if (typeof showCustomToast === 'function') {
+        showCustomToast("Venda salva em 'Vendas'!");
+    }
+}
+
+function restoreSale(index) {
+    // 1. Verifica se tem algo na tela atual para salvar (Swap)
+    if (cart.length > 0) {
+        openConfirmModal(
+            "Existe uma venda em andamento. Deseja salvá-la antes de abrir a outra?",
+            () => {
+                // Confirmou: Salva a atual e abre a outra
+                parkCurrentSale();
+                proceedRestoreSale(index);
+            },
+            () => {
+                // Cancelou (Não quer salvar): Apenas abre a outra (sobrescrevendo)
+                // Behavior original do 'confirm' negativo era prosseguir sem salvar? 
+                // Revisando código antigo: 'if (confirm) park() else {}' -> e depois executava restore.
+                // Então sim, se disser 'não vou salvar', ele continua e perde a venda atual. 
+                // Mas talvez o usuário queira CANCELAR a restauração. 
+                // O texto diz "Deseja salvá-la?". Se responder não, entende-se que não quer salvar, mas quer abrir a outra.
+                // Vou manter o comportamento de prosseguir.
+                proceedRestoreSale(index);
+            },
+            "Venda em Andamento"
+        );
+    } else {
+        proceedRestoreSale(index);
+    }
+}
+
+function proceedRestoreSale(index) {
+    // 2. Recupera a venda alvo
+    const saleToRestore = parkedSales[index];
+    if (!saleToRestore) return;
+
+    // 3. Remove a venda recuperada da lista (ela vai pra tela)
+    parkedSales.splice(index, 1);
+    localStorage.setItem('parkedSales', JSON.stringify(parkedSales));
+    updateParkedSalesUI();
+
+    // 4. Restaura Estado
+    cart = saleToRestore.cart || [];
+    discount = saleToRestore.discount || 0;
+    selectedCrediarioClient = saleToRestore.selectedCrediarioClient;
+    selectedPaymentMethod = saleToRestore.selectedPaymentMethod || null;
+
+    // 5. Atualiza UI
+    renderCart();
+
+    const discountInputR = document.getElementById('discount-input-r');
+    if (discountInputR) {
+        if (discount > 0) {
+            discountInputR.value = discount.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+            discountInputR.disabled = false;
+        } else {
+            discountInputR.value = '';
+        }
+    }
+
+    // Payment Method UI
+    const paymentLabel = document.getElementById('summary-payment-method');
+    if (paymentLabel) {
+        if (selectedPaymentMethod) {
+            paymentLabel.innerText = selectedPaymentMethod;
+            paymentLabel.classList.add('selected');
+        } else {
+            paymentLabel.innerText = 'Escolher';
+            paymentLabel.classList.remove('selected');
+        }
+    }
+
+    // Restaura Cliente na UI
+    if (selectedCrediarioClient) {
+        updateSummaryClientCard();
+    } else {
+        const clientNameEl = document.getElementById('summary-client-name-text');
+        if (clientNameEl) clientNameEl.innerText = saleToRestore.clientName || 'Consumidor Final';
+        const btnRemove = document.getElementById('btn-remove-client');
+        if (btnRemove) btnRemove.style.display = saleToRestore.clientName && saleToRestore.clientName !== 'Consumidor Final' ? 'flex' : 'none';
+    }
+
+    updateSummary();
+
+    if (typeof showCustomToast === 'function') showCustomToast("Venda restaurada!");
+}
+
+function deleteParkedSale(index) {
+    openConfirmModal(
+        "Tem certeza que deseja excluir esta venda salva?",
+        () => {
+            parkedSales.splice(index, 1);
+            localStorage.setItem('parkedSales', JSON.stringify(parkedSales));
+            updateParkedSalesUI();
+            if (typeof showCustomToast === 'function') showCustomToast("Venda removida!");
+        },
+        null,
+        "Excluir Venda"
+    );
+}
+
+// Helper para limpar UI (Reusa lógica de cancelar venda ou cria nova)
+function clearSaleUI() {
+    // Reseta variaveis
+    cart = [];
+    discount = 0;
+    selectedCrediarioClient = null;
+    selectedPaymentMethod = null;
+
+    // Reseta Inputs
+    const barcodeInput = document.getElementById('barcode-input');
+    if (barcodeInput) {
+        barcodeInput.value = '';
+        barcodeInput.focus();
+    }
+
+    const discountInputR = document.getElementById('discount-input-r');
+    if (discountInputR) {
+        discountInputR.value = '';
+        discountInputR.disabled = true;
+    }
+
+    const paymentLabel = document.getElementById('summary-payment-method');
+    if (paymentLabel) {
+        paymentLabel.innerText = 'Escolher';
+        paymentLabel.classList.remove('selected');
+    }
+
+    // Reseta UI Cliente
+    const clientNameEl = document.getElementById('summary-client-name-text');
+    if (clientNameEl) clientNameEl.innerText = 'Consumidor Final';
+    const btnRemove = document.getElementById('btn-remove-client');
+    // UI Updates
+    renderCart();
+    updateSummary();
+}
