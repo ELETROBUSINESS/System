@@ -6630,7 +6630,69 @@ document.addEventListener('DOMContentLoaded', () => {
     // Ouvinte em tempo real para avisos do sistema
     // Ouvinte em tempo real para avisos do sistema - REMOVIDO
     function listenForSystemAnnouncements() {
-        console.log("Sistema: Monitoramento de avisos desativado.");
+        // Monitora documento específico de atualização
+        db.collection('system_alerts').doc('update-notice')
+            .onSnapshot(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    const lastSeenVersion = localStorage.getItem('appVersion');
+
+                    // Se deve mostrar e a versão é diferente da salva
+                    if (data.show && data.version && data.version !== lastSeenVersion) {
+
+                        // Exibe Modal Customizado
+                        const modal = document.getElementById('custom-confirm-modal');
+                        const title = document.getElementById('custom-confirm-title');
+                        const msg = document.getElementById('custom-confirm-message');
+                        const btnYes = document.getElementById('custom-confirm-yes-btn');
+
+                        if (modal && title && msg && btnYes) {
+                            title.textContent = "Nova Atualização Disponível";
+                            msg.innerHTML = `Nova versão <strong>${data.version}</strong> encontrada.<br>O sistema precisa ser atualizado para continuar.`;
+
+                            // Clone para desvincular eventos anteriores
+                            const newBtn = btnYes.cloneNode(true);
+                            btnYes.parentNode.replaceChild(newBtn, btnYes);
+
+                            newBtn.textContent = "Atualizar Agora 🚀";
+                            newBtn.className = "btn btn-primary";
+
+                            newBtn.onclick = () => {
+                                // 1. Salva a nova versão
+                                localStorage.setItem('appVersion', data.version);
+
+                                // 2. Limpar Caches (Service Worker + Cache Storage)
+                                if ('serviceWorker' in navigator) {
+                                    caches.keys().then(function (names) {
+                                        for (let name of names) caches.delete(name);
+                                    });
+                                    navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                                        for (let registration of registrations) {
+                                            registration.unregister();
+                                        }
+                                    });
+                                }
+
+                                // 3. Feedback visual antes do reload
+                                newBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Atualizando...";
+                                newBtn.disabled = true;
+
+                                // 4. Hard Reload após breve delay
+                                setTimeout(() => {
+                                    console.log("Executando Hard Reload...");
+                                    window.location.reload(true);
+                                }, 500);
+                            };
+
+                            // Opção de fechar (Cancelar) pode ser escondida se a atualização for mandatória
+                            // Neste caso, vamos permitir fechar, mas o aviso voltará se der refresh.
+                            openModal(modal);
+                        }
+                    }
+                }
+            }, error => {
+                console.warn("Erro ao buscar avisos:", error);
+            });
     }
 
     // Inicie a escuta junto com as outras inicializações do DOM
