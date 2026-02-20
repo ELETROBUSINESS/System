@@ -3,55 +3,63 @@
 document.addEventListener('userReady', (e) => {
     const user = e.detail;
     const container = document.getElementById("orders-list");
-    
+
     if (!container) return;
 
-    if (!user || user.isAnonymous) {
-        container.innerHTML = `
-            <div class='empty-state'>
-                <i class='bx bx-user-circle'></i>
-                <h3>Faça Login</h3>
-                <p>Acesse sua conta para visualizar o histórico.</p>
-            </div>`;
-        return;
+    let searchUid = null;
+    if (user && !user.isAnonymous) {
+        searchUid = user.uid;
+    } else {
+        const localUid = localStorage.getItem('guest_uid');
+        if (localUid) {
+            searchUid = localUid;
+        } else {
+            container.innerHTML = `
+                 <div class='empty-state'>
+                     <i class='bx bx-shopping-bag'></i>
+                     <h3>Nenhum pedido</h3>
+                     <p>Faça sua primeira compra para acompanhar o status aqui.</p>
+                 </div>`;
+            return;
+        }
     }
 
     // Listener em tempo real do Firebase
     db.collection("orders")
-      .where("userId", "==", user.uid)
-      .orderBy("createdAt", "desc")
-      .onSnapshot(snapshot => {
-          if (snapshot.empty) {
-              container.innerHTML = `
+        .where("userId", "==", searchUid)
+        .orderBy("createdAt", "desc")
+        .onSnapshot(snapshot => {
+            if (snapshot.empty) {
+                container.innerHTML = `
                 <div class='empty-state'>
                     <i class='bx bx-shopping-bag'></i>
                     <h3>Nenhum pedido ainda</h3>
                     <p>Seus pedidos aparecerão aqui.</p>
                 </div>`;
-              return;
-          }
-          
-          container.innerHTML = "";
-          
-          snapshot.forEach(doc => {
-              const order = { id: doc.id, ...doc.data() };
-              renderOrderCard(order, container);
-          });
-      }, error => {
-          console.error("Erro ao buscar pedidos:", error);
-          container.innerHTML = "<p style='text-align:center; color:red; margin-top:20px;'>Erro de conexão.</p>";
-      });
+                return;
+            }
+
+            container.innerHTML = "";
+
+            snapshot.forEach(doc => {
+                const order = { id: doc.id, ...doc.data() };
+                renderOrderCard(order, container);
+            });
+        }, error => {
+            console.error("Erro ao buscar pedidos:", error);
+            container.innerHTML = "<p style='text-align:center; color:red; margin-top:20px;'>Erro de conexão.</p>";
+        });
 });
 
 function renderOrderCard(order, container) {
-    const firstItem = order.items && order.items.length > 0 
-        ? order.items[0] 
+    const firstItem = order.items && order.items.length > 0
+        ? order.items[0]
         : { name: 'Pedido Diversos', image: 'https://placehold.co/70' };
-    
+
     let date = '--/--/----';
     if (order.createdAt && order.createdAt.toDate) {
         date = order.createdAt.toDate().toLocaleDateString('pt-BR', {
-            day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit'
+            day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
         });
     }
 
@@ -63,11 +71,11 @@ function renderOrderCard(order, container) {
     // ... (Mantenha o código de reembolso igual ao anterior se quiser, ou eu posso reenviar) ...
     // Vou pular o bloco de reembolso aqui para focar na mudança, mas mantenha ele no seu arquivo.
 
-    let statusClass = 'status-pending'; 
+    let statusClass = 'status-pending';
     let statusLabel = 'Processando';
     let showPixButton = false;
     let showTracking = false;
-    let canDelete = true; 
+    let canDelete = true;
 
     // Variáveis Rastreio
     let step1Active = false, step2Active = false, step3Active = false;
@@ -81,70 +89,70 @@ function renderOrderCard(order, container) {
     const descStep3 = isPickup ? "Pedido retirado com sucesso." : "O pedido foi entregue com sucesso.";
     const iconStep2 = isPickup ? "bx-store" : "bxs-truck";
 
-    switch(order.status) {
-        case 'approved': 
-        case 'preparation': 
-            statusClass = 'status-approved'; 
+    switch (order.status) {
+        case 'approved':
+        case 'preparation':
+            statusClass = 'status-approved';
             statusLabel = 'Aprovado';
             showTracking = true;
-            step1Active = true; 
-            canDelete = false; 
+            step1Active = true;
+            canDelete = false;
             break;
-        
-        case 'shipped': 
-            statusClass = 'status-approved'; 
+
+        case 'shipped':
+            statusClass = 'status-approved';
             statusLabel = isPickup ? 'Disponível na Loja' : 'Em Transporte';
             showTracking = true;
-            step1Active = true; 
-            step2Active = true; 
-            if(isPickup) {
+            step1Active = true;
+            step2Active = true;
+            if (isPickup) {
                 showPickupAnimation = true; // Mostra algo estático ou ícone de loja
             } else {
                 showTruckAnimation = true; // Mostra caminhão
             }
-            canDelete = false; 
+            canDelete = false;
             break;
 
-        case 'delivered': 
+        case 'delivered':
             statusClass = 'status-approved';
             statusLabel = isPickup ? 'Retirado' : 'Entregue';
             showTracking = true;
             step1Active = true;
             step2Active = true;
-            step3Active = true; 
-            canDelete = false; 
+            step3Active = true;
+            canDelete = false;
             break;
-            
+
         case 'pending':
         case 'pending_payment':
         case 'in_process':
-            statusClass = 'status-pending'; 
+            statusClass = 'status-pending';
             statusLabel = 'Aguardando Pagamento';
             if (order.paymentData && (order.paymentData.qr_code || order.paymentData.qr_code_base64)) {
-                 showPixButton = true;
+                showPixButton = true;
             }
-            canDelete = true; 
+            canDelete = true;
             break;
 
         case 'rejected':
         case 'cancelled':
-        case 'failed': 
-            statusClass = 'status-cancelled'; 
+        case 'failed':
+            statusClass = 'status-cancelled';
             statusLabel = 'Cancelado';
             canDelete = true;
             break;
-            
+
         default:
             statusLabel = order.statusText || 'Verificando';
     }
 
-    const pixActionHtml = showPixButton 
-        ? `<button class="btn-pix-action" onclick="openPixModal('${order.id}')"><i class='bx bx-qr-scan'></i> Pagar com Pix</button>` 
-        : ``; 
+    const pixActionHtml = showPixButton
+        ? `<button class="btn-pix-action" onclick="openPixModal('${order.id}')"><i class='bx bx-qr-scan'></i> Pagar com Pix</button>`
+        : ``;
 
-    const deleteBtnHtml = canDelete 
+    const deleteBtnHtml = canDelete
         ? `<button class="btn-delete-order" onclick="deleteOrder('${order.id}')" title="Remover"><i class='bx bx-trash'></i></button>`
-        : ``; 
+        : ``;
 
     // HTML do Rastreamento
     let trackingHtml = '';
@@ -213,7 +221,7 @@ function renderOrderCard(order, container) {
             </div>
         </div>
     `;
-    
+
     container.innerHTML += cardHtml;
 }
 
@@ -236,21 +244,21 @@ window.openPixModal = async (orderId) => {
     try {
         const doc = await db.collection("orders").doc(orderId).get();
         if (!doc.exists) return;
-        
+
         const order = doc.data();
-        
+
         if (order.paymentData && order.paymentData.qr_code_base64) {
             const pixArea = document.getElementById("pix-display-area");
             const pixImg = document.getElementById("pix-qr-img");
             const pixInput = document.getElementById("pix-code-text");
-            
+
             if (pixArea) {
                 // Injeta a imagem
                 pixImg.innerHTML = `<img src="data:image/png;base64, ${order.paymentData.qr_code_base64}" alt="QR Code Pix">`;
                 // Coloca o código copia e cola no input
                 pixInput.value = order.paymentData.qr_code;
                 // Mostra o modal (usando flex para centralizar)
-                pixArea.style.display = "flex"; 
+                pixArea.style.display = "flex";
             }
         } else {
             showToast("QR Code não disponível.", "error");

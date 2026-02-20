@@ -646,23 +646,24 @@ button {
 
 #cart-items-container .cart-item {
     background: var(--color-bg-light);
-    border-radius: 8px;
-    padding: 1rem;
+    border-radius: 12px;
+    padding: 1.2rem;
     display: flex;
-    gap: 1rem;
+    gap: 1.2rem;
     margin-bottom: 1rem;
     align-items: center;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    /* Sombra leve */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
 }
 
 .cart-item-image {
-    width: 80px;
-    height: 80px;
+    width: 90px;
+    height: 90px;
     object-fit: contain;
-    border: 1px solid #f0f0f0;
-    border-radius: 6px;
+    border: 1px solid #f9f9f9;
+    background: #fdfdfd;
+    border-radius: 8px;
     flex-shrink: 0;
+    padding: 5px;
 }
 
 .cart-item-info {
@@ -734,10 +735,11 @@ button {
 /* Resumo e Botão Finalizar */
 .cart-summary {
     background: var(--color-bg-light);
-    border-radius: 8px;
+    border-radius: 12px;
     padding: 1.5rem;
-    margin-top: 2rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
 }
 
 .cart-summary h3 {
@@ -769,25 +771,27 @@ button {
 /* BOTÃO DE CHECKOUT - CORREÇÃO VISUAL */
 .checkout-btn {
     display: block !important;
-    /* Garante visibilidade */
     width: 100%;
     margin-top: 1.5rem;
-    padding: 15px;
+    padding: 16px;
     background-color: var(--color-brand-red);
-    /* Vermelho Dtudo */
     color: #fff;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     font-weight: 700;
-    border-radius: 8px;
+    border-radius: 12px;
     text-align: center;
     cursor: pointer;
     border: none;
-    box-shadow: 0 4px 10px rgba(219, 0, 56, 0.2);
-    transition: background 0.2s;
+    box-shadow: 0 6px 15px rgba(194, 0, 38, 0.2);
+    transition: background 0.2s, transform 0.1s;
+}
+
+.checkout-btn:active {
+    transform: scale(0.98);
 }
 
 .checkout-btn:hover {
-    background-color: #b71c1c;
+    background-color: #a80020;
 }
 
 /* ==================== NAVBAR INFERIOR (ATUALIZADO) ==================== */

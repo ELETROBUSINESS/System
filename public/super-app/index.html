@@ -26,16 +26,21 @@
         <i class='bx bxs-up-arrow'></i> Faça login aqui para acessar seus pedidos!
     </div>
 
+    <div id="custom-loader-overlay">
+        <span class="loader"></span>
+        <p class="loader-text">preparando tudo para você</p>
+    </div>
+
     <header class="main-header">
         <div class="container header-container">
             <a href="index.html" class="logo">
-                <img src="dtudo.png" alt="Logo" class="logo-img">
-                <span>D<span class="logo-highlight">tudo</span></span>
+                <img src="/assets/img/dtudoicon.png" alt="Logo" class="logo-img" onerror="this.src='dtudo.png'">
             </a>
 
             <div class="search-bar">
-                <input type="text" placeholder="buscar na Dtudo">
-                <i class='bx bx-search'></i>
+                <i class='bx bx-left-arrow-alt search-back-btn' onclick="closeSearchModal(event)"></i>
+                <input type="text" placeholder="buscar na Dtudo" id="main-search-input">
+                <i class='bx bx-search search-icon'></i>
                 <div id="search-dropdown" class="search-dropdown"></div>
             </div>
 
@@ -58,9 +63,10 @@
     </header>
 
     <main>
-        <div class="home-offer-banner">
+        <div class="home-offer-banner" onclick="window.location.href='index.html?filter=ofertas'"
+            style="cursor: pointer;">
             <i class='bx bxs-hot'></i>
-            <span>OFERTAS BLACK FRIDAY: Encerram em <span id="home-timer-countdown">--:--:--</span></span>
+            <span>OFERTAS RELÂMPAGO: Encerram em <span id="home-timer-countdown">--:--:--</span></span>
         </div>
 
         <section id="product-detail-view" style="display: none; padding-top: 20px;">
@@ -84,19 +90,37 @@
     <section class="categories-section">
         <div class="container">
             <div class="categories-scroll">
-                <div class="category-item fire">
+                <div class="category-item fire" onclick="filterLocalCategory('ofertas')">
                     <div class="category-icon"><i class='bx bxs-hot'></i></div>
                     <span style="color: var(--color-brand-red); font-weight: 700;">Ofertas!</span>
                 </div>
-                <div class="category-item">
+                <div class="category-item" onclick="filterLocalCategory('casa')">
                     <div class="category-icon"><i class='bx bx-home'></i></div><span>Casa</span>
                 </div>
-                <div class="category-item">
+                <div class="category-item" onclick="filterLocalCategory('ferramenta')">
                     <div class="category-icon"><i class='bx bx-wrench'></i></div><span>Ferramentas</span>
                 </div>
-                <div class="category-item">
+                <div class="category-item" onclick="filterLocalCategory('eletr')">
                     <div class="category-icon"><i class='bx bx-mobile'></i></div><span>Eletrônicos</span>
                 </div>
+                <div class="category-item" onclick="filterLocalCategory('todos')">
+                    <div class="category-icon" style="background:#e0e0e0;"><i class='bx bx-grid-alt'
+                            style="color:#666;"></i></div><span style="color:#666;">Todos</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- VISTO POR ÚLTIMO (Injetado via JS) -->
+    <section id="recently-viewed"
+        style="display: none; background: #fff; padding: 15px 0; margin-bottom: 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+        <div class="container">
+            <h2 class="section-title"
+                style="font-size: 1.1rem; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                <i class='bx bx-history' style="color: var(--color-brand-red);"></i> Visto por último
+            </h2>
+            <div id="recently-viewed-container" class="categories-scroll" style="gap: 15px;">
+                <!-- Preenchido via JS -->
             </div>
         </div>
     </section>
@@ -126,8 +150,17 @@
 
             <div id="scroll-sentinel"></div>
 
-            <div id="infinite-loader">
-                <div class="spinner"></div>
+            <div id="infinite-loader" style="display: none; margin-top: 15px;">
+                <div class="product-grid">
+                    <div class="product-card skeleton-card">
+                        <div class="skeleton skeleton-img"></div>
+                        <div class="skeleton skeleton-text"></div>
+                    </div>
+                    <div class="product-card skeleton-card">
+                        <div class="skeleton skeleton-img"></div>
+                        <div class="skeleton skeleton-text"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>

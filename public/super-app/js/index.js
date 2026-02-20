@@ -123,7 +123,7 @@ function renderProductBatch(products) {
     products.forEach(prod => {
         if (document.getElementById(`prod-${prod.id}`)) return;
 
-        let displayImg = prod.imgUrl || 'https://placehold.co/400x400/EBEBEB/333?text=Sem+Foto';
+        let displayImg = prod.imgUrl || 'https://placehold.co/400x400/f8f9fa/c20026?text=Dtudo';
 
         // Preços de exibição (Venda)
         const valPrice = parseFloat(prod.price || 0); // Original
@@ -183,10 +183,14 @@ function renderProductBatch(products) {
 
 // --- BUSCA COM SUGESTÕES ---
 function setupSearch() {
-    const input = document.querySelector('.search-bar input');
+    const input = document.getElementById('main-search-input') || document.querySelector('.search-bar input');
     const dropdown = document.getElementById('search-dropdown');
 
     if (!input || !dropdown) return;
+
+    input.addEventListener('focus', () => {
+        document.querySelector('.header-container').classList.add('search-active');
+    });
 
     input.addEventListener('input', (e) => {
         const term = e.target.value.trim().toLowerCase();
@@ -212,7 +216,7 @@ function setupSearch() {
                 results.forEach(p => {
                     const price = parseFloat(p['price-oferta'] || p.price || 0);
                     const fmtPrice = price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                    const img = p.imgUrl || 'https://placehold.co/50x50';
+                    const img = p.imgUrl || 'https://placehold.co/400x400/f8f9fa/c20026?text=Dtudo';
 
                     html += `
                         <div class="search-item" onclick="window.location.href='index.html?id=${p.id}'" style="display:flex; gap:10px; padding:10px; border-bottom:1px solid #eee; cursor:pointer; align-items:center;">
@@ -230,10 +234,18 @@ function setupSearch() {
     });
 
     document.addEventListener('click', (e) => {
-        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+        if (!input.contains(e.target) && !dropdown.contains(e.target) && !e.target.classList.contains('search-back-btn')) {
             dropdown.style.display = 'none';
         }
     });
+
+    window.closeSearchModal = function (e) {
+        if (e) e.stopPropagation();
+        document.querySelector('.header-container').classList.remove('search-active');
+        dropdown.style.display = 'none';
+        input.value = '';
+        input.blur();
+    };
 }
 
 function startSuggestionTimer() {
@@ -250,71 +262,251 @@ function startSuggestionTimer() {
     }, 60000);
 }
 
+const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
+
+function registerInterest(category) {
+    if (!category || category === 'todos' || category === 'ofertas') return;
+    let interests = JSON.parse(localStorage.getItem('user_interests') || '[]');
+    let lowerCat = category.toLowerCase().trim();
+    if (!interests.includes(lowerCat)) {
+        interests.unshift(lowerCat);
+        if (interests.length > 4) interests.pop(); // Mantém últimos 4 interesses
+        localStorage.setItem('user_interests', JSON.stringify(interests));
+    }
+}
+
+function registerRecentlyViewed(prod) {
+    if (!prod) return;
+    let viewed = JSON.parse(localStorage.getItem('user_recently_viewed') || '[]');
+    viewed = viewed.filter(p => p.id !== prod.id); // Remove if exists
+    viewed.unshift({
+        id: prod.id,
+        name: prod.name,
+        price: prod.price,
+        'price-oferta': prod['price-oferta'],
+        imgUrl: prod.imgUrl
+    });
+    if (viewed.length > 10) viewed.pop(); // Keep last 10
+    localStorage.setItem('user_recently_viewed', JSON.stringify(viewed));
+}
+
+function renderRecentlyViewed() {
+    const container = document.getElementById('recently-viewed-container');
+    const section = document.getElementById('recently-viewed');
+    if (!container || !section) return;
+
+    const viewed = JSON.parse(localStorage.getItem('user_recently_viewed') || '[]');
+    if (viewed.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+
+    section.style.display = 'block';
+
+    // Create mini cards
+    let html = '';
+    viewed.forEach(prod => {
+        let displayImg = prod.imgUrl || 'https://placehold.co/400x400/f8f9fa/c20026?text=Dtudo';
+        const valPrice = parseFloat(prod.price || 0);
+        const valOffer = parseFloat(prod['price-oferta'] || 0);
+        const hasOffer = (valOffer > 0 && valOffer < valPrice);
+        const finalPrice = hasOffer ? valOffer : valPrice;
+
+        const fmtConfig = { style: 'currency', currency: 'BRL' };
+        const fmtPrice = new Intl.NumberFormat('pt-BR', fmtConfig).format(finalPrice);
+
+        html += `
+            <div class="category-item" style="min-width: 120px; text-align: left; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onclick="window.location.href='index.html?id=${prod.id}'">
+                <img src="${displayImg}" style="width: 100%; height: 100px; object-fit: cover;">
+                <div style="padding: 8px;">
+                    <div style="font-size: 0.75rem; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px;">${prod.name}</div>
+                    <div style="font-size: 0.9rem; font-weight: 700; color: #333;">${fmtPrice}</div>
+                </div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+}
+
+function sortProductsForUX(products) {
+    const interests = JSON.parse(localStorage.getItem('user_interests') || '[]');
+
+    return products.sort((a, b) => {
+        const aStock = parseFloat(a.stock || 0);
+        const bStock = parseFloat(b.stock || 0);
+
+        // Esgotados para o final
+        if (aStock <= 0 && bStock > 0) return 1;
+        if (bStock <= 0 && aStock > 0) return -1;
+
+        // Produtos com interesse salvos primeiro (apenas comparando se a categoria do produto contém algo da base do user)
+        if (interests.length > 0) {
+            const aCat = (a.category || '').toLowerCase();
+            const bCat = (b.category || '').toLowerCase();
+            const aMatch = interests.some(i => aCat.includes(i));
+            const bMatch = interests.some(i => bCat.includes(i));
+
+            if (aMatch && !bMatch) return -1;
+            if (bMatch && !aMatch) return 1;
+        }
+
+        // Produtos com desconto no topo
+        const aHasOffer = (parseFloat(a['price-oferta'] || 0) > 0 && parseFloat(a['price-oferta'] || 0) < parseFloat(a.price || 0));
+        const bHasOffer = (parseFloat(b['price-oferta'] || 0) > 0 && parseFloat(b['price-oferta'] || 0) < parseFloat(b.price || 0));
+
+        if (aHasOffer && !bHasOffer) return -1;
+        if (bHasOffer && !aHasOffer) return 1;
+
+        return 0;
+    });
+}
+
+// Global state para não buscar do script mais de 1x
+window._apiFetched = false;
+
 async function fetchMoreProducts() {
     if (isLoading || allProductsLoaded) return;
     const loader = document.getElementById('infinite-loader');
 
-    if (productsBuffer.length > 0) {
+    // 1. Caso faltem carregar os recursos iniciais / e esteja vazio o buffer
+    if (productsBuffer.length === 0 && !window._apiFetched) {
+        isLoading = true;
         if (loader) loader.style.display = 'block';
-        setTimeout(() => {
-            renderProductBatch(productsBuffer);
-            productsBuffer = [];
-            if (loader) loader.style.display = 'none';
-        }, 300);
-        return;
+
+        try {
+            const response = await fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`);
+            const result = await response.json();
+
+            if (result.status === "success" && result.data && result.data.length > 0) {
+                saveToCache(result.data);
+                const urlParams = new URLSearchParams(window.location.search);
+                applyLocalFilter(result.data, urlParams.get('filter') || 'todos');
+            } else {
+                allProductsLoaded = true;
+            }
+        } catch (error) {
+            console.error("Erro busca AppScript:", error);
+            allProductsLoaded = true;
+        } finally {
+            window._apiFetched = true;
+            isLoading = false;
+            const customLoader = document.getElementById('custom-loader-overlay');
+            if (customLoader) customLoader.style.display = 'none';
+        }
     }
 
-    isLoading = true;
-    if (loader) loader.style.display = 'block';
+    // 2. Transfere suavemente para a tela os próximos blocos do buffer
+    if (productsBuffer.length > 0) {
+        isLoading = true;
+        if (loader) loader.style.display = 'block';
 
-    try {
-        let query = db.collection('artifacts').doc(APP_ID)
-            .collection('users').doc(STORE_OWNER_UID)
-            .collection('products')
-            .orderBy('createdAt', 'desc')
-            .limit(30);
+        setTimeout(() => {
+            const BATCH_SIZE = 12; // Lote controlado para manter engajamento
+            const toDisplay = productsBuffer.slice(0, BATCH_SIZE);
+            productsBuffer = productsBuffer.slice(BATCH_SIZE);
 
-        if (lastVisibleDoc) query = query.startAfter(lastVisibleDoc);
-        const snapshot = await query.get();
+            renderProductBatch(toDisplay);
 
-        if (snapshot.empty) {
-            allProductsLoaded = true;
+            if (productsBuffer.length === 0 && window._apiFetched) {
+                allProductsLoaded = true;
+            }
+            isLoading = false;
             if (loader) loader.style.display = 'none';
-            return;
-        }
-
-        lastVisibleDoc = snapshot.docs[snapshot.docs.length - 1];
-        const products = [];
-        snapshot.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
-        saveToCache(products);
-
-        const toDisplay = products.slice(0, 20);
-        const toBuffer = products.slice(20);
-        renderProductBatch(toDisplay);
-        productsBuffer = toBuffer;
-
-    } catch (error) {
-        console.error("Erro busca:", error);
-    } finally {
-        isLoading = false;
+        }, 500); // 500ms simula um carregamento natural ao rolar = excelente UX
+    } else {
+        allProductsLoaded = true;
         if (loader) loader.style.display = 'none';
     }
 }
 
 async function initProductFeed() {
+    productsBuffer = [];
+    allProductsLoaded = false;
+    window._apiFetched = false;
+    isLoading = false;
+
+    renderRecentlyViewed();
+
+    // Reseta o container caso retorne rápido do cache
+    const container = document.getElementById('firebase-products-container');
+    if (container.querySelector('.skeleton-card')) container.innerHTML = '';
+
     const cached = getCachedData();
     if (cached && cached.length > 0) {
-        renderProductBatch(cached);
-    } else {
-        await fetchMoreProducts();
+        window._apiFetched = true;
+
+        // Verifica URL para página isolada de Ofertas simulada, ou default
+        const urlParams = new URLSearchParams(window.location.search);
+        let categoryStr = urlParams.get('filter') || 'todos';
+
+        applyLocalFilter(cached, categoryStr);
+
+        // Soft refresh constante em Background (Garante banco de dados atualizado a cada Recarregamento)
+        fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`)
+            .then(res => res.json())
+            .then(result => {
+                if (result.status === "success" && result.data) {
+                    saveToCache(result.data); // Atualiza base local silenciosamente
+                }
+            }).catch(() => { });
     }
+
+    // Mostra o primeiro lote (Cache ou da Web)
+    await fetchMoreProducts();
+
+    // Hide custom loader gracefully after cached payload injects
+    const customLoader = document.getElementById('custom-loader-overlay');
+    if (customLoader) customLoader.style.display = 'none';
+
     const sentinel = document.getElementById('scroll-sentinel');
     if (sentinel) {
         const observer = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting) fetchMoreProducts();
-        }, { rootMargin: '200px' });
+            if (entries[0].isIntersecting && !isLoading && !allProductsLoaded) {
+                fetchMoreProducts();
+            }
+        }, { rootMargin: '300px' });
         observer.observe(sentinel);
     }
+}
+
+window.filterLocalCategory = function (categoryStr) {
+    const cached = getCachedData();
+    if (!cached) return;
+
+    // Altera interface visual
+    const titleObj = document.querySelector('.section-title');
+    if (titleObj) {
+        if (categoryStr === 'ofertas') titleObj.innerText = 'Promoções Relâmpago ⚡';
+        else if (categoryStr === 'todos' || !categoryStr) titleObj.innerText = 'Destaques para você';
+        else titleObj.innerText = 'Categoria: ' + categoryStr.charAt(0).toUpperCase() + categoryStr.slice(1);
+    }
+
+    document.getElementById('firebase-products-container').innerHTML = '';
+    isLoading = false;
+    allProductsLoaded = false;
+    window._apiFetched = true; // Previne ir no AppScript de novo
+
+    registerInterest(categoryStr);
+    applyLocalFilter(cached, categoryStr);
+    fetchMoreProducts();
+};
+
+function applyLocalFilter(cached, categoryStr) {
+    let filtered = cached;
+    if (categoryStr === 'ofertas') {
+        filtered = cached.filter(p => parseFloat(p['price-oferta'] || 0) > 0 && parseFloat(p['price-oferta'] || 0) < parseFloat(p.price || 0));
+    } else if (categoryStr && categoryStr !== 'todos') {
+        filtered = cached.filter(p => p.category && p.category.toLowerCase().includes(categoryStr.toLowerCase()));
+    }
+
+    // Filtro de Restrição:
+    // Exibe itens sem foto APENAS se tiver "?pd26" na URL. 
+    // Caso contrário, bloqueia exibição de itens sem foto válida.
+    if (!window.location.search.includes('pd26')) {
+        filtered = filtered.filter(p => p.imgUrl && p.imgUrl.trim() !== '' && !p.imgUrl.includes('placehold.co'));
+    }
+
+    productsBuffer = sortProductsForUX(filtered);
 }
 
 // ==================== 3. LÓGICA DE DETALHES ====================
@@ -346,16 +538,31 @@ async function loadProductDetail(id) {
     `;
 
     try {
-        const doc = await db.collection('artifacts').doc(APP_ID)
-            .collection('users').doc(STORE_OWNER_UID)
-            .collection('products').doc(id).get();
+        let prod = null;
 
-        if (!doc.exists) {
+        const cachedData = getCachedData();
+        if (cachedData) {
+            prod = cachedData.find(p => String(p.id) === String(id));
+        }
+
+        if (!prod) {
+            const response = await fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`);
+            const result = await response.json();
+            if (result.status === "success" && result.data) {
+                saveToCache(result.data);
+                prod = result.data.find(p => String(p.id) === String(id));
+            }
+        }
+
+        if (!prod) {
             content.innerHTML = "<h3>Produto não encontrado.</h3>";
             return;
         }
 
-        const prod = doc.data();
+        registerInterest(prod.category);
+        registerRecentlyViewed(prod);
+
+        const doc = { id: String(id) };
         currentDetailImages = extractProductImages(prod);
 
         // --- PREÇOS ---
@@ -451,7 +658,7 @@ async function loadProductDetail(id) {
         // --- VARIAÇÕES (LINKED VARIANTS - VISUAL) ---
         let linkedVariantsHtml = '';
         if (prod.linkedVariants && Array.isArray(prod.linkedVariants) && prod.linkedVariants.length > 0) {
-            
+
             // Renderiza as outras opções
             const othersHtml = prod.linkedVariants.map(v => `
                 <div class="variant-option" onclick="window.location.href='index.html?id=${v.id}'" title="${v.name}">
@@ -541,6 +748,12 @@ async function loadProductDetail(id) {
                             Adicionar ao carrinho
                         </button>
                     </div>
+                    <button class="btn-whatsapp-direct" 
+                        style="background-color: #25D366; color: white; border: none; padding: 12px; border-radius: var(--radius-sm); font-weight: 700; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; cursor: pointer;"
+                        ${stockCount <= 0 ? 'disabled style="background:#ccc; cursor:not-allowed;"' : ''}
+                        onclick="window.open('https://wa.me/5591986341760?text=Olá, quero fazer um pedido do produto: ${encodeURIComponent(prod.name)}', '_blank')">
+                        <i class='bx bxl-whatsapp' style="font-size: 1.3rem;"></i> Comprar pelo WhatsApp
+                    </button>
 
                     <div class="trust-badges">
                         <div class="trust-item">
@@ -583,6 +796,9 @@ async function loadProductDetail(id) {
     } catch (error) {
         console.error("Erro detalhes:", error);
         content.innerHTML = "<p>Erro ao carregar.</p>";
+    } finally {
+        const customLoader = document.getElementById('custom-loader-overlay');
+        if (customLoader) customLoader.style.display = 'none';
     }
 }
 
@@ -973,7 +1189,7 @@ function renderReviewItem(data, isPending) {
 function initSlider() {
     const wrapper = document.querySelector('.slider-wrapper');
     const slides = document.querySelectorAll('.slide');
-    
+
     // Se não houver slider ou slides, cancela para evitar erros
     if (!wrapper || slides.length === 0) return;
 
@@ -983,7 +1199,7 @@ function initSlider() {
 
     setInterval(() => {
         currentIndex++;
-        
+
         // Se chegar no fim, volta para o primeiro
         if (currentIndex >= totalSlides) {
             currentIndex = 0;
