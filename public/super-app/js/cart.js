@@ -184,6 +184,7 @@ function updateSummary() {
 }
 
 function updateShippingProgressBar() {
+    /* 
     const box = document.getElementById('shipping-progress-box');
     const fill = document.getElementById('shipping-progress-fill');
     const text = document.getElementById('shipping-progress-text');
@@ -226,6 +227,9 @@ function updateShippingProgressBar() {
             text.innerHTML = `Faltam <strong>${remainingFmt}</strong> para Frete Grátis`;
         }
     }
+    */
+    const box = document.getElementById('shipping-progress-box');
+    if (box) box.style.display = 'none';
 }
 
 function setupCartEvents() {

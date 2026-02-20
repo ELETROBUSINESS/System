@@ -4,7 +4,7 @@
 const API_URLS = {
     CREATE_PREFERENCE: "https://createpreference-xsy57wqb6q-uc.a.run.app",
     CREATE_PAYMENT: "https://createpayment-xsy57wqb6q-uc.a.run.app",
-    CREATE_INFINITEPAY_LINK: "https://createinfinitepaylink-xsy57wqb6q-uc.a.run.app"
+    CREATE_INFINITEPAY_LINK: "https://us-central1-super-app25.cloudfunctions.net/createInfinitePayLink"
 };
 const MP_PUBLIC_KEY = "APP_USR-ab887886-2763-4265-8893-bf9513809bd1";
 

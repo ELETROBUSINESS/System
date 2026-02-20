@@ -165,16 +165,22 @@ function renderProductBatch(products) {
         const stock = parseInt(prod.stock || 0);
         const isSoldOut = stock <= 0;
 
+        // CRITÉRIO DE EXIBIÇÃO: Ter Nome, Preço > 0, NCM e URL de Imagem Válida
+        const hasNcm = prod.ncm && prod.ncm.trim() !== "" && prod.ncm !== "0";
+        const hasUrl = prod.imgUrl && prod.imgUrl.trim() !== "" && !prod.imgUrl.includes('placehold.co');
+
+        if (!hasNcm || !hasUrl) return;
+
         const html = `
             <div class="product-card ${isSoldOut ? 'sold-out' : ''}" id="prod-${prod.id}" onclick="window.location.href='index.html?id=${prod.id}'">
                 <div class="product-image">
                     <img src="${displayImg}" alt="${prod.name}" loading="lazy" onload="this.classList.add('loaded')">
-                    ${isSoldOut ? '<div style="position:absolute; bottom:0; width:100%; background:#ccc; color:#555; text-align:center; font-size:0.8rem; font-weight:700;">Esgotado</div>' : ''}
+                    ${isSoldOut ? '<div class="sold-out-badge" style="position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.6); color:#fff; text-align:center; font-size:0.75rem; font-weight:700; padding:2px 0; backdrop-filter:blur(2px);">Esgotado</div>' : ''}
                 </div>
                 <div class="product-info">
                     <h4 class="product-name">${prod.name}</h4>
                     ${priceHtml}
-                    <div class="free-shipping"><i class='bx bxs-truck'></i> Frete Grátis</div>
+                    ${!isSoldOut ? '<div class="free-shipping"><i class=\'bx bxs-truck\'></i> Frete Grátis</div>' : '<div class="free-shipping" style="color:#999"><i class=\'bx bx-time\'></i> Em breve</div>'}
                 </div>
             </div>`;
         container.insertAdjacentHTML('beforeend', html);
@@ -207,7 +213,11 @@ function setupSearch() {
             dropdown.style.display = 'block';
 
             const cached = getCachedData() || [];
-            let results = cached.filter(p => p.name.toLowerCase().includes(term)).slice(0, 5);
+            // Prioriza itens em estoque na busca
+            let results = cached.filter(p =>
+                p.name.toLowerCase().includes(term) &&
+                parseInt(p.stock || 0) > 0
+            ).slice(0, 5);
 
             if (results.length === 0) {
                 dropdown.innerHTML = '<div style="padding:10px; text-align:center; color:#666;">Nenhum produto encontrado.</div>';
@@ -500,11 +510,11 @@ function applyLocalFilter(cached, categoryStr) {
     }
 
     // Filtro de Restrição:
-    // Exibe itens sem foto APENAS se tiver "?pd26" na URL. 
-    // Caso contrário, bloqueia exibição de itens sem foto válida.
-    if (!window.location.search.includes('pd26')) {
-        filtered = filtered.filter(p => p.imgUrl && p.imgUrl.trim() !== '' && !p.imgUrl.includes('placehold.co'));
-    }
+    // Exibe apenas produtos com NCM e URL de imagem válida.
+    filtered = filtered.filter(p =>
+        (p.ncm && p.ncm.trim() !== "" && p.ncm !== "0") &&
+        (p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co'))
+    );
 
     productsBuffer = sortProductsForUX(filtered);
 }
