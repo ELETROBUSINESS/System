@@ -580,25 +580,46 @@
             border-left: 4px solid #d93025;
         }
 
-        /* ==================== OVERLAY DE PROCESSAMENTO EMOCIONAL ==================== */
-        #processing-overlay {
+        /* ==================== LOADER PADRÃO ==================== */
+        #custom-loader-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(5px);
-            z-index: 9999;
-            /* Acima de tudo */
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 99999;
             display: none;
-            /* Oculto por padrão */
             flex-direction: column;
-            align-items: center;
             justify-content: center;
-            text-align: center;
-            padding: 20px;
+            align-items: center;
             animation: fadeInOverlay 0.3s ease-out;
+        }
+
+        .loader {
+            width: 48px;
+            height: 48px;
+            background: var(--color-primary);
+            animation: rotate-loader 1s linear infinite;
+        }
+
+        @keyframes rotate-loader {
+            0% {
+                transform: rotate(0deg) scale(0.2);
+                border-radius: 10%;
+            }
+
+            50% {
+                transform: rotate(180deg) scale(1.5);
+                border-radius: 50%;
+            }
+
+            100% {
+                transform: rotate(360deg) scale(0.2);
+                border-radius: 10%;
+            }
         }
 
         @keyframes fadeInOverlay {
@@ -608,88 +629,6 @@
 
             to {
                 opacity: 1;
-            }
-        }
-
-        .processing-content {
-            max-width: 400px;
-        }
-
-        .processing-icon {
-            font-size: 4rem;
-            color: var(--color-primary);
-            /* Vermelho da marca */
-            margin-bottom: 20px;
-            animation: heartBeat 1.5s infinite;
-        }
-
-        @keyframes heartBeat {
-            0% {
-                transform: scale(1);
-            }
-
-            14% {
-                transform: scale(1.3);
-            }
-
-            28% {
-                transform: scale(1);
-            }
-
-            42% {
-                transform: scale(1.3);
-            }
-
-            70% {
-                transform: scale(1);
-            }
-        }
-
-        .processing-title {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: #333;
-            margin-bottom: 10px;
-        }
-
-        .processing-subtitle {
-            font-size: 1rem;
-            color: #666;
-            margin-bottom: 30px;
-        }
-
-        .processing-steps {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            font-size: 0.9rem;
-            color: #555;
-            opacity: 0.8;
-        }
-
-        .processing-step {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .spinner-mini {
-            width: 16px;
-            height: 16px;
-            border: 2px solid #ddd;
-            border-top: 2px solid var(--color-primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
             }
         }
 
@@ -871,16 +810,32 @@
                 <div class="shipping-row total"><span>Total Final:</span> <span id="payment-total-display">R$
                         0,00</span></div>
 
-                <div id="checkout-options" style="margin-top: 20px;">
+                <div id="checkout-options" style="margin-top: 20px; display: flex; flex-direction: column; gap: 12px;">
                     <p
-                        style="font-size: 0.9rem; color: var(--color-text-muted); margin-bottom: 15px; text-align: center;">
-                        Escolha como deseja concluir seu pedido:</p>
-                    <button class="cta-button" id="btn-pay-site" style="margin-top: 10px;">Pagar pelo site (Checkout
-                        Rápido)</button>
+                        style="font-size: 0.9rem; color: var(--color-text-muted); margin-bottom: 5px; text-align: center;">
+                        Escolha a forma de pagamento:</p>
+
+                    <!-- Opção Pix -->
+                    <button class="cta-button" id="btn-choice-pix"
+                        style="background: #fff; color: #00bfa5; border: 2px solid #00bfa5; margin-top: 5px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <img src="https://logopng.com.br/logos/pix-106.png"
+                            style="width: 20px; filter: grayscale(1) brightness(0.5) sepia(1) hue-rotate(130deg) saturate(500%);">
+                        Pagar com Pix
+                    </button>
+
+                    <!-- Opção Cartão -->
+                    <button class="cta-button" id="btn-choice-card"
+                        style="background: #fff; color: var(--color-secondary); border: 2px solid var(--color-secondary); margin-top: 0; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <i class='bx bx-credit-card' style="font-size: 1.4rem;"></i>
+                        Cartão de Crédito
+                    </button>
+
+                    <!-- Opção WhatsApp (Mantida) -->
                     <button class="cta-button" id="btn-pay-whatsapp"
-                        style="background-color: #25D366; margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 8px;"><i
-                            class='bx bxl-whatsapp' style="font-size: 1.3rem;"></i> Concluir pedido com
-                        atendente</button>
+                        style="background-color: #25D366; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <i class='bx bxl-whatsapp' style="font-size: 1.3rem;"></i>
+                        Concluir via WhatsApp
+                    </button>
                 </div>
 
                 <div id="payment-brick-wrapper" style="display: none;">
@@ -908,19 +863,10 @@
         </div>
     </main>
 
-    <div id="processing-overlay">
-        <div class="processing-content">
-            <i class='bx bxs-shopping-bag processing-icon'></i>
-            <h2 class="processing-title"></h2>
-            <p class="processing-subtitle">Essa compra já é quase sua...</p>
-
-            <div class="processing-steps">
-                <div class="processing-step">
-                    <div class="spinner-mini"></div>
-                    <span>Confirmando estoque...</span>
-                </div>
-            </div>
-        </div>
+    <div id="custom-loader-overlay" style="display: none;">
+        <span class="loader"></span>
+        <p class="loader-text" style="color: #666; margin-top: 20px; font-weight: 500; letter-spacing: 0.5px;">
+            preparando tudo para você</p>
     </div>
 
     <div id="toast-notification" class="toast"></div>

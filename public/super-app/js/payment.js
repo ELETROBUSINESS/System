@@ -9,20 +9,14 @@ let selectedStore = '';
 const STORE_OWNER_UID = "3zYT9Y6hXWeJSuvmEYP4FMZa5gI2";
 const APP_ID = 'floralchic-loja';
 
-// --- CONTROLE DO OVERLAY EMOCIONAL ---
+// --- CONTROLE DO LOADER PADRÃO ---
 function showProcessingOverlay() {
-    const overlay = document.getElementById('processing-overlay');
-    if (overlay) {
-        overlay.style.display = 'flex';
-        // Simula a mudança de textos para parecer progresso real
-        const steps = overlay.querySelectorAll('.processing-step span');
-        setTimeout(() => { if (steps[0]) steps[0].innerText = "Estoque reservado!"; }, 1000);
-        setTimeout(() => { if (steps[1]) steps[1].innerText = "Finalizando pedido..."; }, 2000);
-    }
+    const overlay = document.getElementById('custom-loader-overlay');
+    if (overlay) overlay.style.display = 'flex';
 }
 
 function hideProcessingOverlay() {
-    const overlay = document.getElementById('processing-overlay');
+    const overlay = document.getElementById('custom-loader-overlay');
     if (overlay) overlay.style.display = 'none';
 }
 
@@ -230,27 +224,79 @@ function setupStepNavigation() {
 function setupCheckoutOptions() {
     // Rendereiza resumo rápido e opções.
     const cart = CartManager.get();
-    let totalCard = 0;
-    cart.forEach(item => totalCard += ((item.priceBase || item.priceNew) * item.quantity));
+    const totalCard = cart.reduce((sum, item) => sum + ((item.priceBase || item.priceNew) * item.quantity), 0);
     const finalTotal = totalCard + currentShippingCost;
 
     document.getElementById("payment-subtotal-display").innerText = `R$ ${totalCard.toFixed(2).replace('.', ',')}`;
     document.getElementById("payment-total-display").innerText = `R$ ${finalTotal.toFixed(2).replace('.', ',')}`;
 
-    const btnSite = document.getElementById("btn-pay-site");
+    // Renderiza a lista de produtos no resumo
+    const listContainer = document.getElementById("payment-product-list");
+    if (listContainer) {
+        listContainer.innerHTML = '';
+        cart.forEach(item => {
+            const itemPrice = parseFloat(item.priceBase || item.priceNew);
+            const imgUrl = item.image || 'https://placehold.co/100x100/eee/999?text=Sem+Foto';
+            const html = `
+                <div class="product-summary-item">
+                    <img src="${imgUrl}" class="product-summary-img">
+                    <div class="product-summary-info">
+                        <div class="product-summary-name">${item.name}</div>
+                        <div class="product-summary-price">
+                            ${item.quantity}x R$ ${itemPrice.toFixed(2).replace('.', ',')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            listContainer.insertAdjacentHTML('beforeend', html);
+        });
+    }
+
+    const btnPix = document.getElementById("btn-choice-pix");
+    const btnCard = document.getElementById("btn-choice-card");
     const btnZap = document.getElementById("btn-pay-whatsapp");
 
-    // Limpa event listeners antigos clonando nodes se necessário para evitar re-bind:
-    const newBtnSite = btnSite.cloneNode(true);
-    btnSite.parentNode.replaceChild(newBtnSite, btnSite);
+    // Limpa event listeners antigos clonando nodes se necessário
+    const newBtnPix = btnPix.cloneNode(true);
+    btnPix.parentNode.replaceChild(newBtnPix, btnPix);
+
+    const newBtnCard = btnCard.cloneNode(true);
+    btnCard.parentNode.replaceChild(newBtnCard, btnCard);
 
     const newBtnZap = btnZap.cloneNode(true);
     btnZap.parentNode.replaceChild(newBtnZap, btnZap);
 
-    newBtnSite.addEventListener("click", async () => {
-        document.getElementById("checkout-options").style.display = "none";
-        document.getElementById("payment-brick-wrapper").style.display = "block";
-        await initPaymentBrick();
+    // LÓGICA PIX
+    newBtnPix.addEventListener("click", async () => {
+        showProcessingOverlay();
+        try {
+            const checkoutData = await startCustomCheckout('pix');
+            if (checkoutData && checkoutData.point_of_interaction) {
+                hideProcessingOverlay();
+                showPixScreen(checkoutData);
+            }
+        } catch (e) {
+            hideProcessingOverlay();
+            showToast("Erro ao gerar Pix", "error");
+        }
+    });
+
+    // LÓGICA CARTÃO (INTEGRAÇÃO INFINITEPAY)
+    newBtnCard.addEventListener("click", async () => {
+        showProcessingOverlay();
+        try {
+            const checkoutData = await startInfinitePayCheckout();
+            if (checkoutData && checkoutData.url) {
+                // Redireciona para o checkout seguro da InfinitePay
+                window.location.href = checkoutData.url;
+            } else {
+                throw new Error("Link incompleto");
+            }
+        } catch (e) {
+            hideProcessingOverlay();
+            showToast("Erro ao processar cartão. Tente novamente ou use Pix.", "error");
+            console.error(e);
+        }
     });
 
     newBtnZap.addEventListener("click", () => {
@@ -426,101 +472,10 @@ function updateTotalDisplay() {
     document.getElementById("payment-total-display").innerText = `R$ ${finalTotal.toFixed(2).replace('.', ',')}`;
 }
 
-// --- FUNÇÃO PRINCIPAL DO BRICK ---
-async function initPaymentBrick() {
-    const loadingEl = document.getElementById("brick-loading-message");
-    if (loadingEl) {
-        loadingEl.style.display = 'block';
-        loadingEl.innerText = "Preparando valores...";
-    }
-
-    let cart;
-    try {
-        cart = await validateCartPrices(CartManager.get());
-    } catch (e) {
-        console.error("Erro crítico validação:", e);
-        return;
-    }
-
-    const productsTotalCard = cart.reduce((sum, item) => sum + ((item.priceBase || item.priceNew) * item.quantity), 0);
+async function startCustomCheckout(method) {
+    const cart = await validateCartPrices(CartManager.get());
     const productsTotalPix = cart.reduce((sum, item) => sum + ((item.pricePix || item.priceNew) * item.quantity), 0);
-
-    const finalTotalCard = productsTotalCard + currentShippingCost;
     const finalTotalPix = productsTotalPix + currentShippingCost;
-
-    const savings = finalTotalCard - finalTotalPix;
-    const interestFreeMax = getInterestFreeSteps(finalTotalCard);
-
-    // --- RENDERIZA A LISTA ---
-    const listContainer = document.getElementById("payment-product-list");
-    if (listContainer) {
-        listContainer.innerHTML = '';
-        cart.forEach(item => {
-            const itemPrice = parseFloat(item.priceBase || item.priceNew);
-            const imgUrl = item.image || 'https://placehold.co/100x100/eee/999?text=Sem+Foto';
-
-            const parcelas = interestFreeMax;
-            const valorParcela = itemPrice / parcelas;
-            const valorFormatado = valorParcela.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-            let badgeHtml = '';
-            if (interestFreeMax > 1) {
-                badgeHtml = `
-                <div class="installment-warning" style="background-color: #e8f5e9; color: #1b5e20; border-color: #c8e6c9;">
-                    <i class='bx bx-credit-card'></i> 
-                    Até ${parcelas}x de ${valorFormatado} sem juros
-                </div>`;
-            } else {
-                badgeHtml = `<div class="installment-warning">Preço à vista</div>`;
-            }
-
-            const html = `
-                <div class="product-summary-item">
-                    <img src="${imgUrl}" class="product-summary-img">
-                    <div class="product-summary-info">
-                        <div class="product-summary-name">${item.name}</div>
-                        <div class="product-summary-price">
-                            ${item.quantity}x R$ ${itemPrice.toFixed(2).replace('.', ',')}
-                        </div>
-                        ${badgeHtml}
-                    </div>
-                </div>
-            `;
-            listContainer.insertAdjacentHTML('beforeend', html);
-        });
-
-        if (savings > 0) {
-            const savingsFormatted = savings.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            const pixTotalFormatted = finalTotalPix.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-            const economyHtml = `
-            <div style="
-                background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-                color: #064e3b;
-                border: 1px solid #34d399;
-                border-radius: 8px;
-                padding: 12px;
-                margin-top: 15px;
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            ">
-                <i class='bx bxs-offer' style="font-size: 2rem; color: #059669;"></i>
-                <div>
-                    <div style="font-weight: 800; font-size: 0.95rem; text-transform: uppercase;">Economize ${savingsFormatted} no Pix!</div>
-                    <div style="font-size: 0.85rem;">Total final selecionando Pix: <strong>${pixTotalFormatted}</strong></div>
-                </div>
-            </div>
-            `;
-            listContainer.insertAdjacentHTML('beforeend', economyHtml);
-        }
-    }
-
-    if (productsTotalCard <= 0) return;
-
-    document.getElementById("payment-subtotal-display").innerText = `R$ ${productsTotalCard.toFixed(2).replace('.', ',')}`;
-    document.getElementById("payment-total-display").innerText = `R$ ${finalTotalCard.toFixed(2).replace('.', ',')}`;
 
     const fullName = document.getElementById("reg-full-name").value;
     const parts = fullName.split(' ');
@@ -533,98 +488,93 @@ async function initPaymentBrick() {
     const cleanCpf = rawCpf.replace(/\D/g, '');
     let email = document.getElementById("reg-email").value;
     if ((!email || email.trim() === "") && auth.currentUser) email = auth.currentUser.email;
-    if (!email || email.trim() === "") email = "cliente@rapidbuy.com.br";
+    if (!email || email.trim() === "") email = "cliente@eletrobusiness.com.br";
 
-    let uid = 'guest';
-    const user = auth.currentUser;
-    if (user && user.uid) {
-        uid = user.uid;
-    } else {
-        let localUid = localStorage.getItem('guest_uid');
-        if (!localUid) {
-            localUid = 'guest_' + Date.now();
-            localStorage.setItem('guest_uid', localUid);
-        }
-        uid = localUid;
-    }
+    const uid = auth.currentUser ? auth.currentUser.uid : (localStorage.getItem('guest_uid') || 'guest_' + Date.now());
 
-    const cep = document.getElementById("cep").value.replace(/\D/g, '') || "00000000";
     const street = document.getElementById("address").value || "Retirada";
-    const number = document.getElementById("num").value || "0";
     const city = document.getElementById("city-select").value || "Cidade";
 
-    try {
-        const response = await fetch(API_URLS.CREATE_PREFERENCE, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                items: cart,
-                shippingCost: currentShippingCost,
-                interestFreeSteps: interestFreeMax,
-                deliveryData: {
-                    mode: deliveryMode,
-                    store: selectedStore,
-                    address: deliveryMode === 'delivery' ? street : null,
-                },
-                clientData: { firstName, lastName, phone: rawPhone, email, cpf: rawCpf },
-                userId: uid
-            }),
-        });
+    // 1. Cria Preferência
+    const prefResponse = await fetch(API_URLS.CREATE_PREFERENCE, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            account: 'eletropay', // REQUISITO: Conta 45692327000100
+            items: cart,
+            shippingCost: currentShippingCost,
+            deliveryData: { mode: deliveryMode, store: selectedStore, address: street },
+            clientData: { firstName, lastName, phone: rawPhone, email, cpf: rawCpf },
+            userId: uid
+        }),
+    });
 
-        const data = await response.json();
-        if (!data.preferenceId) throw new Error("ID pref inválido");
+    const prefData = await prefResponse.json();
+    if (!prefData.orderId) throw new Error("Erro ao gerar Pedido");
 
-        if (paymentBrickController) paymentBrickController.unmount();
-
-        const builder = mp.bricks();
-        const settings = {
-            initialization: {
-                amount: finalTotalCard,
-                preferenceId: data.preferenceId,
-                payer: {
-                    email: email,
-                    firstName: firstName, lastName: lastName,
-                    identification: { type: 'CPF', number: cleanCpf ? cleanCpf : "00000000000" },
-                    address: { zip_code: cep, street_name: street, street_number: number, city: city }
-                },
+    // 2. Cria Pagamento Pix
+    const payResponse = await fetch(API_URLS.CREATE_PAYMENT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            account: 'eletropay', // REQUISITO: Conta 45692327000100
+            payment_data: {
+                transaction_amount: finalTotalPix,
+                payment_method_id: 'pix',
+                description: `Pedido Super App #${prefData.orderId.substring(0, 6)}`
             },
-            customization: {
-                paymentMethods: {
-                    creditCard: 'all', debitCard: 'all', ticket: [], bankTransfer: ['pix'],
-                    maxInstallments: 12
-                },
-                visual: { style: { theme: 'light' }, hidePaymentButton: false }
-            },
-            callbacks: {
-                onReady: () => { if (loadingEl) loadingEl.style.display = 'none'; },
+            orderId: prefData.orderId,
+            items: cart,
+            shippingCost: currentShippingCost,
+            customPayer: {
+                email, first_name: firstName, last_name: lastName,
+                identification: { type: "CPF", number: cleanCpf || "00000000000" },
+                phone: { area_code: cleanPhone.substring(0, 2), number: cleanPhone.substring(2) },
+                address: { zip_code: "00000000", street_name: street, city: city }
+            }
+        })
+    });
 
-                // === AQUI ESTÁ A MUDANÇA PRINCIPAL ===
-                onSubmit: ({ formData }) => {
-                    // 1. MOSTRA O OVERLAY DE EMOÇÃO/DESEJO IMEDIATAMENTE
-                    showProcessingOverlay();
+    return await payResponse.json();
+}
 
-                    // 2. Continua o fluxo normal
-                    let amountToCharge = finalTotalCard;
-                    if (formData.payment_method_id === 'pix') {
-                        amountToCharge = finalTotalPix;
-                        formData.transaction_amount = amountToCharge;
-                    }
+async function startInfinitePayCheckout() {
+    const cart = await validateCartPrices(CartManager.get());
 
-                    return processPaymentSubmit(formData, data.orderId, cart, amountToCharge, uid, firstName, lastName, email, cleanCpf, cleanPhone, street, number, city, rawPhone, rawCpf);
-                },
-                onError: (error) => {
-                    console.error(error);
-                    hideProcessingOverlay(); // Esconde se der erro
-                    showToast("Erro pagamento", "error");
-                },
-            },
-        };
-        paymentBrickController = await builder.create("payment", "payment-brick-container", settings);
+    const fullName = document.getElementById("reg-full-name").value;
+    const parts = fullName.split(' ');
+    const firstName = parts[0];
+    const lastName = parts.slice(1).join(' ');
 
-    } catch (e) {
-        console.error("Erro fatal:", e);
-        if (loadingEl) loadingEl.innerText = "Erro ao carregar.";
-    }
+    const rawPhone = document.getElementById("reg-phone").value;
+    let email = document.getElementById("reg-email").value;
+    if ((!email || email.trim() === "") && auth.currentUser) email = auth.currentUser.email;
+
+    const uid = auth.currentUser ? auth.currentUser.uid : (localStorage.getItem('guest_uid') || 'guest_' + Date.now());
+
+    const street = document.getElementById("address").value || "Retirada";
+
+    const response = await fetch(API_URLS.CREATE_INFINITEPAY_LINK, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            account: 'eletropay', // REQUISITO: Conta 45692327000100
+            items: cart,
+            shippingCost: currentShippingCost,
+            deliveryData: { mode: deliveryMode, store: selectedStore, address: street },
+            clientData: { firstName, lastName, phone: rawPhone, email },
+            userId: uid
+        }),
+    });
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
+    return data;
+}
+
+// --- FUNÇÃO ANTIGA DO BRICK (Pode ser removida ou deixada legada) ---
+async function initPaymentBrick() {
+    // ... mantido ou removido se não for mais usar ...
 }
 
 function processPaymentSubmit(formData, orderId, cart, finalTotal, uid, fName, lName, email, cpf, phone, street, num, city, rawPhone, rawCpf) {

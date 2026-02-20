@@ -3,9 +3,10 @@
 // --- 1. CONFIGURAÇÕES ---
 const API_URLS = {
     CREATE_PREFERENCE: "https://createpreference-xsy57wqb6q-uc.a.run.app",
-    CREATE_PAYMENT: "https://createpayment-xsy57wqb6q-uc.a.run.app"
+    CREATE_PAYMENT: "https://createpayment-xsy57wqb6q-uc.a.run.app",
+    CREATE_INFINITEPAY_LINK: "https://createinfinitepaylink-xsy57wqb6q-uc.a.run.app"
 };
-const MP_PUBLIC_KEY = "APP_USR-ab887886-2763-4265-8893-bf9513809bd1"; 
+const MP_PUBLIC_KEY = "APP_USR-ab887886-2763-4265-8893-bf9513809bd1";
 
 // Variáveis globais acessíveis em outras páginas
 let currentUser = null;
@@ -39,8 +40,8 @@ document.addEventListener("DOMContentLoaded", () => {
         document.dispatchEvent(new CustomEvent('userReady', { detail: user }));
     });
 
-    updateCartBadge(); 
-    setupGlobalEvents(); 
+    updateCartBadge();
+    setupGlobalEvents();
 });
 
 // --- 3. GERENCIAMENTO DO CARRINHO ---
@@ -106,7 +107,7 @@ function showToast(msg, type = "success") {
 function updateUserUI(user) {
     const desktopGreeting = document.getElementById("desktop-profile-trigger");
     const mobileBtn = document.getElementById("profile-button-mobile");
-    
+
     // Elementos do Modal de Perfil
     const modalLoggedIn = document.getElementById("user-logged-in-view");
     const modalLoggedOut = document.getElementById("user-logged-out-view");
@@ -140,14 +141,14 @@ function updateUserUI(user) {
         if (modalLoggedIn && modalLoggedOut) {
             modalLoggedIn.style.display = "block"; // Mostra painel logado
             modalLoggedOut.style.display = "none"; // Esconde botão de login
-            
+
             if (profilePic) profilePic.src = photoUrl;
             if (profileName) profileName.innerText = user.displayName;
         }
 
     } else {
         // --- USUÁRIO DESLOGADO ---
-        
+
         // 1. Reset Header Desktop
         if (desktopGreeting) {
             desktopGreeting.innerHTML = `<span>olá, faça seu login</span><strong>ou cadastre-se</strong>`;
@@ -202,12 +203,12 @@ function setupGlobalEvents() {
     // Menu "Mais" e Modais globais (Perfil)
     const profileBtn = document.getElementById("profile-button-mobile"); // Botão mobile
     const profileModal = document.getElementById("user-profile-modal");
-    
+
     // O botão desktop já tem lógica inline no HTML, mas o mobile precisa disso:
     if (profileBtn && profileModal) {
         profileBtn.addEventListener("click", () => profileModal.classList.add("show"));
-        
+
         const closeBtn = profileModal.querySelector(".modal-close");
-        if(closeBtn) closeBtn.addEventListener("click", () => profileModal.classList.remove("show"));
+        if (closeBtn) closeBtn.addEventListener("click", () => profileModal.classList.remove("show"));
     }
 }
