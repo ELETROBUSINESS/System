@@ -165,11 +165,10 @@ function renderProductBatch(products) {
         const stock = parseInt(prod.stock || 0);
         const isSoldOut = stock <= 0;
 
-        // CRITÉRIO DE EXIBIÇÃO: Ter Nome, Preço > 0, NCM e URL de Imagem Válida
-        const hasNcm = prod.ncm && prod.ncm.trim() !== "" && prod.ncm !== "0";
+        // CRITÉRIO DE EXIBIÇÃO: Ter Nome, Preço > 0 e URL de Imagem Válida
         const hasUrl = prod.imgUrl && prod.imgUrl.trim() !== "" && !prod.imgUrl.includes('placehold.co');
 
-        if (!hasNcm || !hasUrl) return;
+        if (!hasUrl) return;
 
         const html = `
             <div class="product-card ${isSoldOut ? 'sold-out' : ''}" id="prod-${prod.id}" onclick="window.location.href='index.html?id=${prod.id}'">
@@ -510,10 +509,9 @@ function applyLocalFilter(cached, categoryStr) {
     }
 
     // Filtro de Restrição:
-    // Exibe apenas produtos com NCM e URL de imagem válida.
+    // Exibe apenas produtos com URL de imagem válida.
     filtered = filtered.filter(p =>
-        (p.ncm && p.ncm.trim() !== "" && p.ncm !== "0") &&
-        (p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co'))
+        p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co')
     );
 
     productsBuffer = sortProductsForUX(filtered);
