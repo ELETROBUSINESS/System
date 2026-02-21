@@ -20,7 +20,7 @@
             border: 1px solid #e0e0e0;
             transition: all 0.3s ease;
         }
-        
+
         /* Animação Especial de Sucesso */
         .shipping-progress-container.celebrate {
             animation: popSuccess 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -30,10 +30,21 @@
         }
 
         @keyframes popSuccess {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            70% { transform: scale(0.98); }
-            100% { transform: scale(1); }
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            70% {
+                transform: scale(0.98);
+            }
+
+            100% {
+                transform: scale(1);
+            }
         }
 
         .shipping-progress-text {
@@ -72,7 +83,8 @@
         /* ==================== TEXTO DE ECONOMIA SIMPLES ==================== */
         .pix-economy-text {
             font-size: 0.85rem;
-            color: #00a650; /* Verde */
+            color: #00a650;
+            /* Verde */
             font-weight: 600;
             margin-top: 4px;
             text-align: right;
@@ -81,10 +93,12 @@
 
         /* AJUSTE DE FONTE DO HEADER */
         .logo {
-            font-family: 'Roboto', sans-serif !important; /* Força a fonte padrão */
+            font-family: 'Roboto', sans-serif !important;
+            /* Força a fonte padrão */
             font-weight: 700 !important;
             letter-spacing: 0 !important;
-            text-transform: none !important; /* Remove caixa alta forçada se houver */
+            text-transform: none !important;
+            /* Remove caixa alta forçada se houver */
         }
     </style>
 </head>
@@ -122,11 +136,12 @@
 
         <div id="cart-summary-box" class="cart-summary" style="display: none;">
             <h3>Resumo</h3>
-            <div class="summary-line total" style="margin-top: 0; border-top: none; padding-top: 0; align-items: flex-start;">
+            <div class="summary-line total"
+                style="margin-top: 0; border-top: none; padding-top: 0; align-items: flex-start;">
                 <span>Total</span>
                 <div style="text-align: right;">
-                    <span id="summary-total-value">R$ 0,00</span>
-                    <div id="summary-savings-text"></div>
+                    <div id="summary-total-value">R$ 0,00</div>
+                    <div id="summary-savings-text" style="margin-top: 5px;"></div>
                 </div>
             </div>
             <button id="go-to-checkout" class="cta-button checkout-btn">Finalizar Compra</button>
@@ -149,7 +164,8 @@
             <div id="user-logged-out-view">
                 <h3>Login Necessário</h3>
                 <p>Faça login para finalizar sua compra.</p>
-                <button class="google-login-button" id="google-login-button"><i class='bx bxl-google'></i> Entrar com Google</button>
+                <button class="google-login-button" id="google-login-button"><i class='bx bxl-google'></i> Entrar com
+                    Google</button>
             </div>
             <div id="user-logged-in-view" style="display:none;"></div>
         </div>
@@ -163,4 +179,5 @@
     <script src="js/global.js"></script>
     <script src="js/cart.js"></script>
 </body>
+
 </html>

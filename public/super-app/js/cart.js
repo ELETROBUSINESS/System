@@ -164,21 +164,34 @@ function updateSummary() {
 
     const savings = totalReal - totalPix;
 
-    // Atualiza Total Principal (Valor REAL/Cheio)
+    // Atualiza Total Principal
     const totalEl = document.getElementById("summary-total-value");
+    const savingsContainer = document.getElementById("summary-savings-text");
+
     if (totalEl) {
         totalEl.style.opacity = "1";
-        totalEl.innerText = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalReal);
-    }
 
-    // Atualiza Texto de Economia Simples
-    const savingsContainer = document.getElementById("summary-savings-text");
-    if (savingsContainer) {
         if (savings > 0.05) {
-            const savingsFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(savings);
-            savingsContainer.innerHTML = `<span class="pix-economy-text">Economize ${savingsFmt} no Pix</span>`;
+            // Se houver economia, mostra o valor Pix como principal
+            const fmtPix = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalPix);
+            const fmtReal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalReal);
+
+            totalEl.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                    <span style="font-size: 0.85rem; color: #999; text-decoration: line-through; margin-bottom: 2px;">${fmtReal}</span>
+                    <span style="color: #00a650; font-weight: 800; font-size: 1.4rem;">${fmtPix}</span>
+                    <small style="font-size: 0.75rem; color: #666; font-weight: 500; margin-top: -2px;">no Pix</small>
+                </div>
+            `;
+
+            if (savingsContainer) {
+                const savingsFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(savings);
+                savingsContainer.innerHTML = `<span class="pix-economy-text" style="color: #00a650; background: #e8f5e9; padding: 4px 8px; border-radius: 4px; border: 1px solid #c8e6c9;">Você economiza ${savingsFmt}</span>`;
+            }
         } else {
-            savingsContainer.innerHTML = "";
+            // Sem economia, mostra normal
+            totalEl.innerText = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalReal);
+            if (savingsContainer) savingsContainer.innerHTML = "";
         }
     }
 }

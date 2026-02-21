@@ -64,8 +64,8 @@ async function validateCartPrices(localCart) {
             const officialPriceCard = valPrice > 0 ? valPrice : (item.priceNew || 0);
             const officialPricePix = hasOffer ? valOffer : officialPriceCard;
 
-            if (Math.abs(item.priceNew - officialPriceCard) > 0.05 && Math.abs(item.priceNew - officialPricePix) > 0.05) {
-                item.priceNew = officialPriceCard;
+            if (Math.abs(item.priceNew - officialPricePix) > 0.05) {
+                item.priceNew = officialPricePix;
                 hasChanges = true;
             }
 
@@ -224,18 +224,57 @@ function setupStepNavigation() {
 function setupCheckoutOptions() {
     // Rendereiza resumo rápido e opções.
     const cart = CartManager.get();
-    const totalCard = cart.reduce((sum, item) => sum + ((item.priceBase || item.priceNew) * item.quantity), 0);
-    const finalTotal = totalCard + currentShippingCost;
 
-    document.getElementById("payment-subtotal-display").innerText = `R$ ${totalCard.toFixed(2).replace('.', ',')}`;
-    document.getElementById("payment-total-display").innerText = `R$ ${finalTotal.toFixed(2).replace('.', ',')}`;
+    let totalPix = 0;
+    let totalReal = 0;
+
+    cart.forEach(item => {
+        const qty = item.quantity || 1;
+        const pPix = parseFloat(item.pricePix || item.priceNew || 0);
+        let pReal = parseFloat(item.priceBase || item.priceOriginal || 0);
+        if (pReal === 0 || pReal < pPix) pReal = pPix;
+
+        totalPix += pPix * qty;
+        totalReal += pReal * qty;
+    });
+
+    const finalTotalPix = totalPix + currentShippingCost;
+    const finalTotalReal = totalReal + currentShippingCost;
+    const savings = totalReal - totalPix;
+
+    // Atualiza Subtotal (Valor Cheio)
+    const subtotalEl = document.getElementById("payment-subtotal-display");
+    if (subtotalEl) {
+        subtotalEl.innerText = `R$ ${totalReal.toFixed(2).replace('.', ',')}`;
+    }
+
+    // Atualiza Total Final com ênfase no Pix
+    const totalEl = document.getElementById("payment-total-display");
+    if (totalEl) {
+        if (savings > 0.05) {
+            totalEl.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                    <span style="font-size: 0.9rem; color: #999; text-decoration: line-through; font-weight: normal;">R$ ${finalTotalReal.toFixed(2).replace('.', ',')}</span>
+                    <span style="color: #00a650;">R$ ${finalTotalPix.toFixed(2).replace('.', ',')}</span>
+                    <small style="font-size: 0.75rem; color: #666; font-weight: 500; margin-top: -2px;">no Pix (Economize R$ ${savings.toFixed(2).replace('.', ',')})</small>
+                </div>
+            `;
+        } else {
+            totalEl.innerText = `R$ ${finalTotalReal.toFixed(2).replace('.', ',')}`;
+        }
+    }
 
     // Renderiza a lista de produtos no resumo
     const listContainer = document.getElementById("payment-product-list");
     if (listContainer) {
         listContainer.innerHTML = '';
         cart.forEach(item => {
-            const itemPrice = parseFloat(item.priceBase || item.priceNew);
+            const pPix = parseFloat(item.pricePix || item.priceNew || 0);
+            let pReal = parseFloat(item.priceBase || item.priceOriginal || 0);
+            if (pReal === 0 || pReal < pPix) pReal = pPix;
+
+            const hasDiscount = (pReal - pPix) > 0.05;
+
             const imgUrl = item.image || 'https://placehold.co/100x100/eee/999?text=Sem+Foto';
             const html = `
                 <div class="product-summary-item">
@@ -243,7 +282,8 @@ function setupCheckoutOptions() {
                     <div class="product-summary-info">
                         <div class="product-summary-name">${item.name}</div>
                         <div class="product-summary-price">
-                            ${item.quantity}x R$ ${itemPrice.toFixed(2).replace('.', ',')}
+                            ${item.quantity}x ${hasDiscount ? `<span style="text-decoration:line-through; font-size:0.7rem; color:#999;">R$ ${pReal.toFixed(2).replace('.', ',')}</span> ` : ''}
+                            <span style="${hasDiscount ? 'color:#00a650; font-weight:700;' : ''}">R$ ${pPix.toFixed(2).replace('.', ',')}</span>
                         </div>
                     </div>
                 </div>
@@ -477,10 +517,43 @@ function calculateShipping() {
 }
 
 function updateTotalDisplay() {
-    const productsTotal = CartManager.total();
-    const finalTotal = productsTotal + currentShippingCost;
-    document.getElementById("payment-shipping-display").innerText = currentShippingCost === 0 ? "Grátis" : `R$ ${currentShippingCost.toFixed(2).replace('.', ',')}`;
-    document.getElementById("payment-total-display").innerText = `R$ ${finalTotal.toFixed(2).replace('.', ',')}`;
+    const cart = CartManager.get();
+    let totalPix = 0;
+    let totalReal = 0;
+
+    cart.forEach(item => {
+        const qty = item.quantity || 1;
+        const pPix = parseFloat(item.pricePix || item.priceNew || 0);
+        let pReal = parseFloat(item.priceBase || item.priceOriginal || 0);
+        if (pReal === 0 || pReal < pPix) pReal = pPix;
+
+        totalPix += pPix * qty;
+        totalReal += pReal * qty;
+    });
+
+    const finalTotalPix = totalPix + currentShippingCost;
+    const finalTotalReal = totalReal + currentShippingCost;
+    const savings = totalReal - totalPix;
+
+    const shippingEl = document.getElementById("payment-shipping-display");
+    if (shippingEl) {
+        shippingEl.innerText = currentShippingCost === 0 ? "Grátis" : `R$ ${currentShippingCost.toFixed(2).replace('.', ',')}`;
+    }
+
+    const totalEl = document.getElementById("payment-total-display");
+    if (totalEl) {
+        if (savings > 0.05) {
+            totalEl.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                    <span style="font-size: 0.9rem; color: #999; text-decoration: line-through; font-weight: normal;">R$ ${finalTotalReal.toFixed(2).replace('.', ',')}</span>
+                    <span style="color: #00a650;">R$ ${finalTotalPix.toFixed(2).replace('.', ',')}</span>
+                    <small style="font-size: 0.75rem; color: #666; font-weight: 500; margin-top: -2px;">no Pix (Economize R$ ${savings.toFixed(2).replace('.', ',')})</small>
+                </div>
+            `;
+        } else {
+            totalEl.innerText = `R$ ${finalTotalReal.toFixed(2).replace('.', ',')}`;
+        }
+    }
 }
 
 async function startCustomCheckout(method) {
