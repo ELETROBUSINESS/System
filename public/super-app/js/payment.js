@@ -176,7 +176,8 @@ function setupStepNavigation() {
         const phone = document.getElementById("reg-phone").value.trim();
         const cpfInput = document.getElementById("reg-cpf");
         const cpfVal = cpfInput ? cpfInput.value.trim() : "";
-        const emailInput = document.getElementById("reg-email").value;
+        const emailField = document.getElementById("reg-email");
+        const emailInput = emailField ? emailField.value : "";
 
         if (!fullName || !phone) {
             showToast("Preencha seu Nome e Celular.", "error");
@@ -570,7 +571,8 @@ async function startCustomCheckout(method) {
     const cleanPhone = rawPhone.replace(/\D/g, '');
     const rawCpf = document.getElementById("reg-cpf") ? document.getElementById("reg-cpf").value : "";
     const cleanCpf = rawCpf.replace(/\D/g, '');
-    let email = document.getElementById("reg-email").value;
+    const emailField = document.getElementById("reg-email");
+    let email = emailField ? emailField.value : "";
     if ((!email || email.trim() === "") && auth.currentUser) email = auth.currentUser.email;
     if (!email || email.trim() === "") email = "cliente@eletrobusiness.com.br";
 
@@ -631,7 +633,8 @@ async function startInfinitePayCheckout() {
     const lastName = parts.slice(1).join(' ');
 
     const rawPhone = document.getElementById("reg-phone").value;
-    let email = document.getElementById("reg-email").value;
+    const emailField = document.getElementById("reg-email");
+    let email = emailField ? emailField.value : "";
     if ((!email || email.trim() === "") && auth.currentUser) email = auth.currentUser.email;
 
     const uid = auth.currentUser ? auth.currentUser.uid : (localStorage.getItem('guest_uid') || 'guest_' + Date.now());
