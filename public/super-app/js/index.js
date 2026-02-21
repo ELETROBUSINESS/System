@@ -154,11 +154,10 @@ function renderProductBatch(products) {
                     <span class="card-savings">Economize ${fmtSavings}</span>
                 </div>`;
         } else {
-            // NÃO TEM OFERTA: Mostra parcelamento calculado com a base correta
+            // NÃO TEM OFERTA: Mostra apenas o preço normal
             priceHtml = `
                 <div class="price-container">
                     <span class="price-new">${fmtNormal}</span>
-                    <span class="card-savings">${maxInst}x de ${fmtInst} sem juros</span>
                 </div>`;
         }
 
@@ -212,10 +211,9 @@ function setupSearch() {
             dropdown.style.display = 'block';
 
             const cached = getCachedData() || [];
-            // Prioriza itens em estoque na busca
+            // Busca em todos os itens (estoque ou esgotados)
             let results = cached.filter(p =>
-                p.name.toLowerCase().includes(term) &&
-                parseInt(p.stock || 0) > 0
+                p.name.toLowerCase().includes(term)
             ).slice(0, 5);
 
             if (results.length === 0) {
@@ -618,12 +616,10 @@ async function loadProductDetail(id) {
                 <div class="detail-price-old">${fmtOld}</div>
                 <div class="detail-price-current">${fmtFinal}</div>
                 <span class="detail-savings-text">Você economiza ${fmtSavings}</span>
-                ${installmentBlock}
             `;
         } else {
             priceBlock = `
                 <div class="detail-price-current">${fmtFinal}</div>
-                ${installmentBlock}
             `;
         }
 

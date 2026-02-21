@@ -5,6 +5,7 @@ const CLIENTES_SHEET_NAME = "clientes";
 const LOGS_SHEET_NAME = "logs";
 const CAIXA_SHEET_NAME = "caixa_movimentos"; // (NOVO)
 const FISCAL_SHEET_NAME = "fiscal";
+const PEDIDOS_SHEET_NAME = "pedidos"; // (NOVO) Geração de pedidos do Super App
 
 // Validação de comprovante
 
@@ -66,6 +67,18 @@ function doPost(e) {
         // 6. Abater Estoque em Lote (NOVO)
         else if (action === "abaterEstoqueLote") {
             const result = abaterEstoqueLote(data.itens);
+            return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        // 7. Salvar Pedido Super App (Redundância)
+        else if (action === "salvarPedido") {
+            const result = salvarPedidoSuperApp(data.data);
+            return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        // 8. Atualizar Status de Pagamento
+        else if (action === "atualizarStatusPedido") {
+            const result = atualizarStatusPedidoSuperApp(data.orderId, data.status);
             return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
         }
 
@@ -316,6 +329,10 @@ function doGet(e) {
             response = listarTodosProdutos();
         }
 
+        else if (action === "buscarPrecoPorNome") {
+            response = buscarPrecoPorNome(e.parameter.nome);
+        }
+
         else if (action === "alterarVencimentoManual") {
             response = alterarVencimentoManual(e.parameter.idCliente, e.parameter.novaData);
         }
@@ -411,6 +428,11 @@ function doGet(e) {
             response = renegociarSaldoCliente(e.parameter.idCliente, e.parameter.novaData, e.parameter.parcelas);
         }
 
+        // --- SUPER APP ---
+        else if (action === "listarProdutosSuperApp") {
+            response = listarProdutosSuperApp();
+        }
+
         // --- AÇÃO DESCONHECIDA ---
         else {
             response = { status: "error", message: "Ação inválida: " + action };
@@ -431,6 +453,173 @@ function doGet(e) {
     // Retorno universal em JSON
     return ContentService.createTextOutput(JSON.stringify(response))
         .setMimeType(ContentService.MimeType.JSON);
+}
+
+function listarProdutosSuperApp() {
+    try {
+        const sheet = getSheet(PRODUTOS_SHEET_NAME);
+        const dataRaw = sheet.getDataRange().getValues();
+        if (dataRaw.length <= 1) return { status: "success", data: [] };
+
+        const headers = dataRaw[0].map(h => String(h).toLowerCase().trim());
+        const produtos = [];
+
+        const idxCodigo = headers.indexOf("codigo") !== -1 ? headers.indexOf("codigo") : 0;
+        const idxNome = headers.indexOf("nome") !== -1 ? headers.indexOf("nome") : 1;
+        const idxPreco = headers.indexOf("preco") !== -1 ? headers.indexOf("preco") : 2;
+        const idxNcm = headers.indexOf("ncm");
+        const idxPromo = Math.max(headers.indexOf("promocional"), headers.indexOf("promocao"));
+        const idxCat = Math.max(headers.indexOf("categoria"), headers.indexOf("category"));
+        const idxDesc = Math.max(headers.indexOf("descricao"), headers.indexOf("description"));
+        const idxImgUrl = Math.max(headers.indexOf("imgurl"), headers.indexOf("img url"));
+        const idxWebPrice = headers.indexOf("web_price");
+
+        for (let i = 1; i < dataRaw.length; i++) {
+            const row = dataRaw[i];
+
+            // 1. Mapeia NCM se disponível
+            const ncm = idxNcm !== -1 ? String(row[idxNcm] || "").trim() : "";
+
+            // 2. Coleta Estoque (Coluna P - Index 15 ou Header nominal)
+            let estoque = parseFloat(row[15]) || 0;
+            if (headers.indexOf("estoque atual") !== -1) {
+                estoque = parseFloat(row[headers.indexOf("estoque atual")]) || 0;
+            }
+
+            const codigo = String(row[idxCodigo] || "");
+            if (!codigo) continue;
+
+            let precoNum = 0;
+            if (idxPreco !== -1) {
+                let pString = String(row[idxPreco]).replace("R$", "").trim().replace(",", ".");
+                precoNum = parseFloat(pString) || 0;
+            }
+
+            const prodObj = {
+                id: codigo,
+                name: String(row[idxNome] || ""),
+                price: precoNum,
+                stock: estoque,
+                ncm: ncm
+            };
+
+            // 3. Força o uso da Coluna Q (Index 16) para Preço Promocional
+            const valPromo = row[16];
+            if (valPromo && valPromo !== "") {
+                let pString2 = String(valPromo).replace("R$", "").trim().replace(",", ".");
+                const pNum = parseFloat(pString2) || 0;
+                if (pNum > 0) prodObj["price-oferta"] = pNum;
+            }
+
+            if (idxWebPrice !== -1 && row[idxWebPrice]) {
+                let pString3 = String(row[idxWebPrice]).replace("R$", "").trim().replace(",", ".");
+                prodObj["web_price"] = parseFloat(pString3) || 0;
+            }
+
+            if (idxImgUrl !== -1 && row[idxImgUrl]) prodObj.imgUrl = String(row[idxImgUrl]);
+            if (idxCat !== -1 && row[idxCat]) prodObj.category = String(row[idxCat]);
+            if (idxDesc !== -1 && row[idxDesc]) prodObj.description = String(row[idxDesc]);
+
+            let imgCont = 1;
+            while (imgCont <= 10) {
+                const headStr = ("imgurl" + imgCont);
+                const idxI = headers.indexOf(headStr);
+                if (idxI !== -1 && row[idxI]) {
+                    prodObj["imgUrl" + imgCont] = String(row[idxI]);
+                } else if (idxI === -1 && imgCont > 3) {
+                    break;
+                }
+                imgCont++;
+            }
+
+            produtos.push(prodObj);
+        }
+
+        return { status: "success", data: produtos };
+    } catch (e) {
+        return { status: "error", message: e.toString() };
+    }
+}
+
+function buscarPrecoPorNome(nomePesquisa) {
+    try {
+        if (!nomePesquisa) return { status: "error", message: "Nome do produto não informado." };
+
+        const sheet = getSheet(PRODUTOS_SHEET_NAME);
+        const data = sheet.getDataRange().getValues();
+
+        // 1. Mapeamento
+        const headers = data[0].map(h => String(h).toLowerCase().trim());
+        const idxNome = headers.indexOf("nome");
+        const idxPreco = headers.indexOf("preco");
+        let idxPromo = headers.indexOf("promocional");
+        if (idxPromo === -1) idxPromo = headers.indexOf("promocao");
+
+        if (idxNome === -1 || idxPreco === -1) {
+            return { status: "error", message: "Colunas 'nome' ou 'preco' não encontradas." };
+        }
+
+        // 2. Normalização do termo de busca (Remove acentos e caracteres especiais)
+        // Ex: "V-30" vira "v30", "Batom!" vira "batom"
+        const termoBusca = normalizarTexto(nomePesquisa);
+
+        // 3. Loop de busca
+        for (let i = 1; i < data.length; i++) {
+            const row = data[i];
+            const nomeOriginal = String(row[idxNome]);
+            const nomeDb = normalizarTexto(nomeOriginal);
+
+            // TENTATIVA 1: Busca Exata (Normalizada)
+            // TENTATIVA 2: Verifica se o termo buscado CONTÉM o nome do banco (para casos onde o vendedor digitou detalhes extra)
+            // Ex: Busca = "Ventilador Mondial V-30 110v" | Banco = "Ventilador Mondial V-30" -> Match!
+
+            const matchExato = nomeDb === termoBusca;
+            const matchParcial = termoBusca.includes(nomeDb) && nomeDb.length > 3; // >3 evita match com palavras curtas tipo "v30"
+
+            if (matchExato || matchParcial) {
+                let precoFinal = parseBrFloat(row[idxPreco]);
+                let statusOferta = "normal";
+
+                if (idxPromo !== -1) {
+                    const valorPromo = parseBrFloat(row[idxPromo]);
+                    if (valorPromo > 0) {
+                        precoFinal = valorPromo;
+                        statusOferta = "oferta";
+                    }
+                }
+
+                return {
+                    status: "success",
+                    nome: nomeOriginal, // Retorna o nome oficial do banco
+                    preco: precoFinal,
+                    tipo: statusOferta
+                };
+            }
+        }
+
+        return { status: "error", message: "Produto não encontrado: " + nomePesquisa };
+
+    } catch (e) {
+        return { status: "error", message: "Erro: " + e.toString() };
+    }
+}
+
+// FUNÇÃO NOVA: Adicione esta função no final do seu arquivo .gs
+function normalizarTexto(texto) {
+    if (!texto) return "";
+    return String(texto)
+        .toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, "") // Remove acentos
+        .replace(/[^a-z0-9\s]/g, "") // Remove traços, pontos, símbolos
+        .replace(/\s+/g, " ") // Remove espaços duplos
+        .trim();
+}
+
+function parseBrFloat(value) {
+    if (typeof value === "number") return value;
+    if (!value) return 0;
+    let cleanValue = value.toString().replace(/[R$\s]/g, "").replace(",", ".");
+    return parseFloat(cleanValue) || 0;
 }
 
 // --- 1. FUNÇÃO DE CRIAÇÃO DE ABAS (Atualizada com novas colunas) ---
@@ -543,8 +732,6 @@ function formatSheetData(sheet) {
                 obj[header] = value;
             }
         });
-        // Guarda a linha bruta para fallbacks de emergência (como buscar pela coluna P/index 15)
-        obj["__raw_row"] = row;
         return obj;
     });
 }
@@ -583,25 +770,27 @@ function listarTodosProdutos() {
                 precoNum = parseFloat(pString) || 0;
             }
 
-            // Mapeamento de Estoque (Prioridade absoluta para Coluna P / Index 15 conforme informado pelo usuário)
-            const raw = item["__raw_row"] || [];
-            let stockVal = 0;
+            // Tratamento de Estoque
+            // Busca Inteligente de Estoque
+            const keys = Object.keys(item);
 
-            if (raw.length >= 16) {
-                stockVal = parseFloat(raw[15]) || 0;
-            } else {
-                // Fallback via Header se a linha tiver menos de 16 colunas
-                let stockKey = Object.keys(item).find(k => k === "estoque atual") ||
-                    Object.keys(item).find(k => k === "estoque") ||
-                    Object.keys(item).find(k => k.includes("estoque") && !k.includes("minimo"));
-                stockVal = stockKey ? parseFloat(item[stockKey]) : 0;
-            }
+            // Prioriza "estoque atual", depois "estoque", depois qualquer uma que contenha "estoque" e não "minimo"
+            let stockKey = keys.find(k => k === "estoque atual") ||
+                keys.find(k => k === "estoque") ||
+                keys.find(k => k.includes("estoque") && !k.includes("minimo"));
+
+            // Se não encontrou pelo nome, e a planilha tem muitas colunas, tenta o fallback da Coluna P (index 15)
+            // No formatSheetData, se não houver header, a chave pode ser vazia ou algo genérico
+            let stockVal = stockKey ? parseFloat(item[stockKey]) : 0;
+
+            // Se o valor for 0 e tivermos acesso ao índice bruto (não temos aqui pelo item), 
+            // mas podemos verificar se existe uma chave vazia que possa ser a P
             if (isNaN(stockVal)) stockVal = 0;
 
             // Busca Inteligente de Estoque Mínimo
-            let minStockKey = Object.keys(item).find(k => k === "estoque minimo") ||
-                Object.keys(item).find(k => k === "estoque_minimo") ||
-                Object.keys(item).find(k => (k.includes("estoque") || k.includes("stock")) && k.includes("minimo"));
+            let minStockKey = keys.find(k => k === "estoque minimo") ||
+                keys.find(k => k === "estoque_minimo") ||
+                keys.find(k => k.includes("estoque") && k.includes("minimo"));
 
             let minStockVal = minStockKey ? parseFloat(item[minStockKey]) : 0;
             if (isNaN(minStockVal)) minStockVal = 0;
@@ -2357,5 +2546,71 @@ function abaterEstoqueLote(itens) {
         return { status: "error", message: "Erro abater estoque: " + e.toString() };
     } finally {
         lock.releaseLock();
+    }
+}
+
+// ==========================================================
+// FUNÇÕES PARA GESTÃO DE PEDIDOS DO SUPER APP
+// ==========================================================
+
+function salvarPedidoSuperApp(data) {
+    try {
+        const ss = SpreadsheetApp.getActiveSpreadsheet();
+        let sheet = ss.getSheetByName(PEDIDOS_SHEET_NAME);
+
+        // Se a aba não existir, cria com os cabeçalhos
+        if (!sheet) {
+            sheet = ss.insertSheet(PEDIDOS_SHEET_NAME);
+            sheet.appendRow([
+                "Data", "ID Pedido", "ID Cliente", "Nome Cliente", "Telefone",
+                "Email", "Endereço", "Items", "Total Produtos", "Frete",
+                "Total Final", "Status", "Gateway", "Conta"
+            ]);
+            sheet.getRange("1:1").setFontWeight("bold").setBackground("#f3f3f3");
+        }
+
+        const itemsString = data.items.map(i => `${i.quantity}x ${i.name}`).join(" | ");
+        const dateStr = Utilities.formatDate(new Date(), "GMT-3", "dd/MM/yyyy HH:mm:ss");
+
+        sheet.appendRow([
+            dateStr,
+            data.orderId,
+            data.userId || "guest",
+            data.clientData ? `${data.clientData.firstName} ${data.clientData.lastName}` : "Cliente",
+            data.clientData ? data.clientData.phone : "",
+            data.clientData ? data.clientData.email : "",
+            data.deliveryData ? data.deliveryData.address : "Retirada",
+            itemsString,
+            data.productsTotal,
+            data.shippingCost,
+            data.total,
+            data.status || "Pendente",
+            data.gateway || "Mercado Pago",
+            data.account || "Default"
+        ]);
+
+        return { status: "success", message: "Pedido salvo na planilha" };
+    } catch (e) {
+        return { status: "error", message: "Erro ao salvar pedido: " + e.toString() };
+    }
+}
+
+function atualizarStatusPedidoSuperApp(orderId, newStatus) {
+    try {
+        const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(PEDIDOS_SHEET_NAME);
+        if (!sheet) return { status: "error", message: "Aba pedidos não encontrada" };
+
+        const data = sheet.getDataRange().getValues();
+        // Coluna B (index 1) tem o ID do Pedido
+        for (let i = 1; i < data.length; i++) {
+            if (String(data[i][1]) === String(orderId)) {
+                // Coluna L (index 11) tem o Status
+                sheet.getRange(i + 1, 12).setValue(newStatus);
+                return { status: "success" };
+            }
+        }
+        return { status: "not_found" };
+    } catch (e) {
+        return { status: "error", message: e.toString() };
     }
 }
