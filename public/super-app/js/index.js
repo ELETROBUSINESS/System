@@ -65,17 +65,29 @@ function saveLocalUserReviews(reviews) {
     localStorage.setItem(COMMENTS_CACHE_KEY, JSON.stringify(data));
 }
 
-window.addToCartDirect = function (id, name, price, img) {
-    let cart = JSON.parse(localStorage.getItem(CART_KEY)) || [];
-    const existingItem = cart.find(item => item.id === id);
-    if (existingItem) {
-        existingItem.quantity += 1;
+window.addToCartDirect = function (id, name, priceOriginal, priceNew, img) {
+    if (typeof CartManager !== 'undefined') {
+        const product = {
+            id: id,
+            name: name,
+            priceOriginal: priceOriginal,
+            priceNew: priceNew,
+            image: img
+        };
+        CartManager.add(product);
     } else {
-        cart.push({ id: id, name: name, priceNew: price, image: img, quantity: 1 });
+        const CART_KEY = 'app_cart';
+        let cart = JSON.parse(localStorage.getItem(CART_KEY)) || [];
+        const existingItem = cart.find(item => item.id === id);
+        if (existingItem) {
+            existingItem.quantity += 1;
+        } else {
+            cart.push({ id: id, name: name, priceOriginal: priceOriginal, priceNew: priceNew, image: img, quantity: 1 });
+        }
+        localStorage.setItem(CART_KEY, JSON.stringify(cart));
+        if (typeof updateCartBadge === 'function') updateCartBadge();
+        showToast(`${name} adicionado ao carrinho!`, "success");
     }
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    if (typeof updateCartBadge === 'function') updateCartBadge();
-    showToast(`${name} adicionado ao carrinho!`, "success");
 }
 
 function extractProductImages(prod) {
@@ -757,13 +769,13 @@ async function loadProductDetail(id) {
                     <div class="action-buttons">
                         <button class="btn-buy-now" 
                              ${stockCount <= 0 ? 'disabled style="background:#ccc; cursor:not-allowed;"' : ''}
-                             onclick="addToCartDirect('${doc.id}', '${prod.name}', ${finalPrice}, '${currentDetailImages[0]}'); window.location.href='carrinho.html'">
+                             onclick="addToCartDirect('${doc.id}', '${prod.name}', ${valPrice}, ${finalPrice}, '${currentDetailImages[0]}'); window.location.href='carrinho.html'">
                              ${stockCount <= 0 ? 'Indisponível' : 'Comprar Agora'}
                         </button>
                         
                         <button class="btn-add-cart" 
                             ${stockCount <= 0 ? 'disabled style="border-color:#ccc!important; color:#999!important;"' : ''}
-                            onclick="addToCartDirect('${doc.id}', '${prod.name}', ${finalPrice}, '${currentDetailImages[0]}')">
+                            onclick="addToCartDirect('${doc.id}', '${prod.name}', ${valPrice}, ${finalPrice}, '${currentDetailImages[0]}')">
                             Adicionar ao carrinho
                         </button>
                     </div>
