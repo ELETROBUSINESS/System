@@ -403,42 +403,40 @@ function setupDeliveryLogic() {
 }
 
 function validateDeliveryArea(cep) {
-    const deliveryCard = document.querySelector(`.delivery-option-card[data-type="delivery"]`);
-    const pickupContainer = document.getElementById("container-pickup-list");
-    const deliveryForm = document.getElementById("container-delivery-form");
+    const cepRaw = cep.replace(/\D/g, '');
+    const auroraRec = document.getElementById("aurora-recommendation");
+    const sellerCont = document.getElementById("seller-checkout-container");
+    const goPaymentBtn = document.getElementById("btn-go-payment");
+    const summaryBox = document.getElementById("shipping-summary-box");
+    const citySelect = document.getElementById("city-select");
 
-    if (cep !== '68637000') {
-        deliveryCard.style.opacity = '0.5';
-        deliveryCard.style.filter = 'grayscale(1)';
-        deliveryCard.classList.add('blocked-option');
-        selectDeliveryType('pickup');
-        showToast("Entrega indisponível para este CEP.", "warning");
+    // Reseta estados
+    if (auroraRec) auroraRec.style.display = 'none';
+    if (sellerCont) sellerCont.style.display = 'none';
+    if (goPaymentBtn) goPaymentBtn.style.display = 'block';
+    if (summaryBox) summaryBox.style.display = 'block';
 
-        if (!document.getElementById("btn-change-cep-retry")) {
-            const btn = document.createElement("button");
-            btn.id = "btn-change-cep-retry";
-            btn.style = "background:none; border:none; color:#db0038; cursor:pointer; margin-bottom:15px; font-weight:600;";
-            btn.innerHTML = "<i class='bx bx-left-arrow-alt'></i> Alterar CEP";
-            btn.onclick = (e) => {
-                e.preventDefault();
-                pickupContainer.style.display = "none";
-                deliveryForm.style.display = "block";
-                deliveryCard.style.opacity = '1';
-                deliveryCard.style.filter = 'none';
-                deliveryCard.classList.remove('blocked-option');
-                selectDeliveryType('delivery');
-                document.getElementById("cep").value = "";
-                document.getElementById("cep").focus();
-            };
-            pickupContainer.insertBefore(btn, pickupContainer.firstChild);
-        }
-    } else {
-        deliveryCard.style.opacity = '1';
-        deliveryCard.style.filter = 'none';
-        deliveryCard.classList.remove('blocked-option');
-        const btnRetry = document.getElementById("btn-change-cep-retry");
-        if (btnRetry) btnRetry.remove();
+    const isIpixuna = (cepRaw === '68637000');
+    const isParagominas = (cepRaw.startsWith('68625') || cepRaw.startsWith('68626') || cepRaw.startsWith('68627') || cepRaw.startsWith('68628') || cepRaw.startsWith('68629') || cepRaw.startsWith('68630'));
+    const isAurora = (cepRaw === '68658000');
+
+    if (isAurora) {
+        if (auroraRec) auroraRec.style.display = 'flex';
+        citySelect.value = "Aurora do Pará";
+    }
+
+    if (isIpixuna || isParagominas || isAurora) {
+        // Áreas atendidas (Aurora entra aqui mas com recomendação acima)
+        if (isIpixuna) citySelect.value = "Ipixuna do Pará";
+        if (isParagominas) citySelect.value = "Paragominas";
+
         if (deliveryMode === 'delivery') calculateShipping();
+    } else {
+        // Áreas NÃO atendidas para entrega automática
+        if (sellerCont) sellerCont.style.display = 'block';
+        if (goPaymentBtn) goPaymentBtn.style.display = 'none';
+        if (summaryBox) summaryBox.style.display = 'none';
+        showToast("Entrega automática indisponível. Fale com um vendedor.", "warning");
     }
 }
 
@@ -451,16 +449,29 @@ function calculateShipping() {
     const cepInput = document.getElementById("cep");
     const cepVal = cepInput.value.replace(/\D/g, '');
     const display = document.getElementById("shipping-cost-display");
-    const cartTotal = CartManager.total();
 
-    if (cepVal === '68637000') { // Ipixuna
-        currentShippingCost = 0; // Entrega GRÁTIS pra TUDO em ipixuna agora.
+    const isIpixuna = (cepVal === '68637000');
+    const isAurora = (cepVal === '68658000');
+    const isParagominas = (cepVal.startsWith('68625') || cepVal.startsWith('68626') || cepVal.startsWith('68627') || cepVal.startsWith('68628') || cepVal.startsWith('68629') || cepVal.startsWith('68630'));
+
+    if (isIpixuna) {
+        currentShippingCost = 0;
         display.innerText = "Grátis (Oferta Limitada)";
         display.style.color = "#00a650";
         display.style.fontWeight = "bold";
+    } else if (isAurora) {
+        currentShippingCost = 50;
+        display.innerText = "R$ 50,00";
+        display.style.color = "#333";
+        display.style.fontWeight = "bold";
+    } else if (isParagominas) {
+        currentShippingCost = 60; // Definindo um padrão para Paragominas
+        display.innerText = "R$ 60,00";
+        display.style.color = "#333";
+        display.style.fontWeight = "bold";
     } else {
         currentShippingCost = 0;
-        display.innerText = "Calculando...";
+        display.innerText = "Consultar Vendedor";
     }
     updateTotalDisplay();
 }
@@ -638,6 +649,26 @@ function setupPixEvents() {
     }
     const btnFinish = document.getElementById("btn-finish-pix");
     if (btnFinish) btnFinish.addEventListener("click", () => window.location.href = "pedidos.html");
+
+    const btnSeller = document.getElementById("btn-seller-checkout");
+    if (btnSeller) {
+        btnSeller.addEventListener("click", () => {
+            const cart = CartManager.get();
+            const fullName = document.getElementById("reg-full-name") ? document.getElementById("reg-full-name").value : "Cliente";
+            const phone = document.getElementById("reg-phone") ? document.getElementById("reg-phone").value : "";
+            const cep = document.getElementById("cep").value;
+            const address = document.getElementById("address").value;
+            const num = document.getElementById("num").value;
+
+            let msg = `Olá! Meu CEP (${cep}) não está na lista de entrega automática e gostaria de finalizar meu pedido com um vendedor.\n\n*Produtos:*\n`;
+            cart.forEach(item => {
+                msg += `- ${item.quantity}x ${item.name}\n`;
+            });
+            msg += `\n*Endereço:* ${address}, ${num}\n*Nome:* ${fullName}\n*Telefone:* ${phone}`;
+
+            window.open(`https://wa.me/5591986341760?text=${encodeURIComponent(msg)}`, '_blank');
+        });
+    }
 }
 
 function showPixScreen(paymentResult) {

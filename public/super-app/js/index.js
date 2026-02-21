@@ -736,12 +736,15 @@ async function loadProductDetail(id) {
 
                     <h1 class="detail-title">${prod.name}</h1>
                     
+/*
                     <div class="detail-rating-summary" id="detail-rating-box">
                         <div class="review-stars-static">
                             <i class='bx bx-star' style="color:#ddd"></i><i class='bx bx-star' style="color:#ddd"></i><i class='bx bx-star' style="color:#ddd"></i><i class='bx bx-star' style="color:#ddd"></i><i class='bx bx-star' style="color:#ddd"></i>
                         </div>
                         <span style="font-size:0.9rem; color:#666; font-weight:600;">(0)</span>
                     </div>
+*/
+
 
                     ${priceBlock}
                     ${stockHtml}
@@ -763,6 +766,14 @@ async function loadProductDetail(id) {
                             Adicionar ao carrinho
                         </button>
                     </div>
+                    <div class="seller-info" style="margin-top: 15px; padding: 12px; background: #f8f9fa; border-radius: 8px; border: 1px solid #eee; display: flex; align-items: center; gap: 10px;">
+                        <i class='bx bx-store-alt' style="font-size: 1.5rem; color: #666;"></i>
+                        <div style="font-size: 0.85rem; color: #444;">
+                            Vendido por: <strong>D'Tudo Variedades</strong><br>
+                            <span style="color: #888;">CD1 - Ipixuna do Pará</span>
+                        </div>
+                    </div>
+
                     <button class="btn-whatsapp-direct" 
                         style="background-color: #25D366; color: white; border: none; padding: 12px; border-radius: var(--radius-sm); font-weight: 700; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; cursor: pointer;"
                         ${stockCount <= 0 ? 'disabled style="background:#ccc; cursor:not-allowed;"' : ''}
@@ -783,6 +794,7 @@ async function loadProductDetail(id) {
                 </div>
             </div>
 
+/*
             <div class="comments-section">
                 <div class="comments-header">Opiniões sobre o produto</div>
                 <div id="review-form-container">
@@ -797,6 +809,17 @@ async function loadProductDetail(id) {
                     </div>
                 </div>
             </div>
+*/
+
+            <!-- PRODUTOS SUGERIDOS -->
+            <div class="suggested-products-section" style="margin-top: 30px;">
+                <h3 style="font-size: 1.1rem; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                    <i class='bx bx-bulb' style="color: #ffb100;"></i> Quem viu este produto também comprou
+                </h3>
+                <div id="suggested-items-container" class="categories-scroll" style="gap: 15px;">
+                    <!-- Preenchido via JS logo abaixo -->
+                </div>
+            </div>
             
             <div style="background:#fff; padding:20px; margin-top:20px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
                 <h3 style="font-size:1.2rem; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">Descrição</h3>
@@ -804,9 +827,13 @@ async function loadProductDetail(id) {
             </div>
         `;
 
-        fetchLiveRating(doc.id);
-        checkUserReviewStatus(doc.id);
-        loadReviews(doc.id);
+        // Renderiza Sugestões no Detalhe
+        renderSuggestedProducts(prod, cachedData);
+
+        // fetchLiveRating(doc.id);
+        // checkUserReviewStatus(doc.id);
+        // loadReviews(doc.id);
+
 
     } catch (error) {
         console.error("Erro detalhes:", error);
@@ -1266,6 +1293,57 @@ function startMegaCountdown() {
 
     updateTimer();
     setInterval(updateTimer, 1000);
+}
+
+function renderSuggestedProducts(currentProd, allProducts) {
+    const container = document.getElementById('suggested-items-container');
+    if (!container || !allProducts) return;
+
+    // Filtra produtos da mesma categoria, excluindo o atual, e que tenham imagem válida
+    const category = (currentProd.category || '').toLowerCase();
+    let suggested = allProducts.filter(p =>
+        String(p.id) !== String(currentProd.id) &&
+        (p.category || '').toLowerCase() === category &&
+        p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co')
+    );
+
+    // Se tiver poucos da mesma categoria, pega aleatórios
+    if (suggested.length < 4) {
+        const others = allProducts.filter(p =>
+            String(p.id) !== String(currentProd.id) &&
+            (p.category || '').toLowerCase() !== category &&
+            p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co')
+        );
+        suggested = [...suggested, ...others.sort(() => 0.5 - Math.random())];
+    }
+
+    // Limita a 8 itens
+    suggested = suggested.slice(0, 8);
+
+    if (suggested.length === 0) {
+        document.querySelector('.suggested-products-section').style.display = 'none';
+        return;
+    }
+
+    let html = '';
+    suggested.forEach(prod => {
+        let displayImg = prod.imgUrl || 'https://placehold.co/400x400/f8f9fa/c20026?text=Dtudo';
+        const valPrice = parseFloat(prod.price || 0);
+        const valOffer = parseFloat(prod['price-oferta'] || 0);
+        const finalPrice = (valOffer > 0 && valOffer < valPrice) ? valOffer : valPrice;
+        const fmtPrice = finalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        html += `
+            <div class="category-item" style="min-width: 140px; text-align: left; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: transform 0.2s;" onclick="window.location.href='index.html?id=${prod.id}'">
+                <img src="${displayImg}" style="width: 100%; height: 120px; object-fit: cover;">
+                <div style="padding: 10px;">
+                    <div style="font-size: 0.8rem; color: #444; height: 32px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.2; margin-bottom: 5px;">${prod.name}</div>
+                    <div style="font-size: 1rem; font-weight: 700; color: #c20026;">${fmtPrice}</div>
+                </div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
 }
 
 // ==================== 5. INICIALIZAÇÃO ====================

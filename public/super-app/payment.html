@@ -764,13 +764,32 @@
                                 <option value="">Selecione...</option>
                                 <option value="Ipixuna do Pará">Ipixuna do Pará</option>
                                 <option value="Aurora do Pará">Aurora do Pará</option>
+                                <option value="Paragominas">Paragominas</option>
                             </select>
                         </div>
                     </div>
-                    <div class="shipping-summary">
+
+                    <div id="aurora-recommendation"
+                        style="display:none; background: #e8f4fd; color: #2d3277; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 0.9rem; border: 1px solid #b3d7ff; align-items: center; gap: 8px;">
+                        <i class='bx bx-info-circle' style="font-size: 1.2rem;"></i>
+                        <span>Para <strong>Aurora</strong>, recomendamos optar por <strong>Retirar na Loja</strong> para
+                            maior rapidez!</span>
+                    </div>
+
+                    <div id="seller-checkout-container" style="display: none; margin-top: 20px; text-align: center;">
+                        <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">A entrega automática não está
+                            disponível para esta região. Finalize seu pedido diretamente com nossa equipe:</p>
+                        <button id="btn-seller-checkout" class="cta-button"
+                            style="background-color: #25D366; margin-top: 0; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            <i class='bx bxl-whatsapp' style="font-size: 1.4rem;"></i>
+                            Continuar com um vendedor
+                        </button>
+                    </div>
+
+                    <div class="shipping-summary" id="shipping-summary-box">
                         <div class="shipping-row"><span>Frete:</span> <span id="shipping-cost-display">A calcular</span>
                         </div>
-                        <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">
+                        <p style="font-size: 0.8rem; color: #666; margin-top: 5px;" id="shipping-rules-text">
                             * Ipixuna: <span
                                 style="background-color: var(--color-primary); color: white; padding: 2px 6px; border-radius: 4px; font-weight: 700; display: inline-block;">FESTIVAL
                                 FRETE GRÁTIS</span><br>
