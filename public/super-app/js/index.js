@@ -736,14 +736,15 @@ async function loadProductDetail(id) {
 
                     <h1 class="detail-title">${prod.name}</h1>
                     
-/*
+                    ${''/*
                     <div class="detail-rating-summary" id="detail-rating-box">
                         <div class="review-stars-static">
                             <i class='bx bx-star' style="color:#ddd"></i><i class='bx bx-star' style="color:#ddd"></i><i class='bx bx-star' style="color:#ddd"></i><i class='bx bx-star' style="color:#ddd"></i><i class='bx bx-star' style="color:#ddd"></i>
                         </div>
                         <span style="font-size:0.9rem; color:#666; font-weight:600;">(0)</span>
                     </div>
-*/
+                    */}
+
 
 
                     ${priceBlock}
@@ -794,7 +795,7 @@ async function loadProductDetail(id) {
                 </div>
             </div>
 
-/*
+            ${''/*
             <div class="comments-section">
                 <div class="comments-header">Opiniões sobre o produto</div>
                 <div id="review-form-container">
@@ -809,7 +810,8 @@ async function loadProductDetail(id) {
                     </div>
                 </div>
             </div>
-*/
+            */}
+
 
             <!-- PRODUTOS SUGERIDOS -->
             <div class="suggested-products-section" style="margin-top: 30px;">
@@ -1301,17 +1303,29 @@ function renderSuggestedProducts(currentProd, allProducts) {
 
     // Filtra produtos da mesma categoria, excluindo o atual, e que tenham imagem válida
     const category = (currentProd.category || '').toLowerCase();
-    let suggested = allProducts.filter(p =>
-        String(p.id) !== String(currentProd.id) &&
-        (p.category || '').toLowerCase() === category &&
-        p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co')
-    );
+    const nameLower = (currentProd.name || '').toLowerCase();
+
+    let suggested = allProducts.filter(p => {
+        if (String(p.id) === String(currentProd.id)) return false;
+        if (!p.imgUrl || p.imgUrl.trim() === "" || p.imgUrl.includes('placehold.co')) return false;
+
+        const pCat = (p.category || '').toLowerCase();
+        const pName = (p.name || '').toLowerCase();
+
+        // Lógica especial para relógios
+        if (category === 'relogio' || nameLower.includes('rel.') || nameLower.includes('relogio') || nameLower.includes('relógio')) {
+            return pCat.includes('relogio') || pName.includes('rel.') || pName.includes('relogio') || pName.includes('relógio');
+        }
+
+        return pCat === category;
+    });
 
     // Se tiver poucos da mesma categoria, pega aleatórios
     if (suggested.length < 4) {
+        const alreadyIn = new Set(suggested.map(p => p.id));
         const others = allProducts.filter(p =>
             String(p.id) !== String(currentProd.id) &&
-            (p.category || '').toLowerCase() !== category &&
+            !alreadyIn.has(p.id) &&
             p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co')
         );
         suggested = [...suggested, ...others.sort(() => 0.5 - Math.random())];
