@@ -31,6 +31,14 @@
         <p class="loader-text">preparando tudo para você</p>
     </div>
 
+    <div class="offer-scrolling-bar">
+        <div class="scrolling-text">
+            <span>⚡ CORRIDA DE OFERTAS: PREÇOS SURREAIS POR TEMPO LIMITADO! APROVEITE ATÉ AS 22H DE HOJE! ⚡</span>
+            <span>⚡ CORRIDA DE OFERTAS: PREÇOS SURREAIS POR TEMPO LIMITADO! APROVEITE ATÉ AS 22H DE HOJE! ⚡</span>
+            <span>⚡ CORRIDA DE OFERTAS: PREÇOS SURREAIS POR TEMPO LIMITADO! APROVEITE ATÉ AS 22H DE HOJE! ⚡</span>
+        </div>
+    </div>
+
     <header class="main-header">
         <div class="container header-container">
             <a href="index.html" class="logo">
@@ -82,10 +90,10 @@
 
     <section class="banner-slider">
         <div class="slider-wrapper">
+            <div class="slide"><img src="1.png" alt="Ofertas"></div>
+            <div class="slide"><img src="2.png" alt="Ofertas"></div>
             <div class="slide"><img src="3.png" alt="Ofertas"></div>
             <div class="slide"><img src="4.png" alt="Ofertas"></div>
-            <div class="slide"><img src="6.png" alt="Ofertas"></div>
-            <div class="slide"><img src="7.png" alt="Ofertas"></div>
         </div>
     </section>
 
@@ -96,11 +104,11 @@
                     <div class="category-icon"><i class='bx bxs-hot'></i></div>
                     <span style="color: var(--color-brand-red); font-weight: 700;">Ofertas!</span>
                 </div>
-                <div class="category-item" onclick="filterLocalCategory('casa')">
-                    <div class="category-icon"><i class='bx bx-home'></i></div><span>Casa</span>
+                <div class="category-item" onclick="filterLocalCategory('escolar')">
+                    <div class="category-icon"><i class='bx bx-pencil'></i></div><span>Material Escolar</span>
                 </div>
                 <div class="category-item" onclick="filterLocalCategory('relogio')">
-                    <div class="category-icon"><i class='bx bx-watch'></i></div><span>Relógios</span>
+                    <div class="category-icon"><i class='bx bx-time-five'></i></div><span>Relógios</span>
                 </div>
                 <div class="category-item" onclick="filterLocalCategory('eletr')">
                     <div class="category-icon"><i class='bx bx-mobile'></i></div><span>Eletrônicos</span>
@@ -108,6 +116,35 @@
                 <div class="category-item" onclick="filterLocalCategory('todos')">
                     <div class="category-icon" style="background:#e0e0e0;"><i class='bx bx-grid-alt'
                             style="color:#666;"></i></div><span style="color:#666;">Todos</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="mega-countdown-section">
+        <div class="container">
+            <div class="countdown-card">
+                <div class="countdown-info">
+                    <div class="countdown-texts">
+                        <h3>A CORRIDA VAI ACABAR!</h3>
+                        <p>As ofertas de hoje expiram em:</p>
+                    </div>
+                </div>
+                <div id="mega-timer" class="timer-display">
+                    <div class="timer-unit">
+                        <span id="timer-hours">00</span>
+                        <label>Horas</label>
+                    </div>
+                    <div class="timer-sep">:</div>
+                    <div class="timer-unit">
+                        <span id="timer-min">00</span>
+                        <label>Min</label>
+                    </div>
+                    <div class="timer-sep">:</div>
+                    <div class="timer-unit">
+                        <span id="timer-sec">00</span>
+                        <label>Seg</label>
+                    </div>
                 </div>
             </div>
         </div>

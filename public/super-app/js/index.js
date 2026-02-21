@@ -503,7 +503,18 @@ function applyLocalFilter(cached, categoryStr) {
     if (categoryStr === 'ofertas') {
         filtered = cached.filter(p => parseFloat(p['price-oferta'] || 0) > 0 && parseFloat(p['price-oferta'] || 0) < parseFloat(p.price || 0));
     } else if (categoryStr && categoryStr !== 'todos') {
-        filtered = cached.filter(p => p.category && p.category.toLowerCase().includes(categoryStr.toLowerCase()));
+        filtered = cached.filter(p => {
+            const cat = (p.category || '').toLowerCase();
+            const name = (p.name || '').toLowerCase();
+            if (categoryStr === 'relogio') {
+                // Filtra por categoria 'relogio' ou por nomes que indicam relógios (REL, Relógio, etc)
+                return cat.includes('relogio') || name.includes('rel.') || name.includes('relogio') || name.includes('relógio');
+            }
+            if (categoryStr === 'escolar') {
+                return cat.includes('escolar') || cat.includes('papelaria') || cat.includes('material');
+            }
+            return cat.includes(categoryStr.toLowerCase());
+        });
     }
 
     // Filtro de Restrição:
@@ -1215,12 +1226,55 @@ function initSlider() {
     }, intervalTime);
 }
 
+// --- CRONÔMETRO MEGA OFERTAS ---
+function startMegaCountdown() {
+    function updateTimer() {
+        const now = new Date();
+        const target = new Date();
+        target.setHours(22, 0, 0, 0);
+
+        let diff = target - now;
+
+        if (diff <= 0) {
+            // Se já passou das 22h, as ofertas encerram
+            document.querySelectorAll('.timer-unit span').forEach(s => s.innerText = '00');
+            const countdownTitle = document.querySelector('.countdown-texts h3');
+            if (countdownTitle) countdownTitle.innerText = 'OFERTAS ENCERRADAS!';
+            const countdownP = document.querySelector('.countdown-texts p');
+            if (countdownP) countdownP.innerText = 'Fique atento para as próximas promoções.';
+            return;
+        }
+
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+        const hEl = document.getElementById('timer-hours');
+        const mEl = document.getElementById('timer-min');
+        const sEl = document.getElementById('timer-sec');
+
+        if (hEl) hEl.innerText = String(hours).padStart(2, '0');
+        if (mEl) mEl.innerText = String(mins).padStart(2, '0');
+        if (sEl) sEl.innerText = String(secs).padStart(2, '0');
+
+        // Atualiza também o timer secundário da home se existir
+        const homeTimer = document.getElementById('home-timer-countdown');
+        if (homeTimer) {
+            homeTimer.innerText = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+    }
+
+    updateTimer();
+    setInterval(updateTimer, 1000);
+}
+
 // ==================== 5. INICIALIZAÇÃO ====================
 document.addEventListener("DOMContentLoaded", () => {
     if (typeof initSlider === 'function') initSlider();
     if (typeof setupSearch === 'function') setupSearch();
     if (typeof updateCartBadge === 'function') updateCartBadge();
     if (typeof startSuggestionTimer === 'function') startSuggestionTimer();
+    startMegaCountdown();
 
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');

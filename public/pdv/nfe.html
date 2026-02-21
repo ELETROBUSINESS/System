@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/assets/img/iconWeb.png">
+
+    <title>Emissão de NFe | ELETRO</title>
+
+    <!-- Reusing Main Styles -->
+    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="pdv_payment.css?v=1">
+
+    <!-- Fonts and Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <!-- Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <style>
+        /* Specific Styles for NFe Page using existing variables */
+        body {
+            background-color: var(--bg-body);
+            padding: 20px;
+        }
+
+        .nfe-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header Specifics */
+        .nfe-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .header-title-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn-back {
+            background-color: white;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-dark);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-back:hover {
+            background-color: var(--bg-light);
+            transform: translateX(-2px);
+        }
+
+        /* Environment Icon */
+        .env-icon-wrapper {
+            position: relative;
+            cursor: help;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: #dcfce7;
+            color: #166534;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .env-icon-wrapper:hover {
+            background-color: #bbf7d0;
+        }
+
+        .env-tooltip {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background-color: #333;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+
+        .env-icon-wrapper:hover .env-tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Toolbar */
+        .nfe-toolbar {
+            background-color: white;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .toolbar-actions {
+            display: flex;
+            gap: 12px;
+            flex-grow: 1;
+        }
+
+        .search-box {
+            position: relative;
+            max-width: 300px;
+            width: 100%;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 10px 10px 36px;
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-red);
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            background: white;
+            color: var(--text-light);
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .filter-btn.active,
+        .filter-btn:hover {
+            background-color: #fff1f2;
+            color: var(--primary-red);
+            border-color: #fca5a5;
+        }
+
+        /* List View Table */
+        .nfe-list-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-subtle);
+            overflow: hidden;
+        }
+
+        .nfe-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .nfe-table th {
+            text-align: left;
+            padding: 16px;
+            background-color: #f9fafb;
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 0.8rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .nfe-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            vertical-align: middle;
+        }
+
+        .nfe-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .nfe-table tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 99px;
+            display: inline-block;
+        }
+
+        /* List Action Buttons */
+        .action-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-list-action {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: 1px solid var(--border-subtle);
+            background: white;
+            color: var(--text-light);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-list-action:hover {
+            background-color: var(--bg-body);
+            color: var(--text-dark);
+        }
+
+        /* Colors re-used from previous step */
+        .status-authorized {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-canceled {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-processing {
+            background: #fef9c3;
+            color: #854d0e;
+        }
+
+        .status-error {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 600px;
+            padding: 24px;
+            transform: translateY(20px);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="nfe-container">
+        <!-- Header -->
+        <header class="nfe-header">
+            <div class="header-title-group">
+                <a href="index.html" class="btn-back" title="Voltar ao PDV">
+                    <i class='bx bx-arrow-back'></i>
+                </a>
+                <div>
+                    <h1 style="margin:0; font-size:1.5rem;">Notas Fiscais</h1>
+                    <span style="font-size:0.9rem; color:var(--text-light);">Gerenciamento e Emissão</span>
+                </div>
+            </div>
+
+            <!-- Environment Icon -->
+            <div class="env-icon-wrapper">
+                <i class='bx bx-check-shield' style="font-size: 1.5rem;"></i>
+                <div class="env-tooltip">Ambiente: Produção</div>
+            </div>
+        </header>
+
+        <!-- Toolbar -->
+        <div class="nfe-toolbar">
+            <div class="search-box">
+                <i class='bx bx-search'></i>
+                <input type="text" id="nfe-search-input" class="search-input"
+                    placeholder="Buscar por número, cliente...">
+            </div>
+
+            <div class="toolbar-actions" style="overflow-x: auto; padding-bottom: 4px;">
+                <button class="filter-btn active" data-filter="all">Todas</button>
+                <button class="filter-btn" data-filter="authorized">Emitidas</button>
+                <button class="filter-btn" data-filter="processing">Processando</button>
+                <button class="filter-btn" data-filter="canceled">Canceladas</button>
+            </div>
+
+            <button id="btn-new-nfe" class="btn btn-primary"
+                style="background-color: var(--primary-red); color: white; padding: 10px 20px; font-weight: 600; border-radius: 8px; display: flex; align-items: center; gap: 8px; border: none; cursor: pointer;">
+                <i class='bx bx-plus-circle'></i> NOVA NOTA
+            </button>
+        </div>
+
+        <!-- Content List -->
+        <div class="nfe-list-container">
+            <table class="nfe-table">
+                <thead>
+                    <tr>
+                        <th>Número</th>
+                        <th>Destinatário</th>
+                        <th>Emissão</th>
+                        <th>Status</th>
+                        <th>Valor</th>
+                        <th style="text-align: right;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="nfe-table-body">
+                    <!-- Rows will be injected via JS -->
+                </tbody>
+            </table>
+            <div id="empty-state-msg" style="display:none; text-align:center; padding: 40px; color: var(--text-light);">
+                Nenhuma nota encontrada.
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal Nova Nota (Manual Entry) -->
+    <div class="modal-overlay" id="new-nfe-modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header"
+                style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin:0; display:flex; align-items:center; gap:10px;"><i class='bx bx-file-blank'></i> Nova
+                    Nota Fiscal</h3>
+                <button class="close-modal-btn"
+                    style="background:none; border:none; font-size: 1.5rem; cursor:pointer;"><i
+                        class='bx bx-x'></i></button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Stepper Headers -->
+                <div class="stepper-header"
+                    style="display: flex; justify-content: space-between; margin-bottom: 30px; position: relative;">
+                    <div class="step-item active" data-step="1"
+                        style="flex: 1; text-align: center; position: relative; z-index: 2;">
+                        <div class="step-circle"
+                            style="width: 32px; height: 32px; background: var(--primary-red); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-weight: bold; transition: all 0.3s;">
+                            1</div>
+                        <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-dark);">Destinatário</span>
+                    </div>
+                    <div class="step-line"
+                        style="position: absolute; top: 16px; left: 0; width: 100%; height: 2px; background: var(--border-subtle); z-index: 1;">
+                    </div>
+                    <div class="step-item" data-step="2"
+                        style="flex: 1; text-align: center; position: relative; z-index: 2;">
+                        <div class="step-circle"
+                            style="width: 32px; height: 32px; background: white; border: 2px solid var(--border-subtle); color: var(--text-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-weight: bold; transition: all 0.3s;">
+                            2</div>
+                        <span style="font-size: 0.85rem; font-weight: 500; color: var(--text-light);">Produtos</span>
+                    </div>
+                    <div class="step-item" data-step="3"
+                        style="flex: 1; text-align: center; position: relative; z-index: 2;">
+                        <div class="step-circle"
+                            style="width: 32px; height: 32px; background: white; border: 2px solid var(--border-subtle); color: var(--text-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-weight: bold; transition: all 0.3s;">
+                            3</div>
+                        <span style="font-size: 0.85rem; font-weight: 500; color: var(--text-light);">Revisão</span>
+                    </div>
+                </div>
+
+                <!-- Step 1: Destinatário -->
+                <div id="step-1-content" class="step-content">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label style="display: block; font-size: 0.9rem; font-weight: 500; margin-bottom: 8px;">CPF
+                                / CNPJ *</label>
+                            <div style="position: relative;">
+                                <input type="text" id="nfe-doc" placeholder="000.000.000-00"
+                                    style="width: 100%; padding: 10px; border: 1px solid var(--border-subtle); border-radius: 8px;">
+                                <button
+                                    style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--info-blue); cursor: pointer; font-weight: 600; font-size: 0.8rem;">BUSCAR</button>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label style="display: block; font-size: 0.9rem; font-weight: 500; margin-bottom: 8px;">Nome
+                                / Razão Social *</label>
+                            <input type="text" id="nfe-name" placeholder="Nome completo do cliente"
+                                style="width: 100%; padding: 10px; border: 1px solid var(--border-subtle); border-radius: 8px;">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label style="display: block; font-size: 0.9rem; font-weight: 500; margin-bottom: 8px;">Email
+                            (Opcional)</label>
+                        <input type="email" placeholder="Para envio da nota"
+                            style="width: 100%; padding: 10px; border: 1px solid var(--border-subtle); border-radius: 8px;">
+                    </div>
+                </div>
+
+                <!-- Step 2: Produtos -->
+                <div id="step-2-content" class="step-content" style="display:none;">
+                    <div
+                        style="display: grid; grid-template-columns: 2fr 0.5fr 1fr auto; gap: 10px; align-items: end; margin-bottom: 20px;">
+                        <div class="form-group">
+                            <label
+                                style="font-size: 0.9rem; font-weight: 500; display:block; margin-bottom: 4px;">Produto
+                                *</label>
+                            <input type="text" id="nfe-prod-search" placeholder="Buscar produto..."
+                                style="width: 100%; padding: 10px; border: 1px solid var(--border-subtle); border-radius: 8px;">
+                        </div>
+                        <div class="form-group">
+                            <label
+                                style="font-size: 0.9rem; font-weight: 500; display:block; margin-bottom: 4px;">Qtd</label>
+                            <input type="number" id="nfe-prod-qty" value="1" min="1"
+                                style="width: 100%; padding: 10px; border: 1px solid var(--border-subtle); border-radius: 8px;">
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size: 0.9rem; font-weight: 500; display:block; margin-bottom: 4px;">Valor
+                                Unit.</label>
+                            <input type="number" id="nfe-prod-val" step="0.01" placeholder="0,00"
+                                style="width: 100%; padding: 10px; border: 1px solid var(--border-subtle); border-radius: 8px;">
+                        </div>
+                        <button id="btn-add-prod" class="btn"
+                            style="height: 42px; background: var(--primary-red); color: white; border-radius: 8px; padding: 0 16px; border: none; cursor: pointer;"><i
+                                class='bx bx-plus'></i></button>
+                        <!-- Step 2: Produtos -->
+                        <div id="step-2-content" class="step-content" style="display: none;">
+                            <div class="form-group mb-4">
+                                <label>Buscar Produto</label>
+                                <div class="scan-search-container">
+                                    <div class="tooltip" style="flex-grow: 1;">
+                                        <div class="barcode-scanner">
+                                            <i class='bx bx-barcode-reader' id="nfe-barcode-icon"></i>
+                                            <input type="text" id="nfe-prod-search-input"
+                                                placeholder="Digite nome ou código..." autocomplete="off">
+                                        </div>
+                                        <!-- Resultados da Pesquisa Rápida (Barcode) -->
+                                        <div id="nfe-search-results" class="barcode-search-results"></div>
+                                        <span class="tooltip-text">Digite o código ou nome</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group" style="flex: 1;">
+                                    <label>Quantidade</label>
+                                    <input type="number" id="nfe-prod-qty" class="form-input" value="1" min="1">
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <label>Valor Unitário (R$)</label>
+                                    <input type="number" id="nfe-prod-val" class="form-input" placeholder="0,00"
+                                        step="0.01">
+                                </div>
+                            </div>
+
+                            <button id="btn-add-prod" class="btn-primary w-100 mb-4"><i class='bx bx-plus'></i>
+                                Adicionar Item</button>
+
+                            <div class="table-container" style="max-height: 200px; overflow-y: auto;">
+                                <table class="data-table" style="width: 100%;">
+                                    <thead>
+                                        <tr>
+                                            <th>Produto</th>
+                                            <th style="text-align: center;">Qtd</th>
+                                            <th style="text-align: right;">Total</th>
+                                            <th style="text-align: center;">Ação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="nfe-items-body">
+                                        <!-- Items will be added here -->
+                                    </tbody>
+                                </table>
+                                <div id="nfe-empty-items" class="empty-state-msg" style="padding: 20px;">
+                                    Nenhum item adicionado.
+                                </div>
+                            </div>
+
+                            <div class="total-display-nfe"
+                                style="margin-top: 15px; text-align: right; font-size: 1.2rem; font-weight: bold;">
+                                Total: <span id="nfe-total-display" style="color: var(--primary-red);">R$ 0,00</span>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Revisão -->
+                        <div id="step-3-content" class="step-content" style="display:none;">
+                            <div
+                                style="background: #f8fafc; padding: 24px; border-radius: 12px; border: 1px dashed var(--border-subtle); text-align: center;">
+                                <h4 style="margin: 0 0 20px 0; color: #166534; font-size: 1.3rem;"><i
+                                        class='bx bx-check-circle'></i> Tudo pronto para emitir!</h4>
+
+                                <div
+                                    style="background: white; padding: 16px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); text-align: left; margin-bottom: 16px;">
+                                    <div style="margin-bottom: 4px; font-size: 0.9rem; color: var(--text-light);">
+                                        Destinatário
+                                    </div>
+                                    <div style="font-weight: 600; font-size: 1.1rem; color: var(--text-dark);"
+                                        id="review-dest-name">...</div>
+                                    <div style="font-size: 0.85rem; color: var(--text-light);" id="review-dest-doc">...
+                                    </div>
+                                </div>
+
+                                <div
+                                    style="background: white; padding: 16px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); text-align: left;">
+                                    <div
+                                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <div style="font-size: 0.9rem; color: var(--text-light);">Total da Nota</div>
+                                        <div style="font-weight: 800; font-size: 1.4rem; color: var(--primary-red);"
+                                            id="review-total-value">R$ 0,00</div>
+                                    </div>
+                                    <div style="font-size: 0.85rem; color: var(--text-light);"><span
+                                            id="review-items-count">0</span> itens inclusos</div>
+                                </div>
+                            </div>
+                            <p
+                                style="text-align: center; color: var(--text-light); font-size: 0.8rem; margin-top: 16px;">
+                                Ao clicar em EMITIR, a nota será transmitida para a SEFAZ.
+                            </p>
+                        </div>
+
+                    </div>
+                </div> <!-- End of modal-body -->
+
+                <!-- Footer Navigation (Moved outside body for sticky effect) -->
+                <div
+                    style="padding: 20px 24px; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; background: #fff; border-radius: 0 0 16px 16px;">
+                    <button class="close-modal-btn"
+                        style="padding: 10px 20px; border: 1px solid var(--border-subtle); background: white; border-radius: 8px; cursor: pointer; font-weight: 500; color: var(--text-light);">Cancelar</button>
+
+                    <div style="display: flex; gap: 12px;">
+                        <button id="btn-prev-step"
+                            style="padding: 10px 20px; border: 1px solid var(--border-subtle); background: white; border-radius: 8px; cursor: pointer; font-weight: 500; display: none;">Voltar</button>
+                        <button id="btn-next-step"
+                            style="padding: 10px 24px; background: var(--primary-red); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">Próximo
+                            <i class='bx bx-right-arrow-alt'></i></button>
+                        <button id="btn-finish-nfe"
+                            style="padding: 10px 24px; background: #16a34a; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; display: none; align-items: center; gap: 8px;"><i
+                                class='bx bx-send'></i> EMITIR NOTA</button>
+                    </div>
+                </div>
+            </div> <!-- End of modal-content -->
+        </div>
+        <!-- Dependencies -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+        <style>
+            /* ... existing styles ... */
+            .form-input-error {
+                border-color: #ef4444 !important;
+                animation: shake 0.3s ease-in-out;
+            }
+
+            @keyframes shake {
+
+                0%,
+                100% {
+                    transform: translateX(0);
+                }
+
+                25% {
+                    transform: translateX(-5px);
+                }
+
+                75% {
+                    transform: translateX(5px);
+                }
+            }
+        </style>
+
+        <!-- Scripts -->
+        <script>
+            // Mock Data for List
+            const nfeData = [
+                { id: '001245', client: 'João Silva', date: '18/02/2026 10:30', status: 'authorized', value: 1250.00 },
+                { id: '001246', client: 'Maria Oliveira', date: '18/02/2026 11:15', status: 'processing', value: 450.50 },
+                { id: '001240', client: 'Pedro Santos', date: '17/02/2026 15:40', status: 'canceled', value: 89.90 },
+                { id: '001247', client: 'Ana Costa', date: '18/02/2026 12:00', status: 'authorized', value: 2300.00 },
+                { id: '001248', client: 'Carlos Souza', date: '18/02/2026 12:30', status: 'error', value: 150.00 }
+            ];
+
+            // CONSTANTS
+            const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
+
+            // Global Product Cache
+            var allProducts = [];
+
+            document.addEventListener('DOMContentLoaded', async () => {
+                console.log("NFe Manager Loaded");
+
+                // UI Elements References (Moved to top)
+                const tableBody = document.getElementById('nfe-table-body');
+                const searchInput = document.getElementById('nfe-search-input');
+                const emptyMsg = document.getElementById('empty-state-msg');
+                const modal = document.getElementById('new-nfe-modal');
+                const openBtn = document.getElementById('btn-new-nfe');
+                const closeBtns = document.querySelectorAll('.close-modal-btn');
+                const stepContents = document.querySelectorAll('.step-content');
+                const stepIndicators = document.querySelectorAll('.step-item');
+                const btnPrev = document.getElementById('btn-prev-step');
+                const btnNext = document.getElementById('btn-next-step');
+                const btnFinish = document.getElementById('btn-finish-nfe');
+                const itemsBody = document.getElementById('nfe-items-body');
+                const emptyItemsMsg = document.getElementById('nfe-empty-items');
+                const totalDisplay = document.getElementById('nfe-total-display');
+                const prodInput = document.getElementById('nfe-prod-search-input');
+                const qtyInput = document.getElementById('nfe-prod-qty');
+                const valInput = document.getElementById('nfe-prod-val');
+                const addProdBtn = document.getElementById('btn-add-prod');
+                const docInput = document.getElementById('nfe-doc');
+                const nameInput = document.getElementById('nfe-name');
+                const searchResults = document.getElementById('nfe-search-results');
+                let currentStep = 1;
+                let currentFilter = 'all';
+                let currentItems = [];
+                let selectedProduct = null;
+
+                // --- LOAD PRODUCTS FROM API (Direct Fetch) ---
+                fetchProducts();
+
+                // --- MAIN LIST LOGIC ---
+
+                function renderTable(data) {
+                    tableBody.innerHTML = '';
+                    if (data.length === 0) {
+                        emptyMsg.style.display = 'block';
+                        return;
+                    } else {
+                        emptyMsg.style.display = 'none';
+                    }
+                    data.forEach(item => {
+                        const tr = document.createElement('tr');
+                        let statusHtml = '';
+                        let actionsHtml = '';
+                        if (item.status === 'authorized') {
+                            statusHtml = '<span class="status-badge status-authorized">Autorizada</span>';
+                            actionsHtml = `
+                            <button class="btn-list-action" title="Imprimir" onclick="alert('Imprimindo DANFE ${item.id}...')"><i class='bx bx-printer'></i></button>
+                            <button class="btn-list-action" title="XML" onclick="alert('Baixando XML ${item.id}...')"><i class='bx bx-code-alt'></i></button>
+                            <button class="btn-list-action" title="Email" onclick="alert('Enviando Email ${item.id}...')"><i class='bx bx-envelope'></i></button>
+                        `;
+                        } else if (item.status === 'processing') {
+                            statusHtml = '<span class="status-badge status-processing">Processando</span>';
+                            actionsHtml = `
+                            <button class="btn-list-action" title="Atualizar" onclick="alert('Atualizando status...')"><i class='bx bx-refresh'></i></button>
+                        `;
+                        } else if (item.status === 'canceled') {
+                            statusHtml = '<span class="status-badge status-canceled">Cancelada</span>';
+                            actionsHtml = `
+                            <button class="btn-list-action" title="Detalhes" onclick="alert('Vendo detalhes...')"><i class='bx bx-info-circle'></i></button>
+                        `;
+                        } else if (item.status === 'error') {
+                            statusHtml = '<span class="status-badge status-error">Erro</span>';
+                            actionsHtml = `
+                            <button class="btn-list-action" title="Ver Erro" onclick="alert('Erro na transmissão: Time-out')"><i class='bx bx-error'></i></button>
+                            <button class="btn-list-action" title="Reenviar"><i class='bx bx-send'></i></button>
+                        `;
+                        }
+                        tr.innerHTML = `
+                        <td><strong>${item.id}</strong></td>
+                        <td>${item.client}</td>
+                        <td>${item.date}</td>
+                        <td>${statusHtml}</td>
+                        <td style="font-weight:600;">R$ ${item.value.toFixed(2).replace('.', ',')}</td>
+                        <td style="text-align: right;">
+                            <div class="action-group" style="justify-content: flex-end;">
+                                ${actionsHtml}
+                            </div>
+                        </td>
+                    `;
+                        tableBody.appendChild(tr);
+                    });
+                }
+
+                function filterData() {
+                    const term = searchInput.value.toLowerCase();
+                    const filtered = nfeData.filter(item => {
+                        const matchesFilter = currentFilter === 'all' || item.status === currentFilter;
+                        const matchesSearch = item.id.toLowerCase().includes(term) ||
+                            item.client.toLowerCase().includes(term);
+                        return matchesFilter && matchesSearch;
+                    });
+                    renderTable(filtered);
+                }
+
+                // Initial render
+                renderTable(nfeData);
+
+                // Filter Buttons
+                const filterBtns = document.querySelectorAll('.filter-btn');
+                filterBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        filterBtns.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        currentFilter = btn.getAttribute('data-filter');
+                        filterData();
+                    });
+                });
+
+                // Search Input
+                searchInput.addEventListener('input', () => {
+                    filterData();
+                });
+
+                // --- WIZARD / MODAL LOGIC ---
+                // --- INTELLIGENT PRODUCT SEARCH ---
+
+                function setupProductSearch() {
+                    // Input Event
+                    prodInput.addEventListener('input', (e) => {
+                        const term = e.target.value.toLowerCase().trim();
+                        selectedProduct = null; // Reset selection on typing
+
+                        if (term.length < 1) {
+                            searchResults.style.display = 'none';
+                            return;
+                        }
+
+                        // Filter Logic: Exact Barcode > Starts With Barcode > Name Includes
+                        const matches = allProducts.filter(p => {
+                            const code = String(p.id).toLowerCase();
+                            const name = p.name.toLowerCase();
+                            return code.startsWith(term) || name.includes(term);
+                        }).sort((a, b) => {
+                            // Relevance Sort
+                            const codeA = String(a.id).toLowerCase();
+                            const codeB = String(b.id).toLowerCase();
+                            if (codeA === term) return -1; // Exact Code Match Top
+                            if (codeB === term) return 1;
+                            return 0;
+                        }).slice(0, 10); // Limit to 10 results
+
+                        renderSearchResults(matches);
+                    });
+
+                    // Hide results when clicking outside
+                    document.addEventListener('click', (e) => {
+                        if (!e.target.closest('.scan-search-container')) {
+                            searchResults.style.display = 'none';
+                        }
+                    });
+                }
+
+                function renderSearchResults(results) {
+                    searchResults.innerHTML = '';
+
+                    if (results.length === 0) {
+                        searchResults.style.display = 'none';
+                        return;
+                    }
+
+                    results.forEach(p => {
+                        const div = document.createElement('div');
+                        div.className = 'search-result-item'; // Reuse existing class or style inline if needed
+                        // Inline style to ensuring it looks good if class is missing or different
+                        div.style.padding = '10px';
+                        div.style.borderBottom = '1px solid #eee';
+                        div.style.cursor = 'pointer';
+                        div.style.display = 'flex';
+                        div.style.justifyContent = 'space-between';
+
+                        div.innerHTML = `
+                        <div>
+                            <div style="font-weight: bold; font-size: 0.9rem;">${p.name}</div>
+                            <small style="color: #666;">Cód: ${p.id}</small>
+                        </div>
+                        <div style="font-weight: bold; color: var(--primary-red);">R$ ${parseFloat(p.price).toFixed(2).replace('.', ',')}</div>
+                    `;
+
+                        div.addEventListener('click', () => {
+                            selectProduct(p);
+                        });
+
+                        // Hover effect
+                        div.addEventListener('mouseenter', () => div.style.background = '#f9fafb');
+                        div.addEventListener('mouseleave', () => div.style.background = 'white');
+
+                        searchResults.appendChild(div);
+                    });
+
+                    searchResults.style.display = 'block';
+                    searchResults.classList.add('active'); // Ensure visibility style is triggered
+                }
+
+                function selectProduct(p) {
+                    prodInput.value = p.name;
+                    valInput.value = p.price;
+                    selectedProduct = p; // Store full object for NFe
+                    searchResults.style.display = 'none';
+                    qtyInput.focus();
+                }
+
+                async function fetchProducts() {
+                    try {
+                        console.log("Fetching products from API...");
+                        // Update input placeholder to show loading
+                        if (prodInput) prodInput.placeholder = "Carregando produtos...";
+
+                        const response = await fetch(`${SCRIPT_URL}?action=getProducts`);
+                        if (!response.ok) throw new Error("Network response was not ok");
+
+                        allProducts = await response.json();
+                        console.log(`Loaded ${allProducts.length} products from API.`);
+
+                        if (prodInput) {
+                            prodInput.placeholder = "Digite nome ou código...";
+                            prodInput.disabled = false;
+                            setupProductSearch();
+                        }
+
+                    } catch (error) {
+                        console.error("Failed to fetch products:", error);
+                        if (prodInput) prodInput.placeholder = "Erro ao carregar produtos.";
+                    }
+                }
+
+                // CPF/CNPJ Masking Logic
+                docInput.addEventListener('input', function (e) {
+                    let value = e.target.value.replace(/\D/g, ''); // Remove non-numeric chars
+
+                    if (value.length > 14) value = value.slice(0, 14); // Limit length
+
+                    if (value.length <= 11) {
+                        // CPF Mask: 000.000.000-00
+                        value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                        value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                        value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                    } else {
+                        // CNPJ Mask: 00.000.000/0000-00
+                        value = value.replace(/^(\d{2})(\d)/, '$1.$2');
+                        value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+                        value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
+                        value = value.replace(/(\d{4})(\d)/, '$1-$2');
+                    }
+
+                    e.target.value = value;
+                    e.target.classList.remove('form-input-error'); // Remove error on typing
+                });
+
+                nameInput.addEventListener('input', (e) => {
+                    e.target.classList.remove('form-input-error');
+                });
+
+                // Open/Close Logic
+                openBtn.addEventListener('click', () => {
+                    modal.classList.add('active');
+                    resetWizard();
+                });
+
+                closeBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        modal.classList.remove('active');
+                    });
+                });
+
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) modal.classList.remove('active');
+                });
+
+                // Wizard Navigation
+                function updateWizardUI() {
+                    console.log("updateWizardUI called. Current Step:", currentStep);
+                    console.log("btnNext element:", btnNext);
+                    if (btnNext) console.log("btnNext style:", btnNext.style.display);
+
+                    // Show/Hide Content
+                    stepContents.forEach(content => content.style.display = 'none');
+                    document.getElementById(`step-${currentStep}-content`).style.display = 'block';
+
+                    // Update Header
+                    stepIndicators.forEach(item => {
+                        const stepNum = parseInt(item.getAttribute('data-step'));
+                        const circle = item.querySelector('.step-circle');
+
+                        if (stepNum === currentStep) {
+                            item.classList.add('active');
+                            circle.style.background = 'var(--primary-red)';
+                            circle.style.color = 'white';
+                            circle.style.border = 'none';
+                            circle.innerHTML = stepNum;
+                        } else if (stepNum < currentStep) {
+                            item.classList.add('completed');
+                            circle.style.background = '#16a34a'; // Green for past
+                            circle.style.color = 'white';
+                            circle.style.border = 'none';
+                            circle.innerHTML = "<i class='bx bx-check'></i>";
+                        } else {
+                            item.classList.remove('active');
+                            circle.style.background = 'white';
+                            circle.style.color = 'var(--text-light)';
+                            circle.style.border = '2px solid var(--border-subtle)';
+                            circle.innerHTML = stepNum;
+                        }
+                    });
+
+                    // Update Buttons
+                    console.log("Setting buttons for step:", currentStep);
+                    if (currentStep == 1) {
+                        btnPrev.style.display = 'none';
+                        btnNext.style.display = 'inline-flex'; // Changed to inline-flex
+                        btnNext.style.background = '#ef4444'; // Hardcoded red
+                        btnFinish.style.display = 'none';
+                        console.log("Step 1: Next button should be visible");
+                    } else if (currentStep == 2) {
+                        btnPrev.style.display = 'inline-block';
+                        btnNext.style.display = 'inline-flex';
+                        btnNext.style.background = '#ef4444';
+                        btnFinish.style.display = 'none';
+                    } else if (currentStep == 3) {
+                        btnPrev.style.display = 'inline-block';
+                        btnNext.style.display = 'none';
+                        btnFinish.style.display = 'inline-flex';
+                        updateReviewSummary();
+                    }
+
+                    // Debug final state
+                    setTimeout(() => {
+                        console.log("Final btnNext display:", btnNext.style.display);
+                    }, 100);
+                }
+
+                btnNext.addEventListener('click', () => {
+                    let isValid = true;
+
+                    if (currentStep === 1) {
+                        // Check fields
+                        if (!docInput.value.trim()) {
+                            docInput.classList.add('form-input-error');
+                            isValid = false;
+                        }
+                        if (!nameInput.value.trim()) {
+                            nameInput.classList.add('form-input-error');
+                            isValid = false;
+                        }
+
+                        if (!isValid) return; // Stop if invalid
+                    }
+
+                    if (currentStep === 2) {
+                        // Validate Step 2
+                        if (currentItems.length === 0) {
+                            // Flash grid or show message
+                            emptyItemsMsg.style.color = '#ef4444';
+                            setTimeout(() => emptyItemsMsg.style.color = '#9ca3af', 500);
+                            return;
+                        }
+                    }
+
+                    if (currentStep < 3) {
+                        currentStep++;
+                        updateWizardUI();
+                    }
+                });
+
+                btnPrev.addEventListener('click', () => {
+                    if (currentStep > 1) {
+                        currentStep--;
+                        updateWizardUI();
+                    }
+                });
+
+                function resetWizard() {
+                    currentStep = 1;
+                    currentItems = [];
+                    docInput.value = '';
+                    nameInput.value = '';
+                    docInput.classList.remove('form-input-error');
+                    nameInput.classList.remove('form-input-error');
+                    renderItems();
+                    updateWizardUI();
+                }
+
+                // Products Logic
+                addProdBtn.addEventListener('click', () => {
+                    const name = prodInput.value;
+                    const qty = parseInt(qtyInput.value);
+                    const val = parseFloat(valInput.value);
+
+                    // Validation: Must select from list or valid input
+                    if (!name || isNaN(qty) || isNaN(val)) {
+                        showInputError(prodInput);
+                        if (isNaN(val)) showInputError(valInput);
+                        return;
+                    }
+
+                    // Create Item Object (including Fiscal Data)
+                    const newItem = {
+                        name,
+                        qty,
+                        val,
+                        // Use selectedProduct data if available, otherwise defaults (which might fail validation later)
+                        ncm: selectedProduct ? selectedProduct.ncm : '',
+                        cfop: selectedProduct ? selectedProduct.cfop : '',
+                        unit: selectedProduct ? selectedProduct.unit : 'UN',
+                        id: selectedProduct ? selectedProduct.id : 'MANUAL'
+                    };
+
+                    currentItems.push(newItem);
+
+                    // Clear Inputs
+                    prodInput.value = '';
+                    qtyInput.value = 1;
+                    valInput.value = '';
+                    selectedProduct = null;
+                    prodInput.focus();
+
+                    renderItems();
+                });
+
+                function showInputError(element) {
+                    element.classList.add('form-input-error');
+                    setTimeout(() => element.classList.remove('form-input-error'), 500);
+                }
+
+                function renderItems() {
+                    itemsBody.innerHTML = '';
+                    let total = 0;
+
+                    if (currentItems.length === 0) {
+                        emptyItemsMsg.style.display = 'block';
+                    } else {
+                        emptyItemsMsg.style.display = 'none';
+                        currentItems.forEach((item, index) => {
+                            const rowTotal = item.qty * item.val;
+                            total += rowTotal;
+
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                            <td style="padding: 10px; font-size: 0.9rem;">${item.name}</td>
+                            <td style="padding: 10px; font-size: 0.9rem; text-align: center;">${item.qty}</td>
+                            <td style="padding: 10px; font-size: 0.9rem; text-align: right;">R$ ${rowTotal.toFixed(2).replace('.', ',')}</td>
+                            <td style="text-align: center;">
+                                <button onclick="removeItem(${index})" style="background:none; border:none; color: #ef4444; cursor:pointer;"><i class='bx bx-trash'></i></button>
+                            </td>
+                        `;
+                            itemsBody.appendChild(tr);
+                        });
+                    }
+
+                    totalDisplay.innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
+                }
+
+                window.removeItem = (index) => {
+                    currentItems.splice(index, 1);
+                    renderItems();
+                };
+
+                function updateReviewSummary() {
+                    document.getElementById('review-dest-name').innerText = document.getElementById('nfe-name').value;
+                    document.getElementById('review-dest-doc').innerText = document.getElementById('nfe-doc').value;
+                    document.getElementById('review-items-count').innerText = currentItems.length;
+                    document.getElementById('review-total-value').innerText = totalDisplay.innerText;
+                }
+
+                btnFinish.addEventListener('click', () => {
+                    // Simulate emission
+                    const btn = btnFinish;
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Emitindo...";
+                    btn.disabled = true;
+
+                    setTimeout(() => {
+                        alert("Nota Fiscal autorizada com sucesso!");
+                        modal.classList.remove('active');
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+
+                        // Add mock item to list
+                        nfeData.unshift({
+                            id: Math.floor(Math.random() * 100000).toString(),
+                            client: document.getElementById('nfe-name').value,
+                            date: new Date().toLocaleString(),
+                            status: 'authorized',
+                            value: parseFloat(totalDisplay.innerText.replace('R$ ', '').replace(',', '.'))
+                        });
+                        renderTable(nfeData);
+                    }, 2000);
+                });
+
+            });
+        </script>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="hidden">
+            <i class='bx bx-loader-alt bx-spin'></i>
+            <p id="loading-message">Carregando produtos...</p>
+        </div>
+
+</body>
+
+</html>

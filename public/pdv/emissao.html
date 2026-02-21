@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emissão de NF-e | ELETRO</title>
+
+    <!-- Dependencies (same as index.html) -->
+    <link rel="icon" href="/assets/img/iconWeb.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <!-- Scripts Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-BV6V3GTMR0');
+    </script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css?v=3"> <!-- Base Styles (ReadOnly) -->
+    <link rel="stylesheet" href="emissao.css"> <!-- Specific Styles -->
+
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header class="nfe-header">
+        <div class="nfe-title">
+            <i class='bx bx-file'></i>
+            Emissão de Nota Fiscal (NF-e)
+        </div>
+        <button id="btn-nova-emissao" class="btn-nfe-primary">
+            <i class='bx bx-plus'></i> Nova Emissão
+        </button>
+    </header>
+
+
+
+    <!-- Main List -->
+    <div class="nfe-list-container">
+        <!-- Mock of issued notes for visual structure -->
+        <div class="nfe-card-list" id="nfe-history-list">
+            <!-- Items injected by JS -->
+            <div class="nfe-card">
+                <div class="nfe-info">
+                    <strong>Carregando histórico...</strong>
+                    <span>Aguarde um momento</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full Screen Modal -->
+    <div id="modal-emissao" class="nfe-full-modal">
+        <div class="nfe-modal-header">
+            <div class="nfe-title">Nova Nota Fiscal</div>
+            <button class="close-modal-btn" id="btn-close-emissao"
+                style="background:none; border:none; font-size:1.5rem; cursor:pointer;"><i class='bx bx-x'></i></button>
+        </div>
+
+        <!-- Timeline inside modal -->
+        <div class="nfe-timeline" style="border-bottom: 1px solid var(--nfe-border); background: var(--nfe-bg);">
+            <div class="timeline-step active" data-step="1">
+                <div class="step-circle">1</div>
+                <span class="step-label">Cliente</span>
+            </div>
+            <div class="timeline-line"></div>
+            <div class="timeline-step" data-step="2">
+                <div class="step-circle">2</div>
+                <span class="step-label">Produtos</span>
+            </div>
+            <div class="timeline-line"></div>
+            <div class="timeline-step" data-step="3">
+                <div class="step-circle">3</div>
+                <span class="step-label">Pagamento</span>
+            </div>
+        </div>
+
+        <div class="nfe-modal-body">
+            <!-- Left: Form Wizard -->
+            <div class="nfe-form-section">
+                <!-- Step 1: Emitente (Hidden/Auto) & Destinatário -->
+                <div id="step-1" class="step-container active">
+                    <h3>1. Dados do Cliente</h3>
+                    <p class="text-light mb-16">Identifique o destinatário da nota.</p>
+
+                    <div class="form-group-nfe">
+                        <label>CPF / CNPJ</label>
+                        <div class="input-group-loading">
+                            <input type="text" id="nfe-dest-doc" class="form-input-nfe"
+                                placeholder="000.000.000-00 ou 00.000.000/0000-00">
+                            <div id="cnpj-loading" class="spinner-border text-primary" role="status"
+                                style="display:none;">
+
+                            </div>
+                        </div>
+                        <small id="cnpj-feedback" class="form-text text-muted" style="display:none;"></small>
+                    </div>
+
+                    <div class="form-group-nfe">
+                        <label>Nome / Razão Social</label>
+                        <input type="text" id="nfe-dest-nome" class="form-input-nfe" placeholder="Nome do Cliente">
+                    </div>
+
+                    <!-- NEW FIELDS -->
+                    <div class="form-row-nfe" style="display:flex; gap:1rem;">
+                        <div class="form-group-nfe" style="flex:1;">
+                            <label>Telefone / WhatsApp *</label>
+                            <input type="text" id="nfe-dest-tel" class="form-input-nfe" placeholder="(00) 00000-0000">
+                        </div>
+                        <div class="form-group-nfe" style="flex:1;">
+                            <label>Email (Envio da XML/PDF)</label>
+                            <input type="email" id="nfe-dest-email" class="form-input-nfe"
+                                placeholder="cliente@email.com">
+                        </div>
+                    </div>
+
+                    <div class="form-group-nfe">
+                        <label>Endereço Completo</label>
+                        <input type="text" id="nfe-dest-end" class="form-input-nfe"
+                            placeholder="Rua, Número, Bairro, Cidade - UF">
+                    </div>
+                </div>
+
+                <!-- Step 2: Produtos -->
+                <div id="step-2" class="step-container">
+                    <h3>2. Produtos</h3>
+                    <p class="text-light mb-16">Adicione os itens da venda.</p>
+
+                    <!-- Search Component (Reusing structure for script.js compatibility) -->
+                    <div class="scan-search-container">
+                        <div class="search-wrapper" style="flex-grow: 1;">
+                            <div class="barcode-scanner">
+                                <i class="bx bx-barcode-reader" id="barcode-icon"></i>
+                                <!-- ID for our own logic now -->
+                                <input type="text" id="barcode-input" placeholder="Digite o código ou nome..."
+                                    autocomplete="off">
+                            </div>
+                            <!-- ID for our own logic now -->
+                            <div id="barcode-search-results" class="barcode-search-results"></div>
+                        </div>
+                    </div>
+
+                    <!-- Items List (Local NFE List) -->
+                    <div id="nfe-items-list" style="margin-top: 1rem;">
+                        <!-- Added items will appear here -->
+                    </div>
+                </div>
+
+                <!-- Step 3: Pagamento e Tributação -->
+                <div id="step-3" class="step-container">
+                    <h3>3. Pagamento e Finalização</h3>
+                    <p class="text-light mb-16">Defina a forma de pagamento.</p>
+
+                    <div class="form-group-nfe">
+                        <label>Meio de Pagamento</label>
+                        <select id="nfe-pag-tipo" class="form-input-nfe">
+                            <option value="01">Dinheiro</option>
+                            <option value="17">PIX</option>
+                            <option value="03">Cartão de Crédito</option>
+                            <option value="04">Cartão de Débito</option>
+                        </select>
+                    </div>
+
+                    <!-- Parcelamento (Só aparece para Cartão de Crédito) -->
+                    <div id="nfe-parcelas-container" class="form-group-nfe" style="display: none;">
+                        <label>Parcelamento</label>
+                        <select id="nfe-parcelas" class="form-input-nfe">
+                            <option value="1">À Vista (1x)</option>
+                            <option value="2">2x Sem Juros</option>
+                            <option value="3">3x Sem Juros</option>
+                            <option value="4">4x Sem Juros</option>
+                            <option value="5">5x Sem Juros</option>
+                            <option value="6">6x Sem Juros</option>
+                            <option value="7">7x - 12x (A definir)</option>
+                        </select>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right: Live Preview -->
+            <div class="nfe-preview-section">
+                <div class="nfe-paper">
+                    <div class="danfe-simplified">
+                        <!-- Header DANFE -->
+                        <div class="danfe-main-header border-bottom">
+                            <div class="danfe-title">
+                                DANFE SIMPLIFICADO<br>
+                                DOCUMENTO AUXILIAR DA<br>
+                                NOTA FISCAL ELETRÔNICA
+                            </div>
+                            <div class="danfe-meta-box text-center">
+                                1 - SAÍDA<br>
+                                Nº <span id="prev-nfe-num">000.000</span><br>
+                                SÉRIE: 1
+                            </div>
+                        </div>
+
+                        <!-- Barcode (Fake) -->
+                        <div class="danfe-barcode border-bottom" title="Representação Gráfica do Código de Barras">
+                        </div>
+
+                        <!-- Chave -->
+                        <div class="danfe-row border-bottom">
+                            <label class="danfe-key-label">CHAVE DE ACESSO</label>
+                            <div class="danfe-access-key" id="prev-access-key">0000 0000 0000 0000 0000 0000 0000
+                                0000
+                                0000 0000 0000</div>
+                        </div>
+
+                        <!-- Protocol -->
+                        <div class="danfe-row border-bottom">
+                            <label class="danfe-label">PROTOCOLO DE AUTORIZAÇÃO DE USO</label>
+                            <div id="prev-protocol" style="font-size: 9px;">Em processamento...</div>
+                        </div>
+
+                        <!-- Emitente -->
+                        <div class="danfe-section border-bottom">
+                            <div class="danfe-section-title">EMITENTE</div>
+                            <div class="danfe-info-box">
+                                <strong id="prev-emit-nome">SUA EMPRESA LTDA</strong><br>
+                                RUA EXEMPLO, 123 - CENTRO - CIDADE/UF<br>
+                                CNPJ: 00.000.000/0001-00 IE: ISENTO
+                            </div>
+                        </div>
+
+                        <!-- Destinatário -->
+                        <div class="danfe-section border-bottom">
+                            <div class="danfe-section-title">DESTINATÁRIO</div>
+                            <div class="danfe-info-box">
+                                <strong id="prev-dest-nome">CONSUMIDOR FINAL</strong><br>
+                                <span id="prev-dest-data">ENDEREÇO NÃO INFORMADO</span><br>
+                                CPF/CNPJ: <span id="prev-dest-doc">000.000.000-00</span>
+                            </div>
+                        </div>
+
+                        <!-- Products -->
+                        <div class="danfe-section">
+                            <div class="danfe-section-title">DADOS DOS PRODUTOS</div>
+                            <table class="danfe-table">
+                                <thead>
+                                    <tr>
+                                        <th>DESCRIÇÃO</th>
+                                        <th>QTD</th>
+                                        <th>UN</th>
+                                        <th>VL UN</th>
+                                        <th>TOTAL</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="prev-items-body">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Totals -->
+                        <div class="danfe-totals-area">
+                            <div class="danfe-total-box">
+                                <span class="val-label">VL TOTAL PRODUTOS</span>
+                                <span class="val-amount" id="prev-vprod">0,00</span>
+                            </div>
+                            <div class="danfe-total-box">
+                                <span class="val-label">VL TOTAL NOTA</span>
+                                <span class="val-amount" id="prev-vtotal">0,00</span>
+                            </div>
+                        </div>
+
+                        <div class="danfe-footer">
+                            DADOS ADICIONAIS: DOCUMENTO EMITIDO POR ME OU EPP OPTANTE PELO SIMPLES NACIONAL. NÃO
+                            GERA
+                            DIREITO A CRÉDITO FISCAL DE IPI.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nfe-modal-footer">
+            <button id="btn-prev-step" class="btn-nfe-primary"
+                style="background: white; color: black; border: 1px solid #ccc;">Voltar</button>
+            <button id="btn-next-step" class="btn-nfe-primary">Próximo</button>
+        </div>
+    </div>
+
+    <!-- Hidden Elements Required by script.js to avoid errors -->
+    <div class="hidden-structure">
+        <div id="main-content"></div>
+        <div id="cart-items-body"></div>
+        <div id="item-list-container"></div>
+        <div id="empty-state"></div>
+        <div id="item-list-table"></div>
+        <div id="summary-subtotal"></div>
+        <div id="summary-total"></div>
+        <div id="item-count"></div>
+        <div id="summary-discount"></div>
+        <div id="discount-effective-label"></div>
+        <!-- Add others as discovered/needed -->
+    </div>
+
+    <!-- Scripts -->
+    <script src="API.js"></script>
+    <!-- script.js REMOVED -->
+    <script src="emissao.js"></script> <!-- New Logic -->
+
+    <!-- Custom Loader Overlay (Identical to index.html) -->
+    <div id="custom-loader-overlay">
+        <span class="loader"></span>
+        <p class="loader-text">preparando tudo para você</p>
+    </div>
+
+</body>
+
+</html>
