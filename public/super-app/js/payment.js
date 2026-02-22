@@ -9,6 +9,7 @@ let selectedStore = '';
 let selectedPayMethod = 'pix';     // 'pix' | 'card' | 'zap'
 let selectedInstallments = 1;
 let validatedCart = [];
+let appliedCoupon = JSON.parse(sessionStorage.getItem('applied_coupon') || 'null');
 
 const CLOUD_FUNCTIONS_URL = 'https://us-central1-super-app25.cloudfunctions.net';
 const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
@@ -55,7 +56,7 @@ function registrarPedido({ cart, total, method, gateway = 'Mercado Pago', status
         productsTotal,
         shippingCost: currentShippingCost,
         total,
-        couponCode: coupon?.code || null,
+        couponCode: appliedCoupon?.code || null,
         status,
         gateway,
         account: 'default'
@@ -381,25 +382,24 @@ async function setupPaymentStep() {
     renderProductList(validatedCart);
 
     // Lógica de Cupom
-    const coupon = JSON.parse(sessionStorage.getItem('applied_coupon') || 'null');
     let discountValue = 0;
 
     const baseTotalPix = validatedCart.reduce((s, i) => s + (i.pricePix || i.priceNew) * i.quantity, 0) + currentShippingCost;
     const baseTotalCard = validatedCart.reduce((s, i) => s + (i.priceBase || i.priceNew) * i.quantity, 0) + currentShippingCost;
 
-    if (coupon) {
-        if (coupon.code === 'VALE5') {
+    if (appliedCoupon) {
+        if (appliedCoupon.code === 'VALE5') {
             discountValue = 5.00;
-        } else if (coupon.code === 'APROVEITA26' || coupon.code === 'DOMINGOU') {
+        } else if (appliedCoupon.code === 'APROVEITA26' || appliedCoupon.code === 'DOMINGOU') {
             discountValue = baseTotalPix * 0.12;
         }
     }
 
     const totalPix = Math.max(0, baseTotalPix - discountValue);
-    const totalCard = Math.max(0, baseTotalCard - (coupon ? discountValue : 0));
+    const totalCard = Math.max(0, baseTotalCard - (appliedCoupon ? discountValue : 0));
     const savings = baseTotalCard - totalPix;
 
-    renderTotals(totalPix, totalCard, savings, discountValue, coupon);
+    renderTotals(totalPix, totalCard, savings, discountValue, appliedCoupon);
     renderPaymentOptions(totalCard, totalPix);
 
     // Seta método padrão: PIX
