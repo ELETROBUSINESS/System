@@ -26,18 +26,9 @@
         <i class='bx bxs-up-arrow'></i> Faça login aqui para acessar seus pedidos!
     </div>
 
-    <div id="custom-loader-overlay">
-        <span class="loader"></span>
-        <p class="loader-text">preparando tudo para você</p>
-    </div>
 
-    <div class="offer-scrolling-bar">
-        <div class="scrolling-text">
-            <span>⚡ CORRIDA DE OFERTAS: PREÇOS SURREAIS POR TEMPO LIMITADO! APROVEITE ATÉ AS 22H DE HOJE! ⚡</span>
-            <span>⚡ CORRIDA DE OFERTAS: PREÇOS SURREAIS POR TEMPO LIMITADO! APROVEITE ATÉ AS 22H DE HOJE! ⚡</span>
-            <span>⚡ CORRIDA DE OFERTAS: PREÇOS SURREAIS POR TEMPO LIMITADO! APROVEITE ATÉ AS 22H DE HOJE! ⚡</span>
-        </div>
-    </div>
+
+
 
     <header class="main-header">
         <div class="container header-container">
@@ -45,11 +36,44 @@
                 <img src="/assets/img/dtudoicon.png" alt="Logo" class="logo-img" onerror="this.src='dtudo.png'">
             </a>
 
-            <div class="search-bar">
-                <i class='bx bx-left-arrow-alt search-back-btn' onclick="closeSearchModal(event)"></i>
-                <input type="text" placeholder="buscar na Dtudo" id="main-search-input">
+            <div class="search-bar" onclick="openSearchModal()">
+                <input type="text" placeholder="buscar na Dtudo" id="main-search-input" readonly>
                 <i class='bx bx-search search-icon'></i>
-                <div id="search-dropdown" class="search-dropdown"></div>
+            </div>
+
+            <!-- Modal de Busca -->
+            <div id="search-modal" class="modal-overlay search-modal">
+                <div class="search-modal-content">
+                    <header class="search-modal-header">
+                        <i class='bx bx-left-arrow-alt' onclick="closeSearchModal()"></i>
+                        <div class="search-input-wrapper">
+                            <input type="text" placeholder="O que você está procurando?" id="modal-search-input"
+                                autofocus>
+                            <i class='bx bx-x' id="clear-search" style="display: none;"></i>
+                        </div>
+                        <button class="search-confirm-btn" onclick="executeSearch()">Buscar</button>
+                    </header>
+
+                    <div class="search-modal-body">
+                        <div id="search-history-section" style="display: none;">
+                            <div class="search-section-title">
+                                <span>Buscas recentes</span>
+                                <button onclick="clearSearchHistory()">Limpar</button>
+                            </div>
+                            <div id="search-history-list" class="suggestion-list"></div>
+                        </div>
+
+                        <div id="search-suggestions-section">
+                            <div class="search-section-title">Sugestões para você</div>
+                            <div id="search-suggestions-list" class="suggestion-list">
+                                <div class="suggestion-item"><i class='bx bx-trending-up'></i> Relógio Masculino</div>
+                                <div class="suggestion-item"><i class='bx bx-trending-up'></i> Material Escolar</div>
+                                <div class="suggestion-item"><i class='bx bx-trending-up'></i> Eletrônicos</div>
+                                <div class="suggestion-item"><i class='bx bx-trending-up'></i> Brinquedos</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <button class="header-icons header-icon-mobile" id="profile-button-mobile">
@@ -71,29 +95,14 @@
     </header>
 
     <main>
-        <div class="home-offer-banner" onclick="window.location.href='index.html?filter=ofertas'"
-            style="cursor: pointer;">
-            <i class='bx bxs-hot'></i>
-            <span>OFERTAS RELÂMPAGO: Encerram em <span id="home-timer-countdown">--:--:--</span></span>
-        </div>
 
-        <section id="product-detail-view" style="display: none; padding-top: 20px;">
-            <div class="container">
-                <button onclick="window.location.href='index.html'"
-                    style="margin-bottom: 20px; display: flex; align-items: center; gap: 5px; font-weight: 600; color: #666;">
-                    <i class='bx bx-left-arrow-alt' style="font-size: 1.5rem;"></i> Voltar
-                </button>
-                <div id="detail-content">Carregando...</div>
-            </div>
-        </section>
+
+
     </main>
 
     <section class="banner-slider">
         <div class="slider-wrapper">
             <div class="slide"><img src="1.png" alt="Ofertas"></div>
-            <div class="slide"><img src="2.png" alt="Ofertas"></div>
-            <div class="slide"><img src="3.png" alt="Ofertas"></div>
-            <div class="slide"><img src="4.png" alt="Ofertas"></div>
         </div>
     </section>
 
@@ -121,34 +130,7 @@
         </div>
     </section>
 
-    <section class="mega-countdown-section">
-        <div class="container">
-            <div class="countdown-card">
-                <div class="countdown-info">
-                    <div class="countdown-texts">
-                        <h3>A CORRIDA VAI ACABAR!</h3>
-                        <p>As ofertas de hoje expiram em:</p>
-                    </div>
-                </div>
-                <div id="mega-timer" class="timer-display">
-                    <div class="timer-unit">
-                        <span id="timer-hours">00</span>
-                        <label>Horas</label>
-                    </div>
-                    <div class="timer-sep">:</div>
-                    <div class="timer-unit">
-                        <span id="timer-min">00</span>
-                        <label>Min</label>
-                    </div>
-                    <div class="timer-sep">:</div>
-                    <div class="timer-unit">
-                        <span id="timer-sec">00</span>
-                        <label>Seg</label>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+
 
     <!-- VISTO POR ÚLTIMO (Injetado via JS) -->
     <section id="recently-viewed"
@@ -166,9 +148,9 @@
 
     <section id="products">
         <div class="container">
-            <h2 class="section-title">Destaques para você</h2>
+            <h2 class="section-title" id="feed-title">Destaques para você</h2>
 
-            <div class="product-grid" id="firebase-products-container">
+            <div id="firebase-products-container">
                 <div class="product-card skeleton-card">
                     <div class="skeleton skeleton-img"></div>
                     <div class="skeleton skeleton-text"></div>
@@ -206,14 +188,29 @@
     </main>
 
     <nav class="bottom-navbar">
-        <a href="index.html" class="nav-item active"><i class='bx bxs-home'></i><span>Início</span></a>
+        <div class="nav-indicator-container">
+            <div class="nav-indicator"></div>
+        </div>
+        <a href="index.html" class="nav-item active"><i class='bx bx-home'></i><span>Início</span></a>
         <a href="carrinho.html" class="nav-item">
             <i class='bx bx-cart'></i>
             <span id="cart-badge" class="cart-badge">0</span>
             <span>Carrinho</span>
         </a>
-        <a href="pedidos.html" class="nav-item"><i class='bx bx-receipt'></i><span>Pedidos</span></a>
+        <a href="pedidos.html" class="nav-item"><i class='bx bx-box'></i><span>Pedidos</span></a>
     </nav>
+
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-info">
+                <strong>A N F da Silva LTDA</strong>
+                <p>Dtudo Variedades e Utilidades</p>
+                <p>CNPJ: 45.692.327/0001-00</p>
+                <p>Rua Jarbas Passarinho, SN - Centro</p>
+                <p>Ipixuna do pará - PA</p>
+            </div>
+        </div>
+    </footer>
 
     <div id="user-profile-modal" class="modal-overlay">
         <div class="modal-content profile-modal-content">

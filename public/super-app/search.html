@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados de Busca | Dtudo</title>
+    <link rel="icon" href="/assets/img/Dtudoicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="css/index.css">
+</head>
+
+<body>
+    <header class="main-header">
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <i class='bx bx-left-arrow-alt' style="font-size: 1.8rem;"></i>
+            </a>
+
+            <div class="search-bar" onclick="location.href='index.html?openSearch=true'">
+                <input type="text" placeholder="buscar na Dtudo" id="results-search-input" readonly>
+                <i class='bx bx-search search-icon'></i>
+            </div>
+        </div>
+    </header>
+
+    <main style="padding-top: 20px;">
+        <div class="container">
+            <h2 id="search-results-title" class="section-title">Resultados para "..."</h2>
+
+            <div id="no-results-message" style="display: none; text-align: center; padding: 40px 20px;">
+                <i class='bx bx-search-alt' style="font-size: 4rem; color: #ccc; margin-bottom: 15px;"></i>
+                <h3 style="color: #666; margin-bottom: 10px;">Ops! Nenhum produto encontrado.</h3>
+                <p style="color: #999;">Tente buscar por termos mais genéricos ou confira nossas sugestões abaixo.</p>
+            </div>
+
+            <div class="product-grid" id="search-results-container">
+                <!-- Resultados injetados aqui -->
+            </div>
+
+            <div id="suggested-results-section" style="display: none; margin-top: 40px;">
+                <h2 class="section-title">Produtos Sugeridos</h2>
+                <div class="product-grid" id="suggested-products-container">
+                    <!-- Sugestões injetadas aqui -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <nav class="bottom-navbar">
+        <div class="nav-indicator-container">
+            <div class="nav-indicator" style="transform: translateX(100%);"></div>
+        </div>
+        <a href="index.html" class="nav-item"><i class='bx bx-home'></i><span>Início</span></a>
+        <a href="carrinho.html" class="nav-item">
+            <i class='bx bx-cart'></i>
+            <span id="cart-badge" class="cart-badge">0</span>
+            <span>Carrinho</span>
+        </a>
+        <a href="pedidos.html" class="nav-item"><i class='bx bx-box'></i><span>Pedidos</span></a>
+    </nav>
+
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-info">
+                <strong>A N F da Silva LTDA</strong>
+                <p>Dtudo Variedades e Utilidades</p>
+                <p>CNPJ: 45.692.327/0001-00</p>
+                <p>Rua Jarbas Passarinho, SN - Centro</p>
+                <p>Ipixuna do pará - PA</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/global.js"></script>
+    <script src="js/search.js"></script>
+</body>
+
+</html>

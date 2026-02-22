@@ -1,0 +1,301 @@
+// js/product.js
+
+const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
+const CACHE_KEY = 'dtudo_products_cache';
+const CACHE_TIME_KEY = 'dtudo_cache_time';
+const CACHE_DURATION = 20 * 60 * 1000;
+
+function getCachedData() {
+    const json = sessionStorage.getItem(CACHE_KEY);
+    const time = sessionStorage.getItem(CACHE_TIME_KEY);
+    if (!json || !time) return null;
+    if (new Date().getTime() - parseInt(time) > CACHE_DURATION) return null;
+    return JSON.parse(json);
+}
+
+function saveToCache(newProducts) {
+    const currentCache = getCachedData() || [];
+    const uniqueIds = new Set(currentCache.map(p => p.id));
+    const merged = [...currentCache];
+    newProducts.forEach(p => { if (!uniqueIds.has(p.id)) merged.push(p); });
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify(merged));
+    sessionStorage.setItem(CACHE_TIME_KEY, new Date().getTime().toString());
+}
+
+function extractProductImages(prod) {
+    let images = [];
+    if (prod.imgUrl && prod.imgUrl.trim() !== "") images.push(prod.imgUrl.trim());
+    let i = 1;
+    while (true) {
+        const key = 'imgUrl' + i;
+        if (prod[key] && prod[key].trim() !== "") { images.push(prod[key].trim()); i++; }
+        else { break; }
+        if (i > 20) break;
+    }
+    if (images.length === 0) return ['https://placehold.co/500x500/EBEBEB/333?text=Sem+Foto'];
+    return images;
+}
+
+function calculateInstallmentsRule(price) {
+    // Nova regra solicitada: máximo 3x de acordo com o valor
+    if (price >= 300) return 3;
+    if (price >= 150) return 2;
+    return 1; // À vista no cartão
+}
+
+function registerInterest(category) {
+    if (!category || category === 'todos' || category === 'ofertas') return;
+    let interests = JSON.parse(localStorage.getItem('user_interests') || '[]');
+    let lowerCat = category.toLowerCase().trim();
+    if (!interests.includes(lowerCat)) {
+        interests.unshift(lowerCat);
+        if (interests.length > 4) interests.pop();
+        localStorage.setItem('user_interests', JSON.stringify(interests));
+    }
+}
+
+function registerRecentlyViewed(prod) {
+    if (!prod) return;
+    let viewed = JSON.parse(localStorage.getItem('user_recently_viewed') || '[]');
+    viewed = viewed.filter(p => p.id !== prod.id);
+    viewed.unshift({
+        id: prod.id,
+        name: prod.name,
+        price: prod.price,
+        'price-oferta': prod['price-oferta'],
+        imgUrl: prod.imgUrl
+    });
+    if (viewed.length > 10) viewed.pop();
+    localStorage.setItem('user_recently_viewed', JSON.stringify(viewed));
+}
+
+async function loadProductDetail(id) {
+    const content = document.getElementById('detail-content');
+
+    try {
+        let prod = null;
+        let allProducts = getCachedData();
+
+        if (allProducts) {
+            prod = allProducts.find(p => String(p.id) === String(id));
+        }
+
+        if (!prod) {
+            const response = await fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`);
+            const result = await response.json();
+            if (result.status === "success" && result.data) {
+                saveToCache(result.data);
+                allProducts = result.data;
+                prod = result.data.find(p => String(p.id) === String(id));
+            }
+        }
+
+        if (!prod) {
+            content.innerHTML = "<h3>Produto não encontrado.</h3>";
+            return;
+        }
+
+        registerInterest(prod.category);
+        registerRecentlyViewed(prod);
+
+        const productImages = extractProductImages(prod);
+        const valPrice = parseFloat(prod.price || 0);
+        const valOffer = parseFloat(prod['price-oferta'] || 0);
+        const hasOffer = (valOffer > 0 && valOffer < valPrice);
+
+        // Regra Super App: Preço Base de Venda
+        const baseSalePrice = hasOffer ? valOffer : valPrice;
+
+        // Pix tem 5% de desconto sobre o preço de venda final
+        const pixPrice = baseSalePrice * 0.95;
+
+        // Cartão é o preço de venda sem o desconto de 5%
+        const cardPrice = baseSalePrice;
+
+        document.title = `${prod.name} | Dtudo`;
+
+        const fmtConfig = { style: 'currency', currency: 'BRL' };
+        const fmtCard = cardPrice.toLocaleString('pt-BR', fmtConfig);
+        const fmtOriginal = valPrice.toLocaleString('pt-BR', fmtConfig);
+        const fmtPix = pixPrice.toLocaleString('pt-BR', fmtConfig);
+
+        // Parcelamento
+        const maxInstallments = calculateInstallmentsRule(cardPrice);
+        const installmentValue = cardPrice / maxInstallments;
+        const fmtInstallmentValue = installmentValue.toLocaleString('pt-BR', fmtConfig);
+
+        const stockCount = parseInt(prod.stock || 0);
+        const soldCount = parseInt(prod.sold || 0);
+
+        let stockHtml = '';
+        if (stockCount <= 0) {
+            stockHtml = `<div class="stock-scarcity-container"><div class="stock-label"><strong style="color:#999">Esgotado</strong></div></div>`;
+        } else if (stockCount <= 8) {
+            stockHtml = `
+                <div class="stock-scarcity-container">
+                    <div class="stock-label"><span>Disponibilidade: ${stockCount} itens</span><strong style="color:#db0038">Restam poucas unidades!</strong></div>
+                    <div class="stock-track"><div class="stock-fill" style="width:${(1 - stockCount / 8) * 100}%; background:#db0038"></div></div>
+                </div>`;
+        } else {
+            stockHtml = `<div class="stock-scarcity-container"><div class="stock-label"><strong style="color:var(--color-text-dark); display:flex; align-items:center; gap:5px;"><i class='bx bxs-check-circle'></i> Disponível em estoque</strong></div></div>`;
+        }
+
+        let priceBlock = `
+            <div class="detail-price-wrapper">
+                ${hasOffer ? `<div class="detail-price-old">${fmtOriginal}</div>` : ''}
+                <div class="detail-pix-highlight">
+                    <span class="pix-price">${fmtPix}</span>
+                    <span class="pix-badge">PIX</span>
+                </div>
+                ${hasOffer ? `<span class="detail-savings-text">Você economiza ${(valPrice - valOffer).toLocaleString('pt-BR', fmtConfig)}</span>` : ''}
+            </div>
+        `;
+
+        let installmentBlock = '';
+        if (maxInstallments > 1) {
+            installmentBlock = `
+                <div class="installment-container" style="margin-top: 5px;">
+                    <div class="installment-main">
+                        <i class='bx bx-credit-card-front'></i>
+                        <span>Ou <strong>${fmtCard}</strong> em até <strong>${maxInstallments}x</strong> de <strong>${fmtInstallmentValue}</strong></span>
+                    </div>
+                </div>
+            `;
+        } else {
+            installmentBlock = `
+                <div class="installment-container" style="margin-top: 5px;">
+                    <div class="installment-main">
+                        <i class='bx bx-credit-card-front'></i>
+                        <span>Ou <strong>${fmtCard}</strong> à vista no cartão</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        const thumbsHtml = productImages.length > 1 ? `
+            <div class="thumbnails-scroll">
+                ${productImages.map((src, i) => `
+                    <img src="${src}" class="thumbnail-item ${i === 0 ? 'active' : ''}" onclick="swapDetailImage('${src}', this)">
+                `).join('')}
+            </div>` : '';
+
+        content.innerHTML = `
+            <div class="detail-view-container">
+                <div class="detail-gallery-container">
+                    <div class="main-image-wrapper">
+                        <img id="main-detail-img" src="${productImages[0]}" alt="${prod.name}" onclick="openZoom(this.src)">
+                    </div>
+                    ${thumbsHtml}
+                </div>
+
+                <div class="detail-info" style="padding: 0 5px;">
+                    <div class="detail-status">Novo | ${soldCount} vendidos</div>
+                    <h1 class="detail-title" style="margin-bottom: 8px;">${prod.name}</h1>
+                    ${priceBlock}
+                    ${installmentBlock}
+                    ${stockHtml}
+                    
+                    <div class="action-buttons">
+                        <button class="btn-buy-now" ${stockCount <= 0 ? 'disabled style="background:#ccc;"' : ''} onclick="addToCartAndGo('${prod.id}', '${prod.name.replace(/'/g, "\\'")}', ${cardPrice}, ${pixPrice}, '${productImages[0]}')">
+                            ${stockCount <= 0 ? 'Indisponível' : 'Comprar Agora'}
+                        </button>
+                        <button class="btn-add-cart" ${stockCount <= 0 ? 'disabled style="border-color:#ccc; color:#999;"' : ''} onclick="addToCart('${prod.id}', '${prod.name.replace(/'/g, "\\'")}', ${cardPrice}, ${pixPrice}, '${productImages[0]}')">
+                            Adicionar ao carrinho
+                        </button>
+                    </div>
+
+                    <div class="seller-info">
+                        <i class='bx bx-store-alt'></i>
+                        <div class="seller-text">
+                            Vendido por: <strong>D'Tudo Variedades</strong><br>
+                            <span>CD1 - Ipixuna do Pará</span>
+                        </div>
+                    </div>
+
+                    <button class="btn-whatsapp-direct" style="background:#25D366; color:#fff; border:none; padding:12px; border-radius:8px; width:100%; margin-top:10px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="window.open('https://wa.me/5591986341760?text=Olá, quero o produto: ${encodeURIComponent(prod.name)}', '_blank')">
+                        <i class='bx bxl-whatsapp'></i> Comprar pelo WhatsApp
+                    </button>
+                </div>
+            </div>
+
+            <div style="background:#fff; padding:20px; margin-top:20px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                <h3 style="font-size:1.2rem; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">Descrição</h3>
+                <p style="color:#666; line-height:1.6; white-space: pre-line;">${prod.description || 'Sem descrição detalhada.'}</p>
+            </div>
+        `;
+
+        renderSuggestedProducts(prod, allProducts);
+
+    } catch (error) {
+        console.error("Erro detalhes:", error);
+        content.innerHTML = "<p>Erro ao carregar produto.</p>";
+    }
+}
+
+function renderSuggestedProducts(currentProd, allProducts) {
+    const container = document.getElementById('suggested-products-container');
+    if (!container || !allProducts) return;
+
+    const category = (currentProd.category || '').toLowerCase();
+    let suggested = allProducts.filter(p => {
+        if (String(p.id) === String(currentProd.id)) return false;
+        if (!p.imgUrl || p.imgUrl.trim() === "" || p.imgUrl.includes('placehold.co')) return false;
+        return (p.category || '').toLowerCase() === category;
+    });
+
+    if (suggested.length < 4) {
+        const others = allProducts.filter(p =>
+            String(p.id) !== String(currentProd.id) &&
+            p.imgUrl && !p.imgUrl.includes('placehold.co')
+        );
+        suggested = [...suggested, ...others.sort(() => 0.5 - Math.random())];
+    }
+
+    suggested = suggested.slice(0, 8);
+    container.innerHTML = suggested.map(prod => {
+        const valPrice = parseFloat(prod.price || 0);
+        const valOffer = parseFloat(prod['price-oferta'] || 0);
+        const finalPrice = (valOffer > 0 && valOffer < valPrice) ? valOffer : valPrice;
+        return `
+            <div class="category-item" style="min-width: 140px; text-align: left; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; height: 100%;" onclick="window.location.href='product.html?id=${prod.id}'">
+                <img src="${prod.imgUrl}" style="width: 100%; height: 120px; object-fit: cover;">
+                <div style="padding: 10px;">
+                    <div style="font-size: 0.8rem; color: #444; height: 32px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${prod.name}</div>
+                    <div style="font-size: 1rem; font-weight: 700; color: #c20026;">${finalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+window.swapDetailImage = function (src, el) {
+    document.getElementById('main-detail-img').src = src;
+    document.querySelectorAll('.thumbnail-item').forEach(img => img.classList.remove('active'));
+    el.classList.add('active');
+}
+
+window.addToCart = function (id, name, priceOriginal, priceNew, img) {
+    if (typeof CartManager !== 'undefined') {
+        const product = { id, name, priceOriginal, priceNew, image: img };
+        CartManager.add(product);
+    }
+}
+
+window.addToCartAndGo = function (id, name, priceOriginal, priceNew, img) {
+    window.addToCart(id, name, priceOriginal, priceNew, img);
+    window.location.href = 'carrinho.html';
+}
+
+window.openZoom = function (src) {
+    const zoomModal = document.createElement('div');
+    zoomModal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; display:flex; justify-content:center; align-items:center;";
+    zoomModal.innerHTML = `<img src="${src}" style="max-width:95%; max-height:95%; object-fit:contain;">`;
+    zoomModal.onclick = () => document.body.removeChild(zoomModal);
+    document.body.appendChild(zoomModal);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+    if (productId) loadProductDetail(productId);
+});

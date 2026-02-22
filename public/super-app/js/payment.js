@@ -22,13 +22,10 @@ function hideProcessingOverlay() {
 
 // --- REGRA DE PARCELAS SEM JUROS ---
 function getInterestFreeSteps(totalValue) {
-    if (totalValue >= 1000) return 12;
-    if (totalValue >= 800) return 9;
-    if (totalValue >= 625) return 8;
-    if (totalValue >= 600) return 7;
-    if (totalValue >= 300) return 6;
-    if (totalValue >= 250) return 5;
-    return 4;
+    // Sincronizado com index.js e product.js do Super App
+    if (totalValue >= 300) return 3;
+    if (totalValue >= 150) return 2;
+    return 1;
 }
 
 // --- VALIDAÇÃO DE PREÇOS (SEPARA PIX E CARTÃO) ---
@@ -58,19 +55,24 @@ async function validateCartPrices(localCart) {
             }
 
             const valPrice = parseFloat(prod.price || 0); // Preço Cheio (Cartão)
-            const valOffer = parseFloat(prod['price-oferta'] || 0); // Preço Pix
+            const valOffer = parseFloat(prod['price-oferta'] || 0); // Preço Oferta
 
             const hasOffer = (valOffer > 0 && valOffer < valPrice);
-            const officialPriceCard = valPrice > 0 ? valPrice : (item.priceNew || 0);
-            const officialPricePix = hasOffer ? valOffer : officialPriceCard;
+
+            // Regra Super App: Preço Pix tem 5% de desconto sobre o preço final de venda
+            const finalSalePrice = hasOffer ? valOffer : valPrice;
+            const officialPricePix = finalSalePrice * 0.95;
+
+            // Para o Cartão, usamos o preço de venda final sem o desconto de Pix
+            const officialPriceCard = finalSalePrice;
 
             if (Math.abs(item.priceNew - officialPricePix) > 0.05) {
                 item.priceNew = officialPricePix;
                 hasChanges = true;
             }
 
-            item.priceBase = officialPriceCard;
-            item.pricePix = officialPricePix;
+            item.priceBase = officialPriceCard; // Base para o cartão/parcelas
+            item.pricePix = officialPricePix;   // Base para o Pix
             item.hasOffer = hasOffer;
 
             verifiedCart.push(item);
@@ -89,6 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener('userReady', (e) => {
         const user = e.detail;
         if (user && user.email) {
+            // No email input in current payment.html, but keeping for compatibility
             const emailInput = document.getElementById("reg-email");
             if (emailInput) emailInput.value = user.email;
             loadUserData(user.uid);
@@ -106,6 +109,10 @@ document.addEventListener("DOMContentLoaded", () => {
     setupPixEvents();
     updateStoreAddresses();
     setupMasks();
+
+    // Mostra as opções de pagamento (Cartão está oculto por padrão no HTML)
+    const btnCard = document.getElementById("btn-choice-card");
+    if (btnCard) btnCard.style.display = 'flex';
 });
 
 function setupMasks() {
@@ -222,31 +229,29 @@ function setupStepNavigation() {
     });
 }
 
-function setupCheckoutOptions() {
-    // Rendereiza resumo rápido e opções.
-    const cart = CartManager.get();
+async function setupCheckoutOptions() {
+    // Valida no servidor primeiro para evitar que o usuário manipule o preço no navegador
+    showProcessingOverlay();
+    const cart = await validateCartPrices(CartManager.get());
+    hideProcessingOverlay();
 
     let totalPix = 0;
-    let totalReal = 0;
+    let totalCard = 0;
 
     cart.forEach(item => {
         const qty = item.quantity || 1;
-        const pPix = parseFloat(item.pricePix || item.priceNew || 0);
-        let pReal = parseFloat(item.priceBase || item.priceOriginal || 0);
-        if (pReal === 0 || pReal < pPix) pReal = pPix;
-
-        totalPix += pPix * qty;
-        totalReal += pReal * qty;
+        totalPix += (item.pricePix || 0) * qty;
+        totalCard += (item.priceBase || 0) * qty;
     });
 
     const finalTotalPix = totalPix + currentShippingCost;
-    const finalTotalReal = totalReal + currentShippingCost;
-    const savings = totalReal - totalPix;
+    const finalTotalCard = totalCard + currentShippingCost;
+    const savings = totalCard - totalPix;
 
     // Atualiza Subtotal (Valor Cheio)
     const subtotalEl = document.getElementById("payment-subtotal-display");
     if (subtotalEl) {
-        subtotalEl.innerText = `R$ ${totalReal.toFixed(2).replace('.', ',')}`;
+        subtotalEl.innerText = `R$ ${totalCard.toFixed(2).replace('.', ',')}`;
     }
 
     // Atualiza Total Final com ênfase no Pix
@@ -255,13 +260,13 @@ function setupCheckoutOptions() {
         if (savings > 0.05) {
             totalEl.innerHTML = `
                 <div style="display: flex; flex-direction: column; align-items: flex-end;">
-                    <span style="font-size: 0.9rem; color: #999; text-decoration: line-through; font-weight: normal;">R$ ${finalTotalReal.toFixed(2).replace('.', ',')}</span>
+                    <span style="font-size: 0.9rem; color: #999; text-decoration: line-through; font-weight: normal;">R$ ${finalTotalCard.toFixed(2).replace('.', ',')}</span>
                     <span style="color: #00a650;">R$ ${finalTotalPix.toFixed(2).replace('.', ',')}</span>
                     <small style="font-size: 0.75rem; color: #666; font-weight: 500; margin-top: -2px;">no Pix (Economize R$ ${savings.toFixed(2).replace('.', ',')})</small>
                 </div>
             `;
         } else {
-            totalEl.innerText = `R$ ${finalTotalReal.toFixed(2).replace('.', ',')}`;
+            totalEl.innerText = `R$ ${finalTotalCard.toFixed(2).replace('.', ',')}`;
         }
     }
 
@@ -270,11 +275,9 @@ function setupCheckoutOptions() {
     if (listContainer) {
         listContainer.innerHTML = '';
         cart.forEach(item => {
-            const pPix = parseFloat(item.pricePix || item.priceNew || 0);
-            let pReal = parseFloat(item.priceBase || item.priceOriginal || 0);
-            if (pReal === 0 || pReal < pPix) pReal = pPix;
-
-            const hasDiscount = (pReal - pPix) > 0.05;
+            const pPix = item.pricePix || 0;
+            const pCard = item.priceBase || 0;
+            const hasDiscount = (pCard - pPix) > 0.05;
 
             const imgUrl = item.image || 'https://placehold.co/100x100/eee/999?text=Sem+Foto';
             const html = `
@@ -283,7 +286,7 @@ function setupCheckoutOptions() {
                     <div class="product-summary-info">
                         <div class="product-summary-name">${item.name}</div>
                         <div class="product-summary-price">
-                            ${item.quantity}x ${hasDiscount ? `<span style="text-decoration:line-through; font-size:0.7rem; color:#999;">R$ ${pReal.toFixed(2).replace('.', ',')}</span> ` : ''}
+                            ${item.quantity}x ${hasDiscount ? `<span style="text-decoration:line-through; font-size:0.7rem; color:#999;">R$ ${pCard.toFixed(2).replace('.', ',')}</span> ` : ''}
                             <span style="${hasDiscount ? 'color:#00a650; font-weight:700;' : ''}">R$ ${pPix.toFixed(2).replace('.', ',')}</span>
                         </div>
                     </div>
@@ -297,18 +300,8 @@ function setupCheckoutOptions() {
     const btnCard = document.getElementById("btn-choice-card");
     const btnZap = document.getElementById("btn-pay-whatsapp");
 
-    // Limpa event listeners antigos clonando nodes se necessário
-    const newBtnPix = btnPix.cloneNode(true);
-    btnPix.parentNode.replaceChild(newBtnPix, btnPix);
-
-    const newBtnCard = btnCard.cloneNode(true);
-    btnCard.parentNode.replaceChild(newBtnCard, btnCard);
-
-    const newBtnZap = btnZap.cloneNode(true);
-    btnZap.parentNode.replaceChild(newBtnZap, btnZap);
-
-    // LÓGICA PIX
-    newBtnPix.addEventListener("click", async () => {
+    // Re-bind events (prevent duplication)
+    btnPix.onclick = async () => {
         showProcessingOverlay();
         try {
             const checkoutData = await startCustomCheckout('pix');
@@ -320,15 +313,13 @@ function setupCheckoutOptions() {
             hideProcessingOverlay();
             showToast("Erro ao gerar Pix", "error");
         }
-    });
+    };
 
-    // LÓGICA CARTÃO (INTEGRAÇÃO INFINITEPAY)
-    newBtnCard.addEventListener("click", async () => {
+    btnCard.onclick = async () => {
         showProcessingOverlay();
         try {
             const checkoutData = await startInfinitePayCheckout();
             if (checkoutData && checkoutData.url) {
-                // Redireciona para o checkout seguro da InfinitePay
                 window.location.href = checkoutData.url;
             } else {
                 throw new Error("Link incompleto");
@@ -338,22 +329,23 @@ function setupCheckoutOptions() {
             showToast("Erro ao processar cartão. Tente novamente ou use Pix.", "error");
             console.error(e);
         }
-    });
+    };
 
-    newBtnZap.addEventListener("click", () => {
+    btnZap.onclick = () => {
         const fullName = document.getElementById("reg-full-name") ? document.getElementById("reg-full-name").value : "";
-        const phone = document.getElementById("reg-phone").value;
+        const phoneInput = document.getElementById("reg-phone");
+        const phone = phoneInput ? phoneInput.value : "";
         const orderIdentifier = Math.floor(100000 + Math.random() * 900000);
 
         let msg = `Olá, gostaria de finalizar meu pedido!\n\n_Ref. Pedido:_ *#${orderIdentifier}*\n\n*Produtos:*\n`;
         cart.forEach(item => {
-            msg += `- ${item.quantity}x ${item.name} (R$ ${parseFloat(item.priceNew).toFixed(2).replace('.', ',')})\n`;
+            msg += `- ${item.quantity}x ${item.name} (R$ ${item.priceBase.toFixed(2).replace('.', ',')})\n`;
         });
         msg += `\n*Frete:* ${currentShippingCost === 0 ? 'Grátis' : 'R$ ' + currentShippingCost.toFixed(2).replace('.', ',')}`;
-        msg += `\n*Total estimado:* R$ ${finalTotal.toFixed(2).replace('.', ',')}`;
+        msg += `\n*Total estimado:* R$ ${finalTotalCard.toFixed(2).replace('.', ',')}`;
         msg += `\n\n*Meus Dados:*`;
         msg += `\nNome: ${fullName}`;
-        msg += `\nTelefone: ${document.getElementById("reg-phone").value}`;
+        msg += `\nTelefone: ${phone}`;
 
         if (deliveryMode === 'delivery') {
             msg += `\n*Endereço de Entrega:* ${document.getElementById("address").value}, ${document.getElementById("num").value} - ${document.getElementById("city-select").value}`;
@@ -361,8 +353,7 @@ function setupCheckoutOptions() {
             msg += `\n*Retirada:* Loja ${selectedStore}`;
         }
 
-        // Save order logic
-        const cartShort = cart.map(i => ({ id: i.id, name: i.name, quantity: i.quantity, price: i.priceNew, image: i.image }));
+        const cartShort = cart.map(i => ({ id: i.id, name: i.name, quantity: i.quantity, price: i.priceBase, image: i.image }));
         const user = auth.currentUser;
         const uid = user ? user.uid : (localStorage.getItem('guest_uid') || ('guest_' + Date.now()));
 
@@ -371,7 +362,7 @@ function setupCheckoutOptions() {
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             status: "pending_payment",
             statusText: "Aguardando Atendente",
-            total: finalTotal,
+            total: finalTotalCard,
             shipping: { cost: currentShippingCost, mode: deliveryMode },
             client: { name: fullName, phone: phone },
             items: cartShort,
@@ -379,10 +370,9 @@ function setupCheckoutOptions() {
         });
 
         window.open(`https://wa.me/5591986341760?text=${encodeURIComponent(msg)}`, '_blank');
-
         CartManager.clear();
         setTimeout(() => window.location.href = "index.html", 1500);
-    });
+    };
 }
 
 function changeStep(stepNum) {
@@ -402,11 +392,6 @@ function changeStep(stepNum) {
 
 function setupDeliveryLogic() {
     window.selectDeliveryType = (type) => {
-        const deliveryCard = document.querySelector(`.delivery-option-card[data-type="delivery"]`);
-        if (type === 'delivery' && deliveryCard.classList.contains('blocked-option')) {
-            showToast("Entrega indisponível.", "error");
-            return;
-        }
         deliveryMode = type;
         document.querySelectorAll('.delivery-option-card').forEach(c => c.classList.remove('selected'));
         document.querySelector(`.delivery-option-card[data-type="${type}"]`).classList.add('selected');
@@ -451,7 +436,6 @@ function validateDeliveryArea(cep) {
     const summaryBox = document.getElementById("shipping-summary-box");
     const citySelect = document.getElementById("city-select");
 
-    // Reseta estados
     if (auroraRec) auroraRec.style.display = 'none';
     if (sellerCont) sellerCont.style.display = 'none';
     if (goPaymentBtn) goPaymentBtn.style.display = 'block';
@@ -467,13 +451,10 @@ function validateDeliveryArea(cep) {
     }
 
     if (isIpixuna || isParagominas || isAurora) {
-        // Áreas atendidas (Aurora entra aqui mas com recomendação acima)
         if (isIpixuna) citySelect.value = "Ipixuna do Pará";
         if (isParagominas) citySelect.value = "Paragominas";
-
         if (deliveryMode === 'delivery') calculateShipping();
     } else {
-        // Áreas NÃO atendidas para entrega automática
         if (sellerCont) sellerCont.style.display = 'block';
         if (goPaymentBtn) goPaymentBtn.style.display = 'none';
         if (summaryBox) summaryBox.style.display = 'none';
@@ -506,7 +487,7 @@ function calculateShipping() {
         display.style.color = "#333";
         display.style.fontWeight = "bold";
     } else if (isParagominas) {
-        currentShippingCost = 60; // Definindo um padrão para Paragominas
+        currentShippingCost = 60;
         display.innerText = "R$ 60,00";
         display.style.color = "#333";
         display.style.fontWeight = "bold";
@@ -520,21 +501,17 @@ function calculateShipping() {
 function updateTotalDisplay() {
     const cart = CartManager.get();
     let totalPix = 0;
-    let totalReal = 0;
+    let totalCard = 0;
 
     cart.forEach(item => {
         const qty = item.quantity || 1;
-        const pPix = parseFloat(item.pricePix || item.priceNew || 0);
-        let pReal = parseFloat(item.priceBase || item.priceOriginal || 0);
-        if (pReal === 0 || pReal < pPix) pReal = pPix;
-
-        totalPix += pPix * qty;
-        totalReal += pReal * qty;
+        totalPix += (item.pricePix || 0) * qty;
+        totalCard += (item.priceBase || 0) * qty;
     });
 
     const finalTotalPix = totalPix + currentShippingCost;
-    const finalTotalReal = totalReal + currentShippingCost;
-    const savings = totalReal - totalPix;
+    const finalTotalCard = totalCard + currentShippingCost;
+    const savings = totalCard - totalPix;
 
     const shippingEl = document.getElementById("payment-shipping-display");
     if (shippingEl) {
@@ -546,20 +523,20 @@ function updateTotalDisplay() {
         if (savings > 0.05) {
             totalEl.innerHTML = `
                 <div style="display: flex; flex-direction: column; align-items: flex-end;">
-                    <span style="font-size: 0.9rem; color: #999; text-decoration: line-through; font-weight: normal;">R$ ${finalTotalReal.toFixed(2).replace('.', ',')}</span>
+                    <span style="font-size: 0.9rem; color: #999; text-decoration: line-through; font-weight: normal;">R$ ${finalTotalCard.toFixed(2).replace('.', ',')}</span>
                     <span style="color: #00a650;">R$ ${finalTotalPix.toFixed(2).replace('.', ',')}</span>
                     <small style="font-size: 0.75rem; color: #666; font-weight: 500; margin-top: -2px;">no Pix (Economize R$ ${savings.toFixed(2).replace('.', ',')})</small>
                 </div>
             `;
         } else {
-            totalEl.innerText = `R$ ${finalTotalReal.toFixed(2).replace('.', ',')}`;
+            totalEl.innerText = `R$ ${finalTotalCard.toFixed(2).replace('.', ',')}`;
         }
     }
 }
 
 async function startCustomCheckout(method) {
     const cart = await validateCartPrices(CartManager.get());
-    const productsTotalPix = cart.reduce((sum, item) => sum + ((item.pricePix || item.priceNew) * item.quantity), 0);
+    const productsTotalPix = cart.reduce((sum, item) => sum + ((item.pricePix || 0) * item.quantity), 0);
     const finalTotalPix = productsTotalPix + currentShippingCost;
 
     const fullName = document.getElementById("reg-full-name").value;
@@ -569,8 +546,10 @@ async function startCustomCheckout(method) {
 
     const rawPhone = document.getElementById("reg-phone").value;
     const cleanPhone = rawPhone.replace(/\D/g, '');
-    const rawCpf = document.getElementById("reg-cpf") ? document.getElementById("reg-cpf").value : "";
+    const rawCpfInput = document.getElementById("reg-cpf");
+    const rawCpf = rawCpfInput ? rawCpfInput.value : "";
     const cleanCpf = rawCpf.replace(/\D/g, '');
+
     const emailField = document.getElementById("reg-email");
     let email = emailField ? emailField.value : "";
     if ((!email || email.trim() === "") && auth.currentUser) email = auth.currentUser.email;
@@ -579,15 +558,15 @@ async function startCustomCheckout(method) {
     const uid = auth.currentUser ? auth.currentUser.uid : (localStorage.getItem('guest_uid') || 'guest_' + Date.now());
 
     const street = document.getElementById("address").value || "Retirada";
-    const city = document.getElementById("city-select").value || "Cidade";
+    const citySelect = document.getElementById("city-select");
+    const city = citySelect ? citySelect.value : "Cidade";
 
-    // 1. Cria Preferência
     const prefResponse = await fetch(API_URLS.CREATE_PREFERENCE, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            account: 'eletropay', // REQUISITO: Conta 45692327000100
-            items: cart,
+            account: 'eletropay',
+            items: cart.map(i => ({ ...i, priceNew: i.pricePix })),
             shippingCost: currentShippingCost,
             deliveryData: { mode: deliveryMode, store: selectedStore, address: street },
             clientData: { firstName, lastName, phone: rawPhone, email, cpf: rawCpf },
@@ -598,19 +577,18 @@ async function startCustomCheckout(method) {
     const prefData = await prefResponse.json();
     if (!prefData.orderId) throw new Error("Erro ao gerar Pedido");
 
-    // 2. Cria Pagamento Pix
     const payResponse = await fetch(API_URLS.CREATE_PAYMENT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            account: 'eletropay', // REQUISITO: Conta 45692327000100
+            account: 'eletropay',
             payment_data: {
                 transaction_amount: finalTotalPix,
                 payment_method_id: 'pix',
                 description: `Pedido Super App #${prefData.orderId.substring(0, 6)}`
             },
             orderId: prefData.orderId,
-            items: cart,
+            items: cart.map(i => ({ ...i, priceNew: i.pricePix })),
             shippingCost: currentShippingCost,
             customPayer: {
                 email, first_name: firstName, last_name: lastName,
@@ -621,7 +599,11 @@ async function startCustomCheckout(method) {
         })
     });
 
-    return await payResponse.json();
+    const paymentResult = await payResponse.json();
+    if (paymentResult.status === 'pending') {
+        CartManager.clear();
+    }
+    return paymentResult;
 }
 
 async function startInfinitePayCheckout() {
@@ -636,6 +618,7 @@ async function startInfinitePayCheckout() {
     const emailField = document.getElementById("reg-email");
     let email = emailField ? emailField.value : "";
     if ((!email || email.trim() === "") && auth.currentUser) email = auth.currentUser.email;
+    if (!email || email.trim() === "") email = "cliente@eletrobusiness.com.br";
 
     const uid = auth.currentUser ? auth.currentUser.uid : (localStorage.getItem('guest_uid') || 'guest_' + Date.now());
 
@@ -645,8 +628,8 @@ async function startInfinitePayCheckout() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            account: 'eletropay', // REQUISITO: Conta 45692327000100
-            items: cart,
+            account: 'eletropay',
+            items: cart.map(i => ({ ...i, priceNew: i.priceBase })),
             shippingCost: currentShippingCost,
             deliveryData: { mode: deliveryMode, store: selectedStore, address: street },
             clientData: { firstName, lastName, phone: rawPhone, email },
@@ -656,79 +639,31 @@ async function startInfinitePayCheckout() {
 
     const data = await response.json();
     if (data.error) throw new Error(data.error);
+
+    // Opcional: CartManager.clear() aqui pode ser arriscado se o link falhar depois. 
+    // Ideal é limpar quando o webhook confirmar ou quando redirecionar.
+    // Mas para manter consistência com o Super App:
+    CartManager.clear();
+
     return data;
-}
-
-// --- FUNÇÃO ANTIGA DO BRICK (Pode ser removida ou deixada legada) ---
-async function initPaymentBrick() {
-    // ... mantido ou removido se não for mais usar ...
-}
-
-function processPaymentSubmit(formData, orderId, cart, finalTotal, uid, fName, lName, email, cpf, phone, street, num, city, rawPhone, rawCpf) {
-    const areaCode = phone.length >= 2 ? phone.substring(0, 2) : "11";
-    const phoneNumber = phone.length > 2 ? phone.substring(2) : "900000000";
-
-    const customPayer = {
-        email: email, first_name: fName, last_name: lName,
-        identification: { type: "CPF", number: cpf ? cpf : "00000000000" },
-        phone: { area_code: areaCode, number: phoneNumber },
-        address: { zip_code: "00000000", street_name: street, street_number: num, city: city }
-    };
-
-    // Removed the DB set block so we rely entirely on backend generation and prevent permission errors.
-    return new Promise((resolve, reject) => {
-        fetch(API_URLS.CREATE_PAYMENT, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                payment_data: formData,
-                orderId: orderId,
-                items: cart,
-                shippingCost: currentShippingCost,
-                customPayer: customPayer
-            })
-        })
-            .then(res => res.json())
-            .then(paymentResult => {
-                CartManager.clear();
-
-                // Sucesso: Mantemos o overlay até redirecionar ou trocar a tela
-                if (paymentResult.status === 'pending' && paymentResult.point_of_interaction) {
-                    // Para Pix, escondemos o overlay e mostramos a tela de QR Code
-                    hideProcessingOverlay();
-                    showPixScreen(paymentResult);
-                } else {
-                    // Para cartão aprovado, redirecionamos
-                    showToast("Pedido realizado!", "success");
-                    setTimeout(() => window.location.href = "pedidos.html", 2000);
-                }
-                resolve();
-            })
-            .catch(error => {
-                console.error(error);
-                hideProcessingOverlay(); // Se falhar, esconde para o usuário tentar de novo
-                showToast("Falha ao processar", "error");
-                reject();
-            });
-    });
 }
 
 function setupPixEvents() {
     const btnCopy = document.getElementById("btn-copy-pix");
     if (btnCopy) {
-        btnCopy.addEventListener("click", () => {
+        btnCopy.onclick = () => {
             const input = document.getElementById("display-pix-copypaste");
             input.select();
             document.execCommand("copy");
             showToast("Código copiado!", "success");
-        });
+        };
     }
     const btnFinish = document.getElementById("btn-finish-pix");
-    if (btnFinish) btnFinish.addEventListener("click", () => window.location.href = "pedidos.html");
+    if (btnFinish) btnFinish.onclick = () => window.location.href = "pedidos.html";
 
     const btnSeller = document.getElementById("btn-seller-checkout");
     if (btnSeller) {
-        btnSeller.addEventListener("click", () => {
+        btnSeller.onclick = () => {
             const cart = CartManager.get();
             const fullName = document.getElementById("reg-full-name") ? document.getElementById("reg-full-name").value : "Cliente";
             const phone = document.getElementById("reg-phone") ? document.getElementById("reg-phone").value : "";
@@ -743,7 +678,7 @@ function setupPixEvents() {
             msg += `\n*Endereço:* ${address}, ${num}\n*Nome:* ${fullName}\n*Telefone:* ${phone}`;
 
             window.open(`https://wa.me/5591986341760?text=${encodeURIComponent(msg)}`, '_blank');
-        });
+        };
     }
 }
 

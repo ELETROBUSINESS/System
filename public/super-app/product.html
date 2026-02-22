@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carregando Produto... | Dtudo</title>
+    <link rel="icon" href="/assets/img/Dtudoicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="css/index.css">
+</head>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-BV6V3GTMR0');
+</script>
+
+<body>
+    <header class="main-header">
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <i class='bx bx-left-arrow-alt' style="font-size: 1.8rem;"></i>
+            </a>
+            <div class="search-bar" onclick="window.location.href='index.html?openSearch=true'">
+                <input type="text" placeholder="buscar na Dtudo" readonly>
+                <i class='bx bx-search search-icon'></i>
+            </div>
+            <div class="header-actions-desktop">
+                <a href="carrinho.html" class="nav-item-desktop">
+                    <i class='bx bx-cart'></i>
+                    <span id="cart-badge-desktop" class="header-cart-badge" style="display: none;">0</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div id="product-detail-view" style="padding-top: 20px;">
+            <div class="container" id="detail-content">
+                <!-- Preenchido via JS -->
+                <div class="detail-skeleton">
+                    <div class="sk-img shimmer"></div>
+                    <div class="sk-info">
+                        <div class="sk-line shimmer" style="width:60%; height: 15px;"></div>
+                        <div class="sk-line shimmer" style="width:100%; height:30px; margin-bottom:20px;"></div>
+                        <div class="sk-line shimmer" style="width:40%; height:40px;"></div>
+                        <div class="sk-line shimmer" style="width:100%; height:50px; margin-top:30px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção de Sugestões -->
+        <section class="suggested-products-section" style="padding: 20px 0; background: #f9f9f9; margin-top: 30px;">
+            <div class="container">
+                <h3 style="font-size: 1.1rem; margin-bottom: 15px;">Sugestões para você</h3>
+                <div id="suggested-products-container" class="categories-scroll" style="gap: 15px;">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="main-footer">
+        <div class="container footer-info">
+            <strong>D'tudo Variedades <i class='bx bxs-badge-check' style="color: #3483fa;"></i></strong>
+            <p>Sua loja de confiança em Ipixuna do Pará</p>
+            <p style="margin-top: 10px; font-size: 0.75rem; color: #999;">© 2024 Dtudo - Todos os direitos reservados
+            </p>
+        </div>
+    </footer>
+
+    <nav class="bottom-navbar">
+        <div class="nav-indicator"></div>
+        <a href="index.html" class="nav-item">
+            <i class='bx bx-home-alt'></i>
+            <span>Início</span>
+        </a>
+        <a href="carrinho.html" class="nav-item">
+            <i class='bx bx-cart'></i>
+            <span id="cart-badge" class="cart-badge" style="display: none;">0</span>
+            <span>Carrinho</span>
+        </a>
+        <a href="pedidos.html" class="nav-item">
+            <i class='bx bx-package'></i>
+            <span>Pedidos</span>
+        </a>
+    </nav>
+
+    <div id="toast-notification" class="toast"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="js/global.js"></script>
+    <script src="js/product.js"></script>
+</body>
+
+</html>

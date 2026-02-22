@@ -22,15 +22,11 @@ let searchDebounceTimeout = null;
 
 // ==================== 1. UTILITÁRIOS E CACHE ====================
 
-// --- NOVA REGRA DE PARCELAMENTO (MERCADO PAGO) ---
+// --- NOVA REGRA DE PARCELAMENTO ---
 function calculateInstallmentsRule(price) {
-    if (price >= 1000) return 12;
-    if (price >= 800) return 9;
-    if (price >= 625) return 8;
-    if (price >= 600) return 7;
-    if (price >= 300) return 6;
-    if (price >= 250) return 5;
-    return 4; // Até 4x padrão
+    if (price >= 300) return 3;
+    if (price >= 150) return 2;
+    return 1; // À vista no cartão
 }
 
 // --- HELPER PARA OBTER A BASE DE CÁLCULO DA PARCELA ---
@@ -138,58 +134,66 @@ function renderProductBatch(products) {
         let displayImg = prod.imgUrl || 'https://placehold.co/400x400/f8f9fa/c20026?text=Dtudo';
 
         // Preços de exibição (Venda)
-        const valPrice = parseFloat(prod.price || 0); // Original
-        const valOffer = parseFloat(prod['price-oferta'] || 0); // Oferta Atual
+        const valPrice = parseFloat(prod.price || 0); // Cartão (Cheio)
+        const valOffer = parseFloat(prod['price-oferta'] || 0);
         const hasOffer = (valOffer > 0 && valOffer < valPrice);
 
-        const fmtConfig = { style: 'currency', currency: 'BRL' };
-        const fmtNormal = new Intl.NumberFormat('pt-BR', fmtConfig).format(valPrice);
-        const fmtOffer = new Intl.NumberFormat('pt-BR', fmtConfig).format(valOffer);
+        // Regra Super App: Preço de Venda Base
+        const baseSalePrice = hasOffer ? valOffer : valPrice;
 
-        // Lógica de Parcelamento (Baseada em pc-oferta ou price)
-        const installmentBasis = getInstallmentBasis(prod);
-        const maxInst = calculateInstallmentsRule(installmentBasis);
-        const valInst = installmentBasis / maxInst;
-        const fmtInst = new Intl.NumberFormat('pt-BR', fmtConfig).format(valInst);
+        // Descontos: Cartão (cheio) vs Pix (5% extra)
+        const priceCard = baseSalePrice;
+        const pricePix = baseSalePrice * 0.95;
+
+        const fmtConfig = { style: 'currency', currency: 'BRL' };
+        const fmtPix = new Intl.NumberFormat('pt-BR', fmtConfig).format(pricePix);
+        const fmtOriginal = new Intl.NumberFormat('pt-BR', fmtConfig).format(valPrice);
+
+        let name = prod.name || '';
+        name = name.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase());
 
         let priceHtml = '';
-
         if (hasOffer) {
-            // TEM OFERTA: Mostra economia
-            const savings = valPrice - valOffer;
-            const fmtSavings = new Intl.NumberFormat('pt-BR', fmtConfig).format(savings);
-
             priceHtml = `
                 <div class="price-container">
-                    <span class="price-old">${fmtNormal}</span>
-                    <span class="price-new">${fmtOffer}</span>
-                    <span class="card-savings">Economize ${fmtSavings}</span>
+                    <span class="price-old">${fmtOriginal}</span>
+                    <span class="price-new">${fmtPix}</span>
                 </div>`;
         } else {
-            // NÃO TEM OFERTA: Mostra apenas o preço normal
             priceHtml = `
                 <div class="price-container">
-                    <span class="price-new">${fmtNormal}</span>
+                    <span class="price-new">${fmtPix}</span>
                 </div>`;
+        }
+
+        const maxInst = calculateInstallmentsRule(priceCard);
+        let installmentHtml = '';
+        if (maxInst > 1) {
+            const instVal = (priceCard / maxInst).toLocaleString('pt-BR', fmtConfig);
+            installmentHtml = `<div class="installment-text">ou ${maxInst}x de ${instVal}</div>`;
+        } else {
+            installmentHtml = `<div class="installment-text">à vista no cartão</div>`;
         }
 
         const stock = parseInt(prod.stock || 0);
         const isSoldOut = stock <= 0;
-
-        // CRITÉRIO DE EXIBIÇÃO: Ter Nome, Preço > 0 e URL de Imagem Válida
         const hasUrl = prod.imgUrl && prod.imgUrl.trim() !== "" && !prod.imgUrl.includes('placehold.co');
 
         if (!hasUrl) return;
 
         const html = `
-            <div class="product-card ${isSoldOut ? 'sold-out' : ''}" id="prod-${prod.id}" onclick="window.location.href='index.html?id=${prod.id}'">
+            <div class="product-card ${isSoldOut ? 'sold-out' : ''}" id="prod-${prod.id}" onclick="window.location.href='product.html?id=${prod.id}'">
                 <div class="product-image">
                     <img src="${displayImg}" alt="${prod.name}" loading="lazy" onload="this.classList.add('loaded')">
+                    <button class="cart-btn-overlay" onclick="event.stopPropagation(); addToCartDirect('${prod.id}', '${name}', ${priceCard}, ${pricePix}, '${displayImg}')">
+                        <i class='bx bx-cart-add'></i>
+                    </button>
                     ${isSoldOut ? '<div class="sold-out-badge" style="position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.6); color:#fff; text-align:center; font-size:0.75rem; font-weight:700; padding:2px 0; backdrop-filter:blur(2px);">Esgotado</div>' : ''}
                 </div>
                 <div class="product-info">
-                    <h4 class="product-name">${prod.name}</h4>
+                    <h4 class="product-name">${name}</h4>
                     ${priceHtml}
+                    ${installmentHtml}
                     ${!isSoldOut ? '<div class="free-shipping"><i class=\'bx bxs-truck\'></i> Frete Grátis</div>' : '<div class="free-shipping" style="color:#999"><i class=\'bx bx-time\'></i> Em breve</div>'}
                 </div>
             </div>`;
