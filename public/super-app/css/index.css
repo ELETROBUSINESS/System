@@ -586,40 +586,29 @@ a {
     pointer-events: none;
 }
 
-.skeleton-image {
-    width: 100%;
-    aspect-ratio: 1/1;
-}
-
-.skeleton-info {
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.skeleton-line {
-    height: 12px;
+.skeleton {
+    background: #eee;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
     border-radius: 4px;
 }
 
-.skeleton-line.sm {
-    width: 30%;
-    height: 10px;
+.skeleton-img {
+    width: 100%;
+    aspect-ratio: 1/1;
+    border-radius: 12px 12px 0 0;
 }
 
-.skeleton-line.md {
-    width: 60%;
+.skeleton-text {
+    height: 15px;
+    margin: 12px;
+    width: 80%;
 }
 
-.skeleton-line.lg {
-    width: 90%;
-}
-
-.skeleton-line.price {
-    height: 20px;
+.skeleton-card .skeleton-text:last-child {
     width: 50%;
-    margin-top: 5px;
+    margin-top: 0;
 }
 
 .shimmer {

@@ -335,28 +335,28 @@
             <!-- Injetado via JS -->
         </div>
 
+        <!-- Cupom de Desconto -->
+        <div id="coupon-section" class="container" style="margin-top: 25px; padding: 0;">
+            <div id="applied-coupon-row" class="applied-coupon-card" style="display: none;">
+                <div class="coupon-info">
+                    <i class='bx bxs-coupon'></i>
+                    <span id="applied-coupon-text">Cupom aplicado</span>
+                </div>
+                <button onclick="removeCoupon()" class="remove-coupon-btn">&times;</button>
+            </div>
+            <button id="open-coupon-modal" class="btn-coupon-trigger" onclick="openCouponModal()">
+                <i class='bx bx-purchase-tag-alt'></i>
+                <span>Tem um cupom de desconto?</span>
+                <i class='bx bx-chevron-right'></i>
+            </button>
+        </div>
+
         <!-- Seção de Sugestões (Opcional) -->
         <div id="cart-suggestions" style="margin-top: 40px; margin-bottom: 40px; display: none;">
             <h3 style="font-size: 1.1rem; margin-bottom: 15px; color: #444;">Aproveite também</h3>
             <div class="product-grid" id="suggested-products-container"></div>
         </div>
     </main>
-
-    <!-- Cupom de Desconto -->
-    <div class="container" style="margin-top: 15px;">
-        <div id="applied-coupon-row" class="applied-coupon-card" style="display: none;">
-            <div class="coupon-info">
-                <i class='bx bxs-coupon'></i>
-                <span id="applied-coupon-text">Cupom aplicado</span>
-            </div>
-            <button onclick="removeCoupon()" class="remove-coupon-btn">&times;</button>
-        </div>
-        <button id="open-coupon-modal" class="btn-coupon-trigger" onclick="openCouponModal()">
-            <i class='bx bx-purchase-tag-alt'></i>
-            <span>Tem um cupom de desconto?</span>
-            <i class='bx bx-chevron-right'></i>
-        </button>
-    </div>
 
     <!-- Resumo Fixo na Base (Só aparece se tiver itens) -->
     <div id="fixed-summary" class="fixed-bottom-summary" style="display: none;">

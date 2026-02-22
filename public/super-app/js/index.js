@@ -441,7 +441,7 @@ function renderRecentlyViewed() {
         const fmtPrice = new Intl.NumberFormat('pt-BR', fmtConfig).format(finalPrice);
 
         html += `
-            <div class="category-item" style="min-width: 120px; text-align: left; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onclick="window.location.href='index.html?id=${prod.id}'">
+            <div class="category-item" style="min-width: 120px; text-align: left; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer;" onclick="window.location.href='product.html?id=${prod.id}'">
                 <img src="${displayImg}" style="width: 100%; height: 100px; object-fit: cover;">
                 <div style="padding: 8px;">
                     <div style="font-size: 0.75rem; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px;">${prod.name}</div>
@@ -552,35 +552,48 @@ async function initProductFeed() {
 
     renderRecentlyViewed();
 
-    // Reseta o container caso retorne rápido do cache
     const container = document.getElementById('firebase-products-container');
 
-    // Garantir que o skeleton apareça mesmo com cache para uma experiência mais fluida
-    await new Promise(r => setTimeout(r, 1200));
+    // Inicia a busca imediatamente em background
+    const fetchPromise = (async () => {
+        const cached = getCachedData();
+        if (cached && cached.length > 0) {
+            window._apiFetched = true;
+            return cached;
+        }
+        try {
+            const response = await fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`);
+            const result = await response.json();
+            if (result.status === "success" && result.data) {
+                saveToCache(result.data);
+                return result.data;
+            }
+        } catch (e) { console.error(e); }
+        return [];
+    })();
 
-    if (container.querySelector('.skeleton-card')) container.innerHTML = '';
+    // Garante que o skeleton seja visto por pelo menos 800ms para evitar flickering
+    const [data] = await Promise.all([
+        fetchPromise,
+        new Promise(r => setTimeout(r, 800))
+    ]);
 
-    const cached = getCachedData();
-    if (cached && cached.length > 0) {
+    if (data && data.length > 0) {
         window._apiFetched = true;
-
-        // Verifica URL para página isolada de Ofertas simulada, ou default
         const urlParams = new URLSearchParams(window.location.search);
-        let categoryStr = urlParams.get('filter') || 'todos';
+        applyLocalFilter(data, urlParams.get('filter') || 'todos');
 
-        applyLocalFilter(cached, categoryStr);
-
-        // Soft refresh constante em Background (Garante banco de dados atualizado a cada Recarregamento)
-        fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`)
-            .then(res => res.json())
-            .then(result => {
-                if (result.status === "success" && result.data) {
-                    saveToCache(result.data); // Atualiza base local silenciosamente
-                }
-            }).catch(() => { });
+        // Soft refresh em background
+        if (getCachedData()) {
+            fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`)
+                .then(res => res.json())
+                .then(result => {
+                    if (result.status === "success" && result.data) saveToCache(result.data);
+                }).catch(() => { });
+        }
     }
 
-    // Mostra o primeiro lote (Cache ou da Web)
+    // Mostra o primeiro lote
     await fetchMoreProducts();
 
     // Hide custom loader gracefully after cached payload injects
@@ -798,7 +811,7 @@ async function loadProductDetail(id) {
 
             // Renderiza as outras opções
             const othersHtml = prod.linkedVariants.map(v => `
-                <div class="variant-option" onclick="window.location.href='index.html?id=${v.id}'" title="${v.name}">
+                <div class="variant-option" onclick="window.location.href='product.html?id=${v.id}'" title="${v.name}">
                     <img src="${v.img || 'https://placehold.co/60'}" alt="${v.name}">
                     <span>${v.name}</span>
                 </div>
@@ -1470,7 +1483,7 @@ function renderSuggestedProducts(currentProd, allProducts) {
         const fmtPrice = finalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
         html += `
-            <div class="category-item" style="min-width: 140px; text-align: left; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: transform 0.2s;" onclick="window.location.href='index.html?id=${prod.id}'">
+            <div class="category-item" style="min-width: 140px; text-align: left; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: transform 0.2s; cursor: pointer;" onclick="window.location.href='product.html?id=${prod.id}'">
                 <img src="${displayImg}" style="width: 100%; height: 120px; object-fit: cover;">
                 <div style="padding: 10px;">
                     <div style="font-size: 0.8rem; color: #444; height: 32px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.2; margin-bottom: 5px;">${prod.name}</div>

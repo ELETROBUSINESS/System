@@ -61,6 +61,8 @@ function renderEmptyState() {
     const fixedSummary = document.getElementById("fixed-summary");
 
     if (fixedSummary) fixedSummary.style.display = 'none';
+    const couponSection = document.getElementById("coupon-section");
+    if (couponSection) couponSection.style.display = 'none';
 
     if (container) {
         container.innerHTML = `
@@ -85,6 +87,8 @@ function renderCartPage() {
     }
 
     if (fixedSummary) fixedSummary.style.display = 'block';
+    const couponSection = document.getElementById("coupon-section");
+    if (couponSection) couponSection.style.display = 'block';
     if (container) container.innerHTML = "";
 
     const fmtConfig = { style: 'currency', currency: 'BRL' };
