@@ -55,6 +55,7 @@ function registrarPedido({ cart, total, method, gateway = 'Mercado Pago', status
         productsTotal,
         shippingCost: currentShippingCost,
         total,
+        couponCode: coupon?.code || null,
         status,
         gateway,
         account: 'default'
@@ -379,12 +380,26 @@ async function setupPaymentStep() {
     // Renderiza lista de produtos
     renderProductList(validatedCart);
 
-    // Calcula totais
-    const totalPix = validatedCart.reduce((s, i) => s + (i.pricePix || i.priceNew) * i.quantity, 0) + currentShippingCost;
-    const totalCard = validatedCart.reduce((s, i) => s + (i.priceBase || i.priceNew) * i.quantity, 0) + currentShippingCost;
-    const savings = totalCard - (totalPix);
+    // Lógica de Cupom
+    const coupon = JSON.parse(sessionStorage.getItem('applied_coupon') || 'null');
+    let discountValue = 0;
 
-    renderTotals(totalPix, totalCard, savings);
+    const baseTotalPix = validatedCart.reduce((s, i) => s + (i.pricePix || i.priceNew) * i.quantity, 0) + currentShippingCost;
+    const baseTotalCard = validatedCart.reduce((s, i) => s + (i.priceBase || i.priceNew) * i.quantity, 0) + currentShippingCost;
+
+    if (coupon) {
+        if (coupon.code === 'VALE5') {
+            discountValue = 5.00;
+        } else if (coupon.code === 'APROVEITA26' || coupon.code === 'DOMINGOU') {
+            discountValue = baseTotalPix * 0.12;
+        }
+    }
+
+    const totalPix = Math.max(0, baseTotalPix - discountValue);
+    const totalCard = Math.max(0, baseTotalCard - (coupon ? discountValue : 0));
+    const savings = baseTotalCard - totalPix;
+
+    renderTotals(totalPix, totalCard, savings, discountValue, coupon);
     renderPaymentOptions(totalCard, totalPix);
 
     // Seta método padrão: PIX
@@ -414,14 +429,25 @@ function renderProductList(cart) {
     }).join('');
 }
 
-function renderTotals(totalPix, totalCard, savings) {
+function renderTotals(totalPix, totalCard, savings, discountValue = 0, coupon = null) {
     // Armazena globalmente para usar no confirmar
     window._totalPix = totalPix;
     window._totalCard = totalCard;
 
-    const subtotalCard = totalCard - currentShippingCost;
+    const subtotalCard = (totalCard + (coupon ? discountValue : 0)) - currentShippingCost;
     document.getElementById('pay-subtotal').textContent = fmt(subtotalCard);
     document.getElementById('pay-frete').textContent = currentShippingCost === 0 ? 'Grátis 🎉' : fmt(currentShippingCost);
+
+    const couponRow = document.getElementById('pay-coupon-row');
+    const couponVal = document.getElementById('pay-coupon-value');
+    if (couponRow && couponVal) {
+        if (coupon && discountValue > 0) {
+            couponRow.style.display = 'flex';
+            couponVal.textContent = `- ${fmt(discountValue)}`;
+        } else {
+            couponRow.style.display = 'none';
+        }
+    }
 
     const hasSavings = savings > 0.05;
     const savBadge = document.getElementById('pay-savings');

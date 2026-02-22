@@ -157,15 +157,43 @@ function updateSummary() {
         totalCard += (parseFloat(item.priceOriginal || item.priceNew) || 0) * qty;
     });
 
-    const savings = totalCard - totalPix;
+    // Lógica de Cupom
+    const coupon = JSON.parse(sessionStorage.getItem('applied_coupon') || 'null');
+    let discountValue = 0;
+
+    if (coupon) {
+        if (coupon.code === 'VALE5') {
+            discountValue = 5.00;
+        } else if (coupon.code === 'APROVEITA26' || coupon.code === 'DOMINGOU') {
+            discountValue = totalPix * 0.12;
+        }
+    }
+
+    const finalPix = Math.max(0, totalPix - discountValue);
+    const finalCard = Math.max(0, totalCard - (coupon ? discountValue : 0)); // No cartão o desconto é o mesmo valor nominal? O usuário disse: "somado com desconto se o pagamento for no pix" para o APROVEITA26. Geralmente cupons de % aplicam sobre o valor base. 
+    // "APROVEITA26 cupom de 12% de desconto (somado com desconto se o pagamento for no pix)"
+    // Isso sugere que o desconto de 12% é sobre o valor que já tem desconto de Pix se for Pix.
+
+    const savings = totalCard - finalPix;
     const fmt = { style: 'currency', currency: 'BRL' };
 
     const elPix = document.getElementById("summary-total-pix");
     const elCard = document.getElementById("summary-total-card");
     const elSavings = document.getElementById("savings-container");
+    const elCouponRow = document.getElementById("coupon-summary-row");
+    const elCouponVal = document.getElementById("summary-coupon-value");
 
-    if (elPix) elPix.innerText = totalPix.toLocaleString('pt-BR', fmt);
-    if (elCard) elCard.innerText = `ou ${totalCard.toLocaleString('pt-BR', fmt)} no cartão`;
+    if (elPix) elPix.innerText = finalPix.toLocaleString('pt-BR', fmt);
+    if (elCard) elCard.innerText = `ou ${finalCard.toLocaleString('pt-BR', fmt)} no cartão`;
+
+    if (elCouponRow && elCouponVal) {
+        if (coupon) {
+            elCouponRow.style.display = 'flex';
+            elCouponVal.innerText = `- ${discountValue.toLocaleString('pt-BR', fmt)}`;
+        } else {
+            elCouponRow.style.display = 'none';
+        }
+    }
 
     if (elSavings) {
         if (savings > 0.05) {
@@ -174,15 +202,67 @@ function updateSummary() {
             elSavings.innerHTML = '';
         }
     }
+
+    renderCouponUI(coupon);
+}
+
+function renderCouponUI(coupon) {
+    const row = document.getElementById('applied-coupon-row');
+    const btn = document.getElementById('open-coupon-modal');
+    const text = document.getElementById('applied-coupon-text');
+
+    if (coupon) {
+        if (row) row.style.display = 'flex';
+        if (btn) btn.style.display = 'none';
+        if (text) text.innerText = `Cupom ${coupon.code} aplicado`;
+    } else {
+        if (row) row.style.display = 'none';
+        if (btn) btn.style.display = 'flex';
+    }
+}
+
+window.openCouponModal = function () {
+    const modal = document.getElementById('coupon-modal');
+    if (modal) modal.classList.add('show');
+}
+
+window.closeCouponModal = function () {
+    const modal = document.getElementById('coupon-modal');
+    if (modal) {
+        modal.classList.remove('show');
+        document.getElementById('coupon-error').style.display = 'none';
+        document.getElementById('coupon-code-input').value = '';
+    }
+}
+
+window.applyCoupon = function () {
+    const input = document.getElementById('coupon-code-input');
+    const code = input.value.trim().toUpperCase();
+    const error = document.getElementById('coupon-error');
+
+    if (code === 'VALE5' || code === 'APROVEITA26' || code === 'DOMINGOU') {
+        sessionStorage.setItem('applied_coupon', JSON.stringify({ code: code }));
+        updateSummary();
+        closeCouponModal();
+    } else {
+        if (error) error.style.display = 'block';
+    }
+}
+
+window.removeCoupon = function () {
+    sessionStorage.removeItem('applied_coupon');
+    updateSummary();
 }
 
 function setupCartEvents() {
+    // Definimos diretamente no escopo global ou garantimos uma única atribuição
     const checkoutBtn = document.getElementById("go-to-checkout");
     if (checkoutBtn) {
-        checkoutBtn.onclick = () => {
+        // Removemos qualquer atribuição anterior para garantir que não haja duplicidade ou lógicas conflitantes
+        checkoutBtn.onclick = null;
+        checkoutBtn.onclick = (e) => {
+            e.preventDefault();
             if (CartManager.get().length === 0) return;
-            // Se o usuário não tiver autenticado, mostramos o modal? 
-            // A lógica de global.js geralmente cuida de CartManager.get() e checkout.
             window.location.href = "payment.html";
         };
     }

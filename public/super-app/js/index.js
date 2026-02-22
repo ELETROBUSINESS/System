@@ -4,7 +4,7 @@ const STORE_OWNER_UID = "3zYT9Y6hXWeJSuvmEYP4FMZa5gI2";
 const APP_ID = 'floralchic-loja';
 const CACHE_KEY = 'dtudo_products_cache';
 const CACHE_TIME_KEY = 'dtudo_cache_time';
-const CACHE_DURATION = 20 * 60 * 1000;
+const CACHE_DURATION = 1 * 60 * 1000;
 const COMMENTS_CACHE_KEY = "dtudo_user_reviews";
 const REVIEWS_CACHE_DURATION = 20 * 60 * 60 * 1000;
 const CART_KEY = 'app_cart';
@@ -554,6 +554,10 @@ async function initProductFeed() {
 
     // Reseta o container caso retorne rápido do cache
     const container = document.getElementById('firebase-products-container');
+
+    // Garantir que o skeleton apareça mesmo com cache para uma experiência mais fluida
+    await new Promise(r => setTimeout(r, 1200));
+
     if (container.querySelector('.skeleton-card')) container.innerHTML = '';
 
     const cached = getCachedData();

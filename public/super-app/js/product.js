@@ -3,7 +3,7 @@
 const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
 const CACHE_KEY = 'dtudo_products_cache';
 const CACHE_TIME_KEY = 'dtudo_cache_time';
-const CACHE_DURATION = 20 * 60 * 1000;
+const CACHE_DURATION = 1 * 60 * 1000;
 
 function getCachedData() {
     const json = sessionStorage.getItem(CACHE_KEY);
@@ -71,6 +71,9 @@ function registerRecentlyViewed(prod) {
 
 async function loadProductDetail(id) {
     const content = document.getElementById('detail-content');
+
+    // Garantir que o skeleton seja visto por pelo menos 800ms para uma transição suave
+    await new Promise(r => setTimeout(r, 800));
 
     try {
         let prod = null;
