@@ -1,694 +1,836 @@
-// js/payment.js
+// js/payment.js — Dtudo Super App Checkout
+// Sincronizado com o novo payment.html (design minimalista)
 
 const mp = new MercadoPago(MP_PUBLIC_KEY);
-let paymentBrickController;
+let paymentBrickController = null;
 let currentShippingCost = 0;
 let deliveryMode = 'delivery';
 let selectedStore = '';
+let selectedPayMethod = 'pix';     // 'pix' | 'card' | 'zap'
+let selectedInstallments = 1;
+let validatedCart = [];
 
-const STORE_OWNER_UID = "3zYT9Y6hXWeJSuvmEYP4FMZa5gI2";
-const APP_ID = 'floralchic-loja';
+const CLOUD_FUNCTIONS_URL = 'https://us-central1-super-app25.cloudfunctions.net';
+const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
 
-// --- CONTROLE DO LOADER PADRÃO ---
+// ─── REGISTRO CENTRALIZADO DE PEDIDO ─────────────────────
+// Fire-and-forget: não bloqueia o pagamento se falhar
+function registrarPedido({ cart, total, method, gateway = 'Mercado Pago', status = 'Pendente' }) {
+    const user = (typeof auth !== 'undefined') ? auth.currentUser : null;
+    const uid = user?.uid || localStorage.getItem('guest_uid') || ('guest_' + Date.now());
+    const fullName = document.getElementById("reg-full-name")?.value.trim() || "Cliente";
+    const phone = document.getElementById("reg-phone")?.value.trim() || "";
+    const address = document.getElementById("address")?.value || "";
+    const city = document.getElementById("city-select")?.value || "";
+    const cep = document.getElementById("cep")?.value || "";
+
+    const nameParts = fullName.split(' ');
+    const productsTotal = total - currentShippingCost;
+    const orderId = 'SA-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+
+    const orderPayload = {
+        orderId,
+        userId: uid,
+        clientData: {
+            firstName: nameParts[0],
+            lastName: nameParts.slice(1).join(' ') || '',
+            phone,
+            email: user?.email || ''
+        },
+        deliveryData: {
+            address: deliveryMode === 'pickup'
+                ? `Retirada: ${selectedStore}`
+                : `${address}, ${city}, CEP ${cep}`,
+            mode: deliveryMode,
+            store: selectedStore,
+            city,
+            cep
+        },
+        items: cart.map(i => ({
+            id: i.id, name: i.name,
+            quantity: i.quantity,
+            price: i.priceBase || i.priceNew,
+            image: i.image
+        })),
+        productsTotal,
+        shippingCost: currentShippingCost,
+        total,
+        status,
+        gateway,
+        account: 'default'
+    };
+
+    // 1. Salva na API (planilha) — mode:no-cors evita preflight CORS no GAS
+    fetch(APPSCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors', // fire-and-forget: não lemos a resposta
+        body: JSON.stringify({ action: 'salvarPedido', data: orderPayload })
+    }).catch(e => console.warn("API pedido (ignorado):", e.message));
+
+    // 2. Log no Firestore — apenas se autenticado
+    if (typeof db !== 'undefined' && typeof firebase !== 'undefined' && user) {
+        db.collection("orders").doc(orderId).set({
+            ...orderPayload,
+            paymentMethod: method,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(e => console.warn("Firestore log (ignorado):", e.message));
+    }
+
+    return orderId; // Síncrono — retorna ID imediatamente
+}
+
+
+// ─── UTILS ───────────────────────────────────────────────
+const fmt = (v) => 'R$ ' + Number(v).toFixed(2).replace('.', ',');
+
 function showProcessingOverlay() {
-    const overlay = document.getElementById('custom-loader-overlay');
-    if (overlay) overlay.style.display = 'flex';
+    const el = document.getElementById('custom-loader-overlay');
+    if (el) el.style.display = 'flex';
 }
-
 function hideProcessingOverlay() {
-    const overlay = document.getElementById('custom-loader-overlay');
-    if (overlay) overlay.style.display = 'none';
+    const el = document.getElementById('custom-loader-overlay');
+    if (el) el.style.display = 'none';
+}
+function showToast(msg, type = 'info') {
+    const el = document.getElementById('toast-notification');
+    if (!el) return;
+    el.textContent = msg;
+    el.className = 'toast show';
+    setTimeout(() => { el.className = 'toast'; }, 3500);
 }
 
-// --- REGRA DE PARCELAS SEM JUROS ---
-function getInterestFreeSteps(totalValue) {
-    // Sincronizado com index.js e product.js do Super App
-    if (totalValue >= 300) return 3;
-    if (totalValue >= 150) return 2;
-    return 1;
+// ─── REGRA DE PARCELAS SEM JUROS ─────────────────────────
+// Sincronizado com o backend (functions/index.js - createPayment)
+function getInstallmentPlan(total) {
+    // Regra: sem juros até 3x (quando total ≥ R$300), 2x (≥ R$150), 1x abaixo
+    const freeInstallments = total >= 300 ? 3 : total >= 150 ? 2 : 1;
+    const maxInstallments = 12;
+    const INTEREST_RATE = 0.0199; // 1.99% ao mês (cartão c/ juros acima do limite sem juros)
+
+    const plan = [];
+    for (let n = 1; n <= maxInstallments; n++) {
+        if (total / n < 5) break; // MP exige parcela mínima de R$5
+
+        let installmentValue, totalWithInterest;
+        if (n <= freeInstallments) {
+            installmentValue = total / n;
+            totalWithInterest = total;
+        } else {
+            // Juros simples para exibição informativa
+            const factor = Math.pow(1 + INTEREST_RATE, n);
+            installmentValue = (total * factor * INTEREST_RATE) / (factor - 1);
+            totalWithInterest = installmentValue * n;
+        }
+        plan.push({ n, installmentValue, totalWithInterest, free: n <= freeInstallments });
+    }
+    return plan;
 }
 
-// --- VALIDAÇÃO DE PREÇOS (SEPARA PIX E CARTÃO) ---
+// ─── VALIDAÇÃO DE PREÇOS (API) ────────────────────────────
 async function validateCartPrices(localCart) {
-    const verifiedCart = [];
-    let hasChanges = false;
     let serverProducts = [];
-
     try {
-        const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
         const response = await fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`);
         const result = await response.json();
-        if (result.status === "success" && result.data) {
-            serverProducts = result.data;
-        }
+        if (result.status === "success" && result.data) serverProducts = result.data;
     } catch (e) {
-        console.error("Erro ao buscar API para validação", e);
+        console.warn("Sem acesso à API, usando preços locais");
     }
 
-    for (const item of localCart) {
-        try {
-            const prod = serverProducts.find(p => String(p.id) === String(item.id));
+    return localCart.map(item => {
+        const prod = serverProducts.find(p => String(p.id) === String(item.id));
+        if (!prod) return { ...item, pricePix: item.priceNew, priceBase: item.priceNew };
 
-            if (!prod) {
-                verifiedCart.push(item);
-                continue;
-            }
+        const basePrice = parseFloat(prod['price-oferta'] || 0) > 0 && parseFloat(prod['price-oferta']) < parseFloat(prod.price)
+            ? parseFloat(prod['price-oferta'])
+            : parseFloat(prod.price || 0);
 
-            const valPrice = parseFloat(prod.price || 0); // Preço Cheio (Cartão)
-            const valOffer = parseFloat(prod['price-oferta'] || 0); // Preço Oferta
-
-            const hasOffer = (valOffer > 0 && valOffer < valPrice);
-
-            // Regra Super App: Preço Pix tem 5% de desconto sobre o preço final de venda
-            const finalSalePrice = hasOffer ? valOffer : valPrice;
-            const officialPricePix = finalSalePrice * 0.95;
-
-            // Para o Cartão, usamos o preço de venda final sem o desconto de Pix
-            const officialPriceCard = finalSalePrice;
-
-            if (Math.abs(item.priceNew - officialPricePix) > 0.05) {
-                item.priceNew = officialPricePix;
-                hasChanges = true;
-            }
-
-            item.priceBase = officialPriceCard; // Base para o cartão/parcelas
-            item.pricePix = officialPricePix;   // Base para o Pix
-            item.hasOffer = hasOffer;
-
-            verifiedCart.push(item);
-
-        } catch (e) {
-            console.error("Erro validando produto:", item.id, e);
-            verifiedCart.push(item);
-        }
-    }
-
-    if (hasChanges) localStorage.setItem('app_cart', JSON.stringify(verifiedCart));
-    return verifiedCart;
+        const pricePix = basePrice * 0.95;
+        return { ...item, priceBase: basePrice, pricePix, priceNew: pricePix };
+    });
 }
 
+// ─── INIT ─────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
+    // Pré-preenche dados do usuário logado
     document.addEventListener('userReady', (e) => {
-        const user = e.detail;
-        if (user && user.email) {
-            // No email input in current payment.html, but keeping for compatibility
-            const emailInput = document.getElementById("reg-email");
-            if (emailInput) emailInput.value = user.email;
-            loadUserData(user.uid);
-        }
+        if (e.detail) loadUserData(e.detail.uid);
     });
-
-    if (auth && auth.currentUser) {
-        const emailInput = document.getElementById("reg-email");
-        if (emailInput) emailInput.value = auth.currentUser.email;
+    if (typeof auth !== 'undefined' && auth.currentUser) {
         loadUserData(auth.currentUser.uid);
     }
 
+    setupMasks();
     setupStepNavigation();
     setupDeliveryLogic();
-    setupPixEvents();
-    updateStoreAddresses();
-    setupMasks();
-
-    // Mostra as opções de pagamento (Cartão está oculto por padrão no HTML)
-    const btnCard = document.getElementById("btn-choice-card");
-    if (btnCard) btnCard.style.display = 'flex';
+    setupCardModal();
 });
 
-function setupMasks() {
-    const phoneInput = document.getElementById('reg-phone');
-    if (phoneInput) {
-        phoneInput.addEventListener('input', function (e) {
-            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
-            e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
-        });
-    }
-
-    const cpfInput = document.getElementById('reg-cpf');
-    if (cpfInput) {
-        cpfInput.addEventListener('input', function (e) {
-            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,3})(\d{0,2})/);
-            e.target.value = !x[2] ? x[1] : x[1] + '.' + x[2] + (x[3] ? '.' + x[3] : '') + (x[4] ? '-' + x[4] : '');
-        });
-    }
-}
-
-function updateStoreAddresses() {
-    const storeItems = document.querySelectorAll('.store-item');
-    storeItems.forEach(item => {
-        const text = item.innerText;
-        const small = item.querySelector('small');
-        if (!small) return;
-        if (text.includes("Ipixuna")) small.innerText = "R. Jarbas Passarinho, Centro, Ipixuna do Pará";
-        else if (text.includes("Aurora")) small.innerText = "Av. Bernardo Sayão, n° 10, centro, Aurora do Pará";
-    });
-}
-
-function isValidCPF(cpf) {
-    if (typeof cpf !== 'string') return false;
-    cpf = cpf.replace(/[^\d]+/g, '');
-    if (cpf.length !== 11 || !!cpf.match(/(\d)\1{10}/)) return false;
-    let soma = 0;
-    let resto;
-    for (let i = 1; i <= 9; i++) soma = soma + parseInt(cpf.substring(i - 1, i)) * (11 - i);
-    resto = (soma * 10) % 11;
-    if ((resto === 10) || (resto === 11)) resto = 0;
-    if (resto !== parseInt(cpf.substring(9, 10))) return false;
-    soma = 0;
-    for (let i = 1; i <= 10; i++) soma = soma + parseInt(cpf.substring(i - 1, i)) * (12 - i);
-    resto = (soma * 10) % 11;
-    if ((resto === 10) || (resto === 11)) resto = 0;
-    if (resto !== parseInt(cpf.substring(10, 11))) return false;
-    return true;
-}
-
+// ─── CARREGAR DADOS DO USUÁRIO ────────────────────────────
 async function loadUserData(uid) {
+    if (!uid || typeof db === 'undefined') return;
     try {
         const doc = await db.collection("users").doc(uid).get();
         if (doc.exists) {
-            const data = doc.data();
-            let fullName = '';
-            if (data.firstName && data.lastName) fullName = `${data.firstName} ${data.lastName}`;
-            else if (data.firstName) fullName = data.firstName;
-            document.getElementById("reg-full-name").value = fullName;
-            document.getElementById("reg-phone").value = data.phone || '';
-            if (data.cpf && document.getElementById("reg-cpf")) document.getElementById("reg-cpf").value = data.cpf;
+            const d = doc.data();
+            const nameEl = document.getElementById("reg-full-name");
+            const phoneEl = document.getElementById("reg-phone");
+            if (nameEl && !nameEl.value) nameEl.value = [d.firstName, d.lastName].filter(Boolean).join(' ');
+            if (phoneEl && !phoneEl.value) phoneEl.value = d.phone || '';
         }
-    } catch (e) { console.error("Erro perfil", e); }
+    } catch (e) { console.error("loadUserData:", e); }
 }
 
+// ─── MASCARAS ─────────────────────────────────────────────
+function setupMasks() {
+    const phone = document.getElementById('reg-phone');
+    if (phone) {
+        phone.addEventListener('input', function () {
+            let x = this.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
+            this.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+        });
+    }
+
+    const cep = document.getElementById('cep');
+    if (cep) {
+        cep.addEventListener('input', function () {
+            let val = this.value.replace(/\D/g, '');
+            if (val.length > 5) val = val.substring(0, 5) + '-' + val.substring(5, 8);
+            this.value = val;
+
+            if (val.replace('-', '').length === 8) {
+                fetch(`https://viacep.com.br/ws/${val.replace('-', '')}/json/`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data.erro) {
+                            const addr = document.getElementById('address');
+                            if (addr) addr.value = `${data.logradouro}, ${data.bairro}`.replace(/^, /, '');
+                            const city = document.getElementById('city-select');
+                            if (city && data.localidade) {
+                                for (const opt of city.options) {
+                                    if (opt.value.toLowerCase().includes(data.localidade.toLowerCase())) {
+                                        city.value = opt.value;
+                                        city.dispatchEvent(new Event('change'));
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }).catch(() => { });
+            }
+        });
+    }
+}
+
+// ─── NAVEGAÇÃO ENTRE PASSOS ───────────────────────────────
 function setupStepNavigation() {
-    document.getElementById("btn-go-shipping").addEventListener("click", async () => {
-        const fullName = document.getElementById("reg-full-name").value.trim();
-        const phone = document.getElementById("reg-phone").value.trim();
-        const cpfInput = document.getElementById("reg-cpf");
-        const cpfVal = cpfInput ? cpfInput.value.trim() : "";
-        const emailField = document.getElementById("reg-email");
-        const emailInput = emailField ? emailField.value : "";
-
-        if (!fullName || !phone) {
-            showToast("Preencha seu Nome e Celular.", "error");
-            return;
-        }
-
-        const cpfRaw = cpfVal.replace(/\D/g, '');
-        if (cpfRaw.length > 0 && !isValidCPF(cpfVal)) {
-            showToast("CPF Inválido.", "error");
-            return;
-        }
-
-        if (auth.currentUser) {
-            const parts = fullName.split(' ');
-            const fname = parts[0];
-            const lname = parts.slice(1).join(' ');
-
-            db.collection("users").doc(auth.currentUser.uid).set({
-                firstName: fname, lastName: lname, phone: phone, cpf: cpfVal, email: auth.currentUser ? auth.currentUser.email : emailInput
-            }, { merge: true }).catch(e => console.error(e));
-        }
-        changeStep(2);
-    });
-
-    document.getElementById("btn-go-payment").addEventListener("click", async () => {
-        const cart = CartManager.get();
-        if (cart.length === 0) {
-            showToast("Carrinho vazio!", "error");
-            return;
-        }
-        if (deliveryMode === 'delivery') {
-            if (!document.getElementById("cep").value || !document.getElementById("address").value) {
-                showToast("Preencha o endereço.", "error");
+    const btnShipping = document.getElementById("btn-go-shipping");
+    if (btnShipping) {
+        btnShipping.addEventListener("click", async () => {
+            const name = document.getElementById("reg-full-name")?.value.trim();
+            const phone = document.getElementById("reg-phone")?.value.trim();
+            if (!name || !phone) {
+                showToast("Preencha seu nome e WhatsApp.", "error");
                 return;
             }
-        } else if (!selectedStore) {
-            showToast("Selecione uma loja.", "error");
-            return;
-        }
-        changeStep(3);
-        setupCheckoutOptions();
-    });
+            // Salva no Firestore se logado
+            if (typeof auth !== 'undefined' && auth.currentUser) {
+                const parts = name.split(' ');
+                db.collection("users").doc(auth.currentUser.uid).set({
+                    firstName: parts[0], lastName: parts.slice(1).join(' '), phone
+                }, { merge: true }).catch(() => { });
+            }
+            changeStep(2);
+        });
+    }
+
+    const btnPayment = document.getElementById("btn-go-payment");
+    if (btnPayment) {
+        btnPayment.addEventListener("click", async () => {
+            const cart = CartManager.get();
+            if (cart.length === 0) { showToast("Carrinho vazio!", "error"); return; }
+
+            if (deliveryMode === 'delivery') {
+                if (!document.getElementById("cep")?.value || !document.getElementById("address")?.value) {
+                    showToast("Preencha o endereço completo.", "error");
+                    return;
+                }
+            } else if (!selectedStore) {
+                showToast("Selecione uma loja para retirada.", "error");
+                return;
+            }
+
+            changeStep(3);
+            await setupPaymentStep();
+        });
+    }
+
+    const btnConfirm = document.getElementById("btn-confirm-payment");
+    if (btnConfirm) {
+        btnConfirm.addEventListener("click", handleConfirmPayment);
+    }
 }
 
-async function setupCheckoutOptions() {
-    // Valida no servidor primeiro para evitar que o usuário manipule o preço no navegador
-    showProcessingOverlay();
-    const cart = await validateCartPrices(CartManager.get());
-    hideProcessingOverlay();
-
-    let totalPix = 0;
-    let totalCard = 0;
-
-    cart.forEach(item => {
-        const qty = item.quantity || 1;
-        totalPix += (item.pricePix || 0) * qty;
-        totalCard += (item.priceBase || 0) * qty;
-    });
-
-    const finalTotalPix = totalPix + currentShippingCost;
-    const finalTotalCard = totalCard + currentShippingCost;
-    const savings = totalCard - totalPix;
-
-    // Atualiza Subtotal (Valor Cheio)
-    const subtotalEl = document.getElementById("payment-subtotal-display");
-    if (subtotalEl) {
-        subtotalEl.innerText = `R$ ${totalCard.toFixed(2).replace('.', ',')}`;
-    }
-
-    // Atualiza Total Final com ênfase no Pix
-    const totalEl = document.getElementById("payment-total-display");
-    if (totalEl) {
-        if (savings > 0.05) {
-            totalEl.innerHTML = `
-                <div style="display: flex; flex-direction: column; align-items: flex-end;">
-                    <span style="font-size: 0.9rem; color: #999; text-decoration: line-through; font-weight: normal;">R$ ${finalTotalCard.toFixed(2).replace('.', ',')}</span>
-                    <span style="color: #00a650;">R$ ${finalTotalPix.toFixed(2).replace('.', ',')}</span>
-                    <small style="font-size: 0.75rem; color: #666; font-weight: 500; margin-top: -2px;">no Pix (Economize R$ ${savings.toFixed(2).replace('.', ',')})</small>
-                </div>
-            `;
-        } else {
-            totalEl.innerText = `R$ ${finalTotalCard.toFixed(2).replace('.', ',')}`;
-        }
-    }
-
-    // Renderiza a lista de produtos no resumo
-    const listContainer = document.getElementById("payment-product-list");
-    if (listContainer) {
-        listContainer.innerHTML = '';
-        cart.forEach(item => {
-            const pPix = item.pricePix || 0;
-            const pCard = item.priceBase || 0;
-            const hasDiscount = (pCard - pPix) > 0.05;
-
-            const imgUrl = item.image || 'https://placehold.co/100x100/eee/999?text=Sem+Foto';
-            const html = `
-                <div class="product-summary-item">
-                    <img src="${imgUrl}" class="product-summary-img">
-                    <div class="product-summary-info">
-                        <div class="product-summary-name">${item.name}</div>
-                        <div class="product-summary-price">
-                            ${item.quantity}x ${hasDiscount ? `<span style="text-decoration:line-through; font-size:0.7rem; color:#999;">R$ ${pCard.toFixed(2).replace('.', ',')}</span> ` : ''}
-                            <span style="${hasDiscount ? 'color:#00a650; font-weight:700;' : ''}">R$ ${pPix.toFixed(2).replace('.', ',')}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-            listContainer.insertAdjacentHTML('beforeend', html);
-        });
-    }
-
-    const btnPix = document.getElementById("btn-choice-pix");
-    const btnCard = document.getElementById("btn-choice-card");
-    const btnZap = document.getElementById("btn-pay-whatsapp");
-
-    // Re-bind events (prevent duplication)
-    btnPix.onclick = async () => {
-        showProcessingOverlay();
-        try {
-            const checkoutData = await startCustomCheckout('pix');
-            if (checkoutData && checkoutData.point_of_interaction) {
-                hideProcessingOverlay();
-                showPixScreen(checkoutData);
-            }
-        } catch (e) {
-            hideProcessingOverlay();
-            showToast("Erro ao gerar Pix", "error");
-        }
-    };
-
-    btnCard.onclick = async () => {
-        showProcessingOverlay();
-        try {
-            const checkoutData = await startInfinitePayCheckout();
-            if (checkoutData && checkoutData.url) {
-                window.location.href = checkoutData.url;
-            } else {
-                throw new Error("Link incompleto");
-            }
-        } catch (e) {
-            hideProcessingOverlay();
-            showToast("Erro ao processar cartão. Tente novamente ou use Pix.", "error");
-            console.error(e);
-        }
-    };
-
-    btnZap.onclick = () => {
-        const fullName = document.getElementById("reg-full-name") ? document.getElementById("reg-full-name").value : "";
-        const phoneInput = document.getElementById("reg-phone");
-        const phone = phoneInput ? phoneInput.value : "";
-        const orderIdentifier = Math.floor(100000 + Math.random() * 900000);
-
-        let msg = `Olá, gostaria de finalizar meu pedido!\n\n_Ref. Pedido:_ *#${orderIdentifier}*\n\n*Produtos:*\n`;
-        cart.forEach(item => {
-            msg += `- ${item.quantity}x ${item.name} (R$ ${item.priceBase.toFixed(2).replace('.', ',')})\n`;
-        });
-        msg += `\n*Frete:* ${currentShippingCost === 0 ? 'Grátis' : 'R$ ' + currentShippingCost.toFixed(2).replace('.', ',')}`;
-        msg += `\n*Total estimado:* R$ ${finalTotalCard.toFixed(2).replace('.', ',')}`;
-        msg += `\n\n*Meus Dados:*`;
-        msg += `\nNome: ${fullName}`;
-        msg += `\nTelefone: ${phone}`;
-
-        if (deliveryMode === 'delivery') {
-            msg += `\n*Endereço de Entrega:* ${document.getElementById("address").value}, ${document.getElementById("num").value} - ${document.getElementById("city-select").value}`;
-        } else {
-            msg += `\n*Retirada:* Loja ${selectedStore}`;
-        }
-
-        const cartShort = cart.map(i => ({ id: i.id, name: i.name, quantity: i.quantity, price: i.priceBase, image: i.image }));
-        const user = auth.currentUser;
-        const uid = user ? user.uid : (localStorage.getItem('guest_uid') || ('guest_' + Date.now()));
-
-        db.collection("orders").add({
-            userId: uid,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            status: "pending_payment",
-            statusText: "Aguardando Atendente",
-            total: finalTotalCard,
-            shipping: { cost: currentShippingCost, mode: deliveryMode },
-            client: { name: fullName, phone: phone },
-            items: cartShort,
-            paymentMethod: "whatsapp"
-        });
-
-        window.open(`https://wa.me/5591986341760?text=${encodeURIComponent(msg)}`, '_blank');
-        CartManager.clear();
-        setTimeout(() => window.location.href = "index.html", 1500);
-    };
-}
-
+// ─── MUDAR PASSO ──────────────────────────────────────────
 function changeStep(stepNum) {
-    document.querySelectorAll('.checkout-step').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
-    if (stepNum === 2) {
-        document.getElementById("step-shipping").classList.add("active");
-        document.getElementById("step-indic-1").classList.add("active");
-        document.getElementById("step-indic-2").classList.add("active");
-    } else if (stepNum === 3) {
-        document.getElementById("step-payment").classList.add("active");
-        document.getElementById("step-indic-1").classList.add("active");
-        document.getElementById("step-indic-2").classList.add("active");
-        document.getElementById("step-indic-3").classList.add("active");
+    document.querySelectorAll('.co-card').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.co-step-item').forEach(el => {
+        el.classList.remove('active', 'done');
+    });
+
+    const steps = ['step-indic-1', 'step-indic-2', 'step-indic-3'];
+    const cards = ['step-registration', 'step-shipping', 'step-payment'];
+
+    // Marca passos anteriores como "done"
+    for (let i = 0; i < stepNum - 1; i++) {
+        const el = document.getElementById(steps[i]);
+        if (el) {
+            el.classList.add('done');
+            const num = el.querySelector('.co-step-num');
+            if (num) num.innerHTML = '<i class="bx bx-check" style="font-size:0.9rem;"></i>';
+        }
     }
+    // Marca passo atual como "active"
+    const activeStep = document.getElementById(steps[stepNum - 1]);
+    if (activeStep) activeStep.classList.add('active');
+
+    // Mostra card correto
+    const activeCard = document.getElementById(cards[stepNum - 1]);
+    if (activeCard) activeCard.classList.add('active');
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// ─── LÓGICA DE ENTREGA ────────────────────────────────────
 function setupDeliveryLogic() {
+    const citySelect = document.getElementById('city-select');
+    if (citySelect) citySelect.addEventListener('change', calculateShipping);
+
     window.selectDeliveryType = (type) => {
         deliveryMode = type;
-        document.querySelectorAll('.delivery-option-card').forEach(c => c.classList.remove('selected'));
-        document.querySelector(`.delivery-option-card[data-type="${type}"]`).classList.add('selected');
+        document.querySelectorAll('.co-toggle').forEach(c => c.classList.remove('sel'));
+        const active = document.querySelector(`.co-toggle[data-type="${type}"]`);
+        if (active) active.classList.add('sel');
+
+        const deliveryForm = document.getElementById("container-delivery-form");
+        const pickupList = document.getElementById("container-pickup-list");
 
         if (type === 'delivery') {
-            document.getElementById("container-delivery-form").style.display = 'block';
-            document.getElementById("container-pickup-list").style.display = 'none';
+            if (deliveryForm) deliveryForm.style.display = 'block';
+            if (pickupList) pickupList.style.display = 'none';
             calculateShipping();
         } else {
-            document.getElementById("container-delivery-form").style.display = 'none';
-            document.getElementById("container-pickup-list").style.display = 'block';
+            if (deliveryForm) deliveryForm.style.display = 'none';
+            if (pickupList) pickupList.style.display = 'block';
             currentShippingCost = 0;
-            updateTotalDisplay();
+            updateShippingDisplay();
         }
     };
 
     window.selectStore = (elem, storeName) => {
-        document.querySelectorAll('.store-item').forEach(i => {
-            i.classList.remove('selected');
-            i.querySelector('i').className = 'bx bx-circle';
-        });
-        elem.classList.add('selected');
-        elem.querySelector('i').className = 'bx bx-check-circle';
+        document.querySelectorAll('.co-store-item').forEach(i => i.classList.remove('sel'));
+        elem.classList.add('sel');
         selectedStore = storeName;
     };
-
-    const cepInput = document.getElementById("cep");
-    if (cepInput) {
-        cepInput.addEventListener("blur", () => {
-            const cepRaw = cepInput.value.replace(/\D/g, '');
-            if (cepRaw.length === 8) validateDeliveryArea(cepRaw);
-        });
-    }
-    document.getElementById("city-select").addEventListener("change", calculateShipping);
-}
-
-function validateDeliveryArea(cep) {
-    const cepRaw = cep.replace(/\D/g, '');
-    const auroraRec = document.getElementById("aurora-recommendation");
-    const sellerCont = document.getElementById("seller-checkout-container");
-    const goPaymentBtn = document.getElementById("btn-go-payment");
-    const summaryBox = document.getElementById("shipping-summary-box");
-    const citySelect = document.getElementById("city-select");
-
-    if (auroraRec) auroraRec.style.display = 'none';
-    if (sellerCont) sellerCont.style.display = 'none';
-    if (goPaymentBtn) goPaymentBtn.style.display = 'block';
-    if (summaryBox) summaryBox.style.display = 'block';
-
-    const isIpixuna = (cepRaw === '68637000');
-    const isParagominas = (cepRaw.startsWith('68625') || cepRaw.startsWith('68626') || cepRaw.startsWith('68627') || cepRaw.startsWith('68628') || cepRaw.startsWith('68629') || cepRaw.startsWith('68630'));
-    const isAurora = (cepRaw === '68658000');
-
-    if (isAurora) {
-        if (auroraRec) auroraRec.style.display = 'flex';
-        citySelect.value = "Aurora do Pará";
-    }
-
-    if (isIpixuna || isParagominas || isAurora) {
-        if (isIpixuna) citySelect.value = "Ipixuna do Pará";
-        if (isParagominas) citySelect.value = "Paragominas";
-        if (deliveryMode === 'delivery') calculateShipping();
-    } else {
-        if (sellerCont) sellerCont.style.display = 'block';
-        if (goPaymentBtn) goPaymentBtn.style.display = 'none';
-        if (summaryBox) summaryBox.style.display = 'none';
-        showToast("Entrega automática indisponível. Fale com um vendedor.", "warning");
-    }
 }
 
 function calculateShipping() {
-    if (deliveryMode === 'pickup') {
-        currentShippingCost = 0;
-        updateTotalDisplay();
-        return;
-    }
-    const cepInput = document.getElementById("cep");
-    const cepVal = cepInput.value.replace(/\D/g, '');
-    const display = document.getElementById("shipping-cost-display");
+    const cart = CartManager.get();
+    const city = document.getElementById('city-select')?.value || '';
+    const total = cart.reduce((s, i) => s + (i.priceNew * i.quantity), 0);
 
-    const isIpixuna = (cepVal === '68637000');
-    const isAurora = (cepVal === '68658000');
-    const isParagominas = (cepVal.startsWith('68625') || cepVal.startsWith('68626') || cepVal.startsWith('68627') || cepVal.startsWith('68628') || cepVal.startsWith('68629') || cepVal.startsWith('68630'));
-
-    if (isIpixuna) {
-        currentShippingCost = 0;
-        display.innerText = "Grátis (Oferta Limitada)";
-        display.style.color = "#00a650";
-        display.style.fontWeight = "bold";
-    } else if (isAurora) {
+    if (city === 'Ipixuna do Pará') {
+        currentShippingCost = 0; // Festival Frete Grátis
+    } else if (city === 'Aurora do Pará') {
         currentShippingCost = 50;
-        display.innerText = "R$ 50,00";
-        display.style.color = "#333";
-        display.style.fontWeight = "bold";
-    } else if (isParagominas) {
-        currentShippingCost = 60;
-        display.innerText = "R$ 60,00";
-        display.style.color = "#333";
-        display.style.fontWeight = "bold";
     } else {
-        currentShippingCost = 0;
-        display.innerText = "Consultar Vendedor";
+        currentShippingCost = 0; // Paragominas ou outro: tratado via WhatsApp
     }
-    updateTotalDisplay();
+
+    updateShippingDisplay(total);
 }
 
-function updateTotalDisplay() {
+function updateShippingDisplay(subtotal) {
     const cart = CartManager.get();
-    let totalPix = 0;
-    let totalCard = 0;
+    const sub = subtotal || cart.reduce((s, i) => s + (i.priceNew * i.quantity), 0);
+    const total = sub + currentShippingCost;
 
-    cart.forEach(item => {
-        const qty = item.quantity || 1;
-        totalPix += (item.pricePix || 0) * qty;
-        totalCard += (item.priceBase || 0) * qty;
-    });
+    const subtotalEl = document.getElementById('subtotal-display');
+    const shippingEl = document.getElementById('shipping-cost-display');
+    const totalEl = document.getElementById('total-display');
 
-    const finalTotalPix = totalPix + currentShippingCost;
-    const finalTotalCard = totalCard + currentShippingCost;
-    const savings = totalCard - totalPix;
+    if (subtotalEl) subtotalEl.textContent = fmt(sub);
+    if (shippingEl) shippingEl.textContent = currentShippingCost === 0 ? 'Grátis 🎉' : fmt(currentShippingCost);
+    if (totalEl) totalEl.textContent = fmt(total);
+}
 
-    const shippingEl = document.getElementById("payment-shipping-display");
-    if (shippingEl) {
-        shippingEl.innerText = currentShippingCost === 0 ? "Grátis" : `R$ ${currentShippingCost.toFixed(2).replace('.', ',')}`;
+// ─── PASSO 3: CONFIGURAR RESUMO E PAGAMENTO ───────────────
+async function setupPaymentStep() {
+    showProcessingOverlay();
+
+    try {
+        validatedCart = await validateCartPrices(CartManager.get());
+    } catch (e) {
+        validatedCart = CartManager.get().map(i => ({ ...i, pricePix: i.priceNew, priceBase: i.priceNew }));
     }
 
-    const totalEl = document.getElementById("payment-total-display");
-    if (totalEl) {
-        if (savings > 0.05) {
-            totalEl.innerHTML = `
-                <div style="display: flex; flex-direction: column; align-items: flex-end;">
-                    <span style="font-size: 0.9rem; color: #999; text-decoration: line-through; font-weight: normal;">R$ ${finalTotalCard.toFixed(2).replace('.', ',')}</span>
-                    <span style="color: #00a650;">R$ ${finalTotalPix.toFixed(2).replace('.', ',')}</span>
-                    <small style="font-size: 0.75rem; color: #666; font-weight: 500; margin-top: -2px;">no Pix (Economize R$ ${savings.toFixed(2).replace('.', ',')})</small>
-                </div>
-            `;
+    hideProcessingOverlay();
+
+    // Renderiza lista de produtos
+    renderProductList(validatedCart);
+
+    // Calcula totais
+    const totalPix = validatedCart.reduce((s, i) => s + (i.pricePix || i.priceNew) * i.quantity, 0) + currentShippingCost;
+    const totalCard = validatedCart.reduce((s, i) => s + (i.priceBase || i.priceNew) * i.quantity, 0) + currentShippingCost;
+    const savings = totalCard - (totalPix);
+
+    renderTotals(totalPix, totalCard, savings);
+    renderPaymentOptions(totalCard, totalPix);
+
+    // Seta método padrão: PIX
+    selectPayMethod('pix');
+}
+
+function renderProductList(cart) {
+    const container = document.getElementById('pay-product-list');
+    if (!container) return;
+
+    container.innerHTML = cart.map(item => {
+        const pix = item.pricePix || item.priceNew;
+        const card = item.priceBase || item.priceNew;
+        const hasDiscount = card > pix + 0.01;
+        return `
+        <div class="co-product-item">
+            <img class="co-product-img" src="${item.image || ''}" alt="${item.name}" onerror="this.style.background='#eee'">
+            <div class="co-product-info">
+                <div class="co-product-name">${item.name}</div>
+                <div class="co-product-qty">Qtd: ${item.quantity}</div>
+            </div>
+            <div class="co-product-price">
+                ${hasDiscount ? `<small>${fmt(card * item.quantity)}</small>` : ''}
+                ${fmt(pix * item.quantity)}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function renderTotals(totalPix, totalCard, savings) {
+    // Armazena globalmente para usar no confirmar
+    window._totalPix = totalPix;
+    window._totalCard = totalCard;
+
+    const subtotalCard = totalCard - currentShippingCost;
+    document.getElementById('pay-subtotal').textContent = fmt(subtotalCard);
+    document.getElementById('pay-frete').textContent = currentShippingCost === 0 ? 'Grátis 🎉' : fmt(currentShippingCost);
+
+    const hasSavings = savings > 0.05;
+    const savBadge = document.getElementById('pay-savings');
+    if (savBadge) {
+        if (hasSavings) {
+            savBadge.textContent = `Economize ${fmt(savings)} pagando com PIX`;
+            savBadge.style.display = 'inline-block';
         } else {
-            totalEl.innerText = `R$ ${finalTotalCard.toFixed(2).replace('.', ',')}`;
+            savBadge.style.display = 'none';
         }
     }
 }
 
-async function startCustomCheckout(method) {
-    const cart = await validateCartPrices(CartManager.get());
-    const productsTotalPix = cart.reduce((sum, item) => sum + ((item.pricePix || 0) * item.quantity), 0);
-    const finalTotalPix = productsTotalPix + currentShippingCost;
+function renderPaymentOptions(totalCard, totalPix) {
+    // Atualiza sub-labels
+    const pixSub = document.getElementById('pix-sub');
+    if (pixSub) pixSub.textContent = `${fmt(totalPix)} · 5% de desconto à vista`;
 
-    const fullName = document.getElementById("reg-full-name").value;
-    const parts = fullName.split(' ');
-    const firstName = parts[0];
-    const lastName = parts.slice(1).join(' ');
+    const plan = getInstallmentPlan(totalCard);
+    const bestFree = plan.filter(p => p.free).pop();
 
-    const rawPhone = document.getElementById("reg-phone").value;
-    const cleanPhone = rawPhone.replace(/\D/g, '');
-    const rawCpfInput = document.getElementById("reg-cpf");
-    const rawCpf = rawCpfInput ? rawCpfInput.value : "";
-    const cleanCpf = rawCpf.replace(/\D/g, '');
-
-    const emailField = document.getElementById("reg-email");
-    let email = emailField ? emailField.value : "";
-    if ((!email || email.trim() === "") && auth.currentUser) email = auth.currentUser.email;
-    if (!email || email.trim() === "") email = "cliente@eletrobusiness.com.br";
-
-    const uid = auth.currentUser ? auth.currentUser.uid : (localStorage.getItem('guest_uid') || 'guest_' + Date.now());
-
-    const street = document.getElementById("address").value || "Retirada";
-    const citySelect = document.getElementById("city-select");
-    const city = citySelect ? citySelect.value : "Cidade";
-
-    const prefResponse = await fetch(API_URLS.CREATE_PREFERENCE, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            account: 'eletropay',
-            items: cart.map(i => ({ ...i, priceNew: i.pricePix })),
-            shippingCost: currentShippingCost,
-            deliveryData: { mode: deliveryMode, store: selectedStore, address: street },
-            clientData: { firstName, lastName, phone: rawPhone, email, cpf: rawCpf },
-            userId: uid
-        }),
-    });
-
-    const prefData = await prefResponse.json();
-    if (!prefData.orderId) throw new Error("Erro ao gerar Pedido");
-
-    const payResponse = await fetch(API_URLS.CREATE_PAYMENT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            account: 'eletropay',
-            payment_data: {
-                transaction_amount: finalTotalPix,
-                payment_method_id: 'pix',
-                description: `Pedido Super App #${prefData.orderId.substring(0, 6)}`
-            },
-            orderId: prefData.orderId,
-            items: cart.map(i => ({ ...i, priceNew: i.pricePix })),
-            shippingCost: currentShippingCost,
-            customPayer: {
-                email, first_name: firstName, last_name: lastName,
-                identification: { type: "CPF", number: cleanCpf || "00000000000" },
-                phone: { area_code: cleanPhone.substring(0, 2), number: cleanPhone.substring(2) },
-                address: { zip_code: "00000000", street_name: street, city: city }
-            }
-        })
-    });
-
-    const paymentResult = await payResponse.json();
-    if (paymentResult.status === 'pending') {
-        CartManager.clear();
+    const cardSub = document.getElementById('card-sub');
+    if (cardSub && bestFree) {
+        cardSub.textContent = `Até ${bestFree.n}x de ${fmt(bestFree.installmentValue)} sem juros`;
     }
-    return paymentResult;
+
+    // Gera lista de parcelas
+    const box = document.getElementById('installments-box');
+    if (box) {
+        box.innerHTML = plan.map(p => `
+            <div class="co-inst-option" data-n="${p.n}" onclick="chooseInstallment(${p.n}, ${p.installmentValue.toFixed(2)})">
+                <span>${p.n}x de <strong>${fmt(p.installmentValue)}</strong>
+                    ${!p.free ? `<span style="color:var(--faint);font-size:0.8rem;"> (total ${fmt(p.totalWithInterest)})</span>` : ''}
+                </span>
+                <span class="co-inst-badge ${p.free ? 'free' : ''}">
+                    ${p.free ? 'Sem juros' : `+juros`}
+                </span>
+            </div>
+        `).join('');
+    }
 }
 
-async function startInfinitePayCheckout() {
-    const cart = await validateCartPrices(CartManager.get());
+window.chooseInstallment = (n, value) => {
+    selectedInstallments = n;
+    document.querySelectorAll('.co-inst-option').forEach(el => el.classList.remove('sel'));
+    const sel = document.querySelector(`.co-inst-option[data-n="${n}"]`);
+    if (sel) sel.classList.add('sel');
 
-    const fullName = document.getElementById("reg-full-name").value;
-    const parts = fullName.split(' ');
-    const firstName = parts[0];
-    const lastName = parts.slice(1).join(' ');
+    const cardSub = document.getElementById('card-sub');
+    if (cardSub) cardSub.textContent = `${n}x de ${fmt(value)}`;
+};
 
-    const rawPhone = document.getElementById("reg-phone").value;
-    const emailField = document.getElementById("reg-email");
-    let email = emailField ? emailField.value : "";
-    if ((!email || email.trim() === "") && auth.currentUser) email = auth.currentUser.email;
-    if (!email || email.trim() === "") email = "cliente@eletrobusiness.com.br";
+// ─── SELEÇÃO DE MÉTODO DE PAGAMENTO ──────────────────────
+window.selectPayMethod = (method) => {
+    selectedPayMethod = method;
 
-    const uid = auth.currentUser ? auth.currentUser.uid : (localStorage.getItem('guest_uid') || 'guest_' + Date.now());
+    document.querySelectorAll('.co-pay-option').forEach(el => el.classList.remove('sel'));
+    const optMap = { pix: 'opt-pix', card: 'opt-card', zap: 'opt-zap' };
+    const chosen = document.getElementById(optMap[method]);
+    if (chosen) chosen.classList.add('sel');
 
-    const street = document.getElementById("address").value || "Retirada";
+    // Mostrar/ocultar lista de parcelas
+    const instBox = document.getElementById('installments-box');
+    if (instBox) instBox.className = method === 'card' ? 'co-installments show' : 'co-installments';
 
-    const response = await fetch(API_URLS.CREATE_INFINITEPAY_LINK, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            account: 'eletropay',
-            items: cart.map(i => ({ ...i, priceNew: i.priceBase })),
-            shippingCost: currentShippingCost,
-            deliveryData: { mode: deliveryMode, store: selectedStore, address: street },
-            clientData: { firstName, lastName, phone: rawPhone, email },
-            userId: uid
-        }),
+    // Mostrar/ocultar MP Brick (cartão)
+    const brickWrapper = document.getElementById('payment-brick-wrapper');
+    if (brickWrapper) brickWrapper.style.display = 'none';
+
+    // Atualiza total exibido conforme método
+    const totalLabel = document.getElementById('pay-total-label');
+    const totalVal = document.getElementById('pay-total');
+
+    if (method === 'pix') {
+        if (totalLabel) totalLabel.textContent = 'Total com PIX';
+        if (totalVal) totalVal.textContent = fmt(window._totalPix || 0);
+        updateConfirmButton('pix');
+    } else if (method === 'card') {
+        if (totalLabel) totalLabel.textContent = 'Total no Cartão';
+        const plan = getInstallmentPlan(window._totalCard || 0);
+        const inst = plan.find(p => p.n === selectedInstallments) || plan[0];
+        if (totalVal) totalVal.textContent = fmt(inst ? inst.installmentValue : (window._totalCard || 0));
+        updateConfirmButton('card');
+    } else {
+        if (totalLabel) totalLabel.textContent = 'Total';
+        if (totalVal) totalVal.textContent = fmt(window._totalCard || 0);
+        updateConfirmButton('zap');
+    }
+};
+
+function updateConfirmButton(method) {
+    const btn = document.getElementById('btn-confirm-payment');
+    if (!btn) return;
+    if (method === 'pix') {
+        btn.innerHTML = '<i class="bx bx-qr-scan"></i> Gerar QR Code PIX';
+        btn.style.background = '';
+    } else if (method === 'card') {
+        btn.innerHTML = '<i class="bx bx-credit-card"></i> Pagar com Cartão';
+        btn.style.background = '';
+    } else {
+        btn.innerHTML = '<i class="bx bxl-whatsapp"></i> Finalizar via WhatsApp';
+        btn.style.background = '#25D366';
+    }
+}
+
+// ─── CONFIRMAR PAGAMENTO ──────────────────────────────────
+async function handleConfirmPayment() {
+    if (selectedPayMethod === 'pix') {
+        await handlePixPayment();
+    } else if (selectedPayMethod === 'card') {
+        await handleCardPayment();
+    } else {
+        handleWhatsAppPayment();
+    }
+}
+
+// ─── PIX ──────────────────────────────────────────────────
+async function handlePixPayment() {
+    showProcessingOverlay();
+    try {
+        const data = await startCustomCheckout('pix');
+        hideProcessingOverlay();
+        if (data && data.point_of_interaction) {
+            showPixScreen(data);
+        } else {
+            showToast("Erro ao gerar PIX. Tente novamente.", "error");
+        }
+    } catch (e) {
+        hideProcessingOverlay();
+        console.error(e);
+        showToast("Erro ao gerar PIX.", "error");
+    }
+}
+
+async function startCustomCheckout(paymentType) {
+    const cart = validatedCart.length ? validatedCart : CartManager.get();
+    const user = (typeof auth !== 'undefined') ? auth.currentUser : null;
+    const fullName = document.getElementById("reg-full-name")?.value.trim() || "Cliente";
+    const phone = document.getElementById("reg-phone")?.value.trim() || "";
+    const address = document.getElementById("address")?.value || "";
+    const city = document.getElementById("city-select")?.value || "";
+    const cep = document.getElementById("cep")?.value || "";
+
+    const total = paymentType === 'pix' ? window._totalPix : window._totalCard;
+    const expiration = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+
+    // Registra pedido na API (fire-and-forget)
+    const orderId = registrarPedido({
+        cart, total, method: paymentType,
+        gateway: 'Mercado Pago', status: 'Aguardando Pagamento PIX'
     });
 
-    const data = await response.json();
-    if (data.error) throw new Error(data.error);
+    const phoneDigits = phone.replace(/\D/g, '');
+    const nameParts = fullName.split(' ');
 
-    // Opcional: CartManager.clear() aqui pode ser arriscado se o link falhar depois. 
-    // Ideal é limpar quando o webhook confirmar ou quando redirecionar.
-    // Mas para manter consistência com o Super App:
-    CartManager.clear();
+    // Items formatados com priceNew (campo usado pelo backend functions/index.js linha 624)
+    const formattedItems = cart.map(i => ({
+        id: String(i.id),
+        name: i.name,
+        quantity: Number(i.quantity),
+        priceNew: Number(i.pricePix || i.priceNew), // priceNew é o campo lido pelo backend
+        image: i.image || ''
+    }));
 
-    return data;
+    const payload = {
+        orderId,
+        account: 'eletropay',  // CNPJ 45692327000100 — conta do Super App
+        items: formattedItems,
+        shippingCost: currentShippingCost,
+        customPayer: {
+            first_name: nameParts[0],
+            last_name: nameParts.slice(1).join(' ') || 'Cliente',
+            email: user?.email || 'cliente@dtudo.com.br',
+            phone: {
+                area_code: phoneDigits.substring(0, 2) || '11',
+                number: phoneDigits.substring(2) || '900000000'
+            },
+            address: {
+                zip_code: cep.replace(/\D/g, '') || '00000000',
+                street_name: address || 'Rua',
+                street_number: '0',
+                city: city || 'Ipixuna do Para'
+            },
+            identification: { type: 'CPF', number: '00000000000' }
+        },
+        // payment_data: campos que o backend usa para montar o finalPaymentData
+        payment_data: {
+            payment_method_id: 'pix',
+            transaction_amount: Number(total.toFixed(2)),
+            description: 'Compra Dtudo - Pedido ' + orderId,
+            date_of_expiration: expiration,
+            payer: { email: user?.email || 'cliente@dtudo.com.br' }
+        }
+    };
+
+    const resp = await fetch(`${CLOUD_FUNCTIONS_URL}/createPayment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+
+    if (!resp.ok) {
+        const errBody = await resp.text();
+        console.error('createPayment 400:', errBody);
+        throw new Error('Erro ' + resp.status + ': ' + errBody);
+    }
+
+    return await resp.json();
 }
 
-function setupPixEvents() {
-    const btnCopy = document.getElementById("btn-copy-pix");
+
+function showPixScreen(paymentData) {
+    const screen = document.getElementById('pix-screen');
+    if (!screen) return;
+
+    const qr = paymentData.point_of_interaction?.transaction_data;
+    const qrImg = document.getElementById('display-pix-qr');
+    const qrCode = document.getElementById('display-pix-copypaste');
+    const btnCopy = document.getElementById('btn-copy-pix');
+    const btnDone = document.getElementById('btn-finish-pix');
+
+    if (qrImg && qr?.qr_code_base64) qrImg.src = `data:image/png;base64,${qr.qr_code_base64}`;
+    if (qrCode && qr?.qr_code) qrCode.value = qr.qr_code;
+
     if (btnCopy) {
         btnCopy.onclick = () => {
-            const input = document.getElementById("display-pix-copypaste");
-            input.select();
-            document.execCommand("copy");
-            showToast("Código copiado!", "success");
+            navigator.clipboard.writeText(qr?.qr_code || '').then(() => showToast("Código copiado!"));
         };
     }
-    const btnFinish = document.getElementById("btn-finish-pix");
-    if (btnFinish) btnFinish.onclick = () => window.location.href = "pedidos.html";
 
-    const btnSeller = document.getElementById("btn-seller-checkout");
-    if (btnSeller) {
-        btnSeller.onclick = () => {
-            const cart = CartManager.get();
-            const fullName = document.getElementById("reg-full-name") ? document.getElementById("reg-full-name").value : "Cliente";
-            const phone = document.getElementById("reg-phone") ? document.getElementById("reg-phone").value : "";
-            const cep = document.getElementById("cep").value;
-            const address = document.getElementById("address").value;
-            const num = document.getElementById("num").value;
-
-            let msg = `Olá! Meu CEP (${cep}) não está na lista de entrega automática e gostaria de finalizar meu pedido com um vendedor.\n\n*Produtos:*\n`;
-            cart.forEach(item => {
-                msg += `- ${item.quantity}x ${item.name}\n`;
-            });
-            msg += `\n*Endereço:* ${address}, ${num}\n*Nome:* ${fullName}\n*Telefone:* ${phone}`;
-
-            window.open(`https://wa.me/5591986341760?text=${encodeURIComponent(msg)}`, '_blank');
+    if (btnDone) {
+        btnDone.onclick = () => {
+            CartManager.clear();
+            window.location.href = "pedidos.html";
         };
     }
+
+    screen.style.display = 'block';
 }
 
-function showPixScreen(paymentResult) {
-    const qrCodeBase64 = paymentResult.point_of_interaction.transaction_data.qr_code_base64;
-    const qrCodeCopy = paymentResult.point_of_interaction.transaction_data.qr_code;
-    document.getElementById("display-pix-qr").src = `data:image/png;base64,${qrCodeBase64}`;
-    document.getElementById("display-pix-copypaste").value = qrCodeCopy;
-    document.getElementById("checkout-stepper").style.display = 'none';
-    document.getElementById("step-payment").style.display = 'none';
-    document.getElementById("step-pix-result").style.display = 'block';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+// ─── CARTÃO — MODAL BOTTOM-SHEET COM MP BRICK ────────────
+function openCardModal() {
+    const overlay = document.getElementById('card-modal-overlay');
+    if (!overlay) return;
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden'; // bloqueia scroll do fundo
+
+    // Monta o Brick (só se ainda não montado ou se foi desmontado)
+    mountCardBrick();
+}
+
+function closeCardModal() {
+    const overlay = document.getElementById('card-modal-overlay');
+    if (!overlay) return;
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+async function mountCardBrick() {
+    const container = document.getElementById('payment-brick-container');
+    if (!container) return;
+    if (container.children.length > 0 && paymentBrickController) return; // já montado
+
+    if (paymentBrickController) {
+        try { await paymentBrickController.unmount(); } catch (e) { }
+        paymentBrickController = null;
+    }
+
+    showProcessingOverlay();
+    const total = window._totalCard || 0;
+    const user = (typeof auth !== 'undefined') ? auth.currentUser : null;
+    const fullName = document.getElementById("reg-full-name")?.value.trim() || "Cliente";
+
+    const bricksBuilder = mp.bricks();
+    paymentBrickController = await bricksBuilder.create("payment", "payment-brick-container", {
+        initialization: { amount: total },
+        customization: {
+            paymentMethods: {
+                creditCard: "all",
+                debitCard: "all",
+                maxInstallments: 12,
+            },
+            visual: { style: { theme: 'default' } }
+        },
+        callbacks: {
+            onReady: () => hideProcessingOverlay(),
+            onSubmit: async ({ formData }) => {
+                closeCardModal();
+                showProcessingOverlay();
+                try {
+                    const cart = validatedCart.length ? validatedCart : CartManager.get();
+                    const phone = document.getElementById("reg-phone")?.value.trim() || "";
+                    const address = document.getElementById("address")?.value || "";
+                    const city = document.getElementById("city-select")?.value || "";
+                    const cep = document.getElementById("cep")?.value || "";
+
+                    const orderId = registrarPedido({
+                        cart, total,
+                        method: 'card',
+                        gateway: 'Mercado Pago Cartão',
+                        status: 'Processando Cartão'
+                    });
+
+                    const resp = await fetch(`${CLOUD_FUNCTIONS_URL}/createPayment`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            orderId,
+                            account: 'eletropay',
+                            payment_data: formData,
+                            items: cart.map(i => ({ id: String(i.id), name: i.name, quantity: i.quantity, priceNew: i.priceBase || i.priceNew, image: i.image || '' })),
+                            shippingCost: currentShippingCost,
+                            customPayer: {
+                                first_name: fullName.split(' ')[0],
+                                last_name: fullName.split(' ').slice(1).join(' ') || 'Cliente',
+                                email: user?.email || formData.payer?.email || 'cliente@dtudo.com.br',
+                                phone: { area_code: phone.replace(/\D/g, '').substring(0, 2) || '11', number: phone.replace(/\D/g, '').substring(2) || '900000000' },
+                                address: { zip_code: cep.replace(/\D/g, '') || '00000000', street_name: address || 'Rua', street_number: '0', city: city || 'Ipixuna do Para' },
+                                identification: { type: 'CPF', number: '00000000000' }
+                            }
+                        })
+                    });
+
+                    const result = await resp.json();
+                    hideProcessingOverlay();
+
+                    if (result.status === 'approved' || result.status === 'in_process') {
+                        showToast("✅ Pagamento enviado! Aguarde confirmação.");
+                        CartManager.clear();
+                        setTimeout(() => window.location.href = "pedidos.html", 2000);
+                    } else {
+                        showToast("Pagamento não aprovado. Tente novamente.", "error");
+                    }
+                } catch (e) {
+                    hideProcessingOverlay();
+                    console.error(e);
+                    showToast("Erro ao processar cartão.", "error");
+                }
+            },
+            onError: (err) => {
+                hideProcessingOverlay();
+                console.error("Brick error:", err);
+            }
+        }
+    });
+}
+
+// Setup do modal de cartão (chamado no DOMContentLoaded)
+function setupCardModal() {
+    const btnClose = document.getElementById('btn-close-card-modal');
+    if (btnClose) btnClose.onclick = () => {
+        closeCardModal();
+    };
+    // Fechar ao clicar no overlay (fora do modal)
+    const overlay = document.getElementById('card-modal-overlay');
+    if (overlay) overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeCardModal();
+    });
+}
+
+async function handleCardPayment() {
+    openCardModal();
+}
+
+
+// ─── WHATSAPP ─────────────────────────────────────────────
+async function handleWhatsAppPayment() {
+    const cart = validatedCart.length ? validatedCart : CartManager.get();
+    const fullName = document.getElementById("reg-full-name")?.value.trim() || "Cliente";
+    const phone = document.getElementById("reg-phone")?.value.trim() || "";
+    const address = document.getElementById("address")?.value || "";
+    const city = document.getElementById("city-select")?.value || "";
+    const ref = Math.floor(100000 + Math.random() * 900000);
+    const total = window._totalCard || 0;
+
+    // 1. Registra na API (planilha) + Firestore
+    await registrarPedido({
+        cart,
+        total,
+        method: 'whatsapp',
+        gateway: 'WhatsApp',
+        status: 'Aguardando Atendente'
+    });
+
+    // 2. Monta mensagem detalhada para o WhatsApp
+    let msg = `Olá! Gostaria de finalizar meu pedido.\n\n*Ref. #${ref}*\n\n*Produtos:*\n`;
+    cart.forEach(i => {
+        msg += `• ${i.quantity}x ${i.name} — ${fmt((i.priceBase || i.priceNew) * i.quantity)}\n`;
+    });
+    msg += `\n*Frete:* ${currentShippingCost === 0 ? 'Grátis' : fmt(currentShippingCost)}`;
+    msg += `\n*Total:* ${fmt(total)}\n`;
+    msg += `\n*Cliente:* ${fullName}\n*Tel:* ${phone}`;
+    msg += deliveryMode === 'pickup'
+        ? `\n*Retirada:* ${selectedStore}`
+        : `\n*Entrega:* ${address}, ${city}`;
+
+    // 3. Abre WhatsApp e limpa carrinho
+    window.open(`https://wa.me/5591986341760?text=${encodeURIComponent(msg)}`, '_blank');
+    CartManager.clear();
+    setTimeout(() => window.location.href = "index.html", 1500);
+}
+
+// ─── PIX EVENTS (tela de resultado) ──────────────────────
+function setupPixEvents() {
+    const btnFinish = document.getElementById('btn-finish-pix');
+    if (btnFinish) {
+        btnFinish.onclick = () => {
+            CartManager.clear();
+            window.location.href = "pedidos.html";
+        };
+    }
 }

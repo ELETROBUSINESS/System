@@ -103,26 +103,32 @@ async function loadProductDetail(id) {
         const valOffer = parseFloat(prod['price-oferta'] || 0);
         const hasOffer = (valOffer > 0 && valOffer < valPrice);
 
-        // Regra Super App: Preço Base de Venda
-        const baseSalePrice = hasOffer ? valOffer : valPrice;
+        // Preço Base de Venda (Cartão)
+        const cardPrice = hasOffer ? valOffer : valPrice;
 
         // Pix tem 5% de desconto sobre o preço de venda final
-        const pixPrice = baseSalePrice * 0.95;
-
-        // Cartão é o preço de venda sem o desconto de 5%
-        const cardPrice = baseSalePrice;
+        const pixPrice = cardPrice * 0.95;
 
         document.title = `${prod.name} | Dtudo`;
 
-        const fmtConfig = { style: 'currency', currency: 'BRL' };
-        const fmtCard = cardPrice.toLocaleString('pt-BR', fmtConfig);
-        const fmtOriginal = valPrice.toLocaleString('pt-BR', fmtConfig);
-        const fmtPix = pixPrice.toLocaleString('pt-BR', fmtConfig);
+        // Formatação refinada: Separa Reais de Centavos para Estilo Premium
+        const splitPrice = (val) => {
+            const parts = val.toFixed(2).split('.');
+            return { reais: parts[0], centavos: parts[1] };
+        };
 
         // Parcelamento
         const maxInstallments = calculateInstallmentsRule(cardPrice);
         const installmentValue = cardPrice / maxInstallments;
-        const fmtInstallmentValue = installmentValue.toLocaleString('pt-BR', fmtConfig);
+
+        const pixParts = splitPrice(pixPrice);
+        const instParts = splitPrice(installmentValue);
+        const discountPerc = Math.round(((valPrice - pixPrice) / valPrice) * 100);
+
+        const fmtConfig = { style: 'currency', currency: 'BRL' };
+        const fmtCard = cardPrice.toLocaleString('pt-BR', fmtConfig);
+        const fmtOriginal = valPrice.toLocaleString('pt-BR', fmtConfig);
+        // fmtPix e fmtInstallmentValue são usados para cálculos, mas a exibição será customizada abaixo
 
         const stockCount = parseInt(prod.stock || 0);
         const soldCount = parseInt(prod.sold || 0);
@@ -141,36 +147,25 @@ async function loadProductDetail(id) {
         }
 
         let priceBlock = `
-            <div class="detail-price-wrapper">
-                ${hasOffer ? `<div class="detail-price-old">${fmtOriginal}</div>` : ''}
-                <div class="detail-pix-highlight">
-                    <span class="pix-price">${fmtPix}</span>
-                    <span class="pix-badge">PIX</span>
+            <div class="premium-price-container" style="margin-bottom: 20px; font-family: 'Roboto', sans-serif;">
+                <div class="price-old-line" style="color: #999; text-decoration: line-through; font-size: 1rem; margin-bottom: 4px;">
+                    ${fmtOriginal}
                 </div>
-                ${hasOffer ? `<span class="detail-savings-text">Você economiza ${(valPrice - valOffer).toLocaleString('pt-BR', fmtConfig)}</span>` : ''}
+                <div class="price-main-line" style="display: flex; align-items: baseline; gap: 4px; color: #333;">
+                    <span style="font-size: 2.2rem; font-weight: 400; line-height: 1;">R$ ${pixParts.reais}</span>
+                    <span style="font-size: 1.1rem; font-weight: 400; position: relative; top: -12px;">${pixParts.centavos}</span>
+                    <span style="color: #00a650; font-size: 1.15rem; font-weight: 600; margin-left: 10px; background: #e6f7ee; padding: 2px 6px; border-radius: 4px;">${discountPerc}% OFF</span>
+                </div>
+                <div class="installment-line" style="font-size: 1.15rem; color: #333; margin-top: 5px;">
+                    ${maxInstallments}x R$ ${instParts.reais}<span style="font-size: 0.75rem; position: relative; top: -5px;">${instParts.centavos}</span>
+                </div>
+                <div style="color: #00a650; font-size: 0.85rem; font-weight: 600; margin-top: 5px;">
+                    <i class='bx bxs-zap'></i> Preço exclusivo no Pix
+                </div>
             </div>
         `;
 
-        let installmentBlock = '';
-        if (maxInstallments > 1) {
-            installmentBlock = `
-                <div class="installment-container" style="margin-top: 5px;">
-                    <div class="installment-main">
-                        <i class='bx bx-credit-card-front'></i>
-                        <span>Ou <strong>${fmtCard}</strong> em até <strong>${maxInstallments}x</strong> de <strong>${fmtInstallmentValue}</strong></span>
-                    </div>
-                </div>
-            `;
-        } else {
-            installmentBlock = `
-                <div class="installment-container" style="margin-top: 5px;">
-                    <div class="installment-main">
-                        <i class='bx bx-credit-card-front'></i>
-                        <span>Ou <strong>${fmtCard}</strong> à vista no cartão</span>
-                    </div>
-                </div>
-            `;
-        }
+        let installmentBlock = ''; // Substituído pela installment-line acima para seguir o design 1:1
 
         const thumbsHtml = productImages.length > 1 ? `
             <div class="thumbnails-scroll">
@@ -257,7 +252,7 @@ function renderSuggestedProducts(currentProd, allProducts) {
         const valOffer = parseFloat(prod['price-oferta'] || 0);
         const finalPrice = (valOffer > 0 && valOffer < valPrice) ? valOffer : valPrice;
         return `
-            <div class="category-item" style="min-width: 140px; text-align: left; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; height: 100%;" onclick="window.location.href='product.html?id=${prod.id}'">
+            <div class="category-item" style="min-width: 140px; text-align: left; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; height: 100%; font-family: 'Roboto', sans-serif;" onclick="window.location.href='product.html?id=${prod.id}'">
                 <img src="${prod.imgUrl}" style="width: 100%; height: 120px; object-fit: cover;">
                 <div style="padding: 10px;">
                     <div style="font-size: 0.8rem; color: #444; height: 32px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${prod.name}</div>

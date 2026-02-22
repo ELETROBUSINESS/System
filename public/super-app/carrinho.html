@@ -4,174 +4,336 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Carrinho</title>
+    <title>Meu Carrinho | Dtudo</title>
     <link rel="icon" href="/assets/img/Dtudoicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/index.css">
 
     <style>
-        /* ==================== BARRA DE FRETE GRÁTIS ==================== */
-        .shipping-progress-container {
-            background: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            border: 1px solid #e0e0e0;
-            transition: all 0.3s ease;
+        /* Ajustes específicos para a página do Carrinho */
+        body {
+            background-color: #f7f7f7;
+            padding-bottom: 160px;
+            /* Espaço para o resumo fixo + navbar */
         }
 
-        /* Animação Especial de Sucesso */
-        .shipping-progress-container.celebrate {
-            animation: popSuccess 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border-color: #00a650;
-            background-color: #f0fdf4;
-            box-shadow: 0 4px 15px rgba(0, 166, 80, 0.2);
+        .cart-header {
+            background: var(--color-brand-red);
+            color: #fff;
+            padding: 15px 0;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
-        @keyframes popSuccess {
-            0% {
-                transform: scale(1);
-            }
-
-            50% {
-                transform: scale(1.05);
-            }
-
-            70% {
-                transform: scale(0.98);
-            }
-
-            100% {
-                transform: scale(1);
-            }
-        }
-
-        .shipping-progress-text {
-            font-size: 0.9rem;
-            color: #333;
-            margin-bottom: 8px;
+        .cart-header .container {
             display: flex;
             align-items: center;
-            gap: 6px;
+            justify-content: space-between;
         }
 
-        .shipping-progress-text strong {
-            color: #00a650;
+        .cart-title {
+            font-size: 1.2rem;
+            font-weight: 700;
         }
 
-        .progress-track-cart {
-            width: 100%;
-            height: 8px;
-            background-color: #f1f1f1;
-            border-radius: 4px;
+        .back-btn {
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Cart Items */
+        .cart-items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .cart-item-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            gap: 12px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+            border: 1px solid #efefef;
+        }
+
+        .cart-item-img {
+            width: 90px;
+            height: 90px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: #f9f9f9;
+        }
+
+        .cart-item-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .cart-item-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #333;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
             overflow: hidden;
+            margin-bottom: 4px;
         }
 
-        .progress-fill-cart {
-            height: 100%;
-            width: 0%;
-            background-color: #00a650;
-            border-radius: 4px;
-            transition: width 0.5s ease-in-out, background-color 0.3s;
+        .cart-item-price-row {
+            margin-bottom: 8px;
         }
 
-        .progress-fill-cart.incomplete {
-            background-color: #db0038;
+        .price-old-cart {
+            font-size: 0.75rem;
+            color: #999;
+            text-decoration: line-through;
+            margin-right: 5px;
         }
 
-        /* ==================== TEXTO DE ECONOMIA SIMPLES ==================== */
-        .pix-economy-text {
-            font-size: 0.85rem;
+        .price-new-cart {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--color-success);
+        }
+
+        .price-pix-badge {
+            font-size: 0.65rem;
+            background: #e8f5e9;
             color: #00a650;
-            /* Verde */
+            padding: 1px 4px;
+            border-radius: 3px;
             font-weight: 600;
-            margin-top: 4px;
+            vertical-align: middle;
+        }
+
+        .cart-item-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .qty-selector {
+            display: flex;
+            align-items: center;
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 2px;
+        }
+
+        .qty-btn {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            border-radius: 6px;
+            color: #333;
+            font-size: 1.1rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .qty-value {
+            padding: 0 12px;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .remove-btn {
+            color: #ff4d4d;
+            font-size: 1.4rem;
+            background: transparent;
+            padding: 5px;
+        }
+
+        /* Resumo Fixo na Base */
+        .fixed-bottom-summary {
+            position: fixed;
+            bottom: var(--navbar-height);
+            left: 0;
+            width: 100%;
+            background: #fff;
+            padding: 15px;
+            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.08);
+            z-index: 900;
+            border-top: 1px solid #efefef;
+        }
+
+        .summary-total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .total-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .total-value-container {
             text-align: right;
+        }
+
+        .total-pix-value {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: #333;
             display: block;
         }
 
-        /* AJUSTE DE FONTE DO HEADER */
-        .logo {
-            font-family: 'Roboto', sans-serif !important;
-            /* Força a fonte padrão */
-            font-weight: 700 !important;
-            letter-spacing: 0 !important;
-            text-transform: none !important;
-            /* Remove caixa alta forçada se houver */
+        .total-card-info {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .btn-checkout {
+            width: 100%;
+            background: var(--color-brand-red);
+            color: #fff;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(194, 0, 38, 0.25);
+        }
+
+        .empty-cart-view {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-icon {
+            font-size: 5rem;
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+
+        .empty-title {
+            font-size: 1.4rem;
+            color: #444;
+            margin-bottom: 10px;
+        }
+
+        .empty-desc {
+            color: #999;
+            margin-bottom: 30px;
+        }
+
+        .btn-return {
+            background: #333;
+            color: #fff;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-weight: 600;
+        }
+
+        .savings-badge {
+            background: #e6f7ee;
+            color: #00a650;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 5px;
         }
     </style>
 </head>
 
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-BV6V3GTMR0"></script>
-<script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('js', new Date());
-    gtag('config', 'G-BV6V3GTMR0');
-</script>
-
 <body>
-    <header class="main-header">
-        <div class="container header-container">
-            <a href="index.html" class="back-button"><i class='bx bx-chevron-left'></i></a>
-            <span class="logo">Meu Carrinho</span>
-            <div style="width: 24px;"></div>
+    <!-- Header Simplificado -->
+    <header class="cart-header">
+        <div class="container">
+            <a href="index.html" class="back-btn"><i class='bx bx-chevron-left'></i></a>
+            <span class="cart-title">Carrinho de Compras</span>
+            <div style="width: 30px;"></div>
         </div>
     </header>
 
-    <div class="container" style="margin-top: 20px;">
-        <div class="shipping-progress-container" id="shipping-progress-box" style="display:none;">
-            <div class="shipping-progress-text" id="shipping-progress-text">
-                Faltam <strong>R$ 10,00</strong> para Frete Grátis
-            </div>
-            <div class="progress-track-cart">
-                <div class="progress-fill-cart incomplete" id="shipping-progress-fill"></div>
-            </div>
+    <main class="container" style="margin-top: 90px; min-height: 50vh;">
+        <!-- Container de Itens -->
+        <div id="cart-items-container" class="cart-items-list">
+            <!-- Injetado via JS -->
         </div>
-    </div>
 
-    <main class="container">
-        <div id="cart-items-container"></div>
-
-        <div id="cart-summary-box" class="cart-summary" style="display: none;">
-            <h3>Resumo</h3>
-            <div class="summary-line total"
-                style="margin-top: 0; border-top: none; padding-top: 0; align-items: flex-start;">
-                <span>Total</span>
-                <div style="text-align: right;">
-                    <div id="summary-total-value">R$ 0,00</div>
-                    <div id="summary-savings-text" style="margin-top: 5px;"></div>
-                </div>
-            </div>
-            <button id="go-to-checkout" class="cta-button checkout-btn">Finalizar Compra</button>
+        <!-- Seção de Sugestões (Opcional) -->
+        <div id="cart-suggestions" style="margin-top: 40px; margin-bottom: 40px; display: none;">
+            <h3 style="font-size: 1.1rem; margin-bottom: 15px; color: #444;">Aproveite também</h3>
+            <div class="product-grid" id="suggested-products-container"></div>
         </div>
     </main>
 
+    <!-- Resumo Fixo na Base (Só aparece se tiver itens) -->
+    <div id="fixed-summary" class="fixed-bottom-summary" style="display: none;">
+        <div class="container">
+            <div class="summary-total-row">
+                <div class="total-label">
+                    Total no Pix
+                    <div id="savings-container"></div>
+                </div>
+                <div class="total-value-container">
+                    <span id="summary-total-pix" class="total-pix-value">R$ 0,00</span>
+                    <span id="summary-total-card" class="total-card-info">ou R$ 0,00 no cartão</span>
+                </div>
+            </div>
+            <button id="go-to-checkout" class="btn-checkout">
+                <span>Finalizar Compra</span>
+                <i class='bx bx-right-arrow-alt'></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Navegação Inferior -->
     <nav class="bottom-navbar">
-        <a href="index.html" class="nav-item"><i class='bx bxs-home'></i><span>Início</span></a>
+        <div class="nav-indicator-container">
+            <div class="nav-indicator" style="transform: translateX(100%);"></div>
+        </div>
+        <a href="index.html" class="nav-item"><i class='bx bx-home'></i><span>Início</span></a>
         <a href="carrinho.html" class="nav-item active">
-            <i class='bx bx-cart'></i>
+            <i class='bx bxs-cart'></i>
             <span id="cart-badge" class="cart-badge" style="display: none;">0</span>
             <span>Carrinho</span>
         </a>
         <a href="pedidos.html" class="nav-item"><i class='bx bx-receipt'></i><span>Pedidos</span></a>
     </nav>
 
+    <!-- Modal de Login -->
     <div id="user-profile-modal" class="modal-overlay">
         <div class="modal-content profile-modal-content">
-            <button class="modal-close">&times;</button>
+            <button class="modal-close" onclick="closeProfileModal()">&times;</button>
             <div id="user-logged-out-view">
-                <h3>Login Necessário</h3>
-                <p>Faça login para finalizar sua compra.</p>
-                <button class="google-login-button" id="google-login-button"><i class='bx bxl-google'></i> Entrar com
-                    Google</button>
+                <h3 style="margin-bottom: 10px;">Login Necessário</h3>
+                <p style="color: #666; margin-bottom: 20px;">Faça login para salvar seus pedidos e agilizar o checkout.
+                </p>
+                <button class="google-login-button" id="google-login-button"
+                    style="width: 100%; border: 1px solid #ddd; background: #fff; padding: 12px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 500;">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/smartlock/icon_google.svg" width="18">
+                    Entrar com Google
+                </button>
             </div>
             <div id="user-logged-in-view" style="display:none;"></div>
         </div>
     </div>
-    <div id="toast-notification" class="toast"></div>
 
+    <!-- Firebase e Scripts -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>

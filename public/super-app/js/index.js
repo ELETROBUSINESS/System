@@ -9,6 +9,42 @@ const COMMENTS_CACHE_KEY = "dtudo_user_reviews";
 const REVIEWS_CACHE_DURATION = 20 * 60 * 60 * 1000;
 const CART_KEY = 'app_cart';
 
+// --- MAPA DE SINÔNIMOS PARA BUSCA INTELIGENTE ---
+const SEARCH_SYNONYMS = {
+    'tv': ['televisao', 'televisão', 'televisor', 'smart tv', 'monitor', 'led'],
+    'televisao': ['tv', 'televisor', 'smart tv'],
+    'televisão': ['tv', 'televisor', 'smart tv'],
+    'celular': ['smartphone', 'telefone', 'mobile', 'iphone', 'android'],
+    'smartphone': ['celular', 'telefone', 'mobile'],
+    'fone': ['headset', 'fone de ouvido', 'auricular', 'bluetooth', 'tws'],
+    'relogio': ['smartwatch', 'smart watch', 'relógio', 'digital', 'analogico'],
+    'relógio': ['relogio', 'smartwatch', 'smart watch'],
+    'caixa': ['som', 'speaker', 'bluetooth', 'amplificada', 'jbl'],
+    'notebook': ['laptop', 'computador', 'pc', 'informatica'],
+    'pc': ['computador', 'notebook', 'desktop', 'gabinete'],
+    'brinquedo': ['infantil', 'boneca', 'carro', 'jogo', 'kids'],
+    'escolar': ['papelaria', 'caderno', 'caneta', 'lapis', 'mochila']
+};
+
+function smartMatch(product, term) {
+    const name = (product.name || '').toLowerCase();
+    const cat = (product.category || '').toLowerCase();
+    const query = term.toLowerCase();
+
+    // 1. Verifica match direto
+    if (name.includes(query) || cat.includes(query)) return true;
+
+    // 2. Verifica Sinônimos
+    for (const [key, synonyms] of Object.entries(SEARCH_SYNONYMS)) {
+        // Se o termo pesquisado é a chave ou está nos sinônimos daquela chave
+        if (query === key || synonyms.includes(query)) {
+            // Verifica se o NOME do produto contém a CHAVE ou algum dos SINÔNIMOS
+            if (name.includes(key) || synonyms.some(s => name.includes(s))) return true;
+        }
+    }
+    return false;
+}
+
 // Variáveis Globais
 let lastVisibleDoc = null;
 let productsBuffer = [];
@@ -152,17 +188,22 @@ function renderProductBatch(products) {
         let name = prod.name || '';
         name = name.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase());
 
+        const fmtCard = new Intl.NumberFormat('pt-BR', fmtConfig).format(priceCard);
+
         let priceHtml = '';
         if (hasOffer) {
+            // Se tem oferta na planilha, o preço riscado é o Preço Original
             priceHtml = `
                 <div class="price-container">
                     <span class="price-old">${fmtOriginal}</span>
-                    <span class="price-new">${fmtPix}</span>
+                    <span class="price-new">${fmtPix} <small style="font-size: 0.65rem; color: #666; font-weight: 500;">no Pix</small></span>
                 </div>`;
         } else {
+            // Se não tem oferta, o preço riscado é o Preço do Cartão (base)
             priceHtml = `
                 <div class="price-container">
-                    <span class="price-new">${fmtPix}</span>
+                    <span class="price-old">${fmtCard}</span>
+                    <span class="price-new">${fmtPix} <small style="font-size: 0.65rem; color: #666; font-weight: 500;">no Pix</small></span>
                 </div>`;
         }
 
@@ -170,9 +211,9 @@ function renderProductBatch(products) {
         let installmentHtml = '';
         if (maxInst > 1) {
             const instVal = (priceCard / maxInst).toLocaleString('pt-BR', fmtConfig);
-            installmentHtml = `<div class="installment-text">ou ${maxInst}x de ${instVal}</div>`;
+            installmentHtml = `<div class="installment-text">ou <b>${fmtCard}</b> em até <b>${maxInst}x</b></div>`;
         } else {
-            installmentHtml = `<div class="installment-text">à vista no cartão</div>`;
+            installmentHtml = `<div class="installment-text">ou <b>${fmtCard}</b> no cartão</div>`;
         }
 
         const stock = parseInt(prod.stock || 0);
@@ -201,74 +242,135 @@ function renderProductBatch(products) {
     });
 }
 
-// --- BUSCA COM SUGESTÕES ---
+// --- BUSCA COM MODAL ---
+window.openSearchModal = function () {
+    const modal = document.getElementById('search-modal');
+    if (modal) {
+        modal.classList.add('show');
+        const input = document.getElementById('modal-search-input');
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
+        renderSearchHistory();
+    }
+};
+
+window.closeSearchModal = function () {
+    const modal = document.getElementById('search-modal');
+    if (modal) modal.classList.remove('show');
+};
+
+window.executeSearch = function () {
+    const input = document.getElementById('modal-search-input');
+    const term = input ? input.value.trim() : "";
+    if (term) {
+        saveSearchHistory(term);
+        window.location.href = `search.html?q=${encodeURIComponent(term)}`;
+    }
+};
+
+function saveSearchHistory(term) {
+    let history = JSON.parse(localStorage.getItem('search_history') || '[]');
+    history = history.filter(h => h.toLowerCase() !== term.toLowerCase());
+    history.unshift(term);
+    localStorage.setItem('search_history', JSON.stringify(history.slice(0, 5)));
+}
+
+function renderSearchHistory() {
+    const container = document.getElementById('search-history-list');
+    const section = document.getElementById('search-history-section');
+    const history = JSON.parse(localStorage.getItem('search_history') || '[]');
+
+    if (!container || !section) return;
+
+    if (history.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+
+    section.style.display = 'block';
+    container.innerHTML = history.map(h => `
+        <div class="suggestion-item" onclick="window.location.href='search.html?q=${encodeURIComponent(h)}'">
+            <i class='bx bx-history'></i> ${h}
+        </div>
+    `).join('');
+}
+
+window.clearSearchHistory = function () {
+    localStorage.removeItem('search_history');
+    renderSearchHistory();
+};
+
 function setupSearch() {
-    const input = document.getElementById('main-search-input') || document.querySelector('.search-bar input');
-    const dropdown = document.getElementById('search-dropdown');
+    const modalInput = document.getElementById('modal-search-input');
+    const clearBtn = document.getElementById('clear-search');
 
-    if (!input || !dropdown) return;
+    if (modalInput) {
+        modalInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') executeSearch();
+        });
 
-    input.addEventListener('focus', () => {
-        document.querySelector('.header-container').classList.add('search-active');
-    });
+        modalInput.addEventListener('input', (e) => {
+            const term = e.target.value.trim().toLowerCase();
+            if (clearBtn) clearBtn.style.display = term ? 'block' : 'none';
 
-    input.addEventListener('input', (e) => {
-        const term = e.target.value.trim().toLowerCase();
-        clearTimeout(searchDebounceTimeout);
+            const suggestionsList = document.getElementById('search-suggestions-list');
+            const suggestionsSection = document.getElementById('search-suggestions-section');
+            if (suggestionsList) {
+                if (term.length >= 2) {
+                    const cached = getCachedData() || [];
+                    // Usa a lógica de SmartMatch para filtrar
+                    const filtered = cached.filter(p => smartMatch(p, term)).slice(0, 6);
 
-        if (term.length < 2) {
-            dropdown.style.display = 'none';
-            dropdown.innerHTML = '';
-            return;
-        }
-
-        searchDebounceTimeout = setTimeout(async () => {
-            dropdown.innerHTML = '<div style="padding:10px; text-align:center; color:#666;">Buscando...</div>';
-            dropdown.style.display = 'block';
-
-            const cached = getCachedData() || [];
-            // Busca em todos os itens (estoque ou esgotados)
-            let results = cached.filter(p =>
-                p.name.toLowerCase().includes(term)
-            ).slice(0, 5);
-
-            if (results.length === 0) {
-                dropdown.innerHTML = '<div style="padding:10px; text-align:center; color:#666;">Nenhum produto encontrado.</div>';
-            } else {
-                let html = '';
-                results.forEach(p => {
-                    const price = parseFloat(p['price-oferta'] || p.price || 0);
-                    const fmtPrice = price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                    const img = p.imgUrl || 'https://placehold.co/400x400/f8f9fa/c20026?text=Dtudo';
-
-                    html += `
-                        <div class="search-item" onclick="window.location.href='index.html?id=${p.id}'" style="display:flex; gap:10px; padding:10px; border-bottom:1px solid #eee; cursor:pointer; align-items:center;">
-                            <img src="${img}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;">
-                            <div>
-                                <div style="font-size:0.9rem; font-weight:500; color:#333;">${p.name}</div>
-                                <div style="font-size:0.8rem; color:#00a650; font-weight:700;">${fmtPrice}</div>
+                    if (filtered.length > 0) {
+                        // Ao clicar na sugestão, agora vai para a PÁGINA DE PESQUISA (Busca o termo)
+                        suggestionsList.innerHTML = filtered.map(p => `
+                            <div class="suggestion-item" onclick="window.location.href='search.html?q=${encodeURIComponent(p.name)}'">
+                                <i class='bx bx-search'></i> ${p.name}
                             </div>
-                        </div>
+                        `).join('') + `
+                            <div class="suggestion-item" onclick="executeSearch()" style="background: #fdfdfd; border-top: 1px solid #eee; color: var(--color-brand-red); font-weight: 700;">
+                                <i class='bx bx-right-arrow-alt'></i> Ver todos os resultados para "${term}"
+                            </div>
+                        `;
+                        if (suggestionsSection) suggestionsSection.querySelector('.search-section-title').innerText = 'Busca Inteligente';
+                    } else {
+                        suggestionsList.innerHTML = `
+                            <div class="suggestion-item" onclick="executeSearch()">
+                                <i class='bx bx-search'></i> Buscar por "${term}"...
+                            </div>
+                        `;
+                    }
+                } else {
+                    if (suggestionsSection) suggestionsSection.querySelector('.search-section-title').innerText = 'Sugestões para você';
+                    suggestionsList.innerHTML = `
+                        <div class="suggestion-item" onclick="window.location.href='search.html?q=relogio'"><i class='bx bx-trending-up'></i> Relógio Masculino</div>
+                        <div class="suggestion-item" onclick="window.location.href='search.html?q=escolar'"><i class='bx bx-trending-up'></i> Material Escolar</div>
+                        <div class="suggestion-item" onclick="window.location.href='search.html?q=eletronico'"><i class='bx bx-trending-up'></i> Eletrônicos</div>
                     `;
-                });
-                dropdown.innerHTML = html;
+                }
             }
-        }, 300);
-    });
+        });
+    }
 
-    document.addEventListener('click', (e) => {
-        if (!input.contains(e.target) && !dropdown.contains(e.target) && !e.target.classList.contains('search-back-btn')) {
-            dropdown.style.display = 'none';
-        }
-    });
+    if (clearBtn) {
+        clearBtn.onclick = () => {
+            if (modalInput) {
+                modalInput.value = '';
+                modalInput.focus();
+                clearBtn.style.display = 'none';
+            }
+        };
+    }
 
-    window.closeSearchModal = function (e) {
-        if (e) e.stopPropagation();
-        document.querySelector('.header-container').classList.remove('search-active');
-        dropdown.style.display = 'none';
-        input.value = '';
-        input.blur();
-    };
+    // Fechar modal ao clicar fora do conteúdo
+    const modal = document.getElementById('search-modal');
+    if (modal) {
+        modal.onclick = (e) => {
+            if (e.target === modal) closeSearchModal();
+        };
+    }
 }
 
 function startSuggestionTimer() {

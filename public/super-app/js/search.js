@@ -3,6 +3,38 @@
 const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
 const CACHE_KEY = 'dtudo_products_cache';
 
+// --- MAPA DE SINÔNIMOS PARA BUSCA INTELIGENTE ---
+const SEARCH_SYNONYMS = {
+    'tv': ['televisao', 'televisão', 'televisor', 'smart tv', 'monitor', 'led'],
+    'televisao': ['tv', 'televisor', 'smart tv'],
+    'televisão': ['tv', 'televisor', 'smart tv'],
+    'celular': ['smartphone', 'telefone', 'mobile', 'iphone', 'android'],
+    'smartphone': ['celular', 'telefone', 'mobile'],
+    'fone': ['headset', 'fone de ouvido', 'auricular', 'bluetooth', 'tws'],
+    'relogio': ['smartwatch', 'smart watch', 'relógio', 'digital', 'analogico'],
+    'relógio': ['relogio', 'smartwatch', 'smart watch'],
+    'caixa': ['som', 'speaker', 'bluetooth', 'amplificada', 'jbl'],
+    'notebook': ['laptop', 'computador', 'pc', 'informatica'],
+    'pc': ['computador', 'notebook', 'desktop', 'gabinete'],
+    'brinquedo': ['infantil', 'boneca', 'carro', 'jogo', 'kids'],
+    'escolar': ['papelaria', 'caderno', 'caneta', 'lapis', 'mochila']
+};
+
+function smartMatch(product, term) {
+    const name = (product.name || '').toLowerCase();
+    const cat = (product.category || '').toLowerCase();
+    const query = term.toLowerCase();
+
+    if (name.includes(query) || cat.includes(query)) return true;
+
+    for (const [key, synonyms] of Object.entries(SEARCH_SYNONYMS)) {
+        if (query === key || synonyms.includes(query)) {
+            if (name.includes(key) || synonyms.some(s => name.includes(s))) return true;
+        }
+    }
+    return false;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const query = urlParams.get('q') || '';
@@ -82,11 +114,7 @@ async function performSearch(term, type) {
 
     let results = [];
     if (type === 'query') {
-        const lowerTerm = term.toLowerCase();
-        results = allProducts.filter(p =>
-            (p.name && p.name.toLowerCase().includes(lowerTerm)) ||
-            (p.category && p.category.toLowerCase().includes(lowerTerm))
-        );
+        results = allProducts.filter(p => smartMatch(p, term));
     } else if (type === 'category') {
         const lowerCat = term.toLowerCase();
         results = allProducts.filter(p => p.category && p.category.toLowerCase().includes(lowerCat));
@@ -131,18 +159,30 @@ function renderProducts(products, target) {
         let name = prod.name || '';
         name = name.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase());
 
+        const fmtCard = new Intl.NumberFormat('pt-BR', fmtConfig).format(priceCard);
+
         const maxInst = calculateInstallmentsRule(priceCard);
         let installmentHtml = '';
         if (maxInst > 1) {
-            const instVal = (priceCard / maxInst).toLocaleString('pt-BR', fmtConfig);
-            installmentHtml = `<div class="installment-text">ou ${maxInst}x de ${instVal}</div>`;
+            installmentHtml = `<div class="installment-text">ou <b>${fmtCard}</b> em até <b>${maxInst}x</b></div>`;
         } else {
-            installmentHtml = `<div class="installment-text">à vista no cartão</div>`;
+            installmentHtml = `<div class="installment-text">ou <b>${fmtCard}</b> no cartão</div>`;
         }
 
-        let priceHtml = hasOffer
-            ? `<div class="price-container"><span class="price-old">${fmtOriginal}</span><span class="price-new">${fmtPix}</span></div>`
-            : `<div class="price-container"><span class="price-new">${fmtPix}</span></div>`;
+        let priceHtml = '';
+        if (hasOffer) {
+            priceHtml = `
+                <div class="price-container">
+                    <span class="price-old">${fmtOriginal}</span>
+                    <span class="price-new">${fmtPix} <small style="font-size: 0.65rem; color: #666; font-weight: 500;">no Pix</small></span>
+                </div>`;
+        } else {
+            priceHtml = `
+                <div class="price-container">
+                    <span class="price-old">${fmtCard}</span>
+                    <span class="price-new">${fmtPix} <small style="font-size: 0.65rem; color: #666; font-weight: 500;">no Pix</small></span>
+                </div>`;
+        }
 
         const html = `
             <div class="product-card" id="prod-${prod.id}">
