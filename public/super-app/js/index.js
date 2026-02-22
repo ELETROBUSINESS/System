@@ -177,7 +177,7 @@ function renderProductBatch(products) {
 
         const stock = parseInt(prod.stock || 0);
         const isSoldOut = stock <= 0;
-        const hasUrl = prod.imgUrl && prod.imgUrl.trim() !== "" && !prod.imgUrl.includes('placehold.co');
+        const hasUrl = prod.imgUrl && prod.imgUrl.trim() !== "" && !prod.imgUrl.includes('placehold.co') && (prod.imgUrl.startsWith('http') || prod.imgUrl.includes('/'));
 
         if (!hasUrl) return;
 
@@ -536,7 +536,7 @@ function applyLocalFilter(cached, categoryStr) {
     // Filtro de Restrição:
     // Exibe apenas produtos com URL de imagem válida.
     filtered = filtered.filter(p =>
-        p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co')
+        p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co') && (p.imgUrl.startsWith('http') || p.imgUrl.includes('/'))
     );
 
     productsBuffer = sortProductsForUX(filtered);

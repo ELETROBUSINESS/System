@@ -95,7 +95,7 @@ async function performSearch(term, type) {
     }
 
     // Filter valid images
-    results = results.filter(p => p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co'));
+    results = results.filter(p => p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co') && (p.imgUrl.startsWith('http') || p.imgUrl.includes('/')));
 
     if (results.length > 0) {
         container.innerHTML = '';
@@ -106,7 +106,7 @@ async function performSearch(term, type) {
         suggestionsSection.style.display = 'block';
 
         const suggestions = allProducts
-            .filter(p => p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co'))
+            .filter(p => p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co') && (p.imgUrl.startsWith('http') || p.imgUrl.includes('/')))
             .sort(() => 0.5 - Math.random())
             .slice(0, 8);
         renderProducts(suggestions, suggestionsContainer);

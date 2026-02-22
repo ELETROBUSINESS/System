@@ -468,15 +468,19 @@ function listarProdutosSuperApp() {
         const idxNome = headers.indexOf("nome") !== -1 ? headers.indexOf("nome") : 1;
         const idxPreco = headers.indexOf("preco") !== -1 ? headers.indexOf("preco") : 2;
         const idxNcm = headers.indexOf("ncm") !== -1 ? headers.indexOf("ncm") : 9;
-        const idxPromo = Math.max(headers.indexOf("promocional"), headers.indexOf("promocao"), 16);
+
+        // Tenta encontrar colunas promocionais, se não achar usa 16 como fallback
+        let idxPromo = headers.indexOf("promocional");
+        if (idxPromo === -1) idxPromo = headers.indexOf("promocao");
+        if (idxPromo === -1) idxPromo = 16;
 
         // Coluna F (Índice 5) é Categorias, conforme solicitado
         let idxCat = headers.indexOf("categoria");
         if (idxCat === -1) idxCat = headers.indexOf("category");
         if (idxCat === -1) idxCat = 5;
 
-        const idxDesc = Math.max(headers.indexOf("descricao"), headers.indexOf("description"), 17);
-        const idxImgUrl = Math.max(headers.indexOf("imgurl"), headers.indexOf("img url"), 18);
+        const idxDesc = headers.indexOf("descricao") !== -1 ? headers.indexOf("descricao") : (headers.indexOf("description") !== -1 ? headers.indexOf("description") : 17);
+        const idxImgUrl = headers.indexOf("imgurl") !== -1 ? headers.indexOf("imgurl") : (headers.indexOf("img url") !== -1 ? headers.indexOf("img url") : 18);
 
         const idxWebPrice = headers.indexOf("web_price");
 
