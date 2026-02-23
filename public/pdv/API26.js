@@ -89,6 +89,9 @@ function doPost(e) {
             case 'consultar_extrato_cliente':
                 response = consultarExtratoCliente(data, CREDITO_SHEET_NAME, COL_CREDITO);
                 break;
+            case 'salvar_nota_fiscal':
+                response = salvarNotaFiscal(data);
+                break;
             default:
                 response = salvarNoBanco(data);
         }
@@ -101,6 +104,28 @@ function doPost(e) {
             success: false,
             message: "Erro no servidor: " + error.toString()
         })).setMimeType(ContentService.MimeType.JSON);
+    }
+}
+
+// ==========================================
+// PONTO DE ENTRADA DA API (GET)
+// ==========================================
+function doGet(e) {
+    try {
+        const action = e.parameter.action;
+        let response;
+
+        switch (action) {
+            case 'listar_notas_fiscais':
+                response = listarNotasFiscaisTransicao();
+                break;
+            default:
+                response = { success: false, message: "Rota GET não encontrada." };
+        }
+
+        return ContentService.createTextOutput(JSON.stringify(response)).setMimeType(ContentService.MimeType.JSON);
+    } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({ success: false, message: err.toString() })).setMimeType(ContentService.MimeType.JSON);
     }
 }
 
@@ -639,4 +664,94 @@ function listarItensDoDia(dataInput) {
         total_itens: listaItens.length,
         itens: listaItens
     };
+}
+
+// ==========================================
+// FUNÇÃO: SALVAR NOTA FISCAL (NFC-e / NF-e)
+// ==========================================
+function salvarNotaFiscal(data) {
+    const FISCAL_SHEET_NAME = 'Fiscal'; // Mudança para 'Fiscal' como solicitado
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName(FISCAL_SHEET_NAME);
+
+    // Cria a aba se não existir
+    if (!sheet) {
+        sheet = ss.insertSheet(FISCAL_SHEET_NAME);
+        // Loja, Modelo, Nº Nota, ID Venda, Status, Operador, Cargo, Pagamento, Total, Mensagem, Conteúdo XML, Chave, Procolo, Timestamp
+        sheet.appendRow([
+            'Loja',
+            'Modelo',
+            'Nº Nota',
+            'ID Venda',
+            'Status',
+            'Operador',
+            'Cargo',
+            'Pagamento',
+            'Total',
+            'Mensagem',
+            'Conteúdo XML',
+            'Chave',
+            'Procolo',
+            'Timestamp'
+        ]);
+        SpreadsheetApp.flush();
+    }
+
+    const timestamp = new Date();
+    const novaLinha = [
+        data.loja || "DT#25",
+        data.modelo || "NFC-e",
+        data.numeroNota || "---",
+        data.idVenda || "---",
+        data.status || "Pendente",
+        data.operador || "---",
+        data.cargo || "---",
+        data.pagamento || "---",
+        data.total || 0,
+        data.mensagem || "",
+        data.xml || "",
+        data.chave || "",
+        data.protocolo || "",
+        timestamp
+    ];
+
+    try {
+        sheet.appendRow(novaLinha);
+        return { success: true, message: "Nota Fiscal registrada com sucesso (Transição)!" };
+    } catch (e) {
+        return { success: false, message: e.message };
+    }
+}
+
+function listarNotasFiscaisTransicao() {
+    const FISCAL_SHEET_NAME = 'Fiscal'; // Mudança para 'Fiscal' como solicitado
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName(FISCAL_SHEET_NAME);
+
+    if (!sheet) return { success: true, data: [] };
+
+    const rows = sheet.getDataRange().getValues();
+    if (rows.length <= 1) return { success: true, data: [] };
+
+    const data = [];
+    for (let i = 1; i < rows.length; i++) {
+        data.push({
+            loja: rows[i][0],
+            modelo: rows[i][1],
+            nNF: rows[i][2],
+            idVenda: rows[i][3],
+            status: rows[i][4],
+            operador: rows[i][5],
+            cargo: rows[i][6],
+            pagamento: rows[i][7],
+            total: rows[i][8],
+            mensagem: rows[i][9],
+            xml: rows[i][10],
+            chave: rows[i][11],
+            protocolo: rows[i][12],
+            timestamp: rows[i][13]
+        });
+    }
+
+    return { success: true, data: data };
 }

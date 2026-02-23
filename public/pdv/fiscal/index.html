@@ -749,7 +749,28 @@
             </div>
         </div>
 
+        <div class="table-responsive" style="margin-bottom: 20px;">
+            <h3 style="margin-bottom: 15px; font-size: 1.1rem; color: var(--text-dark);">
+                NF-e</h3>
+            <table class="fiscal-table">
+                <thead>
+                    <tr>
+                        <th width="35%">Chave NF-e</th>
+                        <th width="15%">Emissão</th>
+                        <th width="20%">Status</th>
+                        <th width="15%">Número</th>
+                        <th width="15%" style="text-align: right;">Valor (R$)</th>
+                    </tr>
+                </thead>
+                <tbody id="fiscal-table-body-nfe">
+                    <!-- Linhas geradas via JS -->
+                </tbody>
+            </table>
+        </div>
+
         <div class="table-responsive">
+            <h3 style="margin-bottom: 15px; font-size: 1.1rem; color: var(--text-dark);">
+                NFC-e</h3>
             <table class="fiscal-table">
                 <thead>
                     <tr>
@@ -760,14 +781,14 @@
                         <th width="15%" style="text-align: right;">Valor (R$)</th>
                     </tr>
                 </thead>
-                <tbody id="fiscal-table-body">
+                <tbody id="fiscal-table-body-nfce">
                     <!-- Linhas geradas via JS -->
                 </tbody>
             </table>
             <div id="loading-spinner" style="display:none; text-align:center; padding: 20px;">
                 <i class='bx bx-loader-alt bx-spin' style="font-size: 2rem; color: #666;"></i>
                 <p style="color: #666; margin-top: 10px;">Buscando notas...</p>
-                <small style="color:#999;">Carregando todas as notas da planilha...</small>
+                <small style="color:#999;">Carregando todas as notas da base unificada...</small>
             </div>
         </div>
 
@@ -781,7 +802,15 @@
                 <span id="qtde-rejeitadas">0</span>
             </div>
             <div class="summary-row total">
-                <span>Total Emitido:</span>
+                <span>Total NFC-e:</span>
+                <span id="total-emitido-nfce">R$ 0,00</span>
+            </div>
+            <div class="summary-row total">
+                <span>Total NF-e:</span>
+                <span id="total-emitido-nfe">R$ 0,00</span>
+            </div>
+            <div class="summary-row total">
+                <span>Total Geral Emitido:</span>
                 <span id="total-emitido">R$ 0,00</span>
             </div>
             <div class="summary-row projection">
@@ -795,6 +824,7 @@
         // CONFIGURAÇÃO
         const ADMIN_PASS = "ADM25-PASS"; // Senha identificada no sistema
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
+        const CENTRAL_API_URL = "https://script.google.com/macros/s/AKfycbyZtUsI44xA4MQQLZWJ6K93t6ZaSaN6hw7YQw9EclZG9E85kM6yOWQCQ0D-ZJpGmyq4/exec";
         const CURRENT_CNPJ = "45.692.327/0001-00";
 
         let ALL_FISCAL_NOTES = [];
@@ -808,7 +838,6 @@
         const errorMsg = document.getElementById('auth-error-msg');
 
         const monthFilter = document.getElementById('month-filter');
-        const tableBody = document.getElementById('fiscal-table-body');
         const loadingSpinner = document.getElementById('loading-spinner');
         const totalEl = document.getElementById('total-emitido');
         const dasEl = document.getElementById('das-projection');
@@ -881,14 +910,21 @@
             let d = new Date(dateStr);
             if (!isNaN(d.getTime())) return d;
 
-            // Tenta PT-BR (dd/mm/yyyy)
+            // Tenta tratar formato PT-BR "DD/MM/YYYY às HH:MM:SS" ou similar
             if (typeof dateStr === 'string') {
-                const parts = dateStr.split(/[/\-\s]/);
+                const cleanStr = dateStr.replace(' às ', ' ').trim();
+                const parts = cleanStr.split(/[\/\-\s:]+/);
+
                 if (parts.length >= 3) {
-                    if (parts[0].length <= 2 && parts[1].length <= 2 && parts[2].length === 4) {
-                        const timeParts = dateStr.includes(':') ? dateStr.split(' ')[1].split(':') : [0, 0, 0];
-                        return new Date(parts[2], parts[1] - 1, parts[0], timeParts[0] || 0, timeParts[1] || 0, timeParts[2] || 0);
-                    }
+                    const day = parseInt(parts[0], 10);
+                    const month = parseInt(parts[1], 10) - 1;
+                    const year = parseInt(parts[2], 10);
+                    const hour = parts[3] ? parseInt(parts[3], 10) : 0;
+                    const min = parts[4] ? parseInt(parts[4], 10) : 0;
+                    const sec = parts[5] ? parseInt(parts[5], 10) : 0;
+
+                    const newDate = new Date(year, month, day, hour, min, sec);
+                    if (!isNaN(newDate.getTime())) return newDate;
                 }
             }
             return new Date(); // Fallback
@@ -917,43 +953,126 @@
         }
 
         async function fetchFiscalNotes() {
-            tableBody.innerHTML = '';
+            document.getElementById('fiscal-table-body-nfce').innerHTML = '';
+            document.getElementById('fiscal-table-body-nfe').innerHTML = '';
             loadingSpinner.style.display = 'block';
 
             try {
-                // Adicionado parâmetro 'offlimite=true' conforme solicitado
-                const response = await fetch(`${SCRIPT_URL}?action=listarNotasFiscais&offlimite=true`);
-                const result = await response.json();
+                // Fetch de ambas as APIs em paralelo
+                const pOld = fetch(`${SCRIPT_URL}?action=listarNotasFiscais&offlimite=true`).then(r => r.json()).catch(e => ({ status: 'error', data: [] }));
+                const pNew = fetch(`${CENTRAL_API_URL}?action=listar_notas_fiscais`).then(r => r.json()).catch(e => ({ success: false, data: [] }));
 
-                if (result.status === 'success' && Array.isArray(result.data)) {
-                    console.log(`Recebidas ${result.data.length} notas.`);
-                    ALL_FISCAL_NOTES = result.data.map(item => {
-                        const valorXML = extrairTagXML(item.xml, "vNF");
-                        const valor = valorXML ? parseFloat(valorXML) : 0;
-                        const dateObj = parseDate(item.timestamp);
+                const [resOld, resNew] = await Promise.all([pOld, pNew]);
 
-                        return {
-                            id: item.idVenda || Math.random().toString(),
-                            chave: item.chave || 'SEM CHAVE',
-                            emissao: dateObj,
-                            cnpj: CURRENT_CNPJ,
-                            numero: item.nNF || extrairTagXML(item.xml, "nNF") || '---',
-                            valor: valor,
-                            xml: item.xml || '',
-                            status: item.status || 'Desconhecido'
-                        };
-                    });
+                let combinedArray = [];
 
-                    populateFilter();
-                    renderTable();
-                } else {
-                    console.error("Erro na API ou formato inesperado:", result);
-                    throw new Error(result.message || "Formato inválido");
+                if (resOld.status === 'success' && Array.isArray(resOld.data)) {
+                    combinedArray = combinedArray.concat(resOld.data.map(item => ({
+                        ...item,
+                        modelo: "NFC-e", // Api antiga não tinha isso muito claro, mas geralmente é NFC-e
+                        isNew: false
+                    })));
                 }
+
+                if (resNew.success && Array.isArray(resNew.data)) {
+                    combinedArray = combinedArray.concat(resNew.data.map(item => ({
+                        ...item,
+                        nNF: item.nNF || item.numeroNota, // Mapeamento
+                        isNew: true
+                    })));
+                }
+
+                // Deduplicação favorecendo API Nova (api de transição)
+                const dedupMap = new Map();
+                let duplicadasDetalhadas = [];
+
+                for (const note of combinedArray) {
+                    let key = "";
+
+                    // Preferência 1: idVenda (único por transação, agrupa tentativas na mesma venda)
+                    if (note.idVenda && String(note.idVenda).trim() !== '' && note.idVenda !== '---') {
+                        key = "id_" + String(note.idVenda).trim();
+                    }
+                    // Preferência 2: Uma chave SEFAZ real (exatamente 44 caracteres)
+                    else if (note.chave && typeof note.chave === 'string' && note.chave.trim().length === 44) {
+                        key = "chave_" + note.chave.trim();
+                    }
+                    // Preferência 3: nNF válido
+                    else if (note.nNF && note.nNF !== '---' && String(note.nNF).trim() !== '' && note.nNF !== '0') {
+                        key = "nnf_" + String(note.nNF).trim();
+                    }
+                    // Fallback seguro: aleatório
+                    else {
+                        key = "rnd_" + Math.random().toString();
+                    }
+
+                    if (dedupMap.has(key) && !key.startsWith('rnd_')) {
+                        const existing = dedupMap.get(key);
+                        let docRef = String(key).replace('id_', 'ID_Venda: ').replace('chave_', 'Chave: ').replace('nnf_', 'NF: ');
+
+                        // Queremos manter a mais atual/apropriada.
+                        const newIsAuto = (note.status || '').toLowerCase().includes('autorizada') || (note.status || '').toLowerCase() === 'aprovada';
+                        const extIsAuto = (existing.status || '').toLowerCase().includes('autorizada') || (existing.status || '').toLowerCase() === 'aprovada';
+
+                        let replace = false;
+                        if (newIsAuto && !extIsAuto) {
+                            replace = true; // Uma nota autorizada sobrescreve uma rejeitada de mesmo idVenda
+                        } else if (!newIsAuto && extIsAuto) {
+                            replace = false; // Não sobrescreve autorizada com rejeitada
+                        } else if (note.isNew && !existing.isNew) {
+                            replace = true; // Ambas em mesmo estado -> prefere a Nova API
+                        } else {
+                            replace = true; // Mesma API -> a mais recente prevalece
+                        }
+
+                        // Apenas log de debug sem exibir mensagem confusa de 'duplicada' pro usuário.
+                        // duplicadasDetalhadas.push(`Processada Atualização [${docRef}] - Feita por: [${replace ? (note.isNew ? 'NewAPI' : 'OldAPI') : (existing.isNew ? 'NewAPI' : 'OldAPI')}]`);
+
+                        if (replace) {
+                            dedupMap.set(key, note);
+                        }
+                    } else {
+                        dedupMap.set(key, note);
+                    }
+                }
+
+                const finalData = Array.from(dedupMap.values());
+                console.log(`Recebidas ${finalData.length} notas processadas após junção.`);
+                /*
+                // Log comentado pois são retentativas idVenda naturais do sistema e não erro crítico.
+                if (duplicadasDetalhadas.length > 0) {
+                    console.log(`Acompanhamento de retentativas idVenda e migração:`);
+                    console.log(duplicadasDetalhadas.join("\\n"));
+                }
+                */
+
+                ALL_FISCAL_NOTES = finalData.map(item => {
+                    const valorXML = extrairTagXML(item.xml, "vNF");
+                    const valor = valorXML ? parseFloat(valorXML) : (parseFloat(item.total) || parseFloat(item.valor) || 0);
+                    const dateObj = parseDate(item.timestamp);
+                    let modRaw = item.modelo || "NFC-e";
+                    let mod = String(modRaw).trim().toUpperCase();
+                    if (mod === "55") mod = "NF-E";
+
+                    return {
+                        id: item.idVenda || item.id || Math.random().toString(),
+                        chave: item.chave || 'SEM CHAVE',
+                        emissao: dateObj,
+                        modelo: mod,
+                        cnpj: CURRENT_CNPJ,
+                        numero: item.nNF || extrairTagXML(item.xml, "nNF") || '---',
+                        valor: valor,
+                        xml: item.xml || '',
+                        status: item.status || 'Desconhecido'
+                    };
+                });
+
+                populateFilter();
+                renderTable();
 
             } catch (error) {
                 console.error("Erro ao buscar notas:", error);
-                tableBody.innerHTML = `<tr>
+                document.getElementById('fiscal-table-body-nfce').innerHTML = `<tr>
                     <td colspan="5" style="text-align:center; padding: 20px;">
                         <span style="color:var(--warning-red); display:block; margin-bottom:10px; font-weight:bold;">
                             <i class='bx bx-error'></i> Falha ao carregar Notas
@@ -1033,36 +1152,51 @@
 
             filteredData.sort((a, b) => b.emissao - a.emissao);
 
-            const tbody = document.getElementById('fiscal-table-body');
-            tbody.innerHTML = '';
-            let totalPeriodo = 0;
+            const tbodyNfce = document.getElementById('fiscal-table-body-nfce');
+            const tbodyNfe = document.getElementById('fiscal-table-body-nfe');
+            tbodyNfce.innerHTML = '';
+            tbodyNfe.innerHTML = '';
+
+            let totalGeneral = 0;
+            let totalNfce = 0;
+            let totalNfe = 0;
             let qtdeEmitidas = 0;
             let qtdeRejeitadas = 0;
 
             if (filteredData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="empty-state"><i class='bx bx-search'></i> Nenhuma nota encontrada neste mês.</td></tr>`;
+                tbodyNfce.innerHTML = `<tr><td colspan="5" class="empty-state"><i class='bx bx-search'></i> Nenhuma NFC-e encontrada neste mês.</td></tr>`;
+                tbodyNfe.innerHTML = `<tr><td colspan="5" class="empty-state"><i class='bx bx-search'></i> Nenhuma NF-e encontrada neste mês.</td></tr>`;
                 btnDownload.disabled = true;
                 btnDownload.style.opacity = 0.5;
             } else {
                 btnDownload.disabled = false;
                 btnDownload.style.opacity = 1;
 
+                let countNfce = 0;
+                let countNfe = 0;
+
                 filteredData.forEach(item => {
                     const tr = document.createElement('tr');
 
                     let statusClass = 'status-badge';
                     let statusText = item.status || '';
-                    if (statusText.toLowerCase().includes('autorizada')) {
+                    if (statusText.toLowerCase().includes('autorizada') || statusText.toLowerCase() === 'aprovada' || statusText.toLowerCase() === 'emitida') {
                         statusClass += ' status-authorized';
-                        totalPeriodo += item.valor;
+                        totalGeneral += item.valor;
+                        if (item.modelo === 'NF-E' || item.modelo === '55') totalNfe += item.valor;
+                        else totalNfce += item.valor;
                         qtdeEmitidas++;
                     }
                     else if (statusText.toLowerCase().includes('cancelada')) {
                         statusClass += ' status-cancelled';
                         qtdeRejeitadas++;
                     }
-                    else {
+                    else if (statusText.toLowerCase().includes('erro') || statusText.toLowerCase().includes('rejeit')) {
                         statusClass += ' status-rejected';
+                        qtdeRejeitadas++;
+                    }
+                    else {
+                        statusClass += ' status-rejected'; // Garante que desconhecidos também tenham cor
                         qtdeRejeitadas++;
                     }
 
@@ -1073,12 +1207,24 @@
                         <td>${item.numero}</td>
                         <td class="currency-cell" style="text-align: right;">${formatCurrency(item.valor)}</td>
                     `;
-                    tbody.appendChild(tr);
+
+                    if (item.modelo === 'NF-E' || item.modelo === '55') {
+                        tbodyNfe.appendChild(tr);
+                        countNfe++;
+                    } else {
+                        tbodyNfce.appendChild(tr);
+                        countNfce++;
+                    }
                 });
+
+                if (countNfce === 0) tbodyNfce.innerHTML = `<tr><td colspan="5" class="empty-state">Nenhuma NFC-e neste mês.</td></tr>`;
+                if (countNfe === 0) tbodyNfe.innerHTML = `<tr><td colspan="5" class="empty-state">Nenhuma NF-e neste mês.</td></tr>`;
             }
 
-            const dasProj = totalPeriodo * 0.04;
-            totalEl.innerText = formatCurrency(totalPeriodo);
+            const dasProj = totalGeneral * 0.04;
+            totalEl.innerText = formatCurrency(totalGeneral);
+            if (document.getElementById('total-emitido-nfce')) document.getElementById('total-emitido-nfce').innerText = formatCurrency(totalNfce);
+            if (document.getElementById('total-emitido-nfe')) document.getElementById('total-emitido-nfe').innerText = formatCurrency(totalNfe);
             dasEl.innerText = formatCurrency(dasProj);
             if (document.getElementById('qtde-emitidas')) document.getElementById('qtde-emitidas').innerText = qtdeEmitidas;
             if (document.getElementById('qtde-rejeitadas')) document.getElementById('qtde-rejeitadas').innerText = qtdeRejeitadas;
@@ -1097,13 +1243,18 @@
             if (filteredData.length === 0) return;
 
             const zip = new JSZip();
-            const folderName = `NFCe_${getMonthLabel(new Date(selYear, selMonth, 1)).replace(/ /g, '_')}`;
-            const folder = zip.folder(folderName);
+            const baseFolderName = `Notas_${getMonthLabel(new Date(selYear, selMonth, 1)).replace(/ /g, '_')}`;
+            const folderNfce = zip.folder(`${baseFolderName}/NFC-e`);
+            const folderNfe = zip.folder(`${baseFolderName}/NF-e`);
 
             let count = 0;
             filteredData.forEach(item => {
                 if (item.xml && item.xml.length > 50) {
-                    folder.file(`NFe_${item.chave}.xml`, item.xml);
+                    if (item.modelo === 'NF-E' || item.modelo === '55') {
+                        folderNfe.file(`NFe_${item.chave}.xml`, item.xml);
+                    } else {
+                        folderNfce.file(`NFCe_${item.chave}.xml`, item.xml);
+                    }
                     count++;
                 }
             });

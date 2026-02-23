@@ -4396,6 +4396,24 @@ document.addEventListener('DOMContentLoaded', () => {
             // Lista de tarefas secundárias (podem falhar offline sem travar a venda principal)
             const tarefasSecundarias = [
                 safeExec(fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "salvarNotaFiscal", data: dadosFiscal }) }), "Salvar Nota Fiscal"),
+                safeExec(fetch(CENTRAL_API_URL, {
+                    method: 'POST', mode: 'no-cors', body: JSON.stringify({
+                        action: "salvar_nota_fiscal",
+                        loja: "DT#25",
+                        modelo: "NFC-e",
+                        numeroNota: dadosFiscal.nNF || "---",
+                        idVenda: saleId,
+                        status: dadosFiscal.status || "Pendente",
+                        operador: document.getElementById('summary-seller-name') ? document.getElementById('summary-seller-name').textContent : "Caixa",
+                        cargo: "Caixa",
+                        pagamento: metodoPagamento,
+                        total: totalFiscalLiquido,
+                        mensagem: dadosFiscal.mensagem || "",
+                        xml: dadosFiscal.xml || "",
+                        chave: dadosFiscal.chave || "",
+                        protocolo: dadosFiscal.nProt || ""
+                    })
+                }), "Salvar Nota Nova API"),
                 safeExec(salvarVendaNoHistorico(dadosVendaInterna), "Histórico Firebase"),
                 safeExec(abaterEstoqueFirebase(items), "Estoque Firebase"),
                 safeExec(abaterEstoquePlanilha(items), "Estoque Planilha")
