@@ -29,6 +29,27 @@
     <link rel="stylesheet" href="style.css?v=3"> <!-- Base Styles (ReadOnly) -->
     <link rel="stylesheet" href="emissao.css"> <!-- Specific Styles -->
 
+    <style>
+        /* Responsive Table for Preview */
+        @media (max-width: 1000px) {
+
+            .danfe-table th:nth-child(3),
+            .danfe-table td:nth-child(3) {
+                display: none;
+            }
+
+            /* Hide UN */
+            .danfe-table th:nth-child(4),
+            .danfe-table td:nth-child(4) {
+                display: none;
+            }
+
+            /* Hide VL UN */
+            .danfe-table {
+                font-size: 8px;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -36,7 +57,6 @@
     <!-- Header -->
     <header class="nfe-header">
         <div class="nfe-title">
-            <i class='bx bx-file'></i>
             Emissão de Nota Fiscal (NF-e)
         </div>
         <button id="btn-nova-emissao" class="btn-nfe-primary">
@@ -50,13 +70,10 @@
     <div class="nfe-list-container">
         <!-- Mock of issued notes for visual structure -->
         <div class="nfe-card-list" id="nfe-history-list">
-            <!-- Items injected by JS -->
-            <div class="nfe-card">
-                <div class="nfe-info">
-                    <strong>Carregando histórico...</strong>
-                    <span>Aguarde um momento</span>
-                </div>
-            </div>
+            <!-- Skeleton items while loading -->
+            <div class="skeleton-card skeleton"></div>
+            <div class="skeleton-card skeleton"></div>
+            <div class="skeleton-card skeleton"></div>
         </div>
     </div>
 
@@ -64,8 +81,9 @@
     <div id="modal-emissao" class="nfe-full-modal">
         <div class="nfe-modal-header">
             <div class="nfe-title">Nova Nota Fiscal</div>
-            <button class="close-modal-btn" id="btn-close-emissao"
-                style="background:none; border:none; font-size:1.5rem; cursor:pointer;"><i class='bx bx-x'></i></button>
+            <button class="close-modal-btn" id="btn-close-emissao" title="Sair (Esc)">
+                <i class='bx bx-x'></i>
+            </button>
         </div>
 
         <!-- Timeline inside modal -->
@@ -84,6 +102,11 @@
                 <div class="step-circle">3</div>
                 <span class="step-label">Pagamento</span>
             </div>
+            <div class="timeline-line"></div>
+            <div class="timeline-step" data-step="4">
+                <div class="step-circle">4</div>
+                <span class="step-label">Frete</span>
+            </div>
         </div>
 
         <div class="nfe-modal-body">
@@ -99,12 +122,10 @@
                         <div class="input-group-loading">
                             <input type="text" id="nfe-dest-doc" class="form-input-nfe"
                                 placeholder="000.000.000-00 ou 00.000.000/0000-00">
-                            <div id="cnpj-loading" class="spinner-border text-primary" role="status"
-                                style="display:none;">
-
-                            </div>
+                            <i class='bx bx-loader-alt bx-spin' id="cnpj-loading"
+                                style="display:none; position: absolute; right: 15px; font-size: 1.25rem; color: #666;"></i>
                         </div>
-                        <small id="cnpj-feedback" class="form-text text-muted" style="display:none;"></small>
+                        <small id="cnpj-feedback" style="display:none;"></small>
                     </div>
 
                     <div class="form-group-nfe">
@@ -125,10 +146,39 @@
                         </div>
                     </div>
 
-                    <div class="form-group-nfe">
-                        <label>Endereço Completo</label>
-                        <input type="text" id="nfe-dest-end" class="form-input-nfe"
-                            placeholder="Rua, Número, Bairro, Cidade - UF">
+                    <div class="form-row-nfe" style="display:flex; gap:1rem;">
+                        <div class="form-group-nfe" style="flex:3;">
+                            <label>Logradouro (Rua/Av)</label>
+                            <input type="text" id="nfe-dest-rua" class="form-input-nfe"
+                                placeholder="Ex: Rua Jarbas Passarinho">
+                        </div>
+                        <div class="form-group-nfe" style="flex:1;">
+                            <label>Número</label>
+                            <input type="text" id="nfe-dest-num" class="form-input-nfe" placeholder="SN">
+                        </div>
+                    </div>
+
+                    <div class="form-row-nfe" style="display:flex; gap:1rem;">
+                        <div class="form-group-nfe" style="flex:1;">
+                            <label>Bairro</label>
+                            <input type="text" id="nfe-dest-bairro" class="form-input-nfe" placeholder="Centro">
+                        </div>
+                        <div class="form-group-nfe" style="flex:1;">
+                            <label>CEP</label>
+                            <input type="text" id="nfe-dest-cep" class="form-input-nfe" placeholder="00000-000">
+                        </div>
+                    </div>
+
+                    <div class="form-row-nfe" style="display:flex; gap:1rem;">
+                        <div class="form-group-nfe" style="flex:2;">
+                            <label>Município</label>
+                            <input type="text" id="nfe-dest-municipio" class="form-input-nfe"
+                                placeholder="Ipixuna do Pará">
+                        </div>
+                        <div class="form-group-nfe" style="flex:1;">
+                            <label>UF</label>
+                            <input type="text" id="nfe-dest-uf" class="form-input-nfe" maxlength="2" placeholder="PA">
+                        </div>
                     </div>
                 </div>
 
@@ -187,6 +237,37 @@
                     </div>
                 </div>
 
+                <!-- Step 4: Frete -->
+                <div id="step-4" class="step-container">
+                    <h3>4. Dados de Frete</h3>
+                    <p class="text-light mb-16">Informe os detalhes do transporte.</p>
+
+                    <div class="form-group-nfe">
+                        <label>Modalidade do Frete</label>
+                        <select id="nfe-frete-mod" class="form-input-nfe">
+                            <option value="9">9 - Sem Ocorrência de Transporte</option>
+                            <option value="0">0 - Contratação do Frete por conta do Remetente (CIF)</option>
+                            <option value="1">1 - Contratação do Frete por conta do Destinatário (FOB)</option>
+                            <option value="2">2 - Contratação do Frete por conta de Terceiros</option>
+                            <option value="3">3 - Próprio por conta do Remetente</option>
+                            <option value="4">4 - Próprio por conta do Destinatário</option>
+                        </select>
+                    </div>
+
+                    <div id="frete-detalhes" style="display: none;">
+                        <div class="form-group-nfe">
+                            <label>Valor do Frete (R$)</label>
+                            <input type="number" id="nfe-frete-valor" class="form-input-nfe" placeholder="0.00"
+                                step="0.01">
+                        </div>
+                        <div class="form-group-nfe">
+                            <label>Transportadora (Nome/Razão)</label>
+                            <input type="text" id="nfe-frete-transp" class="form-input-nfe"
+                                placeholder="Nome da Transportadora">
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- Right: Live Preview -->
@@ -202,7 +283,7 @@
                             </div>
                             <div class="danfe-meta-box text-center">
                                 1 - SAÍDA<br>
-                                Nº <span id="prev-nfe-num">000.000</span><br>
+                                Nº <span id="prev-nfe-num">000.067</span><br>
                                 SÉRIE: 1
                             </div>
                         </div>
@@ -271,8 +352,13 @@
                                 <span class="val-amount" id="prev-vprod">0,00</span>
                             </div>
                             <div class="danfe-total-box">
+                                <span class="val-label">VL FRETE</span>
+                                <span class="val-amount" id="prev-vfrete">0,00</span>
+                            </div>
+                            <div class="danfe-total-box" style="grid-column: span 2; background: #eee;">
                                 <span class="val-label">VL TOTAL NOTA</span>
-                                <span class="val-amount" id="prev-vtotal">0,00</span>
+                                <span class="val-amount" id="prev-vtotal"
+                                    style="font-weight: 800; font-size: 11px;">0,00</span>
                             </div>
                         </div>
 
@@ -287,9 +373,8 @@
         </div>
 
         <div class="nfe-modal-footer">
-            <button id="btn-prev-step" class="btn-nfe-primary"
-                style="background: white; color: black; border: 1px solid #ccc;">Voltar</button>
-            <button id="btn-next-step" class="btn-nfe-primary">Próximo</button>
+            <button id="btn-prev-step" class="btn-nfe btn-nfe-secondary">Voltar</button>
+            <button id="btn-next-step" class="btn-nfe btn-nfe-primary">Próximo</button>
         </div>
     </div>
 
@@ -309,7 +394,6 @@
     </div>
 
     <!-- Scripts -->
-    <script src="API.js"></script>
     <!-- script.js REMOVED -->
     <script src="emissao.js"></script> <!-- New Logic -->
 

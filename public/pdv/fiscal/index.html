@@ -14,264 +14,366 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
     <style>
+        :root {
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --btn-dark: #0f172a;
+            --btn-dark-hover: #1e293b;
+            --btn-outline: #ffffff;
+            --btn-outline-border: #cbd5e1;
+            --btn-outline-hover: #f1f5f9;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --warning-red: #ef4444;
+            --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
         body {
-            background-color: #f3f4f6;
-            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            font-family: var(--font-family);
             margin: 0;
             padding: 0;
-            color: #1f2937;
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
         }
 
+        /* Fiscal Container */
         .fiscal-container {
-            max-width: 1200px;
+            max-width: 1100px;
             margin: 40px auto;
-            background: #fff;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-            transition: 0.3s;
+            background: var(--bg-card);
+            padding: 40px 48px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+            transition: filter 0.3s ease;
         }
 
-        /* Header Style */
+        /* Header */
         .header-fiscal {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            padding-bottom: 25px;
-            border-bottom: 2px solid #e5e7eb;
-            margin-bottom: 30px;
+            align-items: center;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 32px;
         }
 
         .company-info h1 {
             font-size: 1.5rem;
-            color: #111;
+            color: var(--text-main);
             margin: 0;
-            font-weight: 800;
-            letter-spacing: -0.5px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
         }
 
         .company-info h2 {
-            font-size: 1.1rem;
-            color: #4b5563;
-            margin: 4px 0 0;
-            font-weight: 500;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin: 6px 0 0;
+            font-weight: 400;
         }
 
         .fiscal-info {
             text-align: right;
+            background: #f8fafc;
+            padding: 14px 20px;
+            border-radius: 10px;
+            border: 1px solid #f1f5f9;
         }
 
         .fiscal-info h3 {
-            font-size: 1.25rem;
-            color: #111;
+            font-size: 1.1rem;
+            color: var(--text-main);
             margin: 0;
-            font-weight: 700;
-            font-family: monospace;
+            font-weight: 600;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            letter-spacing: -0.5px;
         }
 
         .fiscal-info p {
-            font-size: 0.9rem;
-            color: #6b7280;
-            margin: 4px 0 0;
-            font-weight: 500;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin: 6px 0 0;
         }
 
         /* Controls */
         .controls-bar {
             display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            gap: 16px;
+            flex-wrap: wrap;
         }
 
         .filter-group {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            background: #f8fafc;
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .filter-group label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-main);
         }
 
         .month-select {
-            padding: 10px 15px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 1rem;
-            width: 220px;
-            background-color: #fff;
-            color: #374151;
+            padding: 8px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            min-width: 180px;
+            background-color: var(--bg-card);
+            color: var(--text-main);
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            font-weight: 500;
         }
 
         .month-select:focus {
-            border-color: #2563eb;
+            border-color: #94a3b8;
+            box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.15);
         }
 
-        .btn-download {
-            background: #2563eb;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
+        .actions-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-action {
             display: flex;
             align-items: center;
             gap: 8px;
-            font-weight: 600;
-            transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+            padding: 10px 18px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            letter-spacing: -0.01em;
         }
 
-        .btn-download:hover {
-            background: #1d4ed8;
+        .btn-dark {
+            background-color: var(--btn-dark);
+            color: white;
+            box-shadow: 0 2px 4px rgba(15, 23, 42, 0.1);
+        }
+
+        .btn-dark:hover {
+            background-color: var(--btn-dark-hover);
             transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(15, 23, 42, 0.15);
         }
 
-        .btn-download:active {
+        .btn-dark:active {
             transform: translateY(0);
         }
 
-        /* Botão para Imprimir (Estilo secundário) */
-        .btn-print {
-            background: #4b5563;
-            margin-right: 10px;
+        .btn-outline {
+            background-color: var(--btn-outline);
+            color: var(--text-main);
+            border-color: var(--btn-outline-border);
+            box-shadow: var(--shadow-sm);
         }
 
-        .btn-print:hover {
-            background: #374151;
+        .btn-outline:hover {
+            background-color: var(--btn-outline-hover);
+            border-color: #94a3b8;
         }
 
-        /* Table */
-        .table-responsive {
-            overflow-x: auto;
+        .btn-icon-only {
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 8px;
-            border: 1px solid #e5e7eb;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-icon-only:hover {
+            background: var(--btn-outline-hover);
+            color: #0f172a;
+            border-color: #94a3b8;
+        }
+
+        /* Table Structure */
+        .table-responsive {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow-x: auto;
+            background: var(--bg-card);
+            box-shadow: var(--shadow-sm);
         }
 
         .fiscal-table {
             width: 100%;
             border-collapse: collapse;
+            white-space: nowrap;
         }
 
         .fiscal-table th,
         .fiscal-table td {
-            padding: 14px 16px;
+            padding: 16px 24px;
             text-align: left;
-            border-bottom: 1px solid #f3f4f6;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .fiscal-table th {
-            background: #f9fafb;
-            font-weight: 600;
-            color: #374151;
-            font-size: 0.85rem;
+            background-color: #f8fafc;
+            font-weight: 500;
+            font-size: 0.8rem;
+            color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
 
-        .fiscal-table td {
-            color: #4b5563;
-            font-size: 0.95rem;
+        .fiscal-table tbody tr {
+            transition: background-color 0.15s ease;
         }
 
-        .fiscal-table tr:last-child td {
+        .fiscal-table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .fiscal-table tbody tr:last-child td {
             border-bottom: none;
         }
 
-        .fiscal-table tr:hover {
-            background: #f8fafc;
-        }
-
         .key-cell {
-            font-family: monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.85rem;
-            color: #6b7280;
+            color: var(--text-muted);
+            letter-spacing: -0.02em;
         }
 
         .currency-cell {
-            font-weight: 600;
-            color: #111;
+            font-weight: 500;
+            color: var(--text-main);
+            font-feature-settings: "tnum";
+            font-variant-numeric: tabular-nums;
         }
 
+        /* Subtle Status Badges */
         .status-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
             font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
+            font-weight: 500;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-main);
         }
 
-        .status-authorized {
-            background-color: #d1fae5;
-            color: #065f46;
+        .status-badge::before {
+            content: '';
+            display: block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
         }
 
-        .status-rejected {
-            background-color: #fee2e2;
-            color: #991b1b;
+        .status-authorized::before {
+            background-color: #10b981;
+        }
+
+        .status-rejected::before {
+            background-color: #f43f5e;
         }
 
         .status-cancelled {
-            background-color: #f3f4f6;
-            color: #374151;
+            color: var(--text-muted);
             text-decoration: line-through;
         }
 
-        /* Footer Summary */
+        .status-cancelled::before {
+            background-color: #94a3b8;
+        }
+
+        /* Summary */
         .summary-box {
             background: #f8fafc;
-            padding: 25px;
+            padding: 24px 32px;
             border-radius: 12px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 16px;
             align-items: flex-end;
-            margin-top: 30px;
-            border: 1px solid #e5e7eb;
+            margin-top: 32px;
+            border: 1px solid var(--border-color);
         }
 
         .summary-row {
-            font-size: 1.1rem;
-            color: #374151;
             display: flex;
-            gap: 30px;
             justify-content: space-between;
-            min-width: 300px;
+            width: 340px;
+            font-size: 0.95rem;
+            color: var(--text-muted);
         }
 
-        .summary-row span:first-child {
-            color: #6b7280;
+        .summary-row span:last-child {
+            color: var(--text-main);
+            font-weight: 500;
+            font-feature-settings: "tnum";
+            font-variant-numeric: tabular-nums;
         }
 
         .summary-row.total {
-            font-weight: 700;
-            font-size: 1.4rem;
-            color: #111;
-            padding-top: 10px;
-            border-top: 1px dashed #d1d5db;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 4px;
         }
 
-        .summary-row.projection {
-            color: #059669;
+        .summary-row.total span:first-child {
             font-weight: 600;
+            color: var(--text-main);
+            font-size: 1.1rem;
         }
 
-        /* Auth Modal Override for this page */
+        .summary-row.total span:last-child {
+            font-weight: 600;
+            font-size: 1.4rem;
+            color: var(--text-main);
+            letter-spacing: -0.02em;
+        }
+
+        .summary-row.projection span:last-child {
+            color: var(--text-muted);
+        }
+
+        /* Modal Auth */
         #main-content.blurred {
-            filter: blur(8px);
+            filter: blur(8px) grayscale(20%);
             pointer-events: none;
             user-select: none;
         }
 
-        /* Custom Modal Styles */
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
             display: none;
             justify-content: center;
             align-items: center;
@@ -280,22 +382,34 @@
 
         .modal-overlay.active {
             display: flex;
+            animation: fadeIn 0.3s ease;
         }
 
         .modal-content {
-            background: white;
-            padding: 25px;
+            background: var(--bg-card);
+            padding: 40px;
             border-radius: 16px;
-            width: 90%;
+            width: 100%;
             max-width: 400px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         @keyframes modalPop {
             from {
                 opacity: 0;
-                transform: scale(0.95) translateY(10px);
+                transform: scale(0.96) translateY(20px);
             }
 
             to {
@@ -304,171 +418,202 @@
             }
         }
 
-        .auth-header {
-            text-align: center;
-            margin-bottom: 15px;
-        }
-
         .auth-icon-wrapper {
-            width: 60px;
-            height: 60px;
-            background: #fee2e2;
-            color: #ef4444;
-            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            background: #f8fafc;
+            color: #0f172a;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.8rem;
-            margin: 0 auto;
+            font-size: 1.5rem;
+            margin: 0 auto 24px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
         }
 
         .auth-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #111;
-            margin: 10px 0 5px;
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin: 0 0 8px;
             text-align: center;
+            letter-spacing: -0.02em;
         }
 
         .auth-subtitle {
-            color: #6b7280;
+            color: var(--text-muted);
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 32px;
             font-size: 0.95rem;
         }
 
         .auth-input {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 1.1rem;
+            box-sizing: border-box;
+            padding: 14px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1.05rem;
             outline: none;
-            transition: 0.2s;
+            transition: all 0.2s ease;
             text-align: center;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
+            background: #f8fafc;
+            font-weight: 500;
         }
 
         .auth-input:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            border-color: #0f172a;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
         }
 
         .auth-error {
             color: #ef4444;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             text-align: center;
-            margin-top: 10px;
+            margin-top: 12px;
             display: none;
+            font-weight: 500;
         }
 
         .auth-actions {
             display: flex;
-            gap: 10px;
-            margin-top: 25px;
+            gap: 12px;
+            margin-top: 32px;
+        }
+
+        .btn-auth-confirm,
+        .btn-auth-cancel {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
 
         .btn-auth-confirm {
-            flex: 1;
-            background: #111;
+            background: var(--btn-dark);
             color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
+            border: 1px solid var(--btn-dark);
+            box-shadow: 0 2px 4px rgba(15, 23, 42, 0.1);
         }
 
         .btn-auth-confirm:hover {
-            background: #000;
+            background: var(--btn-dark-hover);
+            transform: translateY(-1px);
         }
 
         .btn-auth-cancel {
-            flex: 1;
-            background: #fff;
-            color: #374151;
-            border: 1px solid #d1d5db;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
+            background: white;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
         }
 
         .btn-auth-cancel:hover {
-            background: #f3f4f6;
+            background: #f8fafc;
+            border-color: #cbd5e1;
         }
 
         .empty-state {
             text-align: center;
-            padding: 40px;
-            color: #9ca3af;
+            padding: 64px 24px;
+            color: var(--text-muted);
         }
 
         .empty-state i {
             font-size: 3rem;
-            margin-bottom: 10px;
+            margin-bottom: 16px;
             display: block;
+            color: #cbd5e1;
         }
 
-        /* --- PRINT STYLES (A4 LANDSCAPE) --- */
+        .shake {
+            animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
+        }
+
+        @keyframes shake {
+
+            10%,
+            90% {
+                transform: translate3d(-1px, 0, 0);
+            }
+
+            20%,
+            80% {
+                transform: translate3d(2px, 0, 0);
+            }
+
+            30%,
+            50%,
+            70% {
+                transform: translate3d(-3px, 0, 0);
+            }
+
+            40%,
+            60% {
+                transform: translate3d(3px, 0, 0);
+            }
+        }
+
+        /* --- PRINT STYLES (A4 LANDSCAPE) CORRIGIDOS --- */
         @media print {
             @page {
                 size: A4 landscape;
-                margin: 0.5cm;
+                margin: 1cm;
             }
 
             body {
                 background-color: white !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
-                height: 100%;
-                overflow: visible !important;
+                margin: 0;
+                padding: 0;
             }
 
-            /* Esconde tudo inicialmente para garantir controle total */
-            body * {
-                visibility: hidden;
+            /* Esconde todos os elementos do nível do body exceto o main-content */
+            body>*:not(#main-content) {
+                display: none !important;
             }
 
-            /* Mostra apenas o conteúdo principal e seus filhos */
-            #main-content,
-            #main-content * {
-                visibility: visible;
-            }
-
-            /* Posicionamento absoluto para garantir que apareça no topo da página */
-            #main-content {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
+            body>#main-content {
+                display: block !important;
+                visibility: visible !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                border: none !important;
                 box-shadow: none !important;
+                max-width: none !important;
+                width: 100% !important;
                 filter: none !important;
-                overflow: visible !important;
-                transform: none !important;
+                position: relative !important;
+                left: 0 !important;
+                top: 0 !important;
             }
 
             /* Esconde controles explicitamente */
             .controls-bar,
-            .btn-download,
             #loading-spinner,
-            #modal-admin-auth,
-            #btn-refresh,
-            #btn-print {
+            #modal-admin-auth {
                 display: none !important;
             }
 
             .header-fiscal {
                 border-bottom: 2px solid #000;
-                padding-bottom: 10px;
-                margin-bottom: 20px;
+                padding-bottom: 15px;
+                margin-bottom: 25px;
             }
 
-            /* Forçar cores pretas para impressão */
+            .header-fiscal .fiscal-info {
+                background: transparent !important;
+                border: none !important;
+                padding: 0 !important;
+            }
+
             h1,
             h2,
             h3,
@@ -481,26 +626,60 @@
             }
 
             .fiscal-table th {
-                background-color: #eee !important;
-                border: 1px solid #000 !important;
+                background-color: transparent !important;
+                border-bottom: 2px solid #000 !important;
+                border-top: 1px solid #000 !important;
             }
 
             .fiscal-table td {
-                border: 1px solid #ddd !important;
+                border-bottom: 1px solid #ddd !important;
+                padding: 8px 12px !important;
             }
 
-            /* Remove scroll da tabela */
             .table-responsive {
+                border: none !important;
+                box-shadow: none !important;
                 overflow: visible !important;
-                display: block !important;
             }
 
-            /* Label do mês para impressão */
             #print-month-label {
                 display: block !important;
-                font-size: 1.2rem;
-                margin-top: 10px;
+                font-size: 1.1rem;
+                margin-top: 8px;
                 visibility: visible;
+                font-weight: 600;
+            }
+
+            .status-badge {
+                border: 1px solid #666 !important;
+                box-shadow: none !important;
+                background: transparent !important;
+            }
+
+            .status-authorized::before {
+                background-color: #000 !important;
+            }
+
+            .status-rejected::before {
+                background-color: #666 !important;
+            }
+
+            .status-cancelled::before {
+                background-color: #ccc !important;
+                text-decoration: none !important;
+            }
+
+            .summary-box {
+                background: transparent !important;
+                border: 1px solid #000 !important;
+                padding: 15px 20px !important;
+                margin-top: 25px !important;
+                page-break-inside: avoid;
+            }
+
+            .summary-row.total span,
+            .summary-row.projection span:last-child {
+                color: #000 !important;
             }
         }
     </style>
@@ -546,26 +725,26 @@
             </div>
         </div>
 
+
         <div class="controls-bar">
             <div class="filter-group">
-                <label for="month-filter"><strong>Mês de Referência:</strong></label>
+                <label for="month-filter">Mês</label>
                 <select id="month-filter" class="month-select">
                     <!-- Opções geradas via JS -->
                 </select>
-                <button class="btn-download" id="btn-refresh" title="Atualizar dados"
-                    style="background: #10b981; margin-left:10px;">
+                <button class="btn-icon-only" id="btn-refresh" title="Atualizar dados">
                     <i class='bx bx-refresh'></i>
                 </button>
             </div>
 
-            <div style="display: flex;">
+            <div class="actions-group">
                 <!-- Botão de Imprimir Adicionado -->
-                <button class="btn-download btn-print" id="btn-print" title="Imprimir Relatório (A4 Deitado)">
-                    <i class='bx bxs-printer'></i> Imprimir
+                <button class="btn-action btn-outline" id="btn-print" title="Imprimir Relatório (A4 Deitado)">
+                    <i class='bx bx-printer'></i> Imprimir
                 </button>
 
-                <button class="btn-download" id="btn-download-zip" title="Baixar todas as notas do mês em XML">
-                    <i class='bx bxs-file-archive'></i> Baixar ZIP (XMLs)
+                <button class="btn-action btn-dark" id="btn-download-zip" title="Baixar todas as notas do mês em XML">
+                    <i class='bx bx-download'></i> Baixar ZIP
                 </button>
             </div>
         </div>
@@ -593,6 +772,14 @@
         </div>
 
         <div class="summary-box">
+            <div class="summary-row" id="row-qtde-emitidas">
+                <span>Notas Autorizadas:</span>
+                <span id="qtde-emitidas">0</span>
+            </div>
+            <div class="summary-row" id="row-qtde-rejeitadas">
+                <span>Notas Rejeitadas/Canceladas:</span>
+                <span id="qtde-rejeitadas">0</span>
+            </div>
             <div class="summary-row total">
                 <span>Total Emitido:</span>
                 <span id="total-emitido">R$ 0,00</span>
@@ -660,12 +847,12 @@
             });
         }
 
-        // --- PRINT LOGIC ---
         if (btnPrint) {
             btnPrint.addEventListener('click', () => {
                 // Atualiza label de mês para impressão
-                if (monthFilter && monthFilter.options[monthFilter.selectedIndex]) {
-                    printMonthLabel.innerText = "Competência: " + monthFilter.options[monthFilter.selectedIndex].text;
+                const currentFilter = document.getElementById('month-filter');
+                if (currentFilter && currentFilter.options[currentFilter.selectedIndex]) {
+                    printMonthLabel.innerText = "Competência: " + currentFilter.options[currentFilter.selectedIndex].text;
                     printMonthLabel.style.display = 'block';
                 }
 
@@ -780,10 +967,11 @@
         }
 
         function populateFilter() {
+            const currentFilter = document.getElementById('month-filter');
             if (ALL_FISCAL_NOTES.length === 0) {
                 const now = new Date();
                 const currentKey = `${now.getFullYear()}-${now.getMonth()}`;
-                monthFilter.innerHTML = `<option value="${currentKey}">${getMonthLabel(now)}</option>`;
+                currentFilter.innerHTML = `<option value="${currentKey}">${getMonthLabel(now)}</option>`;
                 return;
             }
 
@@ -801,26 +989,26 @@
                 return mB - mA;
             });
 
-            const currentSelection = monthFilter.value;
+            const currentSelection = currentFilter.value;
 
-            monthFilter.innerHTML = '';
+            currentFilter.innerHTML = '';
             monthsArr.forEach(key => {
                 const [y, m] = key.split('-');
                 const option = document.createElement('option');
                 option.value = key;
                 const dateObj = new Date(y, m, 1);
                 option.textContent = getMonthLabel(dateObj);
-                monthFilter.appendChild(option);
+                currentFilter.appendChild(option);
             });
 
             if (currentSelection && monthsArr.includes(currentSelection)) {
-                monthFilter.value = currentSelection;
+                currentFilter.value = currentSelection;
             } else if (monthsArr.length > 0) {
-                monthFilter.value = monthsArr[0];
+                currentFilter.value = monthsArr[0];
             }
 
-            const newFilter = monthFilter.cloneNode(true);
-            monthFilter.parentNode.replaceChild(newFilter, monthFilter);
+            const newFilter = currentFilter.cloneNode(true);
+            currentFilter.parentNode.replaceChild(newFilter, currentFilter);
             newFilter.addEventListener('change', () => renderTable());
 
             renderTable();
@@ -848,6 +1036,8 @@
             const tbody = document.getElementById('fiscal-table-body');
             tbody.innerHTML = '';
             let totalPeriodo = 0;
+            let qtdeEmitidas = 0;
+            let qtdeRejeitadas = 0;
 
             if (filteredData.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="5" class="empty-state"><i class='bx bx-search'></i> Nenhuma nota encontrada neste mês.</td></tr>`;
@@ -858,17 +1048,23 @@
                 btnDownload.style.opacity = 1;
 
                 filteredData.forEach(item => {
-                    if (item.status && item.status.toLowerCase().includes('autorizada')) {
-                        totalPeriodo += item.valor;
-                    }
-
                     const tr = document.createElement('tr');
 
                     let statusClass = 'status-badge';
-                    let statusText = item.status;
-                    if (statusText.toLowerCase().includes('autorizada')) statusClass += ' status-authorized';
-                    else if (statusText.toLowerCase().includes('cancelada')) statusClass += ' status-cancelled';
-                    else statusClass += ' status-rejected';
+                    let statusText = item.status || '';
+                    if (statusText.toLowerCase().includes('autorizada')) {
+                        statusClass += ' status-authorized';
+                        totalPeriodo += item.valor;
+                        qtdeEmitidas++;
+                    }
+                    else if (statusText.toLowerCase().includes('cancelada')) {
+                        statusClass += ' status-cancelled';
+                        qtdeRejeitadas++;
+                    }
+                    else {
+                        statusClass += ' status-rejected';
+                        qtdeRejeitadas++;
+                    }
 
                     tr.innerHTML = `
                         <td class="key-cell" title="${item.chave}">${item.chave}</td>
@@ -884,6 +1080,8 @@
             const dasProj = totalPeriodo * 0.04;
             totalEl.innerText = formatCurrency(totalPeriodo);
             dasEl.innerText = formatCurrency(dasProj);
+            if (document.getElementById('qtde-emitidas')) document.getElementById('qtde-emitidas').innerText = qtdeEmitidas;
+            if (document.getElementById('qtde-rejeitadas')) document.getElementById('qtde-rejeitadas').innerText = qtdeRejeitadas;
         }
 
         btnDownload.addEventListener('click', () => {

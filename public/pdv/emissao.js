@@ -3,19 +3,31 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- State Management ---
     let currentStep = 1;
-    const totalSteps = 3;
+    const totalSteps = 4;
+    const FISCAL_API_URL = "https://southamerica-east1-super-app25.cloudfunctions.net";
+
     let nfeData = {
         dest: {
             cpf: '',
             nome: '',
             telefone: '',
             email: '',
-            endereco: ''
+            rua: '',
+            num: '',
+            bairro: '',
+            cep: '',
+            municipio: '',
+            uf: 'PA'
         },
         items: [],
         pag: {
             tipo: '01', // Dinheiro default
             valor: 0
+        },
+        frete: {
+            mod: '9',
+            valor: 0,
+            transp: ''
         }
     };
 
@@ -40,8 +52,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputDestNome = document.getElementById('nfe-dest-nome');
     const inputDestTel = document.getElementById('nfe-dest-tel');
     const inputDestEmail = document.getElementById('nfe-dest-email');
-    const inputDestEnd = document.getElementById('nfe-dest-end');
+    const inputDestRua = document.getElementById('nfe-dest-rua');
+    const inputDestNum = document.getElementById('nfe-dest-num');
+    const inputDestBairro = document.getElementById('nfe-dest-bairro');
+    const inputDestCep = document.getElementById('nfe-dest-cep');
+    const inputDestMunicipio = document.getElementById('nfe-dest-municipio');
+    const inputDestUf = document.getElementById('nfe-dest-uf');
     const inputPagTipo = document.getElementById('nfe-pag-tipo');
+
+    // Shipping Elements
+    const inputFreteMod = document.getElementById('nfe-frete-mod');
+    const inputFreteValor = document.getElementById('nfe-frete-valor');
+    const inputFreteTransp = document.getElementById('nfe-frete-transp');
+    const divFreteDetalhes = document.getElementById('frete-detalhes');
 
     // Search Elements
     const barcodeInput = document.getElementById('barcode-input');
@@ -58,6 +81,31 @@ document.addEventListener('DOMContentLoaded', () => {
         // Force API load, ignoring offlineDB as requested
         console.log("Iniciando carregamento de produtos via API...");
         await fetchProductsFromAPI();
+        renderHistory(); // Initialize history view
+    }
+
+    function renderHistory() {
+        const listContainer = document.getElementById('nfe-history-list');
+        if (!listContainer) return;
+
+        // Simulate a small delay for skeletons
+        setTimeout(() => {
+            listContainer.innerHTML = ''; // Clear skeletons
+
+            // Re-render draft if it exists
+            renderDraftIndicator();
+
+            // Check if there are any real history items (mock check for now)
+            const draftExists = localStorage.getItem('nfe_draft');
+            if (!draftExists && listContainer.children.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="empty-state-list" style="text-align:center; padding: 4rem 1rem;">
+                        <i class='bx bx-history' style="font-size: 3rem; color: #ddd; margin-bottom: 1rem;"></i>
+                        <p style="color: #aaa;">Nenhuma nota fiscal emitida até o momento.</p>
+                    </div>
+                `;
+            }
+        }, 800);
     }
 
     async function fetchProductsFromAPI() {
@@ -96,31 +144,32 @@ document.addEventListener('DOMContentLoaded', () => {
         btnNovaEmissao.addEventListener('click', () => {
             const stored = localStorage.getItem('nfe_draft');
             if (stored) {
-                try {
-                    const draft = JSON.parse(stored);
-                    if (draft.data && (draft.data.dest.nome || draft.data.items.length > 0)) {
-                        if (confirm(`Existe uma emissão em andamento para ${draft.data.dest.nome || 'Cliente'}. Deseja continuar?`)) {
-                            loadDraft();
-                            modalEmissao.classList.add('active');
-                            return;
-                        } else {
-                            clearDraft(); // User chose to discard
-                        }
-                    }
-                } catch (e) { }
+                if (confirm('Existe uma emissão iniciada. Deseja continuar de onde parou?\n\n[OK] Continuar\n[Cancelar] Começar Nova (Apaga atual)')) {
+                    continueDraft();
+                    return;
+                } else {
+                    clearDraft();
+                }
             }
-
             resetForm();
             modalEmissao.classList.add('active');
             updatePreview();
         });
     }
 
+    window.deleteDraft = function (e) {
+        if (e) e.stopPropagation();
+        if (confirm('Deseja excluir esta emissão em andamento?')) {
+            clearDraft();
+        }
+    };
+
     if (btnCloseEmissao) {
-        btnCloseEmissao.addEventListener('click', () => {
-            // Check if we should save before closing? updatePreview already saves on change.
+        btnCloseEmissao.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log("Fechando modal...");
             modalEmissao.classList.remove('active');
-            renderDraftIndicator(); // Ensure list is updated
+            renderDraftIndicator();
         });
     }
 
@@ -133,7 +182,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert('Informe o nome do destinatário.');
                     return;
                 }
-                // Validar Telefone e Email se necessário
             }
             if (currentStep === 2) {
                 if (nfeData.items.length === 0) {
@@ -158,20 +206,48 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Form Inputs Listeners (Live Preview Update)
-    [inputDestDoc, inputDestNome, inputDestTel, inputDestEmail, inputDestEnd].forEach(input => {
+    [inputDestDoc, inputDestNome, inputDestTel, inputDestEmail, inputDestRua, inputDestNum, inputDestBairro, inputDestCep, inputDestMunicipio, inputDestUf].forEach(input => {
         if (input) {
             input.addEventListener('input', () => {
                 nfeData.dest.cpf = inputDestDoc ? inputDestDoc.value : '';
                 nfeData.dest.nome = inputDestNome ? inputDestNome.value : 'Consumidor Final';
                 nfeData.dest.telefone = inputDestTel ? inputDestTel.value : '';
                 nfeData.dest.email = inputDestEmail ? inputDestEmail.value : '';
-                nfeData.dest.endereco = inputDestEnd ? inputDestEnd.value : '';
+                nfeData.dest.rua = inputDestRua ? inputDestRua.value : '';
+                nfeData.dest.num = inputDestNum ? inputDestNum.value : '';
+                nfeData.dest.bairro = inputDestBairro ? inputDestBairro.value : '';
+                nfeData.dest.cep = inputDestCep ? inputDestCep.value : '';
+                nfeData.dest.municipio = inputDestMunicipio ? inputDestMunicipio.value : '';
+                nfeData.dest.uf = inputDestUf ? inputDestUf.value : 'PA';
                 updatePreview();
             });
         }
     });
 
+    // Shipping Listeners
+    if (inputFreteMod) {
+        inputFreteMod.addEventListener('change', (e) => {
+            nfeData.frete.mod = e.target.value;
+            if (divFreteDetalhes) {
+                divFreteDetalhes.style.display = e.target.value !== '9' ? 'block' : 'none';
+            }
+            updatePreview();
+        });
+    }
 
+    if (inputFreteValor) {
+        inputFreteValor.addEventListener('input', (e) => {
+            nfeData.frete.valor = parseFloat(e.target.value) || 0;
+            updatePreview();
+        });
+    }
+
+    if (inputFreteTransp) {
+        inputFreteTransp.addEventListener('input', (e) => {
+            nfeData.frete.transp = e.target.value;
+            updatePreview();
+        });
+    }
 
     // Phone Formatting (BR)
     if (inputDestTel) {
@@ -179,7 +255,6 @@ document.addEventListener('DOMContentLoaded', () => {
             let value = e.target.value.replace(/\D/g, '');
             if (value.length > 11) value = value.slice(0, 11);
 
-            // Mask: (00) 00000-0000 or (00) 0000-0000
             if (value.length > 10) {
                 value = value.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3');
             } else if (value.length > 5) {
@@ -195,8 +270,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
-
     // Payment Type Listener
     if (inputPagTipo) {
         inputPagTipo.addEventListener('change', (e) => {
@@ -204,21 +277,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
-    // --- PRODUCT SEARCH LOGIC (Copied & Adapted) ---
-
-    // --- PRODUCT SEARCH LOGIC (Advanced) ---
-
-    // --- SEARCH LOGIC (HYBRID) ---
-
     // Close results when clicking outside
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.scan-search-container')) {
             searchResultsDiv.style.display = 'none';
         }
     });
-
-    // --- BUSCA HÍBRIDA REFINADA ---
 
     barcodeInput.addEventListener('input', (e) => {
         const rawTerm = e.target.value;
@@ -229,38 +293,31 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // 1. LÓGICA NUMÉRICA (CÓDIGO DE BARRAS / ID)
         if (/^\d+$/.test(term)) {
-            searchResultsDiv.style.display = 'none'; // Garante que não mostra lista
-
-            // Busca Exata (String vs String para segurança)
+            searchResultsDiv.style.display = 'none';
             const exactMatch = localProductCache.find(p =>
                 String(p.id).trim() === term ||
                 (p.barcode && String(p.barcode).trim() === term) ||
-                (p.codigo && String(p.codigo).trim() === term) // Fallback para campo 'codigo'
+                (p.codigo && String(p.codigo).trim() === term)
             );
 
             if (exactMatch) {
                 addItemToNfe(exactMatch);
-                e.target.value = ''; // Limpa input imediatamente
-                // Feedback sonoro opcional: beep()
+                e.target.value = '';
             }
             return;
         }
 
-        // 2. LÓGICA DE TEXTO (NOME / MARCA)
         if (term.length >= 3) {
             const lowerTerm = term.toLowerCase();
-            const terms = lowerTerm.split(' ').filter(t => t.length > 0); // Suporte a busca composta
+            const terms = lowerTerm.split(' ').filter(t => t.length > 0);
 
             const matches = localProductCache.filter(p => {
                 if (!p) return false;
                 const pName = (p.name || '').toLowerCase();
                 const pBrand = (p.brand || '').toLowerCase();
-
-                // Todos os termos digitados devem existir no nome ou marca
                 return terms.every(t => pName.includes(t) || pBrand.includes(t));
-            }).slice(0, 50); // Mostra até 50 resultados
+            }).slice(0, 50);
 
             renderSearchResults(matches);
         } else {
@@ -268,18 +325,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Enter apenas para confirmar se necessário ou focar
     barcodeInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            // Se houver resultados visíveis no dropdown (texto), seleciona o primeiro
             if (searchResultsDiv.style.display !== 'none' && searchResultsDiv.children.length > 0) {
                 searchResultsDiv.children[0].click();
             }
         }
     });
-
-    // --- DRAFT / CACHE SYSTEM ---
 
     function saveDraft() {
         const draft = {
@@ -296,26 +349,38 @@ document.addEventListener('DOMContentLoaded', () => {
         if (stored) {
             try {
                 const draft = JSON.parse(stored);
-                // Check if draft is recent? (Optional, skipping for now)
-
                 nfeData = draft.data;
                 currentStep = draft.step || 1;
 
-                // Restore UI
                 if (nfeData.dest) {
                     inputDestDoc.value = nfeData.dest.cpf || '';
                     inputDestNome.value = nfeData.dest.nome || '';
                     inputDestTel.value = nfeData.dest.telefone || '';
                     inputDestEmail.value = nfeData.dest.email || '';
-                    inputDestEnd.value = nfeData.dest.endereco || '';
+                    if (inputDestRua) inputDestRua.value = nfeData.dest.rua || '';
+                    if (inputDestNum) inputDestNum.value = nfeData.dest.num || '';
+                    if (inputDestBairro) inputDestBairro.value = nfeData.dest.bairro || '';
+                    if (inputDestCep) inputDestCep.value = nfeData.dest.cep || '';
+                    if (inputDestMunicipio) inputDestMunicipio.value = nfeData.dest.municipio || '';
+                    if (inputDestUf) inputDestUf.value = nfeData.dest.uf || 'PA';
+
+                    // Trigger input events to apply masks if modal is opened later
+                    [inputDestDoc, inputDestTel].forEach(input => {
+                        if (input) input.dispatchEvent(new Event('input'));
+                    });
+                }
+
+                if (nfeData.frete) {
+                    if (inputFreteMod) inputFreteMod.value = nfeData.frete.mod || '9';
+                    if (inputFreteValor) inputFreteValor.value = nfeData.frete.valor || 0;
+                    if (inputFreteTransp) inputFreteTransp.value = nfeData.frete.transp || '';
+                    if (divFreteDetalhes) divFreteDetalhes.style.display = nfeData.frete.mod !== '9' ? 'block' : 'none';
                 }
 
                 if (nfeData.pag && inputPagTipo) {
                     inputPagTipo.value = nfeData.pag.tipo || '01';
                 }
 
-                // If modal is open, jump to step. If closed, maybe just indicate availability.
-                // User said "appear in list". We will render a card in the main list.
                 renderDraftIndicator();
 
             } catch (e) {
@@ -326,14 +391,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function clearDraft() {
         localStorage.removeItem('nfe_draft');
-        nfeData = { dest: { cpf: '', nome: '', telefone: '', email: '', endereco: '' }, items: [], pag: { tipo: '01', valor: 0 } }; // Reset locally too
+        nfeData = {
+            dest: { cpf: '', nome: '', telefone: '', email: '', rua: '', num: '', bairro: '', cep: '', municipio: '', uf: 'PA' },
+            items: [],
+            pag: { tipo: '01', valor: 0 },
+            frete: { mod: '9', valor: 0, transp: '' }
+        };
         renderDraftIndicator();
     }
 
     function renderDraftIndicator() {
         const listContainer = document.getElementById('nfe-history-list');
         const existingDraftCard = document.getElementById('draft-card-indicator');
-
         const stored = localStorage.getItem('nfe_draft');
 
         if (stored) {
@@ -344,10 +413,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const html = `
                 <div class="nfe-info">
-                    <strong style="color: var(--nfe-accent);"><i class='bx bx-edit'></i> Emissão em Andamento (Rascunho)</strong>
-                    <span>${clientName} • Etapa: ${stepName} • ${itemCount} itens</span>
+                    <strong style="color: #000;"><i class='bx bx-file-blank' style="margin-right:8px;"></i> Emissão em Andamento</strong>
+                    <span>${clientName} • ${stepName} • ${itemCount} produtos</span>
                 </div>
-                <button class="btn-nfe-primary" style="padding: 0.5rem;" onclick="continueDraft()">Continuar</button>
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <button class="btn-nfe-delete" onclick="deleteDraft(event)" title="Excluir"><i class='bx bx-trash'></i></button>
+                    <button class="btn-nfe btn-nfe-primary" style="padding: 10px 24px; font-size:0.9rem;" onclick="continueDraft()">Continuar</button>
+                </div>
             `;
 
             if (existingDraftCard) {
@@ -356,18 +428,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const card = document.createElement('div');
                 card.id = 'draft-card-indicator';
                 card.className = 'nfe-card';
-                card.style.borderLeft = '4px solid var(--nfe-accent)';
+                card.style.borderLeft = '4px solid #000';
                 card.innerHTML = html;
 
-                // Add to TOP of list
                 if (listContainer) listContainer.insertBefore(card, listContainer.firstChild);
             }
         } else {
             if (existingDraftCard) existingDraftCard.remove();
+            renderHistory();
         }
     }
 
-    // Assign global function for the button click
     window.continueDraft = function () {
         const stored = localStorage.getItem('nfe_draft');
         if (stored) {
@@ -375,22 +446,34 @@ document.addEventListener('DOMContentLoaded', () => {
             nfeData = draft.data;
             currentStep = draft.step || 1;
 
-            // Restore Form Values
             inputDestDoc.value = nfeData.dest.cpf || '';
             inputDestNome.value = nfeData.dest.nome || '';
             inputDestTel.value = nfeData.dest.telefone || '';
             inputDestEmail.value = nfeData.dest.email || '';
-            inputDestEnd.value = nfeData.dest.endereco || '';
+            if (inputDestRua) inputDestRua.value = nfeData.dest.rua || '';
+            if (inputDestNum) inputDestNum.value = nfeData.dest.num || '';
+            if (inputDestBairro) inputDestBairro.value = nfeData.dest.bairro || '';
+            if (inputDestCep) inputDestCep.value = nfeData.dest.cep || '';
+            if (inputDestMunicipio) inputDestMunicipio.value = nfeData.dest.municipio || '';
+            if (inputDestUf) inputDestUf.value = nfeData.dest.uf || 'PA';
             inputPagTipo.value = nfeData.pag.tipo || '01';
 
+            if (inputFreteMod) inputFreteMod.value = nfeData.frete.mod || '9';
+            if (inputFreteValor) inputFreteValor.value = nfeData.frete.valor || 0;
+            if (inputFreteTransp) inputFreteTransp.value = nfeData.frete.transp || '';
+
             modalEmissao.classList.add('active');
-            showStep(currentStep); // Navigate to correct step
+            showStep(currentStep);
             renderNfeItems();
+
+            // Trigger input events to apply masks
+            [inputDestDoc, inputDestTel].forEach(input => {
+                if (input) input.dispatchEvent(new Event('input'));
+            });
+
             updatePreview();
         }
     };
-
-
 
     function renderSearchResults(products) {
         searchResultsDiv.innerHTML = '';
@@ -403,9 +486,8 @@ document.addEventListener('DOMContentLoaded', () => {
         products.forEach(prod => {
             const div = document.createElement('div');
             div.className = 'search-result-item';
-            div.style.cssText = "padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items:center;";
+            div.style.color = '#000000'; // Explicit color for the whole item
 
-            // Image handling
             let imgHTML = '';
             if (prod.imgUrl && prod.imgUrl.length > 10) {
                 imgHTML = `<img src="${prod.imgUrl}" style="width:30px; height:30px; object-fit:cover; border-radius:4px; margin-right:8px;">`;
@@ -414,14 +496,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             div.innerHTML = `
-                <div style="display:flex; align-items:center;">
+                <div style="display:flex; align-items:center; gap:12px;">
                     ${imgHTML}
-                    <div>
-                        <strong style="font-size:0.9rem;">${prod.name}</strong><br>
-                        <small style="color:#666;">Cod: ${prod.id}</small>
+                    <div style="display:flex; flex-direction:column;">
+                        <strong style="font-size:0.95rem; color:#000;">${prod.name}</strong>
+                        <small style="color:#777; font-size:0.8rem;">Cód: ${prod.id} ${prod.barcode ? ' • ' + prod.barcode : ''}</small>
                     </div>
                 </div>
-                <div style="font-weight:600;">R$ ${parseFloat(prod.price).toFixed(2)}</div>
+                <div style="font-weight:700; color:#000; font-size:1rem;">R$ ${parseFloat(prod.price).toFixed(2)}</div>
             `;
 
             div.addEventListener('click', () => {
@@ -438,7 +520,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function addItemToNfe(prod) {
-        // Check if already exists to increment qty
         const existing = nfeData.items.find(i => i.codigo === prod.id || i.codigo === prod.barcode);
 
         if (existing) {
@@ -461,19 +542,14 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePreview();
     }
 
-
-    // --- Helper Functions ---
-
     function showStep(step) {
-        // Update UI Steps / Timeline
         document.querySelectorAll('.step-container').forEach(el => el.classList.remove('active'));
-        document.getElementById(`step-${step}`).classList.add('active');
+        const targetStep = document.getElementById(`step-${step}`);
+        if (targetStep) targetStep.classList.add('active');
 
-        // Update Buttons
         btnPrev.style.display = step === 1 ? 'none' : 'block';
         btnNext.textContent = step === totalSteps ? 'Emitir Nota' : 'Próximo';
 
-        // Update Timeline UI
         document.querySelectorAll('.timeline-step').forEach(el => {
             const s = parseInt(el.dataset.step);
             if (s <= step) {
@@ -481,7 +557,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 el.classList.remove('active');
             }
-            // Mark completed previous steps
             if (s < step) {
                 el.classList.add('completed');
             } else {
@@ -489,25 +564,29 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // If step 3, calculate totals
-        if (step === 3) {
-            calculateTotals();
-        }
-
-        saveDraft(); // Save step change
+        if (step === 3) calculateTotals();
+        saveDraft();
     }
 
     function resetForm() {
         currentStep = 1;
         nfeData.items = [];
-
         inputDestDoc.value = '';
         inputDestNome.value = '';
         inputDestTel.value = '';
         inputDestEmail.value = '';
-        inputDestEnd.value = '';
-
-        nfeData.dest = { cpf: '', nome: '', telefone: '', email: '', endereco: '' };
+        if (inputDestRua) inputDestRua.value = '';
+        if (inputDestNum) inputDestNum.value = '';
+        if (inputDestBairro) inputDestBairro.value = '';
+        if (inputDestCep) inputDestCep.value = '';
+        if (inputDestMunicipio) inputDestMunicipio.value = '';
+        if (inputDestUf) inputDestUf.value = 'PA';
+        nfeData.dest = { cpf: '', nome: '', telefone: '', email: '', rua: '', num: '', bairro: '', cep: '', municipio: '', uf: 'PA' };
+        nfeData.frete = { mod: '9', valor: 0, transp: '' };
+        if (inputFreteMod) inputFreteMod.value = '9';
+        if (inputFreteValor) inputFreteValor.value = 0;
+        if (inputFreteTransp) inputFreteTransp.value = '';
+        if (divFreteDetalhes) divFreteDetalhes.style.display = 'none';
 
         showStep(1);
         renderNfeItems();
@@ -515,6 +594,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderNfeItems() {
         const container = document.getElementById('nfe-items-list');
+        if (!container) return;
         container.innerHTML = '';
 
         if (nfeData.items.length === 0) {
@@ -522,7 +602,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Add Header
         const header = document.createElement('div');
         header.className = 'nfe-items-header';
         header.innerHTML = `
@@ -530,7 +609,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <span style="text-align:center">Qtd.</span>
             <span style="text-align:center">Vl. Unit</span>
             <span style="text-align:right">Total</span>
-            <span></span>
+            <span style="text-align:right"></span>
         `;
         container.appendChild(header);
 
@@ -580,11 +659,9 @@ document.addEventListener('DOMContentLoaded', () => {
             container.appendChild(div);
         });
 
-        // Listeners for Qty Buttons
         document.querySelectorAll('.btn-decrease').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const idx = e.target.closest('.btn-decrease').dataset.index;
-                // find input associated
                 const input = document.querySelector(`.nfe-qty-input[data-index="${idx}"]`);
                 let val = parseFloat(input.value);
                 if (val > 1) {
@@ -604,7 +681,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Listeners for Direct Input Change (Qty)
         document.querySelectorAll('.nfe-qty-input').forEach(input => {
             input.addEventListener('change', (e) => {
                 const idx = e.target.dataset.index;
@@ -617,7 +693,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Listeners for Price Change
         document.querySelectorAll('.nfe-price-input').forEach(input => {
             input.addEventListener('change', (e) => {
                 const idx = e.target.dataset.index;
@@ -633,7 +708,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Listeners for Delete
         document.querySelectorAll('.btn-action-delete').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const idx = e.target.closest('.btn-action-delete').dataset.index;
@@ -652,29 +726,48 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updatePreview() {
-        // --- Destinatário ---
         const destNome = nfeData.dest.nome || 'CONSUMIDOR FINAL';
-        const destDoc = nfeData.dest.cpf || '000.000.000-00';
-        const destEnd = nfeData.dest.endereco || 'ENDEREÇO NÃO INFORMADO';
+        let destDoc = nfeData.dest.cpf || '000.000.000-00';
 
-        document.getElementById('prev-dest-nome').textContent = destNome.toUpperCase();
-        document.getElementById('prev-dest-data').textContent = destEnd.toUpperCase();
-        document.getElementById('prev-dest-doc').textContent = destDoc;
+        // Detailed Address for Preview
+        const rua = nfeData.dest.rua || '';
+        const num = nfeData.dest.num || '';
+        const bairro = nfeData.dest.bairro || '';
+        const cep = nfeData.dest.cep || '';
+        const mun = nfeData.dest.municipio || '';
+        const uf = nfeData.dest.uf || 'PA';
 
-        // --- Items Table ---
+        let destEnd = 'ENDEREÇO NÃO INFORMADO';
+        if (rua) {
+            destEnd = `${rua}, ${num} - ${bairro} - ${cep} - ${mun}/${uf}`;
+        }
+
+        // Format Doc for preview
+        const rawDoc = destDoc.replace(/\D/g, '');
+        if (rawDoc.length === 11) {
+            destDoc = rawDoc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+        } else if (rawDoc.length === 14) {
+            destDoc = rawDoc.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+        }
+
+        const prevNome = document.getElementById('prev-dest-nome');
+        const prevEnd = document.getElementById('prev-dest-data');
+        const prevDoc = document.getElementById('prev-dest-doc');
+
+        if (prevNome) prevNome.textContent = destNome.toUpperCase();
+        if (prevEnd) prevEnd.textContent = destEnd.toUpperCase();
+        if (prevDoc) prevDoc.textContent = destDoc;
+
         const tbody = document.getElementById('prev-items-body');
         if (tbody) {
             tbody.innerHTML = '';
-            let currentTotal = 0; // Renamed to avoid confusion
+            let currentTotal = 0;
 
             nfeData.items.forEach(item => {
                 const tr = document.createElement('tr');
-
-                // Truncate description if too long
                 let desc = (item.descricao || '').toUpperCase();
                 if (desc.length > 25) desc = desc.substring(0, 25) + '...';
 
-                // Ensure numeric values
                 const qty = item.quantidade || 0;
                 const unit = item.unidade || 'UN';
                 const vUnit = parseFloat(item.valorUnit || 0);
@@ -691,161 +784,155 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentTotal += vTotal;
             });
 
-            // --- Totals ---
+            const vFrete = parseFloat(nfeData.frete.valor || 0);
             const totalFmt = "R$ " + currentTotal.toFixed(2).replace('.', ',');
+            const freteFmt = "R$ " + vFrete.toFixed(2).replace('.', ',');
+            const totalNotaFmt = "R$ " + (currentTotal + vFrete).toFixed(2).replace('.', ',');
 
             const vProdEl = document.getElementById('prev-vprod');
+            const vFreteEl = document.getElementById('prev-vfrete');
             const vTotalEl = document.getElementById('prev-vtotal');
 
             if (vProdEl) vProdEl.textContent = totalFmt;
-            if (vTotalEl) vTotalEl.textContent = totalFmt;
+            if (vFreteEl) vFreteEl.textContent = freteFmt;
+            if (vTotalEl) vTotalEl.textContent = totalNotaFmt;
         }
 
-        // --- Mock Data (Static for now, dynamic later) ---
-        // if no access key generated yet
         const accessKeyDisplay = document.getElementById('prev-access-key');
         if (accessKeyDisplay && accessKeyDisplay.textContent.startsWith('0000')) {
-            // Mock key structure: 
-            // UF(2) YYMM CNPJ(14) MOD(2) SER(3) NF(9) CONST(1) COD(8) DV(1)
-            // simplified:
             accessKeyDisplay.textContent = "3523 1000 0000 0000 0000 5500 1000 0000 0112 3456 7890";
         }
 
         const nfeNumDisplay = document.getElementById('prev-nfe-num');
-        if (nfeNumDisplay) nfeNumDisplay.textContent = "000." + Math.floor(Math.random() * 900 + 100); // Mock
+        // FIX NUMBER TO 67
+        if (nfeNumDisplay) {
+            nfeNumDisplay.textContent = "000.067";
+        }
 
-
-        saveDraft(); // Auto-save on every update
+        saveDraft();
     }
 
-    // --- Event Listeners for Payment ---
     const pagSelect = document.getElementById('nfe-pag-tipo');
     const parcelasContainer = document.getElementById('nfe-parcelas-container');
 
     if (pagSelect && parcelasContainer) {
         pagSelect.addEventListener('change', (e) => {
-            if (e.target.value === '03') { // 03 = Cartão de Crédito
-                parcelasContainer.style.display = 'block';
-            } else {
-                parcelasContainer.style.display = 'none';
-            }
+            parcelasContainer.style.display = e.target.value === '03' ? 'block' : 'none';
         });
     }
 
     function calculateTotals() {
-        let total = nfeData.items.reduce((acc, item) => acc + item.valorTotal, 0);
-        nfeData.pag.valor = total;
+        let itemsTotal = nfeData.items.reduce((acc, item) => acc + item.valorTotal, 0);
+        let freteTotal = parseFloat(nfeData.frete.valor || 0);
+        nfeData.pag.valor = itemsTotal + freteTotal;
     }
 
     async function finishEmission() {
         calculateTotals();
-
         const finalPayload = {
-            emitente: {
-                cnpj: "SEU_CNPJ_AQUI", // Backend fills?
-                nome: "Sua Empresa"
-            },
             destinatario: nfeData.dest,
             produtos: nfeData.items,
             pagamento: nfeData.pag,
-            totais: {
-                vProd: nfeData.pag.valor,
-                vNF: nfeData.pag.valor
-            }
+            frete: nfeData.frete,
+            modelo: "55",
+            nNF: "67" // Fixed as requested
         };
+        console.log("Enviando NFE (Mod 55):", finalPayload);
 
-        console.log("Enviando NFE para backend:", finalPayload);
+        try {
+            const loadingOverlay = document.getElementById('custom-loader-overlay');
+            if (loadingOverlay) loadingOverlay.style.display = 'flex';
 
-        // Alert user
-        alert('Nota fiscal enviada para processamento! (Simulação)');
-        modalEmissao.classList.remove('active');
-        clearDraft(); // Clear draft on success
+            const response = await fetch(`${FISCAL_API_URL}/emitirNfe`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(finalPayload)
+            });
 
-        // Here you would call API.js functionality or similar
+            const result = await response.json();
+
+            if (result.status === "success") {
+                alert(`NF-e Emitida com Sucesso!\nNúmero: ${result.nNF}\nChave: ${result.chave}`);
+                modalEmissao.classList.remove('active');
+                clearDraft();
+                location.reload(); // Refresh to see history if implemented
+            } else {
+                alert(`Erro na Emissão: ${result.message || 'Erro desconhecido'}`);
+            }
+        } catch (err) {
+            console.error("Erro ao emitir NF-e:", err);
+            alert("Erro de conexão com o servidor fiscal.");
+        } finally {
+            const loadingOverlay = document.getElementById('custom-loader-overlay');
+            if (loadingOverlay) loadingOverlay.style.display = 'none';
+        }
     }
 
-    // --- CPF/CNPJ Logic (Refined) ---
     const destCpfInput = document.getElementById('nfe-dest-doc');
     const loadingSpinner = document.getElementById('cnpj-loading');
     const feedbackMsg = document.getElementById('cnpj-feedback');
 
     if (destCpfInput) {
-        // Auto-formatting mask & Trigger
         destCpfInput.addEventListener('input', async (e) => {
             let v = e.target.value.replace(/\D/g, '');
             let rawVal = v;
-
             if (v.length > 14) v = v.substring(0, 14);
 
-            // Simple mask logic
             if (v.length <= 11) {
-                // CPF mask: 000.000.000-00
-                v = v.replace(/(\d{3})(\d)/, '$1.$2');
-                v = v.replace(/(\d{3})(\d)/, '$1.$2');
-                v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-
+                v = v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
             } else {
-                // CNPJ mask: 00.000.000/0000-00
-                v = v.replace(/^(\d{2})(\d)/, '$1.$2');
-                v = v.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
-                v = v.replace(/\.(\d{3})(\d)/, '.$1/$2');
-                v = v.replace(/(\d{4})(\d)/, '$1-$2');
+                v = v.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2');
             }
             e.target.value = v;
 
-            // Check for CNPJ trigger (14 digits)
             if (rawVal.length === 14) {
                 if (loadingSpinner) loadingSpinner.style.display = 'block';
                 if (feedbackMsg) feedbackMsg.style.display = 'none';
-                destCpfInput.style.borderColor = '#e2e8f0';
+                destCpfInput.style.borderColor = 'var(--nfe-border)';
 
                 if (isValidCNPJ(rawVal)) {
                     try {
                         const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${rawVal}`);
                         if (res.ok) {
                             const data = await res.json();
-
                             if (feedbackMsg) {
                                 feedbackMsg.textContent = "CNPJ encontrado: " + (data.razao_social || data.nome_fantasia);
-                                feedbackMsg.className = "form-text text-success";
+                                feedbackMsg.className = "text-success";
                                 feedbackMsg.style.display = 'block';
                             }
-
                             const nomeInput = document.getElementById('nfe-dest-nome');
                             if (nomeInput) nomeInput.value = data.razao_social || data.nome_fantasia || '';
 
-                            const endInput = document.getElementById('nfe-dest-end');
-                            if (endInput) {
-                                const log = data.logradouro || '';
-                                const num = data.numero || '';
-                                const comp = data.complemento || '';
-                                const bai = data.bairro || '';
-                                const mun = data.municipio || '';
-                                const uf = data.uf || '';
-                                endInput.value = `${log}, ${num}${comp ? ' ' + comp : ''} - ${bai}, ${mun} - ${uf}`;
-                            }
+                            if (inputDestRua) inputDestRua.value = data.logradouro || '';
+                            if (inputDestNum) inputDestNum.value = data.numero || 'SN';
+                            if (inputDestBairro) inputDestBairro.value = data.bairro || '';
+                            if (inputDestCep) inputDestCep.value = data.cep || '';
+                            if (inputDestMunicipio) inputDestMunicipio.value = data.municipio || '';
+                            if (inputDestUf) inputDestUf.value = data.uf || 'PA';
 
                             const emailInput = document.getElementById('nfe-dest-email');
                             if (emailInput && data.email) emailInput.value = data.email;
-
                             const telInput = document.getElementById('nfe-dest-tel');
-                            // Format simple phone
-                            const phone = data.ddd_telefone_1 ? `(${data.ddd_telefone_1}) ${data.telefone_1 || ''}` : '';
-                            if (telInput && phone) telInput.value = phone;
+                            if (telInput && data.ddd_telefone_1) telInput.value = `(${data.ddd_telefone_1}) ${data.telefone_1 || ''}`;
 
+                            // Update nfeData source of truth
                             nfeData.dest.cpf = rawVal;
                             nfeData.dest.nome = nomeInput ? nomeInput.value : '';
-                            nfeData.dest.endereco = endInput ? endInput.value : '';
-                            updatePreview();
+                            nfeData.dest.rua = data.logradouro || '';
+                            nfeData.dest.num = data.numero || 'SN';
+                            nfeData.dest.bairro = data.bairro || '';
+                            nfeData.dest.cep = data.cep || '';
+                            nfeData.dest.municipio = data.municipio || '';
+                            nfeData.dest.uf = data.uf || 'PA';
+                            nfeData.dest.email = emailInput ? emailInput.value : '';
+                            nfeData.dest.telefone = telInput ? telInput.value : '';
 
-                        } else {
-                            throw new Error('Not found');
+                            updatePreview();
                         }
                     } catch (err) {
-                        console.error("Erro CNPJ", err);
                         if (feedbackMsg) {
                             feedbackMsg.textContent = "CNPJ não encontrado.";
-                            feedbackMsg.className = "form-text text-danger";
+                            feedbackMsg.className = "text-danger";
                             feedbackMsg.style.display = 'block';
                         }
                     } finally {
@@ -854,98 +941,63 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     if (loadingSpinner) loadingSpinner.style.display = 'none';
                     if (feedbackMsg) {
-                        feedbackMsg.textContent = "CNPJ Inválido logicamente.";
-                        feedbackMsg.className = "form-text text-danger";
+                        feedbackMsg.textContent = "CNPJ Inválido.";
+                        feedbackMsg.className = "text-danger";
                         feedbackMsg.style.display = 'block';
                     }
-                    destCpfInput.style.borderColor = 'red';
+                    destCpfInput.style.borderColor = 'black';
                 }
             } else {
                 if (loadingSpinner) loadingSpinner.style.display = 'none';
                 if (feedbackMsg) feedbackMsg.style.display = 'none';
-                destCpfInput.style.borderColor = '#e2e8f0';
+                destCpfInput.style.borderColor = 'var(--nfe-border)';
             }
         });
 
-        // Blur validation just for visual check
         destCpfInput.addEventListener('blur', (e) => {
-            const rawVal = e.target.value.replace(/\\D/g, '');
+            const rawVal = e.target.value.replace(/\D/g, '');
             if (rawVal.length === 11 && !isValidCPF(rawVal)) {
                 if (feedbackMsg) {
                     feedbackMsg.textContent = "CPF Inválido.";
-                    feedbackMsg.className = "form-text text-danger";
+                    feedbackMsg.className = "text-danger";
                     feedbackMsg.style.display = 'block';
                 }
-                e.target.style.borderColor = 'red';
+                e.target.style.borderColor = 'black';
             }
         });
     }
 
-    // Helper: CPF Validator
     function isValidCPF(cpf) {
-        if (typeof cpf !== "string") return false;
-        cpf = cpf.replace(/[\s.-]*/igm, '');
-        if (cpf.length !== 11 || !Array.from(cpf).filter(e => e !== cpf[0]).length) {
-            return false;
-        }
-        var soma = 0;
-        var resto;
-        for (var i = 1; i <= 9; i++)
-            soma = soma + parseInt(cpf.substring(i - 1, i)) * (11 - i);
+        cpf = cpf.replace(/[^\d]+/g, '');
+        if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
+        let soma = 0, resto;
+        for (let i = 1; i <= 9; i++) soma += parseInt(cpf.substring(i - 1, i)) * (11 - i);
         resto = (soma * 10) % 11;
-        if ((resto == 10) || (resto == 11)) resto = 0;
-        if (resto != parseInt(cpf.substring(9, 10))) return false;
+        if (resto === 10 || resto === 11) resto = 0;
+        if (resto !== parseInt(cpf.substring(9, 10))) return false;
         soma = 0;
-        for (var i = 1; i <= 10; i++)
-            soma = soma + parseInt(cpf.substring(i - 1, i)) * (12 - i);
+        for (let i = 1; i <= 10; i++) soma += parseInt(cpf.substring(i - 1, i)) * (12 - i);
         resto = (soma * 10) % 11;
-        if ((resto == 10) || (resto == 11)) resto = 0;
-        if (resto != parseInt(cpf.substring(10, 11))) return false;
-        return true;
+        if (resto === 10 || resto === 11) resto = 0;
+        return resto === parseInt(cpf.substring(10, 11));
     }
 
-    // Helper: CNPJ Validator
     function isValidCNPJ(cnpj) {
         cnpj = cnpj.replace(/[^\d]+/g, '');
-        if (cnpj == '') return false;
-        if (cnpj.length != 14) return false;
-        // Elimina CNPJs invalidos conhecidos
-        if (cnpj == "00000000000000" ||
-            cnpj == "11111111111111" ||
-            cnpj == "22222222222222" ||
-            cnpj == "33333333333333" ||
-            cnpj == "44444444444444" ||
-            cnpj == "55555555555555" ||
-            cnpj == "66666666666666" ||
-            cnpj == "77777777777777" ||
-            cnpj == "88888888888888" ||
-            cnpj == "99999999999999")
-            return false;
-
-        // Valida DVs
-        let tamanho = cnpj.length - 2
-        let numeros = cnpj.substring(0, tamanho);
-        let digitos = cnpj.substring(tamanho);
-        let soma = 0;
-        let pos = tamanho - 7;
+        if (cnpj.length !== 14 || /^(\d)\1+$/.test(cnpj)) return false;
+        let tamanho = cnpj.length - 2, numeros = cnpj.substring(0, tamanho), digitos = cnpj.substring(tamanho), soma = 0, pos = tamanho - 7;
         for (let i = tamanho; i >= 1; i--) {
             soma += numeros.charAt(tamanho - i) * pos--;
             if (pos < 2) pos = 9;
         }
-        let resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
-        if (resultado != digitos.charAt(0)) return false;
-
-        tamanho = tamanho + 1;
-        numeros = cnpj.substring(0, tamanho);
-        soma = 0;
-        pos = tamanho - 7;
+        let resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
+        if (resultado !== parseInt(digitos.charAt(0))) return false;
+        tamanho++; numeros = cnpj.substring(0, tamanho); soma = 0; pos = tamanho - 7;
         for (let i = tamanho; i >= 1; i--) {
             soma += numeros.charAt(tamanho - i) * pos--;
             if (pos < 2) pos = 9;
         }
-        resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
-        if (resultado != digitos.charAt(1)) return false;
-
-        return true;
+        resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
+        return resultado === parseInt(digitos.charAt(1));
     }
 });
