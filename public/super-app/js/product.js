@@ -98,58 +98,80 @@ async function loadProductDetail(id) {
             return;
         }
 
-        registerInterest(prod.category);
-        registerRecentlyViewed(prod);
+        window.globalAllProducts = allProducts;
+        window.currentProductGroup = prod.variacoes && prod.variacoes.length > 0 ? prod.variacoes : [prod];
 
-        const productImages = extractProductImages(prod);
-        const valPrice = parseFloat(prod.price || 0);
-        const valOffer = parseFloat(prod['price-oferta'] || 0);
-        const hasOffer = (valOffer > 0 && valOffer < valPrice);
+        // Se houver variações, a variação ativa será a que tem o mesmo nome original do prod ou o primeiro.
+        // Já que "prod" é o base, ele deve ser a [0].
+        renderProductView(prod, window.currentProductGroup, allProducts, 0);
 
-        // Preço Base de Venda (Cartão)
-        const cardPrice = hasOffer ? valOffer : valPrice;
+    } catch (error) {
+        console.error("Erro detalhes:", error);
+        content.innerHTML = "<p>Erro ao carregar produto.</p>";
+    }
+}
 
-        // Pix tem 5% de desconto sobre o preço de venda final
-        const pixPrice = cardPrice * 0.95;
+window.selectVariation = function (index) {
+    if (!window.currentProductGroup || !window.currentProductGroup[index]) return;
+    const prod = window.currentProductGroup[index];
+    renderProductView(prod, window.currentProductGroup, window.globalAllProducts, index);
+};
 
-        document.title = `${prod.name} | Dtudo`;
+function renderProductView(prod, variacoesGroup, allProducts, activeIndex) {
+    const content = document.getElementById('detail-content');
 
-        // Formatação refinada: Separa Reais de Centavos para Estilo Premium
-        const splitPrice = (val) => {
-            const parts = val.toFixed(2).split('.');
-            return { reais: parts[0], centavos: parts[1] };
-        };
+    registerInterest(prod.category);
+    registerRecentlyViewed(prod);
 
-        // Parcelamento
-        const maxInstallments = calculateInstallmentsRule(cardPrice);
-        const installmentValue = cardPrice / maxInstallments;
+    const productImages = extractProductImages(prod);
+    const valPrice = parseFloat(prod.price || 0);
+    const valOffer = parseFloat(prod['price-oferta'] || 0);
+    const hasOffer = (valOffer > 0 && valOffer < valPrice);
 
-        const pixParts = splitPrice(pixPrice);
-        const instParts = splitPrice(installmentValue);
-        const discountPerc = Math.round(((valPrice - pixPrice) / valPrice) * 100);
+    // Preço Base de Venda (Cartão)
+    const cardPrice = hasOffer ? valOffer : valPrice;
 
-        const fmtConfig = { style: 'currency', currency: 'BRL' };
-        const fmtCard = cardPrice.toLocaleString('pt-BR', fmtConfig);
-        const fmtOriginal = valPrice.toLocaleString('pt-BR', fmtConfig);
-        // fmtPix e fmtInstallmentValue são usados para cálculos, mas a exibição será customizada abaixo
+    // Pix tem 5% de desconto sobre o preço de venda final
+    const pixPrice = cardPrice * 0.95;
 
-        const stockCount = parseInt(prod.stock || 0);
-        const soldCount = parseInt(prod.sold || 0);
+    document.title = `${prod.name} | Dtudo`;
 
-        let stockHtml = '';
-        if (stockCount <= 0) {
-            stockHtml = `<div class="stock-scarcity-container"><div class="stock-label"><strong style="color:#999">Esgotado</strong></div></div>`;
-        } else if (stockCount <= 8) {
-            stockHtml = `
+    // Formatação refinada: Separa Reais de Centavos para Estilo Premium
+    const splitPrice = (val) => {
+        const parts = val.toFixed(2).split('.');
+        return { reais: parts[0], centavos: parts[1] };
+    };
+
+    // Parcelamento
+    const maxInstallments = calculateInstallmentsRule(cardPrice);
+    const installmentValue = cardPrice / maxInstallments;
+
+    const pixParts = splitPrice(pixPrice);
+    const instParts = splitPrice(installmentValue);
+    const discountPerc = Math.round(((valPrice - pixPrice) / valPrice) * 100);
+
+    const fmtConfig = { style: 'currency', currency: 'BRL' };
+    const fmtCard = cardPrice.toLocaleString('pt-BR', fmtConfig);
+    const fmtOriginal = valPrice.toLocaleString('pt-BR', fmtConfig);
+    // fmtPix e fmtInstallmentValue são usados para cálculos, mas a exibição será customizada abaixo
+
+    const stockCount = parseInt(prod.stock || 0);
+    const soldCount = parseInt(prod.sold || 0);
+
+    let stockHtml = '';
+    if (stockCount <= 0) {
+        stockHtml = `<div class="stock-scarcity-container"><div class="stock-label"><strong style="color:#999">Esgotado</strong></div></div>`;
+    } else if (stockCount <= 8) {
+        stockHtml = `
                 <div class="stock-scarcity-container">
                     <div class="stock-label"><span>Disponibilidade: ${stockCount} itens</span><strong style="color:#db0038">Restam poucas unidades!</strong></div>
                     <div class="stock-track"><div class="stock-fill" style="width:${(1 - stockCount / 8) * 100}%; background:#db0038"></div></div>
                 </div>`;
-        } else {
-            stockHtml = `<div class="stock-scarcity-container"><div class="stock-label"><strong style="color:var(--color-text-dark); display:flex; align-items:center; gap:5px;"><i class='bx bxs-check-circle'></i> Disponível em estoque</strong></div></div>`;
-        }
+    } else {
+        stockHtml = `<div class="stock-scarcity-container"><div class="stock-label"><strong style="color:var(--color-text-dark); display:flex; align-items:center; gap:5px;"><i class='bx bxs-check-circle'></i> Disponível em estoque</strong></div></div>`;
+    }
 
-        let priceBlock = `
+    let priceBlock = `
             <div class="premium-price-container" style="margin-bottom: 20px; font-family: 'Roboto', sans-serif;">
                 <div class="price-old-line" style="color: #999; text-decoration: line-through; font-size: 1rem; margin-bottom: 4px;">
                     ${fmtOriginal}
@@ -168,16 +190,62 @@ async function loadProductDetail(id) {
             </div>
         `;
 
-        let installmentBlock = ''; // Substituído pela installment-line acima para seguir o design 1:1
+    let installmentBlock = ''; // Substituído pela installment-line acima para seguir o design 1:1
 
-        const thumbsHtml = productImages.length > 1 ? `
+    let variationsHtml = '';
+    if (variacoesGroup && variacoesGroup.length > 1) {
+        variationsHtml = `
+            <div class="product-variations" style="margin: 15px 0;">
+                <div style="font-size: 0.9rem; font-weight: 500; margin-bottom: 12px; color: #333;">Opções disponíveis:</div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    ${variacoesGroup.map((v, i) => {
+            const isActive = i === activeIndex;
+            let fullName = String(v.name || ('Opção ' + (i + 1))).toUpperCase();
+            let base = String(v.baseName || '').toUpperCase();
+
+            let diffText = fullName;
+            if (base && fullName.includes(base) && fullName !== base) {
+                diffText = fullName.replace(base, '').trim();
+            }
+
+            // Fallback se faltar ou não houver diferença além de 1 letra etc
+            if (!diffText) diffText = 'Opção ' + (i + 1);
+
+            const vImg = v.imgUrl || 'https://placehold.co/100x100/f8f9fa/c20026?text=Opção';
+
+            return `
+                            <div onclick="selectVariation(${i})" style="
+                                display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+                                width: 75px; cursor: pointer;
+                                border: 2px solid ${isActive ? 'var(--color-brand-blue)' : '#eaeaea'}; 
+                                border-radius: 10px; overflow: hidden;
+                                background: ${isActive ? '#f2f7ff' : '#fff'}; 
+                                transition: all 0.2s ease;
+                                box-shadow: ${isActive ? '0 2px 6px rgba(0,102,255,0.15)' : 'none'};
+                            ">
+                                <img src="${vImg}" style="width: 100%; height: 75px; object-fit: cover; border-bottom: 1px solid #eaeaea;">
+                                <span style="
+                                    font-size: 0.70rem; font-weight: 600; text-align: center; 
+                                    padding: 6px 4px; line-height: 1.1; 
+                                    color: ${isActive ? 'var(--color-brand-blue)' : '#555'};
+                                    word-wrap: break-word; width: 100%;
+                                ">${diffText}</span>
+                            </div>
+                        `;
+        }).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    const thumbsHtml = productImages.length > 1 ? `
             <div class="thumbnails-scroll">
                 ${productImages.map((src, i) => `
                     <img src="${src}" class="thumbnail-item ${i === 0 ? 'active' : ''}" onclick="swapDetailImage('${src}', this)">
                 `).join('')}
             </div>` : '';
 
-        content.innerHTML = `
+    content.innerHTML = `
             <div class="detail-view-container">
                 <div class="detail-gallery-container">
                     <div class="main-image-wrapper">
@@ -192,6 +260,7 @@ async function loadProductDetail(id) {
                     ${priceBlock}
                     ${installmentBlock}
                     ${stockHtml}
+                    ${variationsHtml}
                     
                     <div class="action-buttons">
                         <button class="btn-buy-now" ${stockCount <= 0 ? 'disabled style="background:#ccc;"' : ''} onclick="addToCartAndGo('${prod.id}', '${prod.name.replace(/'/g, "\\'")}', ${cardPrice}, ${pixPrice}, '${productImages[0]}')">
@@ -222,12 +291,7 @@ async function loadProductDetail(id) {
             </div>
         `;
 
-        renderSuggestedProducts(prod, allProducts);
-
-    } catch (error) {
-        console.error("Erro detalhes:", error);
-        content.innerHTML = "<p>Erro ao carregar produto.</p>";
-    }
+    renderSuggestedProducts(prod, allProducts);
 }
 
 function renderSuggestedProducts(currentProd, allProducts) {

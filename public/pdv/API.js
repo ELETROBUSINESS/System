@@ -462,7 +462,7 @@ function listarProdutosSuperApp() {
         if (dataRaw.length <= 1) return { status: "success", data: [] };
 
         const headers = dataRaw[0].map(h => String(h).toLowerCase().trim());
-        const produtos = [];
+        const produtosMap = {};
 
         const idxCodigo = headers.indexOf("codigo") !== -1 ? headers.indexOf("codigo") : 0;
         const idxNome = headers.indexOf("nome") !== -1 ? headers.indexOf("nome") : 1;
@@ -483,6 +483,37 @@ function listarProdutosSuperApp() {
         const idxImgUrl = headers.indexOf("imgurl") !== -1 ? headers.indexOf("imgurl") : (headers.indexOf("img url") !== -1 ? headers.indexOf("img url") : 18);
 
         const idxWebPrice = headers.indexOf("web_price");
+
+        const extractBaseName = (name) => {
+            let base = String(name || "").toUpperCase().trim();
+            const modifiers = [
+                // Cores Básicas
+                "VERDE", "PRETO", "BRANCO", "AZUL", "VERMELHO", "AMARELO", "ROSA", "CINZA", "ROXO", "MARROM", "LARANJA", "PRATA", "DOURADO",
+                "PRETA", "BRANCA", "VERMELHA", "AMARELA",
+                // Cores Específicas / Sub-tons
+                "MENTA", "ACQUA", "ÁGUA", "AGUA", "TIFFANY", "BEGE", "NUDE", "CREME", "CAPUCCINO", "CEREJA", "MARINHO", "BEBÊ", "BEBE", "PASTEL", "LILÁS", "LILAS",
+                // Aspectos Visuais
+                "ESCURO", "CLARO", "SÓLIDO", "SOLIDO", "SÓLIDA", "SOLIDA", "TRANSPARENTE", "NEON", "METÁLICO", "METALICO", "FOSCO",
+                "SORTIDO", "SORTIDAS", "COLORIDO", "COLORIDA", "CORES",
+                // Dimensões e Elétrica
+                "110V", "220V", "BIVOLT",
+                "P", "M", "G", "GG", "XG"
+            ];
+            let changed = true;
+            while (changed) {
+                changed = false;
+                let words = base.split(" ");
+                if (words.length > 1) {
+                    let lastWord = words[words.length - 1];
+                    if (modifiers.includes(lastWord)) {
+                        words.pop();
+                        base = words.join(" ");
+                        changed = true;
+                    }
+                }
+            }
+            return base;
+        };
 
         for (let i = 1; i < dataRaw.length; i++) {
             const row = dataRaw[i];
@@ -542,9 +573,30 @@ function listarProdutosSuperApp() {
                 imgCont++;
             }
 
-            produtos.push(prodObj);
+            const baseNm = extractBaseName(prodObj.name);
+            let groupKey = null;
+
+            // Busca um grupo existente (por código comum se aplicável, ou por nome base rigorosamente idêntico)
+            for (let k in produtosMap) {
+                if (produtosMap[k].baseName === baseNm) {
+                    groupKey = k;
+                    break;
+                }
+                if (codigo && codigo.length > 3 && k === codigo) {
+                    groupKey = k;
+                    break;
+                }
+            }
+
+            if (!groupKey) {
+                groupKey = (codigo && codigo.length > 3) ? codigo : baseNm;
+                produtosMap[groupKey] = { ...prodObj, baseName: baseNm, variacoes: [prodObj] };
+            } else {
+                produtosMap[groupKey].variacoes.push(prodObj);
+            }
         }
 
+        const produtos = Object.values(produtosMap);
         return { status: "success", data: produtos };
     } catch (e) {
         return { status: "error", message: e.toString() };

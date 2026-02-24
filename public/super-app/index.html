@@ -110,20 +110,20 @@
     <section class="categories-section">
         <div class="container">
             <div class="categories-scroll">
-                <div class="category-item fire" onclick="filterLocalCategory('ofertas')">
+                <div class="category-item fire" onclick="location.href='search.html?q=ofertas'">
                     <div class="category-icon"><i class='bx bxs-hot'></i></div>
                     <span style="color: var(--color-brand-red); font-weight: 700;">Ofertas!</span>
                 </div>
-                <div class="category-item" onclick="filterLocalCategory('escolar')">
+                <div class="category-item" onclick="location.href='search.html?q=escolar'">
                     <div class="category-icon"><i class='bx bx-pencil'></i></div><span>Material Escolar</span>
                 </div>
-                <div class="category-item" onclick="filterLocalCategory('relogio')">
+                <div class="category-item" onclick="location.href='search.html?q=relogio'">
                     <div class="category-icon"><i class='bx bx-time-five'></i></div><span>Relógios</span>
                 </div>
-                <div class="category-item" onclick="filterLocalCategory('eletr')">
-                    <div class="category-icon"><i class='bx bx-mobile'></i></div><span>Eletrônicos</span>
+                <div class="category-item" onclick="location.href='search.html?q=brinquedo'">
+                    <div class="category-icon"><i class='bx bx-game'></i></div><span>Brinquedos</span>
                 </div>
-                <div class="category-item" onclick="filterLocalCategory('todos')">
+                <div class="category-item" onclick="location.href='index.html'">
                     <div class="category-icon" style="background:#e0e0e0;"><i class='bx bx-grid-alt'
                             style="color:#666;"></i></div><span style="color:#666;">Todos</span>
                 </div>
@@ -149,28 +149,26 @@
 
     <section id="products">
         <div class="container">
-            <h2 class="section-title" id="feed-title">Destaques para você</h2>
+            <h2 class="section-title" id="feed-title" style="display: none;">Destaques para você</h2>
 
-            <div id="firebase-products-container" class="product-grid">
-                <div class="product-card skeleton-card">
-                    <div class="skeleton skeleton-img"></div>
-                    <div class="skeleton skeleton-text"></div>
-                </div>
-                <div class="product-card skeleton-card">
-                    <div class="skeleton skeleton-img"></div>
-                    <div class="skeleton skeleton-text"></div>
-                </div>
-                <div class="product-card skeleton-card">
-                    <div class="skeleton skeleton-img"></div>
-                    <div class="skeleton skeleton-text"></div>
-                </div>
-                <div class="product-card skeleton-card">
-                    <div class="skeleton skeleton-img"></div>
-                    <div class="skeleton skeleton-text"></div>
+            <div id="home-sections-container">
+                <!-- Skeletons Sections injected by JS -->
+                <div class="product-grid">
+                    <div class="product-card skeleton-card">
+                        <div class="skeleton skeleton-img"></div>
+                        <div class="skeleton skeleton-text"></div>
+                    </div>
+                    <div class="product-card skeleton-card">
+                        <div class="skeleton skeleton-img"></div>
+                        <div class="skeleton skeleton-text"></div>
+                    </div>
                 </div>
             </div>
 
-            <div id="scroll-sentinel"></div>
+            <div id="firebase-products-container" class="product-grid" style="display: none;">
+            </div>
+
+            <div id="scroll-sentinel" style="display: none;"></div>
 
             <div id="infinite-loader" style="display: none; margin-top: 15px;">
                 <div class="product-grid">

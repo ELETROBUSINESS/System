@@ -160,87 +160,129 @@ function clearCache() {
 
 // ==================== 2. RENDERIZAÇÃO DA HOME (CARD NOVO) ====================
 
+function buildProductCardHTML(prod) {
+    let displayImg = prod.imgUrl || 'https://placehold.co/400x400/f8f9fa/c20026?text=Dtudo';
+    const valPrice = parseFloat(prod.price || 0); // Cartão (Cheio)
+    const valOffer = parseFloat(prod['price-oferta'] || 0);
+    const hasOffer = (valOffer > 0 && valOffer < valPrice);
+    const baseSalePrice = hasOffer ? valOffer : valPrice;
+    const priceCard = baseSalePrice;
+    const pricePix = baseSalePrice * 0.95;
+    const fmtConfig = { style: 'currency', currency: 'BRL' };
+    const fmtPix = new Intl.NumberFormat('pt-BR', fmtConfig).format(pricePix);
+    const fmtOriginal = new Intl.NumberFormat('pt-BR', fmtConfig).format(valPrice);
+
+    let name = prod.name || '';
+    name = name.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase());
+
+    const fmtCard = new Intl.NumberFormat('pt-BR', fmtConfig).format(priceCard);
+
+    let priceHtml = '';
+    if (hasOffer) {
+        priceHtml = `
+            <div class="price-container">
+                <span class="price-old">${fmtOriginal}</span>
+                <span class="price-new">${fmtPix} <small style="font-size: 0.65rem; color: #666; font-weight: 500;">no Pix</small></span>
+            </div>`;
+    } else {
+        priceHtml = `
+            <div class="price-container">
+                <span class="price-old">${fmtCard}</span>
+                <span class="price-new">${fmtPix} <small style="font-size: 0.65rem; color: #666; font-weight: 500;">no Pix</small></span>
+            </div>`;
+    }
+
+    const maxInst = calculateInstallmentsRule(priceCard);
+    let installmentHtml = '';
+    if (maxInst > 1) {
+        installmentHtml = `<div class="installment-text">ou <b>${fmtCard}</b> em até <b>${maxInst}x</b></div>`;
+    } else {
+        installmentHtml = `<div class="installment-text">ou <b>${fmtCard}</b> no cartão</div>`;
+    }
+
+    const stock = parseInt(prod.stock || 0);
+    const isSoldOut = stock <= 0;
+
+    return `
+        <div class="product-card ${isSoldOut ? 'sold-out' : ''}" id="prod-${prod.id}" onclick="window.location.href='product.html?id=${prod.id}'">
+            <div class="product-image">
+                <img src="${displayImg}" alt="${prod.name}" loading="lazy" onload="this.classList.add('loaded')">
+                <button class="cart-btn-overlay" onclick="event.stopPropagation(); addToCartDirect('${prod.id}', '${name}', ${priceCard}, ${pricePix}, '${displayImg}')">
+                    <i class='bx bx-cart-add'></i>
+                </button>
+                ${isSoldOut ? '<div class="sold-out-badge" style="position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.6); color:#fff; text-align:center; font-size:0.75rem; font-weight:700; padding:2px 0; backdrop-filter:blur(2px);">Esgotado</div>' : ''}
+            </div>
+            <div class="product-info">
+                <h4 class="product-name">${name}</h4>
+                ${priceHtml}
+                ${installmentHtml}
+                ${!isSoldOut ? '<div class="free-shipping"><i class=\'bx bxs-truck\'></i> Frete Grátis</div>' : '<div class="free-shipping" style="color:#999"><i class=\'bx bx-time\'></i> Em breve</div>'}
+            </div>
+        </div>`;
+}
+
 function renderProductBatch(products) {
     const container = document.getElementById('firebase-products-container');
+    if (!container) return;
     if (container.querySelector('.skeleton-card')) container.innerHTML = '';
 
     products.forEach(prod => {
         if (document.getElementById(`prod-${prod.id}`)) return;
-
-        let displayImg = prod.imgUrl || 'https://placehold.co/400x400/f8f9fa/c20026?text=Dtudo';
-
-        // Preços de exibição (Venda)
-        const valPrice = parseFloat(prod.price || 0); // Cartão (Cheio)
-        const valOffer = parseFloat(prod['price-oferta'] || 0);
-        const hasOffer = (valOffer > 0 && valOffer < valPrice);
-
-        // Regra Super App: Preço de Venda Base
-        const baseSalePrice = hasOffer ? valOffer : valPrice;
-
-        // Descontos: Cartão (cheio) vs Pix (5% extra)
-        const priceCard = baseSalePrice;
-        const pricePix = baseSalePrice * 0.95;
-
-        const fmtConfig = { style: 'currency', currency: 'BRL' };
-        const fmtPix = new Intl.NumberFormat('pt-BR', fmtConfig).format(pricePix);
-        const fmtOriginal = new Intl.NumberFormat('pt-BR', fmtConfig).format(valPrice);
-
-        let name = prod.name || '';
-        name = name.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase());
-
-        const fmtCard = new Intl.NumberFormat('pt-BR', fmtConfig).format(priceCard);
-
-        let priceHtml = '';
-        if (hasOffer) {
-            // Se tem oferta na planilha, o preço riscado é o Preço Original
-            priceHtml = `
-                <div class="price-container">
-                    <span class="price-old">${fmtOriginal}</span>
-                    <span class="price-new">${fmtPix} <small style="font-size: 0.65rem; color: #666; font-weight: 500;">no Pix</small></span>
-                </div>`;
-        } else {
-            // Se não tem oferta, o preço riscado é o Preço do Cartão (base)
-            priceHtml = `
-                <div class="price-container">
-                    <span class="price-old">${fmtCard}</span>
-                    <span class="price-new">${fmtPix} <small style="font-size: 0.65rem; color: #666; font-weight: 500;">no Pix</small></span>
-                </div>`;
-        }
-
-        const maxInst = calculateInstallmentsRule(priceCard);
-        let installmentHtml = '';
-        if (maxInst > 1) {
-            const instVal = (priceCard / maxInst).toLocaleString('pt-BR', fmtConfig);
-            installmentHtml = `<div class="installment-text">ou <b>${fmtCard}</b> em até <b>${maxInst}x</b></div>`;
-        } else {
-            installmentHtml = `<div class="installment-text">ou <b>${fmtCard}</b> no cartão</div>`;
-        }
-
-        const stock = parseInt(prod.stock || 0);
-        const isSoldOut = stock <= 0;
         const hasUrl = prod.imgUrl && prod.imgUrl.trim() !== "" && !prod.imgUrl.includes('placehold.co') && (prod.imgUrl.startsWith('http') || prod.imgUrl.includes('/'));
-
         if (!hasUrl) return;
 
-        const html = `
-            <div class="product-card ${isSoldOut ? 'sold-out' : ''}" id="prod-${prod.id}" onclick="window.location.href='product.html?id=${prod.id}'">
-                <div class="product-image">
-                    <img src="${displayImg}" alt="${prod.name}" loading="lazy" onload="this.classList.add('loaded')">
-                    <button class="cart-btn-overlay" onclick="event.stopPropagation(); addToCartDirect('${prod.id}', '${name}', ${priceCard}, ${pricePix}, '${displayImg}')">
-                        <i class='bx bx-cart-add'></i>
-                    </button>
-                    ${isSoldOut ? '<div class="sold-out-badge" style="position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.6); color:#fff; text-align:center; font-size:0.75rem; font-weight:700; padding:2px 0; backdrop-filter:blur(2px);">Esgotado</div>' : ''}
-                </div>
-                <div class="product-info">
-                    <h4 class="product-name">${name}</h4>
-                    ${priceHtml}
-                    ${installmentHtml}
-                    ${!isSoldOut ? '<div class="free-shipping"><i class=\'bx bxs-truck\'></i> Frete Grátis</div>' : '<div class="free-shipping" style="color:#999"><i class=\'bx bx-time\'></i> Em breve</div>'}
-                </div>
-            </div>`;
-        container.insertAdjacentHTML('beforeend', html);
+        container.insertAdjacentHTML('beforeend', buildProductCardHTML(prod));
     });
 }
+
+function renderHomeSections(cached) {
+    const container = document.getElementById('home-sections-container');
+    if (!container) return;
+
+    // Filter valid images
+    const validProds = cached.filter(p => p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co') && (p.imgUrl.startsWith('http') || p.imgUrl.includes('/')));
+    const interests = JSON.parse(localStorage.getItem('user_interests') || '[]');
+
+    let destaques = validProds.filter(p => interests.some(i => (p.category || '').toLowerCase().includes(i)));
+    if (destaques.length === 0) destaques = validProds.slice(0, 8);
+    else destaques = destaques.slice(0, 8);
+
+    const novidades = [...validProds].reverse().slice(0, 8);
+    const getCat = (term) => validProds.filter(p => (p.category || '').toLowerCase().includes(term) || (p.name || '').toLowerCase().includes(term)).slice(0, 8);
+
+    const brinquedos = getCat('brinquedo');
+    const cozinha = getCat('cozinha');
+
+    let html = '';
+
+    const createSection = (title, items, filterTag) => {
+        if (!items || items.length === 0) return '';
+        return `
+            <div class="home-dynamic-section" style="margin-bottom: 30px;">
+                <h2 class="section-title" style="margin-bottom: 15px;">${title}</h2>
+                <div class="product-grid" style="margin-bottom: 15px;">
+                    ${items.map(p => buildProductCardHTML(p)).join('')}
+                </div>
+                ${filterTag ? `<div style="text-align: center;">
+                    <button onclick="window.location.href='search.html?q=${encodeURIComponent(filterTag)}'" 
+                            style="background: transparent; color: var(--color-brand-red); border: 2px solid var(--color-brand-red); padding: 8px 24px; border-radius: 20px; font-weight: 700; cursor: pointer; text-transform: uppercase; font-size: 0.85rem; transition: background 0.3s;"
+                            onmouseover="this.style.background='var(--color-brand-red)'; this.style.color='#fff';"
+                            onmouseout="this.style.background='transparent'; this.style.color='var(--color-brand-red)';">
+                        Ver mais em ${title}
+                    </button>
+                </div>` : ''}
+            </div>
+        `;
+    };
+
+    html += createSection('Destaques para você', destaques, null);
+    html += createSection('Novidades', novidades, null); // ou uma categoria especial
+    if (brinquedos.length > 0) html += createSection('Brinquedos', brinquedos, 'brinquedo');
+    if (cozinha.length > 0) html += createSection('Cozinha', cozinha, 'cozinha');
+
+    container.innerHTML = html;
+}
+
 
 // --- BUSCA COM MODAL ---
 window.openSearchModal = function () {
@@ -581,7 +623,7 @@ async function initProductFeed() {
     if (data && data.length > 0) {
         window._apiFetched = true;
         const urlParams = new URLSearchParams(window.location.search);
-        applyLocalFilter(data, urlParams.get('filter') || 'todos');
+        filterLocalCategory(urlParams.get('filter') || 'todos');
 
         // Soft refresh em background
         if (getCachedData()) {
@@ -592,9 +634,6 @@ async function initProductFeed() {
                 }).catch(() => { });
         }
     }
-
-    // Mostra o primeiro lote
-    await fetchMoreProducts();
 
     // Hide custom loader gracefully after cached payload injects
     const customLoader = document.getElementById('custom-loader-overlay');
@@ -615,22 +654,47 @@ window.filterLocalCategory = function (categoryStr) {
     const cached = getCachedData();
     if (!cached) return;
 
-    // Altera interface visual
-    const titleObj = document.querySelector('.section-title');
-    if (titleObj) {
-        if (categoryStr === 'ofertas') titleObj.innerText = 'Promoções Relâmpago ⚡';
-        else if (categoryStr === 'todos' || !categoryStr) titleObj.innerText = 'Destaques para você';
-        else titleObj.innerText = 'Categoria: ' + categoryStr.charAt(0).toUpperCase() + categoryStr.slice(1);
+    categoryStr = categoryStr || 'todos';
+
+    const homeSec = document.getElementById('home-sections-container');
+    const feedCont = document.getElementById('firebase-products-container');
+    const titleObj = document.getElementById('feed-title');
+    const sentinel = document.getElementById('scroll-sentinel');
+
+    if (categoryStr === 'todos') {
+        if (homeSec) homeSec.style.display = 'block';
+        if (feedCont) feedCont.style.display = 'none';
+        if (titleObj) titleObj.style.display = 'none';
+        if (sentinel) sentinel.style.display = 'none';
+
+        renderHomeSections(cached);
+        isLoading = false;
+        allProductsLoaded = true; // disable scroll loading for home
+    } else {
+        if (homeSec) homeSec.style.display = 'none';
+        if (feedCont) {
+            feedCont.style.display = 'grid'; // because it is `.product-grid` wait. The class is product-grid, so it is inherently grid. But let's set display '' to revert to css override.
+            feedCont.style.display = '';
+            feedCont.innerHTML = '';
+        }
+        if (titleObj) {
+            titleObj.style.display = 'block';
+            if (categoryStr === 'ofertas') titleObj.innerText = 'Promoções Relâmpago ⚡';
+            else titleObj.innerText = 'Categoria: ' + categoryStr.charAt(0).toUpperCase() + categoryStr.slice(1);
+        }
+        if (sentinel) sentinel.style.display = 'block';
+
+        isLoading = false;
+        allProductsLoaded = false;
+        window._apiFetched = true;
+
+        registerInterest(categoryStr);
+        applyLocalFilter(cached, categoryStr);
+        fetchMoreProducts();
     }
 
-    document.getElementById('firebase-products-container').innerHTML = '';
-    isLoading = false;
-    allProductsLoaded = false;
-    window._apiFetched = true; // Previne ir no AppScript de novo
-
-    registerInterest(categoryStr);
-    applyLocalFilter(cached, categoryStr);
-    fetchMoreProducts();
+    // Smooth scroll para topo ao filtrar
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
 function applyLocalFilter(cached, categoryStr) {
