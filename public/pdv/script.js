@@ -124,7 +124,7 @@ window.closeModal = (modal) => {
                 const activeModals = document.querySelectorAll('.modal-overlay.active');
                 if (activeModals.length === 0) {
                     const scanner = document.querySelector('.barcode-scanner');
-                    if (scanner) scanner.style.display = 'block';
+                    if (scanner) scanner.style.display = '';
                 }
             }
         }, 300);
@@ -3990,10 +3990,6 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmSplitPaymentBtn.disabled = true;
             updateSplitRemaining();
 
-            // Hide barcode scanner
-            const scanner = document.querySelector('.barcode-scanner');
-            if (scanner) scanner.style.display = 'none';
-
             openModal(paymentModal);
         } else {
             showCustomAlert("Vazio", "Adicione itens primeiro.");
@@ -7775,43 +7771,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (pdvDiscountPopover) pdvDiscountPopover.classList.remove('active');
             pdvSellerPopover.classList.toggle('active');
             console.log("Seller toggle clicked. Active:", pdvSellerPopover.classList.contains('active'));
-        });
-    }
-
-    // Toggle Pagamento (Restaurado)
-    var pdvPaymentRow = document.getElementById('payment-toggle-row');
-    if (pdvPaymentRow) {
-        pdvPaymentRow.addEventListener('click', () => {
-            if (cart.length > 0) {
-                // Seletores locais para garantir acesso
-                var splitPaymentArea = document.getElementById('split-payment-area');
-                var singlePaymentOptions = document.getElementById('single-payment-options');
-                var splitPaymentToggleBtn = document.getElementById('toggle-split-payment-btn');
-                var splitValue1 = document.getElementById('split-value-1');
-                var splitValue2 = document.getElementById('split-value-2');
-                var splitMethod1 = document.getElementById('split-method-1');
-                var splitMethod2 = document.getElementById('split-method-2');
-                var confirmSplitPaymentBtn = document.getElementById('confirm-split-payment-btn');
-                var paymentModal = document.getElementById('payment-modal');
-
-                if (splitPaymentArea) splitPaymentArea.style.display = 'none';
-                if (singlePaymentOptions) singlePaymentOptions.style.display = 'grid';
-                if (splitPaymentToggleBtn) {
-                    splitPaymentToggleBtn.innerHTML = "<i class='bx bx-columns'></i> Dividir Pagamento";
-                    splitPaymentToggleBtn.classList.remove('active');
-                }
-                if (splitValue1) splitValue1.value = '';
-                if (splitValue2) splitValue2.value = '';
-                if (splitMethod1) splitMethod1.value = '';
-                if (splitMethod2) splitMethod2.value = '';
-                if (confirmSplitPaymentBtn) confirmSplitPaymentBtn.disabled = true;
-
-                if (typeof updateSplitRemaining === 'function') updateSplitRemaining();
-                if (typeof openModal === 'function' && paymentModal) openModal(paymentModal);
-            } else {
-                if (typeof showCustomAlert === 'function') showCustomAlert("Vazio", "Adicione itens.");
-                else alert("Adicione itens ao carrinho.");
-            }
         });
     }
 
