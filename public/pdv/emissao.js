@@ -3,8 +3,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- State Management ---
     let currentStep = 1;
-    const totalSteps = 4;
-    const FISCAL_API_URL = "https://southamerica-east1-super-app25.cloudfunctions.net";
+    const totalSteps = 5;
+    const FISCAL_API_URL = "https://emitirnfe-xsy57wqb6q-rj.a.run.app";
+    const API26_URL = "https://script.google.com/macros/s/AKfycbyZtUsI44xA4MQQLZWJ6K93t6ZaSaN6hw7YQw9EclZG9E85kM6yOWQCQ0D-ZJpGmyq4/exec";
 
     let nfeData = {
         dest: {
@@ -84,29 +85,94 @@ document.addEventListener('DOMContentLoaded', () => {
         renderHistory(); // Initialize history view
     }
 
-    function renderHistory() {
+    async function renderHistory() {
         const listContainer = document.getElementById('nfe-history-list');
         if (!listContainer) return;
 
-        // Simulate a small delay for skeletons
-        setTimeout(() => {
-            listContainer.innerHTML = ''; // Clear skeletons
+        try {
+            const response = await fetch(`${API26_URL}?action=listar_notas_fiscais`);
+            const result = await response.json();
 
-            // Re-render draft if it exists
+            listContainer.innerHTML = ''; // Clear skeletons
             renderDraftIndicator();
 
-            // Check if there are any real history items (mock check for now)
-            const draftExists = localStorage.getItem('nfe_draft');
-            if (!draftExists && listContainer.children.length === 0) {
-                listContainer.innerHTML = `
-                    <div class="empty-state-list" style="text-align:center; padding: 4rem 1rem;">
-                        <i class='bx bx-history' style="font-size: 3rem; color: #ddd; margin-bottom: 1rem;"></i>
-                        <p style="color: #aaa;">Nenhuma nota fiscal emitida até o momento.</p>
-                    </div>
-                `;
+            if (result.success && result.data && result.data.length > 0) {
+                // FILTRO: Apenas Modelo 55 (NF-e) - Busca flexível por 55 no campo modelo
+                const items = result.data
+                    .filter(n => String(n.modelo).includes('55'))
+                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+                console.log(`Filtro Modelo 55: ${items.length} notas encontradas de ${result.data.length} totais.`);
+
+                if (items.length === 0) {
+                    showEmptyState(listContainer);
+                    return;
+                }
+
+                items.forEach((nota, idx) => {
+                    const card = document.createElement('div');
+                    card.className = 'nfe-card';
+                    const dataFmt = new Date(nota.timestamp).toLocaleString('pt-BR');
+                    const statusClass = nota.status === 'Autorizada' ? 'status-success' : 'status-error';
+
+                    card.innerHTML = `
+                        <div class="nfe-card-info">
+                            <div class="nfe-card-num">NF-e #${nota.nNF}</div>
+                            <div class="nfe-card-date">${dataFmt}</div>
+                        </div>
+                        <div class="nfe-card-actions" style="display:flex; gap: 10px; align-items:center;">
+                            <div class="nfe-card-status">
+                                <span class="badge ${statusClass}">${nota.status}</span>
+                                <div class="nfe-card-total">R$ ${parseFloat(nota.total || 0).toFixed(2).replace('.', ',')}</div>
+                            </div>
+                            <button class="btn-nfe-action" onclick="window.reimprimirNota(${idx}, 'history')" title="Imprimir DANFE">
+                                <i class='bx bx-printer'></i>
+                            </button>
+                        </div>
+                    `;
+                    // Atach data to window for re-printing
+                    if (!window.historyData) window.historyData = [];
+                    window.historyData[idx] = nota;
+
+                    listContainer.appendChild(card);
+                });
+            } else {
+                showEmptyState(listContainer);
             }
-        }, 800);
+        } catch (err) {
+            console.error("Erro ao carregar histórico:", err);
+            listContainer.innerHTML = '<p class="text-error">Erro ao carregar histórico.</p>';
+        }
     }
+
+    function showEmptyState(container) {
+        const draftExists = localStorage.getItem('nfe_draft');
+        if (!draftExists) {
+            container.innerHTML = `
+                <div class="empty-state-list" style="text-align:center; padding: 4rem 1rem;">
+                    <i class='bx bx-history' style="font-size: 3rem; color: #ddd; margin-bottom: 1rem;"></i>
+                    <p style="color: #aaa;">Nenhuma NF-e (Modelo 55) emitida até o momento.</p>
+                </div>
+            `;
+        }
+    }
+
+    window.reimprimirNota = (idx, source) => {
+        const nota = window.historyData[idx];
+        if (!nota) return;
+
+        // Simular o result que a função imprimirNota espera
+        const mockResult = {
+            nNF: nota.nNF,
+            chave: nota.chave,
+            nProt: nota.protocolo,
+            xml: nota.xml,
+            // Precisamos reconstruir dados para a DANFE se o XML não estiver completo
+            reprintData: nota
+        };
+
+        imprimirNota(mockResult);
+    };
 
     async function fetchProductsFromAPI() {
         const loadingOverlay = document.getElementById('custom-loader-overlay');
@@ -154,7 +220,42 @@ document.addEventListener('DOMContentLoaded', () => {
             resetForm();
             modalEmissao.classList.add('active');
             updatePreview();
+            fetchNextNFeNumber();
         });
+    }
+
+    async function fetchNextNFeNumber() {
+        if (!API26_URL) return;
+
+        const url = `${API26_URL}?action=buscar_proximo_numero_nfe`;
+        const resumoEl = document.getElementById('resumo-nfe-num');
+        const prevEl = document.getElementById('prev-nfe-num');
+
+        if (resumoEl) resumoEl.textContent = 'Carregando...';
+        if (prevEl) prevEl.textContent = '...';
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            let nextNumber = "1";
+            if (data && data.success && data.proximoNumero) {
+                nextNumber = String(data.proximoNumero);
+            }
+
+            const padded = nextNumber.padStart(9, '0');
+            const formattedNumber = padded.replace(/(\d{3})(\d{3})(\d{3})/, '$1.$2.$3');
+
+            if (resumoEl) resumoEl.textContent = formattedNumber;
+            if (prevEl) prevEl.textContent = formattedNumber;
+
+            nfeData.numeroNota = formattedNumber;
+            saveDraft();
+        } catch (e) {
+            console.error("Erro ao buscar próximo número da NFe:", e);
+            if (resumoEl) resumoEl.textContent = "Falha ao carregar";
+            if (prevEl) prevEl.textContent = "000.000";
+        }
     }
 
     window.deleteDraft = function (e) {
@@ -472,6 +573,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             updatePreview();
+            fetchNextNFeNumber();
         }
     };
 
@@ -758,6 +860,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (prevEnd) prevEnd.textContent = destEnd.toUpperCase();
         if (prevDoc) prevDoc.textContent = destDoc;
 
+        // Let's use a cleaner approach targeting the info box
+        const emitBox = document.querySelector('.danfe-section .danfe-info-box');
+        if (emitBox && !emitBox.id.includes('dest')) { // Ensure we are in the EMITENTE section
+            emitBox.innerHTML = `<strong>A N F DA SILVA LTDA</strong><br>
+                                 RUA JARBAS PASSARINHO, SN - CENTRO - IPIXUNA DO PARÁ/PA<br>
+                                 CNPJ: 45.692.327/0001-00 IE: 158228057`;
+        }
+
         const tbody = document.getElementById('prev-items-body');
         if (tbody) {
             tbody.innerHTML = '';
@@ -804,9 +914,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const nfeNumDisplay = document.getElementById('prev-nfe-num');
-        // FIX NUMBER TO 67
         if (nfeNumDisplay) {
-            nfeNumDisplay.textContent = "000.067";
+            nfeNumDisplay.textContent = nfeData.numeroNota || "Carregando...";
         }
 
         saveDraft();
@@ -835,7 +944,7 @@ document.addEventListener('DOMContentLoaded', () => {
             pagamento: nfeData.pag,
             frete: nfeData.frete,
             modelo: "55",
-            nNF: "67" // Fixed as requested
+            nNF: nfeData.numeroNota || "1"
         };
         console.log("Enviando NFE (Mod 55):", finalPayload);
 
@@ -852,10 +961,51 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
 
             if (result.status === "success") {
+                // --- SALVAR NO BANCO DE DADOS (PLANILHA FISCAL VIA API26) ---
+                console.log("💾 Salvando NF-e na planilha database...");
+                try {
+                    const saleId = "MANUAL-" + Date.now();
+
+                    // Mapeamento Amigável de Pagamento
+                    const payMap = { '01': 'Dinheiro', '17': 'PIX', '17-prazo': 'PIX', '03': 'C. Crédito', '04': 'C. Débito', '05': 'Crediário', '90': 'Sem Pagto' };
+                    const payLabel = payMap[nfeData.pag.tipo] || 'Outros';
+
+                    const savePayload = {
+                        action: "salvar_nota_fiscal",
+                        loja: "DT#25",
+                        modelo: "55",
+                        numeroNota: result.nNF || nfeData.numeroNota || "---",
+                        idVenda: saleId,
+                        status: "Autorizada",
+                        operador: "Emissor Manual",
+                        cargo: "Caixa",
+                        pagamento: payLabel,
+                        total: nfeData.pag.valor,
+                        mensagem: result.message || "Emitida com Sucesso",
+                        xml: result.xml || "",
+                        chave: result.chave || "",
+                        protocolo: result.nProt || ""
+                    };
+
+                    // Envio em Segundo Plano (Non-blocking)
+                    fetch(API26_URL, {
+                        method: 'POST',
+                        body: JSON.stringify(savePayload)
+                    }).then(r => r.json())
+                        .then(res => console.log("✅ Registro na Planilha:", res))
+                        .catch(e => console.error("❌ Erro ao salvar na planilha:", e));
+
+                } catch (saveErr) {
+                    console.error("❌ Erro ao preparar payload de salvamento:", saveErr);
+                }
+
+                // --- IMPRESSÃO AUTOMÁTICA ---
+                console.log("🖨️ Acionando impressão da DANFE Completa...");
+                imprimirNota(result);
+
                 alert(`NF-e Emitida com Sucesso!\nNúmero: ${result.nNF}\nChave: ${result.chave}`);
                 modalEmissao.classList.remove('active');
                 clearDraft();
-                location.reload(); // Refresh to see history if implemented
             } else {
                 alert(`Erro na Emissão: ${result.message || 'Erro desconhecido'}`);
             }
@@ -999,5 +1149,319 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
         return resultado === parseInt(digitos.charAt(1));
+    }
+
+    // --- FUNÇÕES DE IMPRESSÃO ---
+
+    function parseNfeXml(xmlString) {
+        if (!xmlString) return null;
+        try {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+
+            const getTag = (tag, parent = xmlDoc) => {
+                const el = parent.getElementsByTagName(tag)[0];
+                return el ? el.textContent : '';
+            };
+
+            const destEl = xmlDoc.getElementsByTagName('dest')[0];
+            if (!destEl) return null;
+
+            const enderDest = destEl.getElementsByTagName('enderDest')[0];
+
+            const items = [];
+            const detList = xmlDoc.getElementsByTagName('det');
+            for (let i = 0; i < detList.length; i++) {
+                const prod = detList[i].getElementsByTagName('prod')[0];
+                items.push({
+                    codigo: getTag('cProd', prod),
+                    descricao: getTag('xProd', prod),
+                    ncm: getTag('NCM', prod),
+                    cfop: getTag('CFOP', prod),
+                    unidade: getTag('uCom', prod),
+                    quantidade: getTag('qCom', prod),
+                    valorUnit: parseFloat(getTag('vUnCom', prod) || 0),
+                    valorTotal: parseFloat(getTag('vProd', prod) || 0)
+                });
+            }
+
+            const icmsTot = xmlDoc.getElementsByTagName('ICMSTot')[0];
+
+            return {
+                dest: {
+                    nome: getTag('xNome', destEl),
+                    doc: getTag('CPF', destEl) || getTag('CNPJ', destEl),
+                    end: `${getTag('xLgr', enderDest)}, ${getTag('nro', enderDest)} - ${getTag('xBairro', enderDest)}`,
+                    mun: getTag('xMun', enderDest),
+                    uf: getTag('UF', enderDest),
+                    cep: getTag('CEP', enderDest),
+                    bairro: getTag('xBairro', enderDest)
+                },
+                items: items,
+                total: parseFloat(getTag('vNF', icmsTot) || 0),
+                vProd: parseFloat(getTag('vProd', icmsTot) || 0),
+                vFrete: parseFloat(getTag('vFrete', icmsTot) || 0)
+            };
+        } catch (e) {
+            console.error("Erro ao parsear XML:", e);
+            return null;
+        }
+    }
+
+    function imprimirNota(result) {
+        // Emissão Profissional DANFE Completa A4
+        const printWindow = window.open('', '_blank');
+
+        // Se for uma nota do histórico, tentamos parsear o XML salvo
+        const isHistory = !!result.reprintData;
+        let d = isHistory ? result.reprintData : nfeData;
+
+        // Se for histórico, o XML é nossa fonte da verdade para preencher o que falta
+        let parsedXmlData = null;
+        if (isHistory && d.xml) {
+            parsedXmlData = parseNfeXml(d.xml);
+        }
+
+        const nNF = (result.nNF || d.nNF || d.numeroNota || "0").toString().padStart(9, '0');
+        const chaveFmt = (result.chave || d.chave || "0").replace(/(.{4})/g, '$1 ').trim();
+        const dataEmi = isHistory ? new Date(d.timestamp).toLocaleString('pt-BR') : new Date().toLocaleString('pt-BR');
+        const nProt = result.nProt || d.protocolo || "---";
+
+        // Mapeamento emitente (Padrão)
+        const emit = {
+            nome: "A N F DA SILVA LTDA",
+            cnpj: "45.692.327/0001-00",
+            ie: "158228057",
+            end: "RUA JARBAS PASSARINHO, SN - CENTRO",
+            mun: "IPIXUNA DO PARÁ - PA",
+            cep: "68637-000",
+            fone: "(91) 99237-5194"
+        };
+
+        // Dados do Destinatário
+        let dest = {};
+        if (parsedXmlData) {
+            dest = parsedXmlData.dest;
+        } else if (isHistory) {
+            dest = {
+                nome: "NÃO ENCONTRADO NO XML",
+                doc: d.idVenda,
+                end: "Endereço não disponível",
+                bairro: "---",
+                cep: "---"
+            };
+        } else {
+            dest = {
+                nome: d.dest.nome.toUpperCase(),
+                doc: d.dest.cpf,
+                end: `${d.dest.rua}, ${d.dest.num} - ${d.dest.bairro}`,
+                mun: d.dest.municipio,
+                uf: d.dest.uf,
+                cep: d.dest.cep,
+                bairro: d.dest.bairro.toUpperCase()
+            };
+        }
+
+        // Dados dos Itens
+        let itensHtml = '';
+        let vProdutos = 0;
+        let vFrete = 0;
+        let vFinal = 0;
+
+        if (parsedXmlData) {
+            vProdutos = parsedXmlData.vProd;
+            vFrete = parsedXmlData.vFrete;
+            vFinal = parsedXmlData.total;
+            parsedXmlData.items.forEach(it => {
+                itensHtml += `
+                    <tr>
+                        <td>${it.codigo}</td>
+                        <td>${it.descricao.toUpperCase()}</td>
+                        <td>${it.ncm}</td>
+                        <td>${it.cfop}</td>
+                        <td>${it.unidade}</td>
+                        <td>${it.quantidade}</td>
+                        <td>${it.valorUnit.toFixed(2).replace('.', ',')}</td>
+                        <td>${it.valorTotal.toFixed(2).replace('.', ',')}</td>
+                    </tr>
+                `;
+            });
+        } else if (!isHistory) {
+            vProdutos = nfeData.items.reduce((acc, item) => acc + item.valorTotal, 0);
+            vFrete = parseFloat(nfeData.frete.valor || 0);
+            vFinal = vProdutos + vFrete;
+            d.items.forEach(it => {
+                itensHtml += `
+                    <tr>
+                        <td>${it.codigo || '---'}</td>
+                        <td>${it.descricao.toUpperCase()}</td>
+                        <td>${it.ncm}</td>
+                        <td>${it.cfop || '5102'}</td>
+                        <td>${it.unidade}</td>
+                        <td>${it.quantidade}</td>
+                        <td>${parseFloat(it.valorUnit).toFixed(2).replace('.', ',')}</td>
+                        <td>${parseFloat(it.valorTotal).toFixed(2).replace('.', ',')}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>DANFE NF-E - ${nNF}</title>
+                <style>
+                    body { font-family: 'Arial', sans-serif; font-size: 9px; margin: 0; padding: 15px; color: #000; line-height: 1.1; }
+                    .danfe-box { width: 100%; border: 1px solid #000; margin-bottom: -1px; display: flex; }
+                    .danfe-container { width: 100%; max-width: 800px; margin: auto; }
+                    .border-all { border: 1px solid #000; }
+                    .padding-5 { padding: 5px; }
+                    .text-center { text-align: center; }
+                    .text-right { text-align: right; }
+                    .bold { font-weight: bold; }
+                    .label { font-size: 7px; display: block; text-transform: uppercase; margin-bottom: 2px; }
+                    .value { font-size: 10px; font-weight: bold; }
+                    
+                    .header-left { width: 35%; border: 1px solid #000; padding: 5px; }
+                    .header-mid { width: 15%; border: 1px solid #000; padding: 5px; text-align: center; }
+                    .header-right { width: 50%; border: 1px solid #000; padding: 5px; }
+                    
+                    .canhoto { border: 1px solid #000; padding: 8px; margin-bottom: 15px; font-size: 8px; border-style: none none dashed none; padding-bottom: 15px; }
+                    .section-title { background: #eee; font-weight: bold; padding: 3px; border: 1px solid #000; margin-top: 5px; text-align: center; font-size: 8px; }
+                    
+                    .table-data { width: 100%; border-collapse: collapse; margin-top: -1px; }
+                    .table-data td { border: 1px solid #000; padding: 4px; vertical-align: top; }
+                    
+                    .prod-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+                    .prod-table th { border: 1px solid #000; font-size: 7px; background: #f2f2f2; padding: 4px; }
+                    .prod-table td { border: 1px solid #000; padding: 3px; font-size: 8px; }
+
+                    .barcode-placeholder { 
+                        width: 100%; 
+                        height: 35px; 
+                        background: repeating-linear-gradient(90deg, #000, #000 1px, #fff 1px, #fff 3px);
+                        margin: 5px 0;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="canhoto">
+                    <div style="display:flex; justify-content: space-between;">
+                        <div style="width: 80%;">RECEBEMOS DE ${emit.nome} OS PRODUTOS/SERVIÇOS CONSTANTES DA NOTA FISCAL INDICADA AO LADO</div>
+                        <div style="text-align:center;">NF-E<br><span style="font-size:10px; font-weight:bold;">Nº ${nNF}</span><br>SÉRIE 1</div>
+                    </div>
+                    <div style="margin-top:10px; border-top: 1px solid #000; padding-top:5px;">
+                        DATA DE RECEBIMENTO: ____/____/_______  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; IDENTIFICAÇÃO E ASSINATURA DO RECEBEDOR: __________________________________________________
+                    </div>
+                </div>
+
+                <div class="danfe-container">
+                    <div class="danfe-box">
+                        <div class="header-left">
+                            <div class="value" style="font-size: 11px;">${emit.nome}</div>
+                            <div style="font-size: 8px; margin-top:5px;">
+                                ${emit.end}<br>
+                                ${emit.mun}<br>
+                                CEP: ${emit.cep}<br>
+                                Fone: ${emit.fone}
+                            </div>
+                        </div>
+                        <div class="header-mid">
+                            <div class="bold" style="font-size: 14px;">DANFE</div>
+                            <div style="font-size: 7px;">Documento Auxiliar da<br>Nota Fiscal Eletrônica</div>
+                            <div style="margin: 5px 0; font-size: 9px;">0 - Entrada<br>1 - Saída &nbsp; <span class="border-all" style="padding:0 3px;">1</span></div>
+                            <div class="bold">N. ${nNF}</div>
+                            <div class="bold">SÉRIE 1</div>
+                            <div style="font-size: 7px;">FL 1/1</div>
+                        </div>
+                        <div class="header-right">
+                            <div class="barcode-placeholder"></div>
+                            <div class="label">Chave de Acesso</div>
+                            <div class="value" style="font-size: 9px; letter-spacing: 0.5px;">${chaveFmt}</div>
+                            <div class="label" style="margin-top:5px;">Consulta de autenticidade no portal nacional da NF-e www.nfe.fazenda.gov.br/portal ou no site da Sefaz Autorizadora</div>
+                        </div>
+                    </div>
+
+                    <table class="table-data">
+                        <tr>
+                            <td style="width: 50%;"><span class="label">Natureza da Operação</span><span class="value">VENDA DENTRO DO ESTADO</span></td>
+                            <td style="width: 50%;"><span class="label">Protocolo de Autorização de Uso</span><span class="value">${nProt} - ${dataEmi}</span></td>
+                        </tr>
+                    </table>
+                    <table class="table-data">
+                        <tr>
+                            <td style="width: 33%;"><span class="label">Inscrição Estadual</span><span class="value">${emit.ie}</span></td>
+                            <td style="width: 33%;"><span class="label">Insc. Est. do Subst. Trib.</span><span class="value">---</span></td>
+                            <td style="width: 34%;"><span class="label">CNPJ</span><span class="value">${emit.cnpj}</span></td>
+                        </tr>
+                    </table>
+
+                    <div class="section-title">DESTINATÁRIO / REMETENTE</div>
+                    <table class="table-data">
+                        <tr>
+                            <td style="width: 55%;"><span class="label">Nome / Razão Social</span><span class="value">${dest.nome}</span></td>
+                            <td style="width: 25%;"><span class="label">CNPJ / CPF</span><span class="value">${dest.doc}</span></td>
+                            <td style="width: 20%;"><span class="label">Data de Emissão</span><span class="value">${dataEmi.split(' ')[0]}</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="label">Endereço</span><span class="value">${dest.end}</span></td>
+                            <td><span class="label">Bairro / Distrito</span><span class="value">${dest.bairro}</span></td>
+                            <td><span class="label">CEP</span><span class="value">${dest.cep}</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="label">Município</span><span class="value">${dest.mun}</span></td>
+                            <td><span class="label">UF</span><span class="value">${dest.uf || 'PA'}</span></td>
+                            <td><span class="label">Fone / Fax</span><span class="value">---</span></td>
+                        </tr>
+                    </table>
+
+                    <div class="section-title">CÁLCULO DO IMPOSTO</div>
+                    <table class="table-data">
+                        <tr>
+                            <td><span class="label">Base de Calc. ICMS</span><span class="value">0,00</span></td>
+                            <td><span class="label">Valor do ICMS</span><span class="value">0,00</span></td>
+                            <td><span class="label">Valor Total dos Produtos</span><span class="value">R$ ${vProdutos.toFixed(2).replace('.', ',')}</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="label">Valor do Frete</span><span class="value">R$ ${vFrete.toFixed(2).replace('.', ',')}</span></td>
+                            <td><span class="label">Valor do Seguro</span><span class="value">0,00</span></td>
+                            <td><span class="label">Valor Total da Nota</span><span class="value">R$ ${vFinal.toFixed(2).replace('.', ',')}</span></td>
+                        </tr>
+                    </table>
+
+                    <div class="section-title">DADOS DOS PRODUTOS / SERVIÇOS</div>
+                    <table class="prod-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 8%;">Cód. Prod.</th>
+                                <th style="width: 40%;">Descrição do Produto</th>
+                                <th style="width: 8%;">NCM</th>
+                                <th style="width: 5%;">CFOP</th>
+                                <th style="width: 4%;">UN</th>
+                                <th style="width: 7%;">Qtd.</th>
+                                <th style="width: 14%;">V. Unitário</th>
+                                <th style="width: 14%;">V. Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itensHtml}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="position: fixed; bottom: 20px; left: 0; right: 0; text-align: center; border-top: 1px solid #ccc; font-size: 7px; padding-top: 5px;">
+                    DADOS ADICIONAIS: DOCUMENTO EMITIDO POR ME OU EPP OPTANTE PELO SIMPLES NACIONAL. NÃO GERA DIREITO A CRÉDITO FISCAL DE IPI.
+                </div>
+
+                <script>
+                    window.onload = function() {
+                        setTimeout(() => { window.print(); }, 500);
+                    };
+                </script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
     }
 });

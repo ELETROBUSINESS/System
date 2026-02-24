@@ -56,7 +56,7 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    z-index: 2000;
+    z-index: 3000;
     text-align: center;
     color: var(--text-dark);
     transition: opacity 0.3s ease;
@@ -2007,8 +2007,8 @@ body {
 /* Quando um cliente real Ã© selecionado, muda a cor da borda */
 .client-summary-box.active-client {
     background: #fff;
-    border-color: var(--primary-red);
-    box-shadow: 0 4px 12px rgba(219, 0, 56, 0.08);
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .client-box-header {
@@ -2037,6 +2037,7 @@ body {
 .active-client .client-icon-avatar {
     background: var(--primary-red);
     color: #fff;
+    box-shadow: 0 0 0 4px rgba(219, 0, 56, 0.1);
 }
 
 .client-text-data {
@@ -3048,7 +3049,7 @@ body {
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
-    z-index: 1000;
+    z-index: 2000;
     overflow-y: auto;
     padding: 20px;
 }
@@ -7142,72 +7143,133 @@ input:checked+.slider:before {
 }
 
 /* Crediario/Client Auth */
+/* Crediario/Client Auth - Enhanced */
 .client-auth-card {
     display: flex;
     align-items: center;
-    gap: 12px;
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    padding: 12px;
-    border-radius: 12px;
-    margin-bottom: 20px;
+    gap: 15px;
+    background: #ffffff;
+    border: 1px solid #f1f5f9;
+    padding: 16px;
+    border-radius: 16px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 .auth-avatar {
-    width: 40px;
-    height: 40px;
-    background: #e5e7eb;
-    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    background: #fee2e2;
+    border-radius: 12px;
     display: grid;
     place-items: center;
-    color: #4b5563;
-    font-size: 1.2rem;
+    color: var(--primary-red);
+    font-size: 1.5rem;
 }
 
 .auth-info strong {
     display: block;
-    font-size: 0.95rem;
-    color: #1f2937;
+    font-size: 1.05rem;
+    color: #0f172a;
+    font-weight: 700;
 }
 
 .auth-info button {
-    background: none;
+    background: #f1f5f9;
     border: none;
-    padding: 0;
-    color: #db0038;
+    padding: 4px 12px;
+    color: #64748b;
     font-weight: 600;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     cursor: pointer;
-    text-decoration: underline;
-    margin-top: 2px;
+    border-radius: 6px;
+    text-decoration: none;
+    margin-top: 6px;
+    transition: all 0.2s;
+}
+
+.auth-info button:hover {
+    background: #e2e8f0;
+    color: var(--text-dark);
+}
+
+.installments-box label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    display: block;
 }
 
 .modern-select {
     width: 100%;
-    padding: 14px;
-    border-radius: 12px;
-    border: 1px solid #d1d5db;
+    padding: 16px;
+    border-radius: 14px;
+    border: 2px solid #f1f5f9;
     font-size: 1rem;
-    color: #1f2937;
-    background: #fff;
-    margin-top: 8px;
+    color: #1e293b;
+    background: #f8fafc;
+    margin-top: 5px;
     outline: none;
     cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
 }
 
 .modern-select:focus {
-    border-color: #db0038;
+    border-color: var(--primary-red);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(219, 0, 56, 0.05);
 }
 
 .preview-box {
-    margin-top: 15px;
+    margin: 20px 0;
     text-align: center;
-    background: #fff1f2;
-    color: #be123c;
+    background: linear-gradient(135deg, #fff1f2 0%, #fff 100%);
+    color: var(--primary-red);
+    font-weight: 800;
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid #fee2e2;
+    font-size: 1.25rem;
+    box-shadow: 0 10px 20px rgba(219, 0, 56, 0.04);
+}
+
+/* Badges de Cadastro para o Resumo */
+.pdv-client-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.data-badge {
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.65rem;
     font-weight: 700;
-    padding: 12px;
-    border-radius: 10px;
-    border: 1px dashed #fecaca;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    text-transform: uppercase;
+}
+
+.data-badge.warning {
+    background: #fef2f2;
+    color: var(--primary-red);
+    border: 1px solid #fee2e2;
+}
+
+.data-badge.success {
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #dcfce7;
+}
+
+.data-badge i {
+    font-size: 0.8rem;
 }
 
 /* Modern Split Area */
@@ -7861,7 +7923,7 @@ input:checked+.slider:before {
 .barcode-scanner {
     position: relative;
     /* Container relativo para o absoluto */
-    z-index: 1000;
+    z-index: 900;
 }
 
 .barcode-search-results {

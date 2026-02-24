@@ -119,6 +119,9 @@ function doGet(e) {
             case 'listar_notas_fiscais':
                 response = listarNotasFiscaisTransicao();
                 break;
+            case 'buscar_proximo_numero_nfe':
+                response = buscarProximoNumeroNFe();
+                break;
             default:
                 response = { success: false, message: "Rota GET não encontrada." };
         }
@@ -754,4 +757,38 @@ function listarNotasFiscaisTransicao() {
     }
 
     return { success: true, data: data };
+}
+
+// ==========================================
+// FUNÇÃO: BUSCAR PRÓXIMO NÚMERO DA NFE (MODELO 55)
+// ==========================================
+function buscarProximoNumeroNFe() {
+    const FISCAL_SHEET_NAME = 'Fiscal';
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName(FISCAL_SHEET_NAME);
+
+    // Se não houver aba ou linhas suficientes, a próxima nota é 1
+    if (!sheet) return { success: true, proximoNumero: 1 };
+
+    const rows = sheet.getDataRange().getValues();
+    if (rows.length <= 1) return { success: true, proximoNumero: 1 };
+
+    let maxNumero = 0;
+
+    // Coluna B (índice 1) é o Modelo. Coluna C (índice 2) é o Nº Nota.
+    for (let i = 1; i < rows.length; i++) {
+        const modelo = String(rows[i][1]).trim();
+        if (modelo === '55') {
+            const num = parseInt(rows[i][2], 10);
+            if (!isNaN(num) && num > maxNumero) {
+                maxNumero = num;
+            }
+        }
+    }
+
+    return {
+        success: true,
+        proximoNumero: maxNumero + 1,
+        modeloReferencia: '55'
+    };
 }

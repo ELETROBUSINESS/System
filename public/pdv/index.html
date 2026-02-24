@@ -151,8 +151,8 @@
                             placeholder="Busque por nome..." autocomplete="off" data-primary-focus="true">
                     </div>
 
-                    <button class="btn-square-add" id="btn-new-client-modal" title="Novo Cliente">
-                        <i class='bx bx-plus'></i>
+                    <button class="btn-icon-small" id="btn-new-client-modal" title="Pesquisar">
+                        <i class='bx bx-search'></i>
                     </button>
                 </div>
 
@@ -179,6 +179,8 @@
             </div>
         </div>
     </div>
+
+
 
     <!-- Advanced Search Modal -->
     <div class="modal-overlay" id="adv-search-modal" style="z-index: 10001;">
@@ -841,6 +843,9 @@
                                 </div>
                             </div>
 
+                            <!-- Badges de Cadastro -->
+                            <div class="pdv-client-badges" id="summary-client-badges" style="display: none;"></div>
+
                             <!-- Formulário de Cadastro Rápido na Nota (Expandable) -->
                             <div id="quick-client-register-area"
                                 style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #e5e7eb;">
@@ -963,6 +968,19 @@
                             <div class="calc-row" id="infinitepay-tax-row">
                                 <span class="calc-label">Taxa InfinitePay</span>
                                 <span id="infinitepay-tax-val">R$ 0,00</span>
+                            </div>
+
+                            <!-- Novo: Cronograma de Parcelas para Crediário -->
+                            <div id="crediario-installments-summary"
+                                style="display: none; margin-top: 12px; border-top: 1px dashed #e2e8f0; padding-top: 12px;">
+                                <div
+                                    style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                                    Projeção de Parcelas
+                                </div>
+                                <div id="crediario-installments-list"
+                                    style="display: flex; flex-direction: column; gap: 4px;">
+                                    <!-- Injetado via JS -->
+                                </div>
                             </div>
                         </div>
 
@@ -1797,8 +1815,15 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Estoque Atual</label>
-                                    <input type="number" id="edit-prod-stock" disabled class="bg-locked"
-                                        title="Use Entrada de Nota">
+                                    <div class="input-group-lock">
+                                        <input type="number" id="edit-prod-stock" disabled class="bg-locked"
+                                            title="Use Entrada de Estoque">
+                                        <button type="button" class="btn-unlock" id="btn-add-stock"
+                                            title="Atualizar / Entrada de Estoque"
+                                            style="background:#f0fdf4; color:#16a34a; border-radius:8px;">
+                                            <i class='bx bx-layer-plus'></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <div class="profit-stats">
@@ -2128,14 +2153,14 @@
                             </div>
                         </div>
 
-                        <div class="installments-box" style="display: none;">
+                        <div class="installments-box">
                             <label>Parcelamento</label>
                             <select id="sale-installments" class="modern-select">
                                 <option value="1">1x (À vista na Fatura)</option>
                             </select>
                         </div>
 
-                        <div class="preview-box" id="installment-preview" style="display: none;">
+                        <div class="preview-box" id="installment-preview">
                             1x de R$ 0,00
                         </div>
 
@@ -2584,7 +2609,7 @@
         <div class="brand-row">
             <img src="assets/sistema.png" alt="Logo" class="brand-img-icon">
 
-            <span class="brand-name-text">ELETRO<span class="highlight-dot">. 1.0.0.46</span></span>
+            <span class="brand-name-text">ELETRO<span class="highlight-dot">. 1.0.0.47</span></span>
         </div>
     </div>
     <div class="pn">

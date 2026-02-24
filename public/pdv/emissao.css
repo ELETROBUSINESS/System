@@ -401,7 +401,9 @@ body {
 
 .danfe-main-header {
     display: grid;
-    grid-template-columns: 1fr 120px;
+    grid-template-columns: 80px 1fr 120px;
+    align-items: center;
+    gap: 10px;
     padding-bottom: 10px;
     margin-bottom: 10px;
 }
@@ -825,4 +827,42 @@ body {
 .btn-action-delete:hover {
     color: #fa5252;
     background: #fff5f5;
+}
+
+.btn-nfe-action {
+    background: #000;
+    color: #fff;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 1.2rem;
+}
+
+.btn-nfe-action:hover {
+    background: #333;
+    transform: scale(1.05);
+}
+
+.status-success {
+    background: #e6ffed;
+    color: #218838;
+}
+
+.status-error {
+    background: #fff5f5;
+    color: #fa5252;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
 }

@@ -104,6 +104,10 @@ var mapStatusFirebaseToUI = (fbStatus) => {
 window.openModal = (modal) => {
     if (modal) {
         modal.style.display = 'flex';
+        // Hide barcode scanner when any modal is open to focus user attention
+        const scanner = document.querySelector('.barcode-scanner');
+        if (scanner) scanner.style.display = 'none';
+
         // Small timeout to allow display change to register before adding active class for transition
         setTimeout(() => modal.classList.add('active'), 10);
     }
@@ -113,7 +117,16 @@ window.closeModal = (modal) => {
     if (modal) {
         modal.classList.remove('active');
         setTimeout(() => {
-            if (!modal.classList.contains('active')) modal.style.display = 'none';
+            if (!modal.classList.contains('active')) {
+                modal.style.display = 'none';
+
+                // Re-enable barcode scanner if no other modal is active
+                const activeModals = document.querySelectorAll('.modal-overlay.active');
+                if (activeModals.length === 0) {
+                    const scanner = document.querySelector('.barcode-scanner');
+                    if (scanner) scanner.style.display = 'block';
+                }
+            }
         }, 300);
     }
 };
@@ -724,9 +737,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (optionsGrid && cashSection) {
                     optionsGrid.style.display = 'none';
                     cashSection.style.display = 'block';
+                    // Hide barcode scanner when in cash section or payment modal is too busy
+                    const scanner = document.querySelector('.barcode-scanner');
+                    if (scanner) scanner.style.display = 'none';
                     setTimeout(() => document.getElementById('cash-received').focus(), 150);
                 }
             } else if (method === 'Crediário') {
+                const scanner = document.querySelector('.barcode-scanner');
+                if (scanner) scanner.style.display = 'none';
                 if (!selectedCrediarioClient) {
                     isReturningToPayment = true;
                     closeModal(paymentModal);
@@ -744,6 +762,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (optionsGrid && cardOptions) {
                     optionsGrid.style.display = 'none';
                     cardOptions.style.display = 'flex';
+                    const scanner = document.querySelector('.barcode-scanner');
+                    if (scanner) scanner.style.display = 'none';
                 }
             } else {
                 // Para PIX, Débito e Movecard
@@ -920,7 +940,9 @@ document.addEventListener('DOMContentLoaded', () => {
         window.tempInstallments = numParcelas;
 
         // Atualiza resumo
-        document.getElementById('summary-payment-method').textContent = `Crediário (${numParcelas}x)`;
+        const payLabel = document.getElementById('summary-payment-method');
+        payLabel.textContent = `Crediário (${numParcelas}x)`;
+        payLabel.style.color = "var(--text-dark)";
         updateSummary();
 
         closeModal(document.getElementById('payment-modal'));
@@ -997,13 +1019,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const paymentLabel = document.getElementById('summary-payment-method');
 
         if (paymentRow) {
-            // Adiciona a borda vermelha pulsante
-            paymentRow.classList.add('border-pulse');
+            // Removida a borda vermelha pulsante a pedido do usuário
+            // paymentRow.classList.add('border-pulse');
 
-            // Opcional: Muda o texto para "Definir Pagamento" em vermelho
             if (paymentLabel.textContent === 'Não selecionado') {
-                paymentLabel.textContent = "Definir Pagamento!";
-                paymentLabel.style.color = "var(--warning-red)";
+                paymentLabel.textContent = "Definir Pagamento";
+                paymentLabel.style.color = "var(--text-light)";
             }
         }
 
@@ -1050,26 +1071,72 @@ document.addEventListener('DOMContentLoaded', () => {
             // 1. MOSTRA o botão de remover (SEMPRE que tiver cliente)
             if (btnRemoveClient) btnRemoveClient.style.display = 'inline-flex';
 
+            // --- NOVO: Preencher a ficha do cliente com os dados já existentes ---
+            const qName = document.getElementById('quick-client-name');
+            const qCpf = document.getElementById('quick-client-cpf');
+            const qDob = document.getElementById('quick-client-dob');
+            const qAddress = document.getElementById('quick-client-address');
+
+            if (qName) qName.value = selectedCrediarioClient.nomeCompleto || selectedCrediarioClient.nomeExibicao || '';
+            if (qCpf) qCpf.value = selectedCrediarioClient.cpf || '';
+            if (qAddress) qAddress.value = selectedCrediarioClient.endereco || '';
+
+            if (qDob) {
+                const rawDate = selectedCrediarioClient.dataNascimento;
+                if (rawDate && String(rawDate).includes('/')) {
+                    const parts = String(rawDate).split('/');
+                    if (parts.length === 3) {
+                        qDob.value = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                    }
+                } else {
+                    qDob.value = rawDate || '';
+                }
+            }
+
+            // --- NOVO: LÓGICA DE BADGES DE DADOS FALTANTES ---
+            const badgeContainer = document.getElementById('summary-client-badges');
+            if (badgeContainer) {
+                badgeContainer.innerHTML = '';
+                badgeContainer.style.display = 'flex';
+
+                const fields = [
+                    { key: 'cpf', label: 'CPF', icon: 'bx-id-card' },
+                    { key: 'endereco', label: 'Endereço', icon: 'bx-map' },
+                    { key: 'dataNascimento', label: 'Nascimento', icon: 'bx-calendar' }
+                ];
+
+                fields.forEach(f => {
+                    const value = selectedCrediarioClient[f.key];
+                    const strVal = String(value || '').trim().toLowerCase();
+
+                    // Considera faltante se: vazio, 0, "não informado", "rua..", ou apenas pontos
+                    const isMissing = !value || strVal === '' || strVal === '0' ||
+                        strVal === 'não informado' || strVal === 'rua..' ||
+                        strVal === '.' || strVal.includes('000.000');
+
+                    if (isMissing) {
+                        const badge = document.createElement('div');
+                        badge.className = 'data-badge warning';
+                        badge.innerHTML = `<i class='bx bx-error-circle'></i> ${f.label} ⚠`;
+                        badge.title = `Faltando ${f.label}`;
+                        badgeContainer.appendChild(badge);
+                    }
+                });
+            }
+
             // Lógica da Barra de Crédito
             const limite = parseFloat(selectedCrediarioClient.limite) || 0;
-
             if (limite > 0) {
                 creditInfo.style.display = 'block';
-
                 const dividaAntiga = parseFloat(selectedCrediarioClient.saldoDevedor) || 0;
                 const compraAtual = lastSaleData ? lastSaleData.total : 0;
-
                 const disponivelReal = limite - dividaAntiga;
                 const saldoFinalPrevisto = disponivelReal - compraAtual;
-
                 limitValue.textContent = formatCurrency(saldoFinalPrevisto);
-
                 const usoTotal = dividaAntiga + compraAtual;
                 let percentual = (usoTotal / limite) * 100;
                 if (percentual > 100) percentual = 100;
-
                 limitFill.style.width = `${percentual}%`;
-
                 if (saldoFinalPrevisto < 0) {
                     limitFill.classList.add('danger');
                     limitValue.style.color = 'var(--warning-red)';
@@ -1078,22 +1145,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     limitValue.style.color = 'var(--text-dark)';
                 }
             } else {
-                // Cliente selecionado mas sem limite: Esconde SÓ a barra de crédito
                 creditInfo.style.display = 'none';
-                // (A linha que escondia o botão foi removida daqui)
             }
-
         } else {
             // --- CONSUMIDOR FINAL (Nenhum cliente selecionado) ---
             card.classList.remove('active-client');
             nameText.textContent = "Consumidor Final";
             nameText.style.color = "#94a3b8";
-
-            // ESCONDE o botão de remover
             if (btnRemoveClient) btnRemoveClient.style.display = 'none';
-
-            // Esconde info de crédito
             creditInfo.style.display = 'none';
+
+            const badgeContainer = document.getElementById('summary-client-badges');
+            if (badgeContainer) badgeContainer.style.display = 'none';
+
+            // Limpa os campos da ficha
+            const qName = document.getElementById('quick-client-name');
+            const qCpf = document.getElementById('quick-client-cpf');
+            const qDob = document.getElementById('quick-client-dob');
+            const qAddress = document.getElementById('quick-client-address');
+            if (qName) qName.value = '';
+            if (qCpf) qCpf.value = '';
+            if (qDob) qDob.value = '';
+            if (qAddress) qAddress.value = '';
         }
     };
 
@@ -1359,11 +1432,49 @@ document.addEventListener('DOMContentLoaded', () => {
             // Se for dinheiro ou taxa 0
             if (selectedPaymentMethod === 'Dinheiro' || !selectedPaymentMethod) {
                 if (taxRow) taxRow.style.display = 'none';
+            } else if (selectedPaymentMethod === 'Crediário') {
+                // Esconde se for crediário
+                if (taxRow) taxRow.style.display = 'none';
             } else {
                 // Exibe 0,00 se for Pix (rate 0) ou outro
                 if (taxValEl) taxValEl.textContent = formatCurrency(0);
                 if (taxRow) taxRow.style.display = 'flex';
             }
+        }
+
+        // --- NOVO: LÓGICA DE PARCELAS CREDIÁRIO NO RESUMO ---
+        const crediarioSummary = document.getElementById('crediario-installments-summary');
+        const crediarioList = document.getElementById('crediario-installments-list');
+
+        if (selectedPaymentMethod === 'Crediário') {
+            if (crediarioSummary) crediarioSummary.style.display = 'block';
+
+            if (crediarioList) {
+                crediarioList.innerHTML = '';
+                const numParcelas = parseInt(window.tempInstallments) || 1;
+                const valorParcela = finalTotal / numParcelas;
+
+                const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+                const hoje = new Date();
+
+                for (let i = 1; i <= numParcelas; i++) {
+                    const dataParcela = new Date(hoje.getFullYear(), hoje.getMonth() + i, hoje.getDate());
+                    const nomeMes = meses[dataParcela.getMonth()];
+
+                    const item = document.createElement('div');
+                    item.style.display = 'flex';
+                    item.style.justifyContent = 'space-between';
+                    item.style.fontSize = '0.85rem';
+                    item.style.padding = '2px 0';
+                    item.innerHTML = `
+                        <span style="color: #64748b;">${i}/${numParcelas} ${nomeMes}</span>
+                        <span style="font-weight: 600; color: var(--text-dark);">${formatCurrency(valorParcela)}</span>
+                    `;
+                    crediarioList.appendChild(item);
+                }
+            }
+        } else {
+            if (crediarioSummary) crediarioSummary.style.display = 'none';
         }
         // -----------------------------------
 
@@ -2222,6 +2333,48 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-reload-products')?.addEventListener('click', () => {
         carregarCacheDeProdutos();
     });
+
+    // 5. Atualizar Preview da Imagem no Formulário
+    const inputImgUrl = document.getElementById('edit-prod-img-url');
+    if (inputImgUrl) {
+        inputImgUrl.addEventListener('input', (e) => {
+            if (typeof updateImagePreview === 'function') {
+                updateImagePreview(e.target.value.trim());
+            }
+        });
+    }
+
+    // 6. Botão de Entrada de Estoque (Abre a Atualização de Produto)
+    const btnAddStock = document.getElementById('btn-add-stock');
+    if (btnAddStock) {
+        btnAddStock.addEventListener('click', () => {
+            const currentCode = document.getElementById('edit-prod-code').value.trim();
+            if (!currentCode) {
+                if (typeof showCustomAlert === 'function') {
+                    showCustomAlert("Atenção", "O código do produto não está definido ou o produto ainda não foi salvo na nuvem.");
+                }
+                return;
+            }
+
+            const updateModal = document.getElementById('update-product-modal');
+            if (updateModal) {
+                // Fecha o modal atual para não ficarem sobrepostos confusamente (opcional)
+                // const editModal = document.getElementById('edit-product-modal');
+                // if (editModal) editModal.classList.remove('open');
+
+                const inputBarcode = document.getElementById('update-prod-barcode');
+                if (inputBarcode) {
+                    inputBarcode.value = currentCode;
+                    // Força a busca do produto na API para puxar os dados atuais
+                    setTimeout(() => {
+                        const btnSearch = document.getElementById('btn-search-update-prod');
+                        if (btnSearch) btnSearch.click();
+                    }, 200);
+                }
+                if (typeof openModal === 'function') openModal(updateModal);
+            }
+        });
+    }
 
     // --- PEDIDO 2: SALVAR CLIENTE (Lógica Simplificada) ---
     const formAddCliente = document.getElementById('add-cliente-form');
@@ -3824,7 +3977,28 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     // Porcentagem input removed
     removeDiscountBtn.addEventListener('click', removeDiscount);
-    // paymentToggleRow.addEventListener('click', () => { if (cart.length > 0) { splitPaymentArea.style.display = 'none'; singlePaymentOptions.style.display = 'grid'; splitPaymentToggleBtn.innerHTML = "<i class='bx bx-columns'></i> Dividir Pagamento"; splitPaymentToggleBtn.classList.remove('active'); splitValue1.value = ''; splitValue2.value = ''; splitMethod1.value = ''; splitMethod2.value = ''; confirmSplitPaymentBtn.disabled = true; updateSplitRemaining(); openModal(paymentModal); } else { showCustomAlert("Vazio", "Adicione itens."); } });
+    paymentToggleRow.addEventListener('click', () => {
+        if (cart.length > 0) {
+            splitPaymentArea.style.display = 'none';
+            singlePaymentOptions.style.display = 'grid';
+            splitPaymentToggleBtn.innerHTML = "<i class='bx bx-columns'></i> Dividir Pagamento";
+            splitPaymentToggleBtn.classList.remove('active');
+            splitValue1.value = '';
+            splitValue2.value = '';
+            splitMethod1.value = '';
+            splitMethod2.value = '';
+            confirmSplitPaymentBtn.disabled = true;
+            updateSplitRemaining();
+
+            // Hide barcode scanner
+            const scanner = document.querySelector('.barcode-scanner');
+            if (scanner) scanner.style.display = 'none';
+
+            openModal(paymentModal);
+        } else {
+            showCustomAlert("Vazio", "Adicione itens primeiro.");
+        }
+    });
     splitPaymentToggleBtn.addEventListener('click', () => { const isActive = splitPaymentArea.style.display !== 'none'; splitPaymentArea.style.display = isActive ? 'none' : 'block'; singlePaymentOptions.style.display = isActive ? 'grid' : 'none'; splitPaymentToggleBtn.innerHTML = isActive ? "<i class='bx bx-columns'></i> Dividir Pagamento" : "<i class='bx bx-x'></i> Cancelar Divisão"; splitPaymentToggleBtn.classList.toggle('active'); if (!isActive) { currentSplitPayments.totalSaleValue = lastSaleData?.total || 0; updateSplitRemaining(); splitMethod1.focus(); } else { confirmSplitPaymentBtn.disabled = true; } });
     [splitValue1, splitValue2, splitMethod1, splitMethod2].forEach(el => { el.addEventListener('input', updateSplitRemaining); el.addEventListener('change', updateSplitRemaining); });
     confirmSplitPaymentBtn.addEventListener('click', () => { if (Math.abs(currentSplitPayments.remaining) >= 0.01) { showCustomAlert("Erro", "Soma não bate."); return; } if (!splitMethod1.value || !splitMethod2.value || splitMethod1.value === splitMethod2.value) { showCustomAlert("Erro", "Selecione 2 formas diferentes."); return; } currentSplitPayments.method1 = splitMethod1.value; currentSplitPayments.value1 = parseFloat(splitValue1.value) || 0; currentSplitPayments.method2 = splitMethod2.value; currentSplitPayments.value2 = parseFloat(splitValue2.value) || 0; selectedPaymentMethod = `Dividido (${currentSplitPayments.method1} + ${currentSplitPayments.method2})`; summaryPaymentMethod.textContent = selectedPaymentMethod; summaryPaymentMethod.style.fontWeight = '600'; summaryPaymentMethod.style.color = 'var(--text-dark)'; updateSummary(); closeModal(paymentModal); });
@@ -4789,17 +4963,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Mostra tela de parcelas
         const crediarioArea = document.getElementById('crediario-options');
-        crediarioArea.style.display = 'block';
+        crediarioArea.style.display = 'flex'; // Use flex as defined in CSS
+
+        // Ensure sub-elements are visible
+        const box = crediarioArea.querySelector('.installments-box');
+        if (box) box.style.display = 'block';
+        const preview = document.getElementById('installment-preview');
+        if (preview) preview.style.display = 'block';
 
         // Atualiza simulação
         const total = lastSaleData ? lastSaleData.total : 0;
         const select = document.getElementById('sale-installments');
-        const preview = document.getElementById('installment-preview');
+        const previewText = document.getElementById('installment-preview');
+
+        // Populate installments options based on store logic (usually up to 12x)
+        if (select) {
+            select.innerHTML = '';
+            for (let i = 1; i <= 12; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = i === 1 ? '1x (À vista na Fatura)' : `${i}x (Parcelado)`;
+                select.appendChild(opt);
+            }
+        }
 
         const updatePreview = () => {
             const parc = parseInt(select.value);
             const val = total / parc;
-            preview.innerHTML = `${parc}x de ${formatCurrency(val)}`;
+            previewText.innerHTML = `${parc}x de ${formatCurrency(val)}`;
         };
 
         select.onchange = updatePreview;

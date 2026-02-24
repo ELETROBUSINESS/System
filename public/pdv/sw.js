@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pdv-cache-v14';
+const CACHE_NAME = 'pdv-cache-v15';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -62,7 +62,9 @@ self.addEventListener('fetch', (event) => {
 
     if (
         url.href.includes('script.google.com') ||
-        url.href.includes('firestore.googleapis.com')
+        url.href.includes('firestore.googleapis.com') ||
+        url.href.includes('cloudfunctions.net') ||
+        url.href.includes('a.run.app')
     ) {
         return;
     }

@@ -107,6 +107,11 @@
                 <div class="step-circle">4</div>
                 <span class="step-label">Frete</span>
             </div>
+            <div class="timeline-line"></div>
+            <div class="timeline-step" data-step="5">
+                <div class="step-circle">5</div>
+                <span class="step-label">Resumo</span>
+            </div>
         </div>
 
         <div class="nfe-modal-body">
@@ -216,9 +221,12 @@
                         <label>Meio de Pagamento</label>
                         <select id="nfe-pag-tipo" class="form-input-nfe">
                             <option value="01">Dinheiro</option>
-                            <option value="17">PIX</option>
+                            <option value="17">PIX (À Vista)</option>
+                            <option value="17-prazo">PIX (A Prazo)</option>
                             <option value="03">Cartão de Crédito</option>
                             <option value="04">Cartão de Débito</option>
+                            <option value="05">Crediário (Crédito Loja)</option>
+                            <option value="90">Fornecimento (Sem Pagamento)</option>
                         </select>
                     </div>
 
@@ -268,6 +276,40 @@
                     </div>
                 </div>
 
+                <!-- Step 5: Resumo -->
+                <div id="step-5" class="step-container">
+                    <h3>5. Resumo da Emissão</h3>
+                    <p class="text-light mb-16">Confirme os dados antes de transmitir a nota fiscal.</p>
+
+                    <div class="summary-container"
+                        style="background:#f8f9fa; padding:1.5rem; border-radius:8px; border:1px solid #eee;">
+                        <h4 style="margin-bottom: 1rem; border-bottom: 1px solid #ddd; padding-bottom: 0.5rem;">
+                            Informações Fixas</h4>
+                        <div style="display:flex; justify-content:space-between; margin-bottom: 0.5rem;">
+                            <span class="text-light">Modelo da Nota:</span>
+                            <strong>55 (NF-e)</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom: 1rem;">
+                            <span class="text-light">Série:</span>
+                            <strong>1</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom: 1.5rem;">
+                            <span class="text-light">Próximo Número:</span>
+                            <strong style="font-size: 1.2rem; color: #db0038;"
+                                id="resumo-nfe-num">Carregando...</strong>
+                        </div>
+
+                        <h4 style="margin-bottom: 1rem; border-bottom: 1px solid #ddd; padding-bottom: 0.5rem;">
+                            Confirmação</h4>
+                        <p style="font-size: 0.9rem; color: #555;">
+                            Por favor, verifique cuidadosamente o <strong>preview da DANFE</strong> ao lado.
+                            Ele contém todos os dados que serão transmitidos para a SEFAZ.
+                            Certifique-se de que o destinatário, os itens, as tabelas de incidência e
+                            o pagamento estejam perfeitamente configurados.
+                        </p>
+                    </div>
+                </div>
+
             </div>
 
             <!-- Right: Live Preview -->
@@ -276,6 +318,11 @@
                     <div class="danfe-simplified">
                         <!-- Header DANFE -->
                         <div class="danfe-main-header border-bottom">
+                            <div class="danfe-logo">
+                                <img src="https://blogger.googleusercontent.com/img/a/AVvXsEj8JNrDwK2BJUSO7VYwn8DcHKtEZa0nf6E8RTP0IQbatksPUVGf0EREP0fv_SqtByF1uQMuHyrFzSchJZVKoeDO42vQ_AqlJTCkKSSwIZgn9gBNcexhP9saWvpR91LOHBXOnBK2Z5LWyDCAACNwqasHlVlpev7USrIfqcyNOdBvkN656LxOzLwtZiATB_g"
+                                    alt="Logo da Empresa"
+                                    style="max-width: 100%; max-height: 80px; display: block; margin: 0 auto;">
+                            </div>
                             <div class="danfe-title">
                                 DANFE SIMPLIFICADO<br>
                                 DOCUMENTO AUXILIAR DA<br>
