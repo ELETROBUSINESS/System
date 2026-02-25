@@ -481,6 +481,7 @@ function listarProdutosSuperApp() {
 
         const idxDesc = headers.indexOf("descricao") !== -1 ? headers.indexOf("descricao") : (headers.indexOf("description") !== -1 ? headers.indexOf("description") : 17);
         const idxImgUrl = headers.indexOf("imgurl") !== -1 ? headers.indexOf("imgurl") : (headers.indexOf("img url") !== -1 ? headers.indexOf("img url") : 18);
+        const idxSold = headers.indexOf("vendido") !== -1 ? headers.indexOf("vendido") : 19;
 
         const idxWebPrice = headers.indexOf("web_price");
 
@@ -505,7 +506,9 @@ function listarProdutosSuperApp() {
                 let words = base.split(" ");
                 if (words.length > 1) {
                     let lastWord = words[words.length - 1];
-                    if (modifiers.includes(lastWord)) {
+                    // Verifica se a última palavra é um número, a palavra "COR", ou se está na lista de modificadores
+                    let isNumber = !isNaN(lastWord) && lastWord.trim() !== "";
+                    if (modifiers.includes(lastWord) || isNumber || lastWord === "COR" || lastWord === "NUMERO") {
                         words.pop();
                         base = words.join(" ");
                         changed = true;
@@ -541,7 +544,8 @@ function listarProdutosSuperApp() {
                 name: String(row[idxNome] || ""),
                 price: precoNum,
                 stock: estoque,
-                ncm: ncm
+                ncm: ncm,
+                sold: idxSold !== -1 ? (parseInt(row[idxSold]) || 0) : 0
             };
 
             // 3. Força o uso da Coluna Q (Index 16) para Preço Promocional

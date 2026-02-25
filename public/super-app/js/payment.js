@@ -1,7 +1,18 @@
 // js/payment.js — Dtudo Super App Checkout
 // Sincronizado com o novo payment.html (design minimalista)
 
-const mp = new MercadoPago(MP_PUBLIC_KEY);
+// ─── MERCADO PAGO SDK INIT ───────────────────────────────
+let mp;
+try {
+    if (typeof MercadoPago !== 'undefined') {
+        mp = new MercadoPago(MP_PUBLIC_KEY, { locale: 'pt-BR' });
+        console.log("Mercado Pago inicializado com sucesso.");
+    } else {
+        console.error("Mercado Pago SDK não carregado!");
+    }
+} catch (e) {
+    console.error("Erro ao inicializar SDK Mercado Pago:", e);
+}
 let paymentBrickController = null;
 let currentShippingCost = 0;
 let deliveryMode = 'delivery';
@@ -12,7 +23,7 @@ let validatedCart = [];
 let appliedCoupon = JSON.parse(sessionStorage.getItem('applied_coupon') || 'null');
 
 const CLOUD_FUNCTIONS_URL = 'https://us-central1-super-app25.cloudfunctions.net';
-const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
+// APPSCRIPT_URL is global from global.js
 
 // ─── REGISTRO CENTRALIZADO DE PEDIDO ─────────────────────
 // Fire-and-forget: não bloqueia o pagamento se falhar
@@ -104,9 +115,10 @@ function showToast(msg, type = 'info') {
 // ─── REGRA DE PARCELAS SEM JUROS ─────────────────────────
 // Sincronizado com o backend (functions/index.js - createPayment)
 function getInstallmentPlan(total) {
-    // Regra: sem juros até 3x (quando total ≥ R$300), 2x (≥ R$150), 1x abaixo
+    // Regra: sem juros até 3x (quando total >= R$300), 2x (>= R$150), 1x abaixo
     const freeInstallments = total >= 300 ? 3 : total >= 150 ? 2 : 1;
-    const maxInstallments = 12;
+    // Permite parcelar apenas a partir de R$ 150
+    const maxInstallments = total >= 150 ? 12 : 1;
     const INTEREST_RATE = 0.0199; // 1.99% ao mês (cartão c/ juros acima do limite sem juros)
 
     const plan = [];
@@ -390,8 +402,19 @@ async function setupPaymentStep() {
     if (appliedCoupon) {
         if (appliedCoupon.code === 'VALE5') {
             discountValue = 5.00;
-        } else if (appliedCoupon.code === 'APROVEITA26' || appliedCoupon.code === 'DOMINGOU') {
+        } else if (appliedCoupon.code === 'APROVEITA26') {
             discountValue = baseTotalPix * 0.12;
+        } else if (appliedCoupon.code === 'LAYLA10') {
+            let laylaTotal = 0;
+            const serverProducts = typeof DataManager !== 'undefined' ? (DataManager.getProducts() || []) : [];
+            validatedCart.forEach(item => {
+                const prod = serverProducts.find(p => String(p.id) === String(item.id));
+                const cat = prod && prod.category ? prod.category.toUpperCase() : '';
+                if (cat.includes('MAQUIAGEM') || cat.includes('COSMÉTICO') || cat.includes('COSMETICO')) {
+                    laylaTotal += (item.pricePix || item.priceNew) * item.quantity;
+                }
+            });
+            discountValue = laylaTotal * 0.10;
         }
     }
 
@@ -728,7 +751,7 @@ async function mountCardBrick() {
             paymentMethods: {
                 creditCard: "all",
                 debitCard: "all",
-                maxInstallments: 12,
+                maxInstallments: total >= 150 ? 12 : 1,
             },
             visual: { style: { theme: 'default' } }
         },

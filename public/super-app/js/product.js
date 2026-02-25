@@ -1,17 +1,16 @@
 // js/product.js
 
-const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
-const CACHE_KEY = 'dtudo_products_cache';
-const CACHE_TIME_KEY = 'dtudo_cache_time';
-const CACHE_DURATION = 1 * 60 * 1000;
+// APPSCRIPT_URL, CACHE_KEY etc are global from global.js
 
 function getCachedData() {
-    const json = sessionStorage.getItem(CACHE_KEY);
-    const time = sessionStorage.getItem(CACHE_TIME_KEY);
-    if (!json || !time) return null;
-    if (new Date().getTime() - parseInt(time) > CACHE_DURATION) return null;
-    return JSON.parse(json);
+    return DataManager.getProducts();
 }
+
+document.addEventListener('productsUpdated', (e) => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+    if (productId) loadProductDetail(productId);
+});
 
 function saveToCache(newProducts) {
     const currentCache = getCachedData() || [];
@@ -24,7 +23,14 @@ function saveToCache(newProducts) {
 
 function extractProductImages(prod) {
     let images = [];
-    if (prod.imgUrl && prod.imgUrl.trim() !== "") images.push(prod.imgUrl.trim());
+    if (prod.imgUrl && prod.imgUrl.trim() !== "") {
+        if (prod.imgUrl.includes(',')) {
+            const urls = prod.imgUrl.split(',').map(url => url.trim()).filter(url => url !== "");
+            images.push(...urls);
+        } else {
+            images.push(prod.imgUrl.trim());
+        }
+    }
     let i = 1;
     while (true) {
         const key = 'imgUrl' + i;
@@ -101,8 +107,9 @@ async function loadProductDetail(id) {
         window.globalAllProducts = allProducts;
         window.currentProductGroup = prod.variacoes && prod.variacoes.length > 0 ? prod.variacoes : [prod];
 
-        // Se houver variações, a variação ativa será a que tem o mesmo nome original do prod ou o primeiro.
-        // Já que "prod" é o base, ele deve ser a [0].
+        registerInterest(prod.category);
+        registerRecentlyViewed(prod);
+
         renderProductView(prod, window.currentProductGroup, allProducts, 0);
 
     } catch (error) {
@@ -182,7 +189,7 @@ function renderProductView(prod, variacoesGroup, allProducts, activeIndex) {
                     <span style="color: #00a650; font-size: 1.15rem; font-weight: 600; margin-left: 10px; background: #e6f7ee; padding: 2px 6px; border-radius: 4px;">${discountPerc}% OFF</span>
                 </div>
                 <div class="installment-line" style="font-size: 1.15rem; color: #333; margin-top: 5px;">
-                    ${maxInstallments}x R$ ${instParts.reais}<span style="font-size: 0.75rem; position: relative; top: -5px;">${instParts.centavos}</span>
+                    ou até <b>${maxInstallments}x R$ ${instParts.reais}</b><span style="font-size: 0.75rem; position: relative; top: -5px;">,${instParts.centavos}</span> no cartão
                 </div>
                 <div style="color: #00a650; font-size: 0.85rem; font-weight: 600; margin-top: 5px;">
                     <i class='bx bxs-zap'></i> Preço exclusivo no Pix
@@ -267,7 +274,7 @@ function renderProductView(prod, variacoesGroup, allProducts, activeIndex) {
                             ${stockCount <= 0 ? 'Indisponível' : 'Comprar Agora'}
                         </button>
                         <button class="btn-add-cart" ${stockCount <= 0 ? 'disabled style="border-color:#ccc; color:#999;"' : ''} onclick="addToCart('${prod.id}', '${prod.name.replace(/'/g, "\\'")}', ${cardPrice}, ${pixPrice}, '${productImages[0]}')">
-                            Adicionar ao carrinho
+                            Adicionar ao cesto
                         </button>
                     </div>
 
@@ -315,12 +322,17 @@ function renderSuggestedProducts(currentProd, allProducts) {
 
     suggested = suggested.slice(0, 8);
     container.innerHTML = suggested.map(prod => {
+        let rawImg = prod.imgUrl || '';
+        if (rawImg.includes(',')) {
+            rawImg = rawImg.split(',')[0].trim();
+        }
+        let displayImg = rawImg || 'https://placehold.co/400x400/f8f9fa/c20026?text=Dtudo';
         const valPrice = parseFloat(prod.price || 0);
         const valOffer = parseFloat(prod['price-oferta'] || 0);
         const finalPrice = (valOffer > 0 && valOffer < valPrice) ? valOffer : valPrice;
         return `
             <div class="category-item" style="min-width: 140px; text-align: left; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; height: 100%; font-family: 'Roboto', sans-serif;" onclick="window.location.href='product.html?id=${prod.id}'">
-                <img src="${prod.imgUrl}" style="width: 100%; height: 120px; object-fit: cover;">
+                <img src="${displayImg}" style="width: 100%; height: 120px; object-fit: cover;">
                 <div style="padding: 10px;">
                     <div style="font-size: 0.8rem; color: #444; height: 32px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${prod.name}</div>
                     <div style="font-size: 1rem; font-weight: 700; color: #c20026;">${finalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>

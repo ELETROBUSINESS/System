@@ -1,7 +1,8 @@
-// js/search.js
+// CACHE_KEY is global from global.js
 
-const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
-const CACHE_KEY = 'dtudo_products_cache';
+function getCachedData() {
+    return DataManager.getProducts();
+}
 
 // --- MAPA DE SINÔNIMOS PARA BUSCA INTELIGENTE ---
 const SEARCH_SYNONYMS = {
@@ -58,11 +59,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (typeof updateCartBadge === 'function') updateCartBadge();
 });
 
-function calculateInstallmentsRule(price) {
-    if (price >= 300) return 3;
-    if (price >= 150) return 2;
-    return 1; // À vista no cartão
-}
+// Regras de parcelamento centralizadas no global.js
 
 function renderSkeletonGrid(containerId, count = 4) {
     const container = document.getElementById(containerId);
@@ -94,18 +91,15 @@ async function performSearch(term, type) {
 
     renderSkeletonGrid('search-results-container', 4);
 
-    let allProducts = [];
-    const cached = sessionStorage.getItem(CACHE_KEY);
+    let allProducts = getCachedData();
 
-    if (cached) {
-        allProducts = JSON.parse(cached);
-    } else {
+    if (!allProducts || allProducts.length === 0) {
         try {
             const res = await fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`);
             const json = await res.json();
             if (json.status === 'success') {
                 allProducts = json.data;
-                sessionStorage.setItem(CACHE_KEY, JSON.stringify(allProducts));
+                localStorage.setItem(CACHE_KEY, JSON.stringify(allProducts));
             }
         } catch (e) {
             console.error("Erro ao buscar produtos:", e);
@@ -146,49 +140,42 @@ function renderProducts(products, target) {
         const valPrice = parseFloat(prod.price || 0); // Cartão (Cheio)
         const valOffer = parseFloat(prod['price-oferta'] || 0);
         const hasOffer = (valOffer > 0 && valOffer < valPrice);
-
         const baseSalePrice = hasOffer ? valOffer : valPrice;
 
         const priceCard = baseSalePrice;
         const pricePix = baseSalePrice * 0.95;
 
-        const fmtConfig = { style: 'currency', currency: 'BRL' };
-        const fmtPix = new Intl.NumberFormat('pt-BR', fmtConfig).format(pricePix);
-        const fmtOriginal = new Intl.NumberFormat('pt-BR', fmtConfig).format(valPrice);
-
         let name = prod.name || '';
         name = name.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase());
-
-        const fmtCard = new Intl.NumberFormat('pt-BR', fmtConfig).format(priceCard);
-
-        const maxInst = calculateInstallmentsRule(priceCard);
-        let installmentHtml = '';
-        if (maxInst > 1) {
-            installmentHtml = `<div class="installment-text">ou <b>${fmtCard}</b> em até <b>${maxInst}x</b></div>`;
-        } else {
-            installmentHtml = `<div class="installment-text">ou <b>${fmtCard}</b> no cartão</div>`;
-        }
 
         let priceHtml = '';
         if (hasOffer) {
             priceHtml = `
                 <div class="price-container">
-                    <span class="price-old">${fmtOriginal}</span>
-                    <span class="price-new">${fmtPix} <small style="font-size: 0.65rem; color: #666; font-weight: 500;">no Pix</small></span>
+                    <span class="price-old">${formatCurrency(valPrice)}</span>
+                    <span class="price-new">${formatCurrency(pricePix)} <small style="font-size: 0.65rem; color: #666; font-weight: 500;">no Pix</small></span>
                 </div>`;
         } else {
             priceHtml = `
                 <div class="price-container">
-                    <span class="price-old">${fmtCard}</span>
-                    <span class="price-new">${fmtPix} <small style="font-size: 0.65rem; color: #666; font-weight: 500;">no Pix</small></span>
+                    <span class="price-old">${formatCurrency(priceCard)}</span>
+                    <span class="price-new">${formatCurrency(pricePix)} <small style="font-size: 0.65rem; color: #666; font-weight: 500;">no Pix</small></span>
                 </div>`;
         }
+
+        const installmentHtml = getInstallmentHtml(priceCard);
+
+        let rawImg = prod.imgUrl || '';
+        if (rawImg.includes(',')) {
+            rawImg = rawImg.split(',')[0].trim();
+        }
+        let displayImg = rawImg || 'https://placehold.co/400x400/f8f9fa/c20026?text=Dtudo';
 
         const html = `
             <div class="product-card" id="prod-${prod.id}">
                 <div class="product-image" onclick="window.location.href='product.html?id=${prod.id}'">
-                    <img src="${prod.imgUrl}" alt="${name}" loading="lazy">
-                    <button class="cart-btn-overlay" onclick="event.stopPropagation(); addToCartDirect('${prod.id}', '${name}', ${priceCard}, ${pricePix}, '${prod.imgUrl}')">
+                    <img src="${displayImg}" alt="${name}" loading="lazy">
+                    <button class="cart-btn-overlay" onclick="event.stopPropagation(); addToCartDirect('${prod.id}', '${name}', ${priceCard}, ${pricePix}, '${displayImg}')">
                         <i class='bx bx-cart-add'></i>
                     </button>
                 </div>

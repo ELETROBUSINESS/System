@@ -18,16 +18,18 @@ async function refreshCartData() {
     const localCart = CartManager.get();
     if (localCart.length === 0) return;
 
-    let serverProducts = [];
-    try {
-        const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
-        const response = await fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`);
-        const result = await response.json();
-        if (result.status === "success" && result.data) {
-            serverProducts = result.data;
+    let serverProducts = DataManager.getProducts();
+    if (!serverProducts || serverProducts.length === 0) {
+        try {
+            const response = await fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`);
+            const result = await response.json();
+            if (result.status === "success" && result.data) {
+                serverProducts = result.data;
+                localStorage.setItem('dtudo_products_cache', JSON.stringify(result.data));
+            }
+        } catch (e) {
+            console.error("Erro ao validar API no carrinho", e);
         }
-    } catch (e) {
-        console.error("Erro ao validar API no carrinho", e);
     }
 
     let hasUpdates = false;
@@ -68,7 +70,7 @@ function renderEmptyState() {
         container.innerHTML = `
             <div class="empty-cart-view">
                 <i class='bx bx-cart-alt empty-icon'></i>
-                <h3 class="empty-title">Seu carrinho está vazio</h3>
+                <h3 class="empty-title">Seu cesto está vazio</h3>
                 <p class="empty-desc">Adicione produtos para começar suas compras com os melhores descontos do Pará!</p>
                 <a href="index.html" class="btn-return">Explorar Produtos</a>
             </div>
@@ -91,14 +93,9 @@ function renderCartPage() {
     if (couponSection) couponSection.style.display = 'block';
     if (container) container.innerHTML = "";
 
-    const fmtConfig = { style: 'currency', currency: 'BRL' };
-
     items.forEach(item => {
         const pricePix = parseFloat(item.priceNew || 0);
         const priceCard = parseFloat(item.priceOriginal || item.priceNew || 0);
-
-        const fmtPix = pricePix.toLocaleString('pt-BR', fmtConfig);
-        const fmtCard = priceCard.toLocaleString('pt-BR', fmtConfig);
         const hasDiscount = (priceCard - pricePix) > 0.05;
 
         const html = `
@@ -108,10 +105,11 @@ function renderCartPage() {
                     <div onclick="window.location.href='product.html?id=${item.id}'">
                         <h4 class="cart-item-name">${item.name}</h4>
                         <div class="cart-item-price-row">
-                            ${hasDiscount ? `<span class="price-old-cart">${fmtCard}</span>` : ''}
-                            <span class="price-new-cart">${fmtPix}</span>
+                            ${hasDiscount ? `<span class="price-old-cart">${formatCurrency(priceCard)}</span>` : ''}
+                            <span class="price-new-cart">${formatCurrency(pricePix)}</span>
                             <span class="price-pix-badge">Pix</span>
                         </div>
+                        ${getInstallmentHtml(priceCard)}
                     </div>
                     <div class="cart-item-actions">
                         <div class="qty-selector">
@@ -164,12 +162,23 @@ function updateSummary() {
     // Lógica de Cupom
     const coupon = JSON.parse(sessionStorage.getItem('applied_coupon') || 'null');
     let discountValue = 0;
+    const serverProducts = typeof DataManager !== 'undefined' ? (DataManager.getProducts() || []) : [];
 
     if (coupon) {
         if (coupon.code === 'VALE5') {
             discountValue = 5.00;
-        } else if (coupon.code === 'APROVEITA26' || coupon.code === 'DOMINGOU') {
+        } else if (coupon.code === 'APROVEITA26') {
             discountValue = totalPix * 0.12;
+        } else if (coupon.code === 'LAYLA10') {
+            let laylaTotal = 0;
+            items.forEach(item => {
+                const prod = serverProducts.find(p => String(p.id) === String(item.id));
+                const cat = prod && prod.category ? prod.category.toUpperCase() : '';
+                if (cat.includes('MAQUIAGEM') || cat.includes('COSMÉTICO') || cat.includes('COSMETICO')) {
+                    laylaTotal += (parseFloat(item.priceNew) || 0) * (item.quantity || 1);
+                }
+            });
+            discountValue = laylaTotal * 0.10;
         }
     }
 
@@ -187,8 +196,8 @@ function updateSummary() {
     const elCouponRow = document.getElementById("coupon-summary-row");
     const elCouponVal = document.getElementById("summary-coupon-value");
 
-    if (elPix) elPix.innerText = finalPix.toLocaleString('pt-BR', fmt);
-    if (elCard) elCard.innerText = `ou ${finalCard.toLocaleString('pt-BR', fmt)} no cartão`;
+    if (elPix) elPix.innerText = formatCurrency(finalPix);
+    if (elCard) elCard.innerText = `ou ${formatCurrency(finalCard)} no cartão`;
 
     if (elCouponRow && elCouponVal) {
         if (coupon) {
@@ -244,7 +253,7 @@ window.applyCoupon = function () {
     const code = input.value.trim().toUpperCase();
     const error = document.getElementById('coupon-error');
 
-    if (code === 'VALE5' || code === 'APROVEITA26' || code === 'DOMINGOU') {
+    if (code === 'VALE5' || code === 'APROVEITA26' || code === 'LAYLA10') {
         sessionStorage.setItem('applied_coupon', JSON.stringify({ code: code }));
         updateSummary();
         closeCouponModal();
@@ -266,7 +275,10 @@ function setupCartEvents() {
         checkoutBtn.onclick = null;
         checkoutBtn.onclick = (e) => {
             e.preventDefault();
-            if (CartManager.get().length === 0) return;
+            const cartItems = CartManager.get();
+            if (cartItems.length === 0) return;
+
+            // Vamos direto para o checkout (login não é mais obrigatório aqui)
             window.location.href = "payment.html";
         };
     }

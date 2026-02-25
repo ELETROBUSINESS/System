@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Stories | PDV Dtudo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;800;900&display=swap"
+        rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --brand-color: #c20026;
+            --brand-dark: #8a001a;
+        }
+
+        .search-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto 30px auto;
+            display: none;
+        }
+
+        .search-container input {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1.05rem;
+            font-weight: 500;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            outline: none;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .search-container input:focus {
+            border-color: var(--brand-color);
+        }
+
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            padding: 10px;
+            margin-top: 8px;
+            border: 1px solid #eee;
+        }
+
+        .search-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px;
+            border-bottom: 1px solid #f4f6f9;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: 0.2s;
+        }
+
+        .search-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-item:hover {
+            background: #fafafa;
+            transform: translateX(5px);
+        }
+
+        .search-item img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            background: #fff;
+        }
+
+        .search-item-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .search-item-info strong {
+            font-size: 0.9rem;
+            color: #333;
+            line-height: 1.2;
+            margin-bottom: 4px;
+        }
+
+        .search-item-info span {
+            font-size: 0.85rem;
+            color: var(--brand-color);
+            font-weight: 700;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #f4f6f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .controls input {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+            width: 250px;
+        }
+
+        .controls input:focus {
+            border-color: var(--brand-color);
+        }
+
+        .controls button {
+            background: var(--brand-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .controls button:hover {
+            background: var(--brand-dark);
+        }
+
+        .stories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 40px;
+            width: 100%;
+            max-width: 1200px;
+            justify-items: center;
+        }
+
+        .story-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* Moldes de Story 9:16 em miniatura pra tela, mas renderizados em alta na captura */
+        .story-template {
+            width: 360px;
+            height: 640px;
+            /* Mantém a proporção 9:16 */
+            background: linear-gradient(135deg, white 0%, #f0f0f0 100%);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            border-radius: 15px;
+        }
+
+        /* Estilo Interno da Arte do Story */
+        .art-bg-shapes {
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 250px;
+            height: 250px;
+            background: var(--brand-color);
+            border-radius: 50%;
+            z-index: 0;
+            opacity: 1;
+        }
+
+        .art-bg-shapes2 {
+            position: absolute;
+            bottom: -100px;
+            left: -50px;
+            width: 300px;
+            height: 300px;
+            background: var(--brand-color);
+            border-radius: 50%;
+            z-index: 0;
+            opacity: 1;
+        }
+
+        .art-header {
+            position: relative;
+            z-index: 2;
+            padding: 25px 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .art-insta-handle {
+            background: rgba(0, 0, 0, 0.4);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            backdrop-filter: blur(5px);
+        }
+
+        .art-tag {
+            background: #ffeb3b;
+            color: #333;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transform: rotate(3deg);
+        }
+
+        .art-product-image-container {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+            padding: 0 20px;
+        }
+
+        .art-product-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.15));
+            mix-blend-mode: multiply;
+        }
+
+        .art-product-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            border-radius: 30px 30px 0 0;
+            padding: 25px 30px 40px;
+            z-index: 2;
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .art-product-name {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #333;
+            margin: 0 0 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.3;
+        }
+
+        .art-price-container {
+            width: 100%;
+            background: #fbfbfb;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 5px;
+            /* Menor porque tiramos o botão */
+        }
+
+        .art-price-old {
+            font-size: 1rem;
+            color: #999;
+            text-decoration: line-through;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .art-price-pix {
+            font-size: 2.3rem;
+            font-weight: 900;
+            color: #333;
+            /* Agora é preto conforme solicitado */
+            line-height: 1;
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .art-price-pix small {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 600;
+        }
+
+        /* Removidos .art-price-card e .art-button-fake */
+
+        /* Modal de Configuração API */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+            font-size: 1.2rem;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        /* Sticker do Link do Instagram Fake */
+        .art-link-sticker {
+            background: linear-gradient(135deg, #e1efff, #f1f8ff);
+            color: #0066ff;
+            font-weight: 800;
+            font-size: 0.9rem;
+            padding: 10px 20px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 4px 10px rgba(0, 102, 255, 0.15);
+            margin-top: 5px;
+        }
+
+        /* Apenas um Loader visual */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--brand-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .btn-download {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-download:hover {
+            background: black;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>Gerador de Arte para Stories</h1>
+        <p>Gere e baixe artes automáticas das <strong>Novidades do Dia</strong> para postar no Instagram.</p>
+    </div>
+
+    <div class="controls">
+        <input type="text" id="insta-profile" placeholder="Seu @ do Instagram" value="@dtudovariedadess">
+        <button onclick="updateHandles()"><i class='bx bx-refresh'></i> Atualizar Perfil</button>
+        <button onclick="loadRecentProducts()" style="background: #0066ff;"><i class='bx bx-cloud-download'></i>
+            Carregar do Banco</button>
+        <button onclick="openConfigModal()" style="background: #E1306C; margin-left: auto;"><i class='bx bx-cog'></i>
+            Conectar API Insta</button>
+    </div>
+
+    <div class="search-container" id="search-product-box">
+        <input type="text" id="product-search-input"
+            placeholder="🔍  Busque e adicione um produto específico para o Story..." onkeyup="handleSearch()">
+        <div class="search-results" id="search-results-dropdown"></div>
+    </div>
+
+    <div id="loading" style="display: none; flex-direction: column; align-items: center; margin: 30px;">
+        <div class="loader"></div>
+        <p style="margin-top: 15px; font-weight: 600; color: #555;">Carregando produtos da nuvem...</p>
+    </div>
+
+    <div class="stories-grid" id="stories-container">
+        <!-- Renderizado dinamicamente -->
+    </div>
+
+    <!-- Modal Configuração API -->
+    <div class="modal-overlay" id="ig-config-modal">
+        <div class="modal-content">
+            <h2>⚙️ Conectar API do Instagram</h2>
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 20px;">Use o Graph API do Meta for Developers para
+                publicar seus stories com apenas um clique.</p>
+
+            <label><strong>ID do Usuário Instagram</strong></label>
+            <input type="text" id="input-ig-id" placeholder="Ex: 17841400000000000">
+
+            <label><strong>Token de Acesso Long-Lived</strong></label>
+            <input type="text" id="input-ig-token" placeholder="EAAI...">
+
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button onclick="closeConfigModal()"
+                    style="background: #ccc; padding: 10px 20px; border:none; border-radius:8px; cursor:pointer; font-weight: bold; flex: 1;">Cancelar</button>
+                <button onclick="saveConfigInfo()"
+                    style="background: #E1306C; color:white; padding: 10px 20px; border:none; border-radius:8px; cursor:pointer; font-weight: bold; flex: 1;">Salvar
+                    Conexão</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.removeWhiteBg = function (img) {
+            if (img.dataset.processed === 'true' || img.naturalWidth === 0) return;
+            img.dataset.processed = 'true';
+
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                ctx.drawImage(img, 0, 0);
+
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imgData.data;
+
+                const tolerance = 240;
+
+                for (let i = 0; i < data.length; i += 4) {
+                    let r = data[i], g = data[i + 1], b = data[i + 2];
+                    if (r > tolerance && g > tolerance && b > tolerance) {
+                        let avg = (r + g + b) / 3;
+                        let alpha = 255 - ((avg - tolerance) * (255 / (255 - tolerance)));
+                        data[i + 3] = Math.max(0, Math.floor(alpha));
+                    }
+                }
+
+                ctx.putImageData(imgData, 0, 0);
+                img.src = canvas.toDataURL('image/png');
+            } catch (e) {
+                console.warn('Incapaz de extrair fundo devido restrições externas', e);
+            }
+        }
+
+        const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
+        const FIREBASE_POST_URL = "https://southamerica-east1-super-app25.cloudfunctions.net/postInstagramStory";
+        const FIREBASE_GET_PROFILE_URL = "https://southamerica-east1-super-app25.cloudfunctions.net/getInstagramProfile";
+
+        let allProducts = [];
+        let displayedStoryProducts = [];
+
+        function updateHandles() {
+            const val = document.getElementById('insta-profile').value || '@dtudovariedadess';
+            document.querySelectorAll('.art-insta-handle span').forEach(el => el.innerText = val);
+        }
+
+        async function fetchAutoInstagramProfile() {
+            try {
+                // 1. Tenta pegar pela nova rota do backend (que usa o .env)
+                const res = await fetch(FIREBASE_GET_PROFILE_URL);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.status === "success" && data.username) {
+                        document.getElementById('insta-profile').value = '@' + data.username;
+                        updateHandles();
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.log("Fallback ignorado no backend, tentando local storage...", err);
+            }
+            // 2. Fallback pro localStorage se nao tiver configurado no .env
+            const igId = localStorage.getItem('ig_user_id');
+            const igToken = localStorage.getItem('ig_access_token');
+            if (igId && igToken) {
+                try {
+                    const localRes = await fetch(`https://graph.facebook.com/v21.0/${igId}?fields=username&access_token=${igToken}`);
+                    if (localRes.ok) {
+                        const localData = await localRes.json();
+                        if (localData.username) {
+                            document.getElementById('insta-profile').value = '@' + localData.username;
+                            updateHandles();
+                        }
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', fetchAutoInstagramProfile);
+
+        function openConfigModal() {
+            document.getElementById('input-ig-id').value = localStorage.getItem('ig_user_id') || "";
+            document.getElementById('input-ig-token').value = localStorage.getItem('ig_access_token') || "";
+            document.getElementById('ig-config-modal').style.display = 'flex';
+        }
+
+        function closeConfigModal() {
+            document.getElementById('ig-config-modal').style.display = 'none';
+        }
+
+        function saveConfigInfo() {
+            const id = document.getElementById('input-ig-id').value;
+            const token = document.getElementById('input-ig-token').value;
+            localStorage.setItem('ig_user_id', id);
+            localStorage.setItem('ig_access_token', token);
+            closeConfigModal();
+            fetchAutoInstagramProfile();
+            alert("Credenciais salvas no seu navegador!");
+        }
+
+        async function loadRecentProducts() {
+            document.getElementById('loading').style.display = 'flex';
+            document.getElementById('stories-container').innerHTML = '';
+
+            try {
+                const response = await fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`);
+                const result = await response.json();
+
+                if (result.status === "success" && result.data) {
+                    allProducts = result.data.filter(p => p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co') && (p.imgUrl.startsWith('http') || p.imgUrl.includes('/')));
+
+                    // Por padrão, carrega os 9 mais recentes
+                    displayedStoryProducts = [...allProducts].reverse().slice(0, 9);
+
+                    renderStories(displayedStoryProducts);
+
+                    document.getElementById('search-product-box').style.display = 'block';
+                }
+            } catch (error) {
+                console.error("Erro ao buscar produtos:", error);
+                alert("Falha ao carregar produtos.");
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function handleSearch() {
+            const term = document.getElementById('product-search-input').value.toLowerCase().trim();
+            const dropdown = document.getElementById('search-results-dropdown');
+
+            if (term.length < 2) {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            const results = allProducts.filter(p => (p.name || '').toLowerCase().includes(term) || (p.id || '').toLowerCase().includes(term)).slice(0, 10);
+
+            if (results.length === 0) {
+                dropdown.innerHTML = '<div style="padding: 15px; color: #999; text-align: center; font-weight: 500;">Nenhum produto encontrado.</div>';
+            } else {
+                dropdown.innerHTML = results.map(p => `
+                    <div class="search-item" onclick="addCustomStory('${p.id}')">
+                        <img src="${p.imgUrl}">
+                        <div class="search-item-info">
+                            <strong>${p.name}</strong>
+                            <span>R$ ${(parseFloat(p.price) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            dropdown.style.display = 'flex';
+        }
+
+        function addCustomStory(productId) {
+            const prod = allProducts.find(p => p.id === productId);
+            if (prod) {
+                document.getElementById('search-results-dropdown').style.display = 'none';
+                document.getElementById('product-search-input').value = '';
+
+                // Adiciona o produto na frente da lista e re-renderiza
+                displayedStoryProducts.unshift(prod);
+                renderStories(displayedStoryProducts);
+
+                // Desce a tela suavemente até a div recém adicionada (a primeira)
+                setTimeout(() => {
+                    const firstStory = document.getElementById('story-wrap-0');
+                    if (firstStory) firstStory.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            }
+        }
+
+        function calculateInstallmentsRule(price) {
+            if (price >= 300) return 3;
+            if (price >= 150) return 2;
+            return 1;
+        }
+
+        function renderStories(products) {
+            const container = document.getElementById('stories-container');
+            let profile = document.getElementById('insta-profile').value || '@dtudovariedadess';
+
+            let html = '';
+            products.forEach((prod, index) => {
+                const valPrice = parseFloat(prod.price || 0);
+                const valOffer = parseFloat(prod['price-oferta'] || 0);
+                const baseSalePrice = (valOffer > 0 && valOffer < valPrice) ? valOffer : valPrice;
+                const pricePix = baseSalePrice * 0.95;
+
+                const fmtConfig = { style: 'currency', currency: 'BRL' };
+                const fmtOriginal = valPrice.toLocaleString('pt-BR', fmtConfig);
+                const fmtPix = pricePix.toLocaleString('pt-BR', fmtConfig);
+
+                // Proxy para desviar do bloqueio de CORS ao baixar o Story (html2canvas restrição)
+                // Usando wsrv.nl que é otimizado para imagens e não bloqueia origens dinâmicas facilmente:
+                const safeImgUrl = 'https://wsrv.nl/?url=' + encodeURIComponent(prod.imgUrl);
+
+                html += `
+                <div class="story-wrapper" id="story-wrap-${index}">
+                    <div class="story-template" id="story-art-${index}">
+                        <div class="art-bg-shapes"></div>
+                        <div class="art-bg-shapes2"></div>
+                        
+                        <div class="art-header">
+                            <div class="art-insta-handle"><i class='bx bxl-instagram'></i> <span>${profile}</span></div>
+                            <div class="art-tag">CHEGOU!</div>
+                        </div>
+
+                        <div class="art-product-image-container">
+                            <!-- Proxy aplicado para escapar do CORS block e script nativo de BG Removal JS -->
+                            <img src="${safeImgUrl}" class="art-product-image" crossorigin="anonymous" onload="removeWhiteBg(this)">
+                        </div>
+
+                        <div class="art-product-info">
+                            <h3 class="art-product-name">${prod.name}</h3>
+                            
+                            <div class="art-price-container">
+                                ${(valOffer > 0 || pricePix < valPrice) ? `<div class="art-price-old">${fmtOriginal}</div>` : ''}
+                                <div class="art-price-pix">${fmtPix}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-download" onclick="downloadStory(${index})">
+                            <i class='bx bx-download'></i> Salvar
+                        </button>
+                        <button class="btn-download" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);" onclick="shareToInstagram(${index})">
+                            <i class='bx bxl-instagram'></i> Postar Direto
+                        </button>
+                    </div>
+                </div>
+            `;
+            });
+
+            container.innerHTML = html;
+
+            // As imagens carregarão com o onload no HTML chamando removeWhiteBg()
+        }
+
+        async function createCanvasBlob(index) {
+            const artNode = document.getElementById(`story-art-${index}`);
+            const canvas = await html2canvas(artNode, {
+                scale: 3,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: "#ffffff"
+            });
+            return new Promise(resolve => {
+                canvas.toBlob(blob => resolve({ blob, canvas }), 'image/png');
+            });
+        }
+
+        async function downloadStory(index) {
+            const btn = document.querySelector(`#story-wrap-${index} .btn-download`);
+            const originalText = btn.innerHTML;
+
+            btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Gerando...";
+            btn.style.opacity = "0.7";
+
+            try {
+                const { blob } = await createCanvasBlob(index);
+                const link = document.createElement('a');
+                link.download = `story_dtudo_${Date.now()}.png`;
+                link.href = URL.createObjectURL(blob);
+                link.click();
+            } catch (e) {
+                console.error("Erro ao gerar imagem:", e);
+                alert("Houve um erro ao tentar gerar e baixar a arte.");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.style.opacity = "1";
+            }
+        }
+
+        const sharedBlobs = {};
+
+        async function shareToInstagram(index) {
+            const wrap = document.querySelector(`#story-wrap-${index}`);
+            const btn = wrap.querySelectorAll('.btn-download')[1];
+
+            // Modificamos a lógica para a API Automática ser a padrão.
+            // Os dados virão do Firebase (.env), mas repassa o LocalStorage só se existir como override.
+            const igId = localStorage.getItem('ig_user_id') || "";
+            const igToken = localStorage.getItem('ig_access_token') || "";
+
+            // 1. FLUXO VIA API Oculta e Automática
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Publicando...";
+            btn.style.opacity = "0.7";
+
+            try {
+                const { canvas } = await createCanvasBlob(index);
+                const base64Img = canvas.toDataURL('image/png');
+
+                // Envia pro backend, mesmo que ID/Token estejam vazios, pra usar as chaves globais lá.
+                const response = await fetch(FIREBASE_POST_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imageBase64: base64Img, igUserId: igId, accessToken: igToken })
+                });
+
+                const responseData = await response.json();
+                if (response.ok && responseData.status === "success") {
+                    alert("🎉 Story enviado com sucesso e já está no ar no seu Instagram conectado!");
+                    btn.innerHTML = "<i class='bx bx-check-double'></i> Publicado";
+                    btn.style.background = "#25D366";
+                    setTimeout(() => { btn.innerHTML = originalText; btn.style.background = "linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)"; }, 3000);
+                    return; // Finaliza porque deu certo na automação!
+                } else {
+                    throw new Error(responseData.error || JSON.stringify(responseData.details));
+                }
+            } catch (err) {
+                console.error("Erro ao enviar para API do Instagram:", err);
+
+                // 2. FLUXO MANUAL/NATIVO (Fallback Mobile se a API falhar ou não estiver configurada)
+                console.warn("Automação falhou. Tentando fluxo manual Web-Share como backup...");
+
+                if (btn.dataset.ready === "true" && sharedBlobs[index]) {
+                    const file = new File([sharedBlobs[index]], 'story.png', { type: 'image/png' });
+
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({
+                                files: [file],
+                                title: 'Novo Story - Dtudo',
+                                text: 'Confira as novidades!'
+                            });
+                        } catch (e) { console.log("Compartilhamento cancelado:", e); }
+                    } else {
+                        alert("⚠️ O post automático falhou (" + err.message + ") e seu dispositivo não suporta envio nativo. Salve a imagem no botão [Salvar].");
+                    }
+
+                    btn.innerHTML = "<i class='bx bxl-instagram'></i> Postar Direto";
+                    btn.style.background = "linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)";
+                    btn.dataset.ready = "false";
+                    btn.style.opacity = "1";
+                    return;
+                }
+
+                // Prepara a imagem para o clique de confirmação de envio manual
+                btn.innerHTML = "<i class='bx bxl-instagram'></i> Selecione o App";
+                btn.style.background = "#25D366";
+                btn.style.opacity = "1";
+                btn.dataset.ready = "true";
+                try {
+                    const { blob } = await createCanvasBlob(index);
+                    sharedBlobs[index] = blob;
+                    alert("A automação da API falhou ou está vazia (" + err.message + "). Clique no botão novamente para usar o compartilhamento de celular do seu navegador.");
+                } catch (e) { /* ignora se falhar */ }
+            }
+        }
+
+    </script>
+
+</body>
+
+</html>

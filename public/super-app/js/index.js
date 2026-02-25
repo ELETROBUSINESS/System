@@ -124,7 +124,14 @@ window.addToCartDirect = function (id, name, priceOriginal, priceNew, img) {
 
 function extractProductImages(prod) {
     let images = [];
-    if (prod.imgUrl && prod.imgUrl.trim() !== "") images.push(prod.imgUrl.trim());
+    if (prod.imgUrl && prod.imgUrl.trim() !== "") {
+        if (prod.imgUrl.includes(',')) {
+            const urls = prod.imgUrl.split(',').map(url => url.trim()).filter(url => url !== "");
+            images.push(...urls);
+        } else {
+            images.push(prod.imgUrl.trim());
+        }
+    }
     let i = 1;
     while (true) {
         const key = 'imgUrl' + i;
@@ -161,7 +168,11 @@ function clearCache() {
 // ==================== 2. RENDERIZAÇÃO DA HOME (CARD NOVO) ====================
 
 function buildProductCardHTML(prod) {
-    let displayImg = prod.imgUrl || 'https://placehold.co/400x400/f8f9fa/c20026?text=Dtudo';
+    let rawImg = prod.imgUrl || '';
+    if (rawImg.includes(',')) {
+        rawImg = rawImg.split(',')[0].trim();
+    }
+    let displayImg = rawImg || 'https://placehold.co/400x400/f8f9fa/c20026?text=Dtudo';
     const valPrice = parseFloat(prod.price || 0); // Cartão (Cheio)
     const valOffer = parseFloat(prod['price-oferta'] || 0);
     const hasOffer = (valOffer > 0 && valOffer < valPrice);
@@ -473,7 +484,11 @@ function renderRecentlyViewed() {
     // Create mini cards
     let html = '';
     viewed.forEach(prod => {
-        let displayImg = prod.imgUrl || 'https://placehold.co/400x400/f8f9fa/c20026?text=Dtudo';
+        let rawImg = prod.imgUrl || '';
+        if (rawImg.includes(',')) {
+            rawImg = rawImg.split(',')[0].trim();
+        }
+        let displayImg = rawImg || 'https://placehold.co/400x400/f8f9fa/c20026?text=Dtudo';
         const valPrice = parseFloat(prod.price || 0);
         const valOffer = parseFloat(prod['price-oferta'] || 0);
         const hasOffer = (valOffer > 0 && valOffer < valPrice);

@@ -63,13 +63,35 @@
                             <div id="search-history-list" class="suggestion-list"></div>
                         </div>
 
-                        <div id="search-suggestions-section">
+                        <div id="search-categories-section">
+                            <div class="search-section-title">Categorias populares</div>
+                            <div class="search-categories-grid">
+                                <div class="search-category-block" onclick="executeSearch('maquiagem')">
+                                    <img src="https://img.icons8.com/3d-fluency/94/lipstick.png"
+                                        style="width: 24px; height: 24px; margin-bottom: 5px;">
+                                    <span>Makes</span>
+                                </div>
+                                <div class="search-category-block" onclick="executeSearch('escolar')">
+                                    <img src="https://img.icons8.com/3d-fluency/94/spiral-bound-booklet.png"
+                                        style="width: 24px; height: 24px; margin-bottom: 5px;">
+                                    <span>Escolar</span>
+                                </div>
+                                <div class="search-category-block" onclick="executeSearch('relogio')">
+                                    <img src="https://img.icons8.com/3d-fluency/94/clock.png"
+                                        style="width: 24px; height: 24px; margin-bottom: 5px;">
+                                    <span>Relógios</span>
+                                </div>
+                                <div class="search-category-block" onclick="executeSearch('brinquedo')">
+                                    <img src="https://img.icons8.com/3d-fluency/94/controller.png"
+                                        style="width: 24px; height: 24px; margin-bottom: 5px;">
+                                    <span>Brinquedos</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="search-suggestions-section" style="display: none;">
                             <div class="search-section-title">Sugestões para você</div>
                             <div id="search-suggestions-list" class="suggestion-list">
-                                <div class="suggestion-item"><i class='bx bx-trending-up'></i> Relógio Masculino</div>
-                                <div class="suggestion-item"><i class='bx bx-trending-up'></i> Material Escolar</div>
-                                <div class="suggestion-item"><i class='bx bx-trending-up'></i> Eletrônicos</div>
-                                <div class="suggestion-item"><i class='bx bx-trending-up'></i> Brinquedos</div>
                             </div>
                         </div>
                     </div>
@@ -94,12 +116,6 @@
         </div>
     </header>
 
-    <main>
-
-
-
-    </main>
-
     <section class="banner-slider">
         <div class="slider-wrapper">
             <div class="slide"><img src="1.png" alt="Ofertas"></div>
@@ -110,50 +126,60 @@
     <section class="categories-section">
         <div class="container">
             <div class="categories-scroll">
-                <div class="category-item fire" onclick="location.href='search.html?q=ofertas'">
-                    <div class="category-icon"><i class='bx bxs-hot'></i></div>
-                    <span style="color: var(--color-brand-red); font-weight: 700;">Ofertas!</span>
+                <div class="category-item" onclick="window.filterLocalCategory('maquiagem')">
+                    <div class="category-icon" style="background:#fff4f6; border-color:#ffe0e6;">
+                        <img src="https://img.icons8.com/3d-fluency/94/lipstick.png" alt="Maquiagem"
+                            style="width: 42px; height: 42px; object-fit: contain;">
+                    </div>
+                    <strong>Makes</strong>
                 </div>
-                <div class="category-item" onclick="location.href='search.html?q=escolar'">
-                    <div class="category-icon"><i class='bx bx-pencil'></i></div><span>Material Escolar</span>
+                <div class="category-item" onclick="window.filterLocalCategory('escolar')">
+                    <div class="category-icon" style="background:#f0f7ff; border-color:#e0edff;">
+                        <img src="https://img.icons8.com/3d-fluency/94/open-book.png" alt="Escolar"
+                            style="width: 42px; height: 42px; object-fit: contain;">
+                    </div>
+                    <strong>Escolar</strong>
                 </div>
-                <div class="category-item" onclick="location.href='search.html?q=relogio'">
-                    <div class="category-icon"><i class='bx bx-time-five'></i></div><span>Relógios</span>
+                <div class="category-item" onclick="window.filterLocalCategory('relogio')">
+                    <div class="category-icon" style="background:#f8f9fa; border-color:#eee;">
+                        <img src="https://img.icons8.com/3d-fluency/94/clock.png" alt="Relógios"
+                            style="width: 42px; height: 42px; object-fit: contain;">
+                    </div>
+                    <strong>Relógios</strong>
                 </div>
-                <div class="category-item" onclick="location.href='search.html?q=brinquedo'">
-                    <div class="category-icon"><i class='bx bx-game'></i></div><span>Brinquedos</span>
-                </div>
-                <div class="category-item" onclick="location.href='index.html'">
-                    <div class="category-icon" style="background:#e0e0e0;"><i class='bx bx-grid-alt'
-                            style="color:#666;"></i></div><span style="color:#666;">Todos</span>
+                <div class="category-item" onclick="window.filterLocalCategory('brinquedo')">
+                    <div class="category-icon" style="background:#fefff0; border-color:#fafce0;">
+                        <img src="https://img.icons8.com/3d-fluency/94/controller.png" alt="Brinquedos"
+                            style="width: 42px; height: 42px; object-fit: contain;">
+                    </div>
+                    <strong>Brinquedos</strong>
                 </div>
             </div>
         </div>
     </section>
 
-
-
-    <!-- VISTO POR ÚLTIMO (Injetado via JS) -->
-    <section id="recently-viewed"
-        style="display: none; background: #fff; padding: 15px 0; margin-bottom: 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-        <div class="container">
-            <h2 class="section-title"
-                style="font-size: 1.1rem; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-                <i class='bx bx-history' style="color: var(--color-brand-red);"></i> Visto por último
-            </h2>
-            <div id="recently-viewed-container" class="categories-scroll" style="gap: 15px;">
-                <!-- Preenchido via JS -->
+    <main>
+        <!-- VISTO POR ÚLTIMO (Injetado via JS) -->
+        <section id="recently-viewed"
+            style="display: none; background: #fff; padding: 15px 0; margin-bottom: 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+            <div class="container">
+                <h2 class="section-title"
+                    style="font-size: 1.1rem; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                    <i class='bx bx-history' style="color: var(--color-brand-red);"></i> Visto por último
+                </h2>
+                <div id="recently-viewed-container" class="categories-scroll" style="gap: 15px;">
+                    <!-- Preenchido via JS -->
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <section id="products">
-        <div class="container">
-            <h2 class="section-title" id="feed-title" style="display: none;">Destaques para você</h2>
+        <section id="products" style="margin-top: 20px;">
+            <div class="container">
+                <h2 class="section-title" id="feed-title"
+                    style="display: block; font-size: 1.2rem; margin-bottom: 20px;">Destaques para você</h2>
 
-            <div id="home-sections-container">
-                <!-- Skeletons Sections injected by JS -->
-                <div class="product-grid">
+                <div id="firebase-products-container" class="product-grid">
+                    <!-- Skeletons Sections injected by JS -->
                     <div class="product-card skeleton-card">
                         <div class="skeleton skeleton-img"></div>
                         <div class="skeleton skeleton-text"></div>
@@ -163,40 +189,42 @@
                         <div class="skeleton skeleton-text"></div>
                     </div>
                 </div>
-            </div>
 
-            <div id="firebase-products-container" class="product-grid" style="display: none;">
-            </div>
+                <div id="scroll-sentinel" style="height: 50px; margin-top: 20px;"></div>
 
-            <div id="scroll-sentinel" style="display: none;"></div>
-
-            <div id="infinite-loader" style="display: none; margin-top: 15px;">
-                <div class="product-grid">
-                    <div class="product-card skeleton-card">
-                        <div class="skeleton skeleton-img"></div>
-                        <div class="skeleton skeleton-text"></div>
-                    </div>
-                    <div class="product-card skeleton-card">
-                        <div class="skeleton skeleton-img"></div>
-                        <div class="skeleton skeleton-text"></div>
+                <div id="infinite-loader" style="display: none; margin-top: 15px;">
+                    <div class="product-grid">
+                        <div class="product-card skeleton-card">
+                            <div class="skeleton skeleton-img"></div>
+                            <div class="skeleton skeleton-text"></div>
+                        </div>
+                        <div class="product-card skeleton-card">
+                            <div class="skeleton skeleton-img"></div>
+                            <div class="skeleton skeleton-text"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
     </main>
 
     <nav class="bottom-navbar">
-        <div class="nav-indicator-container">
-            <div class="nav-indicator" style="transform: translateX(0%);"></div>
-        </div>
-        <a href="index.html" class="nav-item active"><i class='bx bxs-home'></i><span>Início</span></a>
-        <a href="carrinho.html" class="nav-item">
-            <i class='bx bx-cart'></i>
-            <span id="cart-badge" class="cart-badge" style="display: none;">0</span>
-            <span>Carrinho</span>
+        <a href="index.html" class="nav-item active"><i class='bx bx-home'></i><span>Início</span></a>
+        <a href="javascript:void(0)" class="nav-item" onclick="openSearchModal()">
+            <i class='bx bx-search-alt-2'></i><span>Busca</span>
         </a>
-        <a href="pedidos.html" class="nav-item"><i class='bx bx-receipt'></i><span>Pedidos</span></a>
+        <a href="carrinho.html" class="nav-item">
+            <i class='bx bx-basket'></i>
+            <span id="cart-badge" class="cart-badge" style="display: none;">0</span>
+            <span>Cesto</span>
+        </a>
+        <a href="pedidos.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                <path
+                    d="M20.26 15.47s-.06-.04-.1-.05c-.4-.22-.84-.32-1.29-.37L17.79 8h1.22c.55 0 1-.45 1-1V5c0-.55-.45-1-1-1h-1.89c-.41-1.19-1.53-2-2.83-2h-2.28v2h2.28a1 1 0 0 1 .99.85l1.62 10.54c-.46.24-.87.57-1.19 1-.14.19-.25.39-.36.6H13V7c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1h.03C2.4 12.84 2 13.87 2 15v3c0 .55.45 1 1 1h1.05c.25 1.69 1.69 3 3.45 3s3.2-1.31 3.45-3h4.1c.25 1.69 1.69 3 3.45 3 1.93 0 3.5-1.57 3.5-3.5 0-1.24-.67-2.4-1.74-3.03M4 8h7v2H4zm3.5 12a1.498 1.498 0 0 1-1.47-1.79c.05-.23.14-.45.27-.61.11-.15.25-.26.4-.36 0 0 .01 0 .02-.01.3-.18.65-.25.99-.21h.07c.16.03.32.08.47.16l.06.03c.35.23.59.57.67.96.02.1.03.21.03.31 0 .83-.67 1.5-1.5 1.5Zm3.5-3h-.34a3 3 0 0 0-.3-.5c-.03-.04-.06-.07-.08-.11-.11-.14-.23-.28-.36-.4-.04-.04-.09-.08-.13-.12-.17-.15-.34-.28-.54-.4a.5.5 0 0 0-.1-.05c-.5-.27-1.07-.42-1.66-.42-1.11 0-2.13.51-2.79 1.38-.15.19-.27.39-.38.62h-.34v-2c0-1.65 1.35-3 3-3h4v5Zm7.5 3a1.498 1.498 0 0 1-1.2-2.4 1.506 1.506 0 0 1 1.94-.41 1.53 1.53 0 0 1 .77 1.31c0 .83-.67 1.5-1.5 1.5Z" />
+            </svg>
+            <span>Pedidos</span>
+        </a>
     </nav>
 
     <footer class="main-footer">
@@ -234,8 +262,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="js/global.js"></script>
-    <script src="js/index.js"></script>
+    <script src="js/global.js?v=2.2"></script>
+    <script src="js/index.js?v=2.2"></script>
 </body>
 
 </html>

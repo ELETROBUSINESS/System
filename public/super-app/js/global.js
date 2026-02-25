@@ -1,12 +1,25 @@
-// js/global.js
+const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
+var MP_PUBLIC_KEY = "APP_USR-ab887886-2763-4265-8893-bf9513809bd1"; // ALERTA: A chave "APP_USR-786d3961..." inserida (EletroPay) é INVÁLIDA e causava o erro 404. Revertido para a chave anterior. Insira a Public Key correta do painel!
+const CACHE_KEY = 'dtudo_products_cache';
+const CACHE_TIME_KEY = 'dtudo_cache_time';
+const CACHE_DURATION = 60 * 1000; // 60 segundos conforme solicitado
 
-// --- 1. CONFIGURAÇÕES ---
-const API_URLS = {
-    CREATE_PREFERENCE: "https://createpreference-xsy57wqb6q-uc.a.run.app",
-    CREATE_PAYMENT: "https://createpayment-xsy57wqb6q-uc.a.run.app",
-    CREATE_INFINITEPAY_LINK: "https://us-central1-super-app25.cloudfunctions.net/createInfinitePayLink"
-};
-const MP_PUBLIC_KEY = "APP_USR-ab887886-2763-4265-8893-bf9513809bd1";
+// Helpers de formatação global
+const formatCurrency = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+
+function calculateInstallmentsRule(price) {
+    if (price >= 300) return { count: 3, value: price / 3 };
+    if (price >= 150) return { count: 2, value: price / 2 };
+    return { count: 1, value: price };
+}
+
+function getInstallmentHtml(price) {
+    const inst = calculateInstallmentsRule(price);
+    if (inst.count > 1) {
+        return `<div class="installment-text">ou até <b>${inst.count}x ${formatCurrency(inst.value)}</b></div>`;
+    }
+    return `<div class="installment-text">ou <b>${formatCurrency(price)}</b> no cartão</div>`;
+}
 
 // Variáveis globais acessíveis em outras páginas
 let currentUser = null;
@@ -31,18 +44,63 @@ document.addEventListener("DOMContentLoaded", () => {
     auth = firebase.auth();
     db = firebase.firestore();
 
-    // Observer de Auth Global: Roda sempre que o status do login muda (inclusive ao recarregar a página)
+    // Observer de Auth Global
     auth.onAuthStateChanged(user => {
         currentUser = user;
-        updateUserUI(user); // << AQUI É ONDE A MÁGICA ACONTECE
-
-        // Dispara evento para outras páginas saberem que carregou
+        updateUserUI(user);
         document.dispatchEvent(new CustomEvent('userReady', { detail: user }));
     });
+
+    // Inicia o Gerenciador de Dados Central
+    DataManager.init();
 
     updateCartBadge();
     setupGlobalEvents();
 });
+
+// --- 3. BANCO DE DADOS CENTRAL (CACHE) ---
+const DataManager = {
+    init: function () {
+        // Primeira carga ao abrir qualquer página
+        this.sync();
+
+        // Loop de atualização a cada 60s
+        setInterval(() => this.sync(), CACHE_DURATION);
+    },
+
+    sync: async function () {
+        try {
+            const response = await fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`);
+            const result = await response.json();
+
+            if (result.status === "success" && result.data) {
+                const oldData = localStorage.getItem(CACHE_KEY);
+                const newDataStr = JSON.stringify(result.data);
+
+                if (oldData !== newDataStr) {
+                    console.log("[DataManager] Detectadas mudanças no banco central.");
+
+                    // Salva novos dados
+                    localStorage.setItem(CACHE_KEY, newDataStr);
+                    localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+
+                    // Mecânica de 10s para refletir a atualização para o usuário
+                    setTimeout(() => {
+                        console.log("[DataManager] Refletindo novas informações...");
+                        document.dispatchEvent(new CustomEvent('productsUpdated', { detail: result.data }));
+                    }, 10000); // 10s após atualizar por completo
+                }
+            }
+        } catch (e) {
+            console.error("[DataManager] Erro ao sincronizar:", e);
+        }
+    },
+
+    getProducts: function () {
+        const data = localStorage.getItem(CACHE_KEY);
+        return data ? JSON.parse(data) : [];
+    }
+};
 
 // --- 3. GERENCIAMENTO DO CARRINHO ---
 const CartManager = {
@@ -58,7 +116,7 @@ const CartManager = {
         }
         localStorage.setItem('app_cart', JSON.stringify(cart));
         updateCartBadge();
-        showToast("Adicionado ao carrinho!", "success");
+        showToast(`${product.name} adicionado ao cesto!`, "success");
     },
 
     remove: (id) => {
@@ -75,7 +133,7 @@ const CartManager = {
 
     total: () => {
         const cart = CartManager.get();
-        return cart.reduce((sum, item) => sum + (item.priceNew * item.quantity), 0);
+        return cart.reduce((sum, item) => sum + ((item.priceNew || item.priceOriginal) * item.quantity), 0);
     }
 };
 
@@ -88,19 +146,35 @@ function updateCartBadge() {
     if (badgeMobile) {
         badgeMobile.innerText = count;
         badgeMobile.style.display = count > 0 ? 'flex' : 'none';
+        if (count > 0) {
+            badgeMobile.classList.add('pulse');
+            setTimeout(() => badgeMobile.classList.remove('pulse'), 3000);
+        }
     }
     if (badgeDesktop) {
         badgeDesktop.innerText = count;
         badgeDesktop.style.display = count > 0 ? 'flex' : 'none';
+        if (count > 0) {
+            badgeDesktop.classList.add('pulse');
+            setTimeout(() => badgeDesktop.classList.remove('pulse'), 3000);
+        }
     }
 }
 
+let toastTimeout;
 function showToast(msg, type = "success") {
     const toast = document.getElementById("toast-notification");
     if (!toast) return;
+
+    // Cancela o timeout anterior se houver (evita que o toast suma antes do tempo se clicarem várias vezes)
+    clearTimeout(toastTimeout);
+
     toast.innerHTML = `<i class='bx bxs-${type === 'success' ? 'check-circle' : 'error-circle'}'></i> <span>${msg}</span>`;
     toast.className = `toast show ${type}`;
-    setTimeout(() => toast.classList.remove("show"), 3000);
+
+    toastTimeout = setTimeout(() => {
+        toast.classList.remove("show");
+    }, 3000);
 }
 
 // --- ATUALIZAÇÃO VISUAL DO USUÁRIO (CORRIGIDO) ---
