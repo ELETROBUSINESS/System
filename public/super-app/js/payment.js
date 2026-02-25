@@ -703,6 +703,15 @@ function showPixScreen(paymentData) {
 
     if (btnDone) {
         btnDone.onclick = () => {
+            if (typeof trackEvent === 'function' && paymentData) {
+                trackEvent('purchase', {
+                    transaction_id: paymentData.id,
+                    value: paymentData.transaction_amount,
+                    currency: 'BRL',
+                    payment_type: 'pix',
+                    items: paymentData.additional_info?.items || []
+                });
+            }
             CartManager.clear();
             window.location.href = "pedidos.html";
         };
@@ -799,6 +808,14 @@ async function mountCardBrick() {
 
                     if (result.status === 'approved' || result.status === 'in_process') {
                         showToast("✅ Pagamento enviado! Aguarde confirmação.");
+                        if (typeof trackEvent === 'function') {
+                            trackEvent('purchase', {
+                                transaction_id: result.id,
+                                value: result.transaction_amount,
+                                currency: 'BRL',
+                                payment_type: 'card'
+                            });
+                        }
                         CartManager.clear();
                         setTimeout(() => window.location.href = "pedidos.html", 2000);
                     } else {
@@ -868,6 +885,14 @@ async function handleWhatsAppPayment() {
         : `\n*Entrega:* ${address}, ${city}`;
 
     // 3. Abre WhatsApp e limpa carrinho
+    if (typeof trackEvent === 'function') {
+        trackEvent('purchase', {
+            transaction_id: 'WA-' + ref,
+            value: total,
+            currency: 'BRL',
+            payment_type: 'whatsapp'
+        });
+    }
     window.open(`https://wa.me/5591986341760?text=${encodeURIComponent(msg)}`, '_blank');
     CartManager.clear();
     setTimeout(() => window.location.href = "index.html", 1500);

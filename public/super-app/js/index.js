@@ -114,8 +114,11 @@ window.addToCartDirect = function (id, name, priceOriginal, priceNew, img) {
             cart.push({ id: id, name: name, priceOriginal: priceOriginal, priceNew: priceNew, image: img, quantity: 1 });
         }
         localStorage.setItem(CART_KEY, JSON.stringify(cart));
-        if (typeof updateCartBadge === 'function') updateCartBadge();
-        showToast(`${name} adicionado ao carrinho!`, "success");
+        if (typeof trackEvent === 'function') {
+            trackEvent('add_to_cart', {
+                items: [{ item_id: id, item_name: name, price: priceNew }]
+            });
+        }
     }
 }
 
@@ -165,11 +168,7 @@ function clearCache() {
 // ==================== 2. RENDERIZAÇÃO DA HOME (CARD NOVO) ====================
 
 function buildProductCardHTML(prod) {
-    let rawImg = prod.imgUrl || '';
-    if (rawImg.includes(',')) {
-        rawImg = rawImg.split(',')[0].trim();
-    }
-    let displayImg = rawImg || 'https://placehold.co/400x400/f8f9fa/c20026?text=Dtudo';
+    let displayImg = getFirstImageUrl(prod.imgUrl);
     const valPrice = parseFloat(prod.price || 0); // Cartão (Cheio)
     const valOffer = parseFloat(prod['price-oferta'] || 0);
     const hasOffer = (valOffer > 0 && valOffer < valPrice);
@@ -480,11 +479,7 @@ function renderRecentlyViewed() {
     // Create mini cards
     let html = '';
     viewed.forEach(prod => {
-        let rawImg = prod.imgUrl || '';
-        if (rawImg.includes(',')) {
-            rawImg = rawImg.split(',')[0].trim();
-        }
-        let displayImg = rawImg || 'https://placehold.co/400x400/f8f9fa/c20026?text=Dtudo';
+        let displayImg = getFirstImageUrl(prod.imgUrl);
         const valPrice = parseFloat(prod.price || 0);
         const valOffer = parseFloat(prod['price-oferta'] || 0);
         const hasOffer = (valOffer > 0 && valOffer < valPrice);
@@ -671,6 +666,13 @@ window.filterLocalCategory = function (categoryStr) {
     if (!cached) return;
 
     categoryStr = categoryStr || 'todos';
+
+    if (typeof trackEvent === 'function') {
+        trackEvent('select_content', {
+            content_type: 'category',
+            item_id: categoryStr
+        });
+    }
 
     const homeSec = document.getElementById('home-sections-container');
     const feedCont = document.getElementById('firebase-products-container');

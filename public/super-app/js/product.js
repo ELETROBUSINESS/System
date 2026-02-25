@@ -141,7 +141,20 @@ function renderProductView(prod, variacoesGroup, allProducts, activeIndex) {
     // Pix tem 5% de desconto sobre o preço de venda final
     const pixPrice = cardPrice * 0.95;
 
-    document.title = `${prod.name} | Dtudo`;
+    const pageTitle = `${prod.name} | Dtudo`;
+    document.title = pageTitle;
+
+    // Rastreia a visualização do produto com metadados para Analytics
+    if (typeof trackEvent === 'function') {
+        trackEvent('view_item', {
+            items: [{
+                item_id: prod.id,
+                item_name: prod.name,
+                item_category: prod.category,
+                price: cardPrice
+            }]
+        });
+    }
 
     // Formatação refinada: Separa Reais de Centavos para Estilo Premium
     const splitPrice = (val) => {
@@ -322,11 +335,7 @@ function renderSuggestedProducts(currentProd, allProducts) {
 
     suggested = suggested.slice(0, 8);
     container.innerHTML = suggested.map(prod => {
-        let rawImg = prod.imgUrl || '';
-        if (rawImg.includes(',')) {
-            rawImg = rawImg.split(',')[0].trim();
-        }
-        let displayImg = rawImg || 'https://placehold.co/400x400/f8f9fa/c20026?text=Dtudo';
+        let displayImg = getFirstImageUrl(prod.imgUrl);
         const valPrice = parseFloat(prod.price || 0);
         const valOffer = parseFloat(prod['price-oferta'] || 0);
         const finalPrice = (valOffer > 0 && valOffer < valPrice) ? valOffer : valPrice;
@@ -352,11 +361,19 @@ window.addToCart = function (id, name, priceOriginal, priceNew, img) {
     if (typeof CartManager !== 'undefined') {
         const product = { id, name, priceOriginal, priceNew, image: img };
         CartManager.add(product);
+        if (typeof trackEvent === 'function') {
+            trackEvent('add_to_cart', {
+                items: [{ item_id: id, item_name: name, price: priceNew }]
+            });
+        }
     }
 }
 
 window.addToCartAndGo = function (id, name, priceOriginal, priceNew, img) {
     window.addToCart(id, name, priceOriginal, priceNew, img);
+    if (typeof trackEvent === 'function') {
+        trackEvent('begin_checkout_click', { item_id: id, item_name: name });
+    }
     window.location.href = 'carrinho.html';
 }
 

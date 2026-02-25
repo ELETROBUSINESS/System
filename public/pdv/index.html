@@ -698,13 +698,7 @@
                         </div>
                     </div>
 
-                    <div class="more-menu-item" id="btn-stories-promo" onclick="window.open('stories.html', '_blank')">
-                        <div class="item-icon-box"><i class='bx bxl-instagram-alt' style="color: #E1306C;"></i></div>
-                        <div class="item-content">
-                            <strong>Marketing Story</strong>
-                            <span>Gerar artes de novidades</span>
-                        </div>
-                    </div>
+
 
                     <div class="more-menu-item" id="btn-update-product">
                         <div class="item-icon-box"><i class='bx bx-barcode-reader'></i></div>
@@ -2617,7 +2611,7 @@
         <div class="brand-row">
             <img src="assets/sistema.png" alt="Logo" class="brand-img-icon">
 
-            <span class="brand-name-text">ELETRO<span class="highlight-dot">. 1.0.0.47</span></span>
+            <span class="brand-name-text">ELETRO<span class="highlight-dot">. 1.0.0.47.2</span></span>
         </div>
     </div>
     <div class="pn">
@@ -3056,9 +3050,12 @@
                             <label>Foto (URL)</label>
                             <input type="text" id="update-prod-img" class="form-input" placeholder="http://...">
                         </div>
-                        <div class="form-group" style="display:flex; align-items:center; justify-content:center;">
+                        <div class="form-group"
+                            style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;">
                             <img id="update-prod-img-preview" src=""
-                                style="max-width: 50px; max-height: 50px; object-fit: contain; display:none;">
+                                style="max-width: 60px; max-height: 60px; object-fit: contain; display:none; border: 1px solid #ddd; border-radius: 4px;">
+                            <div id="update-prod-imgs-container"
+                                style="display:flex; gap:4px; flex-wrap:wrap; justify-content:center;"></div>
                         </div>
                     </div>
 

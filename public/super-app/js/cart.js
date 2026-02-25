@@ -278,6 +278,13 @@ function setupCartEvents() {
             const cartItems = CartManager.get();
             if (cartItems.length === 0) return;
 
+            if (typeof trackEvent === 'function') {
+                trackEvent('begin_checkout', {
+                    value: CartManager.total(),
+                    currency: 'BRL',
+                    items_count: cartItems.length
+                });
+            }
             // Vamos direto para o checkout (login não é mais obrigatório aqui)
             window.location.href = "payment.html";
         };

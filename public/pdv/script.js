@@ -92,6 +92,7 @@ var CENTRAL_API_URL = "https://script.google.com/macros/s/AKfycbyZtUsI44xA4MQQLZ
 // Funções Auxiliares Globais (Necessárias para as funções abaixo)
 var formatCurrency = (value) => { const n = Number(value); if (isNaN(n)) return 'R$ 0,00'; return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); };
 var formatTime = (date) => { const pad = (n) => n < 10 ? '0' + n : n; return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`; };
+var getFirstImageUrl = (url) => { if (!url) return ''; return url.split(',')[0].trim(); };
 var mapStatusFirebaseToUI = (fbStatus) => {
     if (fbStatus === 'approved') return 'pendente';
     if (fbStatus === 'preparation') return 'preparando';
@@ -1229,8 +1230,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Define ícone base (pode melhorar se tiver imagem real)
-            const iconHtml = item.imgUrl
-                ? `<img src="${item.imgUrl}" style="width:100%; height:100%; object-fit:contain;">`
+            const firstImg = getFirstImageUrl(item.imgUrl);
+            const iconHtml = firstImg
+                ? `<img src="${firstImg}" style="width:100%; height:100%; object-fit:contain;">`
                 : `<i class='bx bx-package'></i>`;
 
             tr.innerHTML = `
@@ -1675,8 +1677,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? `<span class="fiscal-status ok" title="NCM: ${prod.ncm}"><i class='bx bx-check'></i> OK</span>`
                 : `<span class="fiscal-status pending"><i class='bx bx-error'></i> Pendente</span>`;
 
-            const imgHtml = prod.imgUrl && prod.imgUrl.length > 10
-                ? `<img src="${prod.imgUrl}" class="product-thumb-sm" alt="Foto">`
+            const firstImg = getFirstImageUrl(prod.imgUrl);
+            const imgHtml = firstImg && firstImg.length > 10
+                ? `<img src="${firstImg}" class="product-thumb-sm" alt="Foto">`
                 : `<div class="product-thumb-placeholder"><i class="bx bx-package"></i></div>`;
 
             const brandHtml = prod.brand ? `<span class="brand-tag">${prod.brand}</span>` : '';
@@ -2119,10 +2122,31 @@ document.addEventListener('DOMContentLoaded', () => {
     // Auxiliar: Atualiza Preview da Imagem
     window.updateImagePreview = (url) => {
         const container = document.getElementById('edit-img-preview');
-        if (url && url.length > 10) {
-            container.innerHTML = `<img src="${url}" onerror="this.src='https://placehold.co/100x100?text=Erro'">`;
+        const firstImg = getFirstImageUrl(url);
+        if (firstImg && firstImg.length > 10) {
+            container.innerHTML = `<img src="${firstImg}" onerror="this.src='https://placehold.co/100x100?text=Erro'">`;
         } else {
             container.innerHTML = `<i class='bx bx-image-add'></i>`;
+        }
+
+        // Show thumbnails if multiple
+        const thumbsContainerId = 'edit-img-thumbs';
+        let thumbsContainer = document.getElementById(thumbsContainerId);
+        if (!thumbsContainer) {
+            thumbsContainer = document.createElement('div');
+            thumbsContainer.id = thumbsContainerId;
+            thumbsContainer.style = 'display:flex; gap:4px; flex-wrap:wrap; margin-top:8px; justify-content:center;';
+            container.parentNode.appendChild(thumbsContainer);
+        }
+        thumbsContainer.innerHTML = '';
+        if (url && url.includes(',')) {
+            url.split(',').forEach(u => {
+                const img = document.createElement('img');
+                img.src = u.trim();
+                img.style = 'width:30px; height:30px; object-fit:cover; border-radius:4px; border:1px solid #eee; cursor:pointer;';
+                img.onclick = () => { container.innerHTML = `<img src="${u.trim()}">`; };
+                thumbsContainer.appendChild(img);
+            });
         }
     };
 
@@ -6268,8 +6292,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Image or Icon Logic
             let imgHTML = '';
-            if (hasImage) {
-                imgHTML = `<img src="${p.imgUrl}" alt="${p.name}" class="adv-card-img">`;
+            const firstImg = getFirstImageUrl(p.imgUrl);
+            if (firstImg && firstImg.length > 10) {
+                imgHTML = `<img src="${firstImg}" alt="${p.name}" class="adv-card-img">`;
             } else {
                 imgHTML = `<div class="adv-card-icon"><i class='bx bx-box'></i></div>`;
             }
@@ -6735,8 +6760,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (results.length > 0) {
                     barcodeResultsEl.innerHTML = results.map(p => {
-                        const imgHtml = p.imgUrl && p.imgUrl.length > 10
-                            ? `<img src="${p.imgUrl}" class="result-thumb">`
+                        const firstImg = getFirstImageUrl(p.imgUrl);
+                        const imgHtml = firstImg && firstImg.length > 10
+                            ? `<img src="${firstImg}" class="result-thumb">`
                             : `<div class="result-thumb"><i class='bx bx-package'></i></div>`;
 
                         return `
@@ -7543,11 +7569,27 @@ document.addEventListener('DOMContentLoaded', () => {
         updateProdForm.style.display = 'block';
 
         upImg.value = prod.imgUrl || '';
-        if (prod.imgUrl) {
-            upImgPreview.src = prod.imgUrl;
+        const firstImg = getFirstImageUrl(prod.imgUrl);
+        if (firstImg) {
+            upImgPreview.src = firstImg;
             upImgPreview.style.display = 'block';
         } else {
             upImgPreview.style.display = 'none';
+        }
+
+        // Multiple Thumbnails
+        const thumbsCont = document.getElementById('update-prod-imgs-container');
+        if (thumbsCont) {
+            thumbsCont.innerHTML = '';
+            if (prod.imgUrl && prod.imgUrl.includes(',')) {
+                prod.imgUrl.split(',').forEach(u => {
+                    const img = document.createElement('img');
+                    img.src = u.trim();
+                    img.style = 'width:30px; height:30px; object-fit:cover; border-radius:4px; border:1px solid #eee; cursor:pointer;';
+                    img.onclick = () => { upImgPreview.src = u.trim(); };
+                    thumbsCont.appendChild(img);
+                });
+            }
         }
 
         upName.value = prod.name || '';
@@ -7623,7 +7665,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const offerPriceField = document.getElementById('festa-offer-price');
                 const discountPercField = document.getElementById('festa-discount-perc');
 
-                if (prodImg) prodImg.src = prod.imgUrl || 'https://placehold.co/70x70?text=S/F';
+                if (prodImg) prodImg.src = getFirstImageUrl(prod.imgUrl) || 'https://placehold.co/70x70?text=S/F';
                 if (prodName) prodName.textContent = prod.name;
                 if (prodPriceOrig) prodPriceOrig.textContent = `Preço Atual: ${formatCurrency(prod.price)}`;
 

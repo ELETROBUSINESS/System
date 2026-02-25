@@ -1,4 +1,43 @@
 const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
+const GA_MEASUREMENT_ID = 'G-BV6V3GTMR0';
+
+/**
+ * Função global para rastreamento de eventos no Google Analytics.
+ * @param {string} eventName - Nome do evento (ex: 'view_item', 'add_to_cart')
+ * @param {object} params - Metadados do evento
+ */
+function trackEvent(eventName, params = {}) {
+    if (typeof gtag === 'function') {
+        const guestId = localStorage.getItem('guest_uid') || 'guest';
+        const enhancedParams = {
+            ...params,
+            client_id: guestId,
+            page_title: document.title,
+            page_location: window.location.href,
+            timestamp: new Date().toISOString()
+        };
+        gtag('event', eventName, enhancedParams);
+        console.log(`[GA] Evento: ${eventName}`, enhancedParams);
+    }
+}
+
+// Detecção de Campanha/Indicação (Landing)
+function checkLandingParameters() {
+    const search = window.location.search;
+    if (search.includes('layla10')) {
+        trackEvent('campaign_referral', {
+            campaign_id: 'layla10',
+            source: 'landing_url'
+        });
+
+        // Auto-aplicação de cupom se for a primeira entrada
+        if (!sessionStorage.getItem('applied_coupon')) {
+            sessionStorage.setItem('applied_coupon', JSON.stringify({ code: 'LAYLA10' }));
+            console.log('[Analytics] Campanha Layla10 detectada. Cupom aplicado.');
+        }
+    }
+}
+
 var MP_PUBLIC_KEY = "APP_USR-ab887886-2763-4265-8893-bf9513809bd1"; // ALERTA: A chave "APP_USR-786d3961..." inserida (EletroPay) é INVÁLIDA e causava o erro 404. Revertido para a chave anterior. Insira a Public Key correta do painel!
 const CACHE_KEY = 'dtudo_products_cache';
 const CACHE_TIME_KEY = 'dtudo_cache_time';
@@ -6,6 +45,7 @@ const CACHE_DURATION = 60 * 1000; // 60 segundos conforme solicitado
 
 // Helpers de formatação global
 const formatCurrency = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+const getFirstImageUrl = (url) => { if (!url) return 'https://placehold.co/500x500?text=Sem+Foto'; return url.split(',')[0].trim(); };
 
 function calculateInstallmentsRule(price) {
     if (price >= 300) return { count: 3, value: price / 3 };
@@ -55,6 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
     DataManager.init();
 
     updateCartBadge();
+    checkLandingParameters();
     setupGlobalEvents();
 });
 
@@ -117,6 +158,11 @@ const CartManager = {
         localStorage.setItem('app_cart', JSON.stringify(cart));
         updateCartBadge();
         showToast(`${product.name} adicionado ao cesto!`, "success");
+        if (typeof trackEvent === 'function') {
+            trackEvent('add_to_cart', {
+                items: [{ item_id: product.id, item_name: product.name, price: product.priceNew || product.priceOriginal }]
+            });
+        }
     },
 
     remove: (id) => {
@@ -247,6 +293,7 @@ function setupGlobalEvents() {
     const desktopLogout = document.getElementById("desktop-logout");
 
     const handleLogout = () => {
+        trackEvent('login', { method: 'Google' });
         auth.signOut().then(() => {
             showToast("Você saiu da conta.");
             // O auth.onAuthStateChanged vai rodar e limpar a UI automaticamente

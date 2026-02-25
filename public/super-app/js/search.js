@@ -119,6 +119,14 @@ async function performSearch(term, type) {
     // Filter valid images
     results = results.filter(p => p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co') && (p.imgUrl.startsWith('http') || p.imgUrl.includes('/')));
 
+    if (typeof trackEvent === 'function') {
+        trackEvent('search', {
+            search_term: term,
+            search_type: type,
+            results_count: results.length
+        });
+    }
+
     if (results.length > 0) {
         container.innerHTML = '';
         renderProducts(results, container);
@@ -165,11 +173,7 @@ function renderProducts(products, target) {
 
         const installmentHtml = getInstallmentHtml(priceCard);
 
-        let rawImg = prod.imgUrl || '';
-        if (rawImg.includes(',')) {
-            rawImg = rawImg.split(',')[0].trim();
-        }
-        let displayImg = rawImg || 'https://placehold.co/400x400/f8f9fa/c20026?text=Dtudo';
+        let displayImg = getFirstImageUrl(prod.imgUrl);
 
         const html = `
             <div class="product-card" id="prod-${prod.id}">
