@@ -141,8 +141,8 @@ function extractProductImages(prod) {
 }
 
 function getCachedData() {
-    const json = sessionStorage.getItem(CACHE_KEY);
-    const time = sessionStorage.getItem(CACHE_TIME_KEY);
+    const json = localStorage.getItem(CACHE_KEY);
+    const time = localStorage.getItem(CACHE_TIME_KEY);
     if (!json || !time) return null;
     if (new Date().getTime() - parseInt(time) > CACHE_DURATION) { clearCache(); return null; }
     return JSON.parse(json);
@@ -153,13 +153,13 @@ function saveToCache(newProducts) {
     const uniqueIds = new Set(currentCache.map(p => p.id));
     const merged = [...currentCache];
     newProducts.forEach(p => { if (!uniqueIds.has(p.id)) merged.push(p); });
-    sessionStorage.setItem(CACHE_KEY, JSON.stringify(merged));
-    sessionStorage.setItem(CACHE_TIME_KEY, new Date().getTime().toString());
+    localStorage.setItem(CACHE_KEY, JSON.stringify(merged));
+    localStorage.setItem(CACHE_TIME_KEY, new Date().getTime().toString());
 }
 
 function clearCache() {
-    sessionStorage.removeItem(CACHE_KEY);
-    sessionStorage.removeItem(CACHE_TIME_KEY);
+    localStorage.removeItem(CACHE_KEY);
+    localStorage.removeItem(CACHE_TIME_KEY);
 }
 
 // ==================== 2. RENDERIZAÇÃO DA HOME (CARD NOVO) ====================
@@ -247,8 +247,8 @@ function renderHomeSections(cached) {
     const container = document.getElementById('home-sections-container');
     if (!container) return;
 
-    // Filter valid images
-    const validProds = cached.filter(p => p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co') && (p.imgUrl.startsWith('http') || p.imgUrl.includes('/')));
+    // Filter valid products (must have a name)
+    const validProds = cached.filter(p => p.name && p.name.trim() !== "");
     const interests = JSON.parse(localStorage.getItem('user_interests') || '[]');
 
     let destaques = validProds.filter(p => interests.some(i => (p.category || '').toLowerCase().includes(i)));
@@ -624,23 +624,28 @@ async function initProductFeed() {
         return [];
     })();
 
-    // Garante que o skeleton seja visto por pelo menos 800ms para evitar flickering
+    // Garante que o skeleton seja visto por pelo menos 300ms para evitar flickering
     const [data] = await Promise.all([
         fetchPromise,
-        new Promise(r => setTimeout(r, 800))
+        new Promise(r => setTimeout(r, 300))
     ]);
 
-    if (data && data.length > 0) {
+    const finalData = (data && data.length > 0) ? data : DataManager.getProducts();
+
+    if (finalData && finalData.length > 0) {
         window._apiFetched = true;
         const urlParams = new URLSearchParams(window.location.search);
         filterLocalCategory(urlParams.get('filter') || 'todos');
 
-        // Soft refresh em background
-        if (getCachedData()) {
+        // Soft refresh em background se usamos cache
+        if (data === null || data.length === 0) {
             fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`)
                 .then(res => res.json())
                 .then(result => {
-                    if (result.status === "success" && result.data) saveToCache(result.data);
+                    if (result.status === "success" && result.data) {
+                        saveToCache(result.data);
+                        // Se mudou algo, o evento productsUpdated (global) cuidará de atualizar o feed
+                    }
                 }).catch(() => { });
         }
     }
@@ -726,11 +731,8 @@ function applyLocalFilter(cached, categoryStr) {
         });
     }
 
-    // Filtro de Restrição:
-    // Exibe apenas produtos com URL de imagem válida.
-    filtered = filtered.filter(p =>
-        p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co') && (p.imgUrl.startsWith('http') || p.imgUrl.includes('/'))
-    );
+    // Filtro de Restrição: Exibe apenas produtos com nome válido.
+    filtered = filtered.filter(p => p.name && p.name.trim() !== "");
 
     productsBuffer = sortProductsForUX(filtered);
 }
@@ -1586,5 +1588,13 @@ document.addEventListener("DOMContentLoaded", () => {
         if (document.getElementById('firebase-products-container')) {
             initProductFeed();
         }
+        // Listen for background updates from DataManager (global.js)
+        document.addEventListener('productsUpdated', (e) => {
+            console.log("[Index] Recebida atualização do DataManager. Atualizando feed...");
+            const urlParams = new URLSearchParams(window.location.search);
+            if (!urlParams.get('id')) { // Only if not on detail view
+                filterLocalCategory(urlParams.get('filter') || 'todos');
+            }
+        });
     }
 });

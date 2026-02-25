@@ -88,7 +88,7 @@ const DataManager = {
                     setTimeout(() => {
                         console.log("[DataManager] Refletindo novas informações...");
                         document.dispatchEvent(new CustomEvent('productsUpdated', { detail: result.data }));
-                    }, 10000); // 10s após atualizar por completo
+                    }, 1000); // 1s após atualizar por completo converter feedback visual
                 }
             }
         } catch (e) {
