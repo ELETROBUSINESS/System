@@ -138,6 +138,12 @@
                         <input type="text" id="nfe-dest-nome" class="form-input-nfe" placeholder="Nome do Cliente">
                     </div>
 
+                    <div class="form-group-nfe">
+                        <label>Inscrição Estadual (IE)</label>
+                        <input type="text" id="nfe-dest-ie" class="form-input-nfe"
+                            placeholder="Deixe em branco se não possuir ou for ISENTO">
+                    </div>
+
                     <!-- NEW FIELDS -->
                     <div class="form-row-nfe" style="display:flex; gap:1rem;">
                         <div class="form-group-nfe" style="flex:1;">
@@ -226,7 +232,8 @@
                             <option value="03">Cartão de Crédito</option>
                             <option value="04">Cartão de Débito</option>
                             <option value="05">Crediário (Crédito Loja)</option>
-                            <option value="90">Fornecimento (Sem Pagamento)</option>
+                            <option value="90">Doação ou Amostra Grátis</option>
+                            <option value="91">Fornecimento (Pagamento Posterior)</option>
                         </select>
                     </div>
 
@@ -370,6 +377,8 @@
                                 <strong id="prev-dest-nome">CONSUMIDOR FINAL</strong><br>
                                 <span id="prev-dest-data">ENDEREÇO NÃO INFORMADO</span><br>
                                 CPF/CNPJ: <span id="prev-dest-doc">000.000.000-00</span>
+                                <span id="prev-dest-ie-container" style="display:none;">IE: <span
+                                        id="prev-dest-ie"></span></span>
                             </div>
                         </div>
 

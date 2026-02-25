@@ -18,7 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
             bairro: '',
             cep: '',
             municipio: '',
-            uf: 'PA'
+            uf: 'PA',
+            ie: ''
         },
         items: [],
         pag: {
@@ -59,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputDestCep = document.getElementById('nfe-dest-cep');
     const inputDestMunicipio = document.getElementById('nfe-dest-municipio');
     const inputDestUf = document.getElementById('nfe-dest-uf');
+    const inputDestIe = document.getElementById('nfe-dest-ie');
     const inputPagTipo = document.getElementById('nfe-pag-tipo');
 
     // Shipping Elements
@@ -307,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Form Inputs Listeners (Live Preview Update)
-    [inputDestDoc, inputDestNome, inputDestTel, inputDestEmail, inputDestRua, inputDestNum, inputDestBairro, inputDestCep, inputDestMunicipio, inputDestUf].forEach(input => {
+    [inputDestDoc, inputDestNome, inputDestTel, inputDestEmail, inputDestRua, inputDestNum, inputDestBairro, inputDestCep, inputDestMunicipio, inputDestUf, inputDestIe].forEach(input => {
         if (input) {
             input.addEventListener('input', () => {
                 nfeData.dest.cpf = inputDestDoc ? inputDestDoc.value : '';
@@ -320,6 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 nfeData.dest.cep = inputDestCep ? inputDestCep.value : '';
                 nfeData.dest.municipio = inputDestMunicipio ? inputDestMunicipio.value : '';
                 nfeData.dest.uf = inputDestUf ? inputDestUf.value : 'PA';
+                nfeData.dest.ie = inputDestIe ? inputDestIe.value : '';
                 updatePreview();
             });
         }
@@ -464,6 +467,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (inputDestCep) inputDestCep.value = nfeData.dest.cep || '';
                     if (inputDestMunicipio) inputDestMunicipio.value = nfeData.dest.municipio || '';
                     if (inputDestUf) inputDestUf.value = nfeData.dest.uf || 'PA';
+                    if (inputDestIe) inputDestIe.value = nfeData.dest.ie || '';
 
                     // Trigger input events to apply masks if modal is opened later
                     [inputDestDoc, inputDestTel].forEach(input => {
@@ -493,7 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function clearDraft() {
         localStorage.removeItem('nfe_draft');
         nfeData = {
-            dest: { cpf: '', nome: '', telefone: '', email: '', rua: '', num: '', bairro: '', cep: '', municipio: '', uf: 'PA' },
+            dest: { cpf: '', nome: '', telefone: '', email: '', rua: '', num: '', bairro: '', cep: '', municipio: '', uf: 'PA', ie: '' },
             items: [],
             pag: { tipo: '01', valor: 0 },
             frete: { mod: '9', valor: 0, transp: '' }
@@ -557,6 +561,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (inputDestCep) inputDestCep.value = nfeData.dest.cep || '';
             if (inputDestMunicipio) inputDestMunicipio.value = nfeData.dest.municipio || '';
             if (inputDestUf) inputDestUf.value = nfeData.dest.uf || 'PA';
+            if (inputDestIe) inputDestIe.value = nfeData.dest.ie || '';
             inputPagTipo.value = nfeData.pag.tipo || '01';
 
             if (inputFreteMod) inputFreteMod.value = nfeData.frete.mod || '9';
@@ -683,7 +688,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (inputDestCep) inputDestCep.value = '';
         if (inputDestMunicipio) inputDestMunicipio.value = '';
         if (inputDestUf) inputDestUf.value = 'PA';
-        nfeData.dest = { cpf: '', nome: '', telefone: '', email: '', rua: '', num: '', bairro: '', cep: '', municipio: '', uf: 'PA' };
+        if (inputDestIe) inputDestIe.value = '';
+        nfeData.dest = { cpf: '', nome: '', telefone: '', email: '', rua: '', num: '', bairro: '', cep: '', municipio: '', uf: 'PA', ie: '' };
         nfeData.frete = { mod: '9', valor: 0, transp: '' };
         if (inputFreteMod) inputFreteMod.value = '9';
         if (inputFreteValor) inputFreteValor.value = 0;
@@ -859,6 +865,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (prevNome) prevNome.textContent = destNome.toUpperCase();
         if (prevEnd) prevEnd.textContent = destEnd.toUpperCase();
         if (prevDoc) prevDoc.textContent = destDoc;
+
+        const prevIe = document.getElementById('prev-dest-ie');
+        const prevIeContainer = document.getElementById('prev-dest-ie-container');
+        if (prevIe && prevIeContainer) {
+            if (nfeData.dest.ie) {
+                prevIe.textContent = nfeData.dest.ie.toUpperCase();
+                prevIeContainer.style.display = 'inline';
+            } else {
+                prevIeContainer.style.display = 'none';
+            }
+        }
 
         // Let's use a cleaner approach targeting the info box
         const emitBox = document.querySelector('.danfe-section .danfe-info-box');
