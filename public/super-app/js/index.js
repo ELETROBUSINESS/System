@@ -437,8 +437,6 @@ function startSuggestionTimer() {
     }, 60000);
 }
 
-const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
-
 function registerInterest(category) {
     if (!category || category === 'todos' || category === 'ofertas') return;
     let interests = JSON.parse(localStorage.getItem('user_interests') || '[]');
