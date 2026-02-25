@@ -92,7 +92,7 @@ var CENTRAL_API_URL = "https://script.google.com/macros/s/AKfycbyZtUsI44xA4MQQLZ
 // Funções Auxiliares Globais (Necessárias para as funções abaixo)
 var formatCurrency = (value) => { const n = Number(value); if (isNaN(n)) return 'R$ 0,00'; return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); };
 var formatTime = (date) => { const pad = (n) => n < 10 ? '0' + n : n; return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`; };
-var getFirstImageUrl = (url) => { if (!url) return ''; return url.split(',')[0].trim(); };
+var getFirstImageUrl = (url) => { if (!url || url.length < 10) return 'https://placehold.co/500x500?text=Sem+Foto'; return url.split(',')[0].trim(); };
 var mapStatusFirebaseToUI = (fbStatus) => {
     if (fbStatus === 'approved') return 'pendente';
     if (fbStatus === 'preparation') return 'preparando';
@@ -1677,10 +1677,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? `<span class="fiscal-status ok" title="NCM: ${prod.ncm}"><i class='bx bx-check'></i> OK</span>`
                 : `<span class="fiscal-status pending"><i class='bx bx-error'></i> Pendente</span>`;
 
-            const firstImg = getFirstImageUrl(prod.imgUrl);
-            const imgHtml = firstImg && firstImg.length > 10
-                ? `<img src="${firstImg}" class="product-thumb-sm" alt="Foto">`
-                : `<div class="product-thumb-placeholder"><i class="bx bx-package"></i></div>`;
+            const allImgs = (prod.imgUrl || '').split(',').map(u => u.trim()).filter(u => u !== "");
+            const firstImg = allImgs[0];
+            let imgHtml = '';
+
+            if (firstImg && firstImg.length > 10) {
+                if (allImgs.length > 1) {
+                    imgHtml = `
+                        <div class="product-img-container-list">
+                            <img src="${firstImg}" class="product-thumb-sm" alt="Capa">
+                            <div class="product-thumbs-bar">
+                                ${allImgs.slice(1, 4).map(u => `<img src="${u}" class="product-thumb-xs">`).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    imgHtml = `<img src="${firstImg}" class="product-thumb-sm" alt="Foto">`;
+                }
+            } else {
+                imgHtml = `<div class="product-thumb-placeholder"><i class="bx bx-package"></i></div>`;
+            }
 
             const brandHtml = prod.brand ? `<span class="brand-tag">${prod.brand}</span>` : '';
 
@@ -3940,9 +3956,26 @@ document.addEventListener('DOMContentLoaded', () => {
             if (resultsEl) {
                 if (results.length > 0) {
                     resultsEl.innerHTML = results.map(p => {
-                        const imgHtml = p.imgUrl && p.imgUrl.length > 10
-                            ? `<img src="${p.imgUrl}" class="result-thumb">`
-                            : `<div class="result-thumb"><i class='bx bx-package'></i></div>`;
+                        const allImgsSearch = (p.imgUrl || '').split(',').map(u => u.trim()).filter(u => u !== "");
+                        const firstImgSearch = allImgsSearch[0];
+                        let imgHtml = '';
+
+                        if (firstImgSearch && firstImgSearch.length > 10) {
+                            if (allImgsSearch.length > 1) {
+                                imgHtml = `
+                                    <div class="product-img-container-list" style="margin-right:10px; padding: 2px; gap: 4px;">
+                                        <img src="${firstImgSearch}" class="product-thumb-sm" style="width:34px; height:34px;" alt="Capa">
+                                        <div class="product-thumbs-bar" style="gap: 1px;">
+                                            ${allImgsSearch.slice(1, 3).map(u => `<img src="${u}" class="product-thumb-xs" style="width:14px; height:14px;">`).join('')}
+                                        </div>
+                                    </div>
+                                `;
+                            } else {
+                                imgHtml = `<img src="${firstImgSearch}" class="result-thumb">`;
+                            }
+                        } else {
+                            imgHtml = `<div class="result-thumb"><i class='bx bx-package'></i></div>`;
+                        }
 
                         return `
                             <div class="search-result-item" onclick="quickAddFromSearch('${p.id}')">
@@ -6760,10 +6793,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (results.length > 0) {
                     barcodeResultsEl.innerHTML = results.map(p => {
-                        const firstImg = getFirstImageUrl(p.imgUrl);
-                        const imgHtml = firstImg && firstImg.length > 10
-                            ? `<img src="${firstImg}" class="result-thumb">`
-                            : `<div class="result-thumb"><i class='bx bx-package'></i></div>`;
+                        const allImgsSearch = (p.imgUrl || '').split(',').map(u => u.trim()).filter(u => u !== "");
+                        const firstImgSearch = allImgsSearch[0];
+                        let imgHtml = '';
+
+                        if (firstImgSearch && firstImgSearch.length > 10) {
+                            if (allImgsSearch.length > 1) {
+                                imgHtml = `
+                                    <div class="product-img-container-list" style="margin-right:10px; padding: 2px; gap: 4px;">
+                                        <img src="${firstImgSearch}" class="product-thumb-sm" style="width:34px; height:34px;" alt="Capa">
+                                        <div class="product-thumbs-bar" style="gap: 1px;">
+                                            ${allImgsSearch.slice(1, 3).map(u => `<img src="${u}" class="product-thumb-xs" style="width:14px; height:14px;">`).join('')}
+                                        </div>
+                                    </div>
+                                `;
+                            } else {
+                                imgHtml = `<img src="${firstImgSearch}" class="result-thumb">`;
+                            }
+                        } else {
+                            imgHtml = `<div class="result-thumb"><i class='bx bx-package'></i></div>`;
+                        }
 
                         return `
                         <div class="search-result-item" onclick="quickAddFromSearch('${p.id}')">

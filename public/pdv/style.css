@@ -1605,11 +1605,38 @@ body {
     width: 42px;
     height: 42px;
     border-radius: 8px;
-    object-fit: cover;
-    background-color: #f3f4f6;
+    object-fit: contain;
+    background-color: #fff;
     border: 1px solid #e5e7eb;
     flex-shrink: 0;
 }
+
+/* Lógica de Barra de Imagens extras */
+.product-img-container-list {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #f8fafc;
+    padding: 3px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+}
+
+.product-thumbs-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.product-thumb-xs {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    border-radius: 4px;
+    border: 1px solid #e2e8f0;
+    background: white;
+}
+
 
 /* Fallback para quando nÃ£o tiver imagem (Ã­cone) */
 .product-thumb-placeholder {

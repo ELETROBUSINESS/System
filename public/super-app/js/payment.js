@@ -178,6 +178,16 @@ document.addEventListener("DOMContentLoaded", () => {
     setupStepNavigation();
     setupDeliveryLogic();
     setupCardModal();
+
+    const pageTitle = "Checkout | Dtudo";
+    document.title = pageTitle;
+    if (typeof gtag === 'function') {
+        gtag('event', 'page_view', {
+            page_title: pageTitle,
+            page_location: window.location.href,
+            page_path: window.location.pathname + window.location.search
+        });
+    }
 });
 
 // ─── CARREGAR DADOS DO USUÁRIO ────────────────────────────
@@ -311,6 +321,18 @@ function changeStep(stepNum) {
     // Mostra card correto
     const activeCard = document.getElementById(cards[stepNum - 1]);
     if (activeCard) activeCard.classList.add('active');
+
+    const stepTitles = ["Identificação", "Entrega", "Pagamento"];
+    const pageTitle = `${stepTitles[stepNum - 1]} | Checkout | Dtudo`;
+    document.title = pageTitle;
+
+    if (typeof gtag === 'function') {
+        gtag('event', 'page_view', {
+            page_title: pageTitle,
+            page_location: window.location.href,
+            page_path: window.location.pathname + "#step" + stepNum
+        });
+    }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }

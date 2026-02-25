@@ -12,6 +12,16 @@ async function initCartPage() {
     await refreshCartData(); // Valida preços na API
     setupCartEvents();
     if (typeof updateCartBadge === 'function') updateCartBadge();
+
+    const pageTitle = "Meu Cesto | Dtudo";
+    document.title = pageTitle;
+    if (typeof gtag === 'function') {
+        gtag('event', 'page_view', {
+            page_title: pageTitle,
+            page_location: window.location.href,
+            page_path: window.location.pathname + window.location.search
+        });
+    }
 }
 
 async function refreshCartData() {

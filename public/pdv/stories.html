@@ -274,6 +274,42 @@
             object-fit: contain;
             filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.15));
             mix-blend-mode: multiply;
+            transition: 0.3s;
+        }
+
+        /* Lógica de Múltiplas Imagens (Barra Lateral) */
+        .art-product-image-container.multi-imgs {
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            padding: 0 10px;
+            gap: 15px;
+        }
+
+        .art-product-image-container.multi-imgs .art-product-image {
+            max-width: 75%;
+            margin: 0;
+        }
+
+        .art-images-bar {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 60px;
+            height: 100%;
+            justify-content: center;
+            z-index: 5;
+        }
+
+        .art-bar-thumb {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid #eee;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            mix-blend-mode: multiply;
         }
 
         .art-product-info {
@@ -432,6 +468,24 @@
             background: black;
             transform: translateY(-2px);
         }
+
+        .art-buy-button {
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 10px 40px;
+            border-radius: 50px;
+            font-weight: 900;
+            font-size: 1rem;
+            text-transform: uppercase;
+            margin-top: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
     </style>
 </head>
 
@@ -444,7 +498,8 @@
 
     <div class="controls">
         <input type="text" id="insta-profile" placeholder="Seu @ do Instagram" value="@dtudovariedadess">
-        <button onclick="updateHandles()"><i class='bx bx-refresh'></i> Atualizar Perfil</button>
+        <input type="text" id="story-callout" placeholder="Link Chamada (ex: CHEGOU!)" value="CHEGOU!">
+        <button onclick="updateHandles()"><i class='bx bx-refresh'></i> Atualizar Visual</button>
         <button onclick="loadRecentProducts()" style="background: #0066ff;"><i class='bx bx-cloud-download'></i>
             Carregar do Banco</button>
         <button onclick="openConfigModal()" style="background: #E1306C; margin-left: auto;"><i class='bx bx-cog'></i>
@@ -530,8 +585,11 @@
         let displayedStoryProducts = [];
 
         function updateHandles() {
-            const val = document.getElementById('insta-profile').value || '@dtudovariedadess';
-            document.querySelectorAll('.art-insta-handle span').forEach(el => el.innerText = val);
+            const profile = document.getElementById('insta-profile').value || '@dtudovariedadess';
+            const callout = document.getElementById('story-callout').value || 'CHEGOU!';
+
+            document.querySelectorAll('.art-insta-handle span').forEach(el => el.innerText = profile);
+            document.querySelectorAll('.art-tag').forEach(el => el.innerText = callout);
         }
 
         async function fetchAutoInstagramProfile() {
@@ -673,6 +731,10 @@
 
             let html = '';
             products.forEach((prod, index) => {
+                const allImgs = (prod.imgUrl || '').split(',').map(u => u.trim()).filter(u => u !== "");
+                const mainImg = allImgs[0] || '';
+                const secondaryImgs = allImgs.slice(1, 4); // Pega até 3 extras para a barra
+
                 const valPrice = parseFloat(prod.price || 0);
                 const valOffer = parseFloat(prod['price-oferta'] || 0);
                 const baseSalePrice = (valOffer > 0 && valOffer < valPrice) ? valOffer : valPrice;
@@ -683,8 +745,20 @@
                 const fmtPix = pricePix.toLocaleString('pt-BR', fmtConfig);
 
                 // Proxy para desviar do bloqueio de CORS ao baixar o Story (html2canvas restrição)
-                // Usando wsrv.nl que é otimizado para imagens e não bloqueia origens dinâmicas facilmente:
-                const safeImgUrl = 'https://wsrv.nl/?url=' + encodeURIComponent(prod.imgUrl);
+                const safeImgUrl = mainImg ? 'https://wsrv.nl/?url=' + encodeURIComponent(mainImg) : '';
+
+                let multiImgClass = secondaryImgs.length > 0 ? 'multi-imgs' : '';
+                let imagesBarHtml = '';
+
+                if (secondaryImgs.length > 0) {
+                    imagesBarHtml = `
+                        <div class="art-images-bar">
+                            ${secondaryImgs.map(u => `
+                                <img src="https://wsrv.nl/?url=${encodeURIComponent(u)}" class="art-bar-thumb" crossorigin="anonymous" onload="removeWhiteBg(this)">
+                            `).join('')}
+                        </div>
+                    `;
+                }
 
                 html += `
                 <div class="story-wrapper" id="story-wrap-${index}">
@@ -694,21 +768,26 @@
                         
                         <div class="art-header">
                             <div class="art-insta-handle"><i class='bx bxl-instagram'></i> <span>${profile}</span></div>
-                            <div class="art-tag">CHEGOU!</div>
+                            <div class="art-tag">${document.getElementById('story-callout').value || 'CHEGOU!'}</div>
                         </div>
-
-                        <div class="art-product-image-container">
-                            <!-- Proxy aplicado para escapar do CORS block e script nativo de BG Removal JS -->
+ 
+                        <div class="art-product-image-container ${multiImgClass}">
+                            <!-- Imagem Principal (Capa) -->
                             <img src="${safeImgUrl}" class="art-product-image" crossorigin="anonymous" onload="removeWhiteBg(this)">
+                            
+                            <!-- Barra de Imagens Extras (se houver) -->
+                            ${imagesBarHtml}
                         </div>
 
                         <div class="art-product-info">
                             <h3 class="art-product-name">${prod.name}</h3>
                             
                             <div class="art-price-container">
-                                ${(valOffer > 0 || pricePix < valPrice) ? `<div class="art-price-old">${fmtOriginal}</div>` : ''}
+                                ${(valOffer > 0 || (baseSalePrice * 0.95) < valPrice) ? `<div class="art-price-old">${fmtOriginal}</div>` : ''}
                                 <div class="art-price-pix">${fmtPix}</div>
                             </div>
+
+                            <div class="art-buy-button">Comprar</div>
                         </div>
                     </div>
 

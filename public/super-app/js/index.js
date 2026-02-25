@@ -691,9 +691,27 @@ window.filterLocalCategory = function (categoryStr) {
 
     if (titleObj) {
         titleObj.style.display = 'block';
-        if (categoryStr === 'todos') titleObj.innerText = 'Destaques para você';
-        else if (categoryStr === 'ofertas') titleObj.innerText = 'Promoções Relâmpago ⚡';
-        else titleObj.innerText = 'Categoria: ' + categoryStr.charAt(0).toUpperCase() + categoryStr.slice(1);
+        let pageTitle = "Dtudo | Varejo Online";
+
+        if (categoryStr === 'todos') {
+            titleObj.innerText = 'Destaques para você';
+        } else if (categoryStr === 'ofertas') {
+            titleObj.innerText = 'Promoções Relâmpago ⚡';
+            pageTitle = "Ofertas | Dtudo";
+        } else {
+            const catName = categoryStr.charAt(0).toUpperCase() + categoryStr.slice(1);
+            titleObj.innerText = 'Categoria: ' + catName;
+            pageTitle = `Categoria: ${catName} | Dtudo`;
+        }
+
+        document.title = pageTitle;
+        if (typeof gtag === 'function') {
+            gtag('event', 'page_view', {
+                page_title: pageTitle,
+                page_location: window.location.href,
+                page_path: window.location.pathname + window.location.search
+            });
+        }
     }
 
     if (sentinel) sentinel.style.display = 'block';

@@ -144,6 +144,15 @@ function renderProductView(prod, variacoesGroup, allProducts, activeIndex) {
     const pageTitle = `${prod.name} | Dtudo`;
     document.title = pageTitle;
 
+    // Envia um evento de page_view manual para que o título correto apareça no Google Analytics
+    if (typeof gtag === 'function') {
+        gtag('event', 'page_view', {
+            page_title: pageTitle,
+            page_location: window.location.href,
+            page_path: window.location.pathname + window.location.search
+        });
+    }
+
     // Rastreia a visualização do produto com metadados para Analytics
     if (typeof trackEvent === 'function') {
         trackEvent('view_item', {

@@ -44,16 +44,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     const resultsTitle = document.getElementById('search-results-title');
     const resultsSearchInput = document.getElementById('results-search-input');
 
+    let pageTitle = "Resultados | Dtudo";
     if (query) {
+        pageTitle = `Busca: ${query} | Dtudo`;
         resultsTitle.innerText = `Resultados para "${query}"`;
         resultsSearchInput.value = query;
         await performSearch(query, 'query');
     } else if (category) {
+        pageTitle = `Categoria: ${category} | Dtudo`;
         resultsTitle.innerText = `Categoria: ${category.charAt(0).toUpperCase() + category.slice(1)}`;
         await performSearch(category, 'category');
     } else {
         resultsTitle.innerText = "Todos os Produtos";
         await performSearch('', 'all');
+    }
+
+    document.title = pageTitle;
+    if (typeof gtag === 'function') {
+        gtag('event', 'page_view', {
+            page_title: pageTitle,
+            page_location: window.location.href,
+            page_path: window.location.pathname + window.location.search
+        });
     }
 
     if (typeof updateCartBadge === 'function') updateCartBadge();
