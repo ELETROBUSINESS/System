@@ -1,6 +1,7 @@
 // js/product.js
 
 // APPSCRIPT_URL, CACHE_KEY etc are global from global.js
+let pageViewSent = false;
 
 function getCachedData() {
     return DataManager.getProducts();
@@ -145,12 +146,13 @@ function renderProductView(prod, variacoesGroup, allProducts, activeIndex) {
     document.title = pageTitle;
 
     // Envia um evento de page_view manual para que o título correto apareça no Google Analytics
-    if (typeof gtag === 'function') {
+    if (typeof gtag === 'function' && !pageViewSent) {
         gtag('event', 'page_view', {
             page_title: pageTitle,
             page_location: window.location.href,
             page_path: window.location.pathname + window.location.search
         });
+        pageViewSent = true;
     }
 
     // Rastreia a visualização do produto com metadados para Analytics
