@@ -236,7 +236,8 @@ function renderProductBatch(products) {
 
     products.forEach(prod => {
         if (document.getElementById(`prod-${prod.id}`)) return;
-        const hasUrl = prod.imgUrl && prod.imgUrl.trim() !== "" && !prod.imgUrl.includes('placehold.co') && (prod.imgUrl.startsWith('http') || prod.imgUrl.includes('/'));
+        const img = prod.imgUrl || "";
+        const hasUrl = img.trim() !== "" && !img.includes('placehold.co') && (img.startsWith('http') || img.includes('/'));
         if (!hasUrl) return;
 
         container.insertAdjacentHTML('beforeend', buildProductCardHTML(prod));
@@ -676,37 +677,33 @@ window.filterLocalCategory = function (categoryStr) {
     const titleObj = document.getElementById('feed-title');
     const sentinel = document.getElementById('scroll-sentinel');
 
-    if (categoryStr === 'todos') {
-        if (homeSec) homeSec.style.display = 'block';
-        if (feedCont) feedCont.style.display = 'none';
-        if (titleObj) titleObj.style.display = 'none';
-        if (sentinel) sentinel.style.display = 'none';
-
-        renderHomeSections(cached);
-        isLoading = false;
-        allProductsLoaded = true; // disable scroll loading for home
-    } else {
-        if (homeSec) homeSec.style.display = 'none';
-        if (feedCont) {
-            feedCont.style.display = 'grid'; // because it is `.product-grid` wait. The class is product-grid, so it is inherently grid. But let's set display '' to revert to css override.
-            feedCont.style.display = '';
-            feedCont.innerHTML = '';
-        }
-        if (titleObj) {
-            titleObj.style.display = 'block';
-            if (categoryStr === 'ofertas') titleObj.innerText = 'Promoções Relâmpago ⚡';
-            else titleObj.innerText = 'Categoria: ' + categoryStr.charAt(0).toUpperCase() + categoryStr.slice(1);
-        }
-        if (sentinel) sentinel.style.display = 'block';
-
-        isLoading = false;
-        allProductsLoaded = false;
-        window._apiFetched = true;
-
-        registerInterest(categoryStr);
-        applyLocalFilter(cached, categoryStr);
-        fetchMoreProducts();
+    if (homeSec) {
+        homeSec.style.display = 'none';
+        homeSec.innerHTML = '';
     }
+
+    if (feedCont) {
+        feedCont.style.display = '';
+        feedCont.innerHTML = '';
+    }
+
+    if (titleObj) {
+        titleObj.style.display = 'block';
+        if (categoryStr === 'todos') titleObj.innerText = 'Destaques para você';
+        else if (categoryStr === 'ofertas') titleObj.innerText = 'Promoções Relâmpago ⚡';
+        else titleObj.innerText = 'Categoria: ' + categoryStr.charAt(0).toUpperCase() + categoryStr.slice(1);
+    }
+
+    if (sentinel) sentinel.style.display = 'block';
+
+    isLoading = false;
+    allProductsLoaded = false;
+    window._apiFetched = true;
+
+    if (categoryStr !== 'todos') registerInterest(categoryStr);
+
+    applyLocalFilter(cached, categoryStr);
+    fetchMoreProducts();
 
     // Smooth scroll para topo ao filtrar
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -731,8 +728,13 @@ function applyLocalFilter(cached, categoryStr) {
         });
     }
 
-    // Filtro de Restrição: Exibe apenas produtos com nome válido.
-    filtered = filtered.filter(p => p.name && p.name.trim() !== "");
+    // Filtro de Restrição: Exibe apenas produtos com nome e URL de imagem válida.
+    filtered = filtered.filter(p => {
+        const hasName = p.name && p.name.trim() !== "";
+        const img = p.imgUrl || "";
+        const hasImg = img.trim() !== "" && !img.includes('placehold.co') && (img.startsWith('http') || img.includes('/'));
+        return hasName && hasImg;
+    });
 
     productsBuffer = sortProductsForUX(filtered);
 }
