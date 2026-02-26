@@ -1611,12 +1611,12 @@ document.addEventListener("DOMContentLoaded", () => {
             initProductFeed();
         }
         // Listen for background updates from DataManager (global.js)
-        document.addEventListener('productsUpdated', (e) => {
-            console.log("[Index] Recebida atualização do DataManager. Atualizando feed...");
-            const urlParams = new URLSearchParams(window.location.search);
-            if (!urlParams.get('id')) { // Only if not on detail view
-                filterLocalCategory(urlParams.get('filter') || 'todos');
-            }
-        });
+        // document.addEventListener('productsUpdated', (e) => {
+        //     console.log("[Index] Recebida atualização do DataManager. Atualizando feed...");
+        //     const urlParams = new URLSearchParams(window.location.search);
+        //     if (!urlParams.get('id')) { // Only if not on detail view
+        //         // filterLocalCategory(urlParams.get('filter') || 'todos');
+        //     }
+        // });
     }
 });
