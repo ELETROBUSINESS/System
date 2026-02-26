@@ -1391,6 +1391,17 @@
     };
 
     // Formatting Inputs
+    document.getElementById('vencimento').addEventListener('input', function (e) {
+      let v = e.target.value.replace(/\D/g, '');
+      if (v.length > 8) v = v.substring(0, 8);
+      if (v.length > 4) {
+        v = v.replace(/^(\d{2})(\d{2})(\d+)/, '$1/$2/$3');
+      } else if (v.length > 2) {
+        v = v.replace(/^(\d{2})(\d+)/, '$1/$2');
+      }
+      e.target.value = v;
+    });
+
     document.getElementById('valor').addEventListener('input', (e) => formatCurrency(e.target));
     document.getElementById('despesa-valor').addEventListener('input', (e) => formatCurrency(e.target));
     function formatCurrency(el) {
