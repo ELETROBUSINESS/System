@@ -104,9 +104,6 @@ const DataManager = {
     init: function () {
         // Primeira carga ao abrir qualquer página
         this.sync();
-
-        // Loop de atualização a cada 60s
-        setInterval(() => this.sync(), CACHE_DURATION);
     },
 
     sync: async function () {
