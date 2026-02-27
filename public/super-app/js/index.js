@@ -173,6 +173,13 @@ function buildProductCardHTML(prod) {
     const valOffer = parseFloat(prod['price-oferta'] || 0);
     const hasOffer = (valOffer > 0 && valOffer < valPrice);
 
+    // Lógica de cronômetro e pausa
+    const OFFER_DEADLINE = new Date("2026-02-28T00:00:00").getTime();
+    const isExpired = Date.now() >= OFFER_DEADLINE;
+
+    // Se estiver expirado e for oferta, não renderiza (pausa)
+    if (hasOffer && isExpired) return '';
+
     let pricePix, priceCard;
 
     if (hasOffer) {
@@ -218,9 +225,19 @@ function buildProductCardHTML(prod) {
     const stock = parseInt(prod.stock || 0);
     const isSoldOut = stock <= 0;
 
+    let timerHtml = '';
+    if (hasOffer) {
+        timerHtml = `
+            <div class="offer-timer">
+                <i class='bx bx-time-five'></i>
+                <span class="timer-countdown">--:--:--</span>
+            </div>`;
+    }
+
     return `
-        <div class="product-card ${isSoldOut ? 'sold-out' : ''}" id="prod-${prod.id}" onclick="window.location.href='product.html?id=${prod.id}'">
+        <div class="product-card ${isSoldOut ? 'sold-out' : ''} ${hasOffer ? 'has-offer' : ''}" id="prod-${prod.id}" onclick="window.location.href='product.html?id=${prod.id}'">
             <div class="product-image">
+                ${timerHtml}
                 <img src="${displayImg}" alt="${prod.name}" loading="lazy" onload="this.classList.add('loaded')">
                 <button class="cart-btn-overlay" onclick="event.stopPropagation(); addToCartDirect('${prod.id}', '${name}', ${priceCard}, ${pricePix}, '${displayImg}')">
                     <i class='bx bx-cart-add'></i>
@@ -485,12 +502,18 @@ function renderRecentlyViewed() {
     section.style.display = 'block';
 
     // Create mini cards
+    const OFFER_DEADLINE = new Date("2026-02-28T00:00:00").getTime();
+    const isExpired = Date.now() >= OFFER_DEADLINE;
+
     let html = '';
     viewed.forEach(prod => {
         let displayImg = getFirstImageUrl(prod.imgUrl);
         const valPrice = parseFloat(prod.price || 0);
         const valOffer = parseFloat(prod['price-oferta'] || 0);
         const hasOffer = (valOffer > 0 && valOffer < valPrice);
+
+        if (hasOffer && isExpired) return;
+
         const finalPrice = hasOffer ? valOffer : valPrice;
 
         const fmtConfig = { style: 'currency', currency: 'BRL' };
@@ -738,9 +761,16 @@ window.filterLocalCategory = function (categoryStr) {
 };
 
 function applyLocalFilter(cached, categoryStr) {
+    const OFFER_DEADLINE = new Date("2026-02-28T00:00:00").getTime();
+    const isExpired = Date.now() >= OFFER_DEADLINE;
+
     let filtered = cached;
     if (categoryStr === 'ofertas') {
-        filtered = cached.filter(p => parseFloat(p['price-oferta'] || 0) > 0 && parseFloat(p['price-oferta'] || 0) < parseFloat(p.price || 0));
+        if (isExpired) {
+            filtered = [];
+        } else {
+            filtered = cached.filter(p => parseFloat(p['price-oferta'] || 0) > 0 && parseFloat(p['price-oferta'] || 0) < parseFloat(p.price || 0));
+        }
     } else if (categoryStr && categoryStr !== 'todos') {
         filtered = cached.filter(p => {
             const cat = (p.category || '').toLowerCase();

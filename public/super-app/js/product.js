@@ -105,6 +105,18 @@ async function loadProductDetail(id) {
             return;
         }
 
+        // Lógica de cronômetro e pausa
+        const valPrice = parseFloat(prod.price || 0);
+        const valOffer = parseFloat(prod['price-oferta'] || 0);
+        const hasOffer = (valOffer > 0 && valOffer < valPrice);
+        const OFFER_DEADLINE = new Date("2026-02-28T00:00:00").getTime();
+        const isExpired = Date.now() >= OFFER_DEADLINE;
+
+        if (hasOffer && isExpired) {
+            content.innerHTML = "<h3>Esta oferta expirou e o produto está pausado.</h3>";
+            return;
+        }
+
         window.globalAllProducts = allProducts;
         window.currentProductGroup = prod.variacoes && prod.variacoes.length > 0 ? prod.variacoes : [prod];
 
@@ -280,10 +292,20 @@ function renderProductView(prod, variacoesGroup, allProducts, activeIndex) {
                 `).join('')}
             </div>` : '';
 
+    let timerHtml = '';
+    if (hasOffer) {
+        timerHtml = `
+            <div class="offer-timer" style="top: 20px; left: 20px;">
+                <i class='bx bx-time-five'></i>
+                <span class="timer-countdown">--:--:--</span>
+            </div>`;
+    }
+
     content.innerHTML = `
             <div class="detail-view-container">
                 <div class="detail-gallery-container">
                     <div class="main-image-wrapper">
+                        ${timerHtml}
                         <img id="main-detail-img" src="${productImages[0]}" alt="${prod.name}" onclick="openZoom(this.src)">
                     </div>
                     ${thumbsHtml}
@@ -353,9 +375,21 @@ function renderSuggestedProducts(currentProd, allProducts) {
         let displayImg = getFirstImageUrl(prod.imgUrl);
         const valPrice = parseFloat(prod.price || 0);
         const valOffer = parseFloat(prod['price-oferta'] || 0);
-        const finalPrice = (valOffer > 0 && valOffer < valPrice) ? valOffer : valPrice;
+        const hasOffer = (valOffer > 0 && valOffer < valPrice);
+        const finalPrice = hasOffer ? valOffer : valPrice;
+
+        let timerHtml = '';
+        if (hasOffer) {
+            timerHtml = `
+                <div class="offer-timer" style="top: 5px; left: 5px; font-size: 0.55rem; padding: 2px 6px;">
+                    <i class='bx bx-time-five' style="font-size: 0.65rem;"></i>
+                    <span class="timer-countdown">--:--:--</span>
+                </div>`;
+        }
+
         return `
-            <div class="category-item" style="min-width: 140px; text-align: left; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; height: 100%; font-family: 'Roboto', sans-serif;" onclick="window.location.href='product.html?id=${prod.id}'">
+            <div class="category-item ${hasOffer ? 'has-offer' : ''}" style="min-width: 140px; text-align: left; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; height: 100%; font-family: 'Roboto', sans-serif; position: relative;" onclick="window.location.href='product.html?id=${prod.id}'">
+                ${timerHtml}
                 <img src="${displayImg}" style="width: 100%; height: 120px; object-fit: cover;">
                 <div style="padding: 10px;">
                     <div style="font-size: 0.8rem; color: #444; height: 32px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${prod.name}</div>

@@ -97,7 +97,41 @@ document.addEventListener("DOMContentLoaded", () => {
     updateCartBadge();
     checkLandingParameters();
     setupGlobalEvents();
+    startOfferTimers();
 });
+
+// --- LÓGICA DE CRONÔMETRO DE OFERTA ---
+function startOfferTimers() {
+    const OFFER_DEADLINE = new Date("2026-02-28T00:00:00").getTime();
+
+    function update() {
+        const now = Date.now();
+        const diff = OFFER_DEADLINE - now;
+
+        if (diff <= 0) {
+            // Pausa produtos com oferta: esconde elementos com a classe .has-offer
+            document.querySelectorAll('.has-offer').forEach(el => {
+                if (el.tagName === 'DIV') {
+                    el.style.display = 'none';
+                }
+            });
+            return;
+        }
+
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+
+        const timeStr = [h, m, s].map(v => v.toString().padStart(2, '0')).join(':');
+
+        document.querySelectorAll('.timer-countdown').forEach(el => {
+            el.innerText = timeStr;
+        });
+    }
+
+    setInterval(update, 1000);
+    update();
+}
 
 // --- 3. BANCO DE DADOS CENTRAL (CACHE) ---
 const DataManager = {

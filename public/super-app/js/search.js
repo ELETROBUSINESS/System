@@ -156,10 +156,16 @@ async function performSearch(term, type) {
 }
 
 function renderProducts(products, target) {
+    const OFFER_DEADLINE = new Date("2026-02-28T00:00:00").getTime();
+    const isExpired = Date.now() >= OFFER_DEADLINE;
+
     products.forEach(prod => {
         const valPrice = parseFloat(prod.price || 0); // Preço original (Cartão)
         const valOffer = parseFloat(prod['price-oferta'] || 0);
         const hasOffer = (valOffer > 0 && valOffer < valPrice);
+
+        // Se expirou e é oferta, pausa (não renderiza)
+        if (hasOffer && isExpired) return;
 
         let pricePix, priceCard;
 
@@ -193,9 +199,19 @@ function renderProducts(products, target) {
 
         let displayImg = getFirstImageUrl(prod.imgUrl);
 
+        let timerHtml = '';
+        if (hasOffer) {
+            timerHtml = `
+                <div class="offer-timer">
+                    <i class='bx bx-time-five'></i>
+                    <span class="timer-countdown">--:--:--</span>
+                </div>`;
+        }
+
         const html = `
-            <div class="product-card" id="prod-${prod.id}">
+            <div class="product-card ${hasOffer ? 'has-offer' : ''}" id="prod-${prod.id}">
                 <div class="product-image" onclick="window.location.href='product.html?id=${prod.id}'">
+                    ${timerHtml}
                     <img src="${displayImg}" alt="${name}" loading="lazy">
                     <button class="cart-btn-overlay" onclick="event.stopPropagation(); addToCartDirect('${prod.id}', '${name}', ${priceCard}, ${pricePix}, '${displayImg}')">
                         <i class='bx bx-cart-add'></i>

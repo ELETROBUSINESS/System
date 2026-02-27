@@ -547,6 +547,37 @@ a {
     transform: translateY(-2px);
 }
 
+/* Timer de Oferta */
+.offer-timer {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: #120078;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 4px 12px rgba(18, 0, 120, 0.4);
+    pointer-events: none;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.offer-timer i {
+    font-size: 0.8rem;
+    animation: spin 3s infinite linear;
+}
+
+.offer-timer span {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.5px;
+}
+
 /* ITEM 1: IMAGENS QUADRADAS */
 .product-image {
     position: relative;
