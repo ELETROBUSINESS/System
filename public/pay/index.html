@@ -620,7 +620,7 @@
 
                                 // Notifica o servidor
                                 const urlPing = `${API_URL}?action=nfcPing&boxId=${boxId}&clientId=${GLOBAL_ID}`;
-                                await fetch(urlPing, { method: "POST" });
+                                await fetch(urlPing, { method: "GET" });
 
                                 // Abre o Modal do Carrinho no modo Loading
                                 openNfcCartModal();

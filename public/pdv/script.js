@@ -1100,10 +1100,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                 const totalNetItems = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
                                 const finalTotal = subtotalGross - ((subtotalGross - totalNetItems) + discount);
 
-                                // Envia pro backend
-                                fetch(`${SCRIPT_URL}?action=nfcSetCart`, {
+                                // Envia pro backend com action no body
+                                fetch(`${SCRIPT_URL}`, {
                                     method: "POST",
-                                    body: JSON.stringify({ boxId: CAIXA_ID, cart: { items: cart, total: finalTotal } })
+                                    body: JSON.stringify({
+                                        action: "nfcSetCart",
+                                        boxId: CAIXA_ID,
+                                        cart: { items: cart, total: finalTotal }
+                                    })
                                 });
 
                                 if (typeof showCustomToast === 'function') {
