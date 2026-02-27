@@ -1088,12 +1088,79 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                             // Toca um sonzinho rápido se possível
                             try { new Audio("https://actions.google.com/sounds/v1/ui/beep_short.ogg").play(); } catch (e) { }
-
                             // Tira qualquer janela de busca da frente
                             closeModal(document.getElementById('client-selection-modal'));
 
                             // Confirma o cliente na venda e joga pro Resumo
                             confirmClientSelection(clienteEncontrado);
+
+                            // ---- NOVA LÓGICA: Envia Checkout p/ Celular ----
+                            if (cart && cart.length > 0) {
+                                const subtotalGross = cart.reduce((acc, item) => acc + (item.originalPrice * item.quantity), 0);
+                                const totalNetItems = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+                                const finalTotal = subtotalGross - ((subtotalGross - totalNetItems) + discount);
+
+                                // Envia pro backend
+                                fetch(`${SCRIPT_URL}?action=nfcSetCart`, {
+                                    method: "POST",
+                                    body: JSON.stringify({ boxId: CAIXA_ID, cart: { items: cart, total: finalTotal } })
+                                });
+
+                                if (typeof showCustomToast === 'function') {
+                                    showCustomToast(`📱 Enviando pagamento p/ celular do cliente...`);
+                                }
+
+                                // Inicia espera pelo pagamento
+                                const btnFinish = document.getElementById('finish-sale-btn');
+                                const originalTextBtn = btnFinish ? btnFinish.innerHTML : '';
+                                if (btnFinish) btnFinish.innerHTML = `<i class='bx bx-loader-alt bx-spin text-xl'></i> <span>Aguarde Confirmação</span>`;
+
+                                let attempts = 0;
+                                const payPoll = setInterval(async () => {
+                                    attempts++;
+                                    if (attempts > 30) {
+                                        clearInterval(payPoll);
+                                        if (btnFinish) btnFinish.innerHTML = originalTextBtn;
+                                        return;
+                                    }
+                                    try {
+                                        const pr = await fetch(`${SCRIPT_URL}?action=nfcGetPayment&boxId=${CAIXA_ID}`);
+                                        const pjson = await pr.json();
+                                        if (pjson.status === "success" && pjson.payment) {
+                                            clearInterval(payPoll);
+                                            // Atualiza método de pagamento (Ex: Crediário)
+                                            selectedPaymentMethod = pjson.payment.method;
+
+                                            // Guarda internamente a quantia de parcelas (para Crediário)
+                                            const numParcelas = pjson.payment.installments;
+                                            window.tempInstallments = numParcelas;
+
+                                            // Gambiarra necessária para que a venda leia a parcela: 
+                                            // Como o checkout puxa o valor do <select> na hora da function
+                                            // A gente injeta no select do html pra bater lá!
+                                            const sellInstallments = document.getElementById('sale-installments');
+                                            if (sellInstallments) { sellInstallments.value = numParcelas; }
+
+                                            // Atualiza UI Resumo (Idêntico ao script.js original)
+                                            const payLabel = document.getElementById('summary-payment-method');
+                                            if (payLabel) {
+                                                payLabel.textContent = `Crediário (${numParcelas}x)`;
+                                                payLabel.style.color = "var(--text-dark)";
+                                            }
+
+                                            if (typeof showCustomToast === 'function') {
+                                                showCustomToast(`✅ Pagamento Confirmado no Celular! Finalizando...`);
+                                            }
+
+                                            // Força finalizar a venda!
+                                            if (btnFinish) {
+                                                btnFinish.innerHTML = originalTextBtn;
+                                                setTimeout(() => { btnFinish.click(); }, 500); // Dá meio segundo para ver finalizando
+                                            }
+                                        }
+                                    } catch (e) { }
+                                }, 2000);
+                            }
                         } else {
                             console.warn("Cliente NFC conectou com ID: " + data.clientId + ", mas ele não está na lista de clientes!");
                         }

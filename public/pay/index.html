@@ -409,6 +409,54 @@
             </div>
         </div>
     </div>
+    <!-- Modal NFC Compra -->
+    <div id="nfcCartModal"
+        class="fixed inset-0 bg-slate-900/80 z-[60] hidden flex-col justify-end transition-opacity duration-300 opacity-0">
+        <div class="bg-white rounded-t-3xl p-6 w-full max-w-lg mx-auto shadow-2xl transform translate-y-full transition-transform duration-300"
+            id="nfcCartSheet">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-slate-800 text-lg">Confirmação de Compra</h3>
+                <button onclick="closeNfcCartModal()"
+                    class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200">
+                    <i class='bx bx-x text-xl'></i>
+                </button>
+            </div>
+
+            <div id="nfcCartLoading" class="hidden flex-col items-center justify-center py-8">
+                <i class='bx bx-loader-alt bx-spin text-3xl text-emerald-600 mb-2'></i>
+                <p class="text-sm text-slate-500">Aguardando itens do caixa...</p>
+            </div>
+
+            <div id="nfcCartContent" class="hidden">
+                <div class="max-h-48 overflow-y-auto mb-4 border-b border-slate-100 pb-2">
+                    <ul id="nfcCartItems" class="space-y-2 text-sm text-slate-600">
+                        <!-- Injected -->
+                    </ul>
+                </div>
+                <div class="flex justify-between items-center mb-6">
+                    <span class="text-slate-500">Total a pagar:</span>
+                    <span id="nfcCartTotal" class="text-2xl font-bold text-slate-900">R$ 0,00</span>
+                </div>
+
+                <p class="text-sm font-semibold mb-2 text-slate-700">Parcelamento</p>
+                <select id="nfcInstallments"
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-6 outline-none text-slate-700 font-medium appearance-none">
+                    <option value="1">1x (À vista)</option>
+                    <option value="2">2x</option>
+                    <option value="3">3x</option>
+                    <option value="4">4x</option>
+                    <option value="5">5x</option>
+                    <option value="6">6x</option>
+                </select>
+
+                <button id="nfcConfirmPayBtn" onclick="confirmNfcPayment()"
+                    class="w-full py-4 bg-emerald-600 text-white font-bold rounded-2xl shadow-lg active:scale-[0.98] flex items-center justify-center gap-2">
+                    <span>Autorizar Compra</span>
+                    <i class='bx bx-check-circle text-xl'></i>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Header -->
     <header class="glass-header sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
@@ -567,12 +615,37 @@
                             const boxId = textDecoder.decode(record.data);
 
                             if (boxId.startsWith("CAIXA_") || boxId.includes("CAIXA01-DTUDO-IPIXUNA")) {
-                                btn.innerHTML = "<i class='bx bx-check-circle text-xl'></i><span>Conectado ao Caixa!</span>";
+                                btn.innerHTML = "<i class='bx bx-check-circle text-xl'></i><span>Conectado! Aguarde...</span>";
                                 btn.classList.replace('bg-slate-800', 'bg-emerald-500');
 
                                 // Notifica o servidor
-                                const url = `${API_URL}?action=nfcPing&boxId=${boxId}&clientId=${GLOBAL_ID}`;
-                                await fetch(url, { method: "POST" });
+                                const urlPing = `${API_URL}?action=nfcPing&boxId=${boxId}&clientId=${GLOBAL_ID}`;
+                                await fetch(urlPing, { method: "POST" });
+
+                                // Abre o Modal do Carrinho no modo Loading
+                                openNfcCartModal();
+
+                                // Inicia polling para pegar o carrinho em seguida
+                                let attempts = 0;
+                                const nfcPollCart = setInterval(async () => {
+                                    try {
+                                        attempts++;
+                                        if (attempts > 30) { // 1 min (30 * 2s)
+                                            clearInterval(nfcPollCart);
+                                            closeNfcCartModal();
+                                            alert("Tempo limite excedido aguardando a compra do caixa.");
+                                            return;
+                                        }
+
+                                        const res = await fetch(`${API_URL}?action=nfcGetCart&boxId=${boxId}`);
+                                        const json = await res.json();
+
+                                        if (json.status === "success" && json.cart) {
+                                            clearInterval(nfcPollCart);
+                                            renderNfcCart(json.cart, boxId);
+                                        }
+                                    } catch (e) { }
+                                }, 2000);
 
                                 setTimeout(() => {
                                     btn.innerHTML = originalText;
@@ -603,6 +676,106 @@
             }
 
             await loadData();
+        }
+
+        // --- NFC UI LOGIC ---
+        let currentNfcBoxId = null;
+
+        function openNfcCartModal() {
+            const modal = document.getElementById('nfcCartModal');
+            const sheet = document.getElementById('nfcCartSheet');
+            document.getElementById('nfcCartLoading').style.display = 'flex';
+            document.getElementById('nfcCartContent').style.display = 'none';
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                sheet.classList.remove('translate-y-full');
+            }, 10);
+        }
+
+        function closeNfcCartModal() {
+            const modal = document.getElementById('nfcCartModal');
+            const sheet = document.getElementById('nfcCartSheet');
+            modal.classList.add('opacity-0');
+            sheet.classList.add('translate-y-full');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function renderNfcCart(cart, boxId) {
+            currentNfcBoxId = boxId;
+            document.getElementById('nfcCartLoading').style.display = 'none';
+            document.getElementById('nfcCartContent').style.display = 'block';
+
+            const ul = document.getElementById('nfcCartItems');
+            ul.innerHTML = '';
+
+            cart.items.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'flex justify-between items-center';
+                li.innerHTML = `
+                    <span class="truncate pr-4">${item.quantity}x ${item.name}</span>
+                    <span class="font-medium shrink-0">${formatMoney(item.price * item.quantity)}</span>
+                `;
+                ul.appendChild(li);
+            });
+
+            document.getElementById('nfcCartTotal').textContent = formatMoney(cart.total);
+
+            // Popula opções de parcelamento baseadas no limite/tamanho do cliente ou fixo (1 a 6)
+            const select = document.getElementById('nfcInstallments');
+            select.innerHTML = '';
+            for (let i = 1; i <= 6; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = i === 1 ? '1x (À vista)' : `${i}x de ${formatMoney(cart.total / i)}`;
+                select.appendChild(opt);
+            }
+        }
+
+        async function confirmNfcPayment() {
+            const btn = document.getElementById('nfcConfirmPayBtn');
+            const select = document.getElementById('nfcInstallments');
+            const originalHtml = btn.innerHTML;
+
+            btn.innerHTML = `<i class='bx bx-loader-alt bx-spin text-xl'></i> Processando...`;
+            btn.disabled = true;
+
+            const paymentData = {
+                method: "Crediário",
+                installments: select.value
+            };
+
+            try {
+                // Post payment
+                const url = `${API_URL}`;
+                await fetch(url, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        action: "nfcSetPayment",
+                        boxId: currentNfcBoxId,
+                        payment: paymentData
+                    })
+                });
+
+                btn.innerHTML = `<i class='bx bx-check-circle text-xl'></i> Venda Concluída!`;
+                btn.classList.replace('bg-emerald-600', 'bg-emerald-500');
+
+                setTimeout(() => {
+                    closeNfcCartModal();
+                    loadData(); // Atualiza dados da fatura na tela principal
+                    btn.innerHTML = originalHtml;
+                    btn.classList.replace('bg-emerald-500', 'bg-emerald-600');
+                    btn.disabled = false;
+                }, 2000);
+
+            } catch (e) {
+                alert("Erro ao confirmar pagamento: " + e.message);
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }
         }
 
         async function loadData() {

@@ -82,6 +82,26 @@ function doPost(e) {
             return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
         }
 
+        // --- NFC CART E PAYMENT POST ---
+        else if (action === "nfcSetCart") {
+            const cache = CacheService.getScriptCache();
+            if (data.boxId && data.cart) {
+                cache.put("NFC_CART_" + data.boxId, JSON.stringify(data.cart), 120); // 2 minutos
+                return ContentService.createTextOutput(JSON.stringify({ status: "success" })).setMimeType(ContentService.MimeType.JSON);
+            } else {
+                return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Faltando boxId ou cart" })).setMimeType(ContentService.MimeType.JSON);
+            }
+        }
+        else if (action === "nfcSetPayment") {
+            const cache = CacheService.getScriptCache();
+            if (data.boxId && data.payment) {
+                cache.put("NFC_PAYMENT_" + data.boxId, JSON.stringify(data.payment), 120); // 2 minutos
+                return ContentService.createTextOutput(JSON.stringify({ status: "success" })).setMimeType(ContentService.MimeType.JSON);
+            } else {
+                return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Faltando boxId ou payment" })).setMimeType(ContentService.MimeType.JSON);
+            }
+        }
+
         return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Ação desconhecida" })).setMimeType(ContentService.MimeType.JSON);
 
     } catch (error) {
@@ -438,6 +458,8 @@ function doGet(e) {
             const cache = CacheService.getScriptCache();
             if (e.parameter.boxId && e.parameter.clientId) {
                 cache.put("NFC_BOX_" + e.parameter.boxId, e.parameter.clientId, 60); // expira em 60s
+                cache.remove("NFC_CART_" + e.parameter.boxId); // Limpa resíduos
+                cache.remove("NFC_PAYMENT_" + e.parameter.boxId); // Limpa resíduos
                 response = { status: "success" };
             } else {
                 response = { status: "error", message: "boxId ou clientId faltando" };
@@ -455,6 +477,34 @@ function doGet(e) {
                 }
             } else {
                 response = { status: "error", message: "boxId faltando" };
+            }
+        }
+        else if (action === "nfcGetCart") {
+            const cache = CacheService.getScriptCache();
+            if (e.parameter.boxId) {
+                const cartStr = cache.get("NFC_CART_" + e.parameter.boxId);
+                if (cartStr) {
+                    cache.remove("NFC_CART_" + e.parameter.boxId); // consome
+                    response = { status: "success", cart: JSON.parse(cartStr) };
+                } else {
+                    response = { status: "waiting" };
+                }
+            } else {
+                response = { status: "error" };
+            }
+        }
+        else if (action === "nfcGetPayment") {
+            const cache = CacheService.getScriptCache();
+            if (e.parameter.boxId) {
+                const payStr = cache.get("NFC_PAYMENT_" + e.parameter.boxId);
+                if (payStr) {
+                    cache.remove("NFC_PAYMENT_" + e.parameter.boxId); // consome
+                    response = { status: "success", payment: JSON.parse(payStr) };
+                } else {
+                    response = { status: "waiting" };
+                }
+            } else {
+                response = { status: "error" };
             }
         }
 
