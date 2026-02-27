@@ -433,6 +433,31 @@ function doGet(e) {
             response = listarProdutosSuperApp();
         }
 
+        // --- NFC CHECKOUT ---
+        else if (action === "nfcPing") {
+            const cache = CacheService.getScriptCache();
+            if (e.parameter.boxId && e.parameter.clientId) {
+                cache.put("NFC_BOX_" + e.parameter.boxId, e.parameter.clientId, 60); // expira em 60s
+                response = { status: "success" };
+            } else {
+                response = { status: "error", message: "boxId ou clientId faltando" };
+            }
+        }
+        else if (action === "nfcCheck") {
+            const cache = CacheService.getScriptCache();
+            if (e.parameter.boxId) {
+                const clientId = cache.get("NFC_BOX_" + e.parameter.boxId);
+                if (clientId) {
+                    cache.remove("NFC_BOX_" + e.parameter.boxId); // Consome o aviso
+                    response = { status: "success", clientId: clientId };
+                } else {
+                    response = { status: "waiting" };
+                }
+            } else {
+                response = { status: "error", message: "boxId faltando" };
+            }
+        }
+
         // --- AÇÃO DESCONHECIDA ---
         else {
             response = { status: "error", message: "Ação inválida: " + action };

@@ -501,6 +501,17 @@
                 class="text-[10px] text-right mt-2 text-emerald-600 font-bold hover:opacity-80 transition-opacity cursor-pointer">
                 Disponível: R$ 0,00</p>
         </section>
+
+        <!-- Botão NFC -->
+        <section class="mt-4 mb-4">
+            <button id="nfcPayBtn"
+                class="w-full py-4 bg-emerald-600 text-white font-bold rounded-2xl shadow-lg active:scale-[0.98] flex items-center justify-center gap-2"
+                onclick="initNFC()">
+                <i class='bx bx-wifi text-xl'></i>
+                <span>Pagar no Caixa (Aproximação)</span>
+            </button>
+            <p class="text-[10px] text-center text-slate-400 mt-2">Disponível em Android com NFC ativo</p>
+        </section>
     </main>
 
     <script>
@@ -533,6 +544,54 @@
         }
 
         // --- Core Logic ---
+        async function initNFC() {
+            if (!('NDEFReader' in window)) {
+                alert("Seu celular não suporta pagamento por aproximação no navegador. Use um Android com NFC ativado.");
+                return;
+            }
+            const btn = document.getElementById('nfcPayBtn');
+            const originalText = btn.innerHTML;
+
+            try {
+                const ndef = new NDEFReader();
+                await ndef.scan();
+
+                btn.innerHTML = "<i class='bx bx-loader-alt bx-spin text-xl'></i><span>Aproxime do balcão...</span>";
+                btn.classList.replace('bg-emerald-600', 'bg-slate-800');
+
+                ndef.onreading = async (event) => {
+                    const message = event.message;
+                    for (const record of message.records) {
+                        if (record.recordType === "text") {
+                            const textDecoder = new TextDecoder(record.encoding);
+                            const boxId = textDecoder.decode(record.data);
+
+                            if (boxId.startsWith("CAIXA_") || boxId.includes("CAIXA01-DTUDO-IPIXUNA")) {
+                                btn.innerHTML = "<i class='bx bx-check-circle text-xl'></i><span>Conectado ao Caixa!</span>";
+                                btn.classList.replace('bg-slate-800', 'bg-emerald-500');
+
+                                // Notifica o servidor
+                                const url = `${API_URL}?action=nfcPing&boxId=${boxId}&clientId=${GLOBAL_ID}`;
+                                await fetch(url, { method: "POST" });
+
+                                setTimeout(() => {
+                                    btn.innerHTML = originalText;
+                                    btn.classList.replace('bg-emerald-500', 'bg-emerald-600');
+                                }, 8000);
+
+                                break;
+                            }
+                        }
+                    }
+                };
+            } catch (error) {
+                alert("Erro ao ativar NFC: " + error.message);
+                btn.innerHTML = originalText;
+                btn.classList.remove('bg-slate-800');
+                btn.classList.add('bg-emerald-600');
+            }
+        }
+
         async function init() {
             const p = new URLSearchParams(window.location.search);
             GLOBAL_ID = p.get('q') || p.get('id');

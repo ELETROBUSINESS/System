@@ -4,7 +4,6 @@ const ASSETS_TO_CACHE = [
     './index.html',
     './style.css',
     './script.js',
-    './offline-db.js',
     './manifest.json',
     'https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css',
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',

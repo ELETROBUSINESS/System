@@ -1034,12 +1034,52 @@ document.addEventListener('DOMContentLoaded', () => {
             isReturningToPayment = false; // Reseta a flag
             openModal(paymentModal);
             showCrediarioScreen(); // Vai direto para as parcelas
-        } else {
             // Fluxo normal (apenas selecionou cliente pelo botão do menu)
             // Apenas atualiza o resumo visualmente
-            summaryPaymentMethod.textContent = "Crediário (Aguardando)";
+            if (summaryPaymentMethod) {
+                summaryPaymentMethod.textContent = "Crediário (Aguardando)";
+            }
         }
     };
+
+    // --- LEITURA NFC CONTÍNUA DO BALCÃO ---
+    let nfcPollingInterval = null;
+    const CAIXA_ID = "CAIXA01-DTUDO-IPIXUNA"; // Identificação única deste PDV
+
+    function startNFCPolling() {
+        if (nfcPollingInterval) clearInterval(nfcPollingInterval);
+        console.log("Iniciando escuta NFC para: " + CAIXA_ID);
+        nfcPollingInterval = setInterval(async () => {
+            try {
+                // Tenta não gerar muito load se offline ou menu pausado
+                if (document.hidden) return;
+
+                const url = `${SCRIPT_URL}?action=nfcCheck&boxId=${CAIXA_ID}`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (data.status === "success" && data.clientId) {
+                    // Tenta encontrar o cliente pelo ID no cache local
+                    if (localClientCache && localClientCache.length > 0) {
+                        const clienteEncontrado = localClientCache.find(c => String(c.idCliente || c.id || c[0]) === String(data.clientId));
+                        if (clienteEncontrado) {
+                            console.log("Cliente detectado via NFC:", clienteEncontrado);
+                            if (typeof showCustomToast === 'function') {
+                                showCustomToast(`📱 ${clienteEncontrado.nomeExibicao || clienteEncontrado.nomeCompleto} conectou via NFC!`);
+                            }
+                            // Toca um sonzinho rápido se possível
+                            try { new Audio("https://actions.google.com/sounds/v1/ui/beep_short.ogg").play(); } catch (e) { }
+                            // Confirma o cliente na venda
+                            confirmClientSelection(clienteEncontrado);
+                        }
+                    }
+                }
+            } catch (e) { /* silent fail for polling */ }
+        }, 3000); // Polling cada 3 segundos
+    }
+
+    // Inicia a escuta NFC automaticamente
+    startNFCPolling();
 
     // Botão "Alterar" no Sidebar
     btnChangeSummaryClient.addEventListener('click', () => {
@@ -3120,8 +3160,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             localProductCache = json; // Salva na memória
 
-            // SALVA NO BANCO OFFLINE (Background)
-            offlineDB.saveProducts(json).catch(e => console.warn("Erro ao salvar cache offline:", e));
+
 
             // Popula o Cache de Marcas
             const marcasExistentes = [...new Set(localProductCache.map(p => p.brand).filter(b => b && b.trim() !== ""))];
@@ -3154,29 +3193,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Erro ao carregar produtos (Online):", error);
 
-            // TENTATIVA OFFLINE
-            try {
-                const offlineProducts = await offlineDB.getProducts();
-                if (offlineProducts && offlineProducts.length > 0) {
-                    localProductCache = offlineProducts;
-                    renderProdutosPage();
-
-                    if (pdvInput) {
-                        pdvInput.disabled = false;
-                        pdvInput.placeholder = "Busca Offline...";
-                    }
-                    if (pdvHint) pdvHint.innerHTML = "<span style='color:orange'><i class='bx bx-wifi-off'></i> Modo Offline</span>";
-
-                    if (typeof showCustomToast === 'function') showCustomToast("Modo Offline: Produtos Carregados!");
-                    return; // Sucesso Offline
-                }
-            } catch (dbError) {
-                console.error("Erro ao recuperar cache offline:", dbError);
-            }
-
-            // Se falhar tudo
             if (container) {
-                container.innerHTML = `<div class="empty-state text-danger"><i class='bx bx-error'></i><p>Erro ao sincronizar e sem cache offline.</p><button class="btn btn-sm btn-secondary mt-2" onclick="carregarCacheDeProdutos()">Tentar Novamente</button></div>`;
+                container.innerHTML = `<div class="empty-state text-danger"><i class='bx bx-error'></i><p>Erro ao sincronizar dados.</p><button class="btn btn-sm btn-secondary mt-2" onclick="carregarCacheDeProdutos()">Tentar Novamente</button></div>`;
             }
             if (pdvHint) {
                 pdvHint.innerHTML = "<span style='color:red'>Erro fatal de conexão.</span>";
@@ -3223,128 +3241,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const paymentData = { ...baseData, payment: payment.method || 'N/A', total: payment.value.toFixed(2) };
             const formData = new URLSearchParams(paymentData);
 
-            // Tenta enviar se estiver online
-            if (navigator.onLine) {
-                try {
-                    console.log("Enviando parte registro:", formData.toString());
-                    const res = await fetch(REGISTRO_VENDA_SCRIPT_URL, {
-                        redirect: "follow",
-                        method: "POST",
-                        body: formData.toString(),
-                        headers: { "Content-Type": "application/x-www-form-urlencoded" }
-                    });
-                    if (!res.ok) throw new Error("Erro HTTP: " + res.status);
-                    return { ok: true };
-                } catch (e) {
-                    console.warn("Falha no fetch, salvando offline:", e);
-                    // Falhou online, cai para o offline
-                }
+            console.log("Enviando parte registro:", formData.toString());
+            const res = await fetch(REGISTRO_VENDA_SCRIPT_URL, {
+                redirect: "follow",
+                method: "POST",
+                body: formData.toString(),
+                headers: { "Content-Type": "application/x-www-form-urlencoded" }
+            });
+            if (!res.ok) {
+                throw new Error("Erro HTTP: " + res.status);
             }
-
-            // Lógica Offline
-            try {
-                await offlineDB.savePendingSale(paymentData);
-                console.log("Venda salva na fila offline.");
-                return { ok: true, offline: true };
-            } catch (dbError) {
-                console.error("ERRO FATAL: Falha ao salvar offline", dbError);
-                throw dbError; // Propaga erro se não conseguir nem salvar offline
-            }
+            return { ok: true };
         });
 
-        const responses = await Promise.all(fetchPromises);
-
-        // Verifica se algum falhou de verdade (nem online nem offline)
-        // Como o fallback offline retorna {ok:true}, só teremos erro se o DB falhar.
-
-        const offlineCount = responses.filter(r => r.offline).length;
-        if (offlineCount > 0) {
-            if (typeof showCustomToast === 'function') showCustomToast(`⚠️ ${offlineCount} registros salvos OFFLINE.`);
-        } else {
-            console.log("Registro OK (Online)!");
-        }
+        await Promise.all(fetchPromises);
+        console.log("Registro OK (Online)!");
     }
 
-    // --- GERENCIADOR OFFLINE / SYNC (UI Conectada) ---
-    async function syncPendingSales() {
-        if (!navigator.onLine) return;
-
-        const syncBadge = document.getElementById('sync-status-badge');
-
-        try {
-            const pending = await offlineDB.getPendingSales();
-            if (!pending || pending.length === 0) return;
-
-            console.log(`[Sync] Encontrados ${pending.length} registros pendentes.`);
-
-            // MOSTRA BADGE DE SYNC
-            if (syncBadge) syncBadge.classList.remove('hidden');
-
-            let successCount = 0;
-
-            for (const sale of pending) {
-                const { localId, ...saleData } = sale; // Remove ID local
-                const formData = new URLSearchParams(saleData);
-
-                try {
-                    const res = await fetch(REGISTRO_VENDA_SCRIPT_URL, {
-                        redirect: "follow",
-                        method: "POST",
-                        body: formData.toString(),
-                        headers: { "Content-Type": "application/x-www-form-urlencoded" }
-                    });
-
-                    if (res.ok) {
-                        await offlineDB.deletePendingSale(localId);
-                        successCount++;
-                    }
-                } catch (err) {
-                    console.error("[Sync] Erro ao enviar item:", err);
-                    // Não deleta, tenta de novo na próxima
-                }
-            }
-
-            if (successCount > 0) {
-                if (typeof showCustomToast === 'function') showCustomToast(`✅ ${successCount} vendas sincronizadas!`);
-            }
-
-        } catch (e) {
-            console.error("[Sync] Erro geral:", e);
-        } finally {
-            // ESCONDE BADGE DE SYNC
-            if (syncBadge) syncBadge.classList.add('hidden');
-        }
-    }
-
-    // Listener de Rede
-    window.addEventListener('online', () => {
-        console.log("Conexão restaurada! Tentando sincronizar...");
-        syncPendingSales();
-        updateNetworkStatusUI();
-    });
-    window.addEventListener('offline', () => {
-        console.log("Sem conexão.");
-        updateNetworkStatusUI();
-    });
-
-    function updateNetworkStatusUI() {
-        const statusText = document.getElementById('network-status-text');
-        const footer = document.querySelector('.pn');
-        const offlineBar = document.getElementById('offline-status-bar');
-
-        if (navigator.onLine) {
-            if (statusText) statusText.textContent = "ONLINE";
-            if (footer) footer.classList.remove('offline');
-            if (offlineBar) offlineBar.classList.add('hidden'); // Esconde barra superior
-        } else {
-            if (statusText) statusText.textContent = "OFFLINE";
-            if (footer) footer.classList.add('offline');
-            if (offlineBar) offlineBar.classList.remove('hidden'); // Mostra barra superior
-        }
-    }
-
-    // Tenta Sync ao iniciar
-    setTimeout(syncPendingSales, 5000);
 
     // Função para abater estoque no Firebase
     async function abaterEstoqueFirebase(itensVendidos) {
@@ -3412,8 +3325,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 localClientCache = result.data;
                 console.log(`Cache cli: ${localClientCache.length}`);
 
-                // SALVA OFFLINE
-                offlineDB.saveClients(localClientCache).catch(e => console.warn("Erro save offline clients:", e));
+
 
                 renderClientesPage();
             } else {
@@ -3422,21 +3334,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Erro carregar cli:", error);
 
-            // TENTATIVA OFFLINE
-            try {
-                const offlineClients = await offlineDB.getClients();
-                if (offlineClients && offlineClients.length > 0) {
-                    localClientCache = offlineClients;
-                    console.log(`Cache cli (OFFLINE): ${localClientCache.length}`);
-                    renderClientesPage();
-                    if (typeof showCustomToast === 'function') showCustomToast("Clientes: Modo Offline");
-                    return;
-                }
-            } catch (dbErr) {
-                console.error("Erro offline clientes:", dbErr);
-            }
-
-            clientesListContainer.innerHTML = `<p style="text-align: center; color: var(--warning-red); padding: 20px 0;">Erro: ${error.message} (Sem cache)</p>`;
+            clientesListContainer.innerHTML = `<p style="text-align: center; color: var(--warning-red); padding: 20px 0;">Erro: ${error.message}</p>`;
             localClientCache = [];
         }
     }
@@ -4428,78 +4326,18 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         // 2. TENTATIVA DE ENVIO (ONLINE)
-        if (navigator.onLine) {
-            try {
-                await fetch(CENTRAL_API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
-                });
-                console.log("✅ Venda enviada para API Central (Online).");
-                return true;
-            } catch (e) {
-                console.warn("Falha no envio Online, tentando salvar Offline...", e);
-            }
-        }
-
-        // 3. FALLBACK OFFLINE
         try {
-            // Salva o payload pronto para envio
-            await offlineDB.savePendingSale(payload);
-            console.log("⚠️ Venda salva na fila OFFLINE (Central API).");
-            if (typeof showCustomToast === 'function') showCustomToast("⚠️ Salvo Offline (Sincronizará depois).");
+            await fetch(CENTRAL_API_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            });
+            console.log("✅ Venda enviada para API Central.");
             return true;
-        } catch (dbError) {
-            console.error("ERRO CRÍTICO: Falha ao salvar offline!", dbError);
-            if (typeof showCustomToast === 'function') showCustomToast("❌ Erro ao salvar venda!");
-            throw dbError;
-        }
-    }
-
-    // --- GERENCIADOR DE SINCRONIZAÇÃO (ATUALIZADO PARA CENTRAL API) ---
-    async function syncPendingSales() {
-        if (!navigator.onLine) return;
-
-        const syncBadge = document.getElementById('sync-status-badge');
-
-        try {
-            const pending = await offlineDB.getPendingSales();
-            if (!pending || pending.length === 0) return;
-
-            console.log(`[Sync] Sincronizando ${pending.length} vendas pendentes...`);
-            if (syncBadge) syncBadge.classList.remove('hidden');
-
-            let successCount = 0;
-
-            for (const sale of pending) {
-                const { localId, ...payload } = sale; // O payload já está pronto
-
-                try {
-                    await fetch(CENTRAL_API_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    // Como é no-cors, assumimos sucesso se não der erro de rede
-                    await offlineDB.deletePendingSale(localId);
-                    successCount++;
-
-                } catch (err) {
-                    console.error("[Sync] Erro de rede ao enviar item:", err);
-                }
-            }
-
-            if (successCount > 0) {
-                if (typeof showCustomToast === 'function') showCustomToast(`✅ ${successCount} vendas sincronizadas!`);
-            }
-
         } catch (e) {
-            console.error("[Sync] Erro geral:", e);
-        } finally {
-            if (syncBadge) syncBadge.classList.add('hidden');
+            console.error("Falha no envio Online:", e);
+            throw e; // Lança o erro para lidar com ele adequadamente
         }
     }
 
