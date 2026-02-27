@@ -157,13 +157,19 @@ async function performSearch(term, type) {
 
 function renderProducts(products, target) {
     products.forEach(prod => {
-        const valPrice = parseFloat(prod.price || 0); // Cartão (Cheio)
+        const valPrice = parseFloat(prod.price || 0); // Preço original (Cartão)
         const valOffer = parseFloat(prod['price-oferta'] || 0);
         const hasOffer = (valOffer > 0 && valOffer < valPrice);
-        const baseSalePrice = hasOffer ? valOffer : valPrice;
 
-        const priceCard = baseSalePrice;
-        const pricePix = baseSalePrice * 0.95;
+        let pricePix, priceCard;
+
+        if (hasOffer) {
+            pricePix = valOffer; // Oferta é o preço final do PIX
+            priceCard = valPrice; // Cartão mantém preço original
+        } else {
+            priceCard = valPrice;
+            pricePix = valPrice * 0.95; // 5% de desconto PIX para produtos fora de oferta
+        }
 
         let name = prod.name || '';
         name = name.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase());

@@ -155,12 +155,19 @@ async function validateCartPrices(localCart) {
         const prod = serverProducts.find(p => String(p.id) === String(item.id));
         if (!prod) return { ...item, pricePix: item.priceNew, priceBase: item.priceNew };
 
-        const basePrice = parseFloat(prod['price-oferta'] || 0) > 0 && parseFloat(prod['price-oferta']) < parseFloat(prod.price)
-            ? parseFloat(prod['price-oferta'])
-            : parseFloat(prod.price || 0);
+        const valPrice = parseFloat(prod.price || 0);
+        const valOffer = parseFloat(prod['price-oferta'] || 0);
+        const hasOffer = (valOffer > 0 && valOffer < valPrice);
 
-        const pricePix = basePrice * 0.95;
-        return { ...item, priceBase: basePrice, pricePix, priceNew: pricePix };
+        let pricePix, priceBase;
+        if (hasOffer) {
+            pricePix = valOffer; // Oferta é o preço final do PIX
+            priceBase = valPrice; // Cartão mantém preço original
+        } else {
+            priceBase = valPrice;
+            pricePix = valPrice * 0.95; // 5% de desconto PIX para produtos fora de oferta
+        }
+        return { ...item, priceBase, pricePix, priceNew: pricePix };
     });
 }
 

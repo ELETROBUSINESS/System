@@ -48,10 +48,16 @@ async function refreshCartData() {
         if (prod) {
             const valPrice = parseFloat(prod.price || 0);
             const valOffer = parseFloat(prod['price-oferta'] || 0);
-            const baseSalePrice = (valOffer > 0 && valOffer < valPrice) ? valOffer : valPrice;
+            const hasOffer = (valOffer > 0 && valOffer < valPrice);
 
-            const officialPricePix = baseSalePrice * 0.95;
-            const officialPriceCard = baseSalePrice;
+            let officialPricePix, officialPriceCard;
+            if (hasOffer) {
+                officialPricePix = valOffer; // Oferta é o preço final do PIX
+                officialPriceCard = valPrice; // Cartão mantém preço original
+            } else {
+                officialPriceCard = valPrice;
+                officialPricePix = valPrice * 0.95; // 5% de desconto PIX para produtos fora de oferta
+            }
 
             if (Math.abs(item.priceNew - officialPricePix) > 0.05 || Math.abs(item.priceOriginal - officialPriceCard) > 0.05) {
                 item.priceNew = officialPricePix;

@@ -105,10 +105,6 @@ var mapStatusFirebaseToUI = (fbStatus) => {
 window.openModal = (modal) => {
     if (modal) {
         modal.style.display = 'flex';
-        // Hide barcode scanner when any modal is open to focus user attention
-        const scanner = document.querySelector('.barcode-scanner');
-        if (scanner) scanner.style.display = 'none';
-
         // Small timeout to allow display change to register before adding active class for transition
         setTimeout(() => modal.classList.add('active'), 10);
     }
@@ -121,12 +117,6 @@ window.closeModal = (modal) => {
             if (!modal.classList.contains('active')) {
                 modal.style.display = 'none';
 
-                // Re-enable barcode scanner if no other modal is active
-                const activeModals = document.querySelectorAll('.modal-overlay.active');
-                if (activeModals.length === 0) {
-                    const scanner = document.querySelector('.barcode-scanner');
-                    if (scanner) scanner.style.display = '';
-                }
             }
         }, 300);
     }
@@ -738,14 +728,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (optionsGrid && cashSection) {
                     optionsGrid.style.display = 'none';
                     cashSection.style.display = 'block';
-                    // Hide barcode scanner when in cash section or payment modal is too busy
-                    const scanner = document.querySelector('.barcode-scanner');
-                    if (scanner) scanner.style.display = 'none';
                     setTimeout(() => document.getElementById('cash-received').focus(), 150);
                 }
             } else if (method === 'Crediário') {
-                const scanner = document.querySelector('.barcode-scanner');
-                if (scanner) scanner.style.display = 'none';
                 if (!selectedCrediarioClient) {
                     isReturningToPayment = true;
                     closeModal(paymentModal);
@@ -763,8 +748,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (optionsGrid && cardOptions) {
                     optionsGrid.style.display = 'none';
                     cardOptions.style.display = 'flex';
-                    const scanner = document.querySelector('.barcode-scanner');
-                    if (scanner) scanner.style.display = 'none';
                 }
             } else {
                 // Para PIX, Débito e Movecard
@@ -2214,6 +2197,7 @@ document.addEventListener('DOMContentLoaded', () => {
             inputCode.value = prod.id;
             document.getElementById('edit-prod-name').value = prod.name;
             document.getElementById('edit-prod-price').value = prod.price;
+            document.getElementById('edit-prod-promo').value = prod.promoPrice || '';
             document.getElementById('edit-prod-cost').value = prod.costPrice || '';
             document.getElementById('edit-prod-brand').value = prod.brand || '';
             document.getElementById('edit-prod-img-url').value = prod.imgUrl || '';
@@ -2356,6 +2340,7 @@ document.addEventListener('DOMContentLoaded', () => {
             id: newCode,
             name: newName,
             price: parseFloat(document.getElementById('edit-prod-price').value) || 0,
+            promoPrice: parseFloat(document.getElementById('edit-prod-promo').value) || 0,
             costPrice: parseFloat(document.getElementById('edit-prod-cost').value) || 0,
             brand: document.getElementById('edit-prod-brand').value.trim(),
             imgUrl: document.getElementById('edit-prod-img-url').value.trim(),
@@ -2375,58 +2360,49 @@ document.addEventListener('DOMContentLoaded', () => {
             category: 'Geral'
         };
 
-        // Bloqueia o botão
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Salvando...";
+        // Inicia em background (UX Otimista)
+        closeModal(document.getElementById('edit-product-modal'));
+        showProcessingNotification("Processando..");
 
+        // Atualiza cache local imediatamente para refletir na UI instantaneamente
         try {
-            // --- ENVIA PARA A API ---
-            const apiResult = await salvarProdutoNaAPI(prodData);
-
-            if (apiResult.status !== 'success') {
-                throw new Error(apiResult.message || "Erro desconhecido na API.");
-            }
-
-            // --- SUCESSO: ATUALIZA O CACHE LOCAL ---
             if (editingProductId) {
-                // --- ATUALIZAR EXISTENTE ---
                 const prodIndex = localProductCache.findIndex(p => String(p.id) === String(editingProductId));
-
                 if (prodIndex !== -1) {
-                    // Verifica troca de código
                     if (newCode !== String(editingProductId)) {
-                        // Se mudou o código, verifica se já existe outro igual
-                        const exists = localProductCache.some(p => String(p.id) === newCode);
-                        if (exists) {
-                            throw new Error("Este novo código de barras já existe em outro produto!");
+                        if (localProductCache.some(p => String(p.id) === newCode)) {
+                            showErrorNotification("Este código de barras já existe!");
+                            return;
                         }
                     }
                     localProductCache[prodIndex] = prodData;
                 }
             } else {
-                // --- CRIAR NOVO ---
-                const exists = localProductCache.some(p => String(p.id) === newCode);
-                if (exists) {
-                    throw new Error("Já existe um produto com este código!");
+                if (localProductCache.some(p => String(p.id) === newCode)) {
+                    showErrorNotification("Já existe um produto com este código!");
+                    return;
                 }
                 localProductCache.push(prodData);
             }
 
-            // Sucesso final
-            showCustomAlert("Sucesso", "Produto salvo na nuvem e localmente!");
-            closeModal(document.getElementById('edit-product-modal'));
             renderProdutosPage();
-
-            // Restaura botão de cadeado
             if (btnUnlockCode) btnUnlockCode.style.display = 'block';
 
+            // Lança API em background
+            salvarProdutoNaAPI(prodData).then(apiResult => {
+                if (apiResult.status === 'success') {
+                    showSuccessNotification("Salvo com sucesso!");
+                } else {
+                    showErrorNotification(apiResult.message || "Erro desconhecido na API.");
+                }
+            }).catch(error => {
+                console.error("Erro ao salvar produto:", error);
+                showErrorNotification("Erro de conexão ao salvar.");
+            });
+
         } catch (error) {
-            console.error("Erro ao salvar produto:", error);
-            showCustomAlert("Erro ao Salvar", error.message);
-        } finally {
-            // Restaura o botão
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalBtnText;
+            console.error("Erro local ao salvar:", error);
+            showErrorNotification("Erro ao processar localmente.");
         }
     };
 
@@ -3079,17 +3055,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('btn-download-prices')?.addEventListener('click', () => {
         if (selectedProductIds.size === 0) return;
-        generateA4Prices();
+        openModal(document.getElementById('label-selection-modal'));
     });
 
-    const generateA4Prices = () => {
+    // Variável para armazenar a cor selecionada
+    let selectedLabelColor = 'red';
+
+    // Seletor de Cores
+    document.querySelectorAll('#label-color-options .swatch').forEach(swatch => {
+        swatch.addEventListener('click', (e) => {
+            document.querySelectorAll('#label-color-options .swatch').forEach(s => s.classList.remove('active'));
+            e.target.classList.add('active');
+            selectedLabelColor = e.target.dataset.color;
+        });
+    });
+
+    // Listeners para o Modal de Seleção de Etiqueta
+    document.getElementById('btn-label-offer')?.addEventListener('click', () => {
+        closeModal(document.getElementById('label-selection-modal'));
+        generateLabels('offer');
+    });
+
+    document.getElementById('btn-label-barcode')?.addEventListener('click', () => {
+        closeModal(document.getElementById('label-selection-modal'));
+        generateLabels('barcode');
+    });
+
+    document.getElementById('btn-label-a4')?.addEventListener('click', () => {
+        closeModal(document.getElementById('label-selection-modal'));
+        generateLabels('a4');
+    });
+
+    const generateLabels = (type) => {
         const productsToPrint = localProductCache.filter(p => selectedProductIds.has(String(p.id)));
         if (productsToPrint.length === 0) return;
 
-        // Dividir em grupos de 5 (5 por folha)
-        const chunks = [];
-        for (let i = 0; i < productsToPrint.length; i += 5) {
-            chunks.push(productsToPrint.slice(i, i + 5));
+        const colorMode = selectedLabelColor;
+        let mainBg = '#db0038';
+        let mainText = '#ffffff';
+        let accentColor = '#10b981'; // Green accent for border/badge
+
+        if (colorMode === 'yellow') {
+            mainBg = '#ffd600';   // High contrast yellow
+            mainText = '#000000'; // Black text
+            accentColor = '#10b981';
+        } else if (colorMode === 'white') {
+            mainBg = '#ffffff';
+            mainText = '#1f2937';
+            accentColor = '#1f2937';
         }
 
         const iframe = document.createElement('iframe');
@@ -3103,107 +3116,211 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const doc = iframe.contentWindow.document;
         doc.open();
+
+        let styles = '';
+        if (type === 'offer') {
+            // Ajustado: Atendendo ao pedido de ser 15% MENOR que o padrão original
+            styles = `
+                @page { size: A4; margin: 0; }
+                body { margin: 10mm; font-family: 'Inter', sans-serif; }
+                .page { width: 210mm; display: flex; flex-direction: column; align-items: center; gap: 3mm; }
+                .tag {
+                    width: 130mm;
+                    height: 38mm;
+                    background: ${mainBg};
+                    color: ${mainText};
+                    display: flex;
+                    flex-direction: column;
+                    box-sizing: border-box;
+                    padding: 3mm 6mm;
+                    border-radius: 3mm;
+                    position: relative;
+                    overflow: hidden;
+                    border: ${colorMode === 'white' ? '1px solid #ccc' : 'none'};
+                }
+                .product-name {
+                    font-size: 13pt;
+                    font-weight: 800;
+                    text-transform: uppercase;
+                    line-height: 1.1;
+                    margin: 0;
+                    display: -webkit-box;
+                    -webkit-line-clamp: 2;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                    color: ${mainText};
+                }
+                .tag-body {
+                    flex: 1;
+                    display: flex;
+                    align-items: flex-end;
+                    justify-content: space-between;
+                    margin-top: 1mm;
+                }
+                .qr-container {
+                    background: #fff;
+                    padding: 1mm;
+                    border-radius: 1.5mm;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .qr-container div { width: 22mm; height: 22mm; }
+                .price-container {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: flex-end;
+                    line-height: 1;
+                }
+                .old-price {
+                    font-size: 11pt;
+                    text-decoration: line-through;
+                    opacity: 0.8;
+                    font-weight: 500;
+                    color: ${mainText};
+                }
+                .new-price {
+                    font-size: 44pt;
+                    font-weight: 950;
+                    margin: 0;
+                    letter-spacing: -1.5pt;
+                    display: flex;
+                    align-items: baseline;
+                    color: ${mainText};
+                }
+                .new-price small { font-size: 16pt; margin-right: 1mm; }
+            `;
+        } else if (type === 'barcode') {
+            styles = `
+                @page { size: A4; margin: 0; }
+                body { margin: 10mm; font-family: 'Inter', sans-serif; }
+                .page { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5mm; }
+                .tag {
+                    width: 45mm;
+                    height: 25mm;
+                    border: 0.1mm solid #ccc;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 2mm;
+                    text-align: center;
+                }
+                .product-name { font-size: 7pt; font-weight: 700; margin-bottom: 1mm; height: 2.4em; overflow: hidden; }
+                .barcode-container svg { height: 12mm; width: 40mm; }
+            `;
+        } else if (type === 'a4') {
+            styles = `
+                @page { size: A4; margin: 0; }
+                body { margin: 0; font-family: 'Inter', sans-serif; background: #f3f4f6; }
+                .page {
+                    width: 210mm;
+                    height: 297mm;
+                    padding: 0;
+                    box-sizing: border-box;
+                    display: flex;
+                    flex-direction: column;
+                    background: #fff;
+                    position: relative;
+                    border: 8mm solid #10b981; /* Restored green border */
+                    box-shadow: inset 0 0 0 2mm #ffffff; /* Inner white spacing */
+                }
+                .label-header { 
+                    background: #fff; 
+                    padding: 15mm; 
+                    text-align: center;
+                    border-bottom: 2mm dashed #e5e7eb;
+                }
+                .product-name {
+                    font-size: 38pt;
+                    font-weight: 900;
+                    color: #1f2937;
+                    text-transform: uppercase;
+                    margin: 0;
+                    line-height: 1.1;
+                }
+                .normal-price-container {
+                    padding: 10mm;
+                    text-align: center;
+                }
+                .normal-price-row {
+                    display: inline-flex;
+                    align-items: baseline;
+                    gap: 5mm;
+                    color: #4b5563;
+                }
+                .normal-price-row .label { font-size: 18pt; font-weight: 700; text-transform: uppercase; }
+                .normal-price-row .value { font-size: 42pt; font-weight: 800; text-decoration: line-through; }
+
+                .offer-section {
+                    flex: 1;
+                    background: ${mainBg};
+                    margin: 5mm;
+                    border-radius: 8mm;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    border: 4mm solid ${colorMode === 'white' ? '#ccc' : mainBg};
+                    position: relative;
+                }
+                .offer-badge {
+                    position: absolute;
+                    top: -10mm;
+                    background: ${accentColor};
+                    color: #fff;
+                    padding: 4mm 15mm;
+                    border-radius: 6mm;
+                    font-size: 32pt;
+                    font-weight: 900;
+                    text-transform: uppercase;
+                    box-shadow: 0 4mm 6mm rgba(0,0,0,0.1);
+                }
+                .offer-price {
+                    font-size: 150pt;
+                    font-weight: 950;
+                    color: ${mainText};
+                    line-height: 0.8;
+                    letter-spacing: -6pt;
+                    display: flex;
+                    align-items: baseline;
+                }
+                .offer-price small { font-size: 45pt; margin-right: 4mm; }
+
+                .footer {
+                    background: #fff;
+                    padding: 10mm;
+                    text-align: center;
+                    border-top: 1px solid #eee;
+                }
+            `;
+        }
+
         doc.write(`
             <!DOCTYPE html>
             <html>
             <head>
-                <style>
-                    @page { size: A4; margin: 0; }
-                    body { margin: 0; font-family: 'Inter', sans-serif; background: #fff; }
-                    .page {
-                        width: 210mm;
-                        height: 297mm;
-                        overflow: hidden;
-                        page-break-after: always;
-                    }
-                    .tag {
-                        width: 210mm;
-                        height: 59.4mm;
-                        background: #db0038;
-                        color: #fff;
-                        display: flex;
-                        flex-direction: column;
-                        box-sizing: border-box;
-                        padding: 4mm 8mm;
-                        border-bottom: 0.2mm dashed rgba(255,255,255,0.4);
-                        position: relative;
-                        overflow: hidden;
-                    }
-                    .tag:last-child { border-bottom: none; }
-                    .product-name {
-                        font-size: 20pt;
-                        font-weight: 800;
-                        text-transform: uppercase;
-                        line-height: 1.1;
-                        margin: 0;
-                        display: -webkit-box;
-                        -webkit-line-clamp: 2;
-                        -webkit-box-orient: vertical;
-                        overflow: hidden;
-                    }
-                    .tag-body {
-                        flex: 1;
-                        display: flex;
-                        align-items: flex-end;
-                        justify-content: space-between;
-                        margin-top: 1mm;
-                    }
-                    .barcode-container {
-                        background: #fff;
-                        padding: 2mm 5mm;
-                        border-radius: 3mm;
-                        display: flex;
-                        align-items: center;
-                    }
-                    .barcode-container svg { height: 14mm; max-width: 65mm; }
-                    .price-container {
-                        display: flex;
-                        flex-direction: column;
-                        align-items: flex-end;
-                        line-height: 1;
-                    }
-                    .old-price {
-                        font-size: 16pt;
-                        text-decoration: line-through;
-                        opacity: 0.8;
-                        font-weight: 500;
-                        margin-bottom: -1mm;
-                    }
-                    .new-price {
-                        font-size: 68pt;
-                        font-weight: 950;
-                        margin: 0;
-                        letter-spacing: -2pt;
-                        white-space: nowrap;
-                        display: flex;
-                        align-items: baseline;
-                    }
-                    .new-price small {
-                        font-size: 22pt;
-                        margin-right: 1mm;
-                        font-weight: 800;
-                    }
-                </style>
+                <style>${styles}</style>
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;800;900&display=swap" rel="stylesheet">
             </head>
             <body>
         `);
 
-        chunks.forEach(chunk => {
+        if (type === 'offer') {
             doc.write('<div class="page">');
-            chunk.forEach(prod => {
+            productsToPrint.forEach(prod => {
                 const promoPrice = prod.promoPrice || 0;
                 const finalPrice = promoPrice > 0 ? promoPrice : prod.price;
                 const formattedFinal = formatCurrency(finalPrice);
                 const priceValue = formattedFinal.replace('R$', '').trim();
                 const oldPriceValue = formatCurrency(prod.price);
+                const qrUrl = `https://eletrobusiness.com.br/super-app/product.html?id=${prod.id}`;
+
                 doc.write(`
                     <div class="tag">
                         <div class="tag-header"><h2 class="product-name">${prod.name}</h2></div>
                         <div class="tag-body">
-                            <div class="barcode-container">
-                                <svg class="barcode" jsbarcode-value="${prod.id}" jsbarcode-textmargin="0" jsbarcode-displayvalue="true" jsbarcode-fontoptions="bold"></svg>
-                            </div>
+                            <div class="qr-container" data-url="${qrUrl}"></div>
                             <div class="price-container">
                                 ${promoPrice > 0 ? `<div class="old-price">${oldPriceValue}</div>` : ''}
                                 <div class="new-price"><small>R$</small>${priceValue}</div>
@@ -3213,19 +3330,81 @@ document.addEventListener('DOMContentLoaded', () => {
                 `);
             });
             doc.write('</div>');
-        });
+        } else if (type === 'barcode') {
+            doc.write('<div class="page">');
+            productsToPrint.forEach(prod => {
+                doc.write(`
+                    <div class="tag">
+                        <div class="product-name">${prod.name}</div>
+                        <div class="barcode-container">
+                            <svg class="barcode" jsbarcode-value="${prod.id}" jsbarcode-width="1" jsbarcode-height="30" jsbarcode-fontsize="10" jsbarcode-textmargin="0" jsbarcode-displayvalue="true"></svg>
+                        </div>
+                    </div>
+                `);
+            });
+            doc.write('</div>');
+        } else if (type === 'a4') {
+            productsToPrint.forEach(prod => {
+                const promoPrice = prod.promoPrice || 0;
+                const finalPrice = promoPrice > 0 ? promoPrice : prod.price;
+                const normalPrice = prod.price;
+                const formattedOffer = formatCurrency(finalPrice).replace('R$', '').trim();
+                const formattedNormal = formatCurrency(normalPrice);
+
+                doc.write(`
+                    <div class="page" style="page-break-after: always;">
+                        <div class="label-header">
+                            <h1 class="product-name">${prod.name}</h1>
+                        </div>
+                        
+                        <div class="normal-price-container">
+                            <div class="normal-price-row">
+                                <span class="label">Preço Normal:</span>
+                                <span class="value">${formattedNormal}</span>
+                            </div>
+                        </div>
+
+                        <div class="offer-section">
+                            <div class="offer-badge">Oferta Especial</div>
+                            <div class="offer-price"><small>R$</small>${formattedOffer}</div>
+                        </div>
+
+                        <div class="footer">
+                             <!-- Validity section removed -->
+                        </div>
+                    </div>
+                `);
+            });
+        }
 
         doc.write(`
             <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
             <script>
                 window.onload = function() {
-                    JsBarcode(".barcode").init();
+                    // Init Barcodes
+                    if (document.querySelector('.barcode')) {
+                        JsBarcode(".barcode").init();
+                    }
+                    
+                    // Init QRCodes
+                    document.querySelectorAll('.qr-container').forEach(el => {
+                        new QRCode(el, {
+                            text: el.dataset.url,
+                            width: 100,
+                            height: 100,
+                            colorDark : "#000000",
+                            colorLight : "#ffffff",
+                            correctLevel : QRCode.CorrectLevel.H
+                        });
+                    });
+
                     setTimeout(() => {
                         window.print();
                         setTimeout(() => {
                             window.parent.document.body.removeChild(window.frameElement);
                         }, 100);
-                    }, 500);
+                    }, 800);
                 };
             </script>
             </body>
@@ -3235,9 +3414,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
 
-    window.carregarCacheDeProdutos = async () => {
+    window.carregarCacheDeProdutos = async (isInitialLoad = false) => {
         const loaderOverlay = document.getElementById('custom-loader-overlay');
-        if (loaderOverlay) loaderOverlay.style.display = 'flex';
+        if (loaderOverlay && isInitialLoad) loaderOverlay.style.display = 'flex';
 
         const container = document.getElementById('produtos-table-container');
         const pdvInput = document.getElementById('barcode-input');
@@ -3313,7 +3492,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return localProductCache.find(p => String(p.id).trim() === barcodeLimpo) || null;
     }
-    async function cadastrarProdutoNaAPI(product) { quickAddSubmitBtn.disabled = true; quickAddSubmitBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Cadastrando..."; try { const params = new URLSearchParams({ action: 'cadastrarProduto', codigo: product.id, nome: product.name, preco: product.price }); const response = await fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET' }); if (!response.ok) throw new Error("Erro rede."); const result = await response.json(); if (result.status === 'success') { if (localProductCache) { localProductCache.push(result.data); } return result.data; } else { throw new Error(result.message || "Erro API."); } } catch (error) { console.error("Erro cadastro prod:", error); showCustomAlert("Erro Cadastro Prod", error.message); return null; } finally { quickAddSubmitBtn.disabled = false; quickAddSubmitBtn.innerHTML = "Adicionar"; } }
+    async function cadastrarProdutoNaAPI(product) {
+        closeModal(quickAddModal);
+        showProcessingNotification("Processando..");
+        try {
+            if (localProductCache) { localProductCache.push(product); }
+
+            const params = new URLSearchParams({ action: 'cadastrarProduto', codigo: product.id, nome: product.name, preco: product.price });
+            fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET' })
+                .then(res => res.json())
+                .then(result => {
+                    if (result.status === 'success') {
+                        showSuccessNotification("Produto cadastrado!");
+                        if (window.carregarCacheDeProdutos) window.carregarCacheDeProdutos();
+                    } else {
+                        showErrorNotification(result.message || "Erro API.");
+                    }
+                }).catch(e => showErrorNotification("Erro de conexão."));
+
+            return product; // Retorno rápido para o addToCart
+        } catch (error) {
+            console.error(error);
+            showErrorNotification("Erro Local");
+            return null;
+        }
+    }
     async function registrarVendaAtual(payments, totalValueOverride = null, discountOverride = null) {
         if (!REGISTRO_VENDA_SCRIPT_URL || REGISTRO_VENDA_SCRIPT_URL.includes("COLE_A_URL")) { throw new Error("URL registro não config."); }
 
@@ -3434,7 +3637,31 @@ document.addEventListener('DOMContentLoaded', () => {
             localClientCache = [];
         }
     }
-    async function salvarClienteNaAPI(clienteData) { clienteSaveBtn.disabled = true; clienteSaveBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Salvando..."; try { const params = new URLSearchParams({ action: 'cadastrarCliente', ...clienteData }); const response = await fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET' }); if (!response.ok) throw new Error("Erro rede."); const result = await response.json(); if (result.status === 'success') { showCustomAlert("Sucesso!", result.message || "Cliente cadastrado!"); closeModal(addClienteModal); if (localClientCache !== null) { localClientCache.push(result.data); localClientCache.sort((a, b) => (a.apelido || a.nomeExibicao).localeCompare(b.apelido || b.nomeExibicao)); } renderClientesPage(); } else { throw new Error(result.message || "Erro API."); } } catch (error) { console.error("Erro salvar cli:", error); showCustomAlert("Erro Salvar", error.message); } finally { clienteSaveBtn.disabled = false; clienteSaveBtn.innerHTML = "<i class='bx bx-save'></i> Salvar"; } }
+    async function salvarClienteNaAPI(clienteData) {
+        closeModal(addClienteModal);
+        showProcessingNotification("Salvando Cliente..");
+        try {
+            const params = new URLSearchParams({ action: 'cadastrarCliente', ...clienteData });
+            fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET' })
+                .then(res => res.json())
+                .then(result => {
+                    if (result.status === 'success') {
+                        if (localClientCache !== null) {
+                            localClientCache.push(result.data);
+                            localClientCache.sort((a, b) => (a.apelido || a.nomeExibicao).localeCompare(b.apelido || b.nomeExibicao));
+                        }
+                        renderClientesPage();
+                        showSuccessNotification("Cliente cadastrado!");
+                    } else {
+                        showErrorNotification(result.message || "Erro API.");
+                    }
+                })
+                .catch(err => showErrorNotification("Erro ao conectar"));
+        } catch (error) {
+            console.error(error);
+            showErrorNotification("Erro Local");
+        }
+    }
     async function abrirCaixaAPI(data) {
         openCaixaSaveBtn.disabled = true; openCaixaSaveBtn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Abrindo..."; try {
             const params = new URLSearchParams({ action: 'abrirCaixa', ...data }); const response = await fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET' }); if (!response.ok) throw new Error("Erro rede."); const result = await response.json(); if (result.status === 'success') {
@@ -3470,7 +3697,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 3. Tenta carregar dados em segundo plano sem travar a UI
         try {
-            carregarCacheDeProdutos();
+            carregarCacheDeProdutos(true);
             carregarClientesDaAPI();
         } catch (e) {
             console.error("Erro ao carregar dados iniciais, mas o sistema segue livre.", e);
@@ -4312,47 +4539,57 @@ document.addEventListener('DOMContentLoaded', () => {
     const notifTitle = document.getElementById('notif-title');
     const notifStatus = document.getElementById('notif-status');
 
-    function showProcessingNotification() {
+    function showProcessingNotification(customText = "Processando..") {
         if (!notifSidebar) return;
         notifSidebar.classList.remove('success', 'error');
         notifSidebar.classList.add('active');
-        if (notifTitle) notifTitle.innerText = "Processando...";
-        if (notifStatus) notifStatus.innerText = "Iniciando...";
+        if (notifTitle) notifTitle.innerText = customText;
+        if (notifStatus) notifStatus.innerText = "";
+
+        // Ensure spinner is visible when processing
+        const spinner = notifSidebar.querySelector('.bx-spin');
+        if (spinner) spinner.style.display = 'inline-block';
     }
 
     function updateNotificationStatus(percent, message) {
         if (!notifSidebar) return;
-        // Percent ignored in new UI
         if (notifStatus) notifStatus.innerText = message;
     }
 
-    function showSuccessNotification() {
+    function showSuccessNotification(customText = "Venda Concluída!") {
         if (!notifSidebar) return;
         notifSidebar.classList.add('success');
-        if (notifTitle) notifTitle.innerText = "Venda Concluída!";
-        if (notifStatus) notifStatus.innerText = "Tudo certo.";
+        if (notifTitle) notifTitle.innerText = customText;
+        if (notifStatus) notifStatus.innerText = "";
+
+        // Hide spinner on success to be clean
+        const spinner = notifSidebar.querySelector('.bx-spin');
+        if (spinner) spinner.style.display = 'none';
 
         setTimeout(() => {
             notifSidebar.classList.remove('active');
-            // Reset styles after hiding
             setTimeout(() => {
                 notifSidebar.classList.remove('success', 'error');
             }, 500);
-        }, 3000);
+        }, 2000);
     }
 
     function showErrorNotification(message) {
         if (!notifSidebar) return;
         notifSidebar.classList.add('error');
-        if (notifTitle) notifTitle.innerText = "Erro";
-        if (notifStatus) notifStatus.innerText = message || "Falha ao salvar.";
+        if (notifTitle) notifTitle.innerText = message || "Falha.";
+        if (notifStatus) notifStatus.innerText = "";
+
+        // Hide spinner on error
+        const spinner = notifSidebar.querySelector('.bx-spin');
+        if (spinner) spinner.style.display = 'none';
 
         setTimeout(() => {
             notifSidebar.classList.remove('active');
             setTimeout(() => {
                 notifSidebar.classList.remove('success', 'error');
             }, 500);
-        }, 5000);
+        }, 3000);
     }
 
     // --- Data Capture ---
@@ -6069,10 +6306,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA DE CÁLCULO DE LUCRO (Adicionar no script.js) ---
     const inputCusto = document.getElementById('edit-prod-cost');
     const inputVenda = document.getElementById('edit-prod-price');
+    const inputOferta = document.getElementById('edit-prod-promo');
 
     const realizarCalculos = () => {
         const custo = parseFloat(inputCusto.value) || 0;
-        const venda = parseFloat(inputVenda.value) || 0;
+        const precoVenda = parseFloat(inputVenda.value) || 0;
+        const oferta = parseFloat(inputOferta.value) || 0;
+
+        const venda = (oferta > 0) ? oferta : precoVenda;
 
         const lucro = venda - custo;
 
@@ -6101,6 +6342,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (inputCusto && inputVenda) {
         inputCusto.addEventListener('input', realizarCalculos);
         inputVenda.addEventListener('input', realizarCalculos);
+        if (inputOferta) inputOferta.addEventListener('input', realizarCalculos);
     }
 
     // --- Listener de Cliques na Tabela do Carrinho ---
@@ -7491,58 +7733,63 @@ document.addEventListener('DOMContentLoaded', () => {
         btnSaveUpdateProd.addEventListener('click', async () => {
             if (!currentEditingProduct) return;
 
-            const originalText = btnSaveUpdateProd.innerHTML;
-            btnSaveUpdateProd.disabled = true;
-            btnSaveUpdateProd.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Salvando...";
+            const prodDataToSave = {
+                id: currentEditingProduct.id,
+                name: upName.value.trim(),
+                price: upPrice.value,
+                stock: upStock.value,
+                unit: upUnit.value,
+                category: upCat.value,
+                imgUrl: upImg.value,
+                costPrice: currentEditingProduct.isNew ? 0 : currentEditingProduct.costPrice,
+                brand: currentEditingProduct.isNew ? '' : currentEditingProduct.brand,
+                ncm: currentEditingProduct.isNew ? '' : currentEditingProduct.ncm,
+                cest: currentEditingProduct.isNew ? '' : currentEditingProduct.cest,
+                cfop: currentEditingProduct.isNew ? '5102' : currentEditingProduct.cfop,
+                origem: currentEditingProduct.isNew ? '0' : currentEditingProduct.origem,
+                csosn: currentEditingProduct.isNew ? '102' : currentEditingProduct.csosn
+            };
+
+            // Fecha form e limpa (UX Background)
+            updateProdForm.style.display = 'none';
+            updateProdBarcode.value = '';
+            closeModal(document.getElementById('update-product-modal'));
+
+            showProcessingNotification("Processando..");
 
             try {
-                const payload = {
-                    action: 'saveProduct',
-                    data: {
-                        id: currentEditingProduct.id,
-                        name: upName.value.trim(),
-                        price: upPrice.value,
-                        stock: upStock.value,
-                        unit: upUnit.value,
-                        category: upCat.value,
-                        imgUrl: upImg.value,
-                        // Preserva ou define padrão
-                        costPrice: currentEditingProduct.isNew ? 0 : currentEditingProduct.costPrice,
-                        brand: currentEditingProduct.isNew ? '' : currentEditingProduct.brand,
-                        ncm: currentEditingProduct.isNew ? '' : currentEditingProduct.ncm,
-                        cest: currentEditingProduct.isNew ? '' : currentEditingProduct.cest,
-                        cfop: currentEditingProduct.isNew ? '5102' : currentEditingProduct.cfop,
-                        origem: currentEditingProduct.isNew ? '0' : currentEditingProduct.origem,
-                        csosn: currentEditingProduct.isNew ? '102' : currentEditingProduct.csosn
+                // Atualiza cache local imediatamente
+                if (localProductCache) {
+                    const idx = localProductCache.findIndex(p => p.id === currentEditingProduct.id);
+                    if (idx !== -1) {
+                        localProductCache[idx] = { ...localProductCache[idx], ...prodDataToSave };
+                    } else if (currentEditingProduct.isNew) {
+                        localProductCache.push(prodDataToSave);
                     }
-                };
-
-                const options = {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                };
-
-                const response = await fetch(SCRIPT_URL, options);
-                const result = await response.json();
-
-                if (result.status === 'success') {
-                    showCustomAlert("Sucesso", result.message);
-                    updateProdForm.style.display = 'none';
-                    updateProdBarcode.value = '';
-                    // Recarrega cache discretamente
-                    if (window.carregarCacheDeProdutos) window.carregarCacheDeProdutos();
-
-                    // [ADICIONADO] Rastreia meta de cadastro
-                    if (window.trackProductRegistration) window.trackProductRegistration(currentEditingProduct.id);
-                } else {
-                    // showCustomAlert("Erro", result.message);
                 }
 
+                if (window.trackProductRegistration) window.trackProductRegistration(currentEditingProduct.id);
+
+                const payload = { action: 'saveProduct', data: prodDataToSave };
+                const options = { method: 'POST', body: JSON.stringify(payload) };
+
+                fetch(SCRIPT_URL, options)
+                    .then(res => res.json())
+                    .then(result => {
+                        if (result.status === 'success') {
+                            showSuccessNotification("Atualizado!");
+                            if (window.carregarCacheDeProdutos) window.carregarCacheDeProdutos();
+                        } else {
+                            showErrorNotification("Erro na Atualização.");
+                        }
+                    })
+                    .catch(e => {
+                        console.error('Erro na gravação background:', e);
+                        showErrorNotification("Erro de conexão.");
+                    });
             } catch (e) {
-                showCustomAlert("Erro", "Erro ao salvar: " + e.toString());
-            } finally {
-                btnSaveUpdateProd.disabled = false;
-                btnSaveUpdateProd.innerHTML = originalText;
+                console.error("Erro local na alteração:", e);
+                showErrorNotification("Erro Local");
             }
         });
     }

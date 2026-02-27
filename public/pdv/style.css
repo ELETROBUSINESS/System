@@ -143,6 +143,95 @@ body {
     animation: bx-spin 1s linear infinite;
 }
 
+/* Modal de Seleção de Etiqueta */
+.label-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+.label-option {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background-color: var(--card-white);
+    border: 2px solid var(--border-subtle);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.label-option:hover {
+    border-color: var(--primary-red);
+    background-color: rgba(219, 0, 56, 0.05);
+}
+
+.label-icon {
+    width: 48px;
+    height: 48px;
+    background-color: var(--bg-body);
+    color: var(--primary-red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 1.5rem;
+}
+
+.label-info strong {
+    display: block;
+    font-size: 1rem;
+    color: var(--text-dark);
+}
+
+.label-info p {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin-top: 2px;
+}
+
+/* Seletor de Cores */
+.color-selector-section {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--border-subtle);
+}
+
+.section-subtitle {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.color-swatches {
+    display: flex;
+    gap: 12px;
+}
+
+.swatch {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--swatch-color);
+    cursor: pointer;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 1px var(--border-subtle);
+    transition: all 0.2s ease;
+}
+
+.swatch:hover {
+    transform: scale(1.1);
+}
+
+.swatch.active {
+    box-shadow: 0 0 0 2px var(--primary-red);
+    transform: scale(1.1);
+}
+
 @keyframes pulse {
     0% {
         transform: scale(1);

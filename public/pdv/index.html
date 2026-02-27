@@ -113,20 +113,10 @@
 
 
 
-    <div id="sale-processing-notification" class="notification-sidebar">
-        <div class="notif-icon-wrapper">
-            <!-- Spinner Circle -->
-            <svg class="spinner-svg" viewBox="0 0 50 50">
-                <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="4"></circle>
-            </svg>
-            <!-- Success/Error Icons (Hidden by default) -->
-            <i class='bx bx-check success-icon'></i>
-            <i class='bx bx-x error-icon'></i>
-        </div>
-        <div class="notif-content">
-            <span id="notif-title">Processando...</span>
-            <p id="notif-status">Aguarde um momento</p>
-        </div>
+    <div id="sale-processing-notification" class="notification-sidebar"
+        style="flex-direction: row; align-items: center; padding: 12px 16px; min-width: auto; gap: 10px;">
+        <i class='bx bx-loader-alt bx-spin' style="font-size: 1.5rem; color: #db0038;"></i>
+        <span id="notif-title" style="font-weight: 600; font-size: 1rem; color: #111;">Processando..</span>
     </div>
 
     <div class="modal-overlay" id="client-selection-modal">
@@ -1577,6 +1567,50 @@
 
     </div>
 
+    <div class="modal-overlay" id="label-selection-modal">
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h3>Selecionar Modelo de Etiqueta</h3>
+                <button class="close-modal-btn" data-target="label-selection-modal"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="label-grid">
+                    <div class="label-option" id="btn-label-offer">
+                        <div class="label-icon"><i class='bx bx-purchase-tag-alt'></i></div>
+                        <div class="label-info">
+                            <strong>Modelo Oferta</strong>
+                            <p>Tamanho reduzido com QR Code de infos.</p>
+                        </div>
+                    </div>
+                    <div class="label-option" id="btn-label-barcode">
+                        <div class="label-icon"><i class='bx bx-barcode'></i></div>
+                        <div class="label-info">
+                            <strong>Código de Barras</strong>
+                            <p>Apenas o código para identificação.</p>
+                        </div>
+                    </div>
+                    <div class="label-option" id="btn-label-a4">
+                        <div class="label-icon"><i class='bx bx-file'></i></div>
+                        <div class="label-info">
+                            <strong>Modelo A4 (Grande)</strong>
+                            <p>Baseado no padrão de oferta Cooperada.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="color-selector-section">
+                    <p class="section-subtitle">Cor de Destaque:</p>
+                    <div class="color-swatches" id="label-color-options">
+                        <div class="swatch active" data-color="red" style="--swatch-color: #db0038;" title="Vermelho">
+                        </div>
+                        <div class="swatch" data-color="yellow" style="--swatch-color: #ffeb3b;" title="Amarelo"></div>
+                        <div class="swatch" data-color="white" style="--swatch-color: #ffffff;" title="Branco"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="open-caixa-modal">
         <div class="modal-content modal-sm">
             <div class="modal-header">
@@ -1806,6 +1840,10 @@
                                 <div class="form-group">
                                     <label>Preço de Venda (R$)</label>
                                     <input type="number" id="edit-prod-price" step="0.01" required placeholder="0,00">
+                                </div>
+                                <div class="form-group">
+                                    <label>Preço de Oferta (R$)</label>
+                                    <input type="number" id="edit-prod-promo" step="0.01" placeholder="0,00">
                                 </div>
                                 <div class="form-group">
                                     <label>Estoque Atual</label>
@@ -2603,7 +2641,7 @@
         <div class="brand-row">
             <img src="assets/sistema.png" alt="Logo" class="brand-img-icon">
 
-            <span class="brand-name-text">ELETRO<span class="highlight-dot">. 1.0.0.47.4</span></span>
+            <span class="brand-name-text">ELETRO<span class="highlight-dot">. 1.0.0.47.6</span></span>
         </div>
     </div>
     <div class="pn">

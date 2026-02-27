@@ -169,12 +169,20 @@ function clearCache() {
 
 function buildProductCardHTML(prod) {
     let displayImg = getFirstImageUrl(prod.imgUrl);
-    const valPrice = parseFloat(prod.price || 0); // Cartão (Cheio)
+    const valPrice = parseFloat(prod.price || 0); // Preço original (Cartão)
     const valOffer = parseFloat(prod['price-oferta'] || 0);
     const hasOffer = (valOffer > 0 && valOffer < valPrice);
-    const baseSalePrice = hasOffer ? valOffer : valPrice;
-    const priceCard = baseSalePrice;
-    const pricePix = baseSalePrice * 0.95;
+
+    let pricePix, priceCard;
+
+    if (hasOffer) {
+        pricePix = valOffer; // Oferta é o preço final do PIX
+        priceCard = valPrice; // Cartão mantém preço original
+    } else {
+        priceCard = valPrice;
+        pricePix = valPrice * 0.95; // 5% de desconto PIX para produtos fora de oferta
+    }
+
     const fmtConfig = { style: 'currency', currency: 'BRL' };
     const fmtPix = new Intl.NumberFormat('pt-BR', fmtConfig).format(pricePix);
     const fmtOriginal = new Intl.NumberFormat('pt-BR', fmtConfig).format(valPrice);

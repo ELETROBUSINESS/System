@@ -132,15 +132,19 @@ function renderProductView(prod, variacoesGroup, allProducts, activeIndex) {
     registerRecentlyViewed(prod);
 
     const productImages = extractProductImages(prod);
-    const valPrice = parseFloat(prod.price || 0);
+    const valPrice = parseFloat(prod.price || 0); // Preço original (Cartão)
     const valOffer = parseFloat(prod['price-oferta'] || 0);
     const hasOffer = (valOffer > 0 && valOffer < valPrice);
 
-    // Preço Base de Venda (Cartão)
-    const cardPrice = hasOffer ? valOffer : valPrice;
+    let pixPrice, cardPrice;
 
-    // Pix tem 5% de desconto sobre o preço de venda final
-    const pixPrice = cardPrice * 0.95;
+    if (hasOffer) {
+        pixPrice = valOffer; // Oferta é o preço final do PIX
+        cardPrice = valPrice; // Cartão mantém preço original
+    } else {
+        cardPrice = valPrice;
+        pixPrice = valPrice * 0.95; // 5% de desconto PIX para produtos fora de oferta
+    }
 
     const pageTitle = `${prod.name} | Dtudo`;
     document.title = pageTitle;
