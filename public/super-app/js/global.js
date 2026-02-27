@@ -102,7 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // --- LÓGICA DE CRONÔMETRO DE OFERTA ---
 function startOfferTimers() {
-    const OFFER_DEADLINE = new Date("2026-02-28T00:00:00").getTime();
+    const OFFER_DEADLINE = new Date("2026-02-28T23:59:59").getTime();
 
     function update() {
         const now = Date.now();

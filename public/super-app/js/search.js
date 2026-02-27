@@ -156,7 +156,7 @@ async function performSearch(term, type) {
 }
 
 function renderProducts(products, target) {
-    const OFFER_DEADLINE = new Date("2026-02-28T00:00:00").getTime();
+    const OFFER_DEADLINE = new Date("2026-02-28T23:59:59").getTime();
     const isExpired = Date.now() >= OFFER_DEADLINE;
 
     products.forEach(prod => {

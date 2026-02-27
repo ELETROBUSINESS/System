@@ -174,7 +174,7 @@ function buildProductCardHTML(prod) {
     const hasOffer = (valOffer > 0 && valOffer < valPrice);
 
     // Lógica de cronômetro e pausa
-    const OFFER_DEADLINE = new Date("2026-02-28T00:00:00").getTime();
+    const OFFER_DEADLINE = new Date("2026-02-28T23:59:59").getTime();
     const isExpired = Date.now() >= OFFER_DEADLINE;
 
     // Se estiver expirado e for oferta, não renderiza (pausa)
@@ -502,7 +502,7 @@ function renderRecentlyViewed() {
     section.style.display = 'block';
 
     // Create mini cards
-    const OFFER_DEADLINE = new Date("2026-02-28T00:00:00").getTime();
+    const OFFER_DEADLINE = new Date("2026-02-28T23:59:59").getTime();
     const isExpired = Date.now() >= OFFER_DEADLINE;
 
     let html = '';
@@ -535,15 +535,18 @@ function renderRecentlyViewed() {
 function sortProductsForUX(products) {
     const interests = JSON.parse(localStorage.getItem('user_interests') || '[]');
 
-    return products.sort((a, b) => {
+    // Shuffle inicial para garantir a aleatoriedade solicitada
+    const shuffled = [...products].sort(() => Math.random() - 0.5);
+
+    return shuffled.sort((a, b) => {
         const aStock = parseFloat(a.stock || 0);
         const bStock = parseFloat(b.stock || 0);
 
-        // Esgotados para o final
+        // 1. Esgotados sempre para o final
         if (aStock <= 0 && bStock > 0) return 1;
         if (bStock <= 0 && aStock > 0) return -1;
 
-        // Produtos com interesse salvos primeiro (apenas comparando se a categoria do produto contém algo da base do user)
+        // 2. Prioridade por interesse do usuário
         if (interests.length > 0) {
             const aCat = (a.category || '').toLowerCase();
             const bCat = (b.category || '').toLowerCase();
@@ -554,13 +557,8 @@ function sortProductsForUX(products) {
             if (bMatch && !aMatch) return 1;
         }
 
-        // Produtos com desconto no topo
-        const aHasOffer = (parseFloat(a['price-oferta'] || 0) > 0 && parseFloat(a['price-oferta'] || 0) < parseFloat(a.price || 0));
-        const bHasOffer = (parseFloat(b['price-oferta'] || 0) > 0 && parseFloat(b['price-oferta'] || 0) < parseFloat(b.price || 0));
-
-        if (aHasOffer && !bHasOffer) return -1;
-        if (bHasOffer && !aHasOffer) return 1;
-
+        // Removido o bloco que priorizava ofertas (hasOffer)
+        // Agora o resto é decidido pela aleatoriedade do shuffle inicial
         return 0;
     });
 }
@@ -761,7 +759,7 @@ window.filterLocalCategory = function (categoryStr) {
 };
 
 function applyLocalFilter(cached, categoryStr) {
-    const OFFER_DEADLINE = new Date("2026-02-28T00:00:00").getTime();
+    const OFFER_DEADLINE = new Date("2026-02-28T23:59:59").getTime();
     const isExpired = Date.now() >= OFFER_DEADLINE;
 
     let filtered = cached;

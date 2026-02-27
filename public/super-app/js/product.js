@@ -109,7 +109,7 @@ async function loadProductDetail(id) {
         const valPrice = parseFloat(prod.price || 0);
         const valOffer = parseFloat(prod['price-oferta'] || 0);
         const hasOffer = (valOffer > 0 && valOffer < valPrice);
-        const OFFER_DEADLINE = new Date("2026-02-28T00:00:00").getTime();
+        const OFFER_DEADLINE = new Date("2026-02-28T23:59:59").getTime();
         const isExpired = Date.now() >= OFFER_DEADLINE;
 
         if (hasOffer && isExpired) {
