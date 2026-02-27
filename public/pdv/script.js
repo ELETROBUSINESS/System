@@ -1059,9 +1059,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await res.json();
 
                 if (data.status === "success" && data.clientId) {
+                    let cacheParaBuscar = localClientCache;
+
+                    // Se o cache local estiver vazio no PDV, força carregar do Google na hora
+                    if (!cacheParaBuscar || cacheParaBuscar.length === 0) {
+                        try {
+                            const clientsRes = await fetch(SCRIPT_URL + "?action=listarClientes");
+                            const clientsData = await clientsRes.json();
+                            if (clientsData.status === 'success') {
+                                localClientCache = clientsData.data;
+                                cacheParaBuscar = localClientCache;
+                            }
+                        } catch (e) { console.error("Erro ao puxar cache de clientes emergencial pro NFC!"); return; }
+                    }
+
                     // Tenta encontrar o cliente pelo ID no cache local
-                    if (localClientCache && localClientCache.length > 0) {
-                        const clienteEncontrado = localClientCache.find(c => String(c.idCliente || c.id || c[0]) === String(data.clientId));
+                    if (cacheParaBuscar && cacheParaBuscar.length > 0) {
+                        // Varre o cache tentando achar pelo idCliente (pode estar na prop id, idCliente ou no índice 0)
+                        const clienteEncontrado = cacheParaBuscar.find(c => {
+                            const cid = String(c.idCliente || c.id || c[0] || "");
+                            return cid.trim() === String(data.clientId).trim();
+                        });
+
                         if (clienteEncontrado) {
                             console.log("Cliente detectado via NFC:", clienteEncontrado);
                             if (typeof showCustomToast === 'function') {
@@ -1069,8 +1088,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                             // Toca um sonzinho rápido se possível
                             try { new Audio("https://actions.google.com/sounds/v1/ui/beep_short.ogg").play(); } catch (e) { }
-                            // Confirma o cliente na venda
+
+                            // Tira qualquer janela de busca da frente
+                            closeModal(document.getElementById('client-selection-modal'));
+
+                            // Confirma o cliente na venda e joga pro Resumo
                             confirmClientSelection(clienteEncontrado);
+                        } else {
+                            console.warn("Cliente NFC conectou com ID: " + data.clientId + ", mas ele não está na lista de clientes!");
                         }
                     }
                 }
