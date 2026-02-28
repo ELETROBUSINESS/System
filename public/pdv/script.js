@@ -90,7 +90,24 @@ var REGISTRO_VENDA_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCCaxd
 var CENTRAL_API_URL = "https://script.google.com/macros/s/AKfycbyZtUsI44xA4MQQLZWJ6K93t6ZaSaN6hw7YQw9EclZG9E85kM6yOWQCQ0D-ZJpGmyq4/exec"; // URL de Migração
 
 // Funções Auxiliares Globais (Necessárias para as funções abaixo)
-var formatCurrency = (value) => { const n = Number(value); if (isNaN(n)) return 'R$ 0,00'; return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); };
+var parsePrice = (val) => {
+    if (typeof val === 'number') return val;
+    if (!val) return 0;
+    let s = String(val).replace('R$', '').trim();
+    if (s.includes(',') && s.includes('.')) {
+        s = s.replace(/\./g, '').replace(',', '.');
+    } else {
+        s = s.replace(',', '.');
+    }
+    return parseFloat(s) || 0;
+};
+var formatCurrency = (value) => {
+    if (value === null || value === undefined) return 'R$ 0,00';
+    let n = value;
+    if (typeof n === 'string') n = parsePrice(n);
+    if (isNaN(n)) return 'R$ 0,00';
+    return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+};
 var formatTime = (date) => { const pad = (n) => n < 10 ? '0' + n : n; return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`; };
 var getFirstImageUrl = (url) => { if (!url || url.length < 10) return 'https://placehold.co/500x500?text=Sem+Foto'; return url.split(',')[0].trim(); };
 var mapStatusFirebaseToUI = (fbStatus) => {
@@ -1295,9 +1312,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const verificarToken = () => { const token = localStorage.getItem(TOKEN_KEY); const expiration = localStorage.getItem(TOKEN_EXPIRATION_KEY); const now = Date.now(); if (token && expiration && now < parseInt(expiration)) { console.log("Token válido."); return true; } else { console.log("Token inválido/expirado."); localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(TOKEN_EXPIRATION_KEY); return false; } };
     const salvarToken = () => { const now = Date.now(); const expirationTime = now + TOKEN_DURATION_HOURS * 60 * 60 * 1000; const tokenValue = `caixaAberto_${now}`; localStorage.setItem(TOKEN_KEY, tokenValue); localStorage.setItem(TOKEN_EXPIRATION_KEY, expirationTime.toString()); console.log("Token salvo, expira:", new Date(expirationTime)); };
     const limparToken = () => { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(TOKEN_EXPIRATION_KEY); console.log("Token limpo."); };
-
-    // --- Funções de Formatação ---
-    const formatCurrency = (value) => { const numericValue = Number(value); if (isNaN(numericValue)) return 'R$ 0,00'; return numericValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); };
     const formatTimestamp = (date) => { const pad = (n) => n < 10 ? '0' + n : n; const d = date.getDate(), mo = date.getMonth() + 1, y = date.getFullYear(); const h = date.getHours(), mi = date.getMinutes(), s = date.getSeconds(); return `${pad(d)}/${pad(mo)}/${y} ${pad(h)}:${pad(mi)}:${pad(s)}`; };
     const formatTime = (date) => { const pad = (n) => n < 10 ? '0' + n : n; const h = date.getHours(), mi = date.getMinutes(), s = date.getSeconds(); return `${pad(h)}:${pad(mi)}:${pad(s)}`; };
 
@@ -2839,7 +2853,7 @@ document.addEventListener('DOMContentLoaded', () => {
             existingItem.quantity += 1;
         } else {
             // 1. Define o Preço Original (Sempre o preço cheio da tabela)
-            let basePrice = product.price;
+            let basePrice = parsePrice(product.price);
 
             // 2. Define o Preço Efetivo e o Desconto
             let finalPrice = basePrice;
@@ -2847,10 +2861,10 @@ document.addEventListener('DOMContentLoaded', () => {
             let isOffer = false;
 
             // Se tiver oferta (Planilha ou Firebase)
-            const offerPrice = product.promoPrice || product.priceOffer || 0;
+            const offerPrice = parsePrice(product.promoPrice || product.priceOffer || 0);
 
             if (offerPrice > 0 && offerPrice < basePrice) {
-                finalPrice = parseFloat(offerPrice);
+                finalPrice = offerPrice;
                 discountPct = ((basePrice - finalPrice) / basePrice) * 100;
                 isOffer = true;
             }
@@ -3433,7 +3447,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error("Erro na rede");
             const json = await response.json();
 
-            localProductCache = json; // Salva na memória
+            localProductCache = json.map(p => ({
+                ...p,
+                price: parsePrice(p.price),
+                promoPrice: parsePrice(p.promoPrice),
+                costPrice: parsePrice(p.costPrice)
+            })); // Salva na memória com preços sanitizados
 
 
 
@@ -6895,136 +6914,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // =======================================================
-    // == LÓGICA DE PESQUISA RÁPIDA NO CAMPO DE BARCODE ==
-    // =======================================================
-    var barcodeInputEl = document.getElementById('barcode-input');
-    var barcodeIconEl = document.getElementById('barcode-icon');
-    var barcodeResultsEl = document.getElementById('barcode-search-results');
-
-    if (barcodeInputEl && barcodeIconEl && barcodeResultsEl) {
-
-        // Função para adicionar direto da pesquisa
-        // Nota: 'cart' e 'localProductCache' são globais agora.
-        window.quickAddFromSearch = (id) => {
-            const prod = localProductCache.find(p => String(p.id) === String(id));
-            if (prod) {
-                // Lógica de Adicionar ao Carrinho 
-                const existingItemIndex = cart.findIndex(item => String(item.id) === String(prod.id));
-
-                if (existingItemIndex !== -1) {
-                    cart[existingItemIndex].quantity += 1;
-                } else {
-                    cart.push({
-                        ...prod,
-                        quantity: 1,
-                        discountPercent: 0,
-                        originalPrice: parseFloat(prod.price),
-                        isNew: true // Flag para animação
-                    });
-                }
-
-                // Atualiza UI
-                renderCart();
-                updateSummary();
-
-                // Força a exibição da tabela caso o renderCart falhe em algo específico
-                const itemListTable = document.getElementById('item-list-table');
-                const emptyState = document.getElementById('empty-state');
-                const cartItemsBody = document.getElementById('cart-items-body'); // Para scroll
-
-                if (itemListTable && emptyState) {
-                    itemListTable.style.display = 'table';
-                    emptyState.style.display = 'none';
-                }
-
-                // Scroll para o último item adicionado
-                if (cartItemsBody) {
-                    // Pequeno delay para garantir renderização
-                    setTimeout(() => {
-                        cartItemsBody.firstElementChild?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 50);
-                }
-
-                // Limpa pesquisa
-                barcodeInputEl.value = '';
-                barcodeResultsEl.innerHTML = '';
-                barcodeResultsEl.classList.remove('expanded');
-                barcodeIconEl.className = 'bx bx-barcode-reader';
-                barcodeInputEl.focus();
-            }
-        };
-
-        barcodeInputEl.addEventListener('input', (e) => {
-            const val = e.target.value;
-            const hasLetters = /[a-zA-Z]/.test(val);
-
-            if (val.length > 2 && hasLetters) {
-                barcodeIconEl.className = 'bx bx-search';
-                const terms = val.toLowerCase().split(' ').filter(t => t);
-                const results = localProductCache.filter(p => {
-                    const name = (p.name || '').toLowerCase();
-                    return terms.every(term => name.includes(term));
-                });
-
-                if (results.length > 0) {
-                    barcodeResultsEl.innerHTML = results.map(p => {
-                        const allImgsSearch = (p.imgUrl || '').split(',').map(u => u.trim()).filter(u => u !== "");
-                        const firstImgSearch = allImgsSearch[0];
-                        let imgHtml = '';
-
-                        if (firstImgSearch && firstImgSearch.length > 10) {
-                            if (allImgsSearch.length > 1) {
-                                imgHtml = `
-                                    <div class="product-img-container-list" style="margin-right:10px; padding: 2px; gap: 4px;">
-                                        <img src="${firstImgSearch}" class="product-thumb-sm" style="width:34px; height:34px;" alt="Capa">
-                                        <div class="product-thumbs-bar" style="gap: 1px;">
-                                            ${allImgsSearch.slice(1, 3).map(u => `<img src="${u}" class="product-thumb-xs" style="width:14px; height:14px;">`).join('')}
-                                        </div>
-                                    </div>
-                                `;
-                            } else {
-                                imgHtml = `<img src="${firstImgSearch}" class="result-thumb">`;
-                            }
-                        } else {
-                            imgHtml = `<div class="result-thumb"><i class='bx bx-package'></i></div>`;
-                        }
-
-                        return `
-                        <div class="search-result-item" onclick="quickAddFromSearch('${p.id}')">
-                            ${imgHtml}
-                            <div class="result-info">
-                                <div class="result-name">${p.name}</div>
-                                <div class="result-meta">
-                                    <span class="result-code">#${p.id}</span>
-                                    <span class="result-price">${formatCurrency(p.price)}</span>
-                                </div>
-                            </div>
-                        </div>
-                    `}).join('');
-                    barcodeResultsEl.classList.add('expanded');
-                } else {
-                    barcodeResultsEl.innerHTML = `<div class="search-result-item" style="justify-content: center; color: #6b7280; font-size: 0.9rem;">Nenhum produto encontrado.</div>`;
-                    barcodeResultsEl.classList.add('expanded');
-                }
-            } else {
-                barcodeIconEl.className = 'bx bx-barcode-reader';
-                barcodeResultsEl.classList.remove('expanded');
-                setTimeout(() => { if (!barcodeResultsEl.classList.contains('expanded')) barcodeResultsEl.innerHTML = ''; }, 300);
-            }
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!barcodeInputEl.contains(e.target) && !barcodeResultsEl.contains(e.target)) {
-                barcodeResultsEl.classList.remove('expanded');
-            }
-        });
-
-        barcodeInputEl.addEventListener('focus', () => {
-            const val = barcodeInputEl.value;
-            if (val.length > 2 && /[a-zA-Z]/.test(val)) barcodeInputEl.dispatchEvent(new Event('input'));
-        });
-    }
 
 
 
