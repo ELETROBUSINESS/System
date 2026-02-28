@@ -1378,7 +1378,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <span class="prod-barcode">#${item.id}</span>
                                 ${item.hasOffer ? `
                                     <span class="carnaval-tag" style="padding: 1px 6px; font-size: 0.6rem; background:${showOfferVisuals ? '#db0038' : '#e5e7eb'}; color:${showOfferVisuals ? 'white' : '#9ca3af'}; border-radius:10px; font-weight:700; ${!showOfferVisuals ? 'text-decoration:line-through;' : ''}">
-                                        <i class='bx bx-party'></i> Carnaval
+                                        <i class='bx bxs-hot'></i> Queimão
                                     </span>
                                 ` : ''}
                             </div>
@@ -1505,7 +1505,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const updateSummary = () => {
         // --- LÓGICA DE VALIDAÇÃO DE OFERTA POR PAGAMENTO ---
-        // A oferta de "Carnaval" (promocional) só é válida para Dinheiro ou PIX
+        // A oferta de "Queimão" (promocional) só é válida para Dinheiro ou PIX
         const isOfferApplicable = (!selectedPaymentMethod || selectedPaymentMethod === 'Dinheiro' || selectedPaymentMethod === 'PIX');
 
         // 1. Cálculos (Mantidos)
@@ -1857,7 +1857,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${prod.promoPrice && prod.promoPrice > 0 ? `
                     <div class="carnaval-tag-wrapper">
                         <span class="carnaval-tag">
-                            <i class='bx bx-party'></i> Carnaval
+                            <i class='bx bxs-hot'></i> Queimão
                         </span>
                         <div class="carnaval-value">
                             ${(((prod.price - prod.promoPrice) / prod.price) * 100).toFixed(0)}% OFF
@@ -6535,7 +6535,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h4 class="adv-card-title" title="${p.name}">${p.name}</h4>
                     <div style="display:flex; align-items:center; gap:6px;">
                         <span class="adv-card-subtitle">#${p.id}</span>
-                        ${hasOffer ? `<span class="carnaval-tag" style="font-size: 0.55rem; padding: 1px 6px; background:#db0038; color:white; border-radius:10px; font-weight:700;"><i class='bx bx-party'></i> Carnaval</span>` : ''}
+                        ${hasOffer ? `<span class="carnaval-tag" style="font-size: 0.55rem; padding: 1px 6px; background:#db0038; color:white; border-radius:10px; font-weight:700;"><i class='bx bxs-hot'></i> Queimão</span>` : ''}
                     </div>
                 </div>
 
