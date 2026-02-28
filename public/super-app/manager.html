@@ -813,10 +813,12 @@
                                 <div id="scanner-viewport"
                                     style="display:none; height: 150px; background:black; margin-top:5px;"></div>
                             </div>
+                            <!-- 
                             <div class="form-group">
                                 <label>Estoque Atual</label>
                                 <input type="number" id="prod-stock" class="input-box" value="1">
                             </div>
+-->
                         </div>
 
                         <div class="form-group" style="margin-top: 15px;">
@@ -952,7 +954,7 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, writeBatch } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-        
+
         const firebaseConfig = {
             apiKey: "AIzaSyAVQ3tf6Qu4_9PajpJclZAJjVvRgB4ZE2I",
             authDomain: "super-app25.firebaseapp.com",
@@ -1368,7 +1370,7 @@
                 const data = {
                     name: document.getElementById('prod-name').value,
                     code: document.getElementById('prod-code').value,
-                    stock: parseInt(document.getElementById('prod-stock').value) || 0,
+                    // stock: parseInt(document.getElementById('prod-stock').value) || 0, // Removido por solicitação: o estoque deve ser manual
                     desc: document.getElementById('prod-desc').value,
                     cost: parseFloat(document.getElementById('prod-cost').value) || 0,
                     price: parseFloat(document.getElementById('prod-price').value) || 0,
