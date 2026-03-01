@@ -291,18 +291,7 @@ function renderHomeSections(cached) {
 
     // Filter valid products (must have a name)
     const validProds = cached.filter(p => p.name && p.name.trim() !== "");
-    const interests = JSON.parse(localStorage.getItem('user_interests') || '[]');
-
-    let destaques = validProds.filter(p => interests.some(i => (p.category || '').toLowerCase().includes(i)));
-    if (destaques.length === 0) destaques = validProds.slice(0, 8);
-    else destaques = destaques.slice(0, 8);
-
-    const novidades = [...validProds].reverse().slice(0, 8);
-    const getCat = (term) => validProds.filter(p => (p.category || '').toLowerCase().includes(term) || (p.name || '').toLowerCase().includes(term)).slice(0, 8);
-
-    const brinquedos = getCat('brinquedo');
-    const cozinha = getCat('cozinha');
-
+    // Filtramos produtos com oferta para a seção de Ofertas
     const OFFER_DEADLINE = new Date("2026-03-02T23:59:59").getTime();
     const isExpired = Date.now() >= OFFER_DEADLINE;
 
@@ -314,8 +303,12 @@ function renderHomeSections(cached) {
             const img = p.imgUrl || "";
             const hasImg = img.trim() !== "" && !img.includes('placehold.co') && (img.startsWith('http') || img.includes('/'));
             return valOffer > 0 && valOffer < valPrice && hasImg;
-        }); // Removido o .slice(0, 8) para exibir todos
+        });
     }
+
+    // O restante dos produtos vai para Destaques
+    const idsEmOferta = new Set(ofertas.map(p => p.id));
+    const destaques = validProds.filter(p => !idsEmOferta.has(p.id));
 
     let html = '';
 
@@ -343,11 +336,8 @@ function renderHomeSections(cached) {
         `;
     };
 
-    html += createSection('Ofertas Hoje ⚡', ofertas, null); // Removido o filtro 'ofertas' para não mostrar o botão 'Ver mais'
+    html += createSection('Ofertas Hoje ⚡', ofertas, null);
     html += createSection('Destaques para você', destaques, null);
-    html += createSection('Novidades', novidades, null);
-    if (brinquedos.length > 0) html += createSection('Brinquedos', brinquedos, 'brinquedo');
-    if (cozinha.length > 0) html += createSection('Cozinha', cozinha, 'cozinha');
 
     container.innerHTML = html;
 }
