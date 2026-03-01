@@ -394,10 +394,13 @@
         };
 
         const DASHBOARD_URL = "/users/app/conta.html";
+        let isLoggingIn = false;
 
         document.addEventListener("DOMContentLoaded", () => {
             // Check current auth
             onAuthStateChanged(auth, async (user) => {
+                if (isLoggingIn) return; // Ignora se estivermos no meio de um processo de login
+
                 const tokenString = localStorage.getItem('session_token');
                 let isValidSession = false;
 
@@ -418,6 +421,7 @@
                 }
 
                 // Caso 2: Usuário logado no Firebase MAS sessão expirou ou token sumiu
+                // Só limpamos se não estivermos tentando logar
                 if (user && !isValidSession) {
                     console.warn("Firebase logado mas token de sessão ausente/expirado. Limpando...");
                     await auth.signOut();
@@ -481,6 +485,7 @@
 
             if (!password) { showError("Digite sua senha."); return; }
 
+            isLoggingIn = true;
             setLoading(true);
             const emailFake = `${username.toLowerCase()}@eletrosystem.com`;
 
@@ -523,10 +528,12 @@
                     window.location.href = DASHBOARD_URL;
                 } else {
                     showError("Perfil não encontrado.");
+                    isLoggingIn = false;
                     setLoading(false);
                 }
             } catch (error) {
                 console.error("Login Error:", error);
+                isLoggingIn = false;
                 setLoading(false);
                 if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
                     showError("Credenciais inválidas.");

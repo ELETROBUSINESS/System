@@ -2,158 +2,157 @@
 <html lang="pt-br">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ELETRO | Studio V4 Pro</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/mjml-browser@4.15.3/lib/index.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ELETRO | Studio V4 Pro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mjml-browser@4.15.3/lib/index.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
-            overflow-x: hidden;
-        }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+      overflow-x: hidden;
+    }
 
-        .editor-textarea {
-            font-family: 'Fira Code', monospace;
-            background-color: #1e293b;
-            color: #e2e8f0;
-            font-size: 13px;
-        }
+    .editor-textarea {
+      font-family: 'Fira Code', monospace;
+      background-color: #1e293b;
+      color: #e2e8f0;
+      font-size: 13px;
+    }
 
-        .btn-primary {
-            background-color: #db0038;
-            transition: all 0.3s ease;
-        }
+    .btn-primary {
+      background-color: #db0038;
+      transition: all 0.3s ease;
+    }
 
-        .btn-primary:hover {
-            background-color: #b3002e;
-            transform: translateY(-1px);
-        }
+    .btn-primary:hover {
+      background-color: #b3002e;
+      transform: translateY(-1px);
+    }
 
-        .debug-console {
-            font-family: monospace;
-            font-size: 11px;
-            background: #0f172a;
-            color: #10b981;
-        }
+    .debug-console {
+      font-family: monospace;
+      font-size: 11px;
+      background: #0f172a;
+      color: #10b981;
+    }
 
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 5px;
-        }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+    }
 
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
-        }
-    </style>
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+  </style>
 </head>
 
 <body class="h-screen flex flex-col">
 
-    <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between z-10 shadow-sm">
-        <div class="flex items-center gap-3">
-            <div class="bg-[#db0038] p-2 rounded-lg text-white">
-                <i class="fas fa-edit text-xl"></i>
-            </div>
-            <div>
-                <h1 class="font-bold text-lg text-slate-800 leading-none">ELETRO <span
-                        class="text-[#db0038]">Studio</span></h1>
-                <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1 font-semibold">Edição Direta e
-                    Anexos</p>
-            </div>
+  <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between z-10 shadow-sm">
+    <div class="flex items-center gap-3">
+      <div class="bg-[#db0038] p-2 rounded-lg text-white">
+        <i class="fas fa-edit text-xl"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-lg text-slate-800 leading-none">ELETRO <span class="text-[#db0038]">Studio</span></h1>
+        <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1 font-semibold">Edição Direta e
+          Anexos</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <select id="modelSelector" onchange="changeModel()"
+        class="text-xs font-bold border-slate-200 rounded-md p-2 bg-slate-50 outline-none">
+        <option value="report">Relatório Mensal</option>
+        <option value="newUser">Novo Usuário (Acesso)</option>
+        <option value="welcome">Boas-vindas (Saudação)</option>
+        <option value="payment">Pagamento em Processamento</option>
+      </select>
+      <button onclick="sendEmail()" id="sendBtn"
+        class="btn-primary text-white px-6 py-2 rounded-md font-bold flex items-center gap-2 shadow-lg active:scale-95 transition-all">
+        <i class="fas fa-rocket"></i> ENVIAR AGORA
+      </button>
+    </div>
+  </header>
+
+  <main class="flex-1 flex overflow-hidden">
+    <div class="w-1/2 flex flex-col border-r border-slate-200 bg-white">
+      <div class="p-5 space-y-4 flex-1 flex flex-col overflow-y-auto custom-scrollbar">
+
+        <div class="p-3 bg-slate-50 rounded-lg border border-slate-100">
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-slate-400 uppercase">Agendar Envio</label>
+            <input type="datetime-local" id="agendamento"
+              class="w-full px-3 py-1.5 border border-slate-200 rounded text-xs outline-none focus:ring-1 focus:ring-[#db0038]">
+          </div>
         </div>
 
-        <div class="flex items-center gap-3">
-            <select id="modelSelector" onchange="changeModel()"
-                class="text-xs font-bold border-slate-200 rounded-md p-2 bg-slate-50 outline-none">
-                <option value="report">Relatório Mensal</option>
-                <option value="newUser">Novo Usuário (Acesso)</option>
-                <option value="welcome">Boas-vindas (Saudação)</option>
-                <option value="payment">Pagamento em Processamento</option>
-            </select>
-            <button onclick="sendEmail()" id="sendBtn"
-                class="btn-primary text-white px-6 py-2 rounded-md font-bold flex items-center gap-2 shadow-lg active:scale-95 transition-all">
-                <i class="fas fa-rocket"></i> ENVIAR AGORA
-            </button>
-        </div>
-    </header>
-
-    <main class="flex-1 flex overflow-hidden">
-        <div class="w-1/2 flex flex-col border-r border-slate-200 bg-white">
-            <div class="p-5 space-y-4 flex-1 flex flex-col overflow-y-auto custom-scrollbar">
-
-                <div class="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase">Agendar Envio</label>
-                        <input type="datetime-local" id="agendamento"
-                            class="w-full px-3 py-1.5 border border-slate-200 rounded text-xs outline-none focus:ring-1 focus:ring-[#db0038]">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase">Para</label>
-                        <input type="email" id="destinatario" placeholder="cliente@email.com"
-                            class="w-full px-3 py-2 border border-slate-200 rounded focus:ring-1 focus:ring-[#db0038] outline-none text-sm">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase">Assunto</label>
-                        <input type="text" id="assunto" placeholder="Assunto do e-mail"
-                            class="w-full px-3 py-2 border border-slate-200 rounded focus:ring-1 focus:ring-[#db0038] outline-none text-sm">
-                    </div>
-                </div>
-
-                <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase">Anexar Arquivos</label>
-                    <div
-                        class="border-2 border-dashed border-slate-200 rounded-lg p-4 text-center hover:border-[#db0038] transition-colors relative">
-                        <input type="file" id="fileInput" multiple onchange="handleFiles()"
-                            class="absolute inset-0 opacity-0 cursor-pointer">
-                        <i class="fas fa-paperclip text-slate-300 text-2xl mb-2"></i>
-                        <p class="text-[10px] text-slate-400" id="fileCount">Clique ou arraste arquivos</p>
-                    </div>
-                    <div id="fileList" class="flex flex-wrap gap-2 mt-2"></div>
-                </div>
-
-                <div class="flex-1 flex flex-col min-h-0">
-                    <div class="flex items-center justify-between mb-1">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase">Código Fonte</label>
-                        <span id="formatBadge"
-                            class="text-[9px] bg-[#db0038] text-white px-2 py-0.5 rounded font-bold uppercase">MJML</span>
-                    </div>
-                    <textarea id="codeInput" oninput="updatePreview()"
-                        class="editor-textarea w-full flex-1 p-4 rounded resize-none focus:outline-none custom-scrollbar shadow-inner"></textarea>
-                </div>
-
-                <div class="h-24 debug-console p-2 rounded overflow-y-auto custom-scrollbar" id="debugContent">
-                    > Editor ELETRO V5 Pronto.
-                </div>
-            </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-slate-500 uppercase">Para</label>
+            <input type="email" id="destinatario" placeholder="cliente@email.com"
+              class="w-full px-3 py-2 border border-slate-200 rounded focus:ring-1 focus:ring-[#db0038] outline-none text-sm">
+          </div>
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-slate-500 uppercase">Assunto</label>
+            <input type="text" id="assunto" placeholder="Assunto do e-mail"
+              class="w-full px-3 py-2 border border-slate-200 rounded focus:ring-1 focus:ring-[#db0038] outline-none text-sm">
+          </div>
         </div>
 
-        <div class="w-1/2 bg-slate-100 flex flex-col">
-            <div class="p-3 border-b border-slate-200 bg-white/80 flex items-center justify-between">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"><i
-                        class="fas fa-i-cursor mr-1"></i> Modo de Edição Visual</span>
-                <span class="text-[9px] text-slate-400 font-medium italic">Clique no lápis para editar</span>
-            </div>
-            <div id="preview-container" class="flex-1 p-8 overflow-y-auto flex justify-center custom-scrollbar">
-                <iframe id="preview-iframe"
-                    class="w-full max-w-[600px] border-none shadow-2xl bg-white rounded-sm min-h-[700px]"></iframe>
-            </div>
+        <div class="space-y-1">
+          <label class="text-[10px] font-bold text-slate-500 uppercase">Anexar Arquivos</label>
+          <div
+            class="border-2 border-dashed border-slate-200 rounded-lg p-4 text-center hover:border-[#db0038] transition-colors relative">
+            <input type="file" id="fileInput" multiple onchange="handleFiles()"
+              class="absolute inset-0 opacity-0 cursor-pointer">
+            <i class="fas fa-paperclip text-slate-300 text-2xl mb-2"></i>
+            <p class="text-[10px] text-slate-400" id="fileCount">Clique ou arraste arquivos</p>
+          </div>
+          <div id="fileList" class="flex flex-wrap gap-2 mt-2"></div>
         </div>
-    </main>
 
-    <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyPWy8SHpOTsZAqFKoUTNOrgJkZKVVtYAMRXNDBQ3Nnalkr2k5c6CrUYtfmSuTQ5rbqhw/exec";
-        let attachedFiles = [];
+        <div class="flex-1 flex flex-col min-h-0">
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-[10px] font-bold text-slate-500 uppercase">Código Fonte</label>
+            <span id="formatBadge"
+              class="text-[9px] bg-[#db0038] text-white px-2 py-0.5 rounded font-bold uppercase">MJML</span>
+          </div>
+          <textarea id="codeInput" oninput="updatePreview()"
+            class="editor-textarea w-full flex-1 p-4 rounded resize-none focus:outline-none custom-scrollbar shadow-inner"></textarea>
+        </div>
 
-        const models = {
-            report: `<mjml>
+        <div class="h-24 debug-console p-2 rounded overflow-y-auto custom-scrollbar" id="debugContent">
+          > Editor ELETRO V5 Pronto.
+        </div>
+      </div>
+    </div>
+
+    <div class="w-1/2 bg-slate-100 flex flex-col">
+      <div class="p-3 border-b border-slate-200 bg-white/80 flex items-center justify-between">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"><i
+            class="fas fa-i-cursor mr-1"></i> Modo de Edição Visual</span>
+        <span class="text-[9px] text-slate-400 font-medium italic">Clique no lápis para editar</span>
+      </div>
+      <div id="preview-container" class="flex-1 p-8 overflow-y-auto flex justify-center custom-scrollbar">
+        <iframe id="preview-iframe"
+          class="w-full max-w-[600px] border-none shadow-2xl bg-white rounded-sm min-h-[700px]"></iframe>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyAFN-eTg8f19nnL9JBHJq1Cl2gZXQzmngmF4b3kbdYCbWgXWZUtbu_z_d_ZZdMF-LQ/exec";
+    let attachedFiles = [];
+
+    const models = {
+      report: `<mjml>
   <mj-head>
     <mj-title>Relatório de Faturamento - Janeiro</mj-title>
     <mj-attributes>
@@ -258,7 +257,7 @@
 
   </mj-body>
 </mjml>`,
-            newUser: `<mjml>
+      newUser: `<mjml>
   <mj-head>
     <mj-title>Suas Credenciais - A N F da Silva LTDA</mj-title>
     <mj-attributes>
@@ -370,7 +369,7 @@
 
   </mj-body>
 </mjml>`,
-            welcome: `<mjml>
+      welcome: `<mjml>
   <mj-head>
     <mj-title>Bem-vindo à ELETRO - A N F da Silva LTDA</mj-title>
     <mj-attributes>
@@ -461,7 +460,7 @@
 
   </mj-body>
 </mjml>`,
-            payment: `<mjml>
+      payment: `<mjml>
   <mj-head>
     <mj-title>Pagamento em Processamento - ELETRO</mj-title>
     <mj-font name="Inter" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" />
@@ -531,54 +530,54 @@
     </mj-section>
   </mj-body>
 </mjml>`
+    };
+
+    function addLog(msg, type = 'info') {
+      const content = document.getElementById('debugContent');
+      if (content) {
+        content.innerHTML += `<div style="color:${type === 'error' ? '#ef4444' : '#10b981'}">> ${msg}</div>`;
+        content.scrollTop = content.scrollHeight;
+      }
+    }
+
+    function handleFiles() {
+      const input = document.getElementById('fileInput');
+      for (let file of input.files) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          attachedFiles.push({ name: file.name, type: file.type, data: e.target.result });
+          renderFileList();
         };
+        reader.readAsDataURL(file);
+      }
+    }
 
-        function addLog(msg, type = 'info') {
-            const content = document.getElementById('debugContent');
-            if (content) {
-                content.innerHTML += `<div style="color:${type === 'error' ? '#ef4444' : '#10b981'}">> ${msg}</div>`;
-                content.scrollTop = content.scrollHeight;
-            }
-        }
+    function renderFileList() {
+      const list = document.getElementById('fileList');
+      const countDisplay = document.getElementById('fileCount');
+      list.innerHTML = "";
+      attachedFiles.forEach((f, i) => {
+        list.innerHTML += `<span class="bg-slate-100 text-[10px] px-2 py-1 rounded flex items-center gap-2 border border-slate-200">${f.name} <i class="fas fa-times cursor-pointer text-red-500" onclick="removeFile(${i})"></i></span>`;
+      });
+      countDisplay.innerText = attachedFiles.length > 0 ? `${attachedFiles.length} arquivo(s)` : "Clique para anexar";
+    }
 
-        function handleFiles() {
-            const input = document.getElementById('fileInput');
-            for (let file of input.files) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    attachedFiles.push({ name: file.name, type: file.type, data: e.target.result });
-                    renderFileList();
-                };
-                reader.readAsDataURL(file);
-            }
-        }
+    function removeFile(i) {
+      attachedFiles.splice(i, 1);
+      renderFileList();
+    }
 
-        function renderFileList() {
-            const list = document.getElementById('fileList');
-            const countDisplay = document.getElementById('fileCount');
-            list.innerHTML = "";
-            attachedFiles.forEach((f, i) => {
-                list.innerHTML += `<span class="bg-slate-100 text-[10px] px-2 py-1 rounded flex items-center gap-2 border border-slate-200">${f.name} <i class="fas fa-times cursor-pointer text-red-500" onclick="removeFile(${i})"></i></span>`;
-            });
-            countDisplay.innerText = attachedFiles.length > 0 ? `${attachedFiles.length} arquivo(s)` : "Clique para anexar";
-        }
+    function updatePreview() {
+      const input = document.getElementById('codeInput').value;
+      const iframe = document.getElementById('preview-iframe');
+      try {
+        let html = input.includes('<mjml') ? mjml(input).html : input;
+        iframe.srcdoc = injectVisualEditor(html);
+      } catch (e) { iframe.srcdoc = "Erro no código..."; }
+    }
 
-        function removeFile(i) {
-            attachedFiles.splice(i, 1);
-            renderFileList();
-        }
-
-        function updatePreview() {
-            const input = document.getElementById('codeInput').value;
-            const iframe = document.getElementById('preview-iframe');
-            try {
-                let html = input.includes('<mjml') ? mjml(input).html : input;
-                iframe.srcdoc = injectVisualEditor(html);
-            } catch (e) { iframe.srcdoc = "Erro no código..."; }
-        }
-
-        function injectVisualEditor(html) {
-            const scriptInjetado = `
+    function injectVisualEditor(html) {
+      const scriptInjetado = `
                 <style>
                     .editable-active { 
                         outline: 2px solid #db0038 !important; 
@@ -653,77 +652,86 @@
                     }, true);
                 <\/script>
             `;
-            return html.replace('</body>', scriptInjetado + '</body>');
-        }
+      return html.replace('</body>', scriptInjetado + '</body>');
+    }
 
-        function changeModel() {
-            const key = document.getElementById('modelSelector').value;
-            if (models[key]) {
-                document.getElementById('codeInput').value = models[key];
+    function changeModel() {
+      const key = document.getElementById('modelSelector').value;
+      if (models[key]) {
+        document.getElementById('codeInput').value = models[key];
 
-                let subject = 'Relatório de Faturamento - Janeiro';
-                if (key === 'newUser') subject = 'Suas Credenciais - A N F da Silva LTDA';
-                if (key === 'welcome') subject = 'Bem-vindo à ELETRO - A N F da Silva LTDA';
-                if (key === 'payment') subject = 'Pagamento em Processamento - ELETRO';
+        let subject = 'Relatório de Faturamento - Janeiro';
+        if (key === 'newUser') subject = 'Suas Credenciais - A N F da Silva LTDA';
+        if (key === 'welcome') subject = 'Bem-vindo à ELETRO - A N F da Silva LTDA';
+        if (key === 'payment') subject = 'Pagamento em Processamento - ELETRO';
 
-                document.getElementById('assunto').value = subject;
-                updatePreview();
-                addLog("Modelo restaurado: " + key);
-            }
-        }
+        document.getElementById('assunto').value = subject;
+        updatePreview();
+        addLog("Modelo restaurado: " + key);
+      }
+    }
 
-        async function sendEmail() {
-            const btn = document.getElementById('sendBtn');
-            const iframe = document.getElementById('preview-iframe');
+    async function sendEmail() {
+      const btn = document.getElementById('sendBtn');
+      const iframe = document.getElementById('preview-iframe');
 
-            if (!iframe.contentDocument) {
-                addLog("Aguarde o carregamento do preview.", "error");
-                return;
-            }
+      if (!iframe || !iframe.contentDocument) {
+        addLog("Aguarde o carregamento do preview.", "error");
+        return;
+      }
 
-            // Captura o HTML editado e limpa ferramentas visuais
-            let finalHtml = iframe.contentDocument.documentElement.outerHTML;
-            finalHtml = finalHtml.replace(/<style>[\s\S]*?editable-active[\s\S]*?<\/style>/g, '');
-            finalHtml = finalHtml.replace(/<script>[\s\S]*?pencil-icon[\s\S]*?<\/script>/g, '');
-            finalHtml = finalHtml.replace(/class="[^"]*editable-active[^"]*"/g, '');
-            finalHtml = finalHtml.replace(/<i class="pencil-icon">.*?<\/i>/g, '');
+      const destinatario = document.getElementById('destinatario').value;
+      if (!destinatario) return addLog("Erro: Defina um destinatário", "error");
 
-            const payload = {
-                destinatario: document.getElementById('destinatario').value,
-                assunto: document.getElementById('assunto').value,
-                agendamento: document.getElementById('agendamento').value,
-                corpoHtml: finalHtml,
-                attachments: JSON.stringify(attachedFiles)
-            };
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ENVIANDO...';
+      addLog("Preparando e-mail e anexos...");
 
-            if (!payload.destinatario) return addLog("Erro: Destinatário vazio", "error");
+      try {
+        // Captura o HTML atual do iframe (que contém as edições feitas)
+        let finalHtml = iframe.contentDocument.documentElement.outerHTML;
 
-            btn.disabled = true;
-            addLog("Enviando e-mail...");
+        // Limpeza Ninja: Remove scripts e estilos do editor visual injetado
+        finalHtml = finalHtml.replace(/<style>[\s\S]*?\.editable-active[\s\S]*?<\/style>/gi, '');
+        finalHtml = finalHtml.replace(/<script>[\s\S]*?pencil-icon[\s\S]*?<\/script>/gi, '');
+        finalHtml = finalHtml.replace(/\s+class="[^"]*editable-active[^"]*"/gi, '');
+        finalHtml = finalHtml.replace(/<i\s+class="pencil-icon"[^>]*>.*?<\/i>/gi, '');
+        finalHtml = finalHtml.replace(/\s+contenteditable="[^"]*"/gi, '');
 
-            try {
-                // Enviando como corpo bruto de texto para garantir que o GAS pegue tudo
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: new URLSearchParams(payload).toString(),
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-                });
-
-                addLog("Requisição enviada ao Google!", "success");
-                addLog("Verifique a pasta ENVIADOS e o SPAM.");
-            } catch (e) {
-                addLog("Erro na rede: " + e.message, "error");
-            } finally {
-                btn.disabled = false;
-            }
-        }
-
-        window.onload = () => {
-            document.getElementById('codeInput').value = models.report;
-            updatePreview();
+        const payload = {
+          destinatario: destinatario,
+          assunto: document.getElementById('assunto').value || "Sem Assunto",
+          corpoHtml: finalHtml,
+          attachments: attachedFiles // Enviamos o array direto, o JSON.stringify do fetch cuida disso
         };
-    </script>
+
+        // Enviamos como TEXT/PLAIN para evitar problemas de CORS (Simple Request)
+        // O motor V7 no Google Apps Script está preparado para parsear isso.
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          cache: 'no-cache',
+          body: JSON.stringify(payload),
+          headers: { 'Content-Type': 'text/plain' }
+        });
+
+        addLog("Requisição enviada com sucesso!", "success");
+        addLog("O Google processará o envio em instantes.");
+        addLog("Dica: Verifique a pasta 'Enviados' da sua conta.");
+      } catch (e) {
+        addLog("Falha no envio: " + e.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-rocket"></i> ENVIAR AGORA';
+      }
+    }
+
+
+    window.onload = () => {
+      document.getElementById('codeInput').value = models.report;
+      updatePreview();
+    };
+  </script>
 </body>
 
 </html>
