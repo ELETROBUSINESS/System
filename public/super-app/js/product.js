@@ -109,7 +109,7 @@ async function loadProductDetail(id) {
         const valPrice = parseFloat(prod.price || 0);
         const valOffer = parseFloat(prod['price-oferta'] || 0);
         const hasOffer = (valOffer > 0 && valOffer < valPrice);
-        const OFFER_DEADLINE = new Date("2026-02-28T23:59:59").getTime();
+        const OFFER_DEADLINE = new Date("2026-03-02T23:59:59").getTime();
         const isExpired = Date.now() >= OFFER_DEADLINE;
 
         if (hasOffer && isExpired) {
@@ -312,9 +312,12 @@ function renderProductView(prod, variacoesGroup, allProducts, activeIndex) {
                 </div>
 
                 <div class="detail-info" style="padding: 0 5px;">
-                    <div class="detail-status">Novo | ${soldCount} vendidos</div>
+                    ${soldCount > 5 ? `<div class="detail-status">Novo | ${soldCount} vendidos</div>` : ''}
                     <h1 class="detail-title" style="margin-bottom: 8px;">${prod.name}</h1>
                     ${priceBlock}
+                    <div style="background: #e6f7ee; color: #00a650; padding: 10px; border-radius: 8px; margin-bottom: 20px; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                        <i class='bx bxs-truck' style="font-size: 1.2rem;"></i> Frete grátis para Ipixuna
+                    </div>
                     ${installmentBlock}
                     ${stockHtml}
                     ${variationsHtml}
@@ -370,7 +373,12 @@ function renderSuggestedProducts(currentProd, allProducts) {
         suggested = [...suggested, ...others.sort(() => 0.5 - Math.random())];
     }
 
-    suggested = suggested.slice(0, 8);
+    suggested = suggested.slice(0, 10); // Carrega um pouco mais
+    container.style.display = 'grid';
+    container.style.gridTemplateColumns = 'repeat(2, 1fr)';
+    container.style.overflowX = 'visible';
+    container.style.gap = '15px';
+
     container.innerHTML = suggested.map(prod => {
         let displayImg = getFirstImageUrl(prod.imgUrl);
         const valPrice = parseFloat(prod.price || 0);
@@ -388,7 +396,7 @@ function renderSuggestedProducts(currentProd, allProducts) {
         }
 
         return `
-            <div class="category-item ${hasOffer ? 'has-offer' : ''}" style="min-width: 140px; text-align: left; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; height: 100%; font-family: 'Roboto', sans-serif; position: relative;" onclick="window.location.href='product.html?id=${prod.id}'">
+            <div class="category-item ${hasOffer ? 'has-offer' : ''}" style="width: 100%; min-width: unset; text-align: left; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; height: 100%; font-family: 'Roboto', sans-serif; position: relative;" onclick="window.location.href='product.html?id=${prod.id}'">
                 ${timerHtml}
                 <img src="${displayImg}" style="width: 100%; height: 120px; object-fit: cover;">
                 <div style="padding: 10px;">

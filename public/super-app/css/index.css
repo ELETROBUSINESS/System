@@ -240,12 +240,27 @@ a {
     /* Mais elástico/moderno */
     position: relative;
     height: 52px;
-    min-width: 80px;
-    max-width: 52px;
-    /* Começa fechado */
+    min-width: 52px;
+    max-width: 250px;
     gap: 0;
-    /* overflow: hidden removido para permitir que o badge "fuja" da borda se necessário */
     margin: 0;
+}
+
+@media (max-width: 480px) {
+    .nav-item {
+        min-width: 55px;
+        /* Reduzindo de 80px */
+        padding: 8px;
+    }
+
+    .nav-item.active {
+        padding: 0 12px;
+    }
+
+    .nav-item span:not(.cart-badge) {
+        font-size: 0.75rem;
+        /* Fonte um pouco menor no mobile */
+    }
 }
 
 .nav-item i,
@@ -455,12 +470,16 @@ a {
 
 .categories-scroll {
     display: flex;
-    justify-content: center;
-    gap: 25px;
+    justify-content: flex-start;
+    /* Alinhado à esquerda como solicitado */
+    gap: 20px;
     overflow-x: auto;
-    padding: 10px 0;
+    padding: 10px 15px;
+    /* Mais padding lateral */
     scrollbar-width: none;
     -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+    /* Suporte para toque e swipe */
 }
 
 .categories-scroll::-webkit-scrollbar {
@@ -576,6 +595,18 @@ a {
 .offer-timer span {
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.5px;
+}
+
+/* Badge de Vendas no Feed */
+.sold-badge-feed {
+    background: #f8fafc;
+    color: #64748b;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    border: 1px solid #e2e8f0;
+    white-space: nowrap;
 }
 
 /* ITEM 1: IMAGENS QUADRADAS */
