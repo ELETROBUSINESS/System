@@ -23,9 +23,7 @@
         href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
 
     <!-- Firebase (Required for App Core) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- Firebase 10 is loaded dynamically by app-core.js module -->
 
     <!-- Estilos Unificados e Main -->
     <link rel="stylesheet" href="/assets/css/main.css">
@@ -116,8 +114,16 @@
         <div class="finance-card history-area p-6" id="history-section">
             <h3 class="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-4">Últimas Movimentações</h3>
             <div class="transaction-list space-y-3" id="movements-list">
-                <div class="flex items-center justify-center p-4 text-gray-400 text-xs gap-2">
-                    <i class='bx bx-loader-alt bx-spin'></i> Carregando...
+                <!-- Skeleton Row -->
+                <div class="flex items-center justify-between p-3 border-b border-gray-50">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 rounded-full skeleton mr-3"></div>
+                        <div class="space-y-1">
+                            <div class="h-2 w-16 bg-gray-100 rounded skeleton"></div>
+                            <div class="h-2 w-10 bg-gray-50 rounded skeleton"></div>
+                        </div>
+                    </div>
+                    <div class="h-3 w-8 bg-gray-100 rounded skeleton"></div>
                 </div>
             </div>
             <div class="mt-4 text-center">
@@ -221,7 +227,7 @@
 
     <!-- Scripts -->
     <!-- app-core.js handles Firebase Auth and User Points -->
-    <script src="js/app-core.js"></script>
+    <script type="module" src="js/app-core.js"></script>
 
     <!-- script26.js handles UI, Store Data (Ticket-Médio) and Chart -->
     <script src="/assets/js/script26.js"></script>

@@ -18,9 +18,7 @@
         href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
 
     <!-- Firebase (Required for App Core) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- Firebase 10 via app-core.js module -->
 
     <!-- Estilos Unificados e Main -->
     <link rel="stylesheet" href="/assets/css/main.css">
@@ -229,10 +227,12 @@
     </div>
 
     <!-- Scripts -->
-    <script src="js/app-core.js"></script>
+    <script type="module" src="js/app-core.js"></script>
     <script src="/assets/js/script26.js"></script>
 
-    <script>
+    <script type="module">
+        import { auth, db } from './js/app-core.js';
+
         document.addEventListener("DOMContentLoaded", () => {
             // --- 1. CONFIGURAÇÃO DE CONVERSÃO ---
             const POINT_VALUE = 0.37;
@@ -253,67 +253,37 @@
             const observer = new MutationObserver(updateConversion);
             if (pointsEl) {
                 observer.observe(pointsEl, { childList: true, characterData: true, subtree: true });
-                // Primeira execução caso já tenha valor
-                if (pointsEl.innerText !== "0,00") updateConversion();
+                if (pointsEl.innerText !== "0,00" && pointsEl.innerText !== "") updateConversion();
             }
 
             // --- 2. LÓGICA DE MISSÕES DO PDV ---
-            const db = firebase.firestore();
             const questGrid = document.getElementById('quest-grid-container');
-            const highlightsContainer = document.getElementById('pdv-highlights');
 
-            const renderQuestCard = (title, subtitle, points, statusClass, statusText, iconClass, actionBtn = false) => {
+            const renderLockedCard = (title, subtitle, iconClass = 'bx-question-mark') => {
                 return `
-                    <div class="finance-card quest-card p-4">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-[#db0038]">
-                                <i class="${iconClass} text-lg"></i>
+                    <div class="finance-card quest-card p-4 relative overflow-hidden group border border-dashed border-gray-200">
+                            <div class="absolute inset-0 bg-gray-50/50 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i class='bx bxs-lock-alt text-xl text-gray-400'></i>
+                            <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Em Breve</span>
+                        </div>
+                        <div class="flex items-center gap-4 opacity-40 grayscale">
+                            <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+                                <i class='bx ${iconClass} text-lg'></i>
                             </div>
                             <div>
                                 <h3 class="text-sm font-bold text-gray-800">${title}</h3>
                                 <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mt-0.5">${subtitle}</span>
                             </div>
                         </div>
-                        <div class="text-right flex flex-col items-end gap-1">
-                            ${actionBtn ? `<button class="bg-[#db0038] text-white text-[10px] font-bold px-4 py-1.5 rounded-full hover:bg-[#b8002e] transition shadow-sm">Responder</button>` : ''}
-                            <span class="text-xs font-bold text-gray-800 block">${points} pts</span>
-                            <span class="text-[9px] ${statusClass} font-bold uppercase tracking-wide">${statusText}</span>
+                        <div class="text-right flex flex-col items-end gap-1 opacity-40 grayscale">
+                                <div class="w-16 h-4 bg-gray-200 rounded"></div>
                         </div>
                     </div>
-                 `;
+                `;
             };
 
-            const loadMissions = async () => {
-                const questGrid = document.getElementById('quest-grid-container');
-
-                // --- DESIGN DE MISSÃO BLOQUEADA ---
-                const renderLockedCard = (title, subtitle, iconClass = 'bx-question-mark') => {
-                    return `
-                        <div class="finance-card quest-card p-4 relative overflow-hidden group border border-dashed border-gray-200">
-                                <div class="absolute inset-0 bg-gray-50/50 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <i class='bx bxs-lock-alt text-xl text-gray-400'></i>
-                                <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Em Breve</span>
-                            </div>
-                            <div class="flex items-center gap-4 opacity-40 grayscale">
-                                <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
-                                    <i class='bx ${iconClass} text-lg'></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-sm font-bold text-gray-800">${title}</h3>
-                                    <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mt-0.5">${subtitle}</span>
-                                </div>
-                            </div>
-                            <div class="text-right flex flex-col items-end gap-1 opacity-40 grayscale">
-                                    <div class="w-16 h-4 bg-gray-200 rounded"></div>
-                            </div>
-                        </div>
-                    `;
-                };
-
-                // --- GERAR MISSÕES (TODAS STATIC E BLOQUEADAS) ---
+            const loadMissions = () => {
                 let html = '';
-
-                // Missões do Roadmap
                 html += renderLockedCard("Meta de Vendas", "R$ 1.000,00", "bx-money");
                 html += renderLockedCard("Ticket Médio", "Manter > R$ 50", "bx-bar-chart-alt-2");
                 html += renderLockedCard("Produto Foco", "Vender +5 Itens", "bx-shopping-bag");
@@ -321,7 +291,6 @@
                 html += renderLockedCard("Super Meta", "Desafio semanal", "bx-trophy");
                 html += renderLockedCard("Divulgação", "Poste ao menos 5 stories da loja", "bx-camera");
 
-                // --- MENSAGEM DE DESENVOLVIMENTO ---
                 html += `
                     <div style="grid-column: 1 / -1; margin-top: 10px;text-align: center;">
                         <p class="text-[10px] text-gray-400 uppercase tracking-widest font-semibold flex items-center justify-center gap-2">
@@ -329,7 +298,6 @@
                         </p>
                     </div>
                 `;
-
                 questGrid.innerHTML = html;
             };
 
@@ -340,13 +308,9 @@
             if (btnResgate) {
                 btnResgate.addEventListener('click', () => {
                     const originalContent = `<span>Solicitar Resgate</span>`;
-
-                    // Muda estado para bloqueado
                     btnResgate.innerHTML = `<i class='bx bxs-lock-alt'></i> Em Breve`;
                     btnResgate.classList.add('bg-gray-500', 'cursor-not-allowed');
                     btnResgate.classList.remove('bg-gray-900', 'hover:bg-gray-800');
-
-                    // Reverte após 2 segundos
                     setTimeout(() => {
                         btnResgate.innerHTML = originalContent;
                         btnResgate.classList.remove('bg-gray-500', 'cursor-not-allowed');

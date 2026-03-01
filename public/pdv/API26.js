@@ -31,6 +31,31 @@ const COL_CLIENTE = {
     PASS: 11
 };
 
+// Banco de dados de Usuários (Painel Administrativo)
+const USERS_SHEET_NAME = 'Users';
+
+const COL_USER = {
+    USER_NAME: 0,
+    FUNCTION: 1,
+    STATUS: 2,
+    BALANCE: 3,
+    POINTS: 4,
+    PHOTO_URL: 5,
+    NEXT_PAYMENT_DATE: 6,
+    NEXT_PAYMENT_VALUE: 7
+};
+
+// Banco de dados de Lançamentos dos Usuários (Extrato)
+const USERS_DATA_SHEET_NAME = 'Users_data';
+
+const COL_USER_DATA = {
+    DATE: 0,
+    USER_NAME: 1,
+    VALUE: 2,
+    DESCRIPTION: 3,
+    AUTHORIZED: 4
+};
+
 // ==========================================
 // PONTO DE ENTRADA DA API (POST)
 // ==========================================
@@ -91,6 +116,12 @@ function doPost(e) {
                 break;
             case 'salvar_nota_fiscal':
                 response = salvarNotaFiscal(data);
+                break;
+            case 'buscar_dados_usuario':
+                response = buscarDadosUsuario(data, USERS_SHEET_NAME, COL_USER);
+                break;
+            case 'listar_lancamentos_usuario':
+                response = listarLancamentosUsuario(data, USERS_DATA_SHEET_NAME, COL_USER_DATA);
                 break;
             default:
                 response = salvarNoBanco(data);
@@ -791,4 +822,83 @@ function buscarProximoNumeroNFe() {
         proximoNumero: maxNumero + 1,
         modeloReferencia: '55'
     };
+}
+
+// ==========================================
+// FUNÇÃO: BUSCAR DADOS DO USUÁRIO NA PLANILHA
+// ==========================================
+function buscarDadosUsuario(data, sheetName, colMapping) {
+    try {
+        const ss = SpreadsheetApp.getActiveSpreadsheet();
+        let sheet = ss.getSheetByName(sheetName);
+
+        if (!sheet) return { success: false, message: "Aba '" + sheetName + "' não encontrada." };
+
+        const rows = sheet.getDataRange().getValues();
+        const userNameAlvo = String(data.user_name).trim().toLowerCase();
+
+        for (let i = 1; i < rows.length; i++) {
+            const userNameRow = String(rows[i][colMapping.USER_NAME]).trim().toLowerCase();
+
+            if (userNameRow === userNameAlvo) {
+                return {
+                    success: true,
+                    userData: {
+                        user_name: rows[i][colMapping.USER_NAME],
+                        function: rows[i][colMapping.FUNCTION],
+                        status: rows[i][colMapping.STATUS],
+                        balance: rows[i][colMapping.BALANCE],
+                        points: rows[i][colMapping.POINTS],
+                        photo_url: rows[i][colMapping.PHOTO_URL],
+                        next_payment_data: rows[i][colMapping.NEXT_PAYMENT_DATE],
+                        next_payment_value: rows[i][colMapping.NEXT_PAYMENT_VALUE]
+                    }
+                };
+            }
+        }
+
+        return { success: false, message: "Usuário não encontrado na planilha." };
+
+    } catch (e) {
+        return { success: false, message: e.toString() };
+    }
+}
+
+// ===============================================
+// FUNÇÃO: LISTAR LANÇAMENTOS DO USUÁRIO NA PLANILHA
+// ===============================================
+function listarLancamentosUsuario(data, sheetName, colMapping) {
+    try {
+        const ss = SpreadsheetApp.getActiveSpreadsheet();
+        let sheet = ss.getSheetByName(sheetName);
+
+        if (!sheet) return { success: false, message: "Aba '" + sheetName + "' não encontrada." };
+
+        const rows = sheet.getDataRange().getValues();
+        const userNameAlvo = String(data.user_name).trim().toLowerCase();
+        const lancamentos = [];
+
+        // Ignora o cabeçalho
+        for (let i = 1; i < rows.length; i++) {
+            const userNameRow = String(rows[i][colMapping.USER_NAME]).trim().toLowerCase();
+
+            if (userNameRow === userNameAlvo) {
+                lancamentos.push({
+                    data: rows[i][colMapping.DATE],
+                    valor: rows[i][colMapping.VALUE],
+                    descricao: rows[i][colMapping.DESCRIPTION],
+                    autorizado: rows[i][colMapping.AUTHORIZED]
+                });
+            }
+        }
+
+        // Retorna os últimos lançamentos primeiro (invertido)
+        return {
+            success: true,
+            lancamentos: lancamentos.reverse()
+        };
+
+    } catch (e) {
+        return { success: false, message: e.toString() };
+    }
 }

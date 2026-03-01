@@ -18,9 +18,7 @@
         href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
 
     <!-- Firebase (Required for App Core) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- Firebase 10 via app-core.js module -->
 
     <!-- Estilos Unificados e Main -->
     <link rel="stylesheet" href="/assets/css/main.css">
@@ -63,16 +61,27 @@
             </div>
         </div>
 
-        <!-- Section 1: Balance (Ticket Médio Replacement) -->
-        <div class="finance-card p-6 mx-4 mb-0">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-600">
-                    <i class="fi fi-rr-user-salary text-2xl"></i>
-                </div>
-                <div>
-                    <h3 class="text-xs uppercase font-bold text-gray-400 tracking-wider">A receber</h3>
-                    <p id="wallet-balance" class="text-xl font-bold text-gray-800 skeleton mt-1"
-                        style="min-width: 100px;">Carregando...</p>
+        <!-- Section 1: Próximo Pagamento -->
+        <div class="px-4">
+            <div class="finance-card p-6 bg-white shadow-sm">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-600">
+                        <i class="fi fi-rr-user-salary text-2xl"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-xs uppercase font-bold text-gray-400 tracking-wider">Próximo Pagamento</h3>
+                        <div class="flex items-baseline justify-between gap-2">
+                            <p id="user-next-payment-value" class="text-xl font-bold text-gray-800 mt-1 skeleton"
+                                style="min-width: 100px;">R$ 0,00</p>
+                            <div class="text-right">
+                                <span
+                                    class="text-[9px] font-bold text-gray-400 uppercase block tracking-widest">Previsão</span>
+                                <span id="user-next-payment-date"
+                                    class="text-[12px] font-bold text-gray-800 tracking-tight skeleton"
+                                    style="min-width: 70px;">--/--/----</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -84,9 +93,28 @@
             </h3>
 
             <div id="lancamentos-container" class="space-y-3">
-                <!-- JS Injection -->
-                <div class="finance-card p-4 flex items-center justify-center text-gray-400 text-xs">
-                    Carregando histórico...
+                <!-- Skeleton Loading Rows -->
+                <div
+                    class="finance-card p-4 flex items-center justify-between w-full bg-white shadow-sm border border-gray-50 rounded-2xl mb-2">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full skeleton"></div>
+                        <div class="space-y-2">
+                            <div class="h-3 w-24 bg-gray-100 rounded skeleton"></div>
+                            <div class="h-2 w-16 bg-gray-50 rounded skeleton"></div>
+                        </div>
+                    </div>
+                    <div class="h-4 w-12 bg-gray-100 rounded skeleton"></div>
+                </div>
+                <div
+                    class="finance-card p-4 flex items-center justify-between w-full bg-white shadow-sm border border-gray-50 rounded-2xl mb-2 opacity-60">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full skeleton"></div>
+                        <div class="space-y-2">
+                            <div class="h-3 w-20 bg-gray-100 rounded skeleton"></div>
+                            <div class="h-2 w-12 bg-gray-50 rounded skeleton"></div>
+                        </div>
+                    </div>
+                    <div class="h-4 w-10 bg-gray-100 rounded skeleton"></div>
                 </div>
             </div>
         </div>
@@ -169,92 +197,9 @@
         </nav>
     </div>
 
-    <!-- Scripts -->
-    <script src="js/app-core.js"></script>
+    <script type="module" src="js/app-core.js"></script>
     <script src="/assets/js/script26.js"></script>
-
-    <script>
-        // Specific Logic for Wallet Page
-        document.addEventListener("DOMContentLoaded", () => {
-            // We reuse app-core.js for Auth
-            firebase.auth().onAuthStateChanged(async (user) => {
-                if (user) {
-                    const uid = user.uid;
-                    loadWalletBalance(uid);
-                    loadLancamentos(uid);
-                }
-            });
-        });
-
-        // Wallet Balance Logic (Moved from old wallet.html)
-        async function loadWalletBalance(uid) {
-            const el = document.getElementById('wallet-balance');
-            try {
-                const doc = await db.collection('users').doc(uid).get();
-                if (doc.exists) {
-                    const val = doc.data().saldo || 0;
-                    el.innerText = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
-                    el.classList.remove('skeleton');
-                }
-            } catch (e) { console.error(e); }
-        }
-
-        // Lancamentos Logic (Moved from old wallet.html and adapted to new UI)
-        function loadLancamentos(uid) {
-            const container = document.getElementById('lancamentos-container');
-
-            db.collection('users').doc(uid).collection('lancamentos')
-                .orderBy('data', 'desc')
-                .limit(10)
-                .get()
-                .then((snapshot) => {
-                    container.innerHTML = '';
-
-                    if (snapshot.empty) {
-                        container.innerHTML = '<div class="text-center py-6 text-gray-400 font-medium text-xs">Sem lançamentos recentes.</div>';
-                        return;
-                    }
-
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        const isEntrada = data.tipo === 'entrada';
-                        // Style Config
-                        const iconBg = isEntrada ? 'bg-green-50' : 'bg-red-50';
-                        const iconColor = isEntrada ? 'text-green-600' : 'text-[#db0038]';
-                        const iconClass = isEntrada ? 'bx-up-arrow-alt' : 'bx-down-arrow-alt';
-
-                        let dataDisplay = "--/--";
-                        if (data.data && data.data.toDate) {
-                            dataDisplay = data.data.toDate().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-                        }
-
-                        // Using standard finance-card structure
-                        const html = `
-                        <div class="finance-card p-4 flex items-center justify-between w-full">
-                            <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 rounded-full ${iconBg} flex items-center justify-center ${iconColor}">
-                                     <i class='bx ${iconClass} text-xl'></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-sm font-bold text-gray-800">${data.descricao || 'Movimentação'}</h3>
-                                    <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mt-0.5">${dataDisplay}</span>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-xs font-bold text-gray-800 block">
-                                    ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.valor)}
-                                </span>
-                            </div>
-                        </div>`;
-                        container.insertAdjacentHTML('beforeend', html);
-                    });
-                })
-                .catch(err => {
-                    console.error("Erro lançamentos:", err);
-                    container.innerHTML = '<div class="text-center py-6 text-red-400 font-medium text-xs">Erro ao carregar dados.</div>';
-                });
-        }
-    </script>
+</body>
 </body>
 
 </html>

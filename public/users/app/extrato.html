@@ -21,9 +21,7 @@
     <link rel='stylesheet'
         href='https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- Firebase 10 via app-core.js module -->
 
     <style>
         /* Loading Suave */
@@ -116,12 +114,29 @@
             <!-- Lista de Movimentações -->
             <div class="finance-card">
                 <div class="period-badge">Histórico Completo</div>
-                <div id="app-extract-list">
-                    <!-- Skeleton Loading Inicial -->
-                    <div class="p-6 space-y-4">
-                        <div class="h-10 bg-gray-100 rounded w-full animate-pulse"></div>
-                        <div class="h-10 bg-gray-100 rounded w-full animate-pulse"></div>
-                        <div class="h-10 bg-gray-100 rounded w-full animate-pulse"></div>
+                <div id="app-extract-list" class="p-4 space-y-3">
+                    <!-- Skeleton Loading Rows -->
+                    <div
+                        class="finance-card p-4 flex items-center justify-between w-full bg-white shadow-sm border border-gray-50 rounded-2xl mb-2">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-full skeleton"></div>
+                            <div class="space-y-2">
+                                <div class="h-3 w-24 bg-gray-100 rounded skeleton"></div>
+                                <div class="h-2 w-16 bg-gray-50 rounded skeleton"></div>
+                            </div>
+                        </div>
+                        <div class="h-4 w-12 bg-gray-100 rounded skeleton"></div>
+                    </div>
+                    <div
+                        class="finance-card p-4 flex items-center justify-between w-full bg-white shadow-sm border border-gray-50 rounded-2xl mb-2 opacity-60">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-full skeleton"></div>
+                            <div class="space-y-2">
+                                <div class="h-3 w-20 bg-gray-100 rounded skeleton"></div>
+                                <div class="h-2 w-12 bg-gray-50 rounded skeleton"></div>
+                            </div>
+                        </div>
+                        <div class="h-4 w-10 bg-gray-100 rounded skeleton"></div>
                     </div>
                 </div>
                 <!-- Load More Button -->
@@ -214,136 +229,9 @@
     </div>
 
     <!-- Scripts -->
-    <script src="js/app-core.js"></script>
+    <script type="module" src="js/app-core.js"></script>
     <script src="/assets/js/script26.js"></script>
-
-    <!-- Specific Extrato Logic (to ensure it works with script26) -->
-    <script>
-        // URL da API (Do Script do PDV)
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
-
-        // Elementos
-        const transactionList = document.getElementById('app-extract-list');
-        const totalInEl = document.getElementById('total-in');
-        const totalOutEl = document.getElementById('total-out');
-
-        // Load Data
-        document.addEventListener('DOMContentLoaded', () => {
-            // Injeta estilo para garantir que o container role se necessário
-            const listContainer = document.querySelector('.finance-card:last-of-type');
-            if (listContainer) {
-                listContainer.style.maxHeight = '60vh';
-                listContainer.style.overflowY = 'auto'; // Garante scroll
-            }
-
-            loadExtractData();
-        });
-
-        async function loadExtractData() {
-            if (!transactionList) return;
-
-            // Check Cache
-            const CACHE_KEY = 'app_extract_cache_v6';
-            const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
-            const cached = localStorage.getItem(CACHE_KEY);
-
-            if (cached) {
-                try {
-                    const parsed = JSON.parse(cached);
-                    if (Date.now() - parsed.timestamp < CACHE_DURATION) {
-                        console.log("Usando cache de extrato");
-                        renderTransactions(parsed.data);
-                        calculateTotals(parsed.data);
-                        return;
-                    }
-                } catch (e) {
-                    console.error("Cache invalido", e);
-                }
-            }
-
-            // Fetch New Data
-            transactionList.innerHTML = '<div class="p-6 text-center"><i class="bx bx-loader-alt bx-spin text-2xl text-gray-400"></i><p class="text-sm text-gray-400 mt-2">Sincronizando...</p></div>';
-
-            try {
-                const response = await fetch(`${SCRIPT_URL}?action=listarHistoricoVendas`);
-                const result = await response.json();
-
-                if (result.status === 'success' && result.data && result.data.length > 0) {
-                    // Filter: Only valid sales (positive value or explicitly 'Venda')
-                    // This aligns with PDV showing active sales
-                    const filteredData = result.data.filter(item => {
-                        // Basic validation
-                        return item.valor && item.cliente;
-                    });
-
-                    // Update Cache
-                    localStorage.setItem(CACHE_KEY, JSON.stringify({
-                        timestamp: Date.now(),
-                        data: filteredData
-                    }));
-
-                    renderTransactions(filteredData);
-                    calculateTotals(filteredData);
-                } else {
-                    transactionList.innerHTML = '<div class="p-6 text-center text-gray-400 text-sm">Nenhuma movimentação encontrada.</div>';
-                }
-            } catch (error) {
-                console.error("Erro ao carregar extrato:", error);
-                transactionList.innerHTML = '<div class="p-6 text-center text-red-400 text-sm">Erro ao sincronizar dados.</div>';
-            }
-        }
-
-        function renderTransactions(data) {
-            transactionList.innerHTML = '';
-
-            // Antigravity: Security Limit - Max 5 Transactions
-            const limitedData = data.slice(0, 5);
-
-            limitedData.forEach((item) => {
-                let valorDisplay = item.valor;
-                if (typeof item.valor === 'number') {
-                    valorDisplay = item.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                }
-
-                // Standard Clean Style (Matches conta.html)
-                const html = `
-                <div class="transaction-item flex items-center justify-between p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition">
-                     <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-600">
-                            <i class='bx bx-shopping-bag text-sm'></i>
-                        </div>
-                        <div>
-                            <p class="text-sm font-bold text-gray-800">${item.cliente || 'Consumidor'}</p>
-                            <div class="flex items-center gap-2">
-                                <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">${item.data || '--:--'}</span>
-                                <span class="text-[10px] text-gray-300">•</span>
-                                <span class="text-[10px] text-gray-500 font-medium">${item.pagamento || 'Dinheiro'}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <span class="text-xs font-bold text-green-600 block">+ ${valorDisplay}</span>
-                </div>`;
-
-                transactionList.insertAdjacentHTML('beforeend', html);
-            });
-
-            // Security Note
-            transactionList.insertAdjacentHTML('beforeend', '<div class="p-4 text-center text-[10px] text-gray-400 uppercase tracking-widest mt-2">Visualização limitada a 5 itens por segurança</div>');
-        }
-
-        function calculateTotals(data) {
-            let total = 0;
-            data.forEach(item => {
-                let val = item.valor;
-                if (typeof val === 'string') {
-                    val = parseFloat(val.replace('R$', '').replace(/\./g, '').replace(',', '.').trim());
-                }
-                if (!isNaN(val)) total += val;
-            });
-            if (totalInEl) totalInEl.innerText = `+ ${total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
-            if (totalOutEl) totalOutEl.innerText = `R$ 0,00`;
-        }
-    </script>
+</body>
 </body>
 
 </html>
