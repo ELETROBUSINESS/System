@@ -29,32 +29,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Verifica Autenticação
     onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            console.log("Usuário autenticado:", user.uid);
+        const currentPath = window.location.pathname;
+        const isAdminArea = currentPath.includes('/adm/nb/');
+        const isLoginPage = currentPath.includes('login.html') || currentPath.includes('e-finance.html');
+
+        const tokenString = localStorage.getItem('session_token');
+        let isValidSession = false;
+
+        try {
+            if (tokenString) {
+                const token = JSON.parse(tokenString);
+                if (new Date().getTime() < token.expires) {
+                    isValidSession = true;
+                }
+            }
+        } catch (e) { console.error("Erro ao validar token:", e); }
+
+        if (user && isValidSession) {
+            console.log("Usuário autenticado e sessão válida:", user.uid);
             await loadUserDataGlobal(user);
             body.classList.remove('loading-auth');
             highlightCurrentMenu();
+        } else if (!isLoginPage) {
+            console.warn("Sessão inválida ou expirada. Redirecionando...");
+            window.logoutApp();
         } else {
-            // Se não tem Firebase User, verifica se tem Token de Sessão (Fallback de compatibilidade)
-            const sessionToken = localStorage.getItem('session_token');
-            if (sessionToken) {
-                try {
-                    const token = JSON.parse(sessionToken);
-                    if (new Date().getTime() < token.expires) {
-                        console.log("Sessão via Token válida e detectada.");
-                        body.classList.remove('loading-auth');
-                        // Tenta carregar dados da planilha se tiver nome de usuário no token
-                        if (token.username) loadUserSpreadsheetData(token.username);
-                        return;
-                    }
-                } catch (e) {
-                    console.error("Erro no token legado:", e);
-                }
-            }
-
-            console.warn("Sem sessão ativa. Redirecionando para login...");
-            const isAdminArea = window.location.pathname.includes('/adm/nb/');
-            window.location.href = isAdminArea ? "/users/e-finance.html" : "/login.html";
+            // Se já estiver na página de login, apenas remove o loader
+            body.classList.remove('loading-auth');
         }
     });
 
@@ -69,6 +70,31 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 });
+
+// 7. Função Global de Logout
+let isLoggingOut = false;
+window.logoutApp = function () {
+    if (isLoggingOut) return;
+    isLoggingOut = true;
+
+    const currentPath = window.location.pathname;
+    const isAdminArea = currentPath.includes('/adm/nb/');
+    const isLoginPage = currentPath.includes('login.html') || currentPath.includes('e-finance.html');
+    const redirectUrl = isAdminArea ? "/users/e-finance.html" : "/login.html";
+
+    localStorage.removeItem('user_cache');
+    localStorage.removeItem('session_token');
+    Object.keys(localStorage).forEach(key => { if (key.startsWith('acc_cache_')) localStorage.removeItem(key); });
+
+    if (isLoginPage) {
+        isLoggingOut = false; // Permite tentar logar novamente
+        return;
+    }
+
+    signOut(auth).finally(() => {
+        window.location.href = redirectUrl;
+    });
+};
 
 // 3. Função de Carregamento de Dados (Cache first)
 async function loadUserDataGlobal(user) {
@@ -341,17 +367,3 @@ function createSessionTimer() {
     updateTimer();
     setInterval(updateTimer, 1000);
 }
-
-// 7. Função Global de Logout
-window.logoutApp = function () {
-    const isAdminArea = window.location.pathname.includes('/adm/nb/');
-    const redirectUrl = isAdminArea ? "/users/e-finance.html" : "/login.html";
-
-    localStorage.removeItem('user_cache');
-    localStorage.removeItem('session_token');
-    Object.keys(localStorage).forEach(key => { if (key.startsWith('acc_cache_')) localStorage.removeItem(key); });
-
-    signOut(auth).finally(() => {
-        window.location.href = redirectUrl;
-    });
-};

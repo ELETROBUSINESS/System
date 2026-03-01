@@ -256,29 +256,37 @@ async function fetchStockSummary() {
  */
 (function checkAuth() {
     if (window.USER_API_CONFIG || window.DISABLE_LEGACY_AUTH) return;
+
+    const currentPath = window.location.pathname;
+    const isLoginPage = currentPath.includes('login.html') || currentPath.includes('e-finance.html');
+
+    if (isLoginPage) return; // Não executa checkAuth em páginas de login
+
     const tokenString = localStorage.getItem('session_token');
 
     // Antigravity: Multi-Login Support
-    // Se estiver na pasta específica do admin/nb, redireciona para e-finance.html
     let LOGIN_URL = '/login.html';
-    if (window.location.pathname.includes('/adm/nb/')) {
+    if (currentPath.includes('/adm/nb/')) {
         LOGIN_URL = '/users/e-finance.html';
     }
 
     if (!tokenString) {
-        // Evita loop se já estivermos na página de login correta
-        if (!window.location.pathname.includes('login.html') && !window.location.pathname.includes('e-finance.html')) {
-            window.location.href = LOGIN_URL;
-        }
+        console.warn("Sem token de sessão. Redirecionando para:", LOGIN_URL);
+        window.location.href = LOGIN_URL;
         return;
     }
+
     try {
         const token = JSON.parse(tokenString);
         if (new Date().getTime() > token.expires) {
+            console.error("Sessão expirada via token. Limpando...");
             localStorage.removeItem('session_token');
+            localStorage.removeItem('user_cache');
             window.location.href = LOGIN_URL;
         }
     } catch (e) {
+        console.error("Erro ao validar token. Redirecionando...");
+        localStorage.removeItem('session_token');
         window.location.href = LOGIN_URL;
     }
 })();

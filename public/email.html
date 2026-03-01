@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELETRO | Studio V4 Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/mjml-browser@4.15.3/lib/index.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        .editor-textarea {
+            font-family: 'Fira Code', monospace;
+            background-color: #1e293b;
+            color: #e2e8f0;
+            font-size: 13px;
+        }
+
+        .btn-primary {
+            background-color: #db0038;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: #b3002e;
+            transform: translateY(-1px);
+        }
+
+        .debug-console {
+            font-family: monospace;
+            font-size: 11px;
+            background: #0f172a;
+            color: #10b981;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body class="h-screen flex flex-col">
+
+    <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between z-10 shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="bg-[#db0038] p-2 rounded-lg text-white">
+                <i class="fas fa-edit text-xl"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg text-slate-800 leading-none">ELETRO <span
+                        class="text-[#db0038]">Studio</span></h1>
+                <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1 font-semibold">Edição Direta e
+                    Anexos</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <select id="modelSelector" onchange="changeModel()"
+                class="text-xs font-bold border-slate-200 rounded-md p-2 bg-slate-50 outline-none">
+                <option value="report">Relatório Mensal</option>
+                <option value="newUser">Novo Usuário (Acesso)</option>
+                <option value="welcome">Boas-vindas (Saudação)</option>
+                <option value="payment">Pagamento em Processamento</option>
+            </select>
+            <button onclick="sendEmail()" id="sendBtn"
+                class="btn-primary text-white px-6 py-2 rounded-md font-bold flex items-center gap-2 shadow-lg active:scale-95 transition-all">
+                <i class="fas fa-rocket"></i> ENVIAR AGORA
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden">
+        <div class="w-1/2 flex flex-col border-r border-slate-200 bg-white">
+            <div class="p-5 space-y-4 flex-1 flex flex-col overflow-y-auto custom-scrollbar">
+
+                <div class="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Agendar Envio</label>
+                        <input type="datetime-local" id="agendamento"
+                            class="w-full px-3 py-1.5 border border-slate-200 rounded text-xs outline-none focus:ring-1 focus:ring-[#db0038]">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase">Para</label>
+                        <input type="email" id="destinatario" placeholder="cliente@email.com"
+                            class="w-full px-3 py-2 border border-slate-200 rounded focus:ring-1 focus:ring-[#db0038] outline-none text-sm">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase">Assunto</label>
+                        <input type="text" id="assunto" placeholder="Assunto do e-mail"
+                            class="w-full px-3 py-2 border border-slate-200 rounded focus:ring-1 focus:ring-[#db0038] outline-none text-sm">
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase">Anexar Arquivos</label>
+                    <div
+                        class="border-2 border-dashed border-slate-200 rounded-lg p-4 text-center hover:border-[#db0038] transition-colors relative">
+                        <input type="file" id="fileInput" multiple onchange="handleFiles()"
+                            class="absolute inset-0 opacity-0 cursor-pointer">
+                        <i class="fas fa-paperclip text-slate-300 text-2xl mb-2"></i>
+                        <p class="text-[10px] text-slate-400" id="fileCount">Clique ou arraste arquivos</p>
+                    </div>
+                    <div id="fileList" class="flex flex-wrap gap-2 mt-2"></div>
+                </div>
+
+                <div class="flex-1 flex flex-col min-h-0">
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase">Código Fonte</label>
+                        <span id="formatBadge"
+                            class="text-[9px] bg-[#db0038] text-white px-2 py-0.5 rounded font-bold uppercase">MJML</span>
+                    </div>
+                    <textarea id="codeInput" oninput="updatePreview()"
+                        class="editor-textarea w-full flex-1 p-4 rounded resize-none focus:outline-none custom-scrollbar shadow-inner"></textarea>
+                </div>
+
+                <div class="h-24 debug-console p-2 rounded overflow-y-auto custom-scrollbar" id="debugContent">
+                    > Editor ELETRO V5 Pronto.
+                </div>
+            </div>
+        </div>
+
+        <div class="w-1/2 bg-slate-100 flex flex-col">
+            <div class="p-3 border-b border-slate-200 bg-white/80 flex items-center justify-between">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"><i
+                        class="fas fa-i-cursor mr-1"></i> Modo de Edição Visual</span>
+                <span class="text-[9px] text-slate-400 font-medium italic">Clique no lápis para editar</span>
+            </div>
+            <div id="preview-container" class="flex-1 p-8 overflow-y-auto flex justify-center custom-scrollbar">
+                <iframe id="preview-iframe"
+                    class="w-full max-w-[600px] border-none shadow-2xl bg-white rounded-sm min-h-[700px]"></iframe>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyPWy8SHpOTsZAqFKoUTNOrgJkZKVVtYAMRXNDBQ3Nnalkr2k5c6CrUYtfmSuTQ5rbqhw/exec";
+        let attachedFiles = [];
+
+        const models = {
+            report: `<mjml>
+  <mj-head>
+    <mj-title>Relatório de Faturamento - Janeiro</mj-title>
+    <mj-attributes>
+      <mj-all font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" />
+      <mj-text font-size="16px" color="#333333" line-height="1.5" />
+    </mj-attributes>
+    <mj-style>
+      .banner-rounded {
+        border-radius: 0 0 25px 25px !important;
+        overflow: hidden;
+      }
+      .card-shadow {
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      }
+      @media only screen and (max-width:480px) {
+        .mobile-center { text-align: center !important; }
+        .mobile-padding { padding: 10px 20px !important; }
+      }
+    </mj-style>
+  </mj-head>
+  <mj-body background-color="#f8f9fa">
+
+    <mj-section background-color="#db0038" padding="30px 20px" css-class="banner-rounded">
+      <mj-column>
+        <mj-text align="center" color="#ffffff" font-size="22px" font-weight="800" letter-spacing="1px" text-transform="uppercase">
+          A N F da Silva LTDA
+        </mj-text>
+        <mj-text align="center" color="#ffffff" font-size="16px" font-weight="300">
+          Relatório de Faturamento — Janeiro
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section padding-top="30px">
+      <mj-column>
+        <mj-text font-size="20px" font-weight="700" color="#2d3436">
+          Olá, Ney!
+        </mj-text>
+        <mj-text>
+          Anexamos a este e-mail todos os dados de fechamento referentes ao mês de operação de <strong>Janeiro</strong>.
+        </mj-text>
+        <mj-text font-size="14px" color="#636e72" font-style="italic">
+          Nota: Ressaltamos que não nos responsabilizamos por informações que não tenham sido emitidas. Este documento exibe exclusivamente o que foi gerado de forma oficial.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section padding="10px 0">
+      <mj-column width="45%" background-color="#ffffff" border-radius="12px" padding="15px" css-class="card-shadow">
+        <mj-text align="center" font-size="14px" color="#b2bec3" text-transform="uppercase" font-weight="700" padding-bottom="0">Faturamento</mj-text>
+        <mj-text align="center" font-size="22px" font-weight="800" color="#db0038" padding-top="5px">R$ 0.000,00</mj-text>
+      </mj-column>
+      
+      <mj-column width="5%">
+        <mj-text padding="10px 0"></mj-text>
+      </mj-column>
+
+      <mj-column width="45%" background-color="#ffffff" border-radius="12px" padding="15px" css-class="card-shadow">
+        <mj-text align="center" font-size="14px" color="#b2bec3" text-transform="uppercase" font-weight="700" padding-bottom="0">Emitido</mj-text>
+        <mj-text align="center" font-size="22px" font-weight="800" color="#db0038" padding-top="5px">00 <span style="font-size: 14px;">NFCe</span></mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section padding-top="20px">
+      <mj-column background-color="#ffffff" border-radius="12px" padding="10px" css-class="card-shadow">
+        <mj-table color="#2d3436" font-size="15px">
+          <tr style="border-bottom: 2px solid #f1f2f6; text-align: left;">
+            <th style="padding: 15px 10px;">Descrição</th>
+            <th style="padding: 15px 10px; text-align: right;">Valor/Status</th>
+          </tr>
+          <tr>
+            <td style="padding: 15px 10px; border-bottom: 1px solid #f1f2f6;">Faturamento NFCe e NFC</td>
+            <td style="padding: 15px 10px; text-align: right; font-weight: 700; border-bottom: 1px solid #f1f2f6;">R$ 0.000,00</td>
+          </tr>
+          <tr>
+            <td style="padding: 15px 10px;">Imposto DAS</td>
+            <td style="padding: 15px 10px; text-align: right; font-weight: 700; color: #db0038;">Pendente / Calculado</td>
+          </tr>
+        </mj-table>
+      </mj-column>
+    </mj-section>
+
+    <mj-section padding-bottom="40px">
+      <mj-column>
+        <mj-text align="center" font-size="14px" color="#636e72">
+          Todos os documentos XML das NFC-e emitidas e NFC foram agrupados e anexados em <strong>arquivos ZIP</strong>. O relatório detalhado com todas as notas fiscais encontra-se ao final do anexo.
+        </mj-text>
+        <mj-button background-color="#db0038" border-radius="8px" font-weight="700" href="#">
+          VISUALIZAR DOCUMENTOS ON-LINE
+        </mj-button>
+      </mj-column>
+    </mj-section>
+
+    <mj-section background-color="#f1f2f6" padding="20px">
+      <mj-column>
+        <mj-text align="center" font-size="13px" color="#b2bec3" line-height="20px">
+          <strong>ELETRO BUSINESS | V. 1.0.0.43.5</strong><br/>
+          Contato: <a href="mailto:eletroofficialbusiness@gmail.com" style="color: #db0038; text-decoration: none;">eletroofficialbusiness@gmail.com</a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+  </mj-body>
+</mjml>`,
+            newUser: `<mjml>
+  <mj-head>
+    <mj-title>Suas Credenciais - A N F da Silva LTDA</mj-title>
+    <mj-attributes>
+      <mj-all font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" />
+      <mj-text font-size="16px" color="#2d3436" line-height="1.5" />
+    </mj-attributes>
+    <mj-style>
+      .banner-rounded {
+        border-radius: 0 0 25px 25px !important;
+        overflow: hidden;
+      }
+      .highlight-box {
+        background-color: #f1f2f6 !important;
+        border-radius: 12px !important;
+        color: #db0038 !important;
+        font-weight: 800 !important;
+      }
+      .pass-fat {
+        padding: 20px 0 !important; /* Deixa a caixa de senha mais "gorda" */
+      }
+    </mj-style>
+  </mj-head>
+  <mj-body background-color="#f8f9fa">
+
+    <mj-section background-color="#db0038" padding="30px 20px" css-class="banner-rounded">
+      <mj-column>
+        <mj-text align="center" color="#ffffff" font-size="20px" font-weight="800" letter-spacing="1px" text-transform="uppercase">
+          A N F da Silva LTDA
+        </mj-text>
+        <mj-text align="center" color="#ffffff" font-size="15px" font-weight="300">
+          Configuração de Acesso Concluída
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section padding="40px 25px 10px 25px">
+      <mj-column>
+        <mj-text align="left" font-size="22px" font-weight="700" padding-left="0">
+          Olá, [Nome]!
+        </mj-text>
+        <mj-text align="left" padding-left="0">
+          Sua conta na plataforma <strong>ELETRO</strong> já está ativa. <br/> 
+          Utilize as credenciais abaixo para realizar seu primeiro acesso:
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section padding="10px 25px">
+      <mj-column background-color="#f1f2f6" border-radius="12px">
+        <mj-text align="left" font-size="12px" color="#b2bec3" text-transform="uppercase" font-weight="700" padding-bottom="0">
+          Nome de Usuário
+        </mj-text>
+        <mj-text align="left" color="#db0038" font-size="18px" font-weight="800" padding-top="5px">
+          [usuario.exemplo]
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section padding="20px 25px 0 25px">
+      <mj-column>
+        <mj-text align="left" font-size="13px" color="#b2bec3" text-transform="uppercase" font-weight="700" padding-left="0">
+          Senha Provisória
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section padding="10px 20px">
+      <mj-group>
+        <mj-column padding="5px">
+          <mj-text align="center" css-class="highlight-box pass-fat" font-size="22px">1</mj-text>
+        </mj-column>
+        <mj-column padding="5px">
+          <mj-text align="center" css-class="highlight-box pass-fat" font-size="22px">2</mj-text>
+        </mj-column>
+        <mj-column padding="5px">
+          <mj-text align="center" css-class="highlight-box pass-fat" font-size="22px">3</mj-text>
+        </mj-column>
+        <mj-column padding="5px">
+          <mj-text align="center" css-class="highlight-box pass-fat" font-size="22px">4</mj-text>
+        </mj-column>
+        <mj-column padding="5px">
+          <mj-text align="center" css-class="highlight-box pass-fat" font-size="22px">5</mj-text>
+        </mj-column>
+        <mj-column padding="5px">
+          <mj-text align="center" css-class="highlight-box pass-fat" font-size="22px">6</mj-text>
+        </mj-column>
+      </mj-group>
+    </mj-section>
+
+    <mj-section padding-top="30px">
+      <mj-column>
+        <mj-button background-color="#db0038" border-radius="12px" font-weight="700" font-size="16px" inner-padding="15px 30px" href="https://eletrobusiness.com.br/login.html">
+          ACESSAR MINHA CONTA
+        </mj-button>
+        <mj-text align="center" font-size="12px" color="#b2bec3" font-style="italic" padding-top="20px">
+          Recomendamos a alteração desta senha no seu primeiro login.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section background-color="#f1f2f6" padding="25px">
+      <mj-column>
+        <mj-text align="center" font-size="12px" color="#b2bec3" line-height="18px">
+          <strong>ELETRO BUSINESS | V. 1.0.0.43.5</strong><br/>
+          Suporte: <a href="mailto:eletroofficialbusiness@gmail.com" style="color: #db0038; text-decoration: none;">eletroofficialbusiness@gmail.com</a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+  </mj-body>
+</mjml>`,
+            welcome: `<mjml>
+  <mj-head>
+    <mj-title>Bem-vindo à ELETRO - A N F da Silva LTDA</mj-title>
+    <mj-attributes>
+      <mj-all font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" />
+      <mj-text font-size="16px" color="#2d3436" line-height="1.5" />
+    </mj-attributes>
+    <mj-style>
+      .banner-rounded {
+        border-radius: 0 0 25px 25px !important;
+        overflow: hidden;
+      }
+      .info-card {
+        background-color: #f1f2f6 !important;
+        border-radius: 12px !important;
+      }
+      .text-red {
+        color: #db0038 !important;
+      }
+    </mj-style>
+  </mj-head>
+  <mj-body background-color="#f8f9fa">
+
+    <mj-section background-color="#db0038" padding="30px 20px" css-class="banner-rounded">
+      <mj-column>
+        <mj-text align="center" color="#ffffff" font-size="20px" font-weight="800" letter-spacing="1px" text-transform="uppercase">
+          A N F da Silva LTDA
+        </mj-text>
+        <mj-text align="center" color="#ffffff" font-size="15px" font-weight="300">
+          Seja muito bem-vindo!
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section padding="40px 25px 10px 25px">
+      <mj-column>
+        <mj-text align="left" font-size="22px" font-weight="700" padding-left="0">
+          Olá, [Nome do Usuário]!
+        </mj-text>
+        <mj-text align="left" padding-left="0">
+          É um prazer ter você conosco na plataforma <strong>ELETRO</strong>. Estamos comprometidos em oferecer a melhor experência em prestação de serviços e tecnologia.
+        </mj-text>
+        <mj-text align="left" padding-left="0">
+          Abaixo, confirmamos os dados da unidade onde você receberá seu atendimento e suporte:
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section padding="10px 25px">
+      <mj-column css-class="info-card" padding="20px">
+        <mj-text align="left" font-size="12px" color="#b2bec3" text-transform="uppercase" font-weight="700" padding-bottom="5px">
+          Unidade de Atendimento
+        </mj-text>
+        <mj-text align="left" color="#db0038" font-size="20px" font-weight="800" padding-bottom="15px">
+          [NOME DA LOJA EXEMPLO]
+        </mj-text>
+        
+        <mj-divider border-width="1px" border-color="#dcdde1" padding="0" />
+        
+        <mj-text align="left" font-size="12px" color="#b2bec3" text-transform="uppercase" font-weight="700" padding-top="15px" padding-bottom="5px">
+          Endereço Completo
+        </mj-text>
+        <mj-text align="left" color="#2d3436" font-size="15px" font-weight="600">
+          [Rua, Número - Bairro]<br/>
+          [Cidade - Estado] | [CEP]
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section padding-top="30px">
+      <mj-column>
+        <mj-button background-color="#db0038" border-radius="12px" font-weight="700" font-size="16px" inner-padding="15px 30px" href="https://eletrobusiness.com.br/login.html">
+          ACESSAR MEU PAINEL
+        </mj-button>
+        <mj-text align="center" font-size="12px" color="#b2bec3" font-style="italic" padding-top="20px">
+          Caso tenha dúvidas sobre o trajeto ou horários, entre em contato conosco.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section background-color="#f1f2f6" padding="25px">
+      <mj-column>
+        <mj-text align="center" font-size="12px" color="#b2bec3" line-height="18px">
+          <strong>ELETRO BUSINESS | V. 1.0.0.43.5</strong><br/>
+          Suporte: <a href="mailto:eletroofficialbusiness@gmail.com" style="color: #db0038; text-decoration: none;">eletroofficialbusiness@gmail.com</a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+  </mj-body>
+</mjml>`,
+            payment: `<mjml>
+  <mj-head>
+    <mj-title>Pagamento em Processamento - ELETRO</mj-title>
+    <mj-font name="Inter" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" />
+    <mj-attributes>
+      <mj-all font-family="'Inter', sans-serif" />
+    </mj-attributes>
+    <mj-style>
+      .banner-rounded { border-radius: 0 0 25px 25px !important; overflow: hidden; }
+      .status-pill { background-color: #f1f2f6 !important; border-radius: 50px !important; color: #db0038 !important; font-weight: bold !important; border: 1px solid #e2e8f0 !important; }
+      .step-active { color: #db0038 !important; font-weight: 800 !important; }
+      .step-inactive { color: #b2bec3 !important; }
+    </mj-style>
+  </mj-head>
+  <mj-body background-color="#f8f9fa">
+    <mj-section background-color="#db0038" padding="30px 20px" css-class="banner-rounded">
+      <mj-column>
+        <mj-text align="center" color="#ffffff" font-size="20px" font-weight="800" letter-spacing="1px" text-transform="uppercase">A N F da Silva LTDA</mj-text>
+        <mj-text align="center" color="#ffffff" font-size="15px" font-weight="300">Atualização de Pagamento</mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section padding="40px 25px 10px 25px">
+      <mj-column>
+        <mj-text align="center" font-size="28px" font-weight="800" color="#2d3436">Seu pagamento está a caminho! 🚀</mj-text>
+        <mj-text align="center" font-size="16px" color="#636e72" padding-top="10px">
+          Identificamos que seu pagamento entrou em fase de processamento bancário. 
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section padding="10px 25px">
+      <mj-column background-color="#ffffff" border-radius="20px" padding="20px" border="1px solid #f1f2f6">
+        <mj-text align="center" css-class="status-pill" font-size="12px" padding="10px 20px" width="180px">EM PROCESSAMENTO</mj-text>
+        <mj-spacer height="20px" />
+        <mj-table>
+          <tr>
+            <td style="width: 33%; text-align: center; font-size: 11px;" class="step-active">Solicitado<br/>●</td>
+            <td style="width: 33%; text-align: center; font-size: 11px;" class="step-active">Processando<br/>●</td>
+            <td style="width: 33%; text-align: center; font-size: 11px;" class="step-inactive">Concluído<br/>○</td>
+          </tr>
+        </mj-table>
+        <mj-divider border-width="1px" border-color="#f1f2f6" padding="20px 0" />
+        <mj-text align="center" font-size="14px" color="#b2bec3" text-transform="uppercase" font-weight="700">Valor da Transação</mj-text>
+        <mj-text align="center" font-size="32px" font-weight="800" color="#2d3436" padding-top="5px">R$ *.***,**</mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section padding-top="20px">
+      <mj-column>
+        <mj-text align="center" font-size="15px" color="#636e72">
+          Você já pode consultar todos os detalhes, como a data estimada de liquidação e o comprovante provisório, diretamente no nosso aplicativo.
+        </mj-text>
+        <mj-button background-color="#db0038" border-radius="12px" font-weight="700" font-size="16px" inner-padding="15px 30px" href="https://eletrobusiness.com.br/login">
+          CONSULTAR NO APP
+        </mj-button>
+      </mj-column>
+    </mj-section>
+
+    <mj-section background-color="#f1f2f6" padding="25px" margin-top="30px">
+      <mj-column>
+        <mj-text align="center" font-size="12px" color="#b2bec3" line-height="18px">
+          Este é um e-mail automático. <strong>Por favor, não responda.</strong><br/>
+          <strong>ELETRO BUSINESS | V. 1.0.0.43.5</strong><br/>
+          Suporte: <a href="mailto:eletroofficialbusiness@gmail.com" style="color: #db0038; text-decoration: none;">eletroofficialbusiness@gmail.com</a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>`
+        };
+
+        function addLog(msg, type = 'info') {
+            const content = document.getElementById('debugContent');
+            if (content) {
+                content.innerHTML += `<div style="color:${type === 'error' ? '#ef4444' : '#10b981'}">> ${msg}</div>`;
+                content.scrollTop = content.scrollHeight;
+            }
+        }
+
+        function handleFiles() {
+            const input = document.getElementById('fileInput');
+            for (let file of input.files) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    attachedFiles.push({ name: file.name, type: file.type, data: e.target.result });
+                    renderFileList();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function renderFileList() {
+            const list = document.getElementById('fileList');
+            const countDisplay = document.getElementById('fileCount');
+            list.innerHTML = "";
+            attachedFiles.forEach((f, i) => {
+                list.innerHTML += `<span class="bg-slate-100 text-[10px] px-2 py-1 rounded flex items-center gap-2 border border-slate-200">${f.name} <i class="fas fa-times cursor-pointer text-red-500" onclick="removeFile(${i})"></i></span>`;
+            });
+            countDisplay.innerText = attachedFiles.length > 0 ? `${attachedFiles.length} arquivo(s)` : "Clique para anexar";
+        }
+
+        function removeFile(i) {
+            attachedFiles.splice(i, 1);
+            renderFileList();
+        }
+
+        function updatePreview() {
+            const input = document.getElementById('codeInput').value;
+            const iframe = document.getElementById('preview-iframe');
+            try {
+                let html = input.includes('<mjml') ? mjml(input).html : input;
+                iframe.srcdoc = injectVisualEditor(html);
+            } catch (e) { iframe.srcdoc = "Erro no código..."; }
+        }
+
+        function injectVisualEditor(html) {
+            const scriptInjetado = `
+                <style>
+                    .editable-active { 
+                        outline: 2px solid #db0038 !important; 
+                        outline-offset: 4px;
+                        border-radius: 8px !important;
+                        background: rgba(219, 0, 56, 0.05);
+                        cursor: pointer;
+                        position: relative;
+                    }
+                    .pencil-icon {
+                        position: absolute;
+                        top: -12px;
+                        right: -12px;
+                        background: #db0038;
+                        color: white;
+                        width: 22px;
+                        height: 22px;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 11px;
+                        z-index: 10000;
+                        font-family: Arial;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                        pointer-events: auto;
+                    }
+                    [contenteditable="true"] { outline: 2px dashed #db0038 !important; background: white !important; color: black !important; }
+                </style>
+                <script>
+                    let lastTarget = null;
+                    let lastPencil = null;
+
+                    document.addEventListener('mouseover', function(e) {
+                        const target = e.target.closest('div, p, span, h1, h2, h3, td');
+                        if (!target || target.innerText.trim().length === 0 || target.classList.contains('pencil-icon')) return;
+                        
+                        // Evita duplicar bordas em elementos pai/filho
+                        if (lastTarget && lastTarget !== target) {
+                            lastTarget.classList.remove('editable-active');
+                            if (lastPencil) { lastPencil.remove(); lastPencil = null; }
+                        }
+
+                        if (!target.classList.contains('editable-active')) {
+                            lastTarget = target;
+                            target.classList.add('editable-active');
+                            
+                            lastPencil = document.createElement('i');
+                            lastPencil.className = 'pencil-icon';
+                            lastPencil.innerHTML = '✎';
+                            lastPencil.onclick = (ev) => {
+                                ev.stopPropagation();
+                                target.contentEditable = "true";
+                                target.focus();
+                            };
+                            target.appendChild(lastPencil);
+                        }
+                    });
+
+                    document.addEventListener('mouseout', function(e) {
+                        if (lastTarget && !lastTarget.contains(e.relatedTarget)) {
+                            lastTarget.classList.remove('editable-active');
+                            if (lastPencil) { lastPencil.remove(); lastPencil = null; }
+                            lastTarget = null;
+                        }
+                    });
+
+                    document.addEventListener('blur', function(e) {
+                        if (e.target.contentEditable === "true") {
+                            e.target.contentEditable = "false";
+                        }
+                    }, true);
+                <\/script>
+            `;
+            return html.replace('</body>', scriptInjetado + '</body>');
+        }
+
+        function changeModel() {
+            const key = document.getElementById('modelSelector').value;
+            if (models[key]) {
+                document.getElementById('codeInput').value = models[key];
+
+                let subject = 'Relatório de Faturamento - Janeiro';
+                if (key === 'newUser') subject = 'Suas Credenciais - A N F da Silva LTDA';
+                if (key === 'welcome') subject = 'Bem-vindo à ELETRO - A N F da Silva LTDA';
+                if (key === 'payment') subject = 'Pagamento em Processamento - ELETRO';
+
+                document.getElementById('assunto').value = subject;
+                updatePreview();
+                addLog("Modelo restaurado: " + key);
+            }
+        }
+
+        async function sendEmail() {
+            const btn = document.getElementById('sendBtn');
+            const iframe = document.getElementById('preview-iframe');
+
+            if (!iframe.contentDocument) {
+                addLog("Aguarde o carregamento do preview.", "error");
+                return;
+            }
+
+            // Captura o HTML editado e limpa ferramentas visuais
+            let finalHtml = iframe.contentDocument.documentElement.outerHTML;
+            finalHtml = finalHtml.replace(/<style>[\s\S]*?editable-active[\s\S]*?<\/style>/g, '');
+            finalHtml = finalHtml.replace(/<script>[\s\S]*?pencil-icon[\s\S]*?<\/script>/g, '');
+            finalHtml = finalHtml.replace(/class="[^"]*editable-active[^"]*"/g, '');
+            finalHtml = finalHtml.replace(/<i class="pencil-icon">.*?<\/i>/g, '');
+
+            const payload = {
+                destinatario: document.getElementById('destinatario').value,
+                assunto: document.getElementById('assunto').value,
+                agendamento: document.getElementById('agendamento').value,
+                corpoHtml: finalHtml,
+                attachments: JSON.stringify(attachedFiles)
+            };
+
+            if (!payload.destinatario) return addLog("Erro: Destinatário vazio", "error");
+
+            btn.disabled = true;
+            addLog("Enviando e-mail...");
+
+            try {
+                // Enviando como corpo bruto de texto para garantir que o GAS pegue tudo
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: new URLSearchParams(payload).toString(),
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                });
+
+                addLog("Requisição enviada ao Google!", "success");
+                addLog("Verifique a pasta ENVIADOS e o SPAM.");
+            } catch (e) {
+                addLog("Erro na rede: " + e.message, "error");
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        window.onload = () => {
+            document.getElementById('codeInput').value = models.report;
+            updatePreview();
+        };
+    </script>
+</body>
+
+</html>

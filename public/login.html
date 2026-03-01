@@ -398,13 +398,34 @@
         document.addEventListener("DOMContentLoaded", () => {
             // Check current auth
             onAuthStateChanged(auth, async (user) => {
-                const cachedData = localStorage.getItem('user_cache');
-                if (user && cachedData) {
+                const tokenString = localStorage.getItem('session_token');
+                let isValidSession = false;
+
+                try {
+                    if (tokenString) {
+                        const token = JSON.parse(tokenString);
+                        if (new Date().getTime() < token.expires) {
+                            isValidSession = true;
+                        }
+                    }
+                } catch (e) { console.error("Erro ao validar token:", e); }
+
+                // Caso 1: Usuário logado e sessão válida -> Vai pro Dashboard
+                if (user && isValidSession) {
+                    console.log("Sessão válida detectada, redirecionando...");
                     window.location.href = DASHBOARD_URL;
                     return;
                 }
 
-                // Hide loader if not logged in
+                // Caso 2: Usuário logado no Firebase MAS sessão expirou ou token sumiu
+                if (user && !isValidSession) {
+                    console.warn("Firebase logado mas token de sessão ausente/expirado. Limpando...");
+                    await auth.signOut();
+                    localStorage.removeItem('user_cache');
+                    localStorage.removeItem('session_token');
+                }
+
+                // Se chegou aqui, remove o loader e mostra o formulário
                 setTimeout(() => {
                     DOM.loader.style.opacity = "0";
                     setTimeout(() => DOM.loader.style.display = "none", 500);
