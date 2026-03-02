@@ -63,14 +63,19 @@ a {
 }
 
 .header-container {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    gap: 15px;
+    display: flex;
+    justify-content: space-between;
     align-items: center;
     width: 95%;
     max-width: var(--container-width);
     margin: 0 auto;
     transition: all 0.3s ease;
+}
+
+.header-right-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
 .header-container.search-active {
@@ -109,53 +114,77 @@ a {
     color: #fff;
 }
 
-/* Busca */
-.search-bar {
+/* Novo Container de Busca Expansível */
+.search-trigger-container {
     position: relative;
-    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.4s cubic-bezier(0.86, 0, 0.07, 1);
+    width: 40px;
+    height: 40px;
 }
 
-.search-bar input {
-    width: 100%;
-    padding: 10px 40px 10px 20px;
-    border-radius: 30px;
+.search-trigger-btn {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    flex-shrink: 0;
     border: none;
     outline: none;
-    font-size: 0.95rem;
 }
 
-.search-icon {
+.search-trigger-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.search-expansion-bar {
+    width: 0;
+    opacity: 0;
+    overflow: hidden;
+    height: 40px;
+    background: #fff;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    transition: all 0.4s cubic-bezier(0.86, 0, 0.07, 1);
+    pointer-events: none;
     position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #666;
-    font-size: 1.2rem;
-    transition: all 0.3s ease;
+    right: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.search-back-btn {
+.search-trigger-container.expanded .search-expansion-bar {
+    width: 250px;
+    opacity: 1;
+    pointer-events: auto;
+    padding: 0 45px 0 15px;
+}
+
+.search-expansion-bar input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+/* Esconde o botão original quando expandido para dar lugar ao input se necessário, ou mantém */
+.search-trigger-container.expanded .search-trigger-btn {
+    background: transparent;
+    color: #666;
     position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #666;
-    font-size: 1.5rem;
-    display: none;
-    cursor: pointer;
-}
-
-.header-container.search-active .search-icon {
-    display: none;
-}
-
-.header-container.search-active .search-back-btn {
-    display: block;
-}
-
-.header-container.search-active .search-bar input {
-    padding-left: 40px;
-    padding-right: 20px;
+    right: 5px;
+    z-index: 10;
 }
 
 /* Header Actions */
@@ -437,8 +466,82 @@ a {
     background: var(--color-bg-main);
     margin-bottom: 0;
     margin-top: -1px;
-    /* Remove qualquer friso residual */
     position: relative;
+}
+
+/* Controles do Banner */
+.banner-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(4px);
+    color: #333;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s ease;
+}
+
+.banner-nav:hover {
+    background: rgba(255, 255, 255, 0.8);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.banner-nav.prev {
+    left: 15px;
+}
+
+.banner-nav.next {
+    right: 15px;
+}
+
+.banner-dots {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.dot.active {
+    background: #fff;
+    width: 24px;
+    border-radius: 10px;
+}
+
+/* Efeito de Máscara Fade no Rodapé do Banner - Transição para o Branco */
+.banner-slider::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 80px;
+    /* Efeito esfumado original */
+    background: linear-gradient(to bottom,
+            rgba(255, 255, 255, 0) 0%,
+            var(--color-bg-main) 100%);
+    pointer-events: none;
+    z-index: 5;
 }
 
 .slider-wrapper {
@@ -457,29 +560,36 @@ a {
     width: 100%;
     display: block;
     object-fit: cover;
-    border-radius: 0 0 25px 25px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 0;
+    /* Removido bordas arredondadas para o efeito fade ficar natural */
+    box-shadow: none;
 }
 
 .categories-section {
     background: #fff;
     padding: 15px 0;
-    margin-bottom: 20px;
+    margin-bottom: 0;
+    /* Removido margem bottom conforme solicitado */
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .categories-scroll {
     display: flex;
-    justify-content: flex-start;
-    /* Alinhado à esquerda como solicitado */
+    justify-content: center;
+    /* Centralizado conforme solicitado */
     gap: 20px;
     overflow-x: auto;
     padding: 10px 15px;
-    /* Mais padding lateral */
     scrollbar-width: none;
     -ms-overflow-style: none;
     -webkit-overflow-scrolling: touch;
-    /* Suporte para toque e swipe */
+}
+
+@media (max-width: 480px) {
+    .categories-scroll {
+        justify-content: flex-start;
+        /* No mobile mantém alinhado à esquerda para permitir scroll natural */
+    }
 }
 
 .categories-scroll::-webkit-scrollbar {

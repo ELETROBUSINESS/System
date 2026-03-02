@@ -229,7 +229,8 @@ function buildProductCardHTML(prod) {
     const maxInst = calculateInstallmentsRule(priceCard);
     let installmentHtml = '';
     if (maxInst > 1) {
-        installmentHtml = `<div class="installment-text">ou <b>${fmtCard}</b> em até <b>${maxInst}x</b></div>`;
+        const instVal = new Intl.NumberFormat('pt-BR', fmtConfig).format(priceCard / maxInst);
+        installmentHtml = `<div class="installment-text">ou <b>${maxInst}x</b> de <b>${instVal}</b></div>`;
     } else {
         installmentHtml = `<div class="installment-text">ou <b>${fmtCard}</b> no cartão</div>`;
     }
@@ -325,7 +326,7 @@ function renderHomeSections(cached) {
         `;
     };
 
-    html += createSection('Ofertas Hoje ⚡', ofertas);
+    html += createSection('Ofertas Hoje', ofertas);
     html += createSection('Destaques para você', destaques);
 
     container.innerHTML = html;
@@ -540,7 +541,6 @@ function renderRecentlyViewed() {
                 <img src="${displayImg}" style="width: 100%; height: 100px; object-fit: cover;">
                 <div style="padding: 8px;">
                     <div style="font-size: 0.75rem; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px;">${prod.name}</div>
-                    <div style="font-size: 0.9rem; font-weight: 700; color: #333;">${fmtPrice}</div>
                 </div>
             </div>
         `;
@@ -1525,29 +1525,74 @@ function renderReviewItem(data, isPending) {
 
 // Adicione esta função ao seu arquivo index.js (pode ser antes do DOMContentLoaded)
 
+let bannerIndex = 0;
+let bannerTimer = null;
+
 function initSlider() {
     const wrapper = document.querySelector('.slider-wrapper');
     const slides = document.querySelectorAll('.slide');
+    const dotsContainer = document.querySelector('.banner-dots');
 
-    // Se não houver slider ou slides, cancela para evitar erros
     if (!wrapper || slides.length === 0) return;
 
-    let currentIndex = 0;
     const totalSlides = slides.length;
-    const intervalTime = 4000; // Tempo em milissegundos (4 segundos)
 
-    setInterval(() => {
-        currentIndex++;
-
-        // Se chegar no fim, volta para o primeiro
-        if (currentIndex >= totalSlides) {
-            currentIndex = 0;
+    // Criar bolinhas de identificação
+    if (dotsContainer) {
+        dotsContainer.innerHTML = '';
+        for (let i = 0; i < totalSlides; i++) {
+            const dot = document.createElement('div');
+            dot.className = `dot ${i === 0 ? 'active' : ''}`;
+            dot.onclick = () => goToSlide(i);
+            dotsContainer.appendChild(dot);
         }
+    }
 
-        // Move o wrapper para a esquerda baseado no índice atual
-        // Ex: Index 1 move -100%, Index 2 move -200%
-        wrapper.style.transform = `translateX(-${currentIndex * 100} %)`;
-    }, intervalTime);
+    startBannerTimer();
+}
+
+function startBannerTimer() {
+    stopBannerTimer();
+    bannerTimer = setInterval(() => {
+        moveSlide(1);
+    }, 5000);
+}
+
+function stopBannerTimer() {
+    if (bannerTimer) clearInterval(bannerTimer);
+}
+
+window.moveSlide = function (step) {
+    const slides = document.querySelectorAll('.slide');
+    if (slides.length === 0) return;
+
+    bannerIndex += step;
+    if (bannerIndex >= slides.length) bannerIndex = 0;
+    if (bannerIndex < 0) bannerIndex = slides.length - 1;
+
+    updateSlider();
+    startBannerTimer(); // Reinicia o timer ao interagir
+}
+
+window.goToSlide = function (index) {
+    bannerIndex = index;
+    updateSlider();
+    startBannerTimer(); // Reinicia o timer ao interagir
+}
+
+function updateSlider() {
+    const wrapper = document.querySelector('.slider-wrapper');
+    const dots = document.querySelectorAll('.dot');
+
+    if (wrapper) {
+        wrapper.style.transform = `translateX(-${bannerIndex * 100}%)`;
+    }
+
+    if (dots.length > 0) {
+        dots.forEach((dot, i) => {
+            dot.classList.toggle('active', i === bannerIndex);
+        });
+    }
 }
 
 // --- CRONÔMETRO MEGA OFERTAS ---
@@ -1676,5 +1721,29 @@ document.addEventListener("DOMContentLoaded", () => {
         if (document.getElementById('firebase-products-container')) {
             initProductFeed();
         }
+    }
+});
+
+window.toggleSearchExpansion = function (event) {
+    if (event) event.stopPropagation();
+    const container = document.getElementById('header-search-container');
+    if (container) {
+        const isExpanded = container.classList.contains('expanded');
+        if (isExpanded) {
+            openSearchModal();
+        } else {
+            container.classList.add('expanded');
+            setTimeout(() => {
+                openSearchModal();
+            }, 400);
+        }
+    }
+};
+
+// Fechar expansão ao clicar fora
+document.addEventListener('click', (e) => {
+    const container = document.getElementById('header-search-container');
+    if (container && !container.contains(e.target)) {
+        container.classList.remove('expanded');
     }
 });

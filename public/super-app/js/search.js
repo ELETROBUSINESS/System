@@ -123,7 +123,17 @@ async function performSearch(term, type) {
         results = allProducts.filter(p => smartMatch(p, term));
     } else if (type === 'category') {
         const lowerCat = term.toLowerCase();
-        results = allProducts.filter(p => p.category && p.category.toLowerCase().includes(lowerCat));
+        if (lowerCat === 'ofertas') {
+            const OFFER_DEADLINE = new Date("2026-03-02T23:59:59").getTime();
+            const isExpired = Date.now() >= OFFER_DEADLINE;
+            if (isExpired) {
+                results = [];
+            } else {
+                results = allProducts.filter(p => parseFloat(p['price-oferta'] || 0) > 0 && parseFloat(p['price-oferta'] || 0) < parseFloat(p.price || 0));
+            }
+        } else {
+            results = allProducts.filter(p => p.category && p.category.toLowerCase().includes(lowerCat));
+        }
     } else {
         results = allProducts;
     }
