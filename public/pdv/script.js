@@ -4831,9 +4831,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         protocolo: dadosFiscal.nProt || ""
                     })
                 }), "Salvar Nota Nova API"),
-                safeExec(salvarVendaNoHistorico(dadosVendaInterna), "Histórico Firebase"),
-                safeExec(abaterEstoqueFirebase(items), "Estoque Firebase"),
-                safeExec(abaterEstoquePlanilha(items), "Estoque Planilha")
+                safeExec(salvarVendaNoHistorico(dadosVendaInterna), "Histórico Firebase")
+                // safeExec(abaterEstoqueFirebase(items), "Estoque Firebase"), // Desativado a pedido do usuário
+                // safeExec(abaterEstoquePlanilha(items), "Estoque Planilha") // Desativado a pedido do usuário
             ];
 
             // TAREFA PRINCIPAL: Envio para API CENTRAL (Definitiva)

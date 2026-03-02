@@ -312,7 +312,7 @@ function renderProductView(prod, variacoesGroup, allProducts, activeIndex) {
                 </div>
 
                 <div class="detail-info" style="padding: 0 5px;">
-                    ${soldCount > 5 ? `<div class="detail-status">Novo | ${soldCount} vendidos</div>` : ''}
+                    ${soldCount > 5 ? `<div class="detail-status" style="background:#f5f5f5; color:#666; padding:4px 10px; border-radius:4px; font-size:0.75rem; font-weight:700; width:fit-content; margin-bottom:10px;">Novo | +${soldCount} vendidos</div>` : ''}
                     <h1 class="detail-title" style="margin-bottom: 8px;">${prod.name}</h1>
                     ${priceBlock}
                     <div style="background: #e6f7ee; color: #00a650; padding: 10px; border-radius: 8px; margin-bottom: 20px; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
@@ -386,6 +386,12 @@ function renderSuggestedProducts(currentProd, allProducts) {
         const hasOffer = (valOffer > 0 && valOffer < valPrice);
         const finalPrice = hasOffer ? valOffer : valPrice;
 
+        const soldCount = parseInt(prod.sold || 0);
+        let soldBadgeHtml = '';
+        if (soldCount > 5) {
+            soldBadgeHtml = `<span class="sold-badge-feed" style="position:static; margin-left: 5px; font-size: 0.6rem; padding: 1px 4px; border-radius: 3px; background: rgba(0,0,0,0.05);">+${soldCount} vendidos</span>`;
+        }
+
         let timerHtml = '';
         if (hasOffer) {
             timerHtml = `
@@ -401,7 +407,10 @@ function renderSuggestedProducts(currentProd, allProducts) {
                 <img src="${displayImg}" style="width: 100%; height: 120px; object-fit: cover;">
                 <div style="padding: 10px;">
                     <div style="font-size: 0.8rem; color: #444; height: 32px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${prod.name}</div>
-                    <div style="font-size: 1rem; font-weight: 700; color: #c20026;">${finalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
+                    <div style="display: flex; align-items: center; margin-top: 5px;">
+                        <div style="font-size: 0.95rem; font-weight: 700; color: #c20026;">${finalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
+                        ${soldBadgeHtml}
+                    </div>
                 </div>
             </div>
         `;

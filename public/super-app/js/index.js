@@ -209,7 +209,7 @@ function buildProductCardHTML(prod) {
     if (hasOffer) {
         priceHtml = `
             <div class="price-container">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 8px;">
                     <span class="price-old">${fmtOriginal}</span>
                     ${soldBadgeHtml}
                 </div>
@@ -218,7 +218,7 @@ function buildProductCardHTML(prod) {
     } else {
         priceHtml = `
             <div class="price-container">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 8px;">
                     <span class="price-old">${fmtCard}</span>
                     ${soldBadgeHtml}
                 </div>
@@ -248,8 +248,6 @@ function buildProductCardHTML(prod) {
                 <span class="timer-countdown">--:--:--</span>
             </div>`;
     }
-
-
 
     return `
         <div class="product-card ${isSoldOut ? 'sold-out' : ''} ${hasOffer ? 'has-offer' : ''}" id="prod-${prod.id}" onclick="window.location.href='product.html?id=${prod.id}'">
@@ -312,7 +310,7 @@ function renderHomeSections(cached) {
 
     let html = '';
 
-    const createSection = (title, items, filterTag) => {
+    const createSection = (title, items) => {
         if (!items || items.length === 0) return '';
         const gridContent = items.map(p => buildProductCardHTML(p)).join('').trim();
         if (!gridContent) return '';
@@ -323,21 +321,12 @@ function renderHomeSections(cached) {
                 <div class="product-grid" style="margin-bottom: 15px;">
                     ${gridContent}
                 </div>
-                ${filterTag ? `
-                <div style="text-align: center;">
-                    <button onclick="window.location.href='index.html?filter=${encodeURIComponent(filterTag)}'" 
-                            style="background: transparent; color: var(--color-brand-red); border: 2px solid var(--color-brand-red); padding: 8px 24px; border-radius: 20px; font-weight: 700; cursor: pointer; text-transform: uppercase; font-size: 0.85rem; transition: background 0.3s;"
-                            onmouseover="this.style.background='var(--color-brand-red)'; this.style.color='#fff';"
-                            onmouseout="this.style.background='transparent'; this.style.color='var(--color-brand-red)';">
-                        Ver mais em ${title}
-                    </button>
-                </div>` : ''}
             </div>
         `;
     };
 
-    html += createSection('Ofertas Hoje ⚡', ofertas, null);
-    html += createSection('Destaques para você', destaques, null);
+    html += createSection('Ofertas Hoje ⚡', ofertas);
+    html += createSection('Destaques para você', destaques);
 
     container.innerHTML = html;
 }
@@ -362,12 +351,13 @@ window.closeSearchModal = function () {
     if (modal) modal.classList.remove('show');
 };
 
-window.executeSearch = function () {
+window.executeSearch = function (termOverride) {
     const input = document.getElementById('modal-search-input');
-    const term = input ? input.value.trim() : "";
+    const term = (termOverride && typeof termOverride === 'string') ? termOverride : (input ? input.value.trim() : "");
     if (term) {
         saveSearchHistory(term);
-        window.location.href = `search.html ? q = ${encodeURIComponent(term)} `;
+        // Redireciona para a página de busca com o termo
+        window.location.href = `search.html?q=${encodeURIComponent(term)}`;
     }
 };
 
@@ -717,8 +707,11 @@ async function initProductFeed() {
 }
 
 window.filterLocalCategory = function (categoryStr) {
-    const cached = getCachedData();
-    if (!cached) return;
+    let cached = getCachedData();
+    if (!cached || cached.length === 0) {
+        cached = (typeof DataManager !== 'undefined') ? DataManager.getProducts() : [];
+    }
+    if (!cached || cached.length === 0) return; // Nada a fazer se não há dados algum vez carregados
 
     categoryStr = categoryStr || 'todos';
 
@@ -1672,20 +1665,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
+    const openSearch = urlParams.get('openSearch');
 
     if (productId) {
         loadProductDetail(productId);
     } else {
+        if (openSearch && typeof openSearchModal === 'function') {
+            setTimeout(openSearchModal, 200);
+        }
         if (document.getElementById('firebase-products-container')) {
             initProductFeed();
         }
-        // Listen for background updates from DataManager (global.js)
-        // document.addEventListener('productsUpdated', (e) => {
-        //     console.log("[Index] Recebida atualização do DataManager. Atualizando feed...");
-        //     const urlParams = new URLSearchParams(window.location.search);
-        //     if (!urlParams.get('id')) { // Only if not on detail view
-        //         // filterLocalCategory(urlParams.get('filter') || 'todos');
-        //     }
-        // });
     }
 });
