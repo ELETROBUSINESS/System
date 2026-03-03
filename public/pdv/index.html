@@ -614,7 +614,11 @@
 
         <nav class="navbar" id="main-navbar">
             <span class="navbar-item active" data-page="pdv">PDV</span>
-            <span class="navbar-item" data-page="pedidos">Pedidos</span>
+            <span class="navbar-item" data-page="pedidos" style="position: relative;">
+                Pedidos
+                <span class="menu-badge" id="pedidos-nav-badge"
+                    style="display: none; position: absolute; top: -5px; right: -10px; background: #c20026; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; font-weight: bold;">0</span>
+            </span>
             <span class="navbar-item" data-page="historico">Histórico</span>
 
             <div class="navbar-more-container">
@@ -996,7 +1000,8 @@
                         <p class="text-light no-margin">Gerencie as vendas em tempo real.</p>
                     </div>
                     <div>
-                        <button class="btn btn-secondary btn-auto">
+                        <button class="btn btn-secondary btn-auto" id="btn-reload-orders"
+                            onclick="fetchOrdersFromAPI()">
                             <i class='bx bx-refresh'></i> Atualizar
                         </button>
                     </div>
@@ -2641,7 +2646,7 @@
         <div class="brand-row">
             <img src="assets/sistema.png" alt="Logo" class="brand-img-icon">
 
-            <span class="brand-name-text">ELETRO<span class="highlight-dot">. 1.0.0.47.7</span></span>
+            <span class="brand-name-text">ELETRO<span class="highlight-dot">. 1.0.0.48.21</span></span>
         </div>
     </div>
     <div class="pn">

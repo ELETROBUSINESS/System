@@ -193,13 +193,17 @@ var getSubtotal = () => {
 // Função de Renderização (Movemos para fora do DOMContentLoaded)
 var renderDummyOrders = () => {
     const container = document.getElementById('orders-grid-container');
-    const badgeNavbar = document.getElementById('pedidos-badge');
+    const badgeNavbar = document.getElementById('pedidos-nav-badge');
 
     // Atualiza Badge
     const pendingCount = activeOrdersData.filter(o => o.status === 'pendente').length;
     if (badgeNavbar) {
         badgeNavbar.innerText = pendingCount;
-        if (pendingCount > 0) badgeNavbar.classList.add('active'); else badgeNavbar.classList.remove('active');
+        if (pendingCount > 0) {
+            badgeNavbar.style.display = 'flex';
+        } else {
+            badgeNavbar.style.display = 'none';
+        }
     }
 
     // Atualiza contadores nas abas
@@ -245,12 +249,36 @@ var renderDummyOrders = () => {
     });
 };
 
-// Função de Polling (Escuta do Firebase)
-// Função de Polling (Escuta do Firebase) - ATUALIZADA COM ENDEREÇO DE COLETA
-// Função de Polling (Escuta do Firebase) - ATUALIZADA
-// Função de Polling (Escuta do Firebase) - REMOVIDA POR SOLICITAÇÃO
+// Função de Polling (Escuta da Planilha)
 function startOrderPolling() {
-    console.log("Monitoramento de pedidos desativado.");
+    console.log("Monitoramento de pedidos ativado via API.");
+    fetchOrdersFromAPI();
+    setInterval(fetchOrdersFromAPI, 30000); // Polling a cada 30 segundos
+}
+
+async function fetchOrdersFromAPI() {
+    try {
+        const response = await fetch(`${SCRIPT_URL}?action=getAllOrdersPDV`);
+        const result = await response.json();
+
+        if (result.status === "success" && result.data) {
+            activeOrdersData = result.data.map(order => ({
+                id: order.id,
+                displayId: order.displayId || order.id,
+                status: order.status,
+                client: order.client || "Cliente",
+                address: order.address || "Retirada",
+                items: order.items || "",
+                total: order.total || "R$ 0,00",
+                time: order.time || "",
+                shippingMode: (order.address && order.address.includes("Retirada")) ? "pickup" : "delivery",
+                paymentMethod: order.paymentMethod || "Online"
+            }));
+            renderDummyOrders();
+        }
+    } catch (error) {
+        console.error("Erro ao buscar pedidos da API:", error);
+    }
 }
 
 // ============================================================
@@ -3447,7 +3475,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error("Erro na rede");
             const json = await response.json();
 
-            localProductCache = json.map(p => ({
+            const dataArr = Array.isArray(json) ? json : (json.data || []);
+            localProductCache = dataArr.map(p => ({
                 ...p,
                 price: parsePrice(p.price),
                 promoPrice: parsePrice(p.promoPrice),
@@ -3618,13 +3647,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const response = await fetch(SCRIPT_URL, {
                 method: 'POST',
+                mode: 'no-cors',
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     action: 'abaterEstoqueLote',
                     itens: itensFormatados
                 })
             });
-            const result = await response.json();
-            console.log("Estoque Planilha:", result.message);
+            // Com no-cors, não conseguimos ler o result do JSON (resposta opaca).
+            console.log("Estoque Planilha: Pedido enviado ao script.");
         } catch (e) {
             console.error("Erro ao abater estoque na planilha:", e);
         }
@@ -6226,16 +6257,16 @@ document.addEventListener('DOMContentLoaded', () => {
     window.manualSetStatus = async (targetUiStatus) => {
         if (!currentOpenOrder) return;
 
-        // Mapeamento Inverso
-        const mapStatusUIToFirebase = (uiStatus) => {
-            if (uiStatus === 'pendente') return 'approved';
-            if (uiStatus === 'preparando') return 'preparation';
-            if (uiStatus === 'enviado') return 'shipped';
-            if (uiStatus === 'finalizado') return 'delivered';
+        // Mapeamento para Planilha
+        const mapStatusUIToSheet = (uiStatus) => {
+            if (uiStatus === 'pendente') return 'Pendente';
+            if (uiStatus === 'preparando') return 'Preparando';
+            if (uiStatus === 'enviado') return 'Enviado';
+            if (uiStatus === 'finalizado') return 'Finalizado';
             return uiStatus; // Fallback
         };
 
-        const newFbStatus = mapStatusUIToFirebase(targetUiStatus);
+        const newSheetStatus = mapStatusUIToSheet(targetUiStatus);
         const btn = document.getElementById('btn-update-status');
         const originalText = btn.innerHTML;
 
@@ -6246,28 +6277,27 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.disabled = true;
 
         try {
-            // Atualiza APENAS o status para evitar sobrescrever outros dados
-            await db.collection('orders').doc(currentOpenOrder.id).update({
-                status: newFbStatus,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp() // Usa timestamp do servidor
+            // Atualiza status na Planilha via Apps Script
+            const response = await fetch(SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "atualizarStatusPedido",
+                    orderId: currentOpenOrder.id,
+                    status: newSheetStatus
+                })
             });
 
-            // Atualiza visualmente o objeto local para refletir na hora sem esperar o listener
+            // Assumindo sucesso pois no-cors não devolve resposta tratável imediatamente
             currentOpenOrder.status = targetUiStatus;
-
-            // Recarrega o visual do modal para pintar as bolinhas certas
             window.openOrderDetailModal(currentOpenOrder.id);
-
-            // O listener global (startOrderPolling) vai atualizar a lista de trás automaticamente
+            // Re-render
+            renderDummyOrders();
 
         } catch (error) {
             console.error("Erro status:", error);
-            // Se der erro de cota, avisa amigavelmente
-            if (error.code === 'resource-exhausted') {
-                showCustomAlert("Erro de Cota", "Muitas atualizações recentes. Aguarde um momento.");
-            } else {
-                showCustomAlert("Erro", "Falha ao atualizar status.");
-            }
+            showCustomAlert("Erro", "Falha ao atualizar status na planilha.");
         } finally {
             btn.innerHTML = originalText;
             btn.disabled = false;

@@ -513,6 +513,11 @@ function doGet(e) {
             response = getOrdersByPhone(e.parameter.phone);
         }
 
+        // --- NOVO: BUSCAR TODOS PEDIDOS ATIVOS (PDV) ---
+        else if (action === "getAllOrdersPDV") {
+            response = getAllOrdersPDV();
+        }
+
 
         // --- AÇÃO DESCONHECIDA ---
         else {
@@ -2711,7 +2716,7 @@ function salvarPedidoSuperApp(data) {
             sheet.appendRow([
                 "Data", "ID Pedido", "ID Cliente", "Nome Cliente", "Telefone",
                 "Email", "Endereço", "Items", "Total Produtos", "Frete",
-                "Total Final", "Status", "Gateway", "Conta"
+                "Total Final", "Status", "Gateway", "Conta", "Status-id"
             ]);
             sheet.getRange("1:1").setFontWeight("bold").setBackground("#f3f3f3");
         }
@@ -2719,22 +2724,22 @@ function salvarPedidoSuperApp(data) {
         const itemsString = data.items.map(i => `${i.quantity}x ${i.name}`).join(" | ");
         const dateStr = Utilities.formatDate(new Date(), "GMT-3", "dd/MM/yyyy HH:mm:ss");
 
-        sheet.appendRow([
-            dateStr,
-            data.orderId,
-            data.userId || "guest",
-            data.clientData ? `${data.clientData.firstName} ${data.clientData.lastName}` : "Cliente",
-            data.clientData ? data.clientData.phone : "",
-            data.clientData ? data.clientData.email : "",
-            data.deliveryData ? data.deliveryData.address : "Retirada",
-            itemsString,
-            data.productsTotal,
-            data.shippingCost,
-            data.total,
-            data.status || "Pendente",
-            data.gateway || "Mercado Pago",
-            data.account || "Default"
-        ]);
+        const rowData = [];
+        rowData[0] = dateStr;
+        rowData[1] = data.orderId;
+        rowData[2] = data.userId || "guest";
+        rowData[3] = data.clientData ? `${data.clientData.firstName} ${data.clientData.lastName}` : "Cliente";
+        rowData[4] = data.clientData ? data.clientData.phone : "";
+        rowData[5] = data.clientData ? data.clientData.email : "";
+        rowData[6] = data.deliveryData ? data.deliveryData.address : "Retirada";
+        rowData[7] = itemsString;
+        rowData[8] = data.productsTotal;
+        rowData[9] = data.shippingCost;
+        rowData[10] = data.total;
+        // ...
+        rowData[14] = data.status || "Pendente"; // COLUNA O
+
+        sheet.appendRow(rowData);
 
         return { status: "success", message: "Pedido salvo na planilha" };
     } catch (e) {
@@ -2751,8 +2756,8 @@ function atualizarStatusPedidoSuperApp(orderId, newStatus) {
         // Coluna B (index 1) tem o ID do Pedido
         for (let i = 1; i < data.length; i++) {
             if (String(data[i][1]) === String(orderId)) {
-                // Coluna L (index 11) tem o Status
-                sheet.getRange(i + 1, 12).setValue(newStatus);
+                // Coluna O (index 15) tem o Status
+                sheet.getRange(i + 1, 15).setValue(newStatus);
                 return { status: "success" };
             }
         }
@@ -2773,7 +2778,7 @@ function getOrdersByPhone(phone) {
         const headers = data[0].map(h => String(h).toLowerCase().trim());
 
         const idxPhone = headers.indexOf("telefone");
-        const idxStatus = headers.indexOf("status");
+        const idxStatus = headers.indexOf("status-id") !== -1 ? headers.indexOf("status-id") : headers.indexOf("status");
         const idxOrderId = headers.indexOf("id pedido");
         const idxTotal = headers.indexOf("total final");
         const idxItems = headers.indexOf("items");
@@ -2804,6 +2809,73 @@ function getOrdersByPhone(phone) {
             const dateB = new Date(b.createdAt);
             return dateB - dateA;
         });
+
+        return { status: "success", data: orders };
+    } catch (e) {
+        return { status: "error", message: e.toString() };
+    }
+}
+
+function getAllOrdersPDV() {
+    try {
+        const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("pedidos");
+        if (!sheet) return { status: "success", data: [] };
+
+        const data = sheet.getDataRange().getValues();
+        if (data.length <= 1) return { status: "success", data: [] };
+
+        const headers = data[0].map(h => String(h).toLowerCase().trim());
+
+        const idxStatus = headers.indexOf("status-id") !== -1 ? headers.indexOf("status-id") : headers.indexOf("status");
+        if (idxStatus === -1) return { status: "success", data: [] };
+
+        const idxOrderId = headers.indexOf("id pedido");
+        const idxTotal = headers.indexOf("total final");
+        const idxItems = headers.indexOf("items");
+        const idxDate = headers.indexOf("data");
+        const idxClient = headers.indexOf("nome cliente");
+        const idxAddress = headers.indexOf("endereço");
+
+        const orders = [];
+
+        for (let i = 1; i < data.length; i++) {
+            const rawStatus = String(data[i][idxStatus] || "").toLowerCase().trim();
+            // Mapeando do padrão (aprovado, preparation, shipped, delivered)
+            // mas guardamos o status real ou formatado
+            let mappedStatus = "pendente";
+            if (rawStatus === "preparando" || rawStatus === "preparation") mappedStatus = "preparando";
+            else if (rawStatus === "enviado" || rawStatus === "shipped") mappedStatus = "enviado";
+            else if (rawStatus === "finalizado" || rawStatus === "delivered" || rawStatus === "entregue") mappedStatus = "finalizado";
+
+            // Só traz não finalizados (ou pode trazer para histórico)
+            // O frontend filtra através das abas
+            if (mappedStatus !== "finalizado") { // Limita o tamanho se necessário
+                const orderIdStr = String(data[i][idxOrderId]);
+                const dateFull = new Date(data[i][idxDate]);
+                let timeStr = "";
+                if (!isNaN(dateFull.getTime())) {
+                    const pad = (n) => n < 10 ? '0' + n : n;
+                    timeStr = `${pad(dateFull.getHours())}:${pad(dateFull.getMinutes())}`;
+                } else {
+                    timeStr = String(data[i][idxDate]).split(' ')[1] || "00:00";
+                }
+
+                orders.push({
+                    id: data[i][idxOrderId],
+                    displayId: orderIdStr.length > 5 ? orderIdStr.slice(-5) : orderIdStr,
+                    status: mappedStatus,
+                    total: typeof data[i][idxTotal] === 'number' ? data[i][idxTotal].toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : data[i][idxTotal],
+                    items: data[i][idxItems],
+                    client: data[i][idxClient],
+                    address: data[i][idxAddress] || "Retirada",
+                    time: timeStr,
+                    rawDate: data[i][idxDate]
+                });
+            }
+        }
+
+        // Ordenar por data decrescente
+        orders.sort((a, b) => new Date(b.rawDate) - new Date(a.rawDate));
 
         return { status: "success", data: orders };
     } catch (e) {
