@@ -56,7 +56,7 @@ async function refreshCartData() {
                 officialPriceCard = valPrice; // Cartão mantém preço original
             } else {
                 officialPriceCard = valPrice;
-                officialPricePix = valPrice * 0.95; // 5% de desconto PIX para produtos fora de oferta
+                officialPricePix = valPrice * 0.98; // 2% de desconto PIX para produtos fora de oferta
             }
 
             if (Math.abs(item.priceNew - officialPricePix) > 0.05 || Math.abs(item.priceOriginal - officialPriceCard) > 0.05) {

@@ -168,7 +168,7 @@ async function validateCartPrices(localCart) {
             priceBase = valPrice; // Cartão mantém preço original
         } else {
             priceBase = valPrice;
-            pricePix = valPrice * 0.95; // 5% de desconto PIX para produtos fora de oferta
+            pricePix = valPrice * 0.98; // 2% de desconto PIX para produtos fora de oferta
         }
         return { ...item, priceBase, pricePix, priceNew: pricePix };
     });
@@ -526,7 +526,7 @@ function renderTotals(totalPix, totalCard, savings, discountValue = 0, coupon = 
 function renderPaymentOptions(totalCard, totalPix) {
     // Atualiza sub-labels
     const pixSub = document.getElementById('pix-sub');
-    if (pixSub) pixSub.textContent = `${fmt(totalPix)} · 5% de desconto à vista`;
+    if (pixSub) pixSub.textContent = `${fmt(totalPix)} · 2% de desconto à vista`;
 
     const plan = getInstallmentPlan(totalCard);
     const bestFree = plan.filter(p => p.free).pop();

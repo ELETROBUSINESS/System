@@ -187,7 +187,7 @@ function buildProductCardHTML(prod) {
         priceCard = valPrice; // Cartão mantém preço original
     } else {
         priceCard = valPrice;
-        pricePix = valPrice * 0.95; // 5% de desconto PIX para produtos fora de oferta
+        pricePix = valPrice * 0.98; // 2% de desconto PIX para produtos fora de oferta
     }
 
     const fmtConfig = { style: 'currency', currency: 'BRL' };

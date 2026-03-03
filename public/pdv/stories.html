@@ -738,7 +738,7 @@
                 const valPrice = parseFloat(prod.price || 0);
                 const valOffer = parseFloat(prod['price-oferta'] || 0);
                 const baseSalePrice = (valOffer > 0 && valOffer < valPrice) ? valOffer : valPrice;
-                const pricePix = baseSalePrice * 0.95;
+                const pricePix = baseSalePrice * 0.98;
 
                 const fmtConfig = { style: 'currency', currency: 'BRL' };
                 const fmtOriginal = valPrice.toLocaleString('pt-BR', fmtConfig);
@@ -783,7 +783,7 @@
                             <h3 class="art-product-name">${prod.name}</h3>
                             
                             <div class="art-price-container">
-                                ${(valOffer > 0 || (baseSalePrice * 0.95) < valPrice) ? `<div class="art-price-old">${fmtOriginal}</div>` : ''}
+                                ${(valOffer > 0 || (baseSalePrice * 0.98) < valPrice) ? `<div class="art-price-old">${fmtOriginal}</div>` : ''}
                                 <div class="art-price-pix">${fmtPix}</div>
                             </div>
 

@@ -155,7 +155,7 @@ function renderProductView(prod, variacoesGroup, allProducts, activeIndex) {
         cardPrice = valPrice; // Cartão mantém preço original
     } else {
         cardPrice = valPrice;
-        pixPrice = valPrice * 0.95; // 5% de desconto PIX para produtos fora de oferta
+        pixPrice = valPrice * 0.98; // 2% de desconto PIX para produtos fora de oferta
     }
 
     const pageTitle = `${prod.name} | Dtudo`;
