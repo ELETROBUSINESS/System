@@ -37,6 +37,7 @@ function smartMatch(product, term) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Inicialização da busca via URL
     const urlParams = new URLSearchParams(window.location.search);
     const query = urlParams.get('q') || '';
     const category = urlParams.get('category') || '';
@@ -47,19 +48,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     let pageTitle = "Resultados | Dtudo";
     if (query) {
         pageTitle = `Busca: ${query} | Dtudo`;
-        resultsTitle.innerText = `Resultados para "${query}"`;
-        resultsSearchInput.value = query;
+        if (resultsTitle) resultsTitle.innerText = `Resultados para "${query}"`;
+        if (resultsSearchInput) resultsSearchInput.value = query;
         await performSearch(query, 'query');
     } else if (category) {
         pageTitle = `Categoria: ${category} | Dtudo`;
-        resultsTitle.innerText = `Categoria: ${category.charAt(0).toUpperCase() + category.slice(1)}`;
+        if (resultsTitle) resultsTitle.innerText = `Categoria: ${category.charAt(0).toUpperCase() + category.slice(1)}`;
         await performSearch(category, 'category');
     } else {
-        resultsTitle.innerText = "Todos os Produtos";
+        if (resultsTitle) resultsTitle.innerText = "Todos os Produtos";
         await performSearch('', 'all');
     }
 
     document.title = pageTitle;
+
+    // Configura a lógica do Modal de Busca (novo)
+    setupSearch();
+
     if (typeof gtag === 'function') {
         gtag('event', 'page_view', {
             page_title: pageTitle,
@@ -70,6 +75,133 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (typeof updateCartBadge === 'function') updateCartBadge();
 });
+
+// --- LÓGICA DO MODAL DE BUSCA (Portado de index.js) ---
+window.openSearchModal = function () {
+    const modal = document.getElementById('search-modal');
+    if (modal) {
+        modal.classList.add('show');
+        const input = document.getElementById('modal-search-input');
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
+        renderSearchHistory();
+    }
+};
+
+window.closeSearchModal = function () {
+    const modal = document.getElementById('search-modal');
+    if (modal) modal.classList.remove('show');
+};
+
+window.executeSearch = function (termOverride) {
+    const input = document.getElementById('modal-search-input');
+    const term = (termOverride && typeof termOverride === 'string') ? termOverride : (input ? input.value.trim() : "");
+    if (term) {
+        saveSearchHistory(term);
+        window.location.href = `search.html?q=${encodeURIComponent(term)}`;
+    }
+};
+
+function saveSearchHistory(term) {
+    let history = JSON.parse(localStorage.getItem('search_history') || '[]');
+    history = history.filter(h => h.toLowerCase() !== term.toLowerCase());
+    history.unshift(term);
+    localStorage.setItem('search_history', JSON.stringify(history.slice(0, 5)));
+}
+
+function renderSearchHistory() {
+    const container = document.getElementById('search-history-list');
+    const section = document.getElementById('search-history-section');
+    const history = JSON.parse(localStorage.getItem('search_history') || '[]');
+
+    if (!container || !section) return;
+    if (history.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+
+    section.style.display = 'block';
+    container.innerHTML = history.map(h => `
+        <div class="suggestion-item" onclick="window.location.href='search.html?q=${encodeURIComponent(h)}'">
+            <i class='bx bx-history'></i> ${h}
+        </div>
+    `).join('');
+}
+
+window.clearSearchHistory = function () {
+    localStorage.removeItem('search_history');
+    renderSearchHistory();
+};
+
+function setupSearch() {
+    const modalInput = document.getElementById('modal-search-input');
+    const clearBtn = document.getElementById('clear-search');
+
+    if (modalInput) {
+        modalInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') executeSearch();
+        });
+
+        modalInput.addEventListener('input', (e) => {
+            const term = e.target.value.trim().toLowerCase();
+            if (clearBtn) clearBtn.style.display = term ? 'block' : 'none';
+
+            const suggestionsList = document.getElementById('search-suggestions-list');
+            const suggestionsSection = document.getElementById('search-suggestions-section');
+            if (suggestionsList) {
+                if (term.length >= 2) {
+                    const cached = getCachedData() || [];
+                    const filtered = cached.filter(p => smartMatch(p, term)).slice(0, 6);
+
+                    if (filtered.length > 0) {
+                        suggestionsList.innerHTML = filtered.map(p => `
+                            <div class="suggestion-item" onclick="window.location.href='search.html?q=${encodeURIComponent(p.name)}'">
+                                <i class='bx bx-search'></i> ${p.name}
+                            </div>
+                        `).join('') + `
+                            <div class="suggestion-item" onclick="executeSearch()" style="background: #fdfdfd; border-top: 1px solid #eee; color: var(--color-brand-red); font-weight: 700;">
+                                <i class='bx bx-right-arrow-alt'></i> Ver todos os resultados para "${term}"
+                            </div>
+                        `;
+                        if (suggestionsSection) suggestionsSection.querySelector('.search-section-title').innerText = 'Busca Inteligente';
+                    } else {
+                        suggestionsList.innerHTML = `
+                            <div class="suggestion-item" onclick="executeSearch()">
+                                <i class='bx bx-search'></i> Buscar por "${term}"...
+                            </div>
+                        `;
+                    }
+                } else {
+                    if (suggestionsSection) suggestionsSection.querySelector('.search-section-title').innerText = 'Sugestões para você';
+                    suggestionsList.innerHTML = `
+                        <div class="suggestion-item" onclick="window.location.href='search.html?category=relogio'"><i class='bx bx-trending-up'></i> Relógios</div>
+                        <div class="suggestion-item" onclick="window.location.href='search.html?category=escolar'"><i class='bx bx-trending-up'></i> Material Escolar</div>
+                    `;
+                }
+            }
+        });
+    }
+
+    if (clearBtn) {
+        clearBtn.onclick = () => {
+            if (modalInput) {
+                modalInput.value = '';
+                modalInput.focus();
+                clearBtn.style.display = 'none';
+            }
+        };
+    }
+
+    const modal = document.getElementById('search-modal');
+    if (modal) {
+        modal.onclick = (e) => {
+            if (e.target === modal) closeSearchModal();
+        };
+    }
+}
+
 
 // Regras de parcelamento centralizadas no global.js
 
@@ -101,21 +233,30 @@ async function performSearch(term, type) {
     const suggestionsSection = document.getElementById('suggested-results-section');
     const suggestionsContainer = document.getElementById('suggested-products-container');
 
-    renderSkeletonGrid('search-results-container', 4);
+    if (!container) return;
 
+    // Tenta pegar do cache imediatamente
     let allProducts = getCachedData();
 
+    // Se NÃO tem cache, mostra skeleton e busca do zero
     if (!allProducts || allProducts.length === 0) {
+        renderSkeletonGrid('search-results-container', 4);
         try {
             const res = await fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`);
             const json = await res.json();
             if (json.status === 'success') {
                 allProducts = json.data;
                 localStorage.setItem(CACHE_KEY, JSON.stringify(allProducts));
+                localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
             }
         } catch (e) {
             console.error("Erro ao buscar produtos:", e);
         }
+    }
+
+    if (!allProducts || allProducts.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:40px; color:#666;">Erro ao carregar produtos. Verifique sua conexão.</div>';
+        return;
     }
 
     let results = [];
@@ -129,17 +270,22 @@ async function performSearch(term, type) {
             if (isExpired) {
                 results = [];
             } else {
-                results = allProducts.filter(p => parseFloat(p['price-oferta'] || 0) > 0 && parseFloat(p['price-oferta'] || 0) < parseFloat(p.price || 0));
+                results = allProducts.filter(p => {
+                    const valPrice = parseFloat(p.price || 0);
+                    const valOffer = parseFloat(p['price-oferta'] || 0);
+                    return valOffer > 0 && valOffer < valPrice;
+                });
             }
         } else {
             results = allProducts.filter(p => p.category && p.category.toLowerCase().includes(lowerCat));
         }
     } else {
-        results = allProducts;
+        // "Todos os produtos" - limitar para não travar o browser
+        results = allProducts.slice(0, 48);
     }
 
-    // Filter valid images
-    results = results.filter(p => p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co') && (p.imgUrl.startsWith('http') || p.imgUrl.includes('/')));
+    // Filtrar produtos sem nome ou imagem
+    results = results.filter(p => p.name && p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co'));
 
     if (typeof trackEvent === 'function') {
         trackEvent('search', {
@@ -149,21 +295,27 @@ async function performSearch(term, type) {
         });
     }
 
+    container.innerHTML = '';
     if (results.length > 0) {
-        container.innerHTML = '';
+        noResults.style.display = 'none';
+        suggestionsSection.style.display = 'none';
         renderProducts(results, container);
     } else {
-        container.innerHTML = '';
         noResults.style.display = 'block';
         suggestionsSection.style.display = 'block';
 
         const suggestions = allProducts
-            .filter(p => p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co') && (p.imgUrl.startsWith('http') || p.imgUrl.includes('/')))
+            .filter(p => p.name && p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co'))
             .sort(() => 0.5 - Math.random())
             .slice(0, 8);
-        renderProducts(suggestions, suggestionsContainer);
+
+        if (suggestionsContainer) {
+            suggestionsContainer.innerHTML = '';
+            renderProducts(suggestions, suggestionsContainer);
+        }
     }
 }
+
 
 function renderProducts(products, target) {
     const OFFER_DEADLINE = new Date("2026-03-02T23:59:59").getTime();
@@ -239,26 +391,33 @@ function renderProducts(products, target) {
 }
 
 window.addToCartDirect = function (id, name, priceOriginal, priceNew, img) {
-    const CART_KEY = 'app_cart';
-    let cart = JSON.parse(localStorage.getItem(CART_KEY)) || [];
-    const existingItem = cart.find(item => item.id === id);
-    if (existingItem) {
-        existingItem.quantity += 1;
+    if (typeof CartManager !== 'undefined') {
+        const product = {
+            id: id,
+            name: name,
+            priceOriginal: priceOriginal,
+            priceNew: priceNew,
+            image: img
+        };
+        CartManager.add(product);
     } else {
-        cart.push({ id: id, name: name, priceOriginal: priceOriginal, priceNew: priceNew, image: img, quantity: 1 });
-    }
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    if (typeof updateCartBadge === 'function') updateCartBadge();
+        const CART_KEY = 'app_cart';
+        let cart = JSON.parse(localStorage.getItem(CART_KEY)) || [];
+        const existingItem = cart.find(item => item.id === id);
+        if (existingItem) {
+            existingItem.quantity += 1;
+        } else {
+            cart.push({ id: id, name: name, priceOriginal: priceOriginal, priceNew: priceNew, image: img, quantity: 1 });
+        }
+        localStorage.setItem(CART_KEY, JSON.stringify(cart));
+        if (typeof updateCartBadge === 'function') updateCartBadge();
 
-    const toast = document.createElement('div');
-    toast.className = 'toast show';
-    toast.innerHTML = `<i class='bx bx-check-circle'></i> ${name} adicionado!`;
-    document.body.appendChild(toast);
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 300);
-    }, 2000);
+        if (typeof showToast === 'function') {
+            showToast(`${name} adicionado!`, "success");
+        }
+    }
 }
+
 
 function updateCartBadge() {
     const badge = document.getElementById('cart-badge');
@@ -275,3 +434,25 @@ function updateCartBadge() {
         badgeDesktop.style.display = count > 0 ? 'inline-block' : 'none';
     }
 }
+
+window.toggleSearchExpansion = function (event) {
+    if (event) event.stopPropagation();
+    const container = document.getElementById('header-search-container');
+    if (container) {
+        const isExpanded = container.classList.contains('expanded');
+        if (isExpanded) {
+            openSearchModal();
+        } else {
+            container.classList.add('expanded');
+            setTimeout(() => { openSearchModal(); }, 400);
+        }
+    }
+};
+
+document.addEventListener('click', (e) => {
+    const container = document.getElementById('header-search-container');
+    if (container && !container.contains(e.target) && window.innerWidth < 768) {
+        // No search.html, ignoramos o fechamento automático para manter a barra visível
+    }
+});
+

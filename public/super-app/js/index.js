@@ -383,10 +383,11 @@ function renderSearchHistory() {
 
     section.style.display = 'block';
     container.innerHTML = history.map(h => `
-        < div class="suggestion-item" onclick = "window.location.href='search.html?q=${encodeURIComponent(h)}'" >
+        <div class="suggestion-item" onclick="window.location.href='search.html?q=${encodeURIComponent(h)}'">
             <i class='bx bx-history'></i> ${h}
-        </div >
-        `).join('');
+        </div>
+    `).join('');
+
 }
 
 window.clearSearchHistory = function () {
@@ -418,29 +419,30 @@ function setupSearch() {
                     if (filtered.length > 0) {
                         // Ao clicar na sugestão, agora vai para a PÁGINA DE PESQUISA (Busca o termo)
                         suggestionsList.innerHTML = filtered.map(p => `
-        < div class="suggestion-item" onclick = "window.location.href='search.html?q=${encodeURIComponent(p.name)}'" >
+        <div class="suggestion-item" onclick="window.location.href='search.html?q=${encodeURIComponent(p.name)}'">
             <i class='bx bx-search'></i> ${p.name}
-                            </div >
+        </div>
         `).join('') + `
-        < div class="suggestion-item" onclick = "executeSearch()" style = "background: #fdfdfd; border-top: 1px solid #eee; color: var(--color-brand-red); font-weight: 700;" >
+        <div class="suggestion-item" onclick="executeSearch()" style="background: #fdfdfd; border-top: 1px solid #eee; color: var(--color-brand-red); font-weight: 700;">
             <i class='bx bx-right-arrow-alt'></i> Ver todos os resultados para "${term}"
-                            </div >
+        </div>
         `;
                         if (suggestionsSection) suggestionsSection.querySelector('.search-section-title').innerText = 'Busca Inteligente';
                     } else {
                         suggestionsList.innerHTML = `
-        < div class="suggestion-item" onclick = "executeSearch()" >
+        <div class="suggestion-item" onclick="executeSearch()">
             <i class='bx bx-search'></i> Buscar por "${term}"...
-                            </div >
+        </div>
         `;
                     }
                 } else {
                     if (suggestionsSection) suggestionsSection.querySelector('.search-section-title').innerText = 'Sugestões para você';
                     suggestionsList.innerHTML = `
-        < div class="suggestion-item" onclick = "window.location.href='search.html?q=relogio'" > <i class='bx bx-trending-up'></i> Relógio Masculino</div >
-                        <div class="suggestion-item" onclick="window.location.href='search.html?q=escolar'"><i class='bx bx-trending-up'></i> Material Escolar</div>
-                        <div class="suggestion-item" onclick="window.location.href='search.html?q=eletronico'"><i class='bx bx-trending-up'></i> Eletrônicos</div>
+        <div class="suggestion-item" onclick="window.location.href='search.html?q=relogio'"> <i class='bx bx-trending-up'></i> Relógio Masculino</div>
+        <div class="suggestion-item" onclick="window.location.href='search.html?q=escolar'"><i class='bx bx-trending-up'></i> Material Escolar</div>
+        <div class="suggestion-item" onclick="window.location.href='search.html?q=eletronico'"><i class='bx bx-trending-up'></i> Eletrônicos</div>
     `;
+
                 }
             }
         });
@@ -647,53 +649,45 @@ async function initProductFeed() {
 
     const container = document.getElementById('firebase-products-container');
 
-    // Inicia a busca imediatamente em background
-    const fetchPromise = (async () => {
-        const cached = getCachedData();
-        if (cached && cached.length > 0) {
-            window._apiFetched = true;
-            return cached;
-        }
-        try {
-            const response = await fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`);
-            const result = await response.json();
-            if (result.status === "success" && result.data) {
-                saveToCache(result.data);
-                return result.data;
-            }
-        } catch (e) { console.error(e); }
-        return [];
-    })();
-
-    // Garante que o skeleton seja visto por pelo menos 300ms para evitar flickering
-    const [data] = await Promise.all([
-        fetchPromise,
-        new Promise(r => setTimeout(r, 300))
-    ]);
-
-    const finalData = (data && data.length > 0) ? data : DataManager.getProducts();
-
-    if (finalData && finalData.length > 0) {
+    // 1. Tenta Cache Instantâneo para evitar tempo de espera desnecessário
+    const cached = getCachedData();
+    if (cached && cached.length > 0) {
         window._apiFetched = true;
         const urlParams = new URLSearchParams(window.location.search);
         filterLocalCategory(urlParams.get('filter') || 'todos');
 
-        // Soft refresh em background se usamos cache
-        if (data === null || data.length === 0) {
-            fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`)
-                .then(res => res.json())
-                .then(result => {
-                    if (result.status === "success" && result.data) {
-                        saveToCache(result.data);
-                        // Se mudou algo, o evento productsUpdated (global) cuidará de atualizar o feed
-                    }
-                }).catch(() => { });
+        // Esconde loader se existir
+        const customLoader = document.getElementById('custom-loader-overlay');
+        if (customLoader) customLoader.style.display = 'none';
+
+        // Faz um sync em background silencioso se necessário (via global.js DataManager)
+        if (typeof DataManager !== 'undefined') DataManager.sync();
+    } else {
+        // 2. Se não tem cache, aí sim fazemos o processo com loading/skeleton
+        const fetchPromise = (async () => {
+            try {
+                const response = await fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`);
+                const result = await response.json();
+                if (result.status === "success" && result.data) {
+                    saveToCache(result.data);
+                    return result.data;
+                }
+            } catch (e) { console.error(e); }
+            return [];
+        })();
+
+        const [data] = await Promise.all([
+            fetchPromise,
+            new Promise(r => setTimeout(r, 400)) // Skeleton visível por um momento se não há cache
+        ]);
+
+        if (data && data.length > 0) {
+            window._apiFetched = true;
+            const urlParams = new URLSearchParams(window.location.search);
+            filterLocalCategory(urlParams.get('filter') || 'todos');
         }
     }
 
-    // Hide custom loader gracefully after cached payload injects
-    const customLoader = document.getElementById('custom-loader-overlay');
-    if (customLoader) customLoader.style.display = 'none';
 
     const sentinel = document.getElementById('scroll-sentinel');
     if (sentinel) {
@@ -705,6 +699,7 @@ async function initProductFeed() {
         observer.observe(sentinel);
     }
 }
+
 
 window.filterLocalCategory = function (categoryStr) {
     let cached = getCachedData();
@@ -904,12 +899,12 @@ async function loadProductDetail(id) {
         const fmtInstallmentValue = new Intl.NumberFormat('pt-BR', fmtConfig).format(installmentValue);
 
         const installmentBlock = `
-        < div class="installment-container" >
+        <div class="installment-container">
             <div class="installment-main">
                 <i class='bx bx-credit-card-front'></i>
                 <span>Em até <strong>${maxInstallments}x</strong> de <strong>${fmtInstallmentValue}</strong> sem juros</span>
             </div>
-            </div >
+        </div>
         `;
 
         // Bloco de Preço
@@ -918,13 +913,13 @@ async function loadProductDetail(id) {
             const savings = valPrice - valOffer;
             const fmtSavings = new Intl.NumberFormat('pt-BR', fmtConfig).format(savings);
             priceBlock = `
-        < div class="detail-price-old" > ${fmtOld}</div >
+                <div class="detail-price-old">${fmtOld}</div>
                 <div class="detail-price-current">${fmtFinal}</div>
                 <span class="detail-savings-text">Você economiza ${fmtSavings}</span>
-    `;
+            `;
         } else {
             priceBlock = `
-        < div class="detail-price-current" > ${fmtFinal}</div >
+                <div class="detail-price-current">${fmtFinal}</div>
             `;
         }
 
@@ -936,32 +931,32 @@ async function loadProductDetail(id) {
 
         if (stockCount <= 0) {
             stockHtml = `
-            < div class="stock-scarcity-container" >
+                <div class="stock-scarcity-container">
                     <div class="stock-label"><strong style="color:#999">Esgotado</strong></div>
                     <div class="stock-track"><div class="stock-fill" style="width:0"></div></div>
-                </div > `;
+                </div>`;
         } else if (stockCount <= maxRef) {
             let scarcityRatio = 1 - (stockCount / maxRef);
             if (stockCount === 1) scarcityRatio = 0.95;
             if (scarcityRatio < 0.1) scarcityRatio = 0.1;
             const barWidth = scarcityRatio * 100;
             stockHtml = `
-        < div class="stock-scarcity-container" >
+                <div class="stock-scarcity-container">
                     <div class="stock-label">
                         <span>Disponibilidade: ${stockCount} itens</span>
                         <strong style="color:#db0038">Restam poucas unidades!</strong>
                     </div>
                     <div class="stock-track"><div class="stock-fill" style="width:${barWidth}%; background:#db0038"></div></div>
-                </div > `;
+                </div>`;
         } else {
             stockHtml = `
-        < div class="stock-scarcity-container" >
-            <div class="stock-label">
-                <strong style="color:#00a650; display:flex; align-items:center; gap:5px;">
-                    <i class='bx bxs-check-circle'></i> Disponível em estoque
-                </strong>
-            </div>
-                </div > `;
+                <div class="stock-scarcity-container">
+                    <div class="stock-label">
+                        <strong style="color:#00a650; display:flex; align-items:center; gap:5px;">
+                            <i class='bx bxs-check-circle'></i> Disponível em estoque
+                        </strong>
+                    </div>
+                </div>`;
         }
 
         // --- VARIAÇÕES (LINKED VARIANTS - VISUAL) ---
@@ -970,54 +965,52 @@ async function loadProductDetail(id) {
 
             // Renderiza as outras opções
             const othersHtml = prod.linkedVariants.map(v => `
-        < div class="variant-option" onclick = "window.location.href='product.html?id=${v.id}'" title = "${v.name}" >
-            <img src="${v.img || 'https://placehold.co/60'}" alt="${v.name}">
-                <span>${v.name}</span>
-            </div>
-    `).join('');
+                <div class="variant-option" onclick="window.location.href='product.html?id=${v.id}'" title="${v.name}">
+                    <img src="${v.img || 'https://placehold.co/60'}" alt="${v.name}">
+                    <span>${v.name}</span>
+                </div>
+            `).join('');
 
             // Renderiza a opção atual (Ativa)
             const currentHtml = `
-        < div class="variant-option current" title = "Selecionado: ${prod.name}" >
-            <img src="${currentDetailImages[0]}" alt="${prod.name}">
-                <span>${prod.name}</span>
-            </div>
-    `;
+                <div class="variant-option current" title="Selecionado: ${prod.name}">
+                    <img src="${currentDetailImages[0]}" alt="${prod.name}">
+                    <span>${prod.name}</span>
+                </div>
+            `;
 
             linkedVariantsHtml = `
-        < div class="linked-variants-section" >
+                <div class="linked-variants-section">
                     <div class="linked-variants-title">Variações disponíveis:</div>
                     <div class="linked-variants-list">
                         ${currentHtml}
                         ${othersHtml}
                     </div>
-                </div >
-        `;
+                </div>
+            `;
         }
 
         // --- VARIAÇÕES (TEXTO SIMPLES - LEGADO) ---
-        // Mantemos isso caso você use variações simples como "Tamanho: P;M;G" dentro do mesmo produto ID
         let variantsHtml = '';
         if (prod.variants) {
             const vList = Array.isArray(prod.variants) ? prod.variants : prod.variants.split(';');
             if (vList.length > 0) {
-                const btns = vList.map((v, i) => `< div class="variant-btn ${i === 0 ? 'selected' : ''}" onclick = "selectVariant(this)" > ${v.trim()}</div > `).join('');
-                variantsHtml = `< div class="variants-section" ><div class="variants-title">Opções:</div><div class="variants-list">${btns}</div></div > `;
+                const btns = vList.map((v, i) => `<div class="variant-btn ${i === 0 ? 'selected' : ''}" onclick="selectVariant(this)">${v.trim()}</div>`).join('');
+                variantsHtml = `<div class="variants-section"><div class="variants-title">Opções:</div><div class="variants-list">${btns}</div></div>`;
             }
         }
 
         // --- GALERIA THUMBNAILS ---
         const thumbsHtml = currentDetailImages.length > 1 ? `
-        < div class="thumbnails-scroll" >
-            ${currentDetailImages.map((src, i) => `
+            <div class="thumbnails-scroll">
+                ${currentDetailImages.map((src, i) => `
                     <img src="${src}" class="thumbnail-item ${i === 0 ? 'active' : ''}" onclick="swapDetailImage('${src}', this)">
-                `).join('')
-            }
-            </div > ` : '';
+                `).join('')}
+            </div>` : '';
 
         // --- MONTAGEM FINAL DO HTML ---
         content.innerHTML = `
-        < div class="detail-view-container" >
+            <div class="detail-view-container">
                 <div class="detail-gallery-container">
                     <div class="main-image-wrapper">
                         <img id="main-detail-img" src="${currentDetailImages[0]}" alt="${prod.name}" onclick="openZoom(this.src)">
@@ -1025,6 +1018,7 @@ async function loadProductDetail(id) {
                     </div>
                     ${thumbsHtml}
                 </div>
+
 
                 <div class="detail-info">
                     <div class="detail-status">Novo | ${soldCount} vendidos</div>
@@ -1212,10 +1206,11 @@ async function fetchLiveRating(productId) {
             }
             if (ratingBox) {
                 ratingBox.innerHTML = `
-        < div class="review-stars-static" > ${starsHtml}</div >
+        <div class="review-stars-static">${starsHtml}</div>
             <span style="font-size:0.9rem; color:#666; font-weight:600;">(${count})</span>
     `;
             }
+
         }
     } catch (e) {
         console.error("Erro ao calcular média:", e);
@@ -1227,14 +1222,15 @@ async function checkUserReviewStatus(productId) {
 
     if (!auth.currentUser) {
         container.innerHTML = `
-        < div style = "text-align:center; padding: 20px; background:#f9f9f9; border-radius:8px;" >
+        <div style="text-align:center; padding: 20px; background:#f9f9f9; border-radius:8px;">
                 <p style="color:#666; margin-bottom:10px;">Quer avaliar este produto?</p>
                 <button onclick="document.getElementById('user-profile-modal').classList.add('show')" class="btn-add-cart" style="width:auto; padding:10px 20px;">
                     Fazer Login
                 </button>
-            </div > `;
+            </div>`;
         return;
     }
+
 
     try {
         const snapshot = await db.collection('artifacts').doc(APP_ID)
@@ -1275,13 +1271,13 @@ function renderReviewForm(isEditing, data) {
     for (let i = 1; i <= 5; i++) {
         const cls = (i <= selectedRating) ? 'bx bxs-star active' : 'bx bx-star';
         const style = (i <= selectedRating) ? 'color:#3483fa' : 'color:#e0e0e0';
-        starsHtml += `< i class='${cls}' style = '${style}' data - val="${i}" onclick = "setRating(${i})" ></i > `;
+        starsHtml += `<i class='${cls}' style='${style}' data-val="${i}" onclick="setRating(${i})"></i>`;
     }
 
     const imgPreviewStyle = existingImg ? "display:block;" : "display:none;";
 
     container.innerHTML = `
-        < div class="comment-form" >
+        <div class="comment-form">
             <span class="rating-label">${title}</span>
             <div class="rating-input" id="star-input-group">
                 ${starsHtml}
@@ -1302,6 +1298,7 @@ function renderReviewForm(isEditing, data) {
             </div>
         </div>
     `;
+
 }
 
 // --- FUNÇÕES DE SUPORTE ---
@@ -1472,12 +1469,13 @@ async function loadReviews(productId) {
 
         if (!html) {
             html = `
-        < div class="empty-reviews" >
+        <div class="empty-reviews">
                     <i class='bx bx-star'></i>
                     <p>Este produto ainda não tem avaliações.</p>
                     <small>Seja o primeiro a contar sua experiência!</small>
-                </div > `;
+                </div>`;
         }
+
         listEl.innerHTML = html;
 
     } catch (e) {
@@ -1502,12 +1500,12 @@ function renderReviewItem(data, isPending) {
     }
 
     const initial = data.userName ? data.userName.charAt(0).toUpperCase() : "C";
-    const imgHtml = data.image ? `< img src = "${data.image}" class="review-image-attachment" onclick = "window.open('${data.image}')" title = "Ver zoom" > ` : '';
+    const imgHtml = data.image ? `<img src="${data.image}" class="review-image-attachment" onclick="window.open('${data.image}')" title="Ver zoom">` : '';
 
     const style = isPending ? 'opacity:0.8;' : '';
 
     return `
-        < div class="comment-item" style = "${style}" >
+        <div class="comment-item" style="${style}">
             <div class="review-card-header">
                 <div class="review-avatar">${initial}</div>
                 <div>
@@ -1519,8 +1517,9 @@ function renderReviewItem(data, isPending) {
             
             <div class="comment-text">${data.text}</div>
             ${imgHtml}
-        </div >
+        </div>
         `;
+
 }
 
 // Adicione esta função ao seu arquivo index.js (pode ser antes do DOMContentLoaded)
@@ -1688,7 +1687,7 @@ function renderSuggestedProducts(currentProd, allProducts) {
         const fmtPrice = finalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
         html += `
-        < div class="category-item" style = "min-width: 140px; text-align: left; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: transform 0.2s; cursor: pointer;" onclick = "window.location.href='product.html?id=${prod.id}'" >
+        <div class="category-item" style="min-width: 140px; text-align: left; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: transform 0.2s; cursor: pointer;" onclick="window.location.href='product.html?id=${prod.id}'">
             <img src="${displayImg}" style="width: 100%; height: 120px; object-fit: cover;">
                 <div style="padding: 10px;">
                     <div style="font-size: 0.8rem; color: #444; height: 32px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.2; margin-bottom: 5px;">${prod.name}</div>
@@ -1696,6 +1695,7 @@ function renderSuggestedProducts(currentProd, allProducts) {
                 </div>
             </div>
     `;
+
     });
     container.innerHTML = html;
 }

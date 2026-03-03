@@ -97,51 +97,57 @@ function renderEmptyState() {
 function renderCartPage() {
     const items = CartManager.get();
     const container = document.getElementById("cart-items-container");
+    const storeWrapper = document.getElementById("cart-store-wrapper");
     const fixedSummary = document.getElementById("fixed-summary");
 
+
     if (items.length === 0) {
+        if (storeWrapper) storeWrapper.style.display = 'none';
         renderEmptyState();
         return;
     }
 
+    if (storeWrapper) storeWrapper.style.display = 'block';
     if (fixedSummary) fixedSummary.style.display = 'block';
-    const couponSection = document.getElementById("coupon-section");
-    if (couponSection) couponSection.style.display = 'block';
     if (container) container.innerHTML = "";
 
+
     items.forEach(item => {
-        const pricePix = parseFloat(item.priceNew || 0);
-        const priceCard = parseFloat(item.priceOriginal || item.priceNew || 0);
-        const hasDiscount = (priceCard - pricePix) > 0.05;
+        const priceOffer = parseFloat(item.priceNew || 0); // Preço com desconto/oferta
+        const priceOriginal = parseFloat(item.priceOriginal || item.priceNew || 0); // Preço de tabela
+        const hasOffer = (priceOriginal - priceOffer) > 0.05;
 
         const html = `
             <div class="cart-item-card" data-id="${item.id}">
+                <button class="remove-btn" onclick="removeItem('${item.id}')"><i class='bx bx-trash'></i></button>
                 <img src="${item.image}" alt="${item.name}" class="cart-item-img" onclick="window.location.href='product.html?id=${item.id}'">
                 <div class="cart-item-details">
                     <div onclick="window.location.href='product.html?id=${item.id}'">
                         <h4 class="cart-item-name">${item.name}</h4>
-                        <div class="cart-item-price-row">
-                            ${hasDiscount ? `<span class="price-old-cart">${formatCurrency(priceCard)}</span>` : ''}
-                            <span class="price-new-cart">${formatCurrency(pricePix)}</span>
-                            <span class="price-pix-badge">Pix</span>
-                        </div>
-                        ${getInstallmentHtml(priceCard)}
                     </div>
+                    
                     <div class="cart-item-actions">
                         <div class="qty-selector">
                             <button class="qty-btn" onclick="updateQty('${item.id}', -1)">-</button>
                             <span class="qty-value">${item.quantity}</span>
                             <button class="qty-btn" onclick="updateQty('${item.id}', 1)">+</button>
                         </div>
-                        <button class="remove-btn" onclick="removeItem('${item.id}')">
-                            <i class='bx bx-trash'></i>
-                        </button>
+                    </div>
+
+                    <div class="cart-item-price-row" style="margin-top: auto;">
+                        ${hasOffer ? `<span class="price-old-cart">${formatCurrency(priceOriginal)}</span>` : ''}
+                        <div style="display: flex; align-items: baseline; gap: 5px;">
+                            <span class="price-new-cart">${formatCurrency(priceOffer)}</span>
+                            <span style="font-size: 0.75rem; color: #00a650; font-weight: 600;">no Pix</span>
+                        </div>
                     </div>
                 </div>
             </div>
         `;
         if (container) container.insertAdjacentHTML('beforeend', html);
     });
+
+
 
     updateSummary();
 }
@@ -166,25 +172,30 @@ window.removeItem = function (id) {
 
 function updateSummary() {
     const items = CartManager.get();
-    let totalPix = 0;
-    let totalCard = 0;
+    let subtotal = 0; // Soma dos preços originais
+    let savingsBase = 0; // Diferença entre original e oferta do item
 
     items.forEach(item => {
         const qty = item.quantity || 1;
-        totalPix += (parseFloat(item.priceNew) || 0) * qty;
-        totalCard += (parseFloat(item.priceOriginal || item.priceNew) || 0) * qty;
+        const pOrig = parseFloat(item.priceOriginal || item.priceNew || 0);
+        const pOffer = parseFloat(item.priceNew || 0);
+
+        subtotal += pOrig * qty;
+        savingsBase += (pOrig - pOffer) * qty;
     });
+
+    const totalBeforeCoupon = subtotal - savingsBase;
 
     // Lógica de Cupom
     const coupon = JSON.parse(sessionStorage.getItem('applied_coupon') || 'null');
-    let discountValue = 0;
+    let couponDiscountValue = 0;
     const serverProducts = typeof DataManager !== 'undefined' ? (DataManager.getProducts() || []) : [];
 
     if (coupon) {
         if (coupon.code === 'VALE5') {
-            discountValue = 5.00;
+            couponDiscountValue = 5.00;
         } else if (coupon.code === 'APROVEITA26') {
-            discountValue = totalPix * 0.12;
+            couponDiscountValue = totalBeforeCoupon * 0.12;
         } else if (coupon.code === 'LAYLA10') {
             let laylaTotal = 0;
             items.forEach(item => {
@@ -194,46 +205,35 @@ function updateSummary() {
                     laylaTotal += (parseFloat(item.priceNew) || 0) * (item.quantity || 1);
                 }
             });
-            discountValue = laylaTotal * 0.10;
+            couponDiscountValue = laylaTotal * 0.10;
         }
     }
 
-    const finalPix = Math.max(0, totalPix - discountValue);
-    const finalCard = Math.max(0, totalCard - (coupon ? discountValue : 0)); // No cartão o desconto é o mesmo valor nominal? O usuário disse: "somado com desconto se o pagamento for no pix" para o APROVEITA26. Geralmente cupons de % aplicam sobre o valor base. 
-    // "APROVEITA26 cupom de 12% de desconto (somado com desconto se o pagamento for no pix)"
-    // Isso sugere que o desconto de 12% é sobre o valor que já tem desconto de Pix se for Pix.
-
-    const savings = totalCard - finalPix;
+    const finalPix = Math.max(0, totalBeforeCoupon - couponDiscountValue);
+    const totalDiscounts = savingsBase + couponDiscountValue;
     const fmt = { style: 'currency', currency: 'BRL' };
 
+    // Elementos DOM
+    const elSubtotal = document.getElementById("summary-subtotal");
     const elPix = document.getElementById("summary-total-pix");
-    const elCard = document.getElementById("summary-total-card");
-    const elSavings = document.getElementById("savings-container");
     const elCouponRow = document.getElementById("coupon-summary-row");
     const elCouponVal = document.getElementById("summary-coupon-value");
 
+    if (elSubtotal) elSubtotal.innerText = formatCurrency(subtotal);
     if (elPix) elPix.innerText = formatCurrency(finalPix);
-    if (elCard) elCard.innerText = `ou ${formatCurrency(finalCard)} no cartão`;
 
-    if (elCouponRow && elCouponVal) {
-        if (coupon) {
-            elCouponRow.style.display = 'flex';
-            elCouponVal.innerText = `- ${discountValue.toLocaleString('pt-BR', fmt)}`;
-        } else {
-            elCouponRow.style.display = 'none';
-        }
+    if (totalDiscounts > 0.05) {
+        if (elCouponRow) elCouponRow.style.display = 'flex';
+        if (elCouponVal) elCouponVal.innerText = `- ${totalDiscounts.toLocaleString('pt-BR', fmt)}`;
+    } else {
+        if (elCouponRow) elCouponRow.style.display = 'none';
     }
 
-    if (elSavings) {
-        if (savings > 0.05) {
-            elSavings.innerHTML = `<span class="savings-badge">Economia de ${savings.toLocaleString('pt-BR', fmt)}</span>`;
-        } else {
-            elSavings.innerHTML = '';
-        }
-    }
 
     renderCouponUI(coupon);
 }
+
+
 
 function renderCouponUI(coupon) {
     const row = document.getElementById('applied-coupon-row');

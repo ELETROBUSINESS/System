@@ -141,7 +141,20 @@ const DataManager = {
     },
 
     sync: async function () {
+        const now = Date.now();
+        const lastSync = parseInt(localStorage.getItem(CACHE_TIME_KEY) || '0');
+
+        // Se sincronizou nos últimos 60 segundos, não busca de novo (evita lentidão entre telas)
+        if (now - lastSync < CACHE_DURATION && localStorage.getItem(CACHE_KEY)) {
+            console.log("[DataManager] Cache recente, pulando sincronização.");
+            return;
+        }
+
+        if (this._isSyncing) return;
+        this._isSyncing = true;
+
         try {
+            console.log("[DataManager] Sincronizando produtos...");
             const response = await fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`);
             const result = await response.json();
 
@@ -150,23 +163,24 @@ const DataManager = {
                 const newDataStr = JSON.stringify(result.data);
 
                 if (oldData !== newDataStr) {
-                    console.log("[DataManager] Detectadas mudanças no banco central.");
-
-                    // Salva novos dados
+                    console.log("[DataManager] Dados atualizados detectados.");
                     localStorage.setItem(CACHE_KEY, newDataStr);
                     localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
 
-                    // Mecânica de 10s para refletir a atualização para o usuário
-                    setTimeout(() => {
-                        console.log("[DataManager] Refletindo novas informações...");
-                        document.dispatchEvent(new CustomEvent('productsUpdated', { detail: result.data }));
-                    }, 1000); // 1s após atualizar por completo converter feedback visual
+                    // Notifica interessados
+                    document.dispatchEvent(new CustomEvent('productsUpdated', { detail: result.data }));
+                } else {
+                    // Mesmo se os dados forem iguais, atualiza o tempo para não dar fetch de novo logo em seguida
+                    localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
                 }
             }
         } catch (e) {
             console.error("[DataManager] Erro ao sincronizar:", e);
+        } finally {
+            this._isSyncing = false;
         }
     },
+
 
     getProducts: function () {
         const data = localStorage.getItem(CACHE_KEY);
@@ -352,15 +366,45 @@ function setupGlobalEvents() {
         });
     }
 
-    // Menu "Mais" e Modais globais (Perfil)
-    const profileBtn = document.getElementById("profile-button-mobile"); // Botão mobile
-    const profileModal = document.getElementById("user-profile-modal");
+    // Localização
+    const locationBar = document.getElementById("location-bar-trigger");
+    if (locationBar) {
+        locationBar.addEventListener("click", openLocationModal);
+    }
 
-    // O botão desktop já tem lógica inline no HTML, mas o mobile precisa disso:
-    if (profileBtn && profileModal) {
-        profileBtn.addEventListener("click", () => profileModal.classList.add("show"));
+    updateLocationUI();
+}
 
-        const closeBtn = profileModal.querySelector(".modal-close");
-        if (closeBtn) closeBtn.addEventListener("click", () => profileModal.classList.remove("show"));
+// --- LÓGICA DE LOCALIZAÇÃO ---
+function updateLocationUI() {
+    const loc = localStorage.getItem('user_location') || 'Selecionar endereço';
+    const textEl = document.getElementById('current-location-text');
+    if (textEl) textEl.innerText = loc;
+}
+
+function openLocationModal() {
+    const modal = document.getElementById('location-modal');
+    if (modal) modal.classList.add('show');
+}
+
+window.selectLocation = function (city) {
+    localStorage.setItem('user_location', `Enviar para ${city}`);
+    updateLocationUI();
+    const modal = document.getElementById('location-modal');
+    if (modal) modal.classList.remove('show');
+    showToast(`Endereço alterado para ${city}`);
+}
+
+window.applyCEP = function () {
+    const input = document.getElementById('cep-input');
+    const cep = input ? input.value.trim() : '';
+    if (cep.length >= 8) {
+        localStorage.setItem('user_location', `CEP ${cep}`);
+        updateLocationUI();
+        const modal = document.getElementById('location-modal');
+        if (modal) modal.classList.remove('show');
+        showToast(`CEP ${cep} aplicado`);
+    } else {
+        showToast("Insira um CEP válido", "error");
     }
 }

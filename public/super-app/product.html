@@ -39,6 +39,15 @@
         </div>
     </header>
 
+    <div class="location-bar" id="location-bar-trigger">
+        <div class="location-container">
+            <i class='bx bx-map'></i>
+            <span class="location-text" id="current-location-text">Selecionar endereço</span>
+            <i class='bx bx-chevron-right'></i>
+        </div>
+    </div>
+
+
     <main>
         <div id="product-detail-view" style="padding-top: 20px;">
             <div class="container" id="detail-content">
@@ -96,7 +105,55 @@
 
     <div id="toast-notification" class="toast"></div>
 
+    <div id="location-modal" class="modal-overlay">
+        <div class="modal-content" style="padding: 0; overflow: hidden; max-width: 450px;">
+            <div
+                style="padding: 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between;">
+                <h3 style="font-size: 1.1rem;">Escolha sua localização</h3>
+                <button class="modal-close"
+                    onclick="document.getElementById('location-modal').classList.remove('show')">&times;</button>
+            </div>
+
+            <div class="location-option" onclick="selectLocation('Ipixuna do Pará')">
+                <i class='bx bx-map-pin'></i>
+                <div>
+                    <strong>Ipixuna do Pará</strong>
+                    <p style="font-size: 0.75rem; color: #888;">Entrega expressa na cidade</p>
+                </div>
+            </div>
+
+            <div class="location-option" onclick="selectLocation('Aurora do Pará')">
+                <i class='bx bx-map-pin'></i>
+                <div>
+                    <strong>Aurora do Pará</strong>
+                    <p style="font-size: 0.75rem; color: #888;">Entrega via transportadora</p>
+                </div>
+            </div>
+
+            <div class="location-option" onclick="selectLocation('Paragominas')">
+                <i class='bx bx-map-pin'></i>
+                <div>
+                    <strong>Paragominas</strong>
+                    <p style="font-size: 0.75rem; color: #888;">Entrega via transportadora</p>
+                </div>
+            </div>
+
+            <div class="cep-input-group"
+                style="margin: 15px; background: #f9f9f9; padding: 15px; border-radius: 12px; border: 1px solid #eee;">
+                <span style="font-size: 0.85rem; font-weight: 500;">Ou informe um CEP</span>
+                <div class="cep-input-wrapper" style="display: flex; gap: 10px; margin-top: 8px;">
+                    <input type="text" id="cep-input" placeholder="00000-000" maxlength="9"
+                        style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; outline: none;">
+                    <button class="cep-btn" onclick="applyCEP()"
+                        style="background: #c20026; color: #fff; padding: 10px 15px; border-radius: 8px; font-weight: 700;">Aplicar</button>
+                </div>
+            </div>
+            <div style="height: 20px;"></div>
+        </div>
+    </div>
+
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="js/global.js?v=2.3"></script>
