@@ -75,20 +75,21 @@ async function refreshCartData() {
 }
 
 function renderEmptyState() {
-    const container = document.getElementById("cart-items-container");
+    const emptyContainer = document.getElementById("empty-cart-container");
+    const storeWrapper = document.getElementById("cart-store-wrapper");
     const fixedSummary = document.getElementById("fixed-summary");
 
     if (fixedSummary) fixedSummary.style.display = 'none';
-    const couponSection = document.getElementById("coupon-section");
-    if (couponSection) couponSection.style.display = 'none';
+    if (storeWrapper) storeWrapper.style.display = 'none';
 
-    if (container) {
-        container.innerHTML = `
+    if (emptyContainer) {
+        emptyContainer.style.display = 'block';
+        emptyContainer.innerHTML = `
             <div class="empty-cart-view">
                 <i class='bx bx-cart-alt empty-icon'></i>
                 <h3 class="empty-title">Seu cesto está vazio</h3>
-                <p class="empty-desc">Adicione produtos para começar suas compras com os melhores descontos do Pará!</p>
-                <a href="index.html" class="btn-return">Explorar Produtos</a>
+                <p class="empty-desc">Você ainda não selecionou nenhum produto. Adicione itens para aproveitar as melhores ofertas!</p>
+                <a href="index.html" class="btn-return" style="display: inline-block; text-decoration: none; margin-top: 10px;">Explorar Produtos</a>
             </div>
         `;
     }
@@ -102,10 +103,12 @@ function renderCartPage() {
 
 
     if (items.length === 0) {
-        if (storeWrapper) storeWrapper.style.display = 'none';
         renderEmptyState();
         return;
     }
+
+    const emptyContainer = document.getElementById("empty-cart-container");
+    if (emptyContainer) emptyContainer.style.display = 'none';
 
     if (storeWrapper) storeWrapper.style.display = 'block';
     if (fixedSummary) fixedSummary.style.display = 'block';

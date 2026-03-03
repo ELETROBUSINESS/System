@@ -16,7 +16,7 @@
         body {
             background-color: #f5f5f5;
             padding-top: calc(var(--header-height) + 36px);
-            padding-bottom: 220px;
+            padding-bottom: 320px;
         }
 
 
@@ -81,9 +81,9 @@
 
         .cart-item-card {
             background: #fff;
-            padding: 15px;
+            padding: 12px;
             display: flex;
-            gap: 15px;
+            gap: 12px;
             border-bottom: 1px solid #f5f5f5;
             align-items: flex-start;
             position: relative;
@@ -95,8 +95,8 @@
 
 
         .cart-item-img {
-            width: 160px;
-            height: 160px;
+            width: 125px;
+            height: 125px;
             border-radius: 8px;
             object-fit: cover;
             background: #f9f9f9;
@@ -107,11 +107,12 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            min-height: 160px;
+            min-height: 125px;
+            justify-content: space-between;
         }
 
         .cart-item-name {
-            font-size: 0.95rem;
+            font-size: 0.90rem;
             font-weight: 500;
             color: #333;
             margin-bottom: 6px;
@@ -164,18 +165,18 @@
             background: #fff;
             border: 1px solid #ddd;
             border-radius: 8px;
-            height: 34px;
+            height: 28px;
         }
 
         .qty-btn {
-            width: 34px;
+            width: 28px;
             height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
             background: transparent;
             color: #3483fa;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             border: none;
         }
 
@@ -187,8 +188,8 @@
 
         .remove-btn {
             position: absolute;
-            top: 15px;
-            right: 15px;
+            top: 12px;
+            right: 12px;
             color: #999;
             font-size: 1.3rem;
             background: transparent;
@@ -282,6 +283,8 @@
             padding: 12px 30px;
             border-radius: 30px;
             font-weight: 600;
+            display: inline-block;
+            text-decoration: none;
         }
 
         .savings-badge {
@@ -389,6 +392,9 @@
                 <!-- Injetado via JS -->
             </div>
         </div>
+
+        <!-- Empty State Container -->
+        <div id="empty-cart-container" style="display: none;"></div>
 
 
 

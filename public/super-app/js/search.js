@@ -37,40 +37,45 @@ function smartMatch(product, term) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Inicialização da busca via URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const query = urlParams.get('q') || '';
-    const category = urlParams.get('category') || '';
+    console.log("[Search] Inicializando busca...");
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const query = urlParams.get('q') || '';
+        const category = urlParams.get('category') || '';
 
-    const resultsTitle = document.getElementById('search-results-title');
-    const resultsSearchInput = document.getElementById('results-search-input');
+        const resultsTitle = document.getElementById('search-results-title');
+        const resultsSearchInput = document.getElementById('results-search-input');
 
-    let pageTitle = "Resultados | Dtudo";
-    if (query) {
-        pageTitle = `Busca: ${query} | Dtudo`;
-        if (resultsTitle) resultsTitle.innerText = `Resultados para "${query}"`;
-        if (resultsSearchInput) resultsSearchInput.value = query;
-        await performSearch(query, 'query');
-    } else if (category) {
-        pageTitle = `Categoria: ${category} | Dtudo`;
-        if (resultsTitle) resultsTitle.innerText = `Categoria: ${category.charAt(0).toUpperCase() + category.slice(1)}`;
-        await performSearch(category, 'category');
-    } else {
-        if (resultsTitle) resultsTitle.innerText = "Todos os Produtos";
-        await performSearch('', 'all');
-    }
+        let pageTitle = "Resultados | Dtudo";
+        if (query) {
+            console.log("[Search] Termo de busca:", query);
+            pageTitle = `Busca: ${query} | Dtudo`;
+            if (resultsTitle) resultsTitle.innerText = `Resultados para "${query}"`;
+            if (resultsSearchInput) resultsSearchInput.value = query;
+            await performSearch(query, 'query');
+        } else if (category) {
+            console.log("[Search] Categoria:", category);
+            pageTitle = `Categoria: ${category} | Dtudo`;
+            if (resultsTitle) resultsTitle.innerText = `Categoria: ${category.charAt(0).toUpperCase() + category.slice(1)}`;
+            await performSearch(category, 'category');
+        } else {
+            console.log("[Search] Nenhum termo, mostrando todos");
+            if (resultsTitle) resultsTitle.innerText = "Todos os Produtos";
+            await performSearch('', 'all');
+        }
 
-    document.title = pageTitle;
+        document.title = pageTitle;
+        setupSearch();
 
-    // Configura a lógica do Modal de Busca (novo)
-    setupSearch();
-
-    if (typeof gtag === 'function') {
-        gtag('event', 'page_view', {
-            page_title: pageTitle,
-            page_location: window.location.href,
-            page_path: window.location.pathname + window.location.search
-        });
+        if (typeof gtag === 'function') {
+            gtag('event', 'page_view', {
+                page_title: pageTitle,
+                page_location: window.location.href,
+                page_path: window.location.pathname + window.location.search
+            });
+        }
+    } catch (error) {
+        console.error("[Search] Erro fatal na inicialização:", error);
     }
 
     if (typeof updateCartBadge === 'function') updateCartBadge();
@@ -239,12 +244,16 @@ function renderSkeletonGrid(containerId, count = 4) {
 }
 
 async function performSearch(term, type) {
+    console.log(`[Search] performSearch iniciada: term="${term}", type="${type}"`);
     const container = document.getElementById('search-results-container');
     const noResults = document.getElementById('no-results-message');
     const suggestionsSection = document.getElementById('suggested-results-section');
     const suggestionsContainer = document.getElementById('suggested-products-container');
 
-    if (!container) return;
+    if (!container) {
+        console.error("[Search] Container 'search-results-container' não encontrado!");
+        return;
+    }
 
     // Tenta pegar do cache imediatamente
     let allProducts = getCachedData();
