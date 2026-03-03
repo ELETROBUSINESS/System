@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de DANFE Simplificada</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- JsBarcode -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
+    <!-- Ícones -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Estilos específicos para a visualização da DANFE */
+        .etiqueta-preview {
+            width: 10cm;
+            min-height: 10cm;
+            /* Altura ajustável, mas com mínimo padrão */
+            background-color: white;
+            border: 1px solid #d1d5db;
+            padding: 0.5cm;
+            font-family: Arial, Helvetica, sans-serif;
+            /* Fonte padrão de nota fiscal */
+            color: #000;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        /* Força a quebra de palavras longas se necessário */
+        .etiqueta-preview * {
+            word-wrap: break-word;
+        }
+
+        /* Configurações de Impressão */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            @page {
+                margin: 0;
+            }
+
+            body {
+                margin: 0;
+                padding: 0;
+                background-color: white;
+            }
+
+            #area-impressao,
+            #area-impressao * {
+                visibility: visible;
+            }
+
+            #area-impressao {
+                position: absolute;
+                left: 0;
+                top: 0;
+                border: none;
+                /* Remove a borda na impressão para impressoras térmicas */
+            }
+
+            #painel-controle {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen font-sans text-gray-800">
+
+    <div class="container mx-auto max-w-6xl p-4 lg:p-8 flex flex-col lg:flex-row gap-8">
+
+        <!-- PAINEL DE CONTROLE (Formulário) -->
+        <div id="painel-controle"
+            class="w-full lg:w-1/2 bg-white rounded-xl shadow-lg p-6 h-fit overflow-y-auto max-h-[90vh]">
+            <div class="flex items-center gap-3 mb-6 border-b pb-4">
+                <i data-lucide="file-text" class="text-emerald-600 w-8 h-8"></i>
+                <h1 class="text-2xl font-bold text-gray-800">Gerador de DANFE Simplificada</h1>
+            </div>
+
+            <form id="form-etiqueta" class="space-y-6">
+
+                <!-- Seção Emitente -->
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <i data-lucide="building" class="w-5 h-5"></i> Dados do Emitente
+                    </h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-gray-600">Modelo do Documento</label>
+                            <select id="in_modelo"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-emerald-500 focus:ring-emerald-500 uppercase"
+                                onchange="atualizarEtiqueta()">
+                                <option value="DANFE SIMPLIFICADA">NF-e (DANFE Simplificada)</option>
+                                <option value="DANFE NFC-E SIMPLIFICADA">NFC-e (DANFE Simplificada)</option>
+                            </select>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-gray-600">Nome / Razão Social</label>
+                            <input type="text" id="in_emi_nome"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-emerald-500 focus:ring-emerald-500 uppercase"
+                                value="NORMAL" oninput="atualizarEtiqueta()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">UF</label>
+                            <input type="text" id="in_emi_uf"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-emerald-500 focus:ring-emerald-500 uppercase"
+                                value="PR" maxlength="2" oninput="atualizarEtiqueta()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">CNPJ</label>
+                            <input type="text" id="in_emi_cnpj"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                value="03.544.084/0001-04" oninput="atualizarEtiqueta()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">Número da Nota</label>
+                            <input type="text" id="in_emi_nota"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                value="007383" oninput="atualizarEtiqueta()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">Série</label>
+                            <input type="text" id="in_emi_serie"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                value="1" oninput="atualizarEtiqueta()">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-gray-600">Emissão (Data e Hora)</label>
+                            <input type="text" id="in_emi_emissao"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                value="19/08/2021 00:00:00" oninput="atualizarEtiqueta()">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-gray-600">Protocolo</label>
+                            <input type="text" id="in_emi_protocolo"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                value="141210000703700 19/08/2021 00:00:00" oninput="atualizarEtiqueta()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seção Destinatário -->
+                <div class="border-t pt-4">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <i data-lucide="user" class="w-5 h-5"></i> Dados do Destinatário
+                    </h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-gray-600">Nome / Razão Social</label>
+                            <input type="text" id="in_dest_nome"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-emerald-500 focus:ring-emerald-500 uppercase"
+                                value="ACCION LTDA" oninput="atualizarEtiqueta()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">UF</label>
+                            <input type="text" id="in_dest_uf"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-emerald-500 focus:ring-emerald-500 uppercase"
+                                value="PR" maxlength="2" oninput="atualizarEtiqueta()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">CPF / CNPJ</label>
+                            <input type="text" id="in_dest_cnpj"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                value="03.544.084/0001-04" oninput="atualizarEtiqueta()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">Celular (Cód. de Entrega)</label>
+                            <input type="text" id="in_dest_celular"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                value="(11) 99999-9999" oninput="atualizarEtiqueta()">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-gray-600">Inscrição Estadual</label>
+                            <input type="text" id="in_dest_ie"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                value="9020855273" oninput="atualizarEtiqueta()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seção Chave NF-e -->
+                <div class="border-t pt-4">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <i data-lucide="barcode" class="w-5 h-5"></i> Dados da NF-e
+                    </h2>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600">Chave de Acesso (44 dígitos)</label>
+                        <input type="text" id="in_chave"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                            value="41210803644084000194550010000073831000005391" maxlength="44"
+                            oninput="atualizarEtiqueta()">
+                    </div>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="border-t pt-6 flex gap-4">
+                    <button type="button" onclick="imprimirEtiqueta()"
+                        class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                        <i data-lucide="printer" class="w-5 h-5"></i>
+                        Imprimir Etiqueta
+                    </button>
+                    <button type="button" onclick="limparFormulario()"
+                        class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-4 rounded-lg transition-colors">
+                        Limpar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- VISUALIZAÇÃO DA ETIQUETA -->
+        <div class="w-full lg:w-1/2 flex justify-center items-start overflow-x-auto pt-6 lg:pt-0">
+            <div id="area-impressao" class="etiqueta-preview shadow-2xl bg-white uppercase">
+
+                <!-- Título -->
+                <div id="out_modelo" class="text-center font-bold text-sm mb-3">
+                    DANFE SIMPLIFICADA
+                </div>
+
+                <!-- Bloco do Emitente -->
+                <div class="text-[10px] leading-snug mb-2">
+                    <div><b>EMITENTE :</b></div>
+                    <div id="out_emi_nome">NORMAL</div>
+                    <div><b>UF</b> <span id="out_emi_uf">PR</span></div>
+                    <div><b>CNPJ :</b><span id="out_emi_cnpj">03.544.084/0001-04</span></div>
+                    <div><b>NOTA :</b><span id="out_emi_nota">007383</span></div>
+                    <div><b>EMISSÃO :</b> <span id="out_emi_emissao">19/08/2021 00:00:00</span></div>
+                    <div class="pl-[4.5rem]"><b>SÉRIE :</b><span id="out_emi_serie">1</span></div>
+                    <div><b>PROTOCOLO :</b> <span id="out_emi_protocolo">141210000703700 19/08/2021 00:00:00</span>
+                    </div>
+                </div>
+
+                <!-- Bloco Destinatário e Código de Barras -->
+                <div class="border border-black p-2 text-[10px] leading-snug">
+                    <div><b>DESTINATARIO</b></div>
+                    <div id="out_dest_nome">ACCION LTDA</div>
+                    <div><b>UF</b> <span id="out_dest_uf">PR</span></div>
+                    <div><b>CPF/CNPJ</b> <span id="out_dest_cnpj">03.544.084/0001-04</span></div>
+                    <div><b>CELULAR/CÓD:</b> <span id="out_dest_celular">(11) 99999-9999</span></div>
+                    <div class="mb-3"><b>INSCRIÇÃO ESTADUAL</b> <span id="out_dest_ie">9020855273</span></div>
+
+                    <div class="text-center">
+                        <div class="font-bold mb-1">CHAVE NF-e :</div>
+                        <div id="out_chave_formatada" class="tracking-widest font-bold text-[9px] mb-1">
+                            4121 0803 6440 8400 0194 5500 1000 0073 8310
+                        </div>
+                        <div class="flex justify-center w-full">
+                            <!-- O SVG será preenchido pelo jsBarcode -->
+                            <svg id="barcode"></svg>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Toast de Notificação -->
+    <div id="toast"
+        class="fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-xl transform transition-transform duration-300 translate-y-20 opacity-0 z-50 pointer-events-none">
+        <p id="toast-msg" class="text-sm font-medium"></p>
+    </div>
+
+    <script>
+        // Inicializa os ícones
+        lucide.createIcons();
+
+        // Função para formatar a chave inserindo espaços a cada 4 caracteres (apenas visualização de texto)
+        function formatarChaveVisual(chave) {
+            let limpa = chave.replace(/\D/g, ''); // Remove não números
+            let formatada = limpa.match(/.{1,4}/g);
+            return formatada ? formatada.join(' ') : '';
+        }
+
+        // Função para atualizar os dados da etiqueta em tempo real
+        function atualizarEtiqueta() {
+            // Mapeamento simples
+            const campos = [
+                { in: 'in_modelo', out: 'out_modelo' },
+                { in: 'in_emi_nome', out: 'out_emi_nome' },
+                { in: 'in_emi_uf', out: 'out_emi_uf' },
+                { in: 'in_emi_cnpj', out: 'out_emi_cnpj' },
+                { in: 'in_emi_nota', out: 'out_emi_nota' },
+                { in: 'in_emi_emissao', out: 'out_emi_emissao' },
+                { in: 'in_emi_serie', out: 'out_emi_serie' },
+                { in: 'in_emi_protocolo', out: 'out_emi_protocolo' },
+                { in: 'in_dest_nome', out: 'out_dest_nome' },
+                { in: 'in_dest_uf', out: 'out_dest_uf' },
+                { in: 'in_dest_cnpj', out: 'out_dest_cnpj' },
+                { in: 'in_dest_celular', out: 'out_dest_celular' },
+                { in: 'in_dest_ie', out: 'out_dest_ie' }
+            ];
+
+            campos.forEach(campo => {
+                const inputVal = document.getElementById(campo.in).value || '';
+                document.getElementById(campo.out).textContent = inputVal;
+            });
+
+            // Tratamento especial para a Chave NF-e
+            const chaveRaw = document.getElementById('in_chave').value || '00000000000000000000000000000000000000000000';
+            const chaveLimpa = chaveRaw.replace(/\D/g, '');
+
+            // Atualiza o texto formatado acima do código de barras
+            document.getElementById('out_chave_formatada').textContent = formatarChaveVisual(chaveLimpa);
+
+            // Gera o código de barras real com os 44 dígitos
+            gerarCodigoBarras(chaveLimpa);
+        }
+
+        // Função para gerar o código de barras
+        function gerarCodigoBarras(valor) {
+            try {
+                // Se estiver vazio, coloca zeros para não dar erro no JsBarcode
+                const valorFinal = valor.length > 0 ? valor : '00000000000000000000000000000000000000000000';
+
+                JsBarcode("#barcode", valorFinal, {
+                    format: "CODE128", // Code128 suporta perfeitamente os 44 dígitos comprimidos (C)
+                    lineColor: "#000",
+                    width: 1.1,        // Largura estreita para caber os 44 números na largura de 10cm
+                    height: 45,        // Altura das barras
+                    displayValue: true,// Mostra os numerozinhos apertados embaixo, como na imagem original
+                    fontSize: 8,
+                    textMargin: 2,
+                    margin: 0
+                });
+            } catch (e) {
+                console.error("Erro ao gerar código de barras", e);
+            }
+        }
+
+        // Função para limpar o formulário
+        function limparFormulario() {
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(input => input.value = '');
+            atualizarEtiqueta();
+        }
+
+        // Função de Impressão e Aviso
+        function imprimirEtiqueta() {
+            try {
+                // Tenta o comando nativo de impressão
+                window.print();
+
+                // Se o código estiver rodando dentro de um iframe (como nesta janela de Preview), a impressão automática pode ser bloqueada silenciosamente pelo navegador.
+                if (window.self !== window.top) {
+                    mostrarToast("Dica: Se a impressão não abrir no Preview, pressione Ctrl+P (ou Cmd+P) ou exporte o HTML para usar localmente.");
+                }
+            } catch (e) {
+                mostrarToast("Erro ao iniciar impressão automática. Use Ctrl+P no seu teclado.");
+            }
+        }
+
+        // Função para mostrar notificação Toast (mensagem na tela)
+        function mostrarToast(mensagem) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-msg');
+            toastMsg.textContent = mensagem;
+
+            // Exibe o toast
+            toast.classList.remove('translate-y-20', 'opacity-0');
+
+            // Oculta após 6 segundos
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 6000);
+        }
+
+        // Inicializa ao carregar
+        window.onload = atualizarEtiqueta;
+    </script>
+</body>
+
+</html>
