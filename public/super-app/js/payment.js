@@ -36,6 +36,9 @@ function registrarPedido({ cart, total, method, gateway = 'Mercado Pago', status
     const city = document.getElementById("city-select")?.value || "";
     const cep = document.getElementById("cep")?.value || "";
 
+    // Salva o telefone no localStorage para "login" automático na tela de pedidos
+    if (phone) localStorage.setItem('user_phone', phone);
+
     const nameParts = fullName.split(' ');
     const productsTotal = total - currentShippingCost;
     const orderId = 'SA-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
@@ -210,6 +213,13 @@ async function loadUserData(uid) {
             if (phoneEl && !phoneEl.value) phoneEl.value = d.phone || '';
         }
     } catch (e) { console.error("loadUserData:", e); }
+
+    // Fallback para localStorage (Phone Login)
+    const savedPhone = localStorage.getItem('user_phone');
+    const phoneEl = document.getElementById("reg-phone");
+    if (savedPhone && phoneEl && !phoneEl.value) {
+        phoneEl.value = savedPhone;
+    }
 }
 
 // ─── MASCARAS ─────────────────────────────────────────────

@@ -508,6 +508,12 @@ function doGet(e) {
             }
         }
 
+        // --- NOVO: BUSCAR PEDIDOS POR TELEFONE ---
+        else if (action === "getOrdersByPhone") {
+            response = getOrdersByPhone(e.parameter.phone);
+        }
+
+
         // --- AÇÃO DESCONHECIDA ---
         else {
             response = { status: "error", message: "Ação inválida: " + action };
@@ -2755,3 +2761,53 @@ function atualizarStatusPedidoSuperApp(orderId, newStatus) {
         return { status: "error", message: e.toString() };
     }
 }
+
+function getOrdersByPhone(phone) {
+    try {
+        const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("pedidos");
+        if (!sheet) return { status: "success", data: [] };
+
+        const data = sheet.getDataRange().getValues();
+        if (data.length <= 1) return { status: "success", data: [] };
+
+        const headers = data[0].map(h => String(h).toLowerCase().trim());
+
+        const idxPhone = headers.indexOf("telefone");
+        const idxStatus = headers.indexOf("status");
+        const idxOrderId = headers.indexOf("id pedido");
+        const idxTotal = headers.indexOf("total final");
+        const idxItems = headers.indexOf("items");
+        const idxDate = headers.indexOf("data");
+
+        const orders = [];
+        const cleanPhoneSearch = String(phone || "").replace(/\D/g, "");
+
+        for (let i = 1; i < data.length; i++) {
+            const rowPhone = String(data[i][idxPhone] || "").replace(/\D/g, "");
+            // Match parcial para lidar com DDDs ou formatos variados
+            if (rowPhone === cleanPhoneSearch || (cleanPhoneSearch.length >= 8 && rowPhone.includes(cleanPhoneSearch))) {
+                const itemsStr = String(data[i][idxItems] || "");
+                orders.push({
+                    id: data[i][idxOrderId],
+                    status: data[i][idxStatus] || "Pendente",
+                    total: data[i][idxTotal],
+                    items: [{ name: itemsStr, image: "" }],
+                    createdAt: data[i][idxDate],
+                    shipping: { mode: String(data[i][6]).includes("Retirada") ? "pickup" : "delivery" }
+                });
+            }
+        }
+
+        // Ordenar por data decrescente (mais recentes primeiro)
+        orders.sort((a, b) => {
+            const dateA = new Date(a.createdAt);
+            const dateB = new Date(b.createdAt);
+            return dateB - dateA;
+        });
+
+        return { status: "success", data: orders };
+    } catch (e) {
+        return { status: "error", message: e.toString() };
+    }
+}
+

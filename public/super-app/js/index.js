@@ -261,6 +261,9 @@ function buildProductCardHTML(prod) {
                 ${isSoldOut ? '<div class="sold-out-badge" style="position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.6); color:#fff; text-align:center; font-size:0.75rem; font-weight:700; padding:2px 0; backdrop-filter:blur(2px);">Esgotado</div>' : ''}
             </div>
             <div class="product-info">
+                <div class="seller-tag" style="font-size: 0.65rem; color: #3483fa; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 3px;">
+                    <i class='bx bxs-badge-check'></i> D'tudo Variedades
+                </div>
                 <h4 class="product-name">${name}</h4>
                 ${priceHtml}
                 ${installmentHtml}
@@ -372,9 +375,15 @@ function saveSearchHistory(term) {
 function renderSearchHistory() {
     const container = document.getElementById('search-history-list');
     const section = document.getElementById('search-history-section');
-    const history = JSON.parse(localStorage.getItem('search_history') || '[]');
+    let history = JSON.parse(localStorage.getItem('search_history') || '[]');
 
     if (!container || !section) return;
+
+    // Limpeza de histórico corrompido (strings HTML em vez de termos)
+    if (history.some(h => String(h).includes('<div'))) {
+        history = history.filter(h => !String(h).includes('<div'));
+        localStorage.setItem('search_history', JSON.stringify(history));
+    }
 
     if (history.length === 0) {
         section.style.display = 'none';
@@ -382,12 +391,15 @@ function renderSearchHistory() {
     }
 
     section.style.display = 'block';
-    container.innerHTML = history.map(h => `
-        <div class="suggestion-item" onclick="window.location.href='search.html?q=${encodeURIComponent(h)}'">
-            <i class='bx bx-history'></i> ${h}
-        </div>
-    `).join('');
-
+    container.innerHTML = history.map(h => {
+        // Sanitiza o termo para exibição
+        const safeTerm = String(h).replace(/<[^>]*>/g, '').trim();
+        return `
+            <div class="suggestion-item" onclick="window.location.href='search.html?q=${encodeURIComponent(safeTerm)}'">
+                <i class='bx bx-history'></i> ${safeTerm}
+            </div>
+        `;
+    }).join('');
 }
 
 window.clearSearchHistory = function () {

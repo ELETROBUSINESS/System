@@ -1,55 +1,97 @@
-// js/orders.js
+const container = document.getElementById("orders-list");
 
 document.addEventListener('userReady', (e) => {
-    const user = e.detail;
-    const container = document.getElementById("orders-list");
+    checkUserAuth();
+});
 
+// Inicialização imediata caso userReady já tenha disparado
+if (typeof auth !== 'undefined' && auth.currentUser) {
+    checkUserAuth();
+} else {
+    setTimeout(checkUserAuth, 1000); // Fallback
+}
+
+async function checkUserAuth() {
     if (!container) return;
 
-    let searchUid = null;
+    const user = auth.currentUser;
+    const guestPhone = localStorage.getItem('user_phone');
+
     if (user && !user.isAnonymous) {
-        searchUid = user.uid;
+        loadOrdersFromAPI(user.phoneNumber || guestPhone);
+    } else if (guestPhone) {
+        loadOrdersFromAPI(guestPhone);
     } else {
-        const localUid = localStorage.getItem('guest_uid');
-        if (localUid) {
-            searchUid = localUid;
-        } else {
-            container.innerHTML = `
-                 <div class='empty-state'>
-                     <i class='bx bx-shopping-bag'></i>
-                     <h3>Nenhum pedido</h3>
-                     <p>Faça sua primeira compra para acompanhar o status aqui.</p>
-                 </div>`;
-            return;
-        }
+        renderAuthRequired();
     }
+}
 
-    // Listener em tempo real do Firebase
-    db.collection("orders")
-        .where("userId", "==", searchUid)
-        .orderBy("createdAt", "desc")
-        .onSnapshot(snapshot => {
-            if (snapshot.empty) {
-                container.innerHTML = `
-                <div class='empty-state'>
-                    <i class='bx bx-shopping-bag'></i>
-                    <h3>Nenhum pedido ainda</h3>
-                    <p>Seus pedidos aparecerão aqui.</p>
-                </div>`;
-                return;
-            }
+function renderAuthRequired() {
+    container.innerHTML = `
+        <div class='empty-state'>
+            <i class='bx bx-user-circle'></i>
+            <h3>Acesse seus pedidos</h3>
+            <p>Informe seu WhatsApp para acompanhar suas compras.</p>
+            <div style="margin-top:20px; max-width:300px; margin-left:auto; margin-right:auto;">
+                <input type="tel" id="login-phone" placeholder="(00) 00000-0000" 
+                    style="width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; margin-bottom:10px; text-align:center; font-size:1.1rem;">
+                <button onclick="handlePhoneLogin()" id="btn-login-orders"
+                    style="width:100%; padding:14px; background:var(--color-brand-red, #c20026); color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer;">
+                    Consultar Meus Pedidos
+                </button>
+            </div>
+        </div>`;
 
+    const input = document.getElementById('login-phone');
+    if (input) {
+        input.addEventListener('input', function (e) {
+            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
+            e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+        });
+    }
+}
+
+async function handlePhoneLogin() {
+    const phone = document.getElementById('login-phone').value.trim();
+    if (phone.length < 14) {
+        showToast("Insira um WhatsApp válido.", "error");
+        return;
+    }
+    localStorage.setItem('user_phone', phone);
+    await loadOrdersFromAPI(phone);
+}
+
+async function loadOrdersFromAPI(phone) {
+    if (!phone) return;
+    container.innerHTML = '<p style="text-align: center; margin-top: 2rem; color: #999;">Buscando seus pedidos...</p>';
+    try {
+        const phoneClean = phone.replace(/\D/g, '');
+        const resp = await fetch(`${APPSCRIPT_URL}?action=getOrdersByPhone&phone=${phoneClean}`);
+        const result = await resp.json();
+
+        if (result.status === "success" && result.data && result.data.length > 0) {
             container.innerHTML = "";
-
-            snapshot.forEach(doc => {
-                const order = { id: doc.id, ...doc.data() };
+            result.data.forEach(order => {
                 renderOrderCard(order, container);
             });
-        }, error => {
-            console.error("Erro ao buscar pedidos:", error);
-            container.innerHTML = "<p style='text-align:center; color:red; margin-top:20px;'>Erro de conexão.</p>";
-        });
-});
+        } else {
+            container.innerHTML = `
+                <div class='empty-state'>
+                    <i class='bx bx-shopping-bag'></i>
+                    <h3>Nenhum pedido encontrado</h3>
+                    <p>Não encontramos pedidos para o número ${phone}.</p>
+                    <button onclick="localStorage.removeItem('user_phone'); location.reload();" 
+                        style="background:none; border:none; color:var(--color-brand-red); text-decoration:underline; font-size:0.8rem; margin-top:10px; cursor:pointer;">
+                        Tentar outro número
+                    </button>
+                </div>`;
+        }
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = "<p style='text-align:center; color:red; margin-top:20px;'>Erro ao carregar pedidos.</p>";
+    }
+}
+
 
 function renderOrderCard(order, container) {
     const firstItem = order.items && order.items.length > 0
@@ -57,11 +99,18 @@ function renderOrderCard(order, container) {
         : { name: 'Pedido Diversos', image: 'https://placehold.co/70' };
 
     let date = '--/--/----';
-    if (order.createdAt && order.createdAt.toDate) {
-        date = order.createdAt.toDate().toLocaleDateString('pt-BR', {
-            day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
-        });
+    if (order.createdAt) {
+        let d = order.createdAt;
+        if (d.toDate) d = d.toDate(); // Firebase
+        else d = new Date(d); // String ou Date object
+
+        if (!isNaN(d.getTime())) {
+            date = d.toLocaleDateString('pt-BR', {
+                day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+        }
     }
+
 
     // Verifica se é Retirada ou Entrega
     const isPickup = order.shipping && order.shipping.mode === 'pickup';
@@ -89,8 +138,13 @@ function renderOrderCard(order, container) {
     const descStep3 = isPickup ? "Pedido retirado com sucesso." : "O pedido foi entregue com sucesso.";
     const iconStep2 = isPickup ? "bx-store" : "bxs-truck";
 
-    switch (order.status) {
+    const st = (order.status || 'Pendente').toLowerCase();
+
+    switch (st) {
+        case 'aprovado':
+        case 'pago':
         case 'approved':
+        case 'paid':
         case 'preparation':
             statusClass = 'status-approved';
             statusLabel = 'Aprovado';
@@ -99,21 +153,25 @@ function renderOrderCard(order, container) {
             canDelete = false;
             break;
 
+        case 'enviado':
         case 'shipped':
+        case 'saiu para entrega':
             statusClass = 'status-approved';
             statusLabel = isPickup ? 'Disponível na Loja' : 'Em Transporte';
             showTracking = true;
             step1Active = true;
             step2Active = true;
             if (isPickup) {
-                showPickupAnimation = true; // Mostra algo estático ou ícone de loja
+                showPickupAnimation = true;
             } else {
-                showTruckAnimation = true; // Mostra caminhão
+                showTruckAnimation = true;
             }
             canDelete = false;
             break;
 
+        case 'entregue':
         case 'delivered':
+        case 'concluído':
             statusClass = 'status-approved';
             statusLabel = isPickup ? 'Retirado' : 'Entregue';
             showTracking = true;
@@ -123,9 +181,11 @@ function renderOrderCard(order, container) {
             canDelete = false;
             break;
 
+        case 'pendente':
         case 'pending':
         case 'pending_payment':
         case 'in_process':
+        case 'aguardando':
             statusClass = 'status-pending';
             statusLabel = 'Aguardando Pagamento';
             if (order.paymentData && (order.paymentData.qr_code || order.paymentData.qr_code_base64)) {
@@ -134,6 +194,7 @@ function renderOrderCard(order, container) {
             canDelete = true;
             break;
 
+        case 'cancelado':
         case 'rejected':
         case 'cancelled':
         case 'failed':
@@ -143,7 +204,8 @@ function renderOrderCard(order, container) {
             break;
 
         default:
-            statusLabel = order.statusText || 'Verificando';
+            statusLabel = order.status || 'Verificando';
+
     }
 
     const pixActionHtml = showPixButton
@@ -207,10 +269,10 @@ function renderOrderCard(order, container) {
                 <span class="status-badge ${statusClass}">${statusLabel}</span>
             </div>
             <div class="card-body">
-                <img src="${firstItem.image}" alt="Produto" class="product-thumb">
+                <img src="${firstItem.image}" alt="Produto" class="product-thumb" onerror="this.src='https://placehold.co/70x70?text=Produto'">
                 <div class="product-info">
                     <h4 class="product-name">${firstItem.name}</h4>
-                    <div class="product-total">Total: <strong>R$ ${order.total.toFixed(2).replace('.', ',')}</strong></div>
+                    <div class="product-total">Total: <strong>${typeof order.total === 'number' ? 'R$ ' + order.total.toFixed(2).replace('.', ',') : order.total}</strong></div>
                 </div>
             </div>
             ${refundHtml || ''} 
@@ -228,45 +290,13 @@ function renderOrderCard(order, container) {
 // --- FUNÇÕES DE AÇÃO ---
 
 window.deleteOrder = async (orderId) => {
-    // Usando confirm nativo ou substitua por modal customizado se preferir
     if (confirm("Deseja remover este pedido do histórico?")) {
-        try {
-            await db.collection("orders").doc(orderId).delete();
-            showToast("Pedido removido.", "success");
-        } catch (error) {
-            console.error("Erro ao excluir:", error);
-            showToast("Erro ao processar.", "error");
-        }
+        showToast("Remoção temporariamente indisponível.", "info");
     }
 };
 
-window.openPixModal = async (orderId) => {
-    try {
-        const doc = await db.collection("orders").doc(orderId).get();
-        if (!doc.exists) return;
-
-        const order = doc.data();
-
-        if (order.paymentData && order.paymentData.qr_code_base64) {
-            const pixArea = document.getElementById("pix-display-area");
-            const pixImg = document.getElementById("pix-qr-img");
-            const pixInput = document.getElementById("pix-code-text");
-
-            if (pixArea) {
-                // Injeta a imagem
-                pixImg.innerHTML = `<img src="data:image/png;base64, ${order.paymentData.qr_code_base64}" alt="QR Code Pix">`;
-                // Coloca o código copia e cola no input
-                pixInput.value = order.paymentData.qr_code;
-                // Mostra o modal (usando flex para centralizar)
-                pixArea.style.display = "flex";
-            }
-        } else {
-            showToast("QR Code não disponível.", "error");
-        }
-    } catch (e) {
-        console.error(e);
-        showToast("Erro ao abrir PIX.", "error");
-    }
+window.openPixModal = (orderId) => {
+    showToast("Acesse o PIX via e-mail ou WhatsApp do vendedor.", "info");
 };
 
 window.copyPixCode = () => {

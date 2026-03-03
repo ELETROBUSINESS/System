@@ -334,7 +334,7 @@ function renderProductView(prod, variacoesGroup, allProducts, activeIndex) {
                     <div class="seller-info">
                         <i class='bx bx-store-alt'></i>
                         <div class="seller-text">
-                            Vendido por: <strong>D'Tudo Variedades</strong><br>
+                            Vendido por: <strong>D'Tudo Variedades</strong> <i class='bx bxs-badge-check' style="color: #3483fa;"></i><br>
                             <span>CD1 - Ipixuna do Pará</span>
                         </div>
                     </div>

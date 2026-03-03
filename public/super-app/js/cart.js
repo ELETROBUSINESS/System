@@ -126,7 +126,8 @@ function renderCartPage() {
                         <h4 class="cart-item-name">${item.name}</h4>
                     </div>
                     
-                    <div class="cart-item-actions">
+                    <div class="cart-item-actions" style="margin-top: 5px;">
+                        <span style="font-size: 0.75rem; color: #888; margin-bottom: 4px; display: block;">Quantidade</span>
                         <div class="qty-selector">
                             <button class="qty-btn" onclick="updateQty('${item.id}', -1)">-</button>
                             <span class="qty-value">${item.quantity}</span>
@@ -134,7 +135,7 @@ function renderCartPage() {
                         </div>
                     </div>
 
-                    <div class="cart-item-price-row" style="margin-top: auto;">
+                    <div class="cart-item-price-row" style="margin-top: auto; text-align: left;">
                         ${hasOffer ? `<span class="price-old-cart">${formatCurrency(priceOriginal)}</span>` : ''}
                         <div style="display: flex; align-items: baseline; gap: 5px;">
                             <span class="price-new-cart">${formatCurrency(priceOffer)}</span>

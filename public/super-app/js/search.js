@@ -114,20 +114,31 @@ function saveSearchHistory(term) {
 function renderSearchHistory() {
     const container = document.getElementById('search-history-list');
     const section = document.getElementById('search-history-section');
-    const history = JSON.parse(localStorage.getItem('search_history') || '[]');
+    let history = JSON.parse(localStorage.getItem('search_history') || '[]');
 
     if (!container || !section) return;
+
+    // Limpeza de histórico corrompido (strings HTML em vez de termos)
+    if (history.some(h => String(h).includes('<div'))) {
+        history = history.filter(h => !String(h).includes('<div'));
+        localStorage.setItem('search_history', JSON.stringify(history));
+    }
+
     if (history.length === 0) {
         section.style.display = 'none';
         return;
     }
 
     section.style.display = 'block';
-    container.innerHTML = history.map(h => `
-        <div class="suggestion-item" onclick="window.location.href='search.html?q=${encodeURIComponent(h)}'">
-            <i class='bx bx-history'></i> ${h}
-        </div>
-    `).join('');
+    container.innerHTML = history.map(h => {
+        // Sanitiza o termo para exibição
+        const safeTerm = String(h).replace(/<[^>]*>/g, '').trim();
+        return `
+            <div class="suggestion-item" onclick="window.location.href='search.html?q=${encodeURIComponent(safeTerm)}'">
+                <i class='bx bx-history'></i> ${safeTerm}
+            </div>
+        `;
+    }).join('');
 }
 
 window.clearSearchHistory = function () {
