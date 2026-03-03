@@ -149,8 +149,20 @@
             width: 250px;
         }
 
-        .controls input:focus {
+        .controls input:focus,
+        .controls select:focus {
             border-color: var(--brand-color);
+        }
+
+        .controls select {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+            width: 200px;
+            cursor: pointer;
         }
 
         .controls button {
@@ -486,6 +498,45 @@
             justify-content: center;
             gap: 10px;
         }
+
+        /* Red Template Styles */
+        .story-template.template-red .art-bg-shapes,
+        .story-template.template-red .art-bg-shapes2 {
+            display: none !important;
+        }
+
+        .story-template.template-red .art-tag {
+            background: var(--brand-color) !important;
+            color: white !important;
+        }
+
+        .story-template.template-red .art-product-info {
+            background: var(--brand-color) !important;
+        }
+
+        .story-template.template-red .art-product-name,
+        .story-template.template-red .art-price-pix {
+            color: white !important;
+        }
+
+        .story-template.template-red .art-price-old {
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+
+        .story-template.template-red .art-price-pix small {
+            color: rgba(255, 255, 255, 0.8) !important;
+        }
+
+        .story-template.template-red .art-price-container {
+            background: rgba(255, 255, 255, 0.15) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .story-template.template-red .art-buy-button {
+            background: transparent !important;
+            color: white !important;
+            box-shadow: none !important;
+        }
     </style>
 </head>
 
@@ -499,6 +550,10 @@
     <div class="controls">
         <input type="text" id="insta-profile" placeholder="Seu @ do Instagram" value="@dtudovariedadess">
         <input type="text" id="story-callout" placeholder="Link Chamada (ex: CHEGOU!)" value="CHEGOU!">
+        <select id="story-template" onchange="updateHandles()">
+            <option value="default">Visual Branco</option>
+            <option value="red">Visual Vermelho</option>
+        </select>
         <button onclick="updateHandles()"><i class='bx bx-refresh'></i> Atualizar Visual</button>
         <button onclick="loadRecentProducts()" style="background: #0066ff;"><i class='bx bx-cloud-download'></i>
             Carregar do Banco</button>
@@ -587,9 +642,18 @@
         function updateHandles() {
             const profile = document.getElementById('insta-profile').value || '@dtudovariedadess';
             const callout = document.getElementById('story-callout').value || 'CHEGOU!';
+            const template = document.getElementById('story-template') ? document.getElementById('story-template').value : 'default';
 
             document.querySelectorAll('.art-insta-handle span').forEach(el => el.innerText = profile);
             document.querySelectorAll('.art-tag').forEach(el => el.innerText = callout);
+
+            document.querySelectorAll('.story-template').forEach(el => {
+                if (template === 'red') {
+                    el.classList.add('template-red');
+                } else {
+                    el.classList.remove('template-red');
+                }
+            });
         }
 
         async function fetchAutoInstagramProfile() {
@@ -728,6 +792,7 @@
         function renderStories(products) {
             const container = document.getElementById('stories-container');
             let profile = document.getElementById('insta-profile').value || '@dtudovariedadess';
+            let template = document.getElementById('story-template') ? document.getElementById('story-template').value : 'default';
 
             let html = '';
             products.forEach((prod, index) => {
@@ -760,9 +825,11 @@
                     `;
                 }
 
+                let templateClass = template === 'red' ? ' template-red' : '';
+
                 html += `
                 <div class="story-wrapper" id="story-wrap-${index}">
-                    <div class="story-template" id="story-art-${index}">
+                    <div class="story-template${templateClass}" id="story-art-${index}">
                         <div class="art-bg-shapes"></div>
                         <div class="art-bg-shapes2"></div>
                         
