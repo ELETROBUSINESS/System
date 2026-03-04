@@ -18,7 +18,8 @@ const SEARCH_SYNONYMS = {
     'notebook': ['laptop', 'computador', 'pc', 'informatica'],
     'pc': ['computador', 'notebook', 'desktop', 'gabinete'],
     'brinquedo': ['infantil', 'boneca', 'carro', 'jogo', 'kids'],
-    'escolar': ['papelaria', 'caderno', 'caneta', 'lapis', 'mochila']
+    'escolar': ['papelaria', 'caderno', 'caneta', 'lapis', 'mochila'],
+    'presenteie': ['mulher', 'feminino', 'dia das mulheres', 'presente', 'perfume', 'kit', 'maquiagem', 'makes']
 };
 
 function smartMatch(product, term) {
