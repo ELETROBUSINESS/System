@@ -19,7 +19,7 @@ const SEARCH_SYNONYMS = {
     'pc': ['computador', 'notebook', 'desktop', 'gabinete'],
     'brinquedo': ['infantil', 'boneca', 'carro', 'jogo', 'kids'],
     'escolar': ['papelaria', 'caderno', 'caneta', 'lapis', 'mochila'],
-    'presenteie': ['mulher', 'feminino', 'dia das mulheres', 'presente', 'perfume', 'kit', 'maquiagem', 'makes'],
+    'presenteie': ['dia das mulheres', 'dia da mulher', 'mulheres', 'mulher'],
     'makes': ['cosméticos', 'maquiagens', 'maquiagem', 'batom', 'rimel', 'blush', 'makeup', 'make up']
 };
 
