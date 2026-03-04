@@ -19,19 +19,28 @@ const SEARCH_SYNONYMS = {
     'pc': ['computador', 'notebook', 'desktop', 'gabinete'],
     'brinquedo': ['infantil', 'boneca', 'carro', 'jogo', 'kids'],
     'escolar': ['papelaria', 'caderno', 'caneta', 'lapis', 'mochila'],
-    'presenteie': ['mulher', 'feminino', 'dia das mulheres', 'presente', 'perfume', 'kit', 'maquiagem', 'makes']
+    'presenteie': ['mulher', 'feminino', 'dia das mulheres', 'presente', 'perfume', 'kit', 'maquiagem', 'makes'],
+    'makes': ['cosméticos', 'maquiagens', 'maquiagem', 'batom', 'rimel', 'blush', 'makeup', 'make up']
 };
 
 function smartMatch(product, term) {
     const name = (product.name || '').toLowerCase();
     const cat = (product.category || '').toLowerCase();
+    const brand = (product.brand || product.marca || '').toLowerCase();
     const query = term.toLowerCase();
 
-    if (name.includes(query) || cat.includes(query)) return true;
+    // 1. Verifica match direto (Nome, Categoria ou Marca)
+    if (name.includes(query) || cat.includes(query) || brand.includes(query)) return true;
 
+    // 2. Verifica Sinônimos
     for (const [key, synonyms] of Object.entries(SEARCH_SYNONYMS)) {
+        // Se o termo pesquisado é a chave ou está nos sinônimos daquela chave
         if (query === key || synonyms.includes(query)) {
-            if (name.includes(key) || synonyms.some(s => name.includes(s))) return true;
+            // Verifica se o NOME, CATEGORIA ou MARCA do produto contém a CHAVE ou algum dos SINÔNIMOS
+            const matchesKey = name.includes(key) || cat.includes(key) || brand.includes(key);
+            const matchesSynonym = synonyms.some(s => name.includes(s) || cat.includes(s) || brand.includes(s));
+
+            if (matchesKey || matchesSynonym) return true;
         }
     }
     return false;
@@ -281,11 +290,12 @@ async function performSearch(term, type) {
     }
 
     let results = [];
+    const lowerTerm = term.toLowerCase();
+
     if (type === 'query') {
         results = allProducts.filter(p => smartMatch(p, term));
     } else if (type === 'category') {
-        const lowerCat = term.toLowerCase();
-        if (lowerCat === 'ofertas') {
+        if (lowerTerm === 'ofertas') {
             const OFFER_DEADLINE = new Date("2026-03-02T23:59:59").getTime();
             const isExpired = Date.now() >= OFFER_DEADLINE;
             if (isExpired) {
@@ -297,8 +307,11 @@ async function performSearch(term, type) {
                     return valOffer > 0 && valOffer < valPrice;
                 });
             }
+        } else if (lowerTerm === 'presenteie' || lowerTerm === 'makes') {
+            // Usa smartMatch para categorias especiais (sinônimos)
+            results = allProducts.filter(p => smartMatch(p, term));
         } else {
-            results = allProducts.filter(p => p.category && p.category.toLowerCase().includes(lowerCat));
+            results = allProducts.filter(p => p.category && p.category.toLowerCase().includes(lowerTerm));
         }
     } else {
         // "Todos os produtos" - limitar para não travar o browser
@@ -317,10 +330,46 @@ async function performSearch(term, type) {
     }
 
     container.innerHTML = '';
-    if (results.length > 0) {
+    if (results.length > 0 || (type === 'category' && lowerTerm === 'presenteie')) {
         noResults.style.display = 'none';
         suggestionsSection.style.display = 'none';
+
+        // Renderiza Resultados Principais
         renderProducts(results, container);
+
+        // LOGICA ESPECIAL: PRESENTEIE
+        if (type === 'category' && lowerTerm === 'presenteie') {
+            // 1. Injetar Banner
+            const bannerHtml = `
+                <div class="special-category-banner" style="grid-column: 1 / -1; margin: 20px 0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                    <img src="day-banner-mulher01.png" alt="Dia das Mulheres" style="width: 100%; display: block;">
+                </div>
+                <h3 class="section-title" style="grid-column: 1 / -1; margin: 20px 2.5% 10px; color: #db0038;">Sugestões de Makes</h3>
+            `;
+            container.insertAdjacentHTML('beforeend', bannerHtml);
+
+            // 2. Extensão 'Makes'
+            const makeResults = allProducts.filter(p =>
+                !results.find(r => r.id === p.id) && // Evita duplicatas
+                smartMatch(p, 'makes') &&
+                p.name && p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co')
+            );
+            renderProducts(makeResults, container);
+
+            // 3. Extensão 'Relógios Femininos'
+            const watchResults = allProducts.filter(p =>
+                !results.find(r => r.id === p.id) &&
+                !makeResults.find(m => m.id === p.id) &&
+                (p.name || '').toLowerCase().includes('relógio') &&
+                (p.name || '').toLowerCase().includes('feminino') &&
+                p.name && p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co')
+            );
+
+            if (watchResults.length > 0) {
+                container.insertAdjacentHTML('beforeend', `<h3 class="section-title" style="grid-column: 1 / -1; margin: 20px 2.5% 10px; color: #db0038;">Relógios Femininos</h3>`);
+                renderProducts(watchResults, container);
+            }
+        }
     } else {
         noResults.style.display = 'block';
         suggestionsSection.style.display = 'block';

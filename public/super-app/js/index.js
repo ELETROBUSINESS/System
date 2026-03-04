@@ -21,23 +21,28 @@ const SEARCH_SYNONYMS = {
     'pc': ['computador', 'notebook', 'desktop', 'gabinete'],
     'brinquedo': ['infantil', 'boneca', 'carro', 'jogo', 'kids'],
     'escolar': ['papelaria', 'caderno', 'caneta', 'lapis', 'mochila'],
-    'presenteie': ['mulher', 'feminino', 'dia das mulheres', 'presente', 'perfume', 'kit', 'maquiagem', 'makes']
+    'presenteie': ['mulher', 'feminino', 'dia das mulheres', 'presente', 'perfume', 'kit', 'maquiagem', 'makes'],
+    'makes': ['cosméticos', 'maquiagens', 'maquiagem', 'batom', 'rimel', 'blush', 'makeup', 'make up']
 };
 
 function smartMatch(product, term) {
     const name = (product.name || '').toLowerCase();
     const cat = (product.category || '').toLowerCase();
+    const brand = (product.brand || product.marca || '').toLowerCase();
     const query = term.toLowerCase();
 
-    // 1. Verifica match direto
-    if (name.includes(query) || cat.includes(query)) return true;
+    // 1. Verifica match direto (Nome, Categoria ou Marca)
+    if (name.includes(query) || cat.includes(query) || brand.includes(query)) return true;
 
     // 2. Verifica Sinônimos
     for (const [key, synonyms] of Object.entries(SEARCH_SYNONYMS)) {
         // Se o termo pesquisado é a chave ou está nos sinônimos daquela chave
         if (query === key || synonyms.includes(query)) {
-            // Verifica se o NOME do produto contém a CHAVE ou algum dos SINÔNIMOS
-            if (name.includes(key) || synonyms.some(s => name.includes(s))) return true;
+            // Verifica se o NOME, CATEGORIA ou MARCA do produto contém a CHAVE ou algum dos SINÔNIMOS
+            const matchesKey = name.includes(key) || cat.includes(key) || brand.includes(key);
+            const matchesSynonym = synonyms.some(s => name.includes(s) || cat.includes(s) || brand.includes(s));
+
+            if (matchesKey || matchesSynonym) return true;
         }
     }
     return false;
