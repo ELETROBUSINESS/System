@@ -310,9 +310,16 @@ async function performSearch(term, type) {
         } else if (lowerTerm === 'presenteie' || lowerTerm === 'makes') {
             // Usa smartMatch para categorias especiais (sinônimos)
             results = allProducts.filter(p => smartMatch(p, term));
+        } else if (lowerTerm === 'relogio' || lowerTerm === 'relógio') {
+            // Filtro específico para relógios conforme definido
+            results = allProducts.filter(p =>
+                (p.name || '').toUpperCase().includes('REL') &&
+                (p.name || '').toLowerCase().includes('feminino')
+            );
         } else {
             results = allProducts.filter(p => p.category && p.category.toLowerCase().includes(lowerTerm));
         }
+
     } else {
         // "Todos os produtos" - limitar para não travar o browser
         results = allProducts.slice(0, 48);
