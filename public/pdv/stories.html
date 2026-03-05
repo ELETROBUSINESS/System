@@ -537,6 +537,73 @@
             color: white !important;
             box-shadow: none !important;
         }
+
+        /* Women's Day Template Styles */
+        .story-template.template-womens-day {
+            background: linear-gradient(135deg, #fff5f7 0%, #ffe0e9 100%) !important;
+        }
+
+        .story-template.template-womens-day .art-bg-shapes {
+            background: #ff4d6d !important;
+            opacity: 0.15;
+            width: 400px;
+            height: 400px;
+            top: -150px;
+            right: -100px;
+        }
+
+        .story-template.template-womens-day .art-bg-shapes2 {
+            background: #ff758f !important;
+            opacity: 0.1;
+            width: 350px;
+            height: 350px;
+            bottom: -100px;
+            left: -100px;
+        }
+
+        .story-template.template-womens-day .art-tag {
+            background: #db0038 !important;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(219, 0, 56, 0.3);
+        }
+
+        .story-template.template-womens-day .art-insta-handle {
+            background: rgba(219, 0, 56, 0.6) !important;
+        }
+
+        .story-template.template-womens-day .art-price-pix {
+            color: #db0038 !important;
+        }
+
+        .story-template.template-womens-day .art-buy-button {
+            background: #db0038 !important;
+            color: white !important;
+        }
+
+        /* Heart decorations using pseudo-elements */
+        .story-template.template-womens-day::after {
+            content: '\eb07';
+            font-family: 'boxicons';
+            position: absolute;
+            top: 40%;
+            right: 20px;
+            font-size: 5rem;
+            color: rgba(219, 0, 56, 0.05);
+            z-index: 1;
+            transform: rotate(-15deg);
+        }
+
+        .story-template.template-womens-day::before {
+            content: '\eb07';
+            font-family: 'boxicons';
+            position: absolute;
+            bottom: 300px;
+            left: 20px;
+            font-size: 3rem;
+            color: rgba(219, 0, 56, 0.05);
+            z-index: 1;
+            transform: rotate(15deg);
+        }
     </style>
 </head>
 
@@ -553,6 +620,7 @@
         <select id="story-template" onchange="updateHandles()">
             <option value="default">Visual Branco</option>
             <option value="red">Visual Vermelho</option>
+            <option value="womens-day">Especial Dia das Mulheres</option>
         </select>
         <button onclick="updateHandles()"><i class='bx bx-refresh'></i> Atualizar Visual</button>
         <button onclick="loadRecentProducts()" style="background: #0066ff;"><i class='bx bx-cloud-download'></i>
@@ -648,10 +716,9 @@
             document.querySelectorAll('.art-tag').forEach(el => el.innerText = callout);
 
             document.querySelectorAll('.story-template').forEach(el => {
-                if (template === 'red') {
-                    el.classList.add('template-red');
-                } else {
-                    el.classList.remove('template-red');
+                el.classList.remove('template-red', 'template-womens-day');
+                if (template !== 'default') {
+                    el.classList.add('template-' + template);
                 }
             });
         }
@@ -825,7 +892,9 @@
                     `;
                 }
 
-                let templateClass = template === 'red' ? ' template-red' : '';
+                let templateClass = '';
+                if (template === 'red') templateClass = ' template-red';
+                else if (template === 'womens-day') templateClass = ' template-womens-day';
 
                 html += `
                 <div class="story-wrapper" id="story-wrap-${index}">
