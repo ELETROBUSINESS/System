@@ -2606,14 +2606,17 @@ a {
     height: 100vh;
     background: #ff4d6d;
     z-index: 9999;
-    clip-path: circle(0% at var(--ripple-x) var(--ripple-y));
-    transition: clip-path 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    clip-path: circle(0% at var(--ripple-x, 50%) var(--ripple-y, 50%));
+    transition: clip-path 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
     pointer-events: none;
-    opacity: 0.95;
+    opacity: 0;
+    visibility: hidden;
 }
 
 .heart-expansion-overlay.active {
-    clip-path: circle(150% at var(--ripple-x) var(--ripple-y));
+    clip-path: circle(150% at var(--ripple-x, 50%) var(--ripple-y, 50%));
+    opacity: 0.95;
+    visibility: visible;
 }
 
 .presenteie-heart-icon svg {
