@@ -221,6 +221,14 @@ async function performSearch(term, type) {
     // Filtrar produtos sem nome ou imagem
     results = results.filter(p => p.name && p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co'));
 
+    // Filtro Global de Loja (?ELETRO)
+    const isEletroView = window.location.search.includes('ELETRO');
+    if (isEletroView) {
+        results = results.filter(p => String(p.loja || "").toUpperCase() === 'ELETRO');
+    } else {
+        results = results.filter(p => String(p.loja || "").toUpperCase() !== 'ELETRO');
+    }
+
     if (typeof trackEvent === 'function') {
         trackEvent('search', {
             search_term: term,
@@ -239,13 +247,16 @@ async function performSearch(term, type) {
 
         // LOGICA ESPECIAL: PRESENTEIE
         if (type === 'category' && lowerTerm === 'presenteie') {
-            // 1. Injetar Banner
+            // 1. Injetar Banner Dinâmico
+            const isEletroView = window.location.search.includes('ELETRO');
+            const bannerSrc = isEletroView ? "eletro-banner.png" : "day-banner-mulher01.png";
+
             const bannerHtml = `
-                <div class="special-category-banner" style="grid-column: 1 / -1; margin: 20px 0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                    <img src="day-banner-mulher01.png" alt="Dia das Mulheres" style="width: 100%; display: block;">
-                </div>
-                <h3 class="section-title" style="grid-column: 1 / -1; margin: 20px 2.5% 10px; color: #db0038;">Sugestões de Makes</h3>
-            `;
+                    <div class="special-category-banner" style="grid-column: 1 / -1; margin: 20px 0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                        <img src="${bannerSrc}" alt="Destaque" style="width: 100%; display: block;">
+                    </div>
+                    ${!isEletroView ? '<h3 class="section-title" style="grid-column: 1 / -1; margin: 20px 2.5% 10px; color: #db0038;">Sugestões de Makes</h3>' : ''}
+                `;
             container.insertAdjacentHTML('beforeend', bannerHtml);
 
             // 2. Extensão 'Makes'
@@ -363,7 +374,7 @@ function renderProducts(products, target) {
                     ${specialTagHtml}
                     <h4 class="product-name" style="text-transform: none;">${name}</h4>
                     <div class="seller-tag" style="font-size: 0.65rem; color: #000; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 3px;">
-                        <i class='bx bxs-badge-check' style="color: #3483fa;"></i> D'tudo Variedades
+                        <i class='bx bxs-badge-check' style="color: #3483fa;"></i> ${prod.loja || "D'Tudo Variedades"}
                     </div>
                     ${priceHtml}
                     ${installmentHtml}

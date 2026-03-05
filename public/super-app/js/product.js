@@ -325,7 +325,7 @@ function renderProductView(prod, variacoesGroup, allProducts, activeIndex) {
                     ${specialTagHtml}
                     <h1 class="detail-title" style="margin-bottom: 8px;">${prod.name}</h1>
                     <div class="seller-tag" style="font-size: 0.85rem; color: #000; font-weight: 700; margin-bottom: 15px; display: flex; align-items: center; gap: 4px;">
-                        <i class='bx bxs-badge-check' style="color: #3483fa;"></i> D'tudo Variedades
+                        <i class='bx bxs-badge-check' style="color: #3483fa;"></i> ${prod.loja || "D'Tudo Variedades"}
                     </div>
                     ${priceBlock}
                     <div style="background: #e6f7ee; color: #00a650; padding: 10px; border-radius: 8px; margin-bottom: 20px; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
@@ -348,8 +348,8 @@ function renderProductView(prod, variacoesGroup, allProducts, activeIndex) {
                 </div>
             </div>
 
-            <div class="product-special-banner" onclick="window.location.href='search.html?category=presenteie'">
-                <img src="day-banner-mulher01.png" alt="Especial Dia das Mulheres">
+            <div class="product-special-banner" onclick="window.location.href='${(prod.loja || "").toUpperCase() === 'ELETRO' ? 'search.html?loja=ELETRO' : 'search.html?category=presenteie'}'">
+                <img src="${(prod.loja || "").toUpperCase() === 'ELETRO' ? 'eletro-banner.png' : 'day-banner-mulher01.png'}" alt="Especial">
             </div>
 
             <div style="background:#fff; padding:20px; margin-top:10px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">

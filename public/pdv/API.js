@@ -576,6 +576,7 @@ function listarProdutosSuperApp() {
         const idxDesc = headers.indexOf("descricao") !== -1 ? headers.indexOf("descricao") : (headers.indexOf("description") !== -1 ? headers.indexOf("description") : 17);
         const idxImgUrl = headers.indexOf("imgurl") !== -1 ? headers.indexOf("imgurl") : (headers.indexOf("img url") !== -1 ? headers.indexOf("img url") : 18);
         const idxSold = headers.indexOf("vendido") !== -1 ? headers.indexOf("vendido") : 19;
+        const idxLoja = headers.indexOf("loja");
 
         const idxWebPrice = headers.indexOf("web_price");
 
@@ -633,13 +634,20 @@ function listarProdutosSuperApp() {
                 precoNum = parseFloat(pString) || 0;
             }
 
+            // 4. Identifica a Loja
+            let lojaRaw = idxLoja !== -1 ? String(row[idxLoja] || "").trim() : "";
+            if (lojaRaw === "" || lojaRaw === "DT#25") {
+                lojaRaw = "D'Tudo Variedades";
+            }
+
             const prodObj = {
                 id: codigo,
                 name: String(row[idxNome] || ""),
                 price: precoNum,
                 stock: estoque,
                 ncm: ncm,
-                sold: idxSold !== -1 ? (parseInt(row[idxSold]) || 0) : 0
+                sold: idxSold !== -1 ? (parseInt(row[idxSold]) || 0) : 0,
+                loja: lojaRaw
             };
 
             // 3. Força o uso da Coluna Q (Index 16) para Preço Promocional
@@ -795,9 +803,9 @@ function getSheet(sheetName) {
         // REGRA PARA PRODUTOS (ATUALIZADA)
         if (sheetName === PRODUTOS_SHEET_NAME) {
             sheet.appendRow([
-                "Codigo", "Nome", "Preco", "Custo",
-                "Estoque Atual", "Estoque Minimo",
-                "NCM", "CFOP", "Unidade", "Origem", "Timestamp"
+                "codigo", "Nome", "Preco", "Timestamp", "Custo", "Categoria",
+                "Cadastrado", "ImgUrl", "Marca", "NCM", "CEST", "CFOP",
+                "Unidade", "Origem", "CSOSN", "Estoque", "Promocional", "Vendido", "loja"
             ]);
         }
         // REGRA PARA CLIENTES (MANTIDA ORIGINAL)
@@ -977,7 +985,8 @@ function listarTodosProdutos() {
                 unit: unidadeFinal,
                 origem: String(item.origem || "0"),
                 csosn: String(item.csosn || ""),
-                promoPrice: parseFloat(item.promocional || item.promoPrice) || 0
+                promoPrice: parseFloat(item.promocional || item.promoPrice) || 0,
+                loja: (item.loja === "DT#25" || !item.loja) ? "D'Tudo Variedades" : item.loja
             };
         }).filter(p => p.id && p.id !== "");
 
@@ -1513,7 +1522,7 @@ function importarProdutosEmMassa(novosProdutos) {
 
         if (data.length === 0) {
             // Cria cabeçalhos se a planilha estiver vazia
-            sheet.appendRow(["Codigo", "Nome", "Preco", "Timestamp", "Custo", "Categoria", "Cadastrado", "ImgUrl", "Marca", "NCM", "CEST", "CFOP", "Unidade", "Origem", "CSOSN"]);
+            sheet.appendRow(["codigo", "Nome", "Preco", "Timestamp", "Custo", "Categoria", "Cadastrado", "ImgUrl", "Marca", "NCM", "CEST", "CFOP", "Unidade", "Origem", "CSOSN", "Estoque", "Promocional", "Vendido", "loja"]);
             return importarProdutosEmMassa(novosProdutos);
         }
 

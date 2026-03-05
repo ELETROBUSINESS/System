@@ -236,7 +236,7 @@ function buildProductCardHTML(prod) {
                 ${specialTagHtml}
                 <h4 class="product-name">${name}</h4>
                 <div class="seller-tag" style="font-size: 0.65rem; color: #000; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 3px;">
-                    <i class='bx bxs-badge-check' style="color: #3483fa;"></i> D'tudo Variedades
+                    <i class='bx bxs-badge-check' style="color: #3483fa;"></i> ${prod.loja || "D'Tudo Variedades"}
                 </div>
                 ${priceHtml}
                 ${installmentHtml}
@@ -275,8 +275,22 @@ function renderHomeSections(cached) {
     const container = document.getElementById('home-sections-container');
     if (!container) return;
 
-    // Filtra produtos válidos
-    const validProds = cached.filter(p => p.name && p.name.trim() !== "" && p.imgUrl && !p.imgUrl.includes('placehold.co'));
+    // Verificação de Loja (Modo ?ELETRO)
+    const isEletroView = window.location.search.includes('ELETRO');
+
+    // Filtra produtos válidos e pela loja correspondente
+    const validProds = cached.filter(p => {
+        const hasBaseData = p.name && p.name.trim() !== "" && p.imgUrl && !p.imgUrl.includes('placehold.co');
+        if (!hasBaseData) return false;
+
+        const prodLoja = String(p.loja || "").toUpperCase();
+        if (isEletroView) {
+            return prodLoja === 'ELETRO';
+        } else {
+            // No feed principal, não mostra itens de lojas com restrição (ELETRO)
+            return prodLoja !== 'ELETRO';
+        }
+    });
 
     // 1. MAIS VENDIDOS (Até 12 itens, Estilo Carrossel)
     const maisVendidos = [...validProds]
@@ -331,10 +345,13 @@ function renderHomeSections(cached) {
         `;
     }
 
-    // Banner Dia das Mulheres
+    // Banner Dinâmico
+    const centralBannerSrc = isEletroView ? "eletro-banner.png" : "day-banner-mulher01.png";
+    const centralBannerLink = isEletroView ? "search.html?loja=ELETRO" : "search.html?category=presenteie";
+
     html += `
-        <div class="feed-central-banner" onclick="window.location.href='search.html?category=presenteie'">
-            <img src="day-banner-mulher01.png" alt="Especial Dia das Mulheres">
+        <div class="feed-central-banner" onclick="window.location.href='${centralBannerLink}'">
+            <img src="${centralBannerSrc}" alt="Destaque">
         </div>
     `;
 
@@ -705,7 +722,15 @@ window.filterLocalCategory = function (categoryStr) {
     if (!cached || cached.length === 0) {
         cached = (typeof DataManager !== 'undefined') ? DataManager.getProducts() : [];
     }
-    if (!cached || cached.length === 0) return; // Nada a fazer se não há dados algum vez carregados
+    if (!cached || cached.length === 0) return;
+
+    // Filtro Global de Loja (?ELETRO)
+    const isEletroView = window.location.search.includes('ELETRO');
+    if (isEletroView) {
+        cached = cached.filter(p => String(p.loja || "").toUpperCase() === 'ELETRO');
+    } else {
+        cached = cached.filter(p => String(p.loja || "").toUpperCase() !== 'ELETRO');
+    }
 
     categoryStr = categoryStr || 'todos';
 
@@ -788,7 +813,10 @@ function applyLocalFilter(cached, categoryStr) {
     const OFFER_DEADLINE = new Date("2026-03-02T23:59:59").getTime();
     const isExpired = Date.now() >= OFFER_DEADLINE;
 
+    const isEletroView = window.location.search.includes('ELETRO');
     let filtered = cached;
+
+    // Segunda camada de filtro (Categoria)
     if (categoryStr === 'ofertas') {
         if (isExpired) {
             filtered = [];
