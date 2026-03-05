@@ -4,47 +4,7 @@ function getCachedData() {
     return DataManager.getProducts();
 }
 
-// --- MAPA DE SINÔNIMOS PARA BUSCA INTELIGENTE ---
-const SEARCH_SYNONYMS = {
-    'tv': ['televisao', 'televisão', 'televisor', 'smart tv', 'monitor', 'led'],
-    'televisao': ['tv', 'televisor', 'smart tv'],
-    'televisão': ['tv', 'televisor', 'smart tv'],
-    'celular': ['smartphone', 'telefone', 'mobile', 'iphone', 'android'],
-    'smartphone': ['celular', 'telefone', 'mobile'],
-    'fone': ['headset', 'fone de ouvido', 'auricular', 'bluetooth', 'tws'],
-    'relogio': ['smartwatch', 'smart watch', 'relógio', 'digital', 'analogico'],
-    'relógio': ['relogio', 'smartwatch', 'smart watch'],
-    'caixa': ['som', 'speaker', 'bluetooth', 'amplificada', 'jbl'],
-    'notebook': ['laptop', 'computador', 'pc', 'informatica'],
-    'pc': ['computador', 'notebook', 'desktop', 'gabinete'],
-    'brinquedo': ['infantil', 'boneca', 'carro', 'jogo', 'kids'],
-    'escolar': ['papelaria', 'caderno', 'caneta', 'lapis', 'mochila'],
-    'presenteie': ['dia das mulheres', 'dia da mulher', 'mulheres', 'mulher'],
-    'makes': ['cosméticos', 'maquiagens', 'maquiagem', 'batom', 'rimel', 'blush', 'makeup', 'make up']
-};
-
-function smartMatch(product, term) {
-    const name = (product.name || '').toLowerCase();
-    const cat = (product.category || '').toLowerCase();
-    const brand = (product.brand || product.marca || '').toLowerCase();
-    const query = term.toLowerCase();
-
-    // 1. Verifica match direto (Nome, Categoria ou Marca)
-    if (name.includes(query) || cat.includes(query) || brand.includes(query)) return true;
-
-    // 2. Verifica Sinônimos
-    for (const [key, synonyms] of Object.entries(SEARCH_SYNONYMS)) {
-        // Se o termo pesquisado é a chave ou está nos sinônimos daquela chave
-        if (query === key || synonyms.includes(query)) {
-            // Verifica se o NOME, CATEGORIA ou MARCA do produto contém a CHAVE ou algum dos SINÔNIMOS
-            const matchesKey = name.includes(key) || cat.includes(key) || brand.includes(key);
-            const matchesSynonym = synonyms.some(s => name.includes(s) || cat.includes(s) || brand.includes(s));
-
-            if (matchesKey || matchesSynonym) return true;
-        }
-    }
-    return false;
-}
+// Sinônimos, smartMatch e setupSearch foram movidos para global.js
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("[Search] Inicializando busca...");
@@ -91,75 +51,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (typeof updateCartBadge === 'function') updateCartBadge();
 });
 
-// --- LÓGICA DO MODAL DE BUSCA (Portado de index.js) ---
-window.openSearchModal = function () {
-    const modal = document.getElementById('search-modal');
-    if (modal) {
-        modal.classList.add('show');
-        const input = document.getElementById('modal-search-input');
-        if (input) {
-            input.value = '';
-            input.focus();
-        }
-        renderSearchHistory();
-    }
-};
+// --- LÓGICA DO MODAL DE BUSCA (Centralizado em global.js) ---
 
-window.closeSearchModal = function () {
-    const modal = document.getElementById('search-modal');
-    if (modal) modal.classList.remove('show');
-};
-
-window.executeSearch = function (termOverride) {
-    const input = document.getElementById('modal-search-input');
-    const term = (termOverride && typeof termOverride === 'string') ? termOverride : (input ? input.value.trim() : "");
-    if (term) {
-        saveSearchHistory(term);
-        window.location.href = `search.html?q=${encodeURIComponent(term)}`;
-    }
-};
-
-function saveSearchHistory(term) {
-    let history = JSON.parse(localStorage.getItem('search_history') || '[]');
-    history = history.filter(h => h.toLowerCase() !== term.toLowerCase());
-    history.unshift(term);
-    localStorage.setItem('search_history', JSON.stringify(history.slice(0, 5)));
-}
-
-function renderSearchHistory() {
-    const container = document.getElementById('search-history-list');
-    const section = document.getElementById('search-history-section');
-    let history = JSON.parse(localStorage.getItem('search_history') || '[]');
-
-    if (!container || !section) return;
-
-    // Limpeza de histórico corrompido (strings HTML em vez de termos)
-    if (history.some(h => String(h).includes('<div'))) {
-        history = history.filter(h => !String(h).includes('<div'));
-        localStorage.setItem('search_history', JSON.stringify(history));
-    }
-
-    if (history.length === 0) {
-        section.style.display = 'none';
-        return;
-    }
-
-    section.style.display = 'block';
-    container.innerHTML = history.map(h => {
-        // Sanitiza o termo para exibição
-        const safeTerm = String(h).replace(/<[^>]*>/g, '').trim();
-        return `
-            <div class="suggestion-item" onclick="window.location.href='search.html?q=${encodeURIComponent(safeTerm)}'">
-                <i class='bx bx-history'></i> ${safeTerm}
-            </div>
-        `;
-    }).join('');
-}
-
-window.clearSearchHistory = function () {
-    localStorage.removeItem('search_history');
-    renderSearchHistory();
-};
 
 function setupSearch() {
     const modalInput = document.getElementById('modal-search-input');
@@ -447,6 +340,16 @@ function renderProducts(products, target) {
                 </div>`;
         }
 
+        const isWomensDay = (prod.category || '').toLowerCase().includes('dia das mulheres') ||
+            (prod.category || '').toLowerCase().includes('presenteie') ||
+            (prod.name || '').toLowerCase().includes('dia das mulheres') ||
+            (prod.name || '').toLowerCase().includes('dia da mulher');
+
+        let specialTagHtml = '';
+        if (isWomensDay) {
+            specialTagHtml = `<div class="special-women-tag"><i class='bx bxs-heart'></i> Especial Dia das Mulheres</div>`;
+        }
+
         const html = `
             <div class="product-card ${hasOffer ? 'has-offer' : ''}" id="prod-${prod.id}">
                 <div class="product-image" onclick="window.location.href='product.html?id=${prod.id}'">
@@ -457,12 +360,16 @@ function renderProducts(products, target) {
                     </button>
                 </div>
                 <div class="product-info" onclick="window.location.href='product.html?id=${prod.id}'">
-                    <div class="seller-tag"><i class='bx bxs-badge-check'></i> D'tudo Variedades</div>
+                    ${specialTagHtml}
                     <h4 class="product-name" style="text-transform: none;">${name}</h4>
+                    <div class="seller-tag" style="font-size: 0.65rem; color: #000; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 3px;">
+                        <i class='bx bxs-badge-check' style="color: #3483fa;"></i> D'tudo Variedades
+                    </div>
                     ${priceHtml}
                     ${installmentHtml}
                 </div>
             </div>`;
+
         target.insertAdjacentHTML('beforeend', html);
     });
 }
@@ -512,19 +419,8 @@ function updateCartBadge() {
     }
 }
 
-window.toggleSearchExpansion = function (event) {
-    if (event) event.stopPropagation();
-    const container = document.getElementById('header-search-container');
-    if (container) {
-        const isExpanded = container.classList.contains('expanded');
-        if (isExpanded) {
-            openSearchModal();
-        } else {
-            container.classList.add('expanded');
-            setTimeout(() => { openSearchModal(); }, 400);
-        }
-    }
-};
+// toggleSearchExpansion centralizado em global.js
+
 
 document.addEventListener('click', (e) => {
     const container = document.getElementById('header-search-container');

@@ -26,9 +26,15 @@
             <a href="index.html" class="logo">
                 <i class='bx bx-left-arrow-alt' style="font-size: 1.8rem;"></i>
             </a>
-            <div class="search-bar" onclick="window.location.href='index.html?openSearch=true'">
-                <input type="text" placeholder="buscar na Dtudo" readonly>
-                <i class='bx bx-search search-icon'></i>
+            <div class="header-right-actions">
+                <div class="search-trigger-container" id="header-search-container">
+                    <button class="search-trigger-btn" onclick="toggleSearchExpansion(event)" title="Buscar produtos">
+                        <i class='bx bx-search'></i>
+                    </button>
+                    <div class="search-expansion-bar" onclick="openSearchModal()">
+                        <input type="text" placeholder="buscar na Dtudo" id="main-search-input" readonly>
+                    </div>
+                </div>
             </div>
             <div class="header-actions-desktop">
                 <a href="carrinho.html" class="nav-item-desktop">
@@ -149,6 +155,35 @@
                 </div>
             </div>
             <div style="height: 20px;"></div>
+        </div>
+    </div>
+
+    <!-- Modal de Busca -->
+    <div id="search-modal" class="modal-overlay search-modal">
+        <div class="search-modal-content">
+            <header class="search-modal-header">
+                <i class='bx bx-left-arrow-alt' onclick="closeSearchModal()"></i>
+                <div class="search-input-wrapper">
+                    <input type="text" placeholder="O que você está procurando?" id="modal-search-input" autofocus>
+                    <i class='bx bx-x' id="clear-search" style="display: none;"></i>
+                </div>
+                <button class="search-confirm-btn" onclick="executeSearch()">Buscar</button>
+            </header>
+
+            <div class="search-modal-body">
+                <div id="search-history-section" style="display: none;">
+                    <div class="search-section-title">
+                        <span>Buscas recentes</span>
+                        <button onclick="clearSearchHistory()">Limpar</button>
+                    </div>
+                    <div id="search-history-list" class="suggestion-list"></div>
+                </div>
+
+                <div id="search-suggestions-section" style="display: none;">
+                    <div class="search-section-title">Sugestões para você</div>
+                    <div id="search-suggestions-list" class="suggestion-list"></div>
+                </div>
+            </div>
         </div>
     </div>
 

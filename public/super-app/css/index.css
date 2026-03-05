@@ -2598,6 +2598,7 @@ a {
 }
 
 /* ==================== ANIMAÇÃO CORAÇÃO PRESENTEIE ==================== */
+/* ==================== ANIMAÇÃO CORAÇÃO PRESENTEIE ==================== */
 .heart-expansion-overlay {
     position: fixed;
     top: 0;
@@ -2605,18 +2606,89 @@ a {
     width: 100vw;
     height: 100vh;
     background: #ff4d6d;
-    z-index: 9999;
-    clip-path: circle(0% at var(--ripple-x, 50%) var(--ripple-y, 50%));
-    transition: clip-path 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
-    pointer-events: none;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     opacity: 0;
     visibility: hidden;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    overflow: hidden;
 }
 
 .heart-expansion-overlay.active {
-    clip-path: circle(150% at var(--ripple-x, 50%) var(--ripple-y, 50%));
-    opacity: 0.95;
+    opacity: 1;
     visibility: visible;
+}
+
+.heart-svg-expander {
+    fill: #ff4d6d;
+    width: 50px;
+    /* Base size */
+    height: 50px;
+    transform: scale(0);
+    transition: transform 1s cubic-bezier(0.5, 0, 0.5, 1);
+    transform-origin: center;
+    position: absolute;
+    /* We'll set top/left in JS to match click if needed, or just center it */
+}
+
+.heart-expansion-overlay.active .heart-svg-expander {
+    transform: scale(80);
+    /* Expands enough to cover screen */
+}
+
+/* TAG ESPECIAL DIA DAS MULHERES */
+.special-women-tag {
+    background: #db0038;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 6px rgba(219, 0, 56, 0.3);
+    animation: tagPulse 2s infinite;
+    width: fit-content;
+}
+
+@keyframes tagPulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.03);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Banner Especial Dia das Mulheres */
+.product-special-banner {
+    width: 100%;
+    margin: 20px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.product-special-banner:hover {
+    transform: scale(1.02);
+}
+
+.product-special-banner img {
+    width: 100%;
+    display: block;
 }
 
 .presenteie-heart-icon svg {
@@ -2625,4 +2697,127 @@ a {
 
 #presenteie-category-item:active .presenteie-heart-icon svg {
     transform: scale(1.2);
+}
+
+/* ==================== NOVO LAYOUT DO FEED ==================== */
+.product-carousel {
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    padding: 10px 4px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.product-carousel::-webkit-scrollbar {
+    display: none;
+}
+
+/* Mobile specific carousel width: 2.35 items view (2 + 35% of next) */
+.product-carousel .product-card {
+    flex: 0 0 calc(100% / 2.35 - 12px);
+    scroll-snap-align: start;
+    min-width: 150px;
+    max-width: 180px;
+    margin-right: 12px;
+}
+
+/* No desktop, o carrosel volta ao grid normal ou aumenta o número de itens */
+@media (min-width: 768px) {
+    .product-carousel {
+        flex-wrap: wrap;
+        overflow-x: visible;
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+    }
+
+    .product-carousel .product-card {
+        flex: none;
+        max-width: none;
+        margin-right: 0;
+    }
+}
+
+.feed-section {
+    margin-bottom: 35px;
+    padding: 0 15px;
+    width: 100%;
+}
+
+.feed-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.feed-section-title {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: #333;
+    letter-spacing: -0.5px;
+    margin: 0;
+}
+
+.feed-section-more {
+    color: var(--color-brand-red);
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-decoration: none;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Banner Centralizado no Feed */
+.feed-central-banner {
+    width: calc(100% - 30px);
+    margin: 0 15px 25px;
+    border-radius: 15px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.feed-central-banner:active {
+    transform: scale(0.98);
+}
+
+.feed-central-banner img {
+    width: 100%;
+    display: block;
+}
+
+/* Grid Simples Eletro */
+.eletro-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+@media (min-width: 768px) {
+    .eletro-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.eletro-grid .product-card {
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Feed Infinito Destaques */
+.infinite-highlights-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+@media (min-width: 768px) {
+    .infinite-highlights-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
 }

@@ -408,3 +408,170 @@ window.applyCEP = function () {
         showToast("Insira um CEP válido", "error");
     }
 }
+// --- LÓGICA DO MODAL DE BUSCA GERAL ---
+window.openSearchModal = function () {
+    const modal = document.getElementById('search-modal');
+    if (modal) {
+        modal.classList.add('show');
+        const input = document.getElementById('modal-search-input');
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
+        renderSearchHistory();
+    }
+};
+
+window.closeSearchModal = function () {
+    const modal = document.getElementById('search-modal');
+    if (modal) modal.classList.remove('show');
+};
+
+window.executeSearch = function (termOverride) {
+    const input = document.getElementById('modal-search-input');
+    const term = (termOverride && typeof termOverride === 'string') ? termOverride : (input ? input.value.trim() : "");
+    if (term) {
+        saveSearchHistory(term);
+        window.location.href = `search.html?q=${encodeURIComponent(term)}`;
+    }
+};
+
+function saveSearchHistory(term) {
+    let history = JSON.parse(localStorage.getItem('search_history') || '[]');
+    history = history.filter(h => h.toLowerCase() !== term.toLowerCase());
+    history.unshift(term);
+    localStorage.setItem('search_history', JSON.stringify(history.slice(0, 5)));
+}
+
+function renderSearchHistory() {
+    const container = document.getElementById('search-history-list');
+    const section = document.getElementById('search-history-section');
+    let history = JSON.parse(localStorage.getItem('search_history') || '[]');
+
+    if (!container || !section) return;
+
+    if (history.some(h => String(h).includes('<div'))) {
+        history = history.filter(h => !String(h).includes('<div'));
+        localStorage.setItem('search_history', JSON.stringify(history));
+    }
+
+    if (history.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+
+    section.style.display = 'block';
+    container.innerHTML = history.map(h => {
+        const safeTerm = String(h).replace(/<[^>]*>/g, '').trim();
+        return `
+            <div class="suggestion-item" onclick="window.location.href='search.html?q=${encodeURIComponent(safeTerm)}'">
+                <i class='bx bx-history'></i> ${safeTerm}
+            </div>
+        `;
+    }).join('');
+}
+
+window.clearSearchHistory = function () {
+    localStorage.removeItem('search_history');
+    renderSearchHistory();
+};
+
+window.toggleSearchExpansion = function (event) {
+    if (event) event.stopPropagation();
+    const container = document.getElementById('header-search-container');
+    if (container) {
+        const isExpanded = container.classList.contains('expanded');
+        if (isExpanded) {
+            openSearchModal();
+        } else {
+            container.classList.add('expanded');
+            setTimeout(() => { openSearchModal(); }, 400);
+        }
+    }
+};
+
+// --- MAPA DE SINÔNIMOS PARA BUSCA INTELIGENTE ---
+const SEARCH_SYNONYMS = {
+    'tv': ['televisao', 'televisão', 'televisor', 'smart tv', 'monitor', 'led'],
+    'televisao': ['tv', 'televisor', 'smart tv'],
+    'televisão': ['tv', 'televisor', 'smart tv'],
+    'celular': ['smartphone', 'telefone', 'mobile', 'iphone', 'android'],
+    'smartphone': ['celular', 'telefone', 'mobile'],
+    'fone': ['headset', 'fone de ouvido', 'auricular', 'bluetooth', 'tws'],
+    'relogio': ['smartwatch', 'smart watch', 'relógio', 'digital', 'analogico'],
+    'relógio': ['relogio', 'smartwatch', 'smart watch'],
+    'caixa': ['som', 'speaker', 'bluetooth', 'amplificada', 'jbl'],
+    'notebook': ['laptop', 'computador', 'pc', 'informatica'],
+    'pc': ['computador', 'notebook', 'desktop', 'gabinete'],
+    'brinquedo': ['infantil', 'boneca', 'carro', 'jogo', 'kids'],
+    'escolar': ['papelaria', 'caderno', 'caneta', 'lapis', 'mochila'],
+    'presenteie': ['dia das mulheres', 'dia da mulher', 'mulheres', 'mulher'],
+    'makes': ['cosméticos', 'maquiagens', 'maquiagem', 'batom', 'rimel', 'blush', 'makeup', 'make up']
+};
+
+window.smartMatch = function (product, term) {
+    const name = (product.name || '').toLowerCase();
+    const cat = (product.category || '').toLowerCase();
+    const brand = (product.brand || product.marca || '').toLowerCase();
+    const query = term.toLowerCase();
+    if (name.includes(query) || cat.includes(query) || brand.includes(query)) return true;
+    for (const [key, synonyms] of Object.entries(SEARCH_SYNONYMS)) {
+        if (query === key || synonyms.includes(query)) {
+            const matchesKey = name.includes(key) || cat.includes(key) || brand.includes(key);
+            const matchesSynonym = synonyms.some(s => name.includes(s) || cat.includes(s) || brand.includes(s));
+            if (matchesKey || matchesSynonym) return true;
+        }
+    }
+    return false;
+};
+
+window.setupSearch = function () {
+    const modalInput = document.getElementById('modal-search-input');
+    const clearBtn = document.getElementById('clear-search');
+    if (modalInput) {
+        modalInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') executeSearch(); });
+        modalInput.addEventListener('input', (e) => {
+            const term = e.target.value.trim().toLowerCase();
+            if (clearBtn) clearBtn.style.display = term ? 'block' : 'none';
+            const suggestionsList = document.getElementById('search-suggestions-list');
+            const suggestionsSection = document.getElementById('search-suggestions-section');
+            if (suggestionsList) {
+                if (term.length >= 2) {
+                    const cached = DataManager.getProducts() || [];
+                    const filtered = cached.filter(p => smartMatch(p, term)).slice(0, 6);
+                    if (filtered.length > 0) {
+                        suggestionsList.innerHTML = filtered.map(p => `
+                            <div class="suggestion-item" onclick="window.location.href='search.html?q=${encodeURIComponent(p.name)}'">
+                                <i class='bx bx-search'></i> ${p.name}
+                            </div>
+                        `).join('') + `
+                            <div class="suggestion-item" onclick="executeSearch()" style="background: #fdfdfd; border-top: 1px solid #eee; color: #db0038; font-weight: 700;">
+                                <i class='bx bx-right-arrow-alt'></i> Ver todos os resultados para "${term}"
+                            </div>
+                        `;
+                        if (suggestionsSection) {
+                            suggestionsSection.style.display = 'block';
+                            suggestionsSection.querySelector('.search-section-title').innerText = 'Busca Inteligente';
+                        }
+                    } else {
+                        suggestionsList.innerHTML = `<div class="suggestion-item" onclick="executeSearch()"><i class='bx bx-search'></i> Buscar por "${term}"...</div>`;
+                        if (suggestionsSection) suggestionsSection.style.display = 'block';
+                    }
+                } else {
+                    if (suggestionsSection) {
+                        suggestionsSection.style.display = 'block';
+                        suggestionsSection.querySelector('.search-section-title').innerText = 'Sugestões para você';
+                    }
+                    suggestionsList.innerHTML = `
+                        <div class="suggestion-item" onclick="window.location.href='search.html?q=relogio'"> <i class='bx bx-trending-up'></i> Relógio Masculino</div>
+                        <div class="suggestion-item" onclick="window.location.href='search.html?q=escolar'"><i class='bx bx-trending-up'></i> Material Escolar</div>
+                        <div class="suggestion-item" onclick="window.location.href='search.html?q=eletronico'"><i class='bx bx-trending-up'></i> Eletrônicos</div>
+                    `;
+                }
+            }
+        });
+    }
+    if (clearBtn) { clearBtn.onclick = () => { if (modalInput) { modalInput.value = ''; modalInput.focus(); clearBtn.style.display = 'none'; } }; }
+    const modal = document.getElementById('search-modal');
+    if (modal) { modal.onclick = (e) => { if (e.target === modal) closeSearchModal(); }; }
+};

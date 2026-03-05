@@ -301,6 +301,16 @@ function renderProductView(prod, variacoesGroup, allProducts, activeIndex) {
             </div>`;
     }
 
+    const isWomensDay = (prod.category || '').toLowerCase().includes('dia das mulheres') ||
+        (prod.category || '').toLowerCase().includes('presenteie') ||
+        (prod.name || '').toLowerCase().includes('dia das mulheres') ||
+        (prod.name || '').toLowerCase().includes('dia da mulher');
+
+    let specialTagHtml = '';
+    if (isWomensDay) {
+        specialTagHtml = `<div class="special-women-tag" style="margin-bottom: 10px;"><i class='bx bxs-heart'></i> Especial Dia das Mulheres</div>`;
+    }
+
     content.innerHTML = `
             <div class="detail-view-container">
                 <div class="detail-gallery-container">
@@ -310,10 +320,13 @@ function renderProductView(prod, variacoesGroup, allProducts, activeIndex) {
                     </div>
                     ${thumbsHtml}
                 </div>
-
                 <div class="detail-info" style="padding: 0 5px;">
                     ${soldCount > 5 ? `<div class="detail-status" style="background:#f5f5f5; color:#666; padding:4px 10px; border-radius:4px; font-size:0.75rem; font-weight:700; width:fit-content; margin-bottom:10px;">Novo | +${soldCount} vendidos</div>` : ''}
+                    ${specialTagHtml}
                     <h1 class="detail-title" style="margin-bottom: 8px;">${prod.name}</h1>
+                    <div class="seller-tag" style="font-size: 0.85rem; color: #000; font-weight: 700; margin-bottom: 15px; display: flex; align-items: center; gap: 4px;">
+                        <i class='bx bxs-badge-check' style="color: #3483fa;"></i> D'tudo Variedades
+                    </div>
                     ${priceBlock}
                     <div style="background: #e6f7ee; color: #00a650; padding: 10px; border-radius: 8px; margin-bottom: 20px; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
                         <i class='bx bxs-truck' style="font-size: 1.2rem;"></i> Frete grátis para Ipixuna
@@ -321,7 +334,6 @@ function renderProductView(prod, variacoesGroup, allProducts, activeIndex) {
                     ${installmentBlock}
                     ${stockHtml}
                     ${variationsHtml}
-                    
                     <div class="action-buttons">
                         <button class="btn-buy-now" ${stockCount <= 0 ? 'disabled style="background:#ccc;"' : ''} onclick="addToCartAndGo('${prod.id}', '${prod.name.replace(/'/g, "\\'")}', ${cardPrice}, ${pixPrice}, '${productImages[0]}')">
                             ${stockCount <= 0 ? 'Indisponível' : 'Comprar Agora'}
@@ -330,26 +342,22 @@ function renderProductView(prod, variacoesGroup, allProducts, activeIndex) {
                             Adicionar ao cesto
                         </button>
                     </div>
-
-                    <div class="seller-info">
-                        <i class='bx bx-store-alt'></i>
-                        <div class="seller-text">
-                            Vendido por: <strong>D'Tudo Variedades</strong> <i class='bx bxs-badge-check' style="color: #3483fa;"></i><br>
-                            <span>CD1 - Ipixuna do Pará</span>
-                        </div>
-                    </div>
-
                     <button class="btn-whatsapp-direct" style="background:#25D366; color:#fff; border:none; padding:12px; border-radius:8px; width:100%; margin-top:10px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="window.open('https://wa.me/5591986341760?text=Olá, quero o produto: ${encodeURIComponent(prod.name)}', '_blank')">
                         <i class='bx bxl-whatsapp'></i> Comprar pelo WhatsApp
                     </button>
                 </div>
             </div>
 
-            <div style="background:#fff; padding:20px; margin-top:20px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+            <div class="product-special-banner" onclick="window.location.href='search.html?category=presenteie'">
+                <img src="day-banner-mulher01.png" alt="Especial Dia das Mulheres">
+            </div>
+
+            <div style="background:#fff; padding:20px; margin-top:10px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
                 <h3 style="font-size:1.2rem; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">Descrição</h3>
                 <p style="color:#666; line-height:1.6; white-space: pre-line;">${prod.description || 'Sem descrição detalhada.'}</p>
             </div>
         `;
+
 
     renderSuggestedProducts(prod, allProducts);
 }
@@ -455,4 +463,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
     if (productId) loadProductDetail(productId);
+
+    // Inicializa lógica de busca global (modal)
+    if (typeof setupSearch === 'function') setupSearch();
 });
+

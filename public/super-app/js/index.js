@@ -6,47 +6,7 @@ const COMMENTS_CACHE_KEY = "dtudo_user_reviews";
 const REVIEWS_CACHE_DURATION = 20 * 60 * 60 * 1000;
 const CART_KEY = 'app_cart';
 
-// --- MAPA DE SINÔNIMOS PARA BUSCA INTELIGENTE ---
-const SEARCH_SYNONYMS = {
-    'tv': ['televisao', 'televisão', 'televisor', 'smart tv', 'monitor', 'led'],
-    'televisao': ['tv', 'televisor', 'smart tv'],
-    'televisão': ['tv', 'televisor', 'smart tv'],
-    'celular': ['smartphone', 'telefone', 'mobile', 'iphone', 'android'],
-    'smartphone': ['celular', 'telefone', 'mobile'],
-    'fone': ['headset', 'fone de ouvido', 'auricular', 'bluetooth', 'tws'],
-    'relogio': ['smartwatch', 'smart watch', 'relógio', 'digital', 'analogico'],
-    'relógio': ['relogio', 'smartwatch', 'smart watch'],
-    'caixa': ['som', 'speaker', 'bluetooth', 'amplificada', 'jbl'],
-    'notebook': ['laptop', 'computador', 'pc', 'informatica'],
-    'pc': ['computador', 'notebook', 'desktop', 'gabinete'],
-    'brinquedo': ['infantil', 'boneca', 'carro', 'jogo', 'kids'],
-    'escolar': ['papelaria', 'caderno', 'caneta', 'lapis', 'mochila'],
-    'presenteie': ['dia das mulheres', 'dia da mulher', 'mulheres', 'mulher'],
-    'makes': ['cosméticos', 'maquiagens', 'maquiagem', 'batom', 'rimel', 'blush', 'makeup', 'make up']
-};
-
-function smartMatch(product, term) {
-    const name = (product.name || '').toLowerCase();
-    const cat = (product.category || '').toLowerCase();
-    const brand = (product.brand || product.marca || '').toLowerCase();
-    const query = term.toLowerCase();
-
-    // 1. Verifica match direto (Nome, Categoria ou Marca)
-    if (name.includes(query) || cat.includes(query) || brand.includes(query)) return true;
-
-    // 2. Verifica Sinônimos
-    for (const [key, synonyms] of Object.entries(SEARCH_SYNONYMS)) {
-        // Se o termo pesquisado é a chave ou está nos sinônimos daquela chave
-        if (query === key || synonyms.includes(query)) {
-            // Verifica se o NOME, CATEGORIA ou MARCA do produto contém a CHAVE ou algum dos SINÔNIMOS
-            const matchesKey = name.includes(key) || cat.includes(key) || brand.includes(key);
-            const matchesSynonym = synonyms.some(s => name.includes(s) || cat.includes(s) || brand.includes(s));
-
-            if (matchesKey || matchesSynonym) return true;
-        }
-    }
-    return false;
-}
+// SEARCH_SYNONYMS e smartMatch centralizados em global.js
 
 // Variáveis Globais
 let lastVisibleDoc = null;
@@ -177,14 +137,13 @@ function buildProductCardHTML(prod) {
     let displayImg = getFirstImageUrl(prod.imgUrl);
     const valPrice = parseFloat(prod.price || 0); // Preço original (Cartão)
     const valOffer = parseFloat(prod['price-oferta'] || 0);
+    const stock = parseInt(prod.stock || 0);
+    const isSoldOut = stock <= 0;
+
+    // Ocultar produtos sem estoque exclusivamente do feed
+    if (isSoldOut) return '';
+
     const hasOffer = (valOffer > 0 && valOffer < valPrice);
-
-    // Lógica de cronômetro e pausa
-    const OFFER_DEADLINE = new Date("2026-03-02T23:59:59").getTime();
-    const isExpired = Date.now() >= OFFER_DEADLINE;
-
-    // Se estiver expirado e for oferta, não renderiza (pausa)
-    if (hasOffer && isExpired) return '';
 
     let pricePix, priceCard;
 
@@ -241,9 +200,6 @@ function buildProductCardHTML(prod) {
         installmentHtml = `<div class="installment-text">ou <b>${fmtCard}</b> no cartão</div>`;
     }
 
-    const stock = parseInt(prod.stock || 0);
-    const isSoldOut = stock <= 0;
-
     // Filtro de Restrição: Nunca exibir se não tiver imagem válida
     if (!displayImg || displayImg.includes('placehold.co')) return '';
 
@@ -254,6 +210,16 @@ function buildProductCardHTML(prod) {
                 <i class='bx bx-time-five'></i>
                 <span class="timer-countdown">--:--:--</span>
             </div>`;
+    }
+
+    const isWomensDay = (prod.category || '').toLowerCase().includes('dia das mulheres') ||
+        (prod.category || '').toLowerCase().includes('presenteie') ||
+        (prod.name || '').toLowerCase().includes('dia das mulheres') ||
+        (prod.name || '').toLowerCase().includes('dia da mulher');
+
+    let specialTagHtml = '';
+    if (isWomensDay) {
+        specialTagHtml = `<div class="special-women-tag"><i class='bx bxs-heart'></i> Especial Dia das Mulheres</div>`;
     }
 
     return `
@@ -267,151 +233,166 @@ function buildProductCardHTML(prod) {
                 ${isSoldOut ? '<div class="sold-out-badge" style="position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.6); color:#fff; text-align:center; font-size:0.75rem; font-weight:700; padding:2px 0; backdrop-filter:blur(2px);">Esgotado</div>' : ''}
             </div>
             <div class="product-info">
-                <div class="seller-tag" style="font-size: 0.65rem; color: #3483fa; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 3px;">
-                    <i class='bx bxs-badge-check'></i> D'tudo Variedades
-                </div>
+                ${specialTagHtml}
                 <h4 class="product-name">${name}</h4>
+                <div class="seller-tag" style="font-size: 0.65rem; color: #000; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 3px;">
+                    <i class='bx bxs-badge-check' style="color: #3483fa;"></i> D'tudo Variedades
+                </div>
                 ${priceHtml}
                 ${installmentHtml}
                 ${!isSoldOut ? '<div class="free-shipping"><i class=\'bx bxs-truck\'></i> Frete Grátis</div>' : '<div class="free-shipping" style="color:#999"><i class=\'bx bx-time\'></i> Em breve</div>'}
             </div>
         </div>`;
+
 }
 
 function renderProductBatch(products) {
-    const container = document.getElementById('firebase-products-container');
-    if (!container) return;
-    if (container.querySelector('.skeleton-card')) container.innerHTML = '';
+    const homeHighlightsContainer = document.getElementById('infinite-highlights-container');
+    const homeSections = document.getElementById('home-sections-container');
+
+    let targetContainer;
+    if (homeSections && homeSections.style.display !== 'none' && homeHighlightsContainer) {
+        targetContainer = homeHighlightsContainer;
+    } else {
+        targetContainer = document.getElementById('firebase-products-container');
+    }
+
+    if (!targetContainer) return;
+    if (targetContainer.querySelector('.skeleton-card')) targetContainer.innerHTML = '';
 
     products.forEach(prod => {
-        if (document.getElementById(`prod-${prod.id}`)) return;
+        if (prod.id && document.getElementById(`prod-${prod.id}`)) return;
         const img = prod.imgUrl || "";
         const hasUrl = img.trim() !== "" && !img.includes('placehold.co') && (img.startsWith('http') || img.includes('/'));
         if (!hasUrl) return;
 
-        container.insertAdjacentHTML('beforeend', buildProductCardHTML(prod));
+        targetContainer.insertAdjacentHTML('beforeend', buildProductCardHTML(prod));
     });
 }
+
 
 function renderHomeSections(cached) {
     const container = document.getElementById('home-sections-container');
     if (!container) return;
 
-    // Filter valid products (must have a name)
-    const validProds = cached.filter(p => p.name && p.name.trim() !== "");
-    // Filtramos produtos com oferta para a seção de Ofertas
-    const OFFER_DEADLINE = new Date("2026-03-02T23:59:59").getTime();
-    const isExpired = Date.now() >= OFFER_DEADLINE;
+    // Filtra produtos válidos
+    const validProds = cached.filter(p => p.name && p.name.trim() !== "" && p.imgUrl && !p.imgUrl.includes('placehold.co'));
 
-    let ofertas = [];
-    if (!isExpired) {
-        ofertas = validProds.filter(p => {
-            const valPrice = parseFloat(p.price || 0);
-            const valOffer = parseFloat(p['price-oferta'] || 0);
-            const img = p.imgUrl || "";
-            const hasImg = img.trim() !== "" && !img.includes('placehold.co') && (img.startsWith('http') || img.includes('/'));
-            return valOffer > 0 && valOffer < valPrice && hasImg;
-        });
-    }
+    // 1. MAIS VENDIDOS (Até 12 itens, Estilo Carrossel)
+    const maisVendidos = [...validProds]
+        .sort((a, b) => (parseInt(b.sold) || 0) - (parseInt(a.sold) || 0))
+        .slice(0, 12);
 
-    // O restante dos produtos vai para Destaques
-    const idsEmOferta = new Set(ofertas.map(p => p.id));
-    const destaques = validProds.filter(p => !idsEmOferta.has(p.id));
+    // 2. PRESENTEIE (Estilo Carrossel)
+    const presenteie = validProds.filter(p => smartMatch(p, 'presenteie'));
+
+    // 3. ELETRODOMÉSTICOS (Até 8 itens, Estilo Grid Simples + Ver Mais)
+    const eletro = validProds.filter(p => {
+        const cat = (p.category || '').toLowerCase();
+        return cat === 'eletrodomésticos' || cat === 'eletrodomesticos';
+    }).slice(0, 8);
+
+
+    // 4. DESTAQUES PARA VOCÊ (Histórico de Interesses)
+    const interests = JSON.parse(localStorage.getItem('user_interests') || '[]');
+    let destaques = [...validProds].sort((a, b) => {
+        const catA = (a.category || '').toLowerCase();
+        const catB = (b.category || '').toLowerCase();
+        const indexA = interests.indexOf(catA);
+        const indexB = interests.indexOf(catB);
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        return 0.5 - Math.random();
+    });
+
+    // Remove duplicatas já exibidas nas seções acima para o feed infinito
+    const displayedIds = new Set([
+        ...maisVendidos.map(p => p.id),
+        ...presenteie.map(p => p.id),
+        ...eletro.map(p => p.id)
+    ]);
+    destaques = destaques.filter(p => !displayedIds.has(p.id));
 
     let html = '';
 
-    const createSection = (title, items) => {
-        if (!items || items.length === 0) return '';
-        const gridContent = items.map(p => buildProductCardHTML(p)).join('').trim();
-        if (!gridContent) return '';
-
-        return `
-            <div class="home-dynamic-section" style="margin-bottom: 30px;">
-                <h2 class="section-title" style="margin-bottom: 15px;">${title}</h2>
-                <div class="product-grid" style="margin-bottom: 15px;">
-                    ${gridContent}
+    // Seção Mais Vendidos
+    if (maisVendidos.length > 0) {
+        html += `
+            <section class="feed-section">
+                <div class="feed-section-header">
+                    <h2 class="feed-section-title">Mais Vendidos</h2>
+                    <a href="search.html?q=mais vendidos" class="feed-section-more">Ver tudo <i class='bx bx-chevron-right'></i></a>
                 </div>
-            </div>
+                <div class="product-carousel">
+                    ${maisVendidos.map(p => buildProductCardHTML(p)).join('')}
+                </div>
+            </section>
         `;
-    };
+    }
 
-    html += createSection('Ofertas Hoje', ofertas);
-    html += createSection('Destaques para você', destaques);
+    // Banner Dia das Mulheres
+    html += `
+        <div class="feed-central-banner" onclick="window.location.href='search.html?category=presenteie'">
+            <img src="day-banner-mulher01.png" alt="Especial Dia das Mulheres">
+        </div>
+    `;
+
+    // Seção Presenteie
+    if (presenteie.length > 0) {
+        html += `
+            <section class="feed-section">
+                <div class="feed-section-header">
+                    <h2 class="feed-section-title">Especial Presenteie</h2>
+                    <a href="search.html?category=presenteie" class="feed-section-more">Ver tudo <i class='bx bx-chevron-right'></i></a>
+                </div>
+                <div class="product-carousel">
+                    ${presenteie.map(p => buildProductCardHTML(p)).join('')}
+                </div>
+            </section>
+        `;
+    }
+
+    // Seção Eletrodomésticos
+    if (eletro.length > 0) {
+        html += `
+            <section class="feed-section">
+                <div class="feed-section-header">
+                    <h2 class="feed-section-title">Eletrodomésticos</h2>
+                    <a href="search.html?q=eletrodomesticos" class="feed-section-more">Ver mais <i class='bx bx-plus'></i></a>
+                </div>
+                <div class="eletro-grid">
+                    ${eletro.map(p => buildProductCardHTML(p)).join('')}
+                </div>
+            </section>
+        `;
+    }
+
+    // Seção Destaques para Você (Início do Feed Infinito)
+    if (destaques.length > 0) {
+        html += `
+            <section class="feed-section">
+                <div class="feed-section-header">
+                    <h2 class="feed-section-title">Destaques para você</h2>
+                </div>
+                <div class="infinite-highlights-grid" id="infinite-highlights-container">
+                    ${destaques.slice(0, 10).map(p => buildProductCardHTML(p)).join('')}
+                </div>
+            </section>
+        `;
+
+        // Guardar o restante para o scroll infinito (opcional ou carregar tudo se não for muito)
+        window.remainingHighlights = destaques.slice(10);
+    }
 
     container.innerHTML = html;
 }
 
 
+
 // --- BUSCA COM MODAL ---
-window.openSearchModal = function () {
-    const modal = document.getElementById('search-modal');
-    if (modal) {
-        modal.classList.add('show');
-        const input = document.getElementById('modal-search-input');
-        if (input) {
-            input.value = '';
-            input.focus();
-        }
-        renderSearchHistory();
-    }
-};
+// Funções removidas: agora centralizadas em global.js
 
-window.closeSearchModal = function () {
-    const modal = document.getElementById('search-modal');
-    if (modal) modal.classList.remove('show');
-};
-
-window.executeSearch = function (termOverride) {
-    const input = document.getElementById('modal-search-input');
-    const term = (termOverride && typeof termOverride === 'string') ? termOverride : (input ? input.value.trim() : "");
-    if (term) {
-        saveSearchHistory(term);
-        // Redireciona para a página de busca com o termo
-        window.location.href = `search.html?q=${encodeURIComponent(term)}`;
-    }
-};
-
-function saveSearchHistory(term) {
-    let history = JSON.parse(localStorage.getItem('search_history') || '[]');
-    history = history.filter(h => h.toLowerCase() !== term.toLowerCase());
-    history.unshift(term);
-    localStorage.setItem('search_history', JSON.stringify(history.slice(0, 5)));
-}
-
-function renderSearchHistory() {
-    const container = document.getElementById('search-history-list');
-    const section = document.getElementById('search-history-section');
-    let history = JSON.parse(localStorage.getItem('search_history') || '[]');
-
-    if (!container || !section) return;
-
-    // Limpeza de histórico corrompido (strings HTML em vez de termos)
-    if (history.some(h => String(h).includes('<div'))) {
-        history = history.filter(h => !String(h).includes('<div'));
-        localStorage.setItem('search_history', JSON.stringify(history));
-    }
-
-    if (history.length === 0) {
-        section.style.display = 'none';
-        return;
-    }
-
-    section.style.display = 'block';
-    container.innerHTML = history.map(h => {
-        // Sanitiza o termo para exibição
-        const safeTerm = String(h).replace(/<[^>]*>/g, '').trim();
-        return `
-            <div class="suggestion-item" onclick="window.location.href='search.html?q=${encodeURIComponent(safeTerm)}'">
-                <i class='bx bx-history'></i> ${safeTerm}
-            </div>
-        `;
-    }).join('');
-}
-
-window.clearSearchHistory = function () {
-    localStorage.removeItem('search_history');
-    renderSearchHistory();
-};
 
 function setupSearch() {
     const modalInput = document.getElementById('modal-search-input');
@@ -761,8 +742,15 @@ window.filterLocalCategory = function (categoryStr) {
             }
             titleObj.style.display = 'none'; // Oculta o título global pois as seções têm seus próprios
             if (feedCont) feedCont.style.display = 'none';
-            if (sentinel) sentinel.style.display = 'none';
-        } else if (categoryStr === 'ofertas') {
+            // O sentinel não deve ser ocultado para permitir o feed infinito
+            if (sentinel) sentinel.style.display = 'block';
+
+            // Em vez de usar o applyLocalFilter padrão, usamos os destaques restantes que a renderHomeSections preparou
+            productsBuffer = window.remainingHighlights || [];
+            allProductsLoaded = productsBuffer.length === 0;
+            return; // Pulamos o restante da função pois já tratamos a home
+        }
+        else if (categoryStr === 'ofertas') {
             titleObj.innerText = 'Ofertas Hoje ⚡';
             pageTitle = "Ofertas Hoje | Dtudo";
         } else {
