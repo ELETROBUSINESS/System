@@ -571,13 +571,18 @@
             background: rgba(219, 0, 56, 0.6) !important;
         }
 
-        .story-template.template-womens-day .art-price-pix {
-            color: #db0038 !important;
+        .story-template.template-womens-day .art-price-container {
+            display: none !important;
+        }
+
+        .story-template.template-womens-day .art-womens-special-tag {
+            display: inline-block !important;
+            margin-bottom: 30px;
         }
 
         .story-template.template-womens-day .art-buy-button {
-            background: #db0038 !important;
-            color: white !important;
+            background: white !important;
+            color: black !important;
         }
 
         /* Heart decorations using pseudo-elements */
@@ -918,6 +923,10 @@
                         <div class="art-product-info">
                             <h3 class="art-product-name">${prod.name}</h3>
                             
+                            <div class="art-womens-special-tag" style="display:none; background: #db0038; color: white; padding: 6px 15px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
+                                <i class='bx bxs-heart'></i> Especial Dia das Mulheres
+                            </div>
+
                             <div class="art-price-container">
                                 ${(valOffer > 0 || (baseSalePrice * 0.98) < valPrice) ? `<div class="art-price-old">${fmtOriginal}</div>` : ''}
                                 <div class="art-price-pix">${fmtPix}</div>
