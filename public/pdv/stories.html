@@ -609,6 +609,105 @@
             z-index: 1;
             transform: rotate(15deg);
         }
+
+        /* Women's Day Model 2 - PREMIUM GLASS */
+        .story-template.template-womens-day-2 {
+            background: linear-gradient(180deg, #70001d 0%, #db0038 100%) !important;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .story-template.template-womens-day-2 .art-bg-shapes,
+        .story-template.template-womens-day-2 .art-bg-shapes2 {
+            display: none !important;
+        }
+
+        .story-template.template-womens-day-2::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M50 30 C50 15 30 15 30 30 C30 45 50 60 50 60 C50 60 70 45 70 30 C70 15 50 15 50 30" fill="white" opacity="0.05"/></svg>');
+            background-size: 80px;
+            z-index: 1;
+        }
+
+        .story-template.template-womens-day-2 .art-header {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .story-template.template-womens-day-2 .art-product-image-container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            width: 85%;
+            height: 320px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 5;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .story-template.template-womens-day-2 .art-product-info {
+            background: transparent !important;
+            box-shadow: none !important;
+            position: relative;
+            padding: 20px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .story-template.template-womens-day-2 .art-product-name {
+            color: white !important;
+            font-size: 1.4rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .story-template.template-womens-day-2 .art-womens-special-tag {
+            background: #ffeb3b !important;
+            color: #70001d !important;
+            font-weight: 900 !important;
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin-bottom: 25px !important;
+            display: inline-block !important;
+        }
+
+        .story-template.template-womens-day-2 .art-price-container {
+            display: flex !important;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.2) !important;
+            border: none !important;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .story-template.template-womens-day-2 .art-price-pix {
+            color: #ffeb3b !important;
+            font-size: 2.8rem !important;
+        }
+
+        .story-template.template-womens-day-2 .art-price-old {
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
+
+        .story-template.template-womens-day-2 .art-buy-button {
+            background: white !important;
+            color: #db0038 !important;
+            width: 80%;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
     </style>
 </head>
 
@@ -625,7 +724,8 @@
         <select id="story-template" onchange="updateHandles()">
             <option value="default">Visual Branco</option>
             <option value="red">Visual Vermelho</option>
-            <option value="womens-day">Especial Dia das Mulheres</option>
+            <option value="womens-day">Especial Dia das Mulheres (Soft)</option>
+            <option value="womens-day-2">Dia das Mulheres Premium (Glass)</option>
         </select>
         <button onclick="updateHandles()"><i class='bx bx-refresh'></i> Atualizar Visual</button>
         <button onclick="loadRecentProducts()" style="background: #0066ff;"><i class='bx bx-cloud-download'></i>
@@ -721,7 +821,7 @@
             document.querySelectorAll('.art-tag').forEach(el => el.innerText = callout);
 
             document.querySelectorAll('.story-template').forEach(el => {
-                el.classList.remove('template-red', 'template-womens-day');
+                el.classList.remove('template-red', 'template-womens-day', 'template-womens-day-2');
                 if (template !== 'default') {
                     el.classList.add('template-' + template);
                 }
@@ -900,6 +1000,7 @@
                 let templateClass = '';
                 if (template === 'red') templateClass = ' template-red';
                 else if (template === 'womens-day') templateClass = ' template-womens-day';
+                else if (template === 'womens-day-2') templateClass = ' template-womens-day-2';
 
                 html += `
                 <div class="story-wrapper" id="story-wrap-${index}">
