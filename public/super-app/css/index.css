@@ -2596,3 +2596,30 @@ a {
 .detail-info {
     padding: 0 10px;
 }
+
+/* ==================== ANIMAÇÃO CORAÇÃO PRESENTEIE ==================== */
+.heart-expansion-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #ff4d6d;
+    z-index: 9999;
+    clip-path: circle(0% at var(--ripple-x) var(--ripple-y));
+    transition: clip-path 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    opacity: 0.95;
+}
+
+.heart-expansion-overlay.active {
+    clip-path: circle(150% at var(--ripple-x) var(--ripple-y));
+}
+
+.presenteie-heart-icon svg {
+    transition: transform 0.3s ease;
+}
+
+#presenteie-category-item:active .presenteie-heart-icon svg {
+    transform: scale(1.2);
+}

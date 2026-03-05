@@ -26,6 +26,9 @@
         <i class='bx bxs-up-arrow'></i> Faça login aqui para acessar seus pedidos!
     </div>
 
+    <!-- Overlay de Animação Coração -->
+    <div id="heart-ripple-overlay" class="heart-expansion-overlay"></div>
+
 
 
 
@@ -428,6 +431,27 @@
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script>
+        function animateAndNavigate(event, url) {
+            const overlay = document.getElementById('heart-ripple-overlay');
+            if (!overlay) {
+                window.location.href = url;
+                return;
+            }
+
+            // Posição do clique ou touch
+            const x = event.clientX || (event.touches && event.touches[0].clientX);
+            const y = event.clientY || (event.touches && event.touches[0].clientY);
+
+            overlay.style.setProperty('--ripple-x', `${x}px`);
+            overlay.style.setProperty('--ripple-y', `${y}px`);
+            overlay.classList.add('active');
+
+            setTimeout(() => {
+                window.location.href = url;
+            }, 600); // Tempo para a animação cobrir a tela
+        }
+    </script>
     <script src="js/global.js?v=2.3"></script>
     <script src="js/index.js?v=2.3"></script>
 </body>
