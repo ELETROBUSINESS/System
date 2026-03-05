@@ -70,7 +70,8 @@ function registerRecentlyViewed(prod) {
         name: prod.name,
         price: prod.price,
         'price-oferta': prod['price-oferta'],
-        imgUrl: prod.imgUrl
+        imgUrl: prod.imgUrl,
+        loja: prod.loja
     });
     if (viewed.length > 10) viewed.pop();
     localStorage.setItem('user_recently_viewed', JSON.stringify(viewed));
@@ -367,15 +368,22 @@ function renderSuggestedProducts(currentProd, allProducts) {
     if (!container || !allProducts) return;
 
     const category = (currentProd.category || '').toLowerCase();
+    const prodLoja = String(currentProd.loja || "").toUpperCase();
     let suggested = allProducts.filter(p => {
         if (String(p.id) === String(currentProd.id)) return false;
         if (!p.imgUrl || p.imgUrl.trim() === "" || p.imgUrl.includes('placehold.co')) return false;
+
+        // Filtro por Loja
+        const sLoja = String(p.loja || "").toUpperCase();
+        if (sLoja !== prodLoja) return false;
+
         return (p.category || '').toLowerCase() === category;
     });
 
     if (suggested.length < 4) {
         const others = allProducts.filter(p =>
             String(p.id) !== String(currentProd.id) &&
+            String(p.loja || "").toUpperCase() === prodLoja &&
             p.imgUrl && !p.imgUrl.includes('placehold.co')
         );
         suggested = [...suggested, ...others.sort(() => 0.5 - Math.random())];

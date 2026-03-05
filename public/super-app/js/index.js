@@ -517,7 +517,8 @@ function registerRecentlyViewed(prod) {
         name: prod.name,
         price: prod.price,
         'price-oferta': prod['price-oferta'],
-        imgUrl: prod.imgUrl
+        imgUrl: prod.imgUrl,
+        loja: prod.loja
     });
     if (viewed.length > 10) viewed.pop(); // Keep last 10
     localStorage.setItem('user_recently_viewed', JSON.stringify(viewed));
@@ -528,7 +529,15 @@ function renderRecentlyViewed() {
     const section = document.getElementById('recently-viewed');
     if (!container || !section) return;
 
-    const viewed = JSON.parse(localStorage.getItem('user_recently_viewed') || '[]');
+    let viewed = JSON.parse(localStorage.getItem('user_recently_viewed') || '[]');
+
+    // Filtro por Loja (ELETRO vs Resto)
+    const isEletroView = window.location.search.includes('ELETRO');
+    viewed = viewed.filter(p => {
+        const prodLoja = String(p.loja || "").toUpperCase();
+        return isEletroView ? prodLoja === 'ELETRO' : prodLoja !== 'ELETRO';
+    });
+
     if (viewed.length === 0) {
         section.style.display = 'none';
         return;
@@ -1563,9 +1572,19 @@ let bannerTimer = null;
 
 function initSlider() {
     const wrapper = document.querySelector('.slider-wrapper');
-    const slides = document.querySelectorAll('.slide');
     const dotsContainer = document.querySelector('.banner-dots');
 
+    // Customização ELETRO
+    const isEletroView = window.location.search.includes('ELETRO');
+    if (isEletroView && wrapper) {
+        wrapper.innerHTML = `
+            <div class="slide" onclick="window.location.href='search.html?loja=ELETRO'" style="cursor: pointer;">
+                <img src="eletro-banner.png" alt="Eletro">
+            </div>
+        `;
+    }
+
+    const slides = document.querySelectorAll('.slide');
     if (!wrapper || slides.length === 0) return;
 
     const totalSlides = slides.length;
