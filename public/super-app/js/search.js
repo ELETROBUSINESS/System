@@ -360,7 +360,7 @@ async function performSearch(term, type) {
             const watchResults = allProducts.filter(p =>
                 !results.find(r => r.id === p.id) &&
                 !makeResults.find(m => m.id === p.id) &&
-                (p.name || '').toLowerCase().includes('relógio') &&
+                ((p.name || '').toLowerCase().includes('relógio') || (p.name || '').toUpperCase().includes('REL.')) &&
                 (p.name || '').toLowerCase().includes('feminino') &&
                 p.name && p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co')
             );
