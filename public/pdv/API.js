@@ -101,6 +101,10 @@ function doPost(e) {
                 return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Faltando boxId ou payment" })).setMimeType(ContentService.MimeType.JSON);
             }
         }
+        else if (action === "atualizarStatusNota") {
+            const result = atualizarStatusNota(data.chave, data.novoStatus);
+            return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+        }
 
         return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Ação desconhecida" })).setMimeType(ContentService.MimeType.JSON);
 
@@ -516,6 +520,10 @@ function doGet(e) {
         // --- NOVO: BUSCAR TODOS PEDIDOS ATIVOS (PDV) ---
         else if (action === "getAllOrdersPDV") {
             response = getAllOrdersPDV();
+        }
+
+        else if (action === "atualizarStatusNota") {
+            response = atualizarStatusNota(e.parameter.chave, e.parameter.novoStatus);
         }
 
 
@@ -2384,6 +2392,32 @@ function salvarLogFiscal(data) {
 
         sheet.appendRow(rowData);
         return { status: "success", message: "Log fiscal atualizado." };
+    } catch (e) {
+        return { status: "error", message: e.toString() };
+    } finally {
+        lock.releaseLock();
+    }
+}
+
+function atualizarStatusNota(chave, novoStatus) {
+    const lock = LockService.getScriptLock();
+    lock.tryLock(15000);
+    try {
+        const sheet = getSheet(FISCAL_SHEET_NAME);
+        const data = sheet.getDataRange().getValues();
+        const headers = data[0].map(h => h.toString().toLowerCase().trim());
+        const idxChave = headers.indexOf("chave");
+        const idxStatus = headers.indexOf("status");
+
+        if (idxChave === -1 || idxStatus === -1) return { status: "error", message: "Colunas 'Chave' ou 'Status' não encontradas." };
+
+        for (let i = 1; i < data.length; i++) {
+            if (String(data[i][idxChave]) === String(chave)) {
+                sheet.getRange(i + 1, idxStatus + 1).setValue(novoStatus);
+                return { status: "success", message: `Nota ${chave} atualizada para ${novoStatus}.` };
+            }
+        }
+        return { status: "error", message: "Chave de acesso não encontrada na planilha." };
     } catch (e) {
         return { status: "error", message: e.toString() };
     } finally {

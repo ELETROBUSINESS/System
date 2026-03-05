@@ -4959,7 +4959,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showCustomAlert("Aguarde", "Processando cancelamento na SEFAZ...", "info");
 
             // 2. Chama o Backend
-            const response = await fetch("https://sua-url-cloud-run/cancelarNfce", { // <-- ATUALIZE A URL
+            const response = await fetch("https://southamerica-east1-super-app25.cloudfunctions.net/cancelarNfce", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
