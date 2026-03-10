@@ -2466,9 +2466,8 @@ document.addEventListener('DOMContentLoaded', () => {
             costPrice: parseFloat(document.getElementById('edit-prod-cost').value) || 0,
             brand: document.getElementById('edit-prod-brand').value.trim(),
             imgUrl: document.getElementById('edit-prod-img-url').value.trim(),
-            // Se for edição, mantém o estoque que estava no cache, se for novo começa com 0
-            // (O Google Sheets não deve sobrescrever estoque com 0 se já existir, mas enviamos por segurança)
-            stock: editingProductId ? parseInt(document.getElementById('edit-prod-stock').value) : 0,
+            // Lê o estoque digitado independente de ser novo ou existente
+            stock: parseInt(document.getElementById('edit-prod-stock').value) || 0,
 
             // Dados Fiscais
             ncm: document.getElementById('edit-prod-ncm').value.trim(),
