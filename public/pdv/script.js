@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // 1. ESCOPO GLOBAL (VARIÁVEIS E BANCO DE DADOS)
 // ============================================================
 
@@ -109,7 +109,13 @@ var formatCurrency = (value) => {
     return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 };
 var formatTime = (date) => { const pad = (n) => n < 10 ? '0' + n : n; return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`; };
-var getFirstImageUrl = (url) => { if (!url || url.length < 10) return 'https://placehold.co/500x500?text=Sem+Foto'; return url.split(',')[0].trim(); };
+var getFirstImageUrl = (url) => { 
+    if (!url || typeof url !== 'string' || url.length < 10) return 'https://placehold.co/500x500?text=Sem+Foto'; 
+    let cleanUrl = url.split(',')[0].trim(); 
+    if(cleanUrl.startsWith('data:image')) return 'https://placehold.co/500x500?text=Sem+Foto'; 
+    if(!cleanUrl.startsWith('http') && !cleanUrl.startsWith('/')) return 'https://placehold.co/500x500?text=Sem+Foto';
+    return cleanUrl; 
+};
 var mapStatusFirebaseToUI = (fbStatus) => {
     if (fbStatus === 'approved') return 'pendente';
     if (fbStatus === 'preparation') return 'preparando';
@@ -1724,11 +1730,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const pending = total - ok;
         const offers = localProductCache.filter(p => p.promoPrice && parseFloat(p.promoPrice) > 0).length;
+        const site = localProductCache.filter(p => p.imgUrl && p.imgUrl.length > 10).length;
 
         document.getElementById('count-all').textContent = total;
         document.getElementById('count-ok').textContent = ok;
         document.getElementById('count-pending').textContent = pending;
         if (document.getElementById('count-offers')) document.getElementById('count-offers').textContent = offers;
+        if (document.getElementById('count-site')) document.getElementById('count-site').textContent = site;
     };
     window.updateProductCounters = updateProductCounters;
 
@@ -1749,20 +1757,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const term = searchInput ? searchInput.value.toLowerCase().trim() : "";
 
         // 1. Filtragem
-        let produtosFiltrados = localProductCache.filter(p => {
-            const safeName = (p.name || "").toString().toLowerCase();
-            const safeBrand = (p.brand || "").toString().toLowerCase();
-            const safeId = (p.id || "").toString().toLowerCase();
-            const safeNcm = (p.ncm || "").toString().toLowerCase();
+        let produtosFiltrados = [];
+        
+        if (term) {
+            const searchWords = term.split(' ').filter(w => w.trim() !== '');
+            produtosFiltrados = localProductCache.filter(p => {
+                const combinedStr = `${p.name || ''} ${p.id || ''} ${p.brand || ''} ${p.ncm || ''}`.toLowerCase();
+                return searchWords.every(word => combinedStr.includes(word));
+            });
+            
+            // Fallback para fuzzy se n achar nada via words matching
+            if (produtosFiltrados.length === 0) {
+                 const fuzzyMatch = (str, pattern) => {
+                     pattern = pattern.split('').reduce((a, b) => a + '.*' + b, '');
+                     return (new RegExp(pattern)).test(str);
+                 };
+                 produtosFiltrados = localProductCache.filter(p => {
+                     const combinedStr = `${p.name || ''} ${p.id || ''} ${p.brand || ''} ${p.ncm || ''}`.toLowerCase();
+                     return fuzzyMatch(combinedStr, term.replace(/\s+/g, ''));
+                 });
+            }
+        } else {
+             produtosFiltrados = [...localProductCache];
+        }
 
-            const matchesSearch =
-                safeName.includes(term) ||
-                safeId.includes(term) ||
-                safeNcm.includes(term) ||
-                safeBrand.includes(term);
-
-            if (!matchesSearch) return false;
-
+        produtosFiltrados = produtosFiltrados.filter(p => {
             const hasNcm = p.ncm && String(p.ncm).trim().length >= 2;
             const hasCfop = p.cfop && String(p.cfop).trim().length >= 3;
             const isFiscalOk = (hasNcm && hasCfop);
@@ -1770,6 +1789,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentProductFilter === 'fiscal_ok' && !isFiscalOk) return false;
             if (currentProductFilter === 'fiscal_pending' && isFiscalOk) return false;
             if (currentProductFilter === 'offers' && !(p.promoPrice && parseFloat(p.promoPrice) > 0)) return false;
+            if (currentProductFilter === 'site') {
+                return (p.imgUrl && p.imgUrl.length > 10);
+            }
 
             return true;
         });
@@ -1803,150 +1825,201 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const startIndex = (currentProductPage - 1) * ITEMS_PER_PAGE;
         const endIndex = startIndex + ITEMS_PER_PAGE;
-        const produtosDaPagina = produtosFiltrados.slice(startIndex, endIndex);
+        
+        container.innerHTML = ''; // Limpa a UI anterior antes de preenchê-la com listagem nova
 
-        // --- TABELA ---
-        const table = document.createElement('table');
-        table.className = 'products-table';
+        // --- RENDERING DO GRID (SE FOR SITE) ---
+        if (currentProductFilter === 'site') {
+            const grid = document.createElement('div');
+            grid.className = 'adv-results-grid site-mode';
+            container.appendChild(grid);
 
-        table.innerHTML = `
-        <thead>
-            <tr>
-                <th width="30px" class="text-center">
-                    <input type="checkbox" id="select-all-products" ${produtosDaPagina.length > 0 && produtosDaPagina.every(p => selectedProductIds.has(String(p.id))) ? 'checked' : ''}>
-                </th>
-                <th width="40%">Produto / Marca</th>
-                <th width="15%">Preço</th>
-                <th width="15%">Desc. %</th>
-                <th width="20%">Situação Fiscal</th>
-                <th width="10%" class="text-center">Ações</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-        `;
+            let currentBatch = 0;
+            const batchSize = 30; // Carrega 30 por vez para evitar lag
+            
+            // Cria o Sentinel/Loader com Skeletons
+            const sentinel = document.createElement('div');
+            sentinel.className = 'site-sentinel';
+            sentinel.style.gridColumn = '1 / -1';
+            sentinel.style.display = 'grid';
+            sentinel.style.gridTemplateColumns = 'repeat(auto-fit, minmax(200px, 1fr))';
+            sentinel.style.gap = '16px';
+            sentinel.style.padding = '20px 0';
+            sentinel.innerHTML = `
+                <div class="site-skeleton-card"></div>
+                <div class="site-skeleton-card"></div>
+                <div class="site-skeleton-card"></div>
+                <div class="site-skeleton-card"></div>
+                <div class="site-skeleton-card"></div>
+            `;
 
-        const tbody = table.querySelector('tbody');
+            const renderNextBatch = () => {
+                const chunk = produtosFiltrados.slice(currentBatch * batchSize, (currentBatch + 1) * batchSize);
+                if (chunk.length === 0) return;
 
-        // Renderiza os produtos da página atual
-        produtosDaPagina.forEach(prod => {
-            const tr = document.createElement('tr');
-            const prodIdStr = String(prod.id);
-            const isChecked = selectedProductIds.has(prodIdStr);
+                const fragment = document.createDocumentFragment();
 
-            const isFiscalOk = (prod.ncm && prod.cfop);
-            const statusHtml = isFiscalOk
-                ? `<span class="fiscal-status ok" title="NCM: ${prod.ncm}"><i class='bx bx-check'></i> OK</span>`
-                : `<span class="fiscal-status pending"><i class='bx bx-error'></i> Pendente</span>`;
-
-            const allImgs = (prod.imgUrl || '').split(',').map(u => u.trim()).filter(u => u !== "");
-            const firstImg = allImgs[0];
-            let imgHtml = '';
-
-            if (firstImg && firstImg.length > 10) {
-                if (allImgs.length > 1) {
-                    imgHtml = `
-                        <div class="product-img-container-list">
-                            <img src="${firstImg}" class="product-thumb-sm" alt="Capa">
-                            <div class="product-thumbs-bar">
-                                ${allImgs.slice(1, 4).map(u => `<img src="${u}" class="product-thumb-xs">`).join('')}
+                chunk.forEach(prod => {
+                    const imgHtml = prod.imgUrl ? `<img src="${getFirstImageUrl(prod.imgUrl)}" loading="lazy" class="adv-card-img">` : `<div class="adv-card-icon"><i class='bx bx-box'></i></div>`;
+                    const isPromo = prod.promoPrice && parseFloat(prod.promoPrice) > 0;
+                    const actualPrice = isPromo ? parseFloat(prod.promoPrice) : parseFloat(prod.price);
+                    const originalPriceFormatted = parseFloat(prod.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    const finalPriceFormatted = actualPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    
+                    const card = document.createElement('div');
+                    card.className = 'adv-product-card';
+                    card.onclick = () => { if(typeof openProductEdit === 'function') openProductEdit(prod.id); };
+                    
+                    card.innerHTML = `
+                        <div class="card-edit-overlay">
+                            <i class='bx bx-pencil'></i>
+                            <span>Editar Produto</span>
+                        </div>
+                        ${imgHtml}
+                        <div class="adv-card-body" style="padding: 10px;">
+                            <h4 class="adv-card-title" title="${prod.name}" style="margin: 0 0 5px;">${prod.name}</h4>
+                            <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 5px;">#${prod.id}</div>
+                            <div style="display: flex; gap: 4px;">
+                                ${prod.brand ? `<span class="brand-tag" style="font-size: 0.6rem; padding: 2px 5px;">${prod.brand}</span>` : ''}
                             </div>
                         </div>
+                        <div class="adv-card-price-box" style="padding: 10px; border-top: 1px solid #f1f5f9; background: #fafafa;">
+                            <div style="font-weight: 700; ${isPromo ? 'color:#db0038;' : 'color:#1e293b;'}">${finalPriceFormatted}</div>
+                            ${isPromo ? `<small style="text-decoration:line-through; font-size: 0.7rem; color: #94a3b8;">${originalPriceFormatted}</small>` : ''}
+                        </div>
                     `;
-                } else {
-                    imgHtml = `<img src="${firstImg}" class="product-thumb-sm" alt="Foto">`;
+                    fragment.appendChild(card);
+                });
+
+                grid.appendChild(fragment);
+                currentBatch++;
+                
+                // Recoloca o sentinela no fim se ainda houver mais produtos
+                if (currentBatch * batchSize < produtosFiltrados.length) {
+                    grid.appendChild(sentinel);
+                } else if (grid.contains(sentinel)) {
+                    grid.removeChild(sentinel);
                 }
-            } else {
-                imgHtml = `<div class="product-thumb-placeholder"><i class="bx bx-package"></i></div>`;
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                if(entries[0].isIntersecting) {
+                    // Timeout pequeno para mostrar o skeleton agradavelmente pro usuario
+                    setTimeout(() => {
+                        if (grid.contains(sentinel)) grid.removeChild(sentinel); // Remove skeletons para dar lugar aos cards reais
+                        renderNextBatch();
+                    }, 400); 
+                }
+            }, { rootMargin: '100px' });
+
+            // Roda o primeiro lote (sem delay visual)
+            renderNextBatch();
+            
+            // Atacha o watcher
+            if (currentBatch * batchSize < produtosFiltrados.length) {
+                grid.appendChild(sentinel);
+                observer.observe(sentinel);
             }
 
-            const brandHtml = prod.brand ? `<span class="brand-tag">${prod.brand}</span>` : '';
+        } else {
+            // --- TABELA ORIGINAL (MODO LISTA PADRÃO) ---
+            const produtosDaPagina = produtosFiltrados.slice(startIndex, endIndex);
+            const table = document.createElement('table');
+            table.className = 'products-table';
 
-            tr.innerHTML = `
-            <td class="text-center">
-                <input type="checkbox" class="product-checkbox" data-id="${prod.id}" ${isChecked ? 'checked' : ''}>
-            </td>
-            <td>
-                <div class="product-cell-wrapper">
-                    ${imgHtml}
-                    <div style="display:flex; flex-direction:column;">
-                        <strong style="color:var(--text-dark); font-size: 0.95rem;">${prod.name}</strong>
-                        <div style="display:flex; gap:8px; align-items:center;">
-                            <span style="font-size:0.75rem; color:var(--text-light);">#${prod.id}</span>
-                            ${brandHtml}
-                        </div>
-                    </div>
-                </div>
-            </td>
-            <td>
-                <div style="font-weight:600; color:var(--text-dark);">${formatCurrency(prod.price)}</div>
-                ${prod.costPrice > 0 ? `<small style="color:var(--text-light); font-size:0.7rem;">Custo: ${formatCurrency(prod.costPrice)}</small>` : ''}
-            </td>
-            <td>
-                ${prod.promoPrice && prod.promoPrice > 0 ? `
-                    <div class="carnaval-tag-wrapper">
-                        <span class="carnaval-tag">
-                            <i class='bx bxs-hot'></i> Queimão
-                        </span>
-                        <div class="carnaval-value">
-                            ${(((prod.price - prod.promoPrice) / prod.price) * 100).toFixed(0)}% OFF
-                        </div>
-                    </div>
-                ` : '<span style="color:var(--text-light); font-size:0.8rem;">---</span>'}
-            </td>
-            <td>
-                ${statusHtml}
-                <div style="font-size:0.7rem; color:var(--text-light); margin-top:2px;">
-                    ${prod.ncm ? 'NCM: ' + prod.ncm : 'Sem NCM'}
-                </div>
-            </td>
-            <td class="text-center">
-                <button class="btn btn-sm btn-secondary" onclick="openProductEdit('${prod.id}')" title="Editar">
-                    <i class='bx bx-edit-alt'></i>
-                </button>
-            </td>
+            table.innerHTML = `
+            <thead>
+                <tr>
+                    <th width="40%">Produto / Marca</th>
+                    <th width="15%">Preço</th>
+                    <th width="15%">Desc. %</th>
+                    <th width="20%">Situação Fiscal</th>
+                    <th width="10%" class="text-center">Ações</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
             `;
-            tbody.appendChild(tr);
-        });
 
-        // Event listeners para os checkboxes
-        table.querySelectorAll('.product-checkbox').forEach(cb => {
-            cb.addEventListener('change', (e) => {
-                const id = String(e.target.dataset.id);
-                if (e.target.checked) {
-                    selectedProductIds.add(id);
-                } else {
-                    selectedProductIds.delete(id);
-                }
-                updateDownloadButtonState();
-            });
-        });
-
-        const selectAllCb = table.querySelector('#select-all-products');
-        if (selectAllCb) {
-            selectAllCb.addEventListener('change', (e) => {
-                const checked = e.target.checked;
-                produtosDaPagina.forEach(p => {
-                    const id = String(p.id);
-                    if (checked) {
-                        selectedProductIds.add(id);
-                    } else {
-                        selectedProductIds.delete(id);
+            const tbody = table.querySelector('tbody');
+            
+            produtosDaPagina.forEach(prod => {
+                const tr = document.createElement('tr');
+                tr.onclick = (e) => {
+                    if (e.target.tagName.toLowerCase() !== 'button' && !e.target.closest('button') && e.target.type !== 'checkbox') {
+                        if (typeof openProductEdit === 'function') openProductEdit(prod.id);
                     }
-                });
-                renderProdutosPage(); // Re-renderiza para atualizar os checkboxes individuais
-                updateDownloadButtonState();
+                };
+    
+                const firstImgUrl = getFirstImageUrl(prod.imgUrl);
+                const imgHtml = firstImgUrl ?
+                    `<img src="${firstImgUrl}" class="product-thumb-sm" alt="Produto">` :
+                    `<div class="product-thumb-placeholder"><i class='bx bx-package'></i></div>`;
+    
+                const hasNcm = prod.ncm && String(prod.ncm).trim().length >= 2;
+                const hasCfop = prod.cfop && String(prod.cfop).trim().length >= 3;
+                const isFiscalOk = (hasNcm && hasCfop);
+    
+                const fiscalStatusHtml = isFiscalOk ?
+                    `<span class="fiscal-badge ok"><i class='bx bx-check-circle'></i> Liberado</span>` :
+                    `<span class="fiscal-badge alert"><i class='bx bx-error-circle'></i> Pendente</span>`;
+    
+                const isPromo = prod.promoPrice && parseFloat(prod.promoPrice) > 0;
+                let priceHtml = '';
+                if (isPromo) {
+                    priceHtml = `
+                    <div class="product-price-col">
+                        <span class="price-promo">${formatCurrency(prod.promoPrice)}</span>
+                        <span class="price-old">${formatCurrency(prod.price)}</span>
+                    </div>`;
+                } else {
+                    priceHtml = `
+                    <div class="product-price-col">
+                        <span class="price-normal">${formatCurrency(prod.price)}</span>
+                    </div>`;
+                }
+    
+                let descPercHtml = '-';
+                if (isPromo) {
+                    const priceOldVal = parseFloat(prod.price);
+                    const pricePromoVal = parseFloat(prod.promoPrice);
+                    if (priceOldVal > 0) {
+                        const perc = ((priceOldVal - pricePromoVal) / priceOldVal) * 100;
+                        descPercHtml = `<span class="perc-badge">-${perc.toFixed(0)}%</span>`;
+                    }
+                }
+    
+                const brandHtml = prod.brand ? `<span class="brand-tag">${prod.brand}</span>` : '';
+    
+                tr.innerHTML = `
+                <td>
+                    <div class="product-cell-wrapper">
+                        ${imgHtml}
+                        <div class="product-cell-info">
+                            <strong>${prod.name}</strong>
+                            <div class="product-cell-meta">
+                                <span>#${prod.id}</span>
+                                ${brandHtml}
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                <td>${priceHtml}</td>
+                <td>${descPercHtml}</td>
+                <td>${fiscalStatusHtml}</td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-edit" title="Editar Produto">
+                        <i class='bx bx-edit-alt'></i>
+                    </button>
+                </td>
+                `;
+                tbody.appendChild(tr);
             });
+            container.appendChild(table);
+            listTable = table; // Assign table to listTable
         }
 
         // 3. Rodapé com Paginação
         if (totalPages > 1) {
-            const paginationRow = document.createElement('tr');
-            const td = document.createElement('td');
-            td.colSpan = 4;
-            td.style.padding = "15px";
-            td.style.backgroundColor = "#f9fafb";
-            td.style.borderTop = "1px solid #e5e7eb";
-
             // Controles
             const controlsDiv = document.createElement('div');
             controlsDiv.style.display = "flex";
@@ -1986,13 +2059,15 @@ document.addEventListener('DOMContentLoaded', () => {
             controlsDiv.appendChild(infoText);
             controlsDiv.appendChild(btnNext);
 
-            td.appendChild(controlsDiv);
-            paginationRow.appendChild(td);
-            tbody.appendChild(paginationRow);
+            if (currentProductFilter === 'site') {
+               // Em modo site (Timeline infinita), não há paginação visual.
+            } else {
+               const paginationRow = document.createElement('tr');
+               paginationRow.innerHTML = `<td colspan="5" class="pagination-cell"></td>`;
+               paginationRow.querySelector('td').appendChild(controlsDiv); // Use controlsDiv as the paginationDiv
+               listTable.querySelector('tbody').appendChild(paginationRow);
+            }
         }
-
-        container.innerHTML = '';
-        container.appendChild(table);
     };
     window.renderProdutosPage = renderProdutosPage;
 
@@ -2266,6 +2341,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- MODO NOVO PRODUTO ---
             editingProductId = null; // Nenhum ID sendo editado
 
+            modalContent.classList.add('modal-expanded');
+            if (maxIcon) maxIcon.classList.replace('bx-expand', 'bx-collapse');
+            const btnMaximizeHere = document.getElementById('btn-maximize-modal');
+            if (btnMaximizeHere) btnMaximizeHere.title = "Restaurar tamanho";
+
             // Limpa tudo
             document.getElementById('edit-product-form').reset();
 
@@ -2399,7 +2479,14 @@ document.addEventListener('DOMContentLoaded', () => {
             origem: document.getElementById('edit-prod-origem').value,
 
             // Categoria (opcional, se não tiver no form, enviamos string vazia ou Geral)
-            category: 'Geral'
+            category: 'Geral',
+            operador: (function(){ 
+                try { 
+                    const uc = JSON.parse(localStorage.getItem('user_cache')); 
+                    if(uc && uc.name) return uc.name; 
+                } catch(e){} 
+                return document.getElementById('summary-seller-name')?.textContent || "Caixa Principal"; 
+            })()
         };
 
         // Inicia em background (UX Otimista)
@@ -2492,6 +2579,124 @@ document.addEventListener('DOMContentLoaded', () => {
                     closeModal(document.getElementById('confirm-modal'));
                 }
             );
+        });
+    }
+
+    // --- LÓGICA DE GERAÇÃO DE CÓDIGO ---
+    const btnGenerateBarcode = document.getElementById('btn-generate-barcode');
+    if (btnGenerateBarcode) {
+        btnGenerateBarcode.addEventListener('click', () => {
+            const num = Math.floor(Math.random() * 9000000000000) + 1000000000000; // 13 digitos
+            inputCode.disabled = false;
+            inputCode.classList.remove('bg-locked');
+            inputCode.value = num.toString();
+        });
+    }
+
+    // --- LÓGICA DE AUTOCOMPLETE PARA MARCA E NOME ---
+    const editProdBrand = document.getElementById('edit-prod-brand');
+    const brandSuggestionsList = document.getElementById('brand-suggestions-list');
+    
+    if (editProdBrand && brandSuggestionsList) {
+        editProdBrand.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            brandSuggestionsList.innerHTML = '';
+            if (!val) {
+                brandSuggestionsList.style.display = 'none';
+                return;
+            }
+            
+            // Collect unique brands from cache
+            const uniqueBrandsDec = new Set(brandsCache.map(b => b.toLowerCase()));
+            if (localProductCache) {
+                localProductCache.forEach(p => {
+                    if (p.brand) uniqueBrandsDec.add(p.brand.toLowerCase());
+                });
+            }
+            
+            const matchedBrands = Array.from(uniqueBrandsDec)
+                .filter(b => b.includes(val))
+                .slice(0, 10);
+                
+            matchedBrands.forEach(brand => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.textContent = brand.charAt(0).toUpperCase() + brand.slice(1);
+                div.onclick = () => {
+                    editProdBrand.value = div.textContent;
+                    brandSuggestionsList.style.display = 'none';
+                };
+                brandSuggestionsList.appendChild(div);
+            });
+            
+            if (matchedBrands.length === 0) {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item suggestion-new';
+                div.textContent = `Nova marca: ${e.target.value}`;
+                div.onclick = () => {
+                    brandsCache.push(e.target.value);
+                    brandSuggestionsList.style.display = 'none';
+                };
+                brandSuggestionsList.appendChild(div);
+            }
+            
+            brandSuggestionsList.style.display = 'block';
+        });
+        
+        // Hide on click outside
+        document.addEventListener('click', (e) => {
+            if (e.target !== editProdBrand) {
+                brandSuggestionsList.style.display = 'none';
+            }
+        });
+    }
+
+    const editProdName = document.getElementById('edit-prod-name');
+    const nameSuggestionsList = document.getElementById('name-suggestions-list');
+    
+    if (editProdName && nameSuggestionsList) {
+        editProdName.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            nameSuggestionsList.innerHTML = '';
+            if (!val) {
+                nameSuggestionsList.style.display = 'none';
+                return;
+            }
+            
+            const uniqueNamesSet = new Set();
+            if (localProductCache) {
+                localProductCache.forEach(p => {
+                    if (p.name) uniqueNamesSet.add(p.name);
+                });
+            }
+            
+            const matchedNames = Array.from(uniqueNamesSet)
+                .filter(n => n.toLowerCase().includes(val))
+                .slice(0, 5);
+                
+            matchedNames.forEach(name => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.textContent = name;
+                div.onclick = () => {
+                    editProdName.value = name;
+                    nameSuggestionsList.style.display = 'none';
+                };
+                nameSuggestionsList.appendChild(div);
+            });
+            
+            if (matchedNames.length > 0) {
+                nameSuggestionsList.style.display = 'block';
+            } else {
+                nameSuggestionsList.style.display = 'none';
+            }
+        });
+        
+        // Hide on click outside
+        document.addEventListener('click', (e) => {
+            if (e.target !== editProdName) {
+                nameSuggestionsList.style.display = 'none';
+            }
         });
     }
 
@@ -6524,16 +6729,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let results = [];
         if (!term) {
-            // If no term, clear valid results or show nothing
             searchResultsGrid.innerHTML = '';
             return;
         } else {
-            // Filter Products
-            results = localProductCache.filter(p =>
-                (p.name && p.name.toLowerCase().includes(term)) ||
-                (p.id && p.id.toString().includes(term)) ||
-                (p.brand && p.brand.toLowerCase().includes(term))
-            ).slice(0, 20);
+            // Filter Products with basic fuzzy approach (words inclusion)
+            const searchWords = term.split(' ').filter(w => w.trim() !== '');
+            
+            results = localProductCache.filter(p => {
+                const combinedStr = `${p.name || ''} ${p.id || ''} ${p.brand || ''}`.toLowerCase();
+                
+                // For 'fuzzy' word-based approach, require all typed words to be somewhere in the combined string
+                // Alternatively, just matching *any* of the words (OR logic) or sorting by match count could be done. 
+                // Using an 'EVERY' logic makes it a smart search (order independent)
+                return searchWords.every(word => combinedStr.includes(word));
+            }).slice(0, 20);
+            
+            // If strictly word-based search returned no results, fallback to true fuzzy scoring (Levenshtein based or loose string match)
+            if (results.length === 0) {
+                const fuzzyMatch = (str, pattern) => {
+                    pattern = pattern.split('').reduce((a, b) => a + '.*' + b, '');
+                    return (new RegExp(pattern)).test(str);
+                };
+                
+                results = localProductCache.filter(p => {
+                    const combinedStr = `${p.name || ''} ${p.id || ''} ${p.brand || ''}`.toLowerCase();
+                    return fuzzyMatch(combinedStr, term.replace(/\s+/g, ''));
+                }).slice(0, 10); // Limit to top 10 for generic fuzzy
+            }
         }
 
         if (results.length === 0) {
@@ -6578,7 +6800,7 @@ document.addEventListener('DOMContentLoaded', () => {
                      <button class="btn-adv-action-icon btn-add" title="Adicionar" onclick="event.stopPropagation(); window.addToCartByCode('${p.id}')">
                         <i class='bx bx-plus'></i>
                      </button>
-                     <button class="btn-adv-action-icon btn-details" title="Detalhes" onclick="event.stopPropagation(); if(typeof openEditProductModal === 'function') openEditProductModal('${p.id}');">
+                     <button class="btn-adv-action-icon btn-details" title="Detalhes" onclick="event.stopPropagation(); if(typeof openProductEdit === 'function') openProductEdit('${p.id}');">
                         <i class='bx bx-edit-alt'></i>
                      </button>
                 </div>
@@ -8402,6 +8624,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // UI Updates
         renderCart();
         updateSummary();
+    }
+
+    // Modal Missões
+    const btnMissoes = document.getElementById('btn-open-missoes');
+    const modalMissoes = document.getElementById('modal-missoes');
+    if(btnMissoes && modalMissoes) {
+        btnMissoes.addEventListener('click', () => {
+            if(typeof openModal === 'function') openModal(modalMissoes);
+            else {
+                modalMissoes.style.display = 'flex';
+                modalMissoes.classList.add('active');
+            }
+        });
     }
 
 });

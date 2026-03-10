@@ -1,4 +1,4 @@
-﻿/* ======================================== */
+/* ======================================== */
 /* == ESTILOS GLOBAIS E VARIÃVEIS        == */
 /* ======================================== */
 
@@ -1691,8 +1691,8 @@ body {
 }
 
 .product-thumb-sm {
-    width: 42px;
-    height: 42px;
+    width: 64px;
+    height: 64px;
     border-radius: 8px;
     object-fit: contain;
     background-color: #fff;
@@ -1718,8 +1718,8 @@ body {
 }
 
 .product-thumb-xs {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     object-fit: contain;
     border-radius: 4px;
     border: 1px solid #e2e8f0;
@@ -1729,15 +1729,15 @@ body {
 
 /* Fallback para quando nÃ£o tiver imagem (Ã­cone) */
 .product-thumb-placeholder {
-    width: 42px;
-    height: 42px;
+    width: 64px;
+    height: 64px;
     border-radius: 8px;
     background-color: #f3f4f6;
     color: #9ca3af;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: 1.8rem;
     border: 1px solid #e5e7eb;
 }
 
@@ -6436,6 +6436,132 @@ input:checked+.slider:before {
     padding: 16px;
     padding-bottom: 80px;
     width: 100%;
+}
+
+/* --- Site Filter Mode (5 per row, infinite scroll style) --- */
+.adv-results-grid.site-mode {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    padding: 24px;
+    align-items: stretch;
+}
+
+@media (max-width: 1200px) {
+    .adv-results-grid.site-mode {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+@media (max-width: 992px) {
+    .adv-results-grid.site-mode {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+@media (max-width: 768px) {
+    .adv-results-grid.site-mode {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 480px) {
+    .adv-results-grid.site-mode {
+        grid-template-columns: 1fr;
+    }
+}
+
+.adv-results-grid.site-mode .adv-product-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0;
+    overflow: hidden;
+    height: 100%;
+    cursor: pointer;
+    position: relative;
+    border: 1px solid #e2e8f0;
+}
+
+.adv-results-grid.site-mode .adv-product-card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    transform: translateY(-2px);
+    border-color: #94a3b8;
+}
+
+/* Edit Overlay (Pencil) */
+.adv-results-grid.site-mode .card-edit-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+.adv-results-grid.site-mode .adv-product-card:hover .card-edit-overlay {
+    opacity: 1;
+}
+
+.adv-results-grid.site-mode .card-edit-overlay i {
+    font-size: 2.5rem;
+    color: #1e293b;
+    background: white;
+    padding: 15px;
+    border-radius: 50%;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin-bottom: 10px;
+}
+.adv-results-grid.site-mode .card-edit-overlay span {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.adv-results-grid.site-mode .adv-card-img {
+    width: 100%;
+    height: 180px;
+    object-fit: contain;
+    background: #ffffff;
+    border-radius: 8px 8px 0 0;
+    margin: 0;
+}
+
+.adv-results-grid.site-mode .adv-card-icon {
+    width: 100%;
+    height: 180px;
+    border-radius: 8px 8px 0 0;
+    font-size: 3rem;
+    margin: 0;
+}
+
+.adv-results-grid.site-mode .adv-card-body {
+    padding: 12px;
+}
+
+.adv-results-grid.site-mode .adv-card-price-box {
+    padding: 12px;
+    margin-top: auto;
+    border-top: 1px solid #f1f5f9;
+}
+
+/* Skeletons */
+.site-skeleton-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    height: 280px;
+    animation: pulseSkeleton 1.5s infinite ease-in-out;
+}
+@keyframes pulseSkeleton {
+    0% { opacity: 0.6; }
+    50% { opacity: 0.8; }
+    100% { opacity: 0.6; }
 }
 
 .adv-product-card {

@@ -282,19 +282,83 @@
                 `;
             };
 
-            const loadMissions = () => {
+            const renderActiveCard = (title, subtitle, iconClass, progresso, metaBase, metaExtra) => {
+                let pReg = Array.isArray(progresso) ? progresso[0] : progresso;
+                let mBase = Array.isArray(progresso) ? progresso[1] : metaBase;
+                let mExtra = Array.isArray(progresso) ? progresso[2] : metaExtra;
+
+                let percBase = Math.min((pReg / mBase) * 100, 100);
+                let checkBase = pReg >= mBase ? `<i class='bx bxs-check-circle text-green-500'></i>` : '';
+                
+                return `
+                    <div class="finance-card quest-card p-4 group border border-[#db0038]/20 bg-white" style="grid-column: 1 / -1;">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-[#db0038]">
+                                <i class='bx ${iconClass} text-lg'></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-sm font-bold text-gray-800">${title}</h3>
+                                    ${checkBase}
+                                </div>
+                                <span class="text-[9px] text-gray-500 block leading-tight mt-1 mb-2">${subtitle}</span>
+                                
+                                <div class="mt-3 bg-gray-50 p-3 rounded-lg">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Progresso Hoje</span>
+                                        <span class="text-[10px] text-[#db0038] font-bold">${pReg} / ${mBase}</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                                        <div class="bg-gradient-to-r from-[#db0038] to-red-500 h-1.5 rounded-full transition-all duration-1000" style="width: ${percBase}%"></div>
+                                    </div>
+                                    <p class="text-[9px] text-gray-500 mt-2 flex items-center gap-1 font-semibold"><i class='bx bxs-star text-yellow-500'></i> Bônus Extra: Meta ${mExtra}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            };
+
+            const loadMissions = async () => {
                 let html = '';
+                
+                html += renderLockedCard("Meta de Vendas", "R$ 1.000,00", "bx-money");
+                html += renderLockedCard("Ticket Médio", "Manter > R$ 50", "bx-bar-chart-alt-2");
+                questGrid.innerHTML = html; // Loading State Initial
+            
+                // Fetch progress form API
+                let pReg = 0, mBase = 25, mExtra = 35;
+                try {
+                    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
+                    const uc = JSON.parse(localStorage.getItem('user_cache') || "{}");
+                    const operadorName = uc.name || "Colaborador";
+                    
+                    const res = await fetch(`${SCRIPT_URL}?action=getMissaoCadastroRapido&operador=${encodeURIComponent(operadorName)}`);
+                    const data = await res.json();
+                    if(data.status === 'success') {
+                        pReg = data.progresso || 0;
+                        mBase = data.metaBase || 25;
+                        mExtra = data.metaExtra || 35;
+                    }
+                } catch(e) { console.error("Erro missões:", e); }
+
+                html = renderActiveCard(
+                    "Cadastro Rápido", 
+                    "Cadastre itens pelo 'adicionar item' com Imagem e Estoque no mínimo, preenchendo todos os dados corretamente.", 
+                    "bx-layer-plus", 
+                    pReg, mBase, mExtra
+                );
+
                 html += renderLockedCard("Meta de Vendas", "R$ 1.000,00", "bx-money");
                 html += renderLockedCard("Ticket Médio", "Manter > R$ 50", "bx-bar-chart-alt-2");
                 html += renderLockedCard("Produto Foco", "Vender +5 Itens", "bx-shopping-bag");
                 html += renderLockedCard("Avaliação", "Quiz Rápido", "bx-message-square-dots");
                 html += renderLockedCard("Super Meta", "Desafio semanal", "bx-trophy");
-                html += renderLockedCard("Divulgação", "Poste ao menos 5 stories da loja", "bx-camera");
 
                 html += `
                     <div style="grid-column: 1 / -1; margin-top: 10px;text-align: center;">
                         <p class="text-[10px] text-gray-400 uppercase tracking-widest font-semibold flex items-center justify-center gap-2">
-                            <i class='bx bx-code-alt'></i> Sistema de missões em desenvolvimento
+                            <i class='bx bx-code-alt'></i> Mais missões em breve
                         </p>
                     </div>
                 `;

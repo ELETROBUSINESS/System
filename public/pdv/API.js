@@ -525,6 +525,9 @@ function doGet(e) {
         else if (action === "atualizarStatusNota") {
             response = atualizarStatusNota(e.parameter.chave, e.parameter.novoStatus);
         }
+        else if (action === "getMissaoCadastroRapido") {
+            response = obterProgressoMissao(e.parameter.operador);
+        }
 
 
         // --- AÇÃO DESCONHECIDA ---
@@ -2325,6 +2328,22 @@ function saveProduct(data) {
         } else {
             // Criação: Append
             sheet.appendRow(newRowData);
+            
+            // --- REGISTRA A MISSÃO (Cadastro de Produto) ---
+            try {
+                const ss = SpreadsheetApp.getActiveSpreadsheet();
+                let sheetMovs = ss.getSheetByName("movs");
+                if(!sheetMovs) {
+                    sheetMovs = ss.insertSheet("movs");
+                    sheetMovs.appendRow(["Timestamp", "Operador", "Produto", "Estoque>0", "Tem Imagem"]);
+                }
+                const temEstoque = (parseFloat(data.stock) > 0) ? "SIM" : "NÃO";
+                const temImagem = (data.imgUrl && String(data.imgUrl).trim().length > 5 && !data.imgUrl.includes('placehold.co')) ? "SIM" : "NÃO";
+                const operadorNome = data.operador || "Desconhecido";
+                const nomeProduto = data.name || "Sem Nome";
+                sheetMovs.appendRow([new Date(), operadorNome, nomeProduto, temEstoque, temImagem]);
+            } catch(e) { }
+
             return { status: "success", message: "Produto criado!", type: "create" };
         }
 
@@ -2926,3 +2945,41 @@ function getAllOrdersPDV() {
     }
 }
 
+// --- MISSÕES ---
+function obterProgressoMissao(operador) {
+    if (!operador) return { status: "error", message: "Operador não especificado." };
+    try {
+        const ss = SpreadsheetApp.getActiveSpreadsheet();
+        let sheetMovs = ss.getSheetByName("movs");
+        if (!sheetMovs) {
+            return { status: "success", progresso: 0, metaBase: 25, metaExtra: 35 };
+        }
+        const data = sheetMovs.getDataRange().getValues();
+        if (data.length <= 1) return { status: "success", progresso: 0, metaBase: 25, metaExtra: 35 };
+        
+        let contagem = 0;
+        const dtAtualStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy");
+        
+        for (let i = 1; i < data.length; i++) {
+            const linha = data[i];
+            const ts = linha[0];
+            const opDaLinha = String(linha[1] || "").trim().toLowerCase();
+            const est = String(linha[3] || "").trim().toUpperCase();
+            const img = String(linha[4] || "").trim().toUpperCase();
+            
+            // Conta preenchendo todos os dados + imagem e estoque
+            if (opDaLinha === String(operador).trim().toLowerCase() && est === "SIM" && img === "SIM") {
+                if(ts && (ts instanceof Date || !isNaN(new Date(ts)))) {
+                    const dataFormatadaTS = new Date(ts);
+                    const dtLinhaStr = Utilities.formatDate(dataFormatadaTS, Session.getScriptTimeZone(), "dd/MM/yyyy");
+                    if (dtLinhaStr === dtAtualStr) {
+                         contagem++;
+                    }
+                }
+            }
+        }
+        return { status: "success", progresso: contagem, metaBase: 25, metaExtra: 35 };
+    } catch (e) {
+         return { status: "error", message: e.toString() };
+    }
+}

@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor de Operação | EletroBusiness</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        :root {
+            /* Palette EletroBusiness Premium */
+            --primary: #db0038;
+            --primary-light: #ff1a53;
+            --primary-dark: #b3002d;
+            --accent: #2c3e50;
+
+            --bg: #f3f4f6;
+            --surface: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+
+            /* Activity Colors */
+            --color-work: #3b82f6;
+            --color-service: #10b981;
+            --color-phone: #f59e0b;
+            --color-waste: #ef4444;
+            --color-food: #8b5cf6;
+            --color-unknown: #9ca3af;
+
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.02);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 50px;
+        }
+
+        /* Scrollbar Personalizada */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
+
+        /* Header Navigation */
+        header {
+            background: var(--surface);
+            padding: 1.5rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand i {
+            background: var(--primary);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(219, 0, 56, 0.3);
+        }
+
+        .brand h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--text-main);
+        }
+
+        /* Layout */
+        .page-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 2.5rem;
+            align-items: start;
+        }
+
+        @media (max-width: 1024px) {
+            .page-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Sidebar Panels */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .panel {
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            padding: 1.75rem;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(0, 0, 0, 0.02);
+        }
+
+        .panel-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+        }
+
+        .panel-title i {
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            z-index: 10;
+        }
+
+        input,
+        select {
+            width: 100%;
+            display: block;
+            padding: 12px 12px 12px 42px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+            color: var(--text-main);
+            transition: var(--transition);
+            background: #fdfdfd;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(219, 0, 56, 0.08);
+            background: white;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(219, 0, 56, 0.15);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(219, 0, 56, 0.2);
+        }
+
+        .btn-secondary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #1a252f;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid var(--border);
+            color: var(--text-main);
+        }
+
+        .btn-outline:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+        }
+
+        /* Timeline Area */
+        .content-main {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-header h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        /* Timeline Items */
+        .timeline-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 10px;
+            bottom: 10px;
+            width: 2px;
+            background: var(--border);
+        }
+
+        .timeline-card {
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(0, 0, 0, 0.02);
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 1.5rem;
+            align-items: center;
+            position: relative;
+            transition: var(--transition);
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .timeline-card:hover {
+            transform: scale(1.01);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+        }
+
+        .timeline-card::after {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--border);
+            border: 2px solid var(--bg);
+            z-index: 2;
+        }
+
+        .timeline-card.type-atendendo::after {
+            background: var(--color-service);
+        }
+
+        .timeline-card.type-trabalhando::after {
+            background: var(--color-work);
+        }
+
+        .timeline-card.type-celular::after {
+            background: var(--color-phone);
+        }
+
+        .timeline-card.type-alimentacao::after {
+            background: var(--color-food);
+        }
+
+        .timeline-card.type-perdida::after {
+            background: var(--color-waste);
+        }
+
+        .timeline-card.type-indefinida::after {
+            background: var(--color-unknown);
+        }
+
+        .item-time {
+            font-weight: 700;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            min-width: 110px;
+            text-align: right;
+            border-right: 2px solid #f3f4f6;
+            padding-right: 1.5rem;
+        }
+
+        .item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .item-emp {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .item-dur {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .item-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .activity-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .pdf-description {
+            display: none;
+        }
+
+        /* Action Buttons Timeline */
+        .item-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: none;
+            background: #f9fafb;
+            color: var(--text-muted);
+            transition: var(--transition);
+        }
+
+        .btn-edit:hover {
+            background: #eff6ff;
+            color: var(--color-work);
+        }
+
+        .btn-delete:hover {
+            background: #fef2f2;
+            color: var(--color-waste);
+        }
+
+        /* Report Table */
+        .table-responsive {
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(0, 0, 0, 0.02);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f9fafb;
+            text-align: left;
+            padding: 1.25rem 1.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        td {
+            padding: 1.25rem 1.5rem;
+            font-size: 0.95rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .emp-name-cell {
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .emp-shift-cell {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: normal;
+        }
+
+        /* Styles for Activities in Table */
+        .total-cell {
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .cell-atendendo {
+            color: var(--color-service);
+            font-weight: 500;
+        }
+
+        .cell-trabalhando {
+            color: var(--color-work);
+            font-weight: 500;
+        }
+
+        .cell-celular {
+            color: var(--color-phone);
+            font-weight: 500;
+        }
+
+        .cell-alimentacao {
+            color: var(--color-food);
+            font-weight: 500;
+        }
+
+        .cell-perdida {
+            color: var(--color-waste);
+            font-weight: 500;
+        }
+
+        .cell-indefinida {
+            color: var(--color-unknown);
+            font-weight: 500;
+        }
+
+        /* Print Specifics - Glass Cover Card */
+        .pdf-cover {
+            display: none;
+            padding: 100px 60px;
+            text-align: center;
+            background: linear-gradient(135deg, #db0038 0%, #2c3e50 100%);
+            color: white;
+            border-radius: var(--radius-lg);
+            margin-bottom: 60px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pdf-cover::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            transform: rotate(30deg);
+        }
+
+        .pdf-cover h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .pdf-cover p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Toast Notifications */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--text-main);
+            color: white;
+            padding: 12px 24px;
+            border-radius: var(--radius-sm);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 1000;
+        }
+
+        /* Export PDF Only styles */
+        @media print {
+
+            .sidebar,
+            header,
+            .header-actions,
+            .item-actions,
+            .hide-print,
+            .action-icon {
+                display: none !important;
+            }
+
+            .page-container {
+                display: block !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                max-width: none !important;
+            }
+
+            .pdf-cover {
+                display: block !important;
+                visibility: visible !important;
+                background: linear-gradient(135deg, #db0038 0%, #2c3e50 100%) !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                height: 209mm !important;
+                width: 297mm !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border-radius: 0 !important;
+                color: white !important;
+                page-break-after: always !important;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .pdf-cover::before {
+                display: block !important;
+            }
+
+            .panel,
+            .card,
+            .table-responsive,
+            .timeline-card {
+                box-shadow: none !important;
+                border: 1px solid #ccc !important;
+                color: #000 !important;
+            }
+
+            .item-time,
+            .item-emp,
+            .item-dur,
+            td,
+            th {
+                color: #000 !important;
+            }
+
+            .timeline-card {
+                margin-left: 20px !important;
+            }
+        }
+
+        /* Helper for html2pdf to handle visibility correctly */
+        .is-exporting {
+            margin: 0 !important;
+            padding: 0 !important;
+            animation: none !important;
+        }
+
+        /* Disable all animations for stable capture */
+        .is-exporting * {
+            animation: none !important;
+            transition: none !important;
+            opacity: 1 !important;
+        }
+
+        .is-previewing .pdf-cover-container,
+        .is-exporting .pdf-cover-container {
+            display: flex !important;
+            height: 100%;
+            width: 100%;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 0 100px;
+            gap: 60px;
+            box-sizing: border-box !important;
+        }
+
+        .is-previewing .pdf-cover-left,
+        .is-exporting .pdf-cover-left {
+            flex: 0 0 55%;
+            text-align: left !important;
+        }
+
+        .is-previewing .pdf-cover-right,
+        .is-exporting .pdf-cover-right {
+            flex: 0 0 40%;
+            text-align: left !important;
+        }
+
+        .is-previewing .pdf-brand-logo,
+        .is-exporting .pdf-brand-logo {
+            display: flex !important;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .is-previewing .pdf-brand-logo i,
+        .is-exporting .pdf-brand-logo i {
+            font-size: 70px;
+            color: white !important;
+        }
+
+        .is-previewing .pdf-brand-logo h1,
+        .is-exporting .pdf-brand-logo h1 {
+            font-size: 3.5rem !important;
+            line-height: 1.1;
+            margin: 0 !important;
+            text-align: left;
+            color: white !important;
+        }
+
+        .is-previewing .pdf-subtitle,
+        .is-exporting .pdf-subtitle {
+            font-size: 1.3rem !important;
+            font-weight: 500;
+            margin-bottom: 35px !important;
+            max-width: 480px;
+            opacity: 0.95;
+            text-align: left;
+            color: white !important;
+        }
+
+        .is-previewing .pdf-meta-grid-print,
+        .is-exporting .pdf-meta-grid-print {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 30px !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            padding-top: 25px;
+        }
+
+        .is-previewing .pdf-meta-item-print label,
+        .is-exporting .pdf-meta-item-print label {
+            font-size: 0.75rem !important;
+            text-transform: uppercase;
+            opacity: 0.8;
+            margin-bottom: 5px;
+            display: block;
+            color: white !important;
+        }
+
+        .is-previewing .pdf-value,
+        .is-exporting .pdf-value {
+            font-size: 1.1rem !important;
+            font-weight: 700;
+            display: block;
+            color: white !important;
+        }
+
+        .is-exporting .pdf-cover {
+            /* Make sure cover elements take priority over display block */
+            display: flex !important;
+            border: none !important;
+            border-radius: 0 !important;
+            width: 297mm !important;
+            /* Full A4 landscape width */
+            height: 209mm !important;
+            /* Almost 210 to avoid phantom page bleed */
+            page-break-after: always !important;
+            /* Forces a page break right after the cover */
+            box-sizing: border-box !important;
+            background: linear-gradient(135deg, #db0038 0%, #2c3e50 100%) !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .is-exporting .pdf-description {
+            display: block !important;
+            margin: 0 0 8mm 0 !important;
+            color: #444 !important;
+            opacity: 1 !important;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            background: #f9fafb !important;
+            padding: 15px;
+            border-left: 4px solid var(--primary) !important;
+        }
+
+        .is-exporting .hide-print,
+        .is-exporting .item-actions,
+        .is-exporting .action-icon {
+            display: none !important;
+        }
+
+        .is-exporting .section-header {
+            margin: 0 0 8mm 0 !important;
+        }
+
+        .is-exporting .section-header h2 {
+            color: #000 !important;
+            font-weight: 800 !important;
+        }
+
+        .is-exporting section {
+            padding: 15mm 20mm !important;
+            margin: 0 !important;
+            background: white !important;
+            min-height: auto !important;
+            display: block !important;
+        }
+
+        .is-exporting .timeline-card {
+            margin-bottom: 15px !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            border: 1px solid #ddd !important;
+            box-shadow: none !important;
+            color: #000 !important;
+            background: #fff !important;
+            padding: 10px 15px !important;
+        }
+
+        .is-exporting .item-time {
+            color: #000 !important;
+            font-weight: 800 !important;
+            border-right: 2px solid #ddd !important;
+            opacity: 1 !important;
+        }
+
+        .is-exporting .item-emp {
+            color: #000 !important;
+            font-weight: 800 !important;
+        }
+
+        .is-exporting .item-dur {
+            color: #000 !important;
+            font-weight: 500 !important;
+        }
+
+        .is-exporting #reportToPrint {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Forced Page Break Fixes */
+        .is-exporting section,
+        .is-exporting .timeline-card,
+        .is-exporting tr,
+        .is-exporting .panel {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+        }
+
+        .is-exporting .pdf-cover {
+            page-break-after: always !important;
+        }
+
+        /* High Contrast Activity Indicators for Export */
+        .is-exporting .timeline-card.type-atendendo::after {
+            background: #10b981 !important;
+        }
+
+        .is-exporting .timeline-card.type-trabalhando::after {
+            background: #3b82f6 !important;
+        }
+
+        .is-exporting .timeline-card.type-celular::after {
+            background: #f59e0b !important;
+        }
+
+        .is-exporting .timeline-card.type-alimentacao::after {
+            background: #8b5cf6 !important;
+        }
+
+        .is-exporting .timeline-card.type-perdida::after {
+            background: #ef4444 !important;
+        }
+
+        .is-exporting .timeline-card.type-indefinida::after {
+            background: #9ca3af !important;
+        }
+
+        /* --- Preview Mode UI --- */
+        #pdfPreviewOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 9999;
+            display: none;
+            overflow-y: auto;
+            backdrop-filter: blur(5px);
+            padding: 40px 20px;
+        }
+
+        .preview-controls {
+            position: sticky;
+            top: 0;
+            background: var(--surface);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            z-index: 10000;
+            border-radius: var(--radius-sm);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .is-previewing #reportToPrint {
+            background: white !important;
+            width: 297mm !important;
+            /* Force Landscape A4 width */
+            margin: 0 auto !important;
+            padding: 0 !important;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+            display: block !important;
+            overflow: hidden;
+        }
+
+        .is-previewing .pdf-cover {
+            display: block !important;
+        }
+
+        /* Hide regular UI when previewing */
+        .is-previewing header,
+        .is-previewing .sidebar,
+        .is-previewing #toast {
+            display: none !important;
+        }
+
+        .is-previewing .page-container {
+            display: block !important;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+
+<body>
+
+    <header>
+        <div class="brand">
+            <i class='bx bx-pulse'></i>
+            <h1>Monitor de Operação</h1>
+        </div>
+        <div class="header-actions" style="display: flex; gap: 10px; align-items: center;">
+            <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(event)">
+            <button class="btn btn-outline" onclick="importDataClick()">
+                <i class='bx bx-upload'></i> Importar Dados
+            </button>
+            <button class="btn btn-outline" onclick="exportData()">
+                <i class='bx bx-download'></i> Salvar Dados
+            </button>
+            <button class="btn btn-secondary" onclick="openPreview()">
+                <i class='bx bxs-file-pdf'></i> Visualizar Relatório
+            </button>
+        </div>
+    </header>
+
+    <div class="page-container">
+        <!-- Sidebar Controls -->
+        <aside class="sidebar">
+            <div class="panel">
+                <div class="panel-title">
+                    <i class='bx bx-user-plus'></i> Cadastrar Funcionário
+                </div>
+                <div class="form-group">
+                    <label>Nome Completo</label>
+                    <div class="input-wrapper">
+                        <i class='bx bx-user'></i>
+                        <input type="text" id="empName" placeholder="Ex: Maria Fernandes">
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Entrada Turno</label>
+                        <div class="input-wrapper">
+                            <i class='bx bx-time'></i>
+                            <input type="time" id="empShiftStart">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Saída Turno</label>
+                        <div class="input-wrapper">
+                            <i class='bx bx-log-out-circle'></i>
+                            <input type="time" id="empShiftEnd">
+                        </div>
+                    </div>
+                </div>
+                <button id="btnSubmitEmployee" class="btn btn-primary" onclick="addEmployee()">
+                    <i class='bx bx-plus-circle'></i> Salvar Funcionário
+                </button>
+                <button id="btnCancelEmpEdit" class="btn btn-outline" style="display: none; margin-top: 10px;"
+                    onclick="resetEmpForm()">
+                    Cancelar Edição
+                </button>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">
+                    <i class='bx bx-stopwatch'></i> Registrar Atividade
+                </div>
+                <div class="form-group">
+                    <label>Selecionar Funcionário</label>
+                    <div class="input-wrapper">
+                        <i class='bx bx-group'></i>
+                        <select id="empSelect">
+                            <option value="">Selecione um colaborador...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Hora Início</label>
+                        <div class="input-wrapper">
+                            <i class='bx bx-play-circle'></i>
+                            <input type="time" id="timeStart">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Hora Fim</label>
+                        <div class="input-wrapper">
+                            <i class='bx bx-stop-circle'></i>
+                            <input type="time" id="timeEnd">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Tipo de Atividade</label>
+                    <div class="input-wrapper">
+                        <i class='bx bx-category-alt'></i>
+                        <select id="activityType">
+                            <option value="atendendo">Atendimento ao Cliente</option>
+                            <option value="trabalhando">Trabalho Interno / Estoque</option>
+                            <option value="celular">Uso de Dispositivo Pessoal</option>
+                            <option value="alimentacao">Pausa para Alimentação</option>
+                            <option value="perdida">Tempo Improdutivo / Pausa</option>
+                            <option value="indefinida">Não Identificada</option>
+                        </select>
+                    </div>
+                </div>
+                <button id="btnSubmitActivity" class="btn btn-primary" onclick="addActivity()">
+                    <i class='bx bx-check-double'></i> Adicionar Registro
+                </button>
+                <button id="btnCancelEdit" class="btn btn-outline" style="display: none; margin-top: 10px;"
+                    onclick="resetForm()">
+                    Cancelar Edição
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Dashboard View -->
+        <main class="content-main" id="reportToPrint">
+            <!-- Cover Page for PDF -->
+            <div class="pdf-cover">
+                <div class="pdf-cover-container">
+                    <!-- Left Column (60%) -->
+                    <div class="pdf-cover-left">
+                        <div class="pdf-brand-logo">
+                            <i class='bx bx-analyse' style="color: white !important;"></i>
+                            <h1 style="color: white !important; text-align: left !important;">Relatório
+                                de<br>Produtividade</h1>
+                        </div>
+                        <div class="pdf-subtitle" style="text-align: left !important;">
+                            Análise de ocupação, produtividade e auditoria operacional do PDV.
+                        </div>
+                        <div class="pdf-meta-grid-print">
+                            <div class="pdf-meta-item-print">
+                                <label>Data de Emissão</label>
+                                <div id="pdfDate" class="pdf-value">-</div>
+                            </div>
+                            <div class="pdf-meta-item-print">
+                                <label>Unidade</label>
+                                <div class="pdf-value">Loja Matriz</div>
+                            </div>
+                            <div class="pdf-meta-item-print">
+                                <label>Responsável</label>
+                                <div class="pdf-value">Gilvan</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column (40%) -->
+                    <div class="pdf-cover-right">
+                        <div
+                            style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); text-align: left;">
+                            <strong
+                                style="display: block; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem; color: white;">Legenda
+                                Técnica:</strong>
+                            <div
+                                style="display: flex; flex-direction: column; gap: 15px; font-size: 0.85rem; line-height: 1.4; color: white;">
+                                <div>• <strong>Atendimento:</strong> Interação direta e suporte ao cliente.</div>
+                                <div>• <strong>Trabalho Interno:</strong> Atividades de retaguarda e estoque.</div>
+                                <div>• <strong>Celular:</strong> Uso de dispositivos pessoais.</div>
+                                <div>• <strong>Alimentação:</strong> Pausa para refeição.</div>
+                                <div>• <strong>Perda/Pausa:</strong> Intervalos ou pausas de descanso.</div>
+                                <div>• <strong>Ocioso:</strong> Janelas sem registros operacionais.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeline Section -->
+            <section>
+                <div class="section-header">
+                    <h2>Timeline do Dia</h2>
+                </div>
+                <div class="pdf-description">
+                    Esta seção apresenta a sequência cronológica de todas as atividades registradas no dia.
+                    Cada bloco representa um intervalo de tempo específico, permitindo identificar o fluxo de trabalho e
+                    possíveis gargalos operacionais.
+                </div>
+                <div id="timelineList" class="timeline-container">
+                    <div class="panel" style="text-align: center; color: var(--text-muted);">
+                        <i class='bx bx-history'
+                            style="font-size: 2rem; display: block; margin-bottom: 10px; opacity: 0.5;"></i>
+                        Aguardando registros para gerar timeline...
+                    </div>
+                </div>
+            </section>
+
+            <!-- Detailed Report Section -->
+            <section>
+                <div class="section-header">
+                    <h2>Consolidado de Indicadores</h2>
+                </div>
+                <div class="pdf-description">
+                    Quadro comparativo que consolida o tempo total investido em cada categoria de atividade por
+                    colaborador.
+                    Inclui o tempo 'Ocioso', que representa a diferença entre a carga horária do turno e as atividades
+                    efetivamente registradas.
+                </div>
+                <div class="table-responsive">
+                    <table id="reportTable">
+                        <thead>
+                            <tr>
+                                <th>Colaborador</th>
+                                <th><i class='bx bx-user-voice'></i> Atendendo</th>
+                                <th><i class='bx bx-briefcase'></i> Trabalho</th>
+                                <th><i class='bx bx-mobile-alt'></i> Celular</th>
+                                <th><i class='bx bx-restaurant'></i> Refeição</th>
+                                <th><i class='bx bx-timer'></i> Perda</th>
+                                <th><i class='bx bx-help-circle'></i> Ocioso</th>
+                                <th><i class='bx bx-time'></i> Total</th>
+                                <th class="hide-print">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="toast">Operação realizada com sucesso</div>
+
+    <script>
+        // Data State
+        let employees = JSON.parse(localStorage.getItem('eb_monitor_employees')) || [];
+        let activities = JSON.parse(localStorage.getItem('eb_monitor_activities')) || [];
+        let editingIndex = -1;
+        let editingEmployeeName = null;
+
+        const activityConfigs = {
+            atendendo: { name: "Atend.", color: "var(--color-service)", bg: "rgba(16, 185, 129, 0.1)" },
+            trabalhando: { name: "Interno", color: "var(--color-work)", bg: "rgba(59, 130, 246, 0.1)" },
+            celular: { name: "Celular", color: "var(--color-phone)", bg: "rgba(245, 158, 11, 0.1)" },
+            alimentacao: { name: "Refeição", color: "var(--color-food)", bg: "rgba(139, 92, 246, 0.1)" },
+            perdida: { name: "Pausa", color: "var(--color-waste)", bg: "rgba(239, 68, 68, 0.1)" },
+            indefinida: { name: "Indef.", color: "var(--color-unknown)", bg: "rgba(156, 163, 175, 0.1)" }
+        };
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            migrateData(); // Tenta recuperar dados de versões anteriores
+            updateEmployeeSelect();
+            renderTimeline();
+            updateReport();
+        });
+
+        function migrateData() {
+            const oldEmployees = localStorage.getItem('pdv_monitor_employees');
+            const oldActivities = localStorage.getItem('pdv_monitor_activities');
+
+            // Só migra se os novos dados estiverem vazios e os antigos existirem
+            if (employees.length === 0 && oldEmployees) {
+                try {
+                    const parsedEmps = JSON.parse(oldEmployees);
+                    const parsedActs = oldActivities ? JSON.parse(oldActivities) : [];
+
+                    // Converte formato antigo de array de strings para array de objetos se necessário
+                    employees = parsedEmps.map(emp => {
+                        if (typeof emp === 'string') {
+                            return {
+                                name: emp,
+                                shiftStart: "08:00",
+                                shiftEnd: "18:00",
+                                shiftDuration: 600
+                            };
+                        }
+                        return emp;
+                    });
+
+                    activities = parsedActs;
+                    saveToCache();
+                    showToast("Dados recuperados de versão anterior!");
+                } catch (e) {
+                    console.error("Erro na migração de dados:", e);
+                }
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.style.display = 'block';
+            setTimeout(() => toast.style.display = 'none', 3000);
+        }
+
+        function saveToCache() {
+            localStorage.setItem('eb_monitor_employees', JSON.stringify(employees));
+            localStorage.setItem('eb_monitor_activities', JSON.stringify(activities));
+        }
+
+        // --- Core Functions ---
+
+        function addEmployee() {
+            const nameEl = document.getElementById('empName');
+            const startEl = document.getElementById('empShiftStart');
+            const endEl = document.getElementById('empShiftEnd');
+
+            const name = nameEl.value.trim();
+            const start = startEl.value;
+            const end = endEl.value;
+
+            if (name && start && end) {
+                let startMin = timeToMinutes(start);
+                let endMin = timeToMinutes(end);
+                if (endMin < startMin) endMin += 24 * 60;
+
+                if (editingEmployeeName) {
+                    // Update existing employee
+                    const emp = employees.find(e => e.name === editingEmployeeName);
+                    if (emp) {
+                        emp.shiftStart = start;
+                        emp.shiftEnd = end;
+                        emp.shiftDuration = endMin - startMin;
+                    }
+
+                    editingEmployeeName = null;
+                    nameEl.disabled = false;
+                    document.getElementById('btnSubmitEmployee').innerHTML = "<i class='bx bx-plus-circle'></i> Salvar Funcionário";
+                    document.getElementById('btnCancelEmpEdit').style.display = 'none';
+                    showToast("Turno do funcionário atualizado!");
+                } else {
+                    // Add new employee
+                    if (!employees.find(e => e.name === name)) {
+                        employees.push({
+                            name,
+                            shiftStart: start,
+                            shiftEnd: end,
+                            shiftDuration: endMin - startMin
+                        });
+                        showToast("Funcionário cadastrado!");
+                    } else {
+                        alert("Este funcionário já existe.");
+                        return; // Stop execution
+                    }
+                }
+
+                saveToCache();
+                updateEmployeeSelect();
+                updateReport();
+
+                nameEl.value = ''; startEl.value = ''; endEl.value = '';
+            } else {
+                alert("Preencha todos os campos do turno.");
+            }
+        }
+
+        function editEmployee(name) {
+            const emp = employees.find(e => e.name === name);
+            if (!emp) return;
+
+            editingEmployeeName = emp.name;
+
+            const nameEl = document.getElementById('empName');
+            nameEl.value = emp.name;
+            nameEl.disabled = true; // Empede alterar o nome para não bagunçar referências de atividades.
+
+            document.getElementById('empShiftStart').value = emp.shiftStart;
+            document.getElementById('empShiftEnd').value = emp.shiftEnd;
+
+            document.getElementById('btnSubmitEmployee').innerHTML = "<i class='bx bx-save'></i> Atualizar Turno";
+            document.getElementById('btnCancelEmpEdit').style.display = 'block';
+
+            document.querySelector('.sidebar').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function resetEmpForm() {
+            editingEmployeeName = null;
+            const nameEl = document.getElementById('empName');
+            nameEl.value = '';
+            nameEl.disabled = false;
+            document.getElementById('empShiftStart').value = '';
+            document.getElementById('empShiftEnd').value = '';
+
+            document.getElementById('btnSubmitEmployee').innerHTML = "<i class='bx bx-plus-circle'></i> Salvar Funcionário";
+            document.getElementById('btnCancelEmpEdit').style.display = 'none';
+        }
+
+        function updateEmployeeSelect() {
+            const select = document.getElementById('empSelect');
+            const current = select.value;
+            select.innerHTML = '<option value="">Selecione um colaborador...</option>';
+            employees.forEach(emp => {
+                const opt = document.createElement('option');
+                opt.value = emp.name;
+                opt.textContent = emp.name;
+                select.appendChild(opt);
+            });
+            select.value = current;
+        }
+
+        function addActivity() {
+            const emp = document.getElementById('empSelect').value;
+            const start = document.getElementById('timeStart').value;
+            const end = document.getElementById('timeEnd').value;
+            const type = document.getElementById('activityType').value;
+
+            if (!emp || !start || !end) {
+                alert("Informe colaborador e horário completo.");
+                return;
+            }
+
+            let startMin = timeToMinutes(start);
+            let endMin = timeToMinutes(end);
+            if (endMin < startMin) endMin += 24 * 60;
+            const duration = endMin - startMin;
+
+            if (editingIndex > -1) {
+                const id = activities[editingIndex].id;
+                activities[editingIndex] = { id, emp, start, end, type, duration };
+                editingIndex = -1;
+                document.getElementById('btnSubmitActivity').innerHTML = "<i class='bx bx-check-double'></i> Adicionar Registro";
+                document.getElementById('btnCancelEdit').style.display = 'none';
+                showToast("Registro atualizado!");
+            } else {
+                activities.push({ id: Date.now(), emp, start, end, type, duration });
+                showToast("Registro adicionado!");
+            }
+
+            activities.sort((a, b) => timeToMinutes(a.start) - timeToMinutes(b.start));
+
+            saveToCache();
+            renderTimeline();
+            updateReport();
+            resetFormFields();
+        }
+
+        function editActivity(id) {
+            const idx = activities.findIndex(a => a.id === id);
+            if (idx === -1) return;
+
+            const act = activities[idx];
+            editingIndex = idx;
+
+            document.getElementById('empSelect').value = act.emp;
+            document.getElementById('timeStart').value = act.start;
+            document.getElementById('timeEnd').value = act.end;
+            document.getElementById('activityType').value = act.type;
+
+            document.getElementById('btnSubmitActivity').innerHTML = "<i class='bx bx-save'></i> Atualizar Registro";
+            document.getElementById('btnCancelEdit').style.display = 'block';
+
+            document.querySelector('.sidebar').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function deleteActivity(id) {
+            if (confirm("Deseja realmente remover este registro?")) {
+                activities = activities.filter(a => a.id !== id);
+                saveToCache();
+                renderTimeline();
+                updateReport();
+                showToast("Registro removido.");
+            }
+        }
+
+        function deleteEmployee(name) {
+            if (confirm(`Remover "${name}" e todos os seus registros?`)) {
+                employees = employees.filter(e => e.name !== name);
+                activities = activities.filter(a => a.emp !== name);
+                saveToCache();
+                updateEmployeeSelect();
+                renderTimeline();
+                updateReport();
+                showToast("Colaborador removido.");
+            }
+        }
+
+        function resetForm() {
+            editingIndex = -1;
+            document.getElementById('btnSubmitActivity').innerHTML = "<i class='bx bx-check-double'></i> Adicionar Registro";
+            document.getElementById('btnCancelEdit').style.display = 'none';
+            resetFormFields();
+        }
+
+        function resetFormFields() {
+            document.getElementById('timeStart').value = '';
+            document.getElementById('timeEnd').value = '';
+        }
+
+        // --- View Rendering ---
+
+        function renderTimeline() {
+            const list = document.getElementById('timelineList');
+            list.innerHTML = '';
+
+            if (activities.length === 0) {
+                list.innerHTML = '<div class="panel" style="text-align: center; color: var(--text-muted);"><i class="bx bx-history" style="font-size: 2rem; display: block; margin-bottom: 10px; opacity: 0.5;"></i>Aguardando registros para gerar timeline...</div>';
+                return;
+            }
+
+            activities.forEach(act => {
+                const config = activityConfigs[act.type];
+                const card = document.createElement('div');
+                card.className = `timeline-card type-${act.type}`;
+
+                card.innerHTML = `
+                    <div class="item-time">
+                        <i class='bx bx-time' style="font-size: 0.8rem; vertical-align: middle;"></i> ${act.start} — ${act.end}
+                    </div>
+                    <div class="item-info">
+                        <div class="item-emp">${act.emp}</div>
+                        <div class="item-dur">
+                            <i class='bx bx-timer'></i> Ocupação: ${formatMinutes(act.duration)}
+                            <span style="color: ${config.color}; font-weight: 600; margin-left: 10px;">• ${config.name}</span>
+                        </div>
+                    </div>
+                    <div class="item-meta">
+                        <div class="item-actions hide-print">
+                            <button class="action-icon btn-edit" onclick="editActivity(${act.id})"><i class='bx bx-edit-alt'></i></button>
+                            <button class="action-icon btn-delete" onclick="deleteActivity(${act.id})"><i class='bx bx-trash'></i></button>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function updateReport() {
+            const tbody = document.querySelector('#reportTable tbody');
+            tbody.innerHTML = '';
+
+            employees.forEach(emp => {
+                // Filtro robusto ignorando espaços e case
+                const empNameNorm = emp.name.trim().toLowerCase();
+                const empActs = activities.filter(a => a.emp.trim().toLowerCase() === empNameNorm);
+
+                const totals = { atendendo: 0, trabalhando: 0, celular: 0, alimentacao: 0, perdida: 0, indefinida: 0 };
+                let totalKnown = 0;
+
+                empActs.forEach(act => {
+                    if (totals.hasOwnProperty(act.type)) {
+                        totals[act.type] += (act.duration || 0);
+                        totalKnown += (act.duration || 0);
+                    }
+                });
+
+                // Calcula horas realmente indefinidas baseadas no turno
+                const realIndef = Math.max(0, emp.shiftDuration - totalKnown);
+                totals.indefinida += realIndef;
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="emp-name-cell">
+                        ${emp.name}
+                        <span class="emp-shift-cell">${emp.shiftStart} - ${emp.shiftEnd}</span>
+                    </td>
+                    <td class="cell-atendendo">${formatMinutes(totals.atendendo)}</td>
+                    <td class="cell-trabalhando">${formatMinutes(totals.trabalhando)}</td>
+                    <td class="cell-celular">${formatMinutes(totals.celular)}</td>
+                    <td class="cell-alimentacao">${formatMinutes(totals.alimentacao)}</td>
+                    <td class="cell-perdida">${formatMinutes(totals.perdida)}</td>
+                    <td class="cell-indefinida">${formatMinutes(totals.indefinida)}</td>
+                    <td class="total-cell">${formatMinutes(emp.shiftDuration)}</td>
+                    <td class="hide-print">
+                        <div class="item-actions">
+                            <button class="action-icon btn-edit" onclick="editEmployee('${emp.name}')" title="Editar Turno"><i class='bx bx-edit-alt'></i></button>
+                            <button class="action-icon btn-delete" onclick="deleteEmployee('${emp.name}')" title="Remover Funcionário"><i class='bx bx-user-x'></i></button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // --- Helpers ---
+
+        function timeToMinutes(t) {
+            if (!t) return 0;
+            const [h, m] = t.split(':').map(Number);
+            return (h * 60) + m;
+        }
+
+        function formatMinutes(min) {
+            if (min === 0) return "0m";
+            const h = Math.floor(min / 60);
+            const m = min % 60;
+            return h > 0 ? `${h}h ${m}m` : `${m}m`;
+        }
+
+        function openPreview() {
+            const pdfDateEl = document.getElementById('pdfDate');
+            pdfDateEl.textContent = new Date().toLocaleDateString('pt-BR', {
+                day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+
+            document.body.classList.add('is-previewing');
+            document.getElementById('pdfPreviewOverlay').style.display = 'block';
+            window.scrollTo(0, 0);
+        }
+
+        function closePreview() {
+            document.body.classList.remove('is-previewing');
+            document.getElementById('pdfPreviewOverlay').style.display = 'none';
+        }
+
+        function exportData() {
+            const data = {
+                employees,
+                activities,
+                exportDate: new Date().toISOString()
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", `Monitor_Dados_${new Date().toISOString().slice(0, 10)}.json`);
+            dlAnchorElem.click();
+            showToast("Dados salvos e exportados com sucesso.");
+        }
+
+        function importDataClick() {
+            document.getElementById('importFile').click();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (Array.isArray(data.employees) && Array.isArray(data.activities)) {
+                        employees = data.employees;
+                        activities = data.activities;
+                        saveToCache();
+                        updateEmployeeSelect();
+                        renderTimeline();
+                        updateReport();
+                        showToast("Dados importados com sucesso!");
+                    } else {
+                        alert("Formato de arquivo inválido. Certifique-se de ser um arquivo JSON exportado por este sistema.");
+                    }
+                } catch (error) {
+                    alert("Erro ao ler o arquivo JSON.");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // reseta file input
+        }
+
+        function exportToPDF() {
+            const element = document.getElementById('reportToPrint');
+
+            // Add exporting class to handle visibility/contrast
+            document.body.classList.add('is-exporting');
+
+            // Wait a moment for styles to apply
+            setTimeout(() => {
+                const opt = {
+                    margin: 0,
+                    filename: `Relatorio_Produtividade_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: {
+                        scale: 2,
+                        useCORS: true,
+                        letterRendering: true,
+                        scrollY: 0
+                    },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                };
+
+                // Use html2pdf with the correct flow to avoid issues
+                html2pdf().set(opt).from(element).save().then(() => {
+                    document.body.classList.remove('is-exporting');
+                    closePreview();
+                }).catch(err => {
+                    document.body.classList.remove('is-exporting');
+                    console.error(err);
+                    alert("Ocorreu um erro ao gerar o PDF. Verifique o console.");
+                });
+            }, 300);
+        }
+    </script>
+
+    <div id="pdfPreviewOverlay">
+        <div class="preview-controls">
+            <button class="btn btn-outline" onclick="closePreview()">
+                <i class='bx bx-arrow-back'></i> Voltar para Edição
+            </button>
+            <button class="btn btn-primary" onclick="exportToPDF()">
+                <i class='bx bxs-cloud-download'></i> Confirmar e Baixar PDF
+            </button>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -640,8 +640,7 @@
                         <div class="item-icon-box"><i class='bx bx-group'></i></div>
                         <div class="item-content">
                             <div class="title-row">
-                                <strong>Crediário</strong>
-                                <span class="pro-tag">Pro</span>
+                                <strong>Carteira de Clientes</strong>
                             </div>
                             <span></span>
                         </div>
@@ -649,13 +648,6 @@
 
                     <div class="menu-divider"></div>
 
-                    <div class="more-menu-item" data-page="infinitepay">
-                        <div class="item-icon-box"><i class='bx bx-percentage'></i></div>
-                        <div class="item-content">
-                            <strong>InfinitePay</strong>
-                            <span></span>
-                        </div>
-                    </div>
 
                     <div class="more-menu-item" data-page="notas">
                         <div class="item-icon-box"><i class='bx bx-file'></i></div>
@@ -673,38 +665,15 @@
                         </div>
                     </div>
 
-                    <div class="menu-divider"></div>
 
-                    <!-- Moved Items -->
-                    <div class="more-menu-item" id="btn-festa-promo">
-                        <div class="item-icon-box"><i class='bx bx-party'></i></div>
-                        <div class="item-content">
-                            <strong>Festa</strong>
-                            <span></span>
-                        </div>
-                    </div>
-
-
-
-                    <div class="more-menu-item" id="btn-update-product">
-                        <div class="item-icon-box"><i class='bx bx-barcode-reader'></i></div>
-                        <div class="item-content">
-                            <strong>Atualizar Produto</strong>
-                            <span></span>
-                        </div>
-                    </div>
-
-                    <div class="more-menu-item" id="btn-tour-360" onclick="window.open('gallery.html', '_blank')">
-                        <div class="item-icon-box"><i class='bx bx-cube-alt'></i></div>
-                        <div class="item-content">
-                            <strong>Tour 360</strong>
-                            <span></span>
-                        </div>
-                    </div>
                 </div>
             </div>
 
             <div class="navbar-highlight" id="navbar-highlight"></div>
+            <!-- Botão Missões -->
+            <span class="navbar-item" id="btn-open-missoes" style="background-color: #e2e8f0; color: #111; font-weight: 600; padding: 6px 12px; margin-left: 15px; border-radius: 8px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <i class='bx bxs-trophy' style="color: #eab308; font-size: 1.2rem;"></i> Missões
+            </span>
 
             <!-- Right Side Container -->
             <div class="navbar-right-container"
@@ -1077,6 +1046,10 @@
                             <i class='bx bx-error-circle'></i> Pendente <span class="badge-count"
                                 id="count-pending">0</span>
                         </button>
+                        <button class="filter-cap" data-filter="site" style="border-color: #10b981; color: #10b981;">
+                            <i class='bx bx-globe'></i> Site <span class="badge-count" id="count-site"
+                                style="background: rgba(16, 185, 129, 0.1); color: #10b981;">0</span>
+                        </button>
                     </div>
                 </div>
 
@@ -1090,8 +1063,7 @@
                 <div class="page-header">
                     <div>
                         <div class="title-page">
-                            <h2>Crediário Digital</h2>
-                            <span class="pro-badge-main pro-tag">PRO</span>
+                            <h2>Carteira de Clientes</h2>
                         </div>
                         <p class="text-light mt-4 mb-0 text-sm">Gerencie pagamentos e inadimplência.</p>
                     </div>
@@ -1810,30 +1782,51 @@
 
                         <div class="form-grid">
                             <div class="form-group" style="flex: 1;">
-                                <label>Código (Barcode)</label>
+                                <label>Código</label>
                                 <div class="input-group-lock">
                                     <input type="text" id="edit-prod-code" disabled class="bg-locked"
                                         style="font-weight:700;">
+                                    <button type="button" class="btn-unlock" id="btn-generate-barcode"
+                                        title="Gerar Novo Código"
+                                        style="background:#fefce8; color:#eab308; border-radius: 0;">
+                                        <i class='bx bx-barcode-reader'></i>
+                                    </button>
                                     <button type="button" class="btn-unlock" id="btn-unlock-code"
                                         title="Alterar Código">
                                         <i class='bx bx-lock-alt'></i>
                                     </button>
                                 </div>
                             </div>
-                            <div class="form-group" style="flex: 2.5;">
+                            <div class="form-group relative-container" style="flex: 2.5;">
                                 <label>Nome do Produto *</label>
-                                <input type="text" id="edit-prod-name" required placeholder="Ex: Cabo USB Tipo C">
+                                <input type="text" id="edit-prod-name" required placeholder="Ex: Cabo USB Tipo C"
+                                    autocomplete="off">
+                                <div id="name-suggestions-list" class="suggestions-dropdown"></div>
                             </div>
                         </div>
 
-                        <div class="form-group relative-container">
-                            <label>Marca / Fabricante</label>
-                            <div class="input-with-icon">
-                                <input type="text" id="edit-prod-brand" placeholder="Digite para buscar..."
-                                    autocomplete="off">
-                                <i class='bx bx-search'></i>
+                        <div class="form-grid">
+                            <div class="form-group relative-container" style="flex: 3;">
+                                <label>Marca / Fabricante</label>
+                                <div class="input-with-icon">
+                                    <input type="text" id="edit-prod-brand" placeholder="Digite para buscar..."
+                                        autocomplete="off">
+                                    <i class='bx bx-search'></i>
+                                </div>
+                                <div id="brand-suggestions-list" class="suggestions-dropdown"></div>
                             </div>
-                            <div id="brand-suggestions-list" class="suggestions-dropdown"></div>
+                            <div class="form-group" style="flex: 1;">
+                                <label>Unidade</label>
+                                <select id="edit-prod-unit">
+                                    <option value="UN">UN</option>
+                                    <option value="KG">KG</option>
+                                    <option value="CX">CX</option>
+                                    <option value="L">L</option>
+                                    <option value="M">M</option>
+                                    <option value="PC">PC (Peça)</option>
+                                    <option value="PCT">PCT (Pacote)</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="pricing-card">
@@ -1852,15 +1845,8 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Estoque Atual</label>
-                                    <div class="input-group-lock">
-                                        <input type="number" id="edit-prod-stock" disabled class="bg-locked"
-                                            title="Use Entrada de Estoque">
-                                        <button type="button" class="btn-unlock" id="btn-add-stock"
-                                            title="Atualizar / Entrada de Estoque"
-                                            style="background:#f0fdf4; color:#16a34a; border-radius:8px;">
-                                            <i class='bx bx-layer-plus'></i>
-                                        </button>
-                                    </div>
+                                    <input type="number" id="edit-prod-stock" title="Quantidade em estoque"
+                                        placeholder="0">
                                 </div>
                             </div>
                             <div class="profit-stats">
@@ -1895,18 +1881,6 @@
                             </div>
 
                             <div class="form-grid mt-10">
-                                <div class="form-group" style="flex:1;">
-                                    <label>Unidade</label>
-                                    <select id="edit-prod-unit">
-                                        <option value="UN">UN</option>
-                                        <option value="KG">KG</option>
-                                        <option value="CX">CX</option>
-                                        <option value="L">L</option>
-                                        <option value="M">M</option>
-                                        <option value="PC">PC (Peça)</option>
-                                        <option value="PCT">PCT (Pacote)</option>
-                                    </select>
-                                </div>
                                 <div class="form-group" style="flex:2;">
                                     <label>Origem</label>
                                     <select id="edit-prod-origem">
@@ -1932,7 +1906,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary close-modal-btn"
                         data-target="edit-product-modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary"><i class='bx bx-save'></i> Salvar Alterações</button>
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
                 </div>
             </form>
         </div>
@@ -2646,7 +2620,7 @@
         <div class="brand-row">
             <img src="assets/sistema.png" alt="Logo" class="brand-img-icon">
 
-            <span class="brand-name-text">ELETRO<span class="highlight-dot">. 1.0.0.48.21</span></span>
+            <span class="brand-name-text">ELETRO<span class="highlight-dot">. 1.0.0.49</span></span>
         </div>
     </div>
     <div class="pn">
@@ -3266,6 +3240,35 @@
     <div id="custom-loader-overlay">
         <span class="loader"></span>
         <p class="loader-text">preparando tudo para você</p>
+    </div>
+
+    <!-- MODAL MISSÕES -->
+    <div class="modal-overlay" id="modal-missoes">
+        <div class="modal-content" style="max-width: 400px; text-align: center; border-radius: 20px; overflow: hidden; padding: 0;">
+            <div style="background: #f8fafc; padding: 30px 20px 20px; position: relative; border-bottom: 1px solid #e2e8f0;">
+                <button class="close-modal-btn" data-target="modal-missoes" style="position: absolute; top: 15px; right: 15px; background: white; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border:none; width:30px; height:30px; cursor:pointer;"><i class='bx bx-x' style="font-size:1.2rem; line-height:30px;"></i></button>
+                <div style="width: 70px; height: 70px; background: #64748b; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; box-shadow: 0 4px 10px rgba(100, 116, 139, 0.4);">
+                    <i class='bx bxs-trophy' style="font-size: 2.5rem; color: #eab308;"></i>
+                </div>
+                <h3 style="margin: 0; font-size: 1.5rem; color: #1e293b; font-weight: 800;">Missões Diárias</h3>
+                <p style="margin: 5px 0 0; color: #64748b; font-size: 0.95rem;">Complete metas e ganhe bônus!</p>
+            </div>
+            
+            <div style="padding: 25px 30px;">
+                <p style="color: #475569; font-size: 0.95rem; line-height: 1.5; margin-bottom: 20px;">
+                    Escaneie o QR Code abaixo para acessar o seu painel de <strong>Missões</strong>.<br> 
+                    Ao completá-las, você acumula pontos valiosos que podem ser convertidos em <strong>bônus no seu pagamento</strong>!
+                </p>
+                
+                <div style="background: white; padding: 15px; border-radius: 15px; border: 2px dashed #cbd5e1; display: inline-block; margin-bottom: 10px;">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://eletrobusiness.com.br/login.html" alt="QR Code Missões" style="width: 180px; height: 180px; display: block;">
+                </div>
+                
+                <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 15px; font-weight: 500;">
+                    <i class='bx bx-party' style="color: #10b981; font-size: 1rem; vertical-align: middle;"></i> Acesse agora | ELETRO Business
+                </div>
+            </div>
+        </div>
     </div>
 
     <style>
