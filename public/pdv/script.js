@@ -2007,7 +2007,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${descPercHtml}</td>
                 <td>${fiscalStatusHtml}</td>
                 <td class="text-center">
-                    <button class="btn btn-sm btn-edit" title="Editar Produto">
+                    <button class="btn btn-sm btn-edit" title="Editar Produto" onclick="if(typeof openProductEdit === 'function') openProductEdit('${prod.id}');">
                         <i class='bx bx-edit-alt'></i>
                     </button>
                 </td>
@@ -2479,13 +2479,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Categoria (opcional, se não tiver no form, enviamos string vazia ou Geral)
             category: 'Geral',
-            operador: (function(){ 
-                try { 
-                    const uc = JSON.parse(localStorage.getItem('user_cache')); 
-                    if(uc && uc.name) return uc.name; 
-                } catch(e){} 
-                return document.getElementById('summary-seller-name')?.textContent || "Caixa Principal"; 
-            })()
+            operador: document.getElementById('summary-seller-name')?.textContent || "Caixa Principal"
         };
 
         // Inicia em background (UX Otimista)
