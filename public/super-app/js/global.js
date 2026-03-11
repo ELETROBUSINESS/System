@@ -38,10 +38,10 @@ function checkLandingParameters() {
     }
 }
 
-var MP_PUBLIC_KEY = "APP_USR-ab887886-2763-4265-8893-bf9513809bd1"; // ALERTA: A chave "APP_USR-786d3961..." inserida (EletroPay) é INVÁLIDA e causava o erro 404. Revertido para a chave anterior. Insira a Public Key correta do painel!
+var MP_PUBLIC_KEY = "APP_USR-ab887886-2763-4265-8893-bf9513809bd1"; 
 const CACHE_KEY = 'dtudo_products_cache';
 const CACHE_TIME_KEY = 'dtudo_cache_time';
-const CACHE_DURATION = 60 * 1000; // 60 segundos conforme solicitado
+const CACHE_DURATION = 60 * 1000; 
 
 // Helpers de formatação global
 const formatCurrency = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -98,7 +98,55 @@ document.addEventListener("DOMContentLoaded", () => {
     checkLandingParameters();
     setupGlobalEvents();
     startOfferTimers();
+    globalCustomizeStoreUI();
 });
+
+function globalCustomizeStoreUI() {
+    const isFascínioView = window.location.search.includes('FASCINIO');
+    if (!isFascínioView) return;
+
+    // 1. Título do navegador
+    if (!document.title.includes("Fascínio Modas")) {
+        if (document.title.includes("Dtudo")) {
+            document.title = document.title.replace(/Dtudo/g, "Fascínio Modas");
+        } else {
+            document.title = "Fascínio Modas | " + document.title;
+        }
+    }
+
+    // 2. Favicon
+    let favicon = document.querySelector('link[rel="icon"]');
+    if (favicon) {
+        favicon.href = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBxgj27A0otX_cn1KQV4ESSD-fXLrIZ2Ag6Q&s";
+    }
+
+    // 3. Logo do Header
+    const logoImg = document.querySelector('.logo-img');
+    if (logoImg) {
+        logoImg.src = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBxgj27A0otX_cn1KQV4ESSD-fXLrIZ2Ag6Q&s";
+        logoImg.style.maxHeight = "50px";
+        logoImg.style.objectFit = "contain";
+    }
+
+    // 4. Rodapé
+    const footerCompany = document.getElementById('footer-company-name');
+    const footerFantasy = document.getElementById('footer-fantasy-name');
+    const footerCNPJ = document.getElementById('footer-cnpj');
+    const footerLocs = document.getElementById('footer-locations');
+
+    if (footerCompany) footerCompany.innerHTML = "Grupo Fascínio Modas <i class='bx bxs-badge-check' style='color: #3483fa;'></i>";
+    if (footerFantasy) footerFantasy.innerText = "Fascínio Modas";
+    if (footerCNPJ) footerCNPJ.innerText = "CNPJ: **.***.***/****-**";
+    if (footerLocs) footerLocs.innerText = "Ipixuna do Pará, Aurora do Pará, Mãe do Rio, São Miguel do Guamá, Santa Maria do Pará.";
+
+    // 5. Categorias (Caso existam na página)
+    const categoryScroll = document.getElementById('categories-scroll');
+    if (categoryScroll) {
+        // Se estiver na index, o index.js já cuida disso chamando renderCategories(true)
+        // Mas se for outra página, podemos forçar a atualização se o ID existir
+        if (typeof renderCategories === 'function') renderCategories(true);
+    }
+}
 
 // --- LÓGICA DE CRONÔMETRO DE OFERTA ---
 function startOfferTimers() {
@@ -109,7 +157,6 @@ function startOfferTimers() {
         const diff = OFFER_DEADLINE - now;
 
         if (diff <= 0) {
-            // Pausa produtos com oferta: esconde elementos com a classe .has-offer
             document.querySelectorAll('.has-offer').forEach(el => {
                 if (el.tagName === 'DIV') {
                     el.style.display = 'none';
@@ -136,7 +183,6 @@ function startOfferTimers() {
 // --- 3. BANCO DE DADOS CENTRAL (CACHE) ---
 const DataManager = {
     init: function () {
-        // Primeira carga ao abrir qualquer página
         this.sync();
     },
 
@@ -144,7 +190,6 @@ const DataManager = {
         const now = Date.now();
         const lastSync = parseInt(localStorage.getItem(CACHE_TIME_KEY) || '0');
 
-        // Se sincronizou nos últimos 60 segundos, não busca de novo (evita lentidão entre telas)
         if (now - lastSync < CACHE_DURATION && localStorage.getItem(CACHE_KEY)) {
             console.log("[DataManager] Cache recente, pulando sincronização.");
             return;
@@ -166,11 +211,8 @@ const DataManager = {
                     console.log("[DataManager] Dados atualizados detectados.");
                     localStorage.setItem(CACHE_KEY, newDataStr);
                     localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-
-                    // Notifica interessados
                     document.dispatchEvent(new CustomEvent('productsUpdated', { detail: result.data }));
                 } else {
-                    // Mesmo se os dados forem iguais, atualiza o tempo para não dar fetch de novo logo em seguida
                     localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
                 }
             }
@@ -180,7 +222,6 @@ const DataManager = {
             this._isSyncing = false;
         }
     },
-
 
     getProducts: function () {
         const data = localStorage.getItem(CACHE_KEY);
@@ -237,18 +278,10 @@ function updateCartBadge() {
     if (badgeMobile) {
         badgeMobile.innerText = count;
         badgeMobile.style.display = count > 0 ? 'flex' : 'none';
-        if (count > 0) {
-            badgeMobile.classList.add('pulse');
-            setTimeout(() => badgeMobile.classList.remove('pulse'), 3000);
-        }
     }
     if (badgeDesktop) {
         badgeDesktop.innerText = count;
         badgeDesktop.style.display = count > 0 ? 'flex' : 'none';
-        if (count > 0) {
-            badgeDesktop.classList.add('pulse');
-            setTimeout(() => badgeDesktop.classList.remove('pulse'), 3000);
-        }
     }
 }
 
@@ -256,37 +289,26 @@ let toastTimeout;
 function showToast(msg, type = "success") {
     const toast = document.getElementById("toast-notification");
     if (!toast) return;
-
-    // Cancela o timeout anterior se houver (evita que o toast suma antes do tempo se clicarem várias vezes)
     clearTimeout(toastTimeout);
-
     toast.innerHTML = `<i class='bx bxs-${type === 'success' ? 'check-circle' : 'error-circle'}'></i> <span>${msg}</span>`;
     toast.className = `toast show ${type}`;
-
-    toastTimeout = setTimeout(() => {
-        toast.classList.remove("show");
-    }, 3000);
+    toastTimeout = setTimeout(() => { toast.classList.remove("show"); }, 3000);
 }
 
-// --- ATUALIZAÇÃO VISUAL DO USUÁRIO (CORRIGIDO) ---
+// --- ATUALIZAÇÃO VISUAL DO USUÁRIO ---
 function updateUserUI(user) {
     const desktopGreeting = document.getElementById("desktop-profile-trigger");
     const mobileBtn = document.getElementById("profile-button-mobile");
-
-    // Elementos do Modal de Perfil
     const modalLoggedIn = document.getElementById("user-logged-in-view");
     const modalLoggedOut = document.getElementById("user-logged-out-view");
     const profilePic = document.getElementById("user-profile-pic");
     const profileName = document.getElementById("user-profile-name");
 
     if (user && !user.isAnonymous) {
-        // --- USUÁRIO LOGADO ---
         const firstName = user.displayName ? user.displayName.split(' ')[0] : 'Cliente';
-        const photoUrl = user.photoURL || 'https://placehold.co/100x100/333/fff?text=U'; // Fallback se não tiver foto
+        const photoUrl = user.photoURL || 'https://placehold.co/100x100/333/fff?text=U';
 
-        // 1. Atualiza Header Desktop
         if (desktopGreeting) {
-            // Adiciona a foto pequena ao lado do texto
             desktopGreeting.innerHTML = `
                 <div style="display:flex; align-items:center; gap:8px;">
                     <img src="${photoUrl}" style="width:32px; height:32px; border-radius:50%; border:1px solid #fff;">
@@ -296,35 +318,22 @@ function updateUserUI(user) {
                     </div>
                 </div>`;
         }
-
-        // 2. Atualiza Ícone Mobile (Troca o ícone pela foto)
         if (mobileBtn) {
             mobileBtn.innerHTML = `<img src="${photoUrl}" style="width:30px; height:30px; border-radius:50%; border:2px solid #fff; object-fit:cover;">`;
         }
-
-        // 3. Atualiza Conteúdo do Modal
         if (modalLoggedIn && modalLoggedOut) {
-            modalLoggedIn.style.display = "block"; // Mostra painel logado
-            modalLoggedOut.style.display = "none"; // Esconde botão de login
-
+            modalLoggedIn.style.display = "block";
+            modalLoggedOut.style.display = "none";
             if (profilePic) profilePic.src = photoUrl;
             if (profileName) profileName.innerText = user.displayName;
         }
-
     } else {
-        // --- USUÁRIO DESLOGADO ---
-
-        // 1. Reset Header Desktop
         if (desktopGreeting) {
             desktopGreeting.innerHTML = `<span>olá, faça seu login</span><strong>ou cadastre-se</strong>`;
         }
-
-        // 2. Reset Ícone Mobile
         if (mobileBtn) {
             mobileBtn.innerHTML = `<i class='bx bx-user-circle'></i>`;
         }
-
-        // 3. Reset Conteúdo do Modal
         if (modalLoggedIn && modalLoggedOut) {
             modalLoggedIn.style.display = "none";
             modalLoggedOut.style.display = "block";
@@ -333,24 +342,18 @@ function updateUserUI(user) {
 }
 
 function setupGlobalEvents() {
-    // Logout
     const logoutBtn = document.getElementById("logout-button");
     const desktopLogout = document.getElementById("desktop-logout");
-
     const handleLogout = () => {
-        trackEvent('login', { method: 'Google' });
         auth.signOut().then(() => {
             showToast("Você saiu da conta.");
-            // O auth.onAuthStateChanged vai rodar e limpar a UI automaticamente
             const modal = document.getElementById("user-profile-modal");
             if (modal) modal.classList.remove("show");
         });
     };
-
     if (logoutBtn) logoutBtn.addEventListener("click", handleLogout);
     if (desktopLogout) desktopLogout.addEventListener("click", handleLogout);
 
-    // Google Login (Geralmente no Modal)
     const googleBtn = document.getElementById("google-login-button");
     if (googleBtn) {
         googleBtn.addEventListener("click", () => {
@@ -366,12 +369,10 @@ function setupGlobalEvents() {
         });
     }
 
-    // Localização
     const locationBar = document.getElementById("location-bar-trigger");
     if (locationBar) {
         locationBar.addEventListener("click", openLocationModal);
     }
-
     updateLocationUI();
 }
 
@@ -380,6 +381,41 @@ function updateLocationUI() {
     const loc = localStorage.getItem('user_location') || 'Selecionar endereço';
     const textEl = document.getElementById('current-location-text');
     if (textEl) textEl.innerText = loc;
+    
+    // Injetar pontos de retirada se for modo Fascínio
+    const container = document.querySelector('#location-modal .modal-content');
+    const isFascínioView = window.location.search.includes('FASCINIO');
+    if (isFascínioView && container && !document.getElementById('fascinio-pickup-points')) {
+        const pickupHtml = `
+            <div id="fascinio-pickup-points" style="padding: 15px; background: #f9f9f9; border-top: 1px solid #eee;">
+                <p style="font-size: 0.85rem; font-weight: 700; margin-bottom: 10px; color: #db0038;">Retirar em Loja Física (Grátis):</p>
+                <div class="location-option" onclick="selectLocation('Loja Ipixuna')">
+                    <i class='bx bxs-store'></i>
+                    <div><strong>Fascínio Ipixuna</strong><p style="font-size: 0.7rem; color: #666;">Av. Jarbas Passarinho</p></div>
+                </div>
+                <div class="location-option" onclick="selectLocation('Loja Aurora')">
+                    <i class='bx bxs-store'></i>
+                    <div><strong>Fascínio Aurora</strong><p style="font-size: 0.7rem; color: #666;">Centro</p></div>
+                </div>
+                <div class="location-option" onclick="selectLocation('Loja Mãe do Rio')">
+                    <i class='bx bxs-store'></i>
+                    <div><strong>Fascínio Mãe do Rio</strong><p style="font-size: 0.7rem; color: #666;">Centro</p></div>
+                </div>
+                <div class="location-option" onclick="selectLocation('Loja São Miguel')">
+                    <i class='bx bxs-store'></i>
+                    <div><strong>Fascínio São Miguel</strong><p style="font-size: 0.7rem; color: #666;">Centro</p></div>
+                </div>
+                <div class="location-option" onclick="selectLocation('Loja Santa Maria')">
+                    <i class='bx bxs-store'></i>
+                    <div><strong>Fascínio Santa Maria</strong><p style="font-size: 0.7rem; color: #666;">Centro</p></div>
+                </div>
+            </div>
+        `;
+        const cepGroup = container.querySelector('.cep-input-group');
+        if (cepGroup) {
+            cepGroup.insertAdjacentHTML('beforebegin', pickupHtml);
+        }
+    }
 }
 
 function openLocationModal() {
@@ -408,6 +444,7 @@ window.applyCEP = function () {
         showToast("Insira um CEP válido", "error");
     }
 }
+
 // --- LÓGICA DO MODAL DE BUSCA GERAL ---
 window.openSearchModal = function () {
     const modal = document.getElementById('search-modal');
@@ -432,7 +469,7 @@ window.executeSearch = function (termOverride) {
     const term = (termOverride && typeof termOverride === 'string') ? termOverride : (input ? input.value.trim() : "");
     if (term) {
         saveSearchHistory(term);
-        window.location.href = `search.html?q=${encodeURIComponent(term)}`;
+        window.location.href = applyStoreContext(`search.html?q=${encodeURIComponent(term)}`);
     }
 };
 
@@ -447,24 +484,20 @@ function renderSearchHistory() {
     const container = document.getElementById('search-history-list');
     const section = document.getElementById('search-history-section');
     let history = JSON.parse(localStorage.getItem('search_history') || '[]');
-
     if (!container || !section) return;
-
     if (history.some(h => String(h).includes('<div'))) {
         history = history.filter(h => !String(h).includes('<div'));
         localStorage.setItem('search_history', JSON.stringify(history));
     }
-
     if (history.length === 0) {
         section.style.display = 'none';
         return;
     }
-
     section.style.display = 'block';
     container.innerHTML = history.map(h => {
         const safeTerm = String(h).replace(/<[^>]*>/g, '').trim();
         return `
-            <div class="suggestion-item" onclick="window.location.href='search.html?q=${encodeURIComponent(safeTerm)}'">
+            <div class="suggestion-item" onclick="window.location.href=applyStoreContext('search.html?q=${encodeURIComponent(safeTerm)}')">
                 <i class='bx bx-history'></i> ${safeTerm}
             </div>
         `;
@@ -541,7 +574,7 @@ window.setupSearch = function () {
                     const filtered = cached.filter(p => smartMatch(p, term)).slice(0, 6);
                     if (filtered.length > 0) {
                         suggestionsList.innerHTML = filtered.map(p => `
-                            <div class="suggestion-item" onclick="window.location.href='search.html?q=${encodeURIComponent(p.name)}'">
+                            <div class="suggestion-item" onclick="window.location.href=applyStoreContext('search.html?q=${encodeURIComponent(p.name)}')">
                                 <i class='bx bx-search'></i> ${p.name}
                             </div>
                         `).join('') + `
@@ -563,9 +596,9 @@ window.setupSearch = function () {
                         suggestionsSection.querySelector('.search-section-title').innerText = 'Sugestões para você';
                     }
                     suggestionsList.innerHTML = `
-                        <div class="suggestion-item" onclick="window.location.href='search.html?q=relogio'"> <i class='bx bx-trending-up'></i> Relógio Masculino</div>
-                        <div class="suggestion-item" onclick="window.location.href='search.html?q=escolar'"><i class='bx bx-trending-up'></i> Material Escolar</div>
-                        <div class="suggestion-item" onclick="window.location.href='search.html?q=eletronico'"><i class='bx bx-trending-up'></i> Eletrônicos</div>
+                        <div class="suggestion-item" onclick="window.location.href=applyStoreContext('search.html?q=relogio')"> <i class='bx bx-trending-up'></i> Relógio Masculino</div>
+                        <div class="suggestion-item" onclick="window.location.href=applyStoreContext('search.html?q=escolar')"><i class='bx bx-trending-up'></i> Material Escolar</div>
+                        <div class="suggestion-item" onclick="window.location.href=applyStoreContext('search.html?q=eletronico')"><i class='bx bx-trending-up'></i> Eletrônicos</div>
                     `;
                 }
             }
@@ -575,3 +608,51 @@ window.setupSearch = function () {
     const modal = document.getElementById('search-modal');
     if (modal) { modal.onclick = (e) => { if (e.target === modal) closeSearchModal(); }; }
 };
+
+// --- HELPER DE PERSISTÊNCIA DE CONTEXTO ---
+window.getStoreContext = function() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('ELETRO')) return 'ELETRO';
+    if (params.has('FASCINIO')) return 'FASCINIO';
+    return null;
+};
+
+window.applyStoreContext = function(url) {
+    const context = getStoreContext();
+    if (!context) return url;
+    const separator = url.includes('?') ? '&' : '?';
+    if (url.includes(context)) return url;
+    return `${url}${separator}${context}`;
+};
+
+// Interceptor global para links internos (Reforçado)
+document.addEventListener('click', (e) => {
+    const tag = e.target.closest('a');
+    if (tag && tag.href && !tag.href.includes('javascript:')) {
+        // Verifica se é um link interno (mesma origem ou relativo)
+        const isInternal = tag.href.startsWith(window.location.origin) || 
+                          (!tag.href.startsWith('http') && !tag.href.startsWith('//'));
+        
+        if (isInternal) {
+            const newHref = applyStoreContext(tag.href);
+            if (newHref !== tag.href) {
+                e.preventDefault();
+                window.location.href = newHref;
+            }
+        }
+    }
+});
+
+// MutationObserver para garantir que o título se mantenha Fascínio se setado por outros scripts
+const titleObserver = new MutationObserver(() => {
+    const isFascínioView = window.location.search.includes('FASCINIO');
+    if (isFascínioView && !document.title.includes("Fascínio Modas")) {
+        if (document.title.includes("Dtudo")) {
+             document.title = document.title.replace(/Dtudo/g, "Fascínio Modas");
+        } else {
+             document.title = "Fascínio Modas | " + document.title;
+        }
+    }
+});
+titleObserver.observe(document.querySelector('title'), { childList: true });
+

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pdv-cache-v15';
+const CACHE_NAME = 'pdv-cache-v16';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -46,38 +46,58 @@ self.addEventListener('activate', (event) => {
     self.clients.claim();
 });
 
-// Fetch: Estratégia de Cache
+// Fetch: Estratégia de Cache Inteligente
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
-    // 1. Ignora requisições de API e Analytics
-    if (
-        url.href.includes('googletagmanager') ||
-        url.href.includes('google-analytics')
-    ) {
-        event.respondWith(new Response('', { status: 200 }));
-        return;
-    }
-
+    // 1. Ignora requisições de API e Analytics (Sempre Rede)
     if (
         url.href.includes('script.google.com') ||
         url.href.includes('firestore.googleapis.com') ||
         url.href.includes('cloudfunctions.net') ||
-        url.href.includes('a.run.app')
+        url.href.includes('a.run.app') ||
+        url.href.includes('googletagmanager') ||
+        url.href.includes('google-analytics')
     ) {
         return;
     }
 
-    // 2. Arquivos Estáticos: Cache First, falling back to network
+    // 2. Arquivos Locais (HTML, JS, CSS do projeto): Estratégia NETWORK FIRST
+    // Isso garante que se houver internet, ele pega a versão nova. Se não houver, usa o cache.
+    const isLocalAsset = url.origin === self.location.origin && 
+                        (url.pathname.endsWith('.html') || 
+                         url.pathname.endsWith('.js') || 
+                         url.pathname.endsWith('.css') ||
+                         url.pathname === '/pdv/' ||
+                         url.pathname === '/pdv');
+
+    if (isLocalAsset) {
+        event.respondWith(
+            fetch(event.request)
+                .then((response) => {
+                    // Atualiza o cache com a versão nova da rede
+                    return caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, response.clone());
+                        return response;
+                    });
+                })
+                .catch(() => {
+                    // Falhou a rede (offline)? Usa o que tiver no cache
+                    return caches.match(event.request);
+                })
+        );
+        return;
+    }
+
+    // 3. Bibliotecas Externas (CDNs): Estratégia CACHE FIRST
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) {
-                return cachedResponse;
-            }
-            return fetch(event.request).catch((err) => {
-                console.log('[Service Worker] Fetch failed (ignoring):', event.request.url);
-                // Retorna uma resposta válida para evitar erro no navegador
-                return new Response('', { status: 408, statusText: 'Request Timed Out (Offline)' });
+            if (cachedResponse) return cachedResponse;
+            return fetch(event.request).then((networkResponse) => {
+                return caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(event.request, networkResponse.clone());
+                    return networkResponse;
+                });
             });
         })
     );

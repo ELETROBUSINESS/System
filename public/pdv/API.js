@@ -350,7 +350,7 @@ function doGet(e) {
 
         // --- 1. PRODUTOS ---
         else if (action === "listarProdutos") {
-            response = listarTodosProdutos();
+            response = listarTodosProdutos(e.parameter.loja);
         }
 
         else if (action === "buscarPrecoPorNome") {
@@ -365,7 +365,7 @@ function doGet(e) {
         }
 
         else if (action === "getProducts") {
-            const result = listarTodosProdutos();
+            const result = listarTodosProdutos(e.parameter.loja);
             response = result.status === "success" ? result.data : [];
         }
 
@@ -374,7 +374,7 @@ function doGet(e) {
         }
 
         else if (action === "cadastrarProduto") {
-            response = cadastrarNovoProduto(e.parameter.codigo, e.parameter.nome, e.parameter.preco);
+            response = cadastrarNovoProduto(e.parameter.codigo, e.parameter.nome, e.parameter.preco, e.parameter.loja);
         }
 
         // --- 2. CLIENTES ---
@@ -454,7 +454,7 @@ function doGet(e) {
 
         // --- SUPER APP ---
         else if (action === "listarProdutosSuperApp") {
-            response = listarProdutosSuperApp();
+            response = listarProdutosSuperApp(e.parameter.loja);
         }
 
         // --- NFC CHECKOUT ---
@@ -552,7 +552,7 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.JSON);
 }
 
-function listarProdutosSuperApp() {
+function listarProdutosSuperApp(lojaFiltro) {
     try {
         const sheet = getSheet(PRODUTOS_SHEET_NAME);
         const dataRaw = sheet.getDataRange().getValues();
@@ -577,9 +577,9 @@ function listarProdutosSuperApp() {
         if (idxCat === -1) idxCat = 5;
 
         const idxDesc = headers.indexOf("descricao") !== -1 ? headers.indexOf("descricao") : (headers.indexOf("description") !== -1 ? headers.indexOf("description") : 17);
-        const idxImgUrl = headers.indexOf("imgurl") !== -1 ? headers.indexOf("imgurl") : (headers.indexOf("img url") !== -1 ? headers.indexOf("img url") : 18);
-        const idxSold = headers.indexOf("vendido") !== -1 ? headers.indexOf("vendido") : 19;
-        const idxLoja = headers.indexOf("loja");
+        const idxImgUrl = headers.indexOf("imgurl") !== -1 ? headers.indexOf("imgurl") : (headers.indexOf("img url") !== -1 ? headers.indexOf("img url") : 7);
+        const idxSold = headers.indexOf("vendido") !== -1 ? headers.indexOf("vendido") : 17;
+        const idxLoja = headers.indexOf("loja") !== -1 ? headers.indexOf("loja") : 18;
 
         const idxWebPrice = headers.indexOf("web_price");
 
@@ -641,6 +641,8 @@ function listarProdutosSuperApp() {
             let lojaRaw = idxLoja !== -1 ? String(row[idxLoja] || "").trim() : "";
             if (lojaRaw === "" || lojaRaw === "DT#25") {
                 lojaRaw = "D'Tudo Variedades";
+            } else if (lojaRaw === "FSM#26-1") {
+                lojaRaw = "Fascínio";
             }
 
             const prodObj = {
@@ -705,7 +707,17 @@ function listarProdutosSuperApp() {
             }
         }
 
-        const produtos = Object.values(produtosMap);
+        let produtos = Object.values(produtosMap);
+        if (lojaFiltro) {
+            const reqLoja = String(lojaFiltro).trim().toLowerCase();
+            produtos = produtos.filter(p => {
+                 const prodLoja = String(p.loja).trim().toLowerCase();
+                 if (reqLoja === "dt#25" || reqLoja === "d'tudo variedades") {
+                      return (prodLoja === "d'tudo variedades" || prodLoja === "dt#25" || prodLoja === "");
+                 }
+                 return prodLoja === reqLoja;
+            });
+        }
         return { status: "success", data: produtos };
     } catch (e) {
         return { status: "error", message: e.toString() };
@@ -826,7 +838,7 @@ function getSheet(sheetName) {
         // Localize dentro da função getSheet(sheetName)
         else if (sheetName === FISCAL_SHEET_NAME) {
             // Adicionei "Nº Nota" e "Protocolo" para alinhar com o salvamento
-            sheet.appendRow(["Timestamp", "Nº Nota", "ID Venda", "Status", "Chave", "Protocolo", "Mensagem", "Itens Ignorados", "Conteúdo XML"]);
+            sheet.appendRow(["Timestamp", "Nº Nota", "ID Venda", "Status", "Chave", "Protocolo", "Mensagem", "Itens Ignorados", "Conteúdo XML", "Loja"]);
         }
         // REGRA PARA CAIXA (MANTIDA ORIGINAL)
         else if (sheetName === CAIXA_SHEET_NAME) {
@@ -862,6 +874,7 @@ function salvarProdutoCompleto(data) {
             "cfop": String(data.cfop || "").trim(),
             "unidade": data.unidade || "UN",
             "origem": data.origem || "0",
+            "loja": (data.loja && data.loja !== "DT#25") ? data.loja : "D'Tudo Variedades",
             "timestamp": new Date()
         };
 
@@ -911,7 +924,7 @@ function formatSheetData(sheet) {
 
 // Substitua a função listarTodosProdutos inteira por esta:
 
-function listarTodosProdutos() {
+function listarTodosProdutos(lojaFiltro) {
     Logger.log("Executando listarTodosProdutos (Versão Fiscal + Estoque)...");
 
     try {
@@ -989,9 +1002,25 @@ function listarTodosProdutos() {
                 origem: String(item.origem || "0"),
                 csosn: String(item.csosn || ""),
                 promoPrice: parseFloat(item.promocional || item.promoPrice) || 0,
-                loja: (item.loja === "DT#25" || !item.loja) ? "D'Tudo Variedades" : item.loja
+                loja: (() => {
+                    const l = String(item.loja || "").trim();
+                    if (l === "DT#25" || l === "") return "D'Tudo Variedades";
+                    if (l === "FSM#26-1") return "Fascínio";
+                    return l;
+                })()
             };
-        }).filter(p => p.id && p.id !== "");
+        }).filter(p => {
+             if (!p.id || p.id === "") return false;
+             if (!lojaFiltro) return true;
+             
+             const reqLoja = String(lojaFiltro).trim().toLowerCase();
+             const prodLoja = String(p.loja).trim().toLowerCase();
+             
+             if (reqLoja === "dt#25" || reqLoja === "d'tudo variedades") {
+                  return (prodLoja === "d'tudo variedades" || prodLoja === "dt#25" || prodLoja === "");
+             }
+             return prodLoja === reqLoja;
+        });
 
         return { status: "success", data: produtos };
 
@@ -1006,7 +1035,7 @@ function buscarProdutoPorCodigo(codigo) {
     Logger.log("Executando buscarProdutoPorCodigo: " + codigo); if (!codigo) return { status: "error", message: "Código não fornecido." }; try { const todosProdutosResult = listarTodosProdutos(); if (todosProdutosResult.status === 'error') { return todosProdutosResult; } const produtoEncontrado = todosProdutosResult.data.find(p => p.id === codigo.toString()); if (produtoEncontrado) { Logger.log("Produto encontrado (via listagem): " + JSON.stringify(produtoEncontrado)); return { status: "success", data: produtoEncontrado }; } else { Logger.log("Produto " + codigo + " não encontrado."); return { status: "success", data: null }; } } catch (error) { Logger.log("Erro buscarProdutoPorCodigo " + codigo + ": " + error + " Stack: " + error.stack); return { status: "error", message: "Erro buscar produto." }; }
 }
 
-function cadastrarNovoProduto(codigo, nome, preco) {
+function cadastrarNovoProduto(codigo, nome, preco, loja) {
     Logger.log("Executando cadastrarNovoProduto: " + JSON.stringify({ codigo, nome, preco }));
     if (!codigo || !nome || !preco) return { status: "error", message: "Dados incompletos." };
     const precoNum = parseFloat(preco);
@@ -1027,6 +1056,7 @@ function cadastrarNovoProduto(codigo, nome, preco) {
             if (lowerHeader === 'nome') return nome;
             if (lowerHeader === 'preco') return precoNum;
             if (lowerHeader === 'timestamp') return timestamp; // Adiciona o timestamp
+            if (lowerHeader === 'loja') return (loja && loja !== "DT#25") ? loja : "D'Tudo Variedades";
             return "";
         });
 
@@ -2983,3 +3013,4 @@ function obterProgressoMissao(operador) {
          return { status: "error", message: e.toString() };
     }
 }
+

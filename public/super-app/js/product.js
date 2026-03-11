@@ -349,8 +349,18 @@ function renderProductView(prod, variacoesGroup, allProducts, activeIndex) {
                 </div>
             </div>
 
-            <div class="product-special-banner" onclick="window.location.href='${(prod.loja || "").toUpperCase() === 'ELETRO' ? 'search.html?loja=ELETRO' : 'search.html?category=presenteie'}'">
-                <img src="${(prod.loja || "").toUpperCase() === 'ELETRO' ? 'eletro-banner.png' : 'day-banner-mulher01.png'}" alt="Especial">
+            <div class="product-special-banner" onclick="window.location.href='${(() => {
+                const l = (prod.loja || "").toUpperCase();
+                if (l === 'ELETRO') return 'search.html?loja=ELETRO';
+                if (l === 'FASCÍNIO' || l === 'FASCINIO') return 'search.html?loja=FASCINIO';
+                return 'search.html?category=presenteie';
+            })()}'">
+                <img src="${(() => {
+                const l = (prod.loja || "").toUpperCase();
+                if (l === 'ELETRO') return 'eletro-banner.png';
+                if (l === 'FASCÍNIO' || l === 'FASCINIO') return 'fascinio-banner.png';
+                return 'day-banner-mulher01.png';
+            })()}" alt="Especial">
             </div>
 
             <div style="background:#fff; padding:20px; margin-top:10px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
@@ -418,7 +428,7 @@ function renderSuggestedProducts(currentProd, allProducts) {
         }
 
         return `
-            <div class="category-item ${hasOffer ? 'has-offer' : ''}" style="width: 100%; min-width: unset; text-align: left; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; height: 100%; font-family: 'Roboto', sans-serif; position: relative;" onclick="window.location.href='product.html?id=${prod.id}'">
+            <div class="category-item ${hasOffer ? 'has-offer' : ''}" style="width: 100%; min-width: unset; text-align: left; background: #fff; border: 1px solid #eee; border-radius: 8px; overflow: hidden; height: 100%; font-family: 'Roboto', sans-serif; position: relative;" onclick="window.location.href=applyStoreContext('product.html?id=${prod.id}')">
                 ${timerHtml}
                 <img src="${displayImg}" style="width: 100%; height: 120px; object-fit: cover;">
                 <div style="padding: 10px;">

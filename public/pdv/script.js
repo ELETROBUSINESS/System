@@ -1,3 +1,63 @@
+// --- LOGICA DE SELECAO DE LOJA VIA URL ---
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    let lojaAtiva = null;
+
+    if (params.has('fascinio')) {
+        lojaAtiva = 'FSM#26-1';
+    } else if (params.has('dtudo2')) {
+        lojaAtiva = 'DT#25-2';
+    } else if (params.has('dtudo')) {
+        lojaAtiva = 'DT#25';
+    } else if (window.location.search === "" || window.location.search === "?") {
+        // Se a URL está limpa, força a loja principal conforme solicitado
+        lojaAtiva = 'DT#25';
+    }
+
+    if (lojaAtiva) {
+        localStorage.setItem('lojaAtiva', lojaAtiva);
+        localStorage.setItem('terminalConfigurado', 'true'); // Garante desbloqueio legado se necessário
+    }
+})();
+
+// --- INTERCEPTOR DE REQUISIÇÕES MULTI-EMPRESA ---
+const originalFetch = window.fetch;
+window.fetch = async function() {
+    let [resource, config] = arguments;
+    if (typeof resource === 'string' && (resource.includes('script.google.com') || resource.includes('cloudfunctions.net') || resource.includes('run.app'))) {
+        const lojaAtiva = localStorage.getItem('lojaAtiva') || 'DT#25';
+        if (!config || !config.method || config.method.toUpperCase() === 'GET') {
+            try {
+                const urlObj = new URL(resource);
+                if (!urlObj.searchParams.has('loja')) {
+                    urlObj.searchParams.append('loja', lojaAtiva);
+                    resource = urlObj.toString();
+                }
+            } catch (e) {}
+        } else if (config && config.method && config.method.toUpperCase() === 'POST' && config.body) {
+            try {
+                if (typeof config.body === 'string') {
+                    if (config.body.trim().startsWith('{')) {
+                        const bodyObj = JSON.parse(config.body);
+                        bodyObj.loja = bodyObj.loja || lojaAtiva;
+                        if (bodyObj.data && typeof bodyObj.data === 'object' && !Array.isArray(bodyObj.data)) {
+                            bodyObj.data.loja = bodyObj.data.loja || lojaAtiva;
+                        }
+                        config.body = JSON.stringify(bodyObj);
+                    } else if (config.body.includes('=')) {
+                        const params = new URLSearchParams(config.body);
+                        if (!params.has('loja')) {
+                            params.append('loja', lojaAtiva);
+                            config.body = params.toString();
+                        }
+                    }
+                }
+            } catch (e) {}
+        }
+    }
+    return originalFetch(resource, config);
+};
+// --- FIM INTERCEPTOR ---
 // ============================================================
 // 1. ESCOPO GLOBAL (VARIÁVEIS E BANCO DE DADOS)
 // ============================================================
@@ -6852,7 +6912,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 1. FUNÇÕES DO MODAL DE SENHA ---
 
-    function solicitarAcessoAdm(callbackSucesso) {
+    window.solicitarAcessoAdm = function solicitarAcessoAdm(callbackSucesso) {
         const modalAuth = document.getElementById('modal-admin-auth');
         const inputSenha = document.getElementById('admin-password-input');
         const msgErro = document.getElementById('auth-error-msg');
@@ -8633,3 +8693,162 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 });
+// --- MULTI-EMPRESA CONFIG (Added) ---
+document.addEventListener("DOMContentLoaded", () => {
+    const btnOpenMulti = document.getElementById('btn-open-multi-empresa-auth');
+    if (btnOpenMulti) {
+        btnOpenMulti.addEventListener('click', () => {
+            solicitarAcessoAdm(() => {
+                const modal = document.getElementById('modal-multi-empresa');
+                if (modal) {
+                    modal.classList.add('active');
+                    modal.style.display = 'flex';
+                    carregarConfigMultiEmpresa();
+                }
+            });
+        });
+    }
+
+    const selectLoja = document.getElementById('config-loja-ativa');
+    if (selectLoja) {
+        selectLoja.addEventListener('change', (e) => {
+            const val = e.target.value;
+            const fiscalSec = document.getElementById('config-fiscal-section');
+            const msgDt25 = document.getElementById('config-fiscal-msg-dt25');
+            
+            if (val === 'DT#25') {
+                fiscalSec.style.display = 'none';
+                msgDt25.style.display = 'block';
+            } else {
+                fiscalSec.style.display = 'block';
+                msgDt25.style.display = 'none';
+            }
+        });
+    }
+
+    const btnSaveMulti = document.getElementById('btn-save-multi-empresa');
+    if (btnSaveMulti) {
+        btnSaveMulti.addEventListener('click', async () => {
+            const modal = document.getElementById('modal-multi-empresa');
+            const loja = document.getElementById('config-loja-ativa').value;
+            localStorage.setItem('lojaAtiva', loja);
+            document.getElementById('lbl-loja-atual-config').textContent = loja;
+            
+            // Se for diferente de DT#25, salvar credenciais no Firebase
+            if (loja !== 'DT#25') {
+                const btnBackup = btnSaveMulti.innerHTML;
+                btnSaveMulti.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Salvando...";
+                btnSaveMulti.disabled = true;
+
+                try {
+                    const db = firebase.firestore();
+                    const configRef = db.collection('configuracoes_fiscais').doc(loja);
+                    
+                    const dataToSave = {
+                        atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+
+                    const fields = {
+                        razaoSocial: 'config-razao',
+                        nomeFantasia: 'config-fantasia',
+                        cnpj: 'config-cnpj',
+                        ie: 'config-ie',
+                        ambiente: 'config-ambiente',
+                        uf: 'config-uf',
+                        csc: 'config-csc',
+                        cscId: 'config-csc-id',
+                        certPass: 'config-cert-pass'
+                    };
+                    
+                    for (const [key, id] of Object.entries(fields)) {
+                        const val = document.getElementById(id).value.trim();
+                        if (val) dataToSave[key] = val;
+                    }
+
+                    const fileInput = document.getElementById('config-cert-file');
+                    
+                    // Se não há arquivo e nenhum campo de texto foi preenchido, pula o salvamento no Firebase
+                    if (Object.keys(dataToSave).length === 1 && fileInput.files.length === 0) {
+                        concluirSalvamentoMulti(modal, btnSaveMulti, btnBackup);
+                        return;
+                    }
+
+                    if (fileInput.files.length > 0) {
+                        const file = fileInput.files[0];
+                        const reader = new FileReader();
+                        reader.onload = async function(e) {
+                            const base64 = e.target.result.split(',')[1];
+                            dataToSave.certificadoBase64 = base64;
+                            await configRef.set(dataToSave, { merge: true });
+                            concluirSalvamentoMulti(modal, btnSaveMulti, btnBackup);
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        await configRef.set(dataToSave, { merge: true });
+                        concluirSalvamentoMulti(modal, btnSaveMulti, btnBackup);
+                    }
+                } catch (err) {
+                    console.error("Erro ao salvar config fiscal:", err);
+                    alert("Erro ao salvar dados fiscais: " + err.message);
+                    btnSaveMulti.innerHTML = btnBackup;
+                    btnSaveMulti.disabled = false;
+                }
+            } else {
+                alert("Terminal configurado para DT#25 com sucesso!");
+                closeModal(document.getElementById('modal-multi-empresa'));
+                window.location.reload();
+            }
+        });
+    }
+
+    function concluirSalvamentoMulti(modal, btn, backupHtml) {
+        const status = document.getElementById('config-multi-status');
+        status.textContent = "Salvo com sucesso!";
+        status.style.color = "#10b981";
+        setTimeout(() => {
+            btn.innerHTML = backupHtml;
+            btn.disabled = false;
+            status.textContent = "";
+            closeModal(modal);
+            window.location.reload();
+        }, 1500);
+    }
+
+    async function carregarConfigMultiEmpresa() {
+        const lojaAtual = localStorage.getItem('lojaAtiva') || 'DT#25';
+        const selectLoja = document.getElementById('config-loja-ativa');
+        if (selectLoja) selectLoja.value = lojaAtual;
+        
+        // Dispara evento para exibir formulÃ¡rio correto
+        selectLoja.dispatchEvent(new Event('change'));
+
+        if (lojaAtual !== 'DT#25') {
+            try {
+                const db = firebase.firestore();
+                const doc = await db.collection('configuracoes_fiscais').doc(lojaAtual).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    if(data.razaoSocial) document.getElementById('config-razao').value = data.razaoSocial;
+                    if(data.nomeFantasia) document.getElementById('config-fantasia').value = data.nomeFantasia;
+                    if(data.cnpj) document.getElementById('config-cnpj').value = data.cnpj;
+                    if(data.ie) document.getElementById('config-ie').value = data.ie;
+                    if(data.ambiente) document.getElementById('config-ambiente').value = data.ambiente;
+                    if(data.uf) document.getElementById('config-uf').value = data.uf;
+                    if(data.csc) document.getElementById('config-csc').value = data.csc;
+                    if(data.cscId) document.getElementById('config-csc-id').value = data.cscId;
+                    if(data.certPass) document.getElementById('config-cert-pass').value = data.certPass;
+                }
+            } catch (err) {
+                console.error("Erro ao carregar dados fiscais", err);
+            }
+        }
+    }
+
+    // Atualiza label inicial na tela de config
+    const lblAtual = document.getElementById('lbl-loja-atual-config');
+    if (lblAtual) {
+        lblAtual.textContent = localStorage.getItem('lojaAtiva') || 'DT#25';
+    }
+});
+// --- FIM MULTI-EMPRESA CONFIG ---
+

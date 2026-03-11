@@ -373,7 +373,7 @@ function registrarLog(data) {
     const timestamp = new Date();
     const novaLinha = [
         timestamp,
-        data.loja || "DT#25",
+        (data.loja && data.loja !== "DT#25") ? data.loja : "D'Tudo Variedades",
         data.operador || "",
         data.cargo || "",
         data.acao || "Registro",
@@ -401,7 +401,7 @@ function salvarNoBanco(data) {
     const tipoSalvo = data.tipo ? data.tipo.toLowerCase() : "";
 
     const novaLinha = [
-        data.loja,
+        (data.loja && data.loja !== "DT#25") ? data.loja : "D'Tudo Variedades",
         data.operador,
         data.cargo,
         tipoSalvo,
@@ -733,7 +733,7 @@ function salvarNotaFiscal(data) {
 
     const timestamp = new Date();
     const novaLinha = [
-        data.loja || "DT#25",
+        (data.loja && data.loja !== "DT#25") ? data.loja : "D'Tudo Variedades",
         data.modelo || "NFC-e",
         data.numeroNota || "---",
         data.idVenda || "---",

@@ -223,7 +223,7 @@ function buildProductCardHTML(prod) {
     }
 
     return `
-        <div class="product-card ${isSoldOut ? 'sold-out' : ''} ${hasOffer ? 'has-offer' : ''}" id="prod-${prod.id}" onclick="window.location.href='product.html?id=${prod.id}'">
+        <div class="product-card ${isSoldOut ? 'sold-out' : ''} ${hasOffer ? 'has-offer' : ''}" id="prod-${prod.id}" onclick="window.location.href=applyStoreContext('product.html?id=${prod.id}')">
             <div class="product-image">
                 ${timerHtml}
                 <img src="${displayImg}" alt="${prod.name}" loading="lazy" onload="this.classList.add('loaded')">
@@ -271,6 +271,46 @@ function renderProductBatch(products) {
 }
 
 
+function renderCategories(isFascínioView) {
+    const container = document.getElementById('categories-scroll');
+    if (!container) return;
+
+    if (isFascínioView) {
+        const categories = [
+            { name: 'Feminino', icon: 'bx-dress' },
+            { name: 'Masculino', icon: 'bx-t-shirt' },
+            { name: 'Tênis', icon: 'bx-run' },
+            { name: 'Relógios', icon: 'bx-wrist-watch-round' },
+            { name: 'Sapato', icon: 'bx-sneaker' },
+            { name: 'Sandália', icon: 'bx-footsteps' }
+        ];
+
+        container.innerHTML = categories.map(cat => `
+            <div class="category-pill" onclick="window.location.href=applyStoreContext('search.html?category=${cat.name.toLowerCase()}')">
+                <i class='bx ${cat.icon}'></i>
+                <span>${cat.name}</span>
+            </div>
+        `).join('');
+    } else {
+        // Layout original da Dtudo (caso precise voltar)
+        const categories = [
+            { name: 'Presenteie', icon: 'bx-heart' },
+            { name: 'Eletrodomésticos', icon: 'bx-plug' },
+            { name: 'Relógios', icon: 'bx-watch' },
+            { name: 'Escolares', icon: 'bx-pencil' },
+            { name: 'Brinquedos', icon: 'bx-carousel' },
+            { name: 'Informática', icon: 'bx-laptop' },
+            { name: 'Beleza', icon: 'bx-brush' }
+        ];
+        container.innerHTML = categories.map(cat => `
+            <div class="category-pill" onclick="window.location.href=applyStoreContext('search.html?category=${cat.name.toLowerCase()}')">
+                <i class='bx ${cat.icon}'></i>
+                <span>${cat.name}</span>
+            </div>
+        `).join('');
+    }
+}
+
 function renderHomeSections(cached) {
     const container = document.getElementById('home-sections-container');
     if (!container) return;
@@ -284,11 +324,23 @@ function renderHomeSections(cached) {
         if (!hasBaseData) return false;
 
         const prodLoja = String(p.loja || "").toUpperCase();
+        const isFascínioView = window.location.search.includes('FASCINIO');
+        
         if (isEletroView) {
             return prodLoja === 'ELETRO';
+        } else if (isFascínioView) {
+            // Verificação extremamente robusta para a Fascínio
+            return prodLoja.includes('FASCINIO') || 
+                   prodLoja.includes('FASCÍNIO') || 
+                   prodLoja.includes('FSM#26-1') || 
+                   prodLoja.includes('FSM');
         } else {
-            // No feed principal, não mostra itens de lojas com restrição (ELETRO)
-            return prodLoja !== 'ELETRO';
+            // No feed principal, não mostra itens de lojas com restrição (ELETRO, FASCÍNIO)
+            const isRestricted = prodLoja.includes('ELETRO') || 
+                                prodLoja.includes('FASCINIO') || 
+                                prodLoja.includes('FASCÍNIO') || 
+                                prodLoja.includes('FSM');
+            return !isRestricted;
         }
     });
 
@@ -346,14 +398,25 @@ function renderHomeSections(cached) {
     }
 
     // Banner Dinâmico
-    const centralBannerSrc = isEletroView ? "eletro-banner.png" : "day-banner-mulher01.png";
-    const centralBannerLink = isEletroView ? "search.html?loja=ELETRO" : "search.html?category=presenteie";
+    const isFascínioView = window.location.search.includes('FASCINIO');
+    let centralBannerSrc = "day-banner-mulher01.png";
+    let centralBannerLink = "search.html?category=presenteie";
+    let showCentralBanner = true;
 
-    html += `
-        <div class="feed-central-banner" onclick="window.location.href='${centralBannerLink}'">
-            <img src="${centralBannerSrc}" alt="Destaque">
-        </div>
-    `;
+    if (isEletroView) {
+        centralBannerSrc = "eletro-banner.png";
+        centralBannerLink = "search.html?loja=ELETRO";
+    } else if (isFascínioView) {
+        showCentralBanner = false; // Oculto conforme pedido
+    }
+    
+    if (showCentralBanner) {
+        html += `
+            <div class="feed-central-banner" onclick="window.location.href='${centralBannerLink}'">
+                <img src="${centralBannerSrc}" alt="Destaque">
+            </div>
+        `;
+    }
 
     // Seção Presenteie
     if (presenteie.length > 0) {
@@ -531,11 +594,15 @@ function renderRecentlyViewed() {
 
     let viewed = JSON.parse(localStorage.getItem('user_recently_viewed') || '[]');
 
-    // Filtro por Loja (ELETRO vs Resto)
+    // Filtro por Loja (ELETRO vs FASCÍNIO vs Resto)
     const isEletroView = window.location.search.includes('ELETRO');
+    const isFascínioView = window.location.search.includes('FASCINIO');
+    
     viewed = viewed.filter(p => {
         const prodLoja = String(p.loja || "").toUpperCase();
-        return isEletroView ? prodLoja === 'ELETRO' : prodLoja !== 'ELETRO';
+        if (isEletroView) return prodLoja === 'ELETRO';
+        if (isFascínioView) return prodLoja === 'FASCÍNIO' || prodLoja === 'FASCINIO';
+        return prodLoja !== 'ELETRO' && prodLoja !== 'FASCÍNIO' && prodLoja !== 'FASCINIO';
     });
 
     if (viewed.length === 0) {
@@ -670,6 +737,11 @@ async function initProductFeed() {
     window._apiFetched = false;
     isLoading = false;
 
+    // Garante que as categorias sejam renderizadas com ícones corretos se for Fascínio
+    if (window.location.search.includes('FASCINIO')) {
+        renderCategories(true);
+    }
+
     renderRecentlyViewed();
 
     const container = document.getElementById('firebase-products-container');
@@ -733,12 +805,23 @@ window.filterLocalCategory = function (categoryStr) {
     }
     if (!cached || cached.length === 0) return;
 
-    // Filtro Global de Loja (?ELETRO)
+    // Filtro Global de Loja (?ELETRO / ?FASCINIO)
     const isEletroView = window.location.search.includes('ELETRO');
+    const isFascínioView = window.location.search.includes('FASCINIO');
+
     if (isEletroView) {
         cached = cached.filter(p => String(p.loja || "").toUpperCase() === 'ELETRO');
+    } else if (isFascínioView) {
+        cached = cached.filter(p => {
+            const l = String(p.loja || "").toUpperCase();
+            return l.includes('FASCINIO') || l.includes('FASCÍNIO') || l.includes('FSM#26-1') || l.includes('FSM');
+        });
     } else {
-        cached = cached.filter(p => String(p.loja || "").toUpperCase() !== 'ELETRO');
+        cached = cached.filter(p => {
+            const l = String(p.loja || "").toUpperCase();
+            const isRestricted = l.includes('ELETRO') || l.includes('FASCINIO') || l.includes('FASCÍNIO') || l.includes('FSM');
+            return !isRestricted;
+        });
     }
 
     categoryStr = categoryStr || 'todos';
@@ -1574,12 +1657,20 @@ function initSlider() {
     const wrapper = document.querySelector('.slider-wrapper');
     const dotsContainer = document.querySelector('.banner-dots');
 
-    // Customização ELETRO
+    // Customização ELETRO / FASCÍNIO
     const isEletroView = window.location.search.includes('ELETRO');
+    const isFascínioView = window.location.search.includes('FASCINIO');
+    
     if (isEletroView && wrapper) {
         wrapper.innerHTML = `
             <div class="slide" onclick="window.location.href='search.html?loja=ELETRO'" style="cursor: pointer;">
                 <img src="eletro-banner.png" alt="Eletro">
+            </div>
+        `;
+    } else if (isFascínioView && wrapper) {
+        wrapper.innerHTML = `
+            <div class="slide" onclick="window.location.href='search.html?loja=FASCINIO'" style="cursor: pointer;">
+                <img src="fascinio-banner.png" alt="Fascínio">
             </div>
         `;
     }
@@ -1753,8 +1844,68 @@ function renderSuggestedProducts(currentProd, allProducts) {
     container.innerHTML = html;
 }
 
+// --- PERSONALIZAÇÃO DINÂMICA DE LOJA (Logo, Categorias, Rodapé) ---
+function customizeStoreUI() {
+    const isFascínioView = window.location.search.includes('FASCINIO');
+    if (!isFascínioView) return;
+
+    // 1. Logo, Título e Favicon
+    document.title = "Fascínio Modas | Loja Online";
+    const favicon = document.querySelector('link[rel="icon"]');
+    if (favicon) favicon.href = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBxgj27A0otX_cn1KQV4ESSD-fXLrIZ2Ag6Q&s";
+
+    const logoImg = document.querySelector('.logo-img');
+    if (logoImg) {
+        logoImg.src = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBxgj27A0otX_cn1KQV4ESSD-fXLrIZ2Ag6Q&s";
+        logoImg.style.maxHeight = "50px"; 
+    }
+
+    // 2. Categorias
+    const catScroll = document.querySelector('.categories-scroll');
+    if (catScroll) {
+        catScroll.innerHTML = `
+            <div class="category-item" onclick="window.location.href=applyStoreContext('search.html?category=feminino')">
+                <div class="category-icon" style="background:#fff4f6; color:#ff4d67;"><i class='bx bx-female'></i></div>
+                <strong>Feminino</strong>
+            </div>
+            <div class="category-item" onclick="window.location.href=applyStoreContext('search.html?category=masculino')">
+                <div class="category-icon" style="background:#f0f7ff; color:#3483fa;"><i class='bx bx-male'></i></div>
+                <strong>Masculino</strong>
+            </div>
+            <div class="category-item" onclick="window.location.href=applyStoreContext('search.html?category=tenis')">
+                <div class="category-icon" style="background:#f8f9fa; color:#333;"><i class='bx bxs-pear'></i></div>
+                <strong>Tênis</strong>
+            </div>
+            <div class="category-item" onclick="window.location.href=applyStoreContext('search.html?category=relogio')">
+                <div class="category-icon" style="background:#f8f9fa; color:#666;"><i class='bx bx-stopwatch'></i></div>
+                <strong>Relógios</strong>
+            </div>
+            <div class="category-item" onclick="window.location.href=applyStoreContext('search.html?category=sapato')">
+                <div class="category-icon" style="background:#f8f9fa; color:#444;"><i class='bx bxs-briefcase'></i></div>
+                <strong>Sapato</strong>
+            </div>
+            <div class="category-item" onclick="window.location.href=applyStoreContext('search.html?category=sandalia')">
+                <div class="category-icon" style="background:#fff4f6; color:#ff8fa3;"><i class='bx bxs-star'></i></div>
+                <strong>Sandália</strong>
+            </div>
+        `;
+    }
+
+    // 3. Rodapé
+    const footerInfo = document.querySelector('.footer-info');
+    if (footerInfo) {
+        footerInfo.innerHTML = `
+            <strong>Grupo Fascínio Modas</strong>
+            <p>Fascinio Modas</p>
+            <p>CNPJ: **.***.***/****-**</p>
+            <p>Ipixuna do Pará, Aurora do Pará, Mãe do Rio, São Miguel do Guamá, Santa Maria do Pará.</p>
+        `;
+    }
+}
+
 // ==================== 5. INICIALIZAÇÃO ====================
 document.addEventListener("DOMContentLoaded", () => {
+    customizeStoreUI();
     if (typeof initSlider === 'function') initSlider();
     if (typeof setupSearch === 'function') setupSearch();
     if (typeof updateCartBadge === 'function') updateCartBadge();
@@ -1775,6 +1926,16 @@ document.addEventListener("DOMContentLoaded", () => {
             initProductFeed();
         }
     }
+    // Listener para quando o background sync atualizar os produtos
+    document.addEventListener('productsUpdated', (e) => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (typeof filterLocalCategory === 'function') {
+            filterLocalCategory(urlParams.get('filter') || 'todos');
+        }
+        if (window.location.search.includes('FASCINIO') && typeof renderCategories === 'function') {
+            renderCategories(true);
+        }
+    });
 });
 
 window.toggleSearchExpansion = function (event) {

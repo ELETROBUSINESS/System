@@ -221,12 +221,23 @@ async function performSearch(term, type) {
     // Filtrar produtos sem nome ou imagem
     results = results.filter(p => p.name && p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co'));
 
-    // Filtro Global de Loja (?ELETRO)
+    // Filtro Global de Loja (?ELETRO / ?FASCINIO)
     const isEletroView = window.location.search.includes('ELETRO');
+    const isFascínioView = window.location.search.includes('FASCINIO');
+
     if (isEletroView) {
         results = results.filter(p => String(p.loja || "").toUpperCase() === 'ELETRO');
+    } else if (isFascínioView) {
+        results = results.filter(p => {
+            const l = String(p.loja || "").toUpperCase();
+            return l.includes('FASCINIO') || l.includes('FASCÍNIO') || l.includes('FSM#26-1') || l.includes('FSM');
+        });
     } else {
-        results = results.filter(p => String(p.loja || "").toUpperCase() !== 'ELETRO');
+        results = results.filter(p => {
+            const l = String(p.loja || "").toUpperCase();
+            const isRestricted = l.includes('ELETRO') || l.includes('FASCINIO') || l.includes('FASCÍNIO') || l.includes('FSM');
+            return !isRestricted;
+        });
     }
 
     if (typeof trackEvent === 'function') {
@@ -260,21 +271,51 @@ async function performSearch(term, type) {
             container.insertAdjacentHTML('beforeend', bannerHtml);
 
             // 2. Extensão 'Makes'
-            const makeResults = allProducts.filter(p =>
+            let makeResults = allProducts.filter(p =>
                 !results.find(r => r.id === p.id) && // Evita duplicatas
                 smartMatch(p, 'makes') &&
                 p.name && p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co')
             );
+            
+            // Aplicar filtro de loja
+            if (isEletroView) {
+                makeResults = makeResults.filter(p => String(p.loja || "").toUpperCase() === 'ELETRO');
+            } else if (isFascínioView) {
+                makeResults = makeResults.filter(p => {
+                    const l = String(p.loja || "").toUpperCase();
+                    return l === 'FASCÍNIO' || l === 'FASCINIO';
+                });
+            } else {
+                makeResults = makeResults.filter(p => {
+                    const l = String(p.loja || "").toUpperCase();
+                    return l !== 'ELETRO' && l !== 'FASCÍNIO' && l !== 'FASCINIO';
+                });
+            }
             renderProducts(makeResults, container);
 
             // 3. Extensão 'Relógios Femininos'
-            const watchResults = allProducts.filter(p =>
+            let watchResults = allProducts.filter(p =>
                 !results.find(r => r.id === p.id) &&
                 !makeResults.find(m => m.id === p.id) &&
                 (p.name || '').toUpperCase().includes('REL') &&
                 (p.name || '').toLowerCase().includes('feminino') &&
                 p.name && p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co')
             );
+
+            // Aplicar filtro de loja
+            if (isEletroView) {
+                watchResults = watchResults.filter(p => String(p.loja || "").toUpperCase() === 'ELETRO');
+            } else if (isFascínioView) {
+                watchResults = watchResults.filter(p => {
+                    const l = String(p.loja || "").toUpperCase();
+                    return l === 'FASCÍNIO' || l === 'FASCINIO';
+                });
+            } else {
+                watchResults = watchResults.filter(p => {
+                    const l = String(p.loja || "").toUpperCase();
+                    return l !== 'ELETRO' && l !== 'FASCÍNIO' && l !== 'FASCINIO';
+                });
+            }
 
             if (watchResults.length > 0) {
                 container.insertAdjacentHTML('beforeend', `<h3 class="section-title" style="grid-column: 1 / -1; margin: 20px 2.5% 10px; color: #db0038;">Relógios Femininos</h3>`);
@@ -285,10 +326,24 @@ async function performSearch(term, type) {
         noResults.style.display = 'block';
         suggestionsSection.style.display = 'block';
 
-        const suggestions = allProducts
-            .filter(p => p.name && p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co'))
-            .sort(() => 0.5 - Math.random())
-            .slice(0, 8);
+        let suggestions = allProducts.filter(p => p.name && p.imgUrl && p.imgUrl.trim() !== "" && !p.imgUrl.includes('placehold.co'));
+
+        // Aplicar o mesmo filtro de loja nas sugestões
+        if (isEletroView) {
+            suggestions = suggestions.filter(p => String(p.loja || "").toUpperCase() === 'ELETRO');
+        } else if (isFascínioView) {
+            suggestions = suggestions.filter(p => {
+                const l = String(p.loja || "").toUpperCase();
+                return l === 'FASCÍNIO' || l === 'FASCINIO';
+            });
+        } else {
+            suggestions = suggestions.filter(p => {
+                const l = String(p.loja || "").toUpperCase();
+                return l !== 'ELETRO' && l !== 'FASCÍNIO' && l !== 'FASCINIO';
+            });
+        }
+
+        suggestions = suggestions.sort(() => 0.5 - Math.random()).slice(0, 8);
 
         if (suggestionsContainer) {
             suggestionsContainer.innerHTML = '';
@@ -363,14 +418,14 @@ function renderProducts(products, target) {
 
         const html = `
             <div class="product-card ${hasOffer ? 'has-offer' : ''}" id="prod-${prod.id}">
-                <div class="product-image" onclick="window.location.href='product.html?id=${prod.id}'">
+                <div class="product-image" onclick="window.location.href=applyStoreContext('product.html?id=${prod.id}')">
                     ${timerHtml}
                     <img src="${displayImg}" alt="${name}" loading="lazy">
                     <button class="cart-btn-overlay" onclick="event.stopPropagation(); addToCartDirect('${prod.id}', '${name}', ${priceCard}, ${pricePix}, '${displayImg}')">
                         <i class='bx bx-cart-add'></i>
                     </button>
                 </div>
-                <div class="product-info" onclick="window.location.href='product.html?id=${prod.id}'">
+                <div class="product-info" onclick="window.location.href=applyStoreContext('product.html?id=${prod.id}')">
                     ${specialTagHtml}
                     <h4 class="product-name" style="text-transform: none;">${name}</h4>
                     <div class="seller-tag" style="font-size: 0.65rem; color: #000; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 3px;">

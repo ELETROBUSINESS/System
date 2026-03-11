@@ -8,7 +8,9 @@
     <link rel="icon" href="/assets/img/Dtudoicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
 
     <link rel="stylesheet" href="css/index.css">
 </head>
@@ -112,7 +114,7 @@
 
     <section class="categories-section">
         <div class="container">
-            <div class="categories-scroll">
+            <div class="categories-scroll" id="categories-scroll">
                 <!-- <div class="category-item fire" onclick="window.location.href='search.html?category=ofertas'">
                     <div class="category-icon"
                         style="background:#fffcfc; border-color:#ffd1d8; color: var(--color-brand-red);">
@@ -250,17 +252,26 @@
             </svg>
             <span>Pedidos</span>
         </a>
+        <script>
+            // Força a atualização dos links da barra de navegação para manter o contexto
+            document.querySelectorAll('.bottom-navbar a, .main-header a').forEach(a => {
+                if (a.href && !a.href.includes('javascript:')) {
+                    const ctx = window.location.search.includes('ELETRO') ? 'ELETRO' : (window.location.search.includes('FASCINIO') ? 'FASCINIO' : null);
+                    if (ctx && !a.href.includes(ctx)) {
+                        a.href += (a.href.includes('?') ? '&' : '?') + ctx;
+                    }
+                }
+            });
+        </script>
     </nav>
 
     <footer class="main-footer">
-        <div class="container">
-            <div class="footer-info">
-                <strong>A N F da Silva LTDA</strong>
-                <p>Dtudo Variedades e Utilidades</p>
-                <p>CNPJ: 45.692.327/0001-00</p>
-                <p>Rua Jarbas Passarinho, SN - Centro</p>
-                <p>Ipixuna do pará - PA</p>
-            </div>
+        <div class="container footer-info">
+            <strong id="footer-company-name">D'tudo Variedades <i class='bx bxs-badge-check' style="color: #3483fa;"></i></strong>
+            <p id="footer-fantasy-name" style="margin-top: 5px;">Sua loja de confiança em Ipixuna do Pará</p>
+            <p id="footer-cnpj" style="margin-top: 5px; font-size: 0.75rem;">CNPJ: 45.692.327/0001-00</p>
+            <p id="footer-locations" style="margin-top: 5px; font-size: 0.75rem; color: #666;">Ipixuna do Pará - PA</p>
+            <p style="margin-top: 10px; font-size: 0.75rem; color: #999;">© 2026 Dtudo - Todos os direitos reservados</p>
         </div>
     </footer>
 
