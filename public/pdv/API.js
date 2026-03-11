@@ -435,9 +435,13 @@ function doGet(e) {
         }
 
         // --- AÇÕES DE MÉTRICAS E ADMIN ---
-        else if (action === "metricasCrediario") {
+        else if (action === 'metricasCrediario') {
             response = calcularMetricasCrediario();
         }
+        else if (action === 'listarLogsProdutos') {
+            response = listarLogsProdutos();
+        }
+
 
         // [NOVO] Adicione este bloco:
         else if (action === "previsaoMensal") {
@@ -552,6 +556,35 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.JSON);
 }
 
+
+function listarLogsProdutos() {
+    try {
+        const sheet = getSheet('logs');
+        if (!sheet) return { status: 'error' };
+        
+        const dataRaw = sheet.getDataRange().getValues();
+        if (dataRaw.length <= 1) return { status: 'success', data: [] };
+        
+        const logs = [];
+        const limit = 30;
+        const start = Math.max(1, dataRaw.length - limit);
+        
+        for (let i = start; i < dataRaw.length; i++) {
+            const linha = dataRaw[i];
+            logs.push({
+                timestamp: linha[0],
+                operador: linha[2] || 'Sistema',
+                acao: linha[4] || '',
+                detalhes: linha[6] || ''
+            });
+        }
+        
+        return { status: 'success', data: logs.reverse() };
+    } catch (e) {
+        return { status: 'error', message: e.toString() };
+    }
+}
+
 function listarProdutosSuperApp(lojaFiltro) {
     try {
         const sheet = getSheet(PRODUTOS_SHEET_NAME);
@@ -640,7 +673,7 @@ function listarProdutosSuperApp(lojaFiltro) {
             // 4. Identifica a Loja
             let lojaRaw = idxLoja !== -1 ? String(row[idxLoja] || "").trim() : "";
             if (lojaRaw === "" || lojaRaw === "DT#25") {
-                lojaRaw = "D'Tudo Variedades";
+                lojaRaw = "DT#25";
             } else if (lojaRaw === "FSM#26-1") {
                 lojaRaw = "Fascínio";
             }
@@ -874,7 +907,7 @@ function salvarProdutoCompleto(data) {
             "cfop": String(data.cfop || "").trim(),
             "unidade": data.unidade || "UN",
             "origem": data.origem || "0",
-            "loja": (data.loja && data.loja !== "DT#25") ? data.loja : "D'Tudo Variedades",
+            "loja": (data.loja && data.loja !== "DT#25") ? data.loja : "DT#25",
             "timestamp": new Date()
         };
 
@@ -1004,7 +1037,7 @@ function listarTodosProdutos(lojaFiltro) {
                 promoPrice: parseFloat(item.promocional || item.promoPrice) || 0,
                 loja: (() => {
                     const l = String(item.loja || "").trim();
-                    if (l === "DT#25" || l === "") return "D'Tudo Variedades";
+                    if (l === "DT#25" || l === "") return "DT#25";
                     if (l === "FSM#26-1") return "Fascínio";
                     return l;
                 })()
@@ -1056,7 +1089,7 @@ function cadastrarNovoProduto(codigo, nome, preco, loja) {
             if (lowerHeader === 'nome') return nome;
             if (lowerHeader === 'preco') return precoNum;
             if (lowerHeader === 'timestamp') return timestamp; // Adiciona o timestamp
-            if (lowerHeader === 'loja') return (loja && loja !== "DT#25") ? loja : "D'Tudo Variedades";
+            if (lowerHeader === 'loja') return (loja && loja !== "DT#25") ? loja : "DT#25";
             return "";
         });
 
@@ -2351,31 +2384,33 @@ function saveProduct(data) {
             return mapeamento[h] !== undefined ? mapeamento[h] : "";
         });
 
+        let tipoAcao = "create";
         if (rowIndex > 0) {
-            // Edição: Atualiza linha
             sheet.getRange(rowIndex, 1, 1, newRowData.length).setValues([newRowData]);
-            return { status: "success", message: "Produto atualizado!", type: "edit" };
+            tipoAcao = "edit";
         } else {
-            // Criação: Append
             sheet.appendRow(newRowData);
-            
-            // --- REGISTRA A MISSÃO (Cadastro de Produto) ---
-            try {
-                const ss = SpreadsheetApp.getActiveSpreadsheet();
-                let sheetMovs = ss.getSheetByName("movs");
-                if(!sheetMovs) {
-                    sheetMovs = ss.insertSheet("movs");
-                    sheetMovs.appendRow(["Timestamp", "Operador", "Produto", "Estoque>0", "Tem Imagem"]);
-                }
-                const temEstoque = (parseFloat(data.stock) > 0) ? "SIM" : "NÃO";
-                const temImagem = (data.imgUrl && String(data.imgUrl).trim().length > 5 && !data.imgUrl.includes('placehold.co')) ? "SIM" : "NÃO";
-                const operadorNome = data.operador || "Desconhecido";
-                const nomeProduto = data.name || "Sem Nome";
-                sheetMovs.appendRow([new Date(), operadorNome, nomeProduto, temEstoque, temImagem]);
-            } catch(e) { }
-
-            return { status: "success", message: "Produto criado!", type: "create" };
         }
+
+        // --- REGISTRA A MISSÃO E ALTERAÇÕES EM MOVS ---
+        try {
+            const ss = SpreadsheetApp.getActiveSpreadsheet();
+            let sheetMovs = ss.getSheetByName("movs");
+            if(!sheetMovs) {
+                sheetMovs = ss.insertSheet("movs");
+                sheetMovs.appendRow(["Timestamp", "Operador", "Produto", "Estoque>0", "Tem Imagem"]);
+            }
+            const temEstoque = (parseFloat(data.stock) > 0) ? "SIM" : "NÃO";
+            const temImagem = (data.imgUrl && String(data.imgUrl).trim().length > 5 && !data.imgUrl.includes('placehold.co')) ? "SIM" : "NÃO";
+            const operadorNome = data.operador || "Sistema";
+            const nomeProduto = data.name || "Sem Nome";
+            const sufixoAcao = tipoAcao === "edit" ? " (Edição)" : " (Novo)";
+            
+            sheetMovs.appendRow([new Date(), operadorNome + sufixoAcao, nomeProduto, temEstoque, temImagem]);
+        } catch(e) { }
+
+        return { status: "success", message: tipoAcao === "edit" ? "Produto atualizado!" : "Produto criado!", type: tipoAcao };
+
 
     } catch (e) {
         return { status: "error", message: e.toString() };
@@ -2752,6 +2787,10 @@ function abaterEstoqueLote(itens) {
         const headers = values[0].map(h => h.toString().toLowerCase().trim());
 
         const idxCodigo = headers.indexOf("codigo");
+        let idxNome = headers.indexOf("nome");
+        let idxImg = headers.indexOf("imgurl");
+        if (idxImg === -1) idxImg = headers.indexOf("img url");
+        
         // Aceita "estoque atual" ou "estoque" [cite: 604]
         let idxEstoque = headers.indexOf("estoque atual");
         if (idxEstoque === -1) idxEstoque = headers.indexOf("estoque");
@@ -2777,6 +2816,20 @@ function abaterEstoqueLote(itens) {
                             const novoEstoque = Math.max(0, estoqueAtual - qtdVendida);
                             sheet.getRange(i + 1, idxEstoque + 1).setValue(novoEstoque);
                             totalProcessado++;
+                            
+                            // REGRA: Registrando a baixa na aba movs
+                            try {
+                                const ss = SpreadsheetApp.getActiveSpreadsheet();
+                                let sheetMovs = ss.getSheetByName("movs");
+                                if(!sheetMovs) {
+                                    sheetMovs = ss.insertSheet("movs");
+                                    sheetMovs.appendRow(["Timestamp", "Operador", "Produto", "Estoque>0", "Tem Imagem"]);
+                                }
+                                const nomeProduto = (idxNome !== -1) ? (values[i][idxNome] || codigoAlvo) : codigoAlvo;
+                                const temEstoqueFinal = (novoEstoque > 0) ? "SIM" : "NÃO";
+                                const temImagem = (idxImg !== -1 && String(values[i][idxImg]).trim().length > 5) ? "SIM" : "NÃO";
+                                sheetMovs.appendRow([new Date(), "Sistema (Baixa PDV)", nomeProduto, temEstoqueFinal, temImagem]);
+                            } catch(e) {}
                         }
                         break;
                     }

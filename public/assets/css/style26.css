@@ -530,23 +530,23 @@ body {
     }
 }
 
-/* Skeleton Red Variant (Banner) */
+/* Skeleton Padronizado (Tons de Cinza) */
 .skeleton.red {
-    background-color: rgba(255, 0, 0, 0.1) !important;
+    background-color: #e5e7eb !important;
     animation: skeleton-pulse-red 1.5s infinite ease-in-out;
 }
 
 @keyframes skeleton-pulse-red {
     0% {
-        background-color: rgba(255, 0, 0, 0.1);
+        background-color: #e5e7eb;
     }
 
     50% {
-        background-color: rgba(255, 0, 0, 0.2);
+        background-color: #f3f4f6;
     }
 
     100% {
-        background-color: rgba(255, 0, 0, 0.1);
+        background-color: #e5e7eb;
     }
 }
 
@@ -2072,4 +2072,204 @@ body {
     font-size: 0.875rem;
     color: #6b7280;
     margin-bottom: 1rem;
+}
+
+/* --- NOVA ESTRUTURA HEADER & SALDO --- */
+.info-novo {
+    width: 100%;
+    margin-bottom: 20px;
+    position: relative;
+    padding-top: 15px;
+}
+
+.info-novo::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 160px;
+    background-color: var(--brand-color);
+    border-bottom-left-radius: 24px;
+    border-bottom-right-radius: 24px;
+    z-index: 0;
+}
+
+.header-top-novo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.header-left-novo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.profile-img-novo {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.greeting-novo {
+    font-size: 19px;
+    font-weight: 500;
+    color: #ffffff;
+    margin: 0;
+}
+
+.header-right-novo .action-btn-novo {
+    width: 42px;
+    height: 42px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 14px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #ffffff;
+    font-size: 20px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.header-right-novo .action-btn-novo:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.balance-card-novo {
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0 16px;
+    position: relative;
+    z-index: 1;
+}
+
+.balance-tabs-novo {
+    display: flex;
+    border-bottom: none;
+    overflow-x: auto;
+    position: relative;
+}
+
+.balance-tabs-novo::-webkit-scrollbar {
+    display: none;
+}
+.balance-tabs-novo {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.b-tab-novo {
+    padding: 7px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #ffffff;
+    opacity: 0.8;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    border-radius: 16px 16px 0 0;
+    z-index: 1;
+}
+
+.b-tab-novo.active {
+    color: #111827;
+    opacity: 1;
+    background: #ffffff; /* Immediate background instead of waiting for JS */
+}
+
+/* When JS loads the indicator, we remove the fixed background to allow smooth sliding */
+.balance-tabs-novo:has(.tab-active-indicator) .b-tab-novo.active {
+    background: transparent;
+}
+
+.tab-active-indicator {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 100%;
+    background: #ffffff;
+    border-radius: 16px 16px 0 0;
+    z-index: 0;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.balance-content-novo {
+    padding: 0;
+    background: #ffffff;
+    border-radius: 0 16px 16px 16px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    position: relative;
+}
+
+.balance-slider-novo {
+    display: flex;
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    width: 300%;
+}
+
+.b-tab-pane {
+    width: 33.3333%;
+    flex-shrink: 0;
+    padding: 15px 20px 20px 20px;
+    box-sizing: border-box;
+}
+
+.saldo-new {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.saldo-new .val-text {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1f2937;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.eye-icon-new {
+    font-size: 24px;
+    color: #9ca3af;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.eye-icon-new:hover {
+    color: #db0038;
+}
+
+@media (min-width: 1024px) {
+    .info-novo {
+        grid-area: info;
+        margin-bottom: 0;
+        background-color: var(--brand-color);
+        padding: 24px;
+        border-radius: 24px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    }
+    .info-novo::before {
+        display: none;
+    }
+    .header-top-novo {
+        padding: 0;
+        margin-bottom: 24px;
+    }
+    .balance-card-novo {
+        margin: 0;
+    }
 }

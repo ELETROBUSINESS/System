@@ -50,6 +50,23 @@
 </head>
 
 <body style="--marker-x: 10%; --marker-y: 50%;">
+    <!-- NOTIFICAÇÕES (MODAL 70%) -->
+    <div id="notif-modal-overlay" onclick="closeNotifModal()" class="fixed inset-0 z-[10000] hidden items-end justify-center">
+        <div class="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm transition-opacity opacity-0" id="notif-overlay-bg"></div>
+        <div id="notif-modal-content" onclick="event.stopPropagation()" class="bg-white w-full max-w-[500px] h-[70vh] rounded-t-3xl shadow-2xl z-10 flex flex-col transform translate-y-full transition-transform duration-300">
+            <!-- Pílula Nubank + Título Centralizado -->
+            <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mt-3 mb-1"></div>
+            <div class="relative flex justify-center items-center p-4 border-b border-gray-100">
+                <h2 class="text-base font-bold text-gray-800 tracking-wide uppercase">Notificações</h2>
+                <button onclick="closeNotifModal()" class="absolute right-4 w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors">
+                    <i class="bx bx-x text-xl"></i>
+                </button>
+            </div>
+            <div id="notif-list" class="flex-1 overflow-y-auto p-4 space-y-3 pb-8 relative">
+                <!-- Notifications loaded here -->
+            </div>
+        </div>
+    </div>
 
     <!-- Mensagem de Saudação (Controlada por script26.js) -->
     <div class="mensagerLocal"
@@ -65,49 +82,68 @@
 
     <div id="app-container" class="dashboard-grid">
 
-        <!-- Bloco de Perfil e Saldo (Substituído conforme solicitação) -->
-        <div class="info">
-            <div class="photo-profile">
-                <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg">
-                <div class="detals">
-                    <h1>Olá, Nubia!</h1>
-                    <p>CEO: D'TUDO | Dupão</p>
+        <!-- Bloco de Perfil e Saldo (Novo Layout UI) -->
+        <div class="info-novo">
+            <div class="header-top-novo">
+                <div class="header-left-novo">
+                    <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg" alt="Profile" class="profile-img-novo">
+                    <h1 class="greeting-novo">Olá, Nubia!</h1>
                 </div>
-                <i class="fi fi-rr-shield-trust"></i>
+                <div class="header-right-novo">
+                    <div class="action-btn-novo relative" title="Notificações" onclick="openNotifModal()">
+                        <i class="bx bx-bell relative">
+                            <!-- Indicador ponto vermelho -->
+                            <span class="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 hidden" id="nova-notif-badger"></span>
+                            </span>
+                        </i>
+                    </div>
+                </div>
             </div>
-            <div class="balance">
-                <p>Saldo</p>
-                <div class="saldo">
-                    <span id="valor1" class="">R$&nbsp;</span>
-                    <i class="bx bx-eye" id="toggle-balance-icon"></i>
+
+            <div class="balance-card-novo">
+                <div class="balance-tabs-novo">
+                    <div class="b-tab-novo active" onclick="switchBalanceTab('tab-principal', this)">Saldo</div>
+                    <div class="b-tab-novo" onclick="switchBalanceTab('tab-infinitepay', this)">InfinitePay</div>
+                    <div class="b-tab-novo" onclick="switchBalanceTab('tab-crediario', this)">Crediário</div>
                 </div>
-                <div class="pending">
-                    <div id="balloons-container" class="value-balloon-container">
-                        <!-- InfinitePay Balloon -->
-                        <div class="value-balloon infinite" onclick="toggleBalloon(this)">
-                            <img src="https://i.ibb.co/14pX8yx/Logo-Infinite-Pay.png" alt="InfinitePay"
-                                id="icon-infinite" style="height: 20px; width: auto; border-radius: 0;">
-                            <i class='bx bx-credit-card-front' style="color: #25D366; display: none;"
-                                id="icon-infinite-fallback"></i>
-
-                            <div class="balloon-info" style="display:none;">
-                                <span class="b-title">A receber</span>
-                                <span class="b-legend">Vendas a receber da infinitepay</span>
+                
+                <div class="balance-content-novo">
+                    <div class="balance-slider-novo">
+                        <!-- Tab Principal -->
+                        <div id="tab-principal" class="b-tab-pane active flex flex-col justify-center">
+                            <div class="flex justify-between items-center w-full">
+                                <div class="saldo-new">
+                                    <span id="valor1" class="val-text"></span>
+                                    <i class="bx bx-hide eye-icon-new toggle-balance-icon" onclick="toggleBalanceGlobal()"></i>
+                                </div>
+                                <a href="/users/45692327000100/CD1/adm/nb/extrato.html" class="flex items-center gap-1 font-bold link-extrato transition-colors" style="color: #c20026; font-size: 13px;">Extrato <i class="bx bx-right-arrow-alt"></i></a>
                             </div>
-
-                            <span id="valor2">R$ 0,00</span>
+                            <div class="mt-2 text-green-600 font-medium text-xs flex items-center gap-1">
+                                <i class="bx bx-chevron-up text-sm"></i>
+                                <span class="vendas-hoje-text skeleton">0,00</span> vendido hoje
+                            </div>
                         </div>
-                        <!-- Crediário Balloon -->
-                        <div class="value-balloon crediario" onclick="toggleBalloon(this)">
-                            <img src="https://blogger.googleusercontent.com/img/a/AVvXsEjh9HYsK8nD_NA8Hd5v0I1Hq2ObgdmzJHoG9-XB1gzug5LIFUchj2H0gzpnPyTWj4pqVtqZy92a2OUhhdKnvv3JKBuXQjlCBgKiP0Shqu-dpWwqtqsPDInrDyabTzQrbUeitDypok-NgZnvrhzzTvB8g6vvuCk7V3vjb39NrYueaYqRJkrRH-Ud7dF7bhQ"
-                                alt="Crediário" style="height: 20px; width: auto; border-radius: 0;">
-
-                            <div class="balloon-info" style="display:none;">
-                                <span class="b-title">Cartão Digital</span>
-                                <span class="b-legend">Valores a receber do Crediario Digital</span>
+                        
+                        <!-- Tab InfinitePay -->
+                        <div id="tab-infinitepay" class="b-tab-pane">
+                            <div class="flex justify-between items-center w-full">
+                                <div class="saldo-new">
+                                    <span id="valor2" class="val-text"></span>
+                                    <i class="bx bx-hide eye-icon-new toggle-balance-icon" onclick="toggleBalanceGlobal()"></i>
+                                </div>
                             </div>
-
-                            <span id="cred-val-balloon">R$ 0,00</span>
+                        </div>
+                        
+                        <!-- Tab Crediário -->
+                        <div id="tab-crediario" class="b-tab-pane">
+                            <div class="flex justify-between items-center w-full">
+                                <div class="saldo-new">
+                                    <span id="cred-val-balloon" class="val-text"></span>
+                                    <i class="bx bx-hide eye-icon-new toggle-balance-icon" onclick="toggleBalanceGlobal()"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -578,14 +578,8 @@ function updateValueWithAnimation(elementId, newValueStr) {
 
     if (startVal !== endVal) {
         animateValue(el, startVal, endVal, 1500, true);
-    } else {
         // Sem mudança -> Define valor direto
-        // CHECK RICH FORMAT
-        if (el.id === 'valor2' || el.id === 'cred-val-balloon') {
-            el.innerHTML = formatRichCurrency(newValueStr);
-        } else {
-            el.innerText = newValueStr;
-        }
+        el.innerText = newValueStr;
     }
 }
 
@@ -614,12 +608,6 @@ function animateValue(obj, start, end, duration, isCurrency = false) {
             if (isCurrency) {
                 let finalStr = end.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                 obj.innerHTML = finalStr;
-
-                // --- RICH FORMATTING HOOK ---
-                // Se for um dos balões novos, aplica o formato Rich HTML
-                if (obj.id === 'valor2' || obj.id === 'cred-val-balloon') {
-                    obj.innerHTML = formatRichCurrency(finalStr);
-                }
             }
             else obj.innerHTML = end;
         }
@@ -695,24 +683,35 @@ function applyBalanceVisibility() {
     const fatDec = document.getElementById('fat-dec');
     const credVal = document.getElementById('cred-val-balloon'); // Updated to Balloon ID
     const legCred = document.getElementById('cred-val-legacy'); // [NOVO] Legacy Total
-    const toggleIcon = document.getElementById('toggle-balance-icon');
+    const toggleIcons = document.querySelectorAll('.toggle-balance-icon');
+    const vendasHojeEls = document.querySelectorAll('.vendas-hoje-text');
 
     if (isBalanceVisible) {
         if (v1El) v1El.textContent = valor1Original;
-
-        // Rich Formatting for Balloons
-        if (v2El) v2El.innerHTML = formatRichCurrency(valor2Original);
+        if (v2El) v2El.textContent = valor2Original;
 
         if (fatInt) fatInt.innerText = faturamentoOriginal;
         if (fatDec) fatDec.innerText = faturamentoDecimalOriginal;
 
-        // Rich Formatting for Balloons - CONSTANT 0,00
-        if (credVal) credVal.innerHTML = formatRichCurrency(creditoOriginal || 'R$ 0,00');
+        if (credVal) credVal.textContent = creditoOriginal || 'R$ 0,00';
 
         // Restore Legacy Total
         if (legCred) legCred.innerText = window.creditoTotalOriginal || 'R$ 0,00';
 
-        if (toggleIcon) toggleIcon.className = 'bx bx-show';
+        vendasHojeEls.forEach(el => {
+            el.classList.remove('skeleton');
+            // Formata o faturamento se as variáveis existirem, senão R$ 0,00
+            let strValor = '0,00';
+            if (typeof faturamentoOriginal !== 'undefined' && typeof faturamentoDecimalOriginal !== 'undefined') {
+                strValor = `${faturamentoOriginal}${faturamentoDecimalOriginal}`.replace("R$ ", "").replace("R$", "");
+            }
+            el.textContent = strValor;
+        });
+
+        toggleIcons.forEach(icon => {
+            icon.classList.remove('bx-hide');
+            icon.classList.add('bx-show');
+        });
     } else {
         if (v1El) v1El.textContent = 'R$ ***,**';
         if (v2El) v2El.textContent = 'R$ ***,**';
@@ -722,13 +721,29 @@ function applyBalanceVisibility() {
         if (credVal) credVal.innerText = 'R$ ***,**';
         if (legCred) legCred.innerText = 'R$ ***,**';
 
-        if (toggleIcon) toggleIcon.className = 'bx bx-hide';
+        vendasHojeEls.forEach(el => {
+            el.textContent = '***,**';
+        });
+
+        toggleIcons.forEach(icon => {
+            icon.classList.remove('bx-show');
+            icon.classList.add('bx-hide');
+        });
     }
 
     // Atualiza Listas Dependentes
     renderBillsCarousel(lastBillsTotal);
     if (typeof renderMovements === 'function') renderMovements();
 }
+
+// Global Toggle Action
+window.toggleBalanceGlobal = function() {
+    if (typeof isBalanceVisible !== 'undefined') {
+        isBalanceVisible = !isBalanceVisible;
+        localStorage.setItem('acc_privacy', isBalanceVisible);
+        applyBalanceVisibility();
+    }
+};
 
 /**
  * --- LÓGICA DE DASHBOARD (PÁGINA 2: OPERACIONAL) ---
@@ -2101,7 +2116,235 @@ window.addEventListener('load', () => {
     // Initial Fade In
     setTimeout(() => {
         document.body.classList.add('loaded');
+        
+        // Ativação inicial da aba de saldo para garantir o comportamento correto do indicador
+        const initialTab = document.querySelector('.b-tab-novo.active');
+        if (initialTab) {
+            // Usa 'tab-principal' como padrao, se for outra aba pode-se extrair do DOM,
+            // mas inicialmente e sempre 'tab-principal'
+            window.switchBalanceTab('tab-principal', initialTab);
+        }
     }, 100);
 });
+
+// Navigation for new balance tabs
+// Navigation for new balance tabs
+window.switchBalanceTab = function(tabId, element) {
+    // Remove classe ativa de todas as abas
+    document.querySelectorAll('.b-tab-novo').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Mostra o painel selecionado via Slider
+    const selectedPane = document.getElementById(tabId);
+    if (selectedPane) {
+        document.querySelectorAll('.b-tab-pane').forEach(pane => pane.classList.remove('active'));
+        selectedPane.classList.add('active');
+        
+        const slider = document.querySelector('.balance-slider-novo');
+        if (slider) {
+            const panesArr = Array.from(document.querySelectorAll('.b-tab-pane'));
+            const idx = panesArr.indexOf(selectedPane);
+            if(idx !== -1) {
+                slider.style.transform = `translateX(-${idx * 33.3333}%)`;
+            }
+        }
+    }
+    
+    // Marca a aba como ativa e ajusta a animação do background pill
+    if (element) {
+        element.classList.add('active');
+        const parent = element.parentElement;
+        const tabsArr = Array.from(parent.children).filter(el => el.classList.contains('b-tab-novo'));
+        const isFirst = tabsArr.indexOf(element) === 0;
+        
+        let indicator = parent.querySelector('.tab-active-indicator');
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.className = 'tab-active-indicator';
+            parent.appendChild(indicator);
+        }
+        indicator.style.width = element.offsetWidth + 'px';
+        indicator.style.left = element.offsetLeft + 'px';
+        
+        const contentContainer = document.querySelector('.balance-content-novo');
+        if (contentContainer) {
+            contentContainer.style.borderTopLeftRadius = isFirst ? '0' : '16px';
+        }
+    }
+};
+
+// Touch/Swipe Events Logic
+let tabTouchStartX = 0;
+let tabTouchEndX = 0;
+
+setTimeout(() => {
+    const balanceCard = document.querySelector('.balance-card-novo');
+    if (balanceCard) {
+        balanceCard.addEventListener('touchstart', e => {
+            tabTouchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        balanceCard.addEventListener('touchend', e => {
+            tabTouchEndX = e.changedTouches[0].screenX;
+            handleTabSwipe();
+        }, { passive: true });
+    }
+}, 500);
+
+function handleTabSwipe() {
+    const swipeThresh = 40; // Minimum distance
+    
+    // check horizontal swipe
+    if (tabTouchEndX < tabTouchStartX - swipeThresh) {
+        // swipe left -> next tab
+        navigateTabsByStep(1);
+    } 
+    if (tabTouchEndX > tabTouchStartX + swipeThresh) {
+        // swipe right -> prev tab
+        navigateTabsByStep(-1);
+    }
+}
+
+function navigateTabsByStep(direction) {
+    const tabsArr = Array.from(document.querySelectorAll('.b-tab-novo'));
+    if (!tabsArr.length) return;
+
+    let activeIdx = tabsArr.findIndex(tab => tab.classList.contains('active'));
+    if (activeIdx === -1) activeIdx = 0;
+    
+    let newIdx = activeIdx + direction;
+    if (newIdx >= 0 && newIdx < tabsArr.length) {
+        // Clica na tab respectiva
+        tabsArr[newIdx].click();
+    }
+}
+
+// ===================================
+// LÓGICA DE NOTIFICAÇÕES (MODAL MISTO)
+// ===================================
+
+window.openNotifModal = function() {
+    const notifOverlay = document.getElementById('notif-modal-overlay');
+    const notifBg = document.getElementById('notif-overlay-bg');
+    const notifContent = document.getElementById('notif-modal-content');
+    
+    if(!notifOverlay) return;
+    notifOverlay.classList.remove('hidden');
+    notifOverlay.style.display = 'flex';
+    
+    // Animação de entrada
+    setTimeout(() => {
+        if(notifBg) notifBg.classList.remove('opacity-0');
+        if(notifContent) notifContent.classList.remove('translate-y-full');
+    }, 10);
+    
+    // Ocultar badge quando abre
+    const badge = document.getElementById('nova-notif-badger');
+    if(badge) {
+        badge.classList.add('hidden');
+        if(badge.previousElementSibling) badge.previousElementSibling.classList.add('hidden');
+    }
+
+    loadNotifData();
+};
+
+window.closeNotifModal = function() {
+    const notifOverlay = document.getElementById('notif-modal-overlay');
+    const notifBg = document.getElementById('notif-overlay-bg');
+    const notifContent = document.getElementById('notif-modal-content');
+    
+    if(!notifOverlay) return;
+    
+    // Animação de saída
+    if(notifBg) notifBg.classList.add('opacity-0');
+    if(notifContent) notifContent.classList.add('translate-y-full');
+    
+    setTimeout(() => {
+        notifOverlay.classList.add('hidden');
+        notifOverlay.style.display = 'none';
+    }, 300);
+};
+
+function formatNotifTime(ds) {
+    if(!ds) return '';
+    try {
+        const d = new Date(ds);
+        return d.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+    } catch(e) { return ''; }
+}
+
+async function loadNotifData() {
+    const notifList = document.getElementById('notif-list');
+    if(!notifList) return;
+    
+    notifList.innerHTML = `<div class="flex justify-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--brand-color)]"></div></div>`;
+    
+    const storeSel = document.getElementById('loja-select');
+    const storeId = storeSel ? storeSel.value : 'DT#25';
+    
+    try {
+        const urlVendas = (window.NEW_API) ? window.NEW_API : "https://script.google.com/macros/s/AKfycbyZtUsI44xA4MQQLZWJ6K93t6ZaSaN6hw7YQw9EclZG9E85kM6yOWQCQ0D-ZJpGmyq4/exec";
+        const urlLogs = window.NEW_API || "https://script.google.com/macros/s/AKfycbyZtUsI44xA4MQQLZWJ6K93t6ZaSaN6hw7YQw9EclZG9E85kM6yOWQCQ0D-ZJpGmyq4/exec";
+        
+        const [reqVendas, reqLogs] = await Promise.allSettled([
+            fetch(urlVendas, { method: 'POST', body: JSON.stringify({ action: 'listar_vendas_recentes', loja: storeId }) }).then(r => r.json()),
+            fetch(urlLogs, { method: 'POST', body: JSON.stringify({ action: 'listarLogsProdutos', loja: storeId }) }).then(r => r.json())
+        ]);
+        
+        let todasNotifs = [];
+        
+        if(reqVendas.status === 'fulfilled' && (reqVendas.value.success || reqVendas.value.status === 'success')) {
+            const vendas = reqVendas.value.data || reqVendas.value.vendas || [];
+            vendas.forEach(v => todasNotifs.push({ ...v, tipoLog: 'venda' }));
+        }
+        
+        if(reqLogs.status === 'fulfilled' && reqLogs.value.status === 'success') {
+            const logs = reqLogs.value.data || [];
+            logs.forEach(l => todasNotifs.push({ ...l, tipoLog: 'produto' }));
+        }
+        
+        if(todasNotifs.length === 0) {
+            notifList.innerHTML = `<div class="text-center text-gray-400 py-10 text-sm">Nenhuma notificação recente.</div>`;
+            return;
+        }
+        
+        // Ordena pela data/hora (mais recente primeiro)
+        todasNotifs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        notifList.innerHTML = '';
+        todasNotifs.forEach(item => {
+            const isVenda = item.tipoLog === 'venda';
+            const icon = isVenda ? 'bx-cart-alt' : 'bx-box';
+            const color = isVenda ? 'text-green-600 bg-green-100' : 'text-blue-600 bg-blue-100';
+            
+            const tfmt = formatNotifTime(item.timestamp);
+            
+            const title = isVenda ? `Nova Venda: <b>${item.valor}</b>` : `Ação em Produto`;
+            const desc = isVenda ? `Por ${item.operador} • ${item.pagamento}` : `${item.acao} por ${item.operador}`;
+            const sub = isVenda ? '' : `<p class="text-xs text-gray-500 mt-1 line-clamp-2">${item.detalhes || ''}</p>`;
+            
+            const html = `
+                <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 hover:shadow-sm transition-shadow">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${color}">
+                        <i class="bx ${icon} text-lg"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-start">
+                            <p class="text-sm text-gray-800">${title}</p>
+                            <span class="text-[10px] text-gray-400 font-medium ml-2 shrink-0">${tfmt}</span>
+                        </div>
+                        <p class="text-[11px] text-gray-600 font-medium mt-0.5">${desc}</p>
+                        ${sub}
+                    </div>
+                </div>
+            `;
+            notifList.insertAdjacentHTML('beforeend', html);
+        });
+        
+    } catch(e) {
+        notifList.innerHTML = `<div class="text-center text-red-500 py-10 text-sm">Erro de conexão ao buscar base. ${e.message}</div>`;
+    }
+}
 
 

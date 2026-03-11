@@ -1,16 +1,34 @@
 // --- LOGICA DE SELECAO DE LOJA VIA URL ---
 (function() {
     const params = new URLSearchParams(window.location.search);
-    let lojaAtiva = 'DT#25'; // Loja principal padrão
+    let lojaAtiva = localStorage.getItem('lojaAtiva') || 'DT#25'; // Padrão se não houver na URL
+    let logoUrl = "assets/dtudo.png"; // Logo padrão
 
     if (params.has('fascinio')) {
         lojaAtiva = 'FSM#26-1';
+        logoUrl = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBxgj27A0otX_cn1KQV4ESSD-fXLrIZ2Ag6Q&s";
     } else if (params.has('dtudo2')) {
         lojaAtiva = 'DT#25-2';
+    } else if (params.has('dtudo')) {
+        lojaAtiva = 'DT#25';
     }
 
     localStorage.setItem('lojaAtiva', lojaAtiva);
-    localStorage.setItem('terminalConfigurado', 'true'); // Desbloqueia sistema legado
+    localStorage.setItem('terminalConfigurado', 'true');
+
+    // Aplica a logo se o elemento existir
+    window.addEventListener('scroll', function applyOnce() {
+        const imgLogo = document.getElementById('empty-store-logo');
+        if (imgLogo) {
+            imgLogo.src = logoUrl;
+            window.removeEventListener('scroll', applyOnce);
+        }
+    });
+    // Fallback se não der scroll
+    setTimeout(() => {
+        const imgLogo = document.getElementById('empty-store-logo');
+        if (imgLogo) imgLogo.src = logoUrl;
+    }, 1000);
 })();
 
 // --- INTERCEPTOR DE REQUISIÇÕES MULTI-EMPRESA ---
@@ -3727,15 +3745,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const json = await response.json();
 
             const dataArr = Array.isArray(json) ? json : (json.data || []);
-            localProductCache = dataArr.map(p => ({
-                ...p,
-                price: parsePrice(p.price),
-                promoPrice: parsePrice(p.promoPrice),
-                costPrice: parsePrice(p.costPrice)
-            })); // Salva na memória com preços sanitizados
-
-
-
+            const currentLoja = localStorage.getItem('lojaAtiva') || 'DT#25';
+            localProductCache = dataArr
+                .filter(p => !p.loja || String(p.loja).trim() === currentLoja)
+                .map(p => ({
+                    ...p,
+                    price: parsePrice(p.price),
+                    promoPrice: parsePrice(p.promoPrice),
+                    costPrice: parsePrice(p.costPrice)
+                })); // Salva filtrado por loja
             // Popula o Cache de Marcas
             const marcasExistentes = [...new Set(localProductCache.map(p => p.brand).filter(b => b && b.trim() !== ""))];
             if (marcasExistentes.length > 0) {

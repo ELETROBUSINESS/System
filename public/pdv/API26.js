@@ -123,6 +123,9 @@ function doPost(e) {
             case 'listar_lancamentos_usuario':
                 response = listarLancamentosUsuario(data, USERS_DATA_SHEET_NAME, COL_USER_DATA);
                 break;
+            case 'listar_vendas_recentes':
+                response = listarVendasRecentes(data);
+                break;
             default:
                 response = salvarNoBanco(data);
         }
@@ -373,7 +376,7 @@ function registrarLog(data) {
     const timestamp = new Date();
     const novaLinha = [
         timestamp,
-        (data.loja && data.loja !== "DT#25") ? data.loja : "D'Tudo Variedades",
+        (data.loja && data.loja !== "DT#25") ? data.loja : "DT#25",
         data.operador || "",
         data.cargo || "",
         data.acao || "Registro",
@@ -401,7 +404,7 @@ function salvarNoBanco(data) {
     const tipoSalvo = data.tipo ? data.tipo.toLowerCase() : "";
 
     const novaLinha = [
-        (data.loja && data.loja !== "DT#25") ? data.loja : "D'Tudo Variedades",
+        (data.loja && data.loja !== "DT#25") ? data.loja : "DT#25",
         data.operador,
         data.cargo,
         tipoSalvo,
@@ -646,6 +649,43 @@ function testeFinal() {
     console.log(JSON.stringify(calcularDashboard(req), null, 2));
 }
 
+
+// ==========================================
+// FUNÇÃO: LISTAR VENDAS RECENTES (NOTIFICAÇÕES)
+// ==========================================
+function listarVendasRecentes(dataInput) {
+    try {
+        const sheet = getDatabaseSheet();
+        if (!sheet) return { success: false, message: 'Aba não encontrada.' };
+
+        const rows = sheet.getDataRange().getDisplayValues();
+        if (rows.length <= 1) return { success: true, data: [] };
+
+        const vendas = [];
+        const limit = 40;
+        const start = Math.max(1, rows.length - limit);
+
+        for (let i = start; i < rows.length; i++) {
+            const r = rows[i];
+            const lojaRow = String(r[COL.LOJA]).trim();
+            if (dataInput.loja && lojaRow !== String(dataInput.loja).trim()) continue;
+
+            const tipo = String(r[COL.TIPO]).toLowerCase().trim();
+            if (tipo === 'entrada' || tipo === 'venda') {
+                vendas.push({
+                    timestamp: r[COL.TIMESTAMP],
+                    operador: r[1] || 'Vendedor',
+                    valor: r[COL.TOTAL] || 'R$ 0,00',
+                    pagamento: r[COL.PAGAMENTO] || ''
+                });
+            }
+        }
+
+        return { success: true, data: vendas.reverse() };
+    } catch (e) {
+        return { success: false, message: e.toString() };
+    }
+}
 // ==========================================
 // FUNÇÃO: LISTAR ITENS DO DIA
 // ==========================================
@@ -733,7 +773,7 @@ function salvarNotaFiscal(data) {
 
     const timestamp = new Date();
     const novaLinha = [
-        (data.loja && data.loja !== "DT#25") ? data.loja : "D'Tudo Variedades",
+        (data.loja && data.loja !== "DT#25") ? data.loja : "DT#25",
         data.modelo || "NFC-e",
         data.numeroNota || "---",
         data.idVenda || "---",
