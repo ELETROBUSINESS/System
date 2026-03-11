@@ -1175,13 +1175,12 @@ function refreshCurrentPageData(force = false) {
         fetchBalanceData(force); // Página 1
     }
 
-    if (document.getElementById('fat-int')) {
-        fetchBills(force); // API de Contas
-        fetchDashboardOperational(force); // Página 2
+    if (document.getElementById('recent-sales-inline')) {
+        fetchBills(force);
+        fetchRecentSalesInline(force);
         fetchMovements(force); // Histórico de Movimentações
+        fetchRevenueChart(force); // Gráfico de Vendas
         startHintCycle();
-        fetchRevenueChart(force); // Gráfico de Vendas (ApexCharts)
-        fetchNFCeData(force); // Validação de XML
     }
 
     // Expense Chart (Metricas Logic) - Checks if element exists
@@ -2343,6 +2342,79 @@ async function loadNotifData() {
     } catch(e) {
         notifList.innerHTML = `<div class="text-center text-red-500 py-10 text-sm">Erro de conexão ao buscar base. ${e.message}</div>`;
     }
+}
+
+/**
+ * --- VENDAS RECENTES (INLINE) ---
+ * Busca e renderiza as 3 últimas vendas diretamente na tela.
+ */
+async function fetchRecentSalesInline(force = false) {
+    const list = document.getElementById('recent-sales-inline');
+    if (!list) return;
+
+    const storeId = 'DT#25'; 
+    const url = window.NEW_API || "https://script.google.com/macros/s/AKfycbyZtUsI44xA4MQQLZWJ6K93t6ZaSaN6hw7YQw9EclZG9E85kM6yOWQCQ0D-ZJpGmyq4/exec";
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'listar_vendas_recentes', loja: storeId })
+        }).then(r => r.json());
+
+        if (response.success || response.status === 'success') {
+            const vendas = response.data || response.vendas || [];
+            renderRecentSalesInline(vendas.slice(0, 3));
+        } else {
+             list.innerHTML = `<div class="py-4 text-center text-xs text-gray-400">Nenhuma venda encontrada.</div>`;
+        }
+    } catch (e) {
+        console.error("Erro ao buscar vendas recentes:", e);
+        list.innerHTML = `<div class="py-4 text-center text-xs text-red-400">Erro ao carregar vendas.</div>`;
+    }
+}
+
+function renderRecentSalesInline(vendas) {
+    const list = document.getElementById('recent-sales-inline');
+    if (!list) return;
+
+    if (vendas.length === 0) {
+        list.innerHTML = `<div class="py-1 text-center text-xs text-gray-400">Nenhuma venda hoje.</div>`;
+        return;
+    }
+
+    let html = '';
+    vendas.forEach(v => {
+        const valorVal = v.valor || 'R$ 0,00';
+        const operador = v.operador || 'Sistema';
+        const pagamento = v.pagamento || 'Outros';
+        const timestamp = v.timestamp || '';
+        
+        // Formata valor se for numérico puro, mas aqui geralmente já vem formatado de fetchNotifications
+        // Vamos apenas usar como string se já tem R$
+        const valorDisplay = isBalanceVisible ? valorVal : 'R$ ***,**';
+        
+        let hora = '';
+        if (timestamp) {
+            try {
+                const d = new Date(timestamp);
+                hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            } catch(err) { hora = ''; }
+        }
+
+        html += `
+            <div class="sales-row">
+                <div class="sales-icon">
+                    <i class='bx bx-cart-alt'></i>
+                </div>
+                <div class="sales-info">
+                    <div class="sales-title">${operador}</div>
+                    <div class="sales-meta">${pagamento} • ${hora}</div>
+                </div>
+                <div class="sales-value">${valorDisplay}</div>
+            </div>
+        `;
+    });
+    list.innerHTML = html;
 }
 
 

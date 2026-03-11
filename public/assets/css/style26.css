@@ -2278,7 +2278,7 @@ body {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 12px;
-    margin: 16px;
+    margin: 0px 16px;
 }
 
 .tool-btn {
@@ -2316,8 +2316,8 @@ body {
 }
 
 .tool-btn:hover .tool-icon-wrapper {
-    background: var(--brand-color);
-    color: #ffffff;
+    background: #f1f5f9;
+    color: #1f2937;
     transform: scale(1.05);
 }
 
@@ -2333,11 +2333,6 @@ body {
 
 .section-title-new {
     padding: 0 20px;
-    margin-top: 15px;
-    margin-bottom: 2px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
 }
 
 .section-title-new h2 {
@@ -2358,4 +2353,53 @@ body {
     .tool-btn {
         padding: 24px 16px;
     }
+}
+
+/* --- VENDAS RECENTES INLINE --- */
+.sales-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.03);
+}
+
+.sales-row:last-child {
+    border-bottom: none;
+}
+
+.sales-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    color: #10b981;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.sales-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.sales-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.sales-meta {
+    font-size: 10px;
+    color: #9ca3af;
+    font-weight: 500;
+}
+
+.sales-value {
+    font-size: 14px;
+    font-weight: 900;
+    color: #000;
 }
