@@ -1,23 +1,16 @@
 // --- LOGICA DE SELECAO DE LOJA VIA URL ---
 (function() {
     const params = new URLSearchParams(window.location.search);
-    let lojaAtiva = null;
+    let lojaAtiva = 'DT#25'; // Loja principal padrão
 
     if (params.has('fascinio')) {
         lojaAtiva = 'FSM#26-1';
     } else if (params.has('dtudo2')) {
         lojaAtiva = 'DT#25-2';
-    } else if (params.has('dtudo')) {
-        lojaAtiva = 'DT#25';
-    } else if (window.location.search === "" || window.location.search === "?") {
-        // Se a URL está limpa, força a loja principal conforme solicitado
-        lojaAtiva = 'DT#25';
     }
 
-    if (lojaAtiva) {
-        localStorage.setItem('lojaAtiva', lojaAtiva);
-        localStorage.setItem('terminalConfigurado', 'true'); // Garante desbloqueio legado se necessário
-    }
+    localStorage.setItem('lojaAtiva', lojaAtiva);
+    localStorage.setItem('terminalConfigurado', 'true'); // Desbloqueia sistema legado
 })();
 
 // --- INTERCEPTOR DE REQUISIÇÕES MULTI-EMPRESA ---
