@@ -836,28 +836,26 @@ function renderBillsCarousel(totalVal = 0) {
             ? `R$ ${parseFloat(conta.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
             : 'R$ ***,**';
 
+        const name = conta.descricao || 'Sem título';
+        const truncatedName = name.length > 20 ? name.substring(0, 17) + "..." : name;
+
         return `
         <div class="carousel-item ${idx === 0 ? 'active' : ''}">
-            <div class="flex flex-col items-start text-left">
-                <span class="text-[11px] font-semibold text-gray-400 uppercase tracking-tight">${conta.descricao}</span>
-                <span class="text-xl font-bold text-gray-800">${valorDisplay}</span>
-            </div>
-            <div class="flex items-center gap-4">
-                <span class="text-[9px] ${status.color} font-extrabold px-2 py-1 ${status.bg} rounded-lg uppercase">${status.text}</span>
-                <div class="action-btn" onclick="navigateTo('manager.html')" style="width: 28px; height: 28px; border-radius: 50%; background: #f3f4f6; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-                    <i class='bx bx-plus text-gray-400'></i>
+            <div class="flex items-center justify-between w-full h-full gap-2">
+                <div class="flex items-center gap-2 overflow-hidden flex-1">
+                    <span class="text-[11px] font-bold text-gray-800 uppercase truncate">${truncatedName}</span>
+                    <span class="text-sm font-black text-black whitespace-nowrap">${valorDisplay}</span>
                 </div>
+                <span class="text-[9px] ${status.color} font-extrabold px-2.5 py-1 ${status.bg} rounded-full uppercase whitespace-nowrap ml-2">${status.text}</span>
             </div>
         </div>
     `}).join('') + `
         <div class="carousel-item" id="total-summary-item">
-            <div class="flex flex-col items-center justify-center w-full">
-                <span class="text-[10px] font-semibold text-white/70 uppercase tracking-widest mb-1">Contas a pagar essa semana</span>
-                <div class="flex items-baseline" id="real-total-today">
-                    <span class="text-2xl font-bold text-white">
-                        ${isBalanceVisible ? `R$ ${totalVal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'R$ ***,**'}
-                    </span>
-                </div>
+            <div class="flex items-center justify-between w-full h-full gap-3 px-2">
+                <span class="text-[11px] font-bold text-white uppercase tracking-widest">Resumo Semanal</span>
+                <span class="text-lg font-black text-white">
+                    ${isBalanceVisible ? `R$ ${totalVal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'R$ ***,**'}
+                </span>
             </div>
         </div>
     `;
