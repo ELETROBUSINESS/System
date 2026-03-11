@@ -456,8 +456,8 @@ function calcularDashboard(data) {
     const msDiasPendentes = getDiasPendentes(hoje).map(d => d.getTime());
 
     dataRows.forEach(row => {
-        // 1. Filtro de Loja
-        if (String(row[COL.LOJA]).trim() != lojaAlvo) return;
+        // 1. Filtro de Loja (Removido para sistema fixo)
+        // if (String(row[COL.LOJA]).trim() != lojaAlvo) return;
 
         // 2. Normalização da Data
         const dataRow = normalizarData(row[COL.TIMESTAMP]);
@@ -704,8 +704,8 @@ function listarItensDoDia(dataInput) {
     let listaItens = [];
 
     dataRows.forEach(row => {
-        // 1. Filtro de Loja (Opcional, mas recomendado)
-        if (lojaAlvo && String(row[COL.LOJA]).trim() !== lojaAlvo) return;
+        // 1. Filtro de Loja (Removido para sistema fixo)
+        // if (lojaAlvo && String(row[COL.LOJA]).trim() !== lojaAlvo) return;
 
         // 2. Filtro de Data (Formata a data da linha e compara com hoje)
         const dataCelula = row[COL.TIMESTAMP];

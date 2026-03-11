@@ -674,7 +674,8 @@
 
             <div class="navbar-highlight" id="navbar-highlight"></div>
             <!-- Botão Missões -->
-            <span class="navbar-item" id="btn-open-missoes" style="background-color: #e2e8f0; color: #111; font-weight: 600; padding: 6px 12px; margin-left: 15px; border-radius: 8px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+            <span class="navbar-item" id="btn-open-missoes"
+                style="background-color: #e2e8f0; color: #111; font-weight: 600; padding: 6px 12px; margin-left: 15px; border-radius: 8px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
                 <i class='bx bxs-trophy' style="color: #eab308; font-size: 1.2rem;"></i> Missões
             </span>
 
@@ -734,7 +735,8 @@
 
                         <div class="empty-state" id="empty-state" style="display: flex;">
                             <div class="empty-content-wrapper">
-                                <img src="assets/dtudo.png" id="empty-store-logo" alt="Logo da Loja" class="empty-store-logo"
+                                <img src="assets/dtudo.png" id="empty-store-logo" alt="Logo da Loja"
+                                    class="empty-store-logo"
                                     onerror="this.style.display='none'; document.getElementById('fallback-icon').style.display='block'">
 
                                 <i class='bx bx-store-alt' id="fallback-icon" style="display:none;"></i>
@@ -1546,9 +1548,11 @@
                     <div class="setting-info">
                         <h3>Configuração do Terminal</h3>
                         <p>Defina a qual Loja (Empresa) este terminal pertence.</p>
-                        <p style="font-size:0.8rem; color:#db0038;">Terminal Atual: <strong id="lbl-loja-atual-config">Carregando...</strong></p>
+                        <p style="font-size:0.8rem; color:#db0038;">Terminal Atual: <strong
+                                id="lbl-loja-atual-config">Carregando...</strong></p>
                     </div>
-                    <button class="btn btn-primary" id="btn-open-multi-empresa-auth" style="background:#111; border:none;">
+                    <button class="btn btn-primary" id="btn-open-multi-empresa-auth"
+                        style="background:#111; border:none;">
                         <i class='bx bxs-lock-alt'></i> Configurar
                     </button>
                 </div>
@@ -2633,7 +2637,7 @@
         <div class="brand-row">
             <img src="assets/sistema.png" alt="Logo" class="brand-img-icon">
 
-            <span class="brand-name-text">ELETRO<span class="highlight-dot">. 1.0.0.49.5</span></span>
+            <span class="brand-name-text">ELETRO<span class="highlight-dot">. 1.0.0.49.5.1</span></span>
         </div>
     </div>
     <div class="pn">
@@ -3203,93 +3207,8 @@
             </div>
         </div>
     </div>
-    <!-- MODAL MULTI-EMPRESA -->
-    <div class="modal-overlay" id="modal-multi-empresa">
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header">
-                <h3><i class='bx bx-buildings'></i> Loja & Fiscal</h3>
-                <button class="close-modal-btn" data-target="modal-multi-empresa"><i class='bx bx-x'></i></button>
-            </div>
-            <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding-right:10px;">
-                <p class="mb-16">Selecione a loja operante neste terminal.</p>
-                <div class="form-group">
-                    <label>Loja Ativa</label>
-                    <select id="config-loja-ativa" class="form-input">
-                        <option value="DT#25">D'Tudo Variedades (DT#25)</option>
-                        <option value="DT#25-2">D'Tudo Variedades - Loja 2 (DT#25-2)</option>
-                        <option value="FSM#26-1">Faz a Sua Moda (FSM#26-1)</option>
-                    </select>
-                </div>
 
-                <div id="config-fiscal-section" style="display:none; margin-top:20px; border-top:1px solid #e5e7eb; padding-top:20px;">
-                    <h4 style="margin-bottom:15px;"><i class='bx bx-receipt'></i> Dados do Emissor Fiscal</h4>
-                    <p style="font-size:0.8rem; color:#6b7280; margin-bottom:15px;">Estes dados sÃ£o usados para emissÃ£o de NF-e / NFC-e no servidor e ficarÃ£o salvos na nuvem.</p>
-                    
-                    <div class="form-group">
-                        <label>RazÃ£o Social</label>
-                        <input type="text" id="config-razao" class="form-input" placeholder="Ex: EMPRESA LTDA">
-                    </div>
-                    <div class="form-group">
-                        <label>Nome Fantasia</label>
-                        <input type="text" id="config-fantasia" class="form-input">
-                    </div>
-                    <div class="form-group">
-                        <label>CNPJ <small>(Sem pontuaÃ§Ã£o)</small></label>
-                        <input type="text" id="config-cnpj" class="form-input" maxlength="14">
-                    </div>
-                    <div class="form-group">
-                        <label>InscriÃ§Ã£o Estadual <small>(Sem pontuaÃ§Ã£o)</small></label>
-                        <input type="text" id="config-ie" class="form-input">
-                    </div>
 
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                        <div class="form-group">
-                            <label>Ambiente</label>
-                            <select id="config-ambiente" class="form-input">
-                                <option value="2">HomologaÃ§Ã£o</option>
-                                <option value="1">ProduÃ§Ã£o</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>UF</label>
-                            <input type="text" id="config-uf" class="form-input" placeholder="Ex: SP" maxlength="2">
-                        </div>
-                    </div>
-
-                    <h4 style="margin-top:20px; margin-bottom:15px;"><i class='bx bxs-key'></i> Certificado Digital e CSC</h4>
-                    <div class="form-group">
-                        <label>Certificado PFX (AutomÃ¡tico para Base64)</label>
-                        <input type="file" id="config-cert-file" accept=".pfx,.p12" class="form-input" style="padding:10px;">
-                    </div>
-                    <div class="form-group">
-                        <label>Senha do Certificado</label>
-                        <input type="password" id="config-cert-pass" class="form-input">
-                    </div>
-                    <div class="form-group">
-                        <label>CSC (CÃ³digo de SeguranÃ§a do Contribuinte)</label>
-                        <input type="text" id="config-csc" class="form-input">
-                    </div>
-                    <div class="form-group">
-                        <label>ID Token (CSC)</label>
-                        <input type="text" id="config-csc-id" class="form-input" placeholder="Ex: 000001">
-                    </div>
-                </div>
-
-                <div id="config-fiscal-msg-dt25" style="margin-top:20px; padding:15px; background:#f3f4f6; border-radius:8px; text-align:center;">
-                    <i class='bx bx-check-shield' style="font-size:2rem; color:#10b981;"></i>
-                    <p style="font-size:0.9rem; margin-top:5px; color:#374151;">A Loja DT#25 jÃ¡ possui dados fiscais configurados centralmente.</p>
-                </div>
-
-                <div id="config-multi-status" style="margin-top:15px; font-size:0.9rem; font-weight:bold; text-align:center;"></div>
-            </div>
-            <div class="modal-footer" style="padding:15px; background:#f9fafb; border-top:1px solid #e5e7eb; display:flex; gap:10px;">
-                <button class="btn btn-secondary close-modal-btn" data-target="modal-multi-empresa">Cancelar</button>
-                <button id="btn-save-multi-empresa" class="btn btn-primary" style="background:#db0038; border:none; flex-grow:1;"><i class='bx bx-save'></i> Salvar Terminal</button>
-            </div>
-        </div>
-    </div>
-
-    
     <style>
         .loader {
             width: 48px;
@@ -3343,28 +3262,37 @@
 
     <!-- MODAL MISSÕES -->
     <div class="modal-overlay" id="modal-missoes">
-        <div class="modal-content" style="max-width: 400px; text-align: center; border-radius: 20px; overflow: hidden; padding: 0;">
-            <div style="background: #f8fafc; padding: 30px 20px 20px; position: relative; border-bottom: 1px solid #e2e8f0;">
-                <button class="close-modal-btn" data-target="modal-missoes" style="position: absolute; top: 15px; right: 15px; background: white; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border:none; width:30px; height:30px; cursor:pointer;"><i class='bx bx-x' style="font-size:1.2rem; line-height:30px;"></i></button>
-                <div style="width: 70px; height: 70px; background: #64748b; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; box-shadow: 0 4px 10px rgba(100, 116, 139, 0.4);">
+        <div class="modal-content"
+            style="max-width: 400px; text-align: center; border-radius: 20px; overflow: hidden; padding: 0;">
+            <div
+                style="background: #f8fafc; padding: 30px 20px 20px; position: relative; border-bottom: 1px solid #e2e8f0;">
+                <button class="close-modal-btn" data-target="modal-missoes"
+                    style="position: absolute; top: 15px; right: 15px; background: white; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border:none; width:30px; height:30px; cursor:pointer;"><i
+                        class='bx bx-x' style="font-size:1.2rem; line-height:30px;"></i></button>
+                <div
+                    style="width: 70px; height: 70px; background: #64748b; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; box-shadow: 0 4px 10px rgba(100, 116, 139, 0.4);">
                     <i class='bx bxs-trophy' style="font-size: 2.5rem; color: #eab308;"></i>
                 </div>
                 <h3 style="margin: 0; font-size: 1.5rem; color: #1e293b; font-weight: 800;">Missões Diárias</h3>
                 <p style="margin: 5px 0 0; color: #64748b; font-size: 0.95rem;">Complete metas e ganhe bônus!</p>
             </div>
-            
+
             <div style="padding: 25px 30px;">
                 <p style="color: #475569; font-size: 0.95rem; line-height: 1.5; margin-bottom: 20px;">
-                    Escaneie o QR Code abaixo para acessar o seu painel de <strong>Missões</strong>.<br> 
-                    Ao completá-las, você acumula pontos valiosos que podem ser convertidos em <strong>bônus no seu pagamento</strong>!
+                    Escaneie o QR Code abaixo para acessar o seu painel de <strong>Missões</strong>.<br>
+                    Ao completá-las, você acumula pontos valiosos que podem ser convertidos em <strong>bônus no seu
+                        pagamento</strong>!
                 </p>
-                
-                <div style="background: white; padding: 15px; border-radius: 15px; border: 2px dashed #cbd5e1; display: inline-block; margin-bottom: 10px;">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://eletrobusiness.com.br/login.html" alt="QR Code Missões" style="width: 180px; height: 180px; display: block;">
+
+                <div
+                    style="background: white; padding: 15px; border-radius: 15px; border: 2px dashed #cbd5e1; display: inline-block; margin-bottom: 10px;">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://eletrobusiness.com.br/login.html"
+                        alt="QR Code Missões" style="width: 180px; height: 180px; display: block;">
                 </div>
-                
+
                 <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 15px; font-weight: 500;">
-                    <i class='bx bx-party' style="color: #10b981; font-size: 1rem; vertical-align: middle;"></i> Acesse agora | ELETRO Business
+                    <i class='bx bx-party' style="color: #10b981; font-size: 1rem; vertical-align: middle;"></i> Acesse
+                    agora | ELETRO Business
                 </div>
             </div>
         </div>
@@ -3447,28 +3375,37 @@
 
     <!-- MODAL MISSÕES -->
     <div class="modal-overlay" id="modal-missoes">
-        <div class="modal-content" style="max-width: 400px; text-align: center; border-radius: 20px; overflow: hidden; padding: 0;">
-            <div style="background: #f8fafc; padding: 30px 20px 20px; position: relative; border-bottom: 1px solid #e2e8f0;">
-                <button class="close-modal-btn" data-target="modal-missoes" style="position: absolute; top: 15px; right: 15px; background: white; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border:none; width:30px; height:30px; cursor:pointer;"><i class='bx bx-x' style="font-size:1.2rem; line-height:30px;"></i></button>
-                <div style="width: 70px; height: 70px; background: #64748b; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; box-shadow: 0 4px 10px rgba(100, 116, 139, 0.4);">
+        <div class="modal-content"
+            style="max-width: 400px; text-align: center; border-radius: 20px; overflow: hidden; padding: 0;">
+            <div
+                style="background: #f8fafc; padding: 30px 20px 20px; position: relative; border-bottom: 1px solid #e2e8f0;">
+                <button class="close-modal-btn" data-target="modal-missoes"
+                    style="position: absolute; top: 15px; right: 15px; background: white; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border:none; width:30px; height:30px; cursor:pointer;"><i
+                        class='bx bx-x' style="font-size:1.2rem; line-height:30px;"></i></button>
+                <div
+                    style="width: 70px; height: 70px; background: #64748b; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; box-shadow: 0 4px 10px rgba(100, 116, 139, 0.4);">
                     <i class='bx bxs-trophy' style="font-size: 2.5rem; color: #eab308;"></i>
                 </div>
                 <h3 style="margin: 0; font-size: 1.5rem; color: #1e293b; font-weight: 800;">Missões Diárias</h3>
                 <p style="margin: 5px 0 0; color: #64748b; font-size: 0.95rem;">Complete metas e ganhe bônus!</p>
             </div>
-            
+
             <div style="padding: 25px 30px;">
                 <p style="color: #475569; font-size: 0.95rem; line-height: 1.5; margin-bottom: 20px;">
-                    Escaneie o QR Code abaixo para acessar o seu painel de <strong>Missões</strong>.<br> 
-                    Ao completá-las, você acumula pontos valiosos que podem ser convertidos em <strong>bônus no seu pagamento</strong>!
+                    Escaneie o QR Code abaixo para acessar o seu painel de <strong>Missões</strong>.<br>
+                    Ao completá-las, você acumula pontos valiosos que podem ser convertidos em <strong>bônus no seu
+                        pagamento</strong>!
                 </p>
-                
-                <div style="background: white; padding: 15px; border-radius: 15px; border: 2px dashed #cbd5e1; display: inline-block; margin-bottom: 10px;">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://eletrobusiness.com.br/login.html" alt="QR Code Missões" style="width: 180px; height: 180px; display: block;">
+
+                <div
+                    style="background: white; padding: 15px; border-radius: 15px; border: 2px dashed #cbd5e1; display: inline-block; margin-bottom: 10px;">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://eletrobusiness.com.br/login.html"
+                        alt="QR Code Missões" style="width: 180px; height: 180px; display: block;">
                 </div>
-                
+
                 <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 15px; font-weight: 500;">
-                    <i class='bx bx-party' style="color: #10b981; font-size: 1rem; vertical-align: middle;"></i> Acesse agora | ELETRO Business
+                    <i class='bx bx-party' style="color: #10b981; font-size: 1rem; vertical-align: middle;"></i> Acesse
+                    agora | ELETRO Business
                 </div>
             </div>
         </div>
@@ -3498,6 +3435,6 @@
         }
     </style>
 
-    </body>
+</body>
 
 </html>

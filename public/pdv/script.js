@@ -1,74 +1,9 @@
-// --- LOGICA DE SELECAO DE LOJA VIA URL ---
+// --- LOGICA DE SELECAO DE LOJA (FIXA) ---
 (function() {
-    const params = new URLSearchParams(window.location.search);
-    let lojaAtiva = localStorage.getItem('lojaAtiva') || 'DT#25'; // Padrão se não houver na URL
-    let logoUrl = "assets/dtudo.png"; // Logo padrão
-
-    if (params.has('fascinio')) {
-        lojaAtiva = 'FSM#26-1';
-        logoUrl = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBxgj27A0otX_cn1KQV4ESSD-fXLrIZ2Ag6Q&s";
-    } else if (params.has('dtudo2')) {
-        lojaAtiva = 'DT#25-2';
-    } else if (params.has('dtudo')) {
-        lojaAtiva = 'DT#25';
-    }
-
-    localStorage.setItem('lojaAtiva', lojaAtiva);
+    localStorage.setItem('lojaAtiva', 'DT#25');
     localStorage.setItem('terminalConfigurado', 'true');
-
-    // Aplica a logo se o elemento existir
-    window.addEventListener('scroll', function applyOnce() {
-        const imgLogo = document.getElementById('empty-store-logo');
-        if (imgLogo) {
-            imgLogo.src = logoUrl;
-            window.removeEventListener('scroll', applyOnce);
-        }
-    });
-    // Fallback se não der scroll
-    setTimeout(() => {
-        const imgLogo = document.getElementById('empty-store-logo');
-        if (imgLogo) imgLogo.src = logoUrl;
-    }, 1000);
 })();
 
-// --- INTERCEPTOR DE REQUISIÇÕES MULTI-EMPRESA ---
-const originalFetch = window.fetch;
-window.fetch = async function() {
-    let [resource, config] = arguments;
-    if (typeof resource === 'string' && (resource.includes('script.google.com') || resource.includes('cloudfunctions.net') || resource.includes('run.app'))) {
-        const lojaAtiva = localStorage.getItem('lojaAtiva') || 'DT#25';
-        if (!config || !config.method || config.method.toUpperCase() === 'GET') {
-            try {
-                const urlObj = new URL(resource);
-                if (!urlObj.searchParams.has('loja')) {
-                    urlObj.searchParams.append('loja', lojaAtiva);
-                    resource = urlObj.toString();
-                }
-            } catch (e) {}
-        } else if (config && config.method && config.method.toUpperCase() === 'POST' && config.body) {
-            try {
-                if (typeof config.body === 'string') {
-                    if (config.body.trim().startsWith('{')) {
-                        const bodyObj = JSON.parse(config.body);
-                        bodyObj.loja = bodyObj.loja || lojaAtiva;
-                        if (bodyObj.data && typeof bodyObj.data === 'object' && !Array.isArray(bodyObj.data)) {
-                            bodyObj.data.loja = bodyObj.data.loja || lojaAtiva;
-                        }
-                        config.body = JSON.stringify(bodyObj);
-                    } else if (config.body.includes('=')) {
-                        const params = new URLSearchParams(config.body);
-                        if (!params.has('loja')) {
-                            params.append('loja', lojaAtiva);
-                            config.body = params.toString();
-                        }
-                    }
-                }
-            } catch (e) {}
-        }
-    }
-    return originalFetch(resource, config);
-};
-// --- FIM INTERCEPTOR ---
 // ============================================================
 // 1. ESCOPO GLOBAL (VARIÁVEIS E BANCO DE DADOS)
 // ============================================================
@@ -3745,15 +3680,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const json = await response.json();
 
             const dataArr = Array.isArray(json) ? json : (json.data || []);
-            const currentLoja = localStorage.getItem('lojaAtiva') || 'DT#25';
-            localProductCache = dataArr
-                .filter(p => !p.loja || String(p.loja).trim() === currentLoja)
-                .map(p => ({
-                    ...p,
-                    price: parsePrice(p.price),
-                    promoPrice: parsePrice(p.promoPrice),
-                    costPrice: parsePrice(p.costPrice)
-                })); // Salva filtrado por loja
+            localProductCache = dataArr.map(p => ({
+                ...p,
+                price: parsePrice(p.price),
+                promoPrice: parsePrice(p.promoPrice),
+                costPrice: parsePrice(p.costPrice)
+            })); // Salva todos os produtos (Sistema Fixo)
             // Popula o Cache de Marcas
             const marcasExistentes = [...new Set(localProductCache.map(p => p.brand).filter(b => b && b.trim() !== ""))];
             if (marcasExistentes.length > 0) {

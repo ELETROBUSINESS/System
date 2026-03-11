@@ -957,7 +957,7 @@ function formatSheetData(sheet) {
 
 // Substitua a função listarTodosProdutos inteira por esta:
 
-function listarTodosProdutos(lojaFiltro) {
+function listarTodosProdutos() {
     Logger.log("Executando listarTodosProdutos (Versão Fiscal + Estoque)...");
 
     try {
@@ -1035,25 +1035,9 @@ function listarTodosProdutos(lojaFiltro) {
                 origem: String(item.origem || "0"),
                 csosn: String(item.csosn || ""),
                 promoPrice: parseFloat(item.promocional || item.promoPrice) || 0,
-                loja: (() => {
-                    const l = String(item.loja || "").trim();
-                    if (l === "DT#25" || l === "") return "DT#25";
-                    if (l === "FSM#26-1") return "Fascínio";
-                    return l;
-                })()
+                loja: String(item.loja || "DT#25").trim()
             };
-        }).filter(p => {
-             if (!p.id || p.id === "") return false;
-             if (!lojaFiltro) return true;
-             
-             const reqLoja = String(lojaFiltro).trim().toLowerCase();
-             const prodLoja = String(p.loja).trim().toLowerCase();
-             
-             if (reqLoja === "dt#25" || reqLoja === "d'tudo variedades") {
-                  return (prodLoja === "d'tudo variedades" || prodLoja === "dt#25" || prodLoja === "");
-             }
-             return prodLoja === reqLoja;
-        });
+        }).filter(p => p.id && p.id !== "");
 
         return { status: "success", data: produtos };
 
