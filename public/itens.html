@@ -617,7 +617,7 @@
                     })
                 });
 
-                const link = `${window.location.origin}/super-app/payment.html?orderId=${orderId}${selectedSeller ? '&seller='+encodeURIComponent(selectedSeller) : ''}`;
+                const link = `${window.location.origin}/super-app/payment.html?orderId=${orderId}`;
                 document.getElementById('generated-url').innerText = link;
                 document.getElementById('link-modal').style.display = 'flex';
             } catch (e) {
