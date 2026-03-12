@@ -873,6 +873,7 @@
   <!-- SCRIPT -->
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzkAs8dsJMepkQBhdL--XwO3wUQuQgvA-DFPEwraiz8ijiX9gkPMBuAeM5udQjzmJvzqQ/exec";
+    const NEW_API = "https://script.google.com/macros/s/AKfycbyZtUsI44xA4MQQLZWJ6K93t6ZaSaN6hw7YQw9EclZG9E85kM6yOWQCQ0D-ZJpGmyq4/exec";
     const DATAS_COMERCIO = { 0: "Volta às aulas", 1: "Carnaval", 2: "Consumidor", 3: "Páscoa", 4: "Mães", 5: "Namorados", 7: "Pais", 9: "Crianças", 10: "Black Friday", 11: "Natal" };
 
     let todasContas = [];
@@ -1191,6 +1192,8 @@
         document.getElementById('pagar-descricao').textContent = desc;
         document.getElementById('pagar-valor').textContent = 'R$ ' + parseFloat(val).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
         document.getElementById('btnConfirmarPagamento').dataset.id = id;
+        document.getElementById('btnConfirmarPagamento').dataset.desc = desc;
+        document.getElementById('btnConfirmarPagamento').dataset.val = val;
         document.getElementById('modalPagarConta').style.display = 'flex';
       }
     };
@@ -1360,6 +1363,29 @@
         document.getElementById('despesa-valor').value = '';
         document.getElementById('despesa-descricao').value = '';
         document.getElementById('despesa-declaracao').value = '';
+
+        // Integrar com API 26 (Transição)
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const storeId = params.get('loja') || 'DT#25';
+          const userCache = JSON.parse(localStorage.getItem('user_cache') || '{}');
+          const payload26 = {
+            action: 'salvar_no_banco',
+            loja: storeId,
+            operador: userCache.name || 'Setor Financeiro',
+            cargo: userCache.role || 'Financeiro',
+            tipo: 'saída',
+            id: payload.id,
+            pagamento: pagamento,
+            valor: valor,
+            desconto: 0,
+            taxas: 0,
+            total: valor,
+            descricao: payload.descricao
+          };
+          fetch(NEW_API, { method: 'POST', body: JSON.stringify(payload26) }).catch(e => console.error("Erro silent API26:", e));
+        } catch (err26) { console.error("Erro Integração API26:", err26); }
+
         carregarContas();
 
       } catch (err) {
@@ -1382,6 +1408,29 @@
         });
         document.getElementById('modalPagarConta').style.display = 'none';
         showToast('Pago!', 'success');
+
+        // Integrar com API 26 (Transição)
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const storeId = params.get('loja') || 'DT#25';
+          const userCache = JSON.parse(localStorage.getItem('user_cache') || '{}');
+          const payload26 = {
+            action: 'salvar_no_banco',
+            loja: storeId,
+            operador: userCache.name || 'Setor Financeiro',
+            cargo: userCache.role || 'Financeiro',
+            tipo: 'saída',
+            id: btn.dataset.id,
+            pagamento: document.getElementById('forma-pagamento').value,
+            valor: parseFloat(btn.dataset.val),
+            desconto: 0,
+            taxas: 0,
+            total: parseFloat(btn.dataset.val),
+            descricao: btn.dataset.desc
+          };
+          fetch(NEW_API, { method: 'POST', body: JSON.stringify(payload26) }).catch(e => console.error("Erro silent API26:", e));
+        } catch (err26) { console.error("Erro Integração API26:", err26); }
+
         carregarContas();
       } catch (err) {
         showToast('Erro', 'error');

@@ -231,7 +231,22 @@ const DataManager = {
 
 // --- 3. GERENCIAMENTO DO CARRINHO ---
 const CartManager = {
-    get: () => JSON.parse(localStorage.getItem('app_cart')) || [],
+    get: () => {
+        const params = new URLSearchParams(window.location.search);
+        const cartParam = params.get('cart');
+        if (cartParam) {
+            try {
+                // b64 -> string -> JSON
+                const decoded = decodeURIComponent(atob(cartParam).split('').map(function (c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                return JSON.parse(decoded);
+            } catch (e) {
+                console.warn("[CartManager] Erro ao decodificar cart via URL:", e);
+            }
+        }
+        return JSON.parse(localStorage.getItem('app_cart')) || [];
+    },
 
     add: (product) => {
         let cart = CartManager.get();

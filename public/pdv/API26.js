@@ -126,6 +126,9 @@ function doPost(e) {
             case 'listar_vendas_recentes':
                 response = listarVendasRecentes(data);
                 break;
+            case 'listar_movimentacoes': // <--- NOVA ROTA PARA EXTRATO
+                response = listarMovimentacoes(data);
+                break;
             default:
                 response = salvarNoBanco(data);
         }
@@ -682,6 +685,47 @@ function listarVendasRecentes(dataInput) {
         }
 
         return { success: true, data: vendas.reverse() };
+    } catch (e) {
+        return { success: false, message: e.toString() };
+    }
+}
+
+// ==========================================
+// FUNÇÃO: LISTAR TODAS AS MOVIMENTAÇÕES (EXTRATO)
+// ==========================================
+function listarMovimentacoes(dataInput) {
+    try {
+        const sheet = getDatabaseSheet();
+        if (!sheet) return { success: false, message: 'Aba não encontrada.' };
+
+        const rows = sheet.getDataRange().getDisplayValues();
+        if (rows.length <= 1) return { success: true, data: [] };
+
+        const movimentacoes = [];
+        const lojaAlvo = dataInput.loja || null;
+
+        for (let i = 1; i < rows.length; i++) {
+            const r = rows[i];
+            const lojaRow = String(r[COL.LOJA]).trim();
+            if (lojaAlvo && lojaRow !== String(lojaAlvo).trim()) continue;
+
+            movimentacoes.push({
+                loja: r[COL.LOJA],
+                operador: r[1] || 'Sistema',
+                cargo: r[2] || '',
+                type: r[COL.TIPO] || '',
+                id: r[COL.ID] || '',
+                payment: r[COL.PAGAMENTO] || '',
+                valor: r[6] || '0,00',
+                desconto: r[7] || '0,00',
+                taxas: r[8] || '0,00',
+                total: r[COL.TOTAL] || '0,00',
+                descricao: r[COL.DESCRICAO] || '',
+                timestamp: r[COL.TIMESTAMP] || ''
+            });
+        }
+
+        return { success: true, data: movimentacoes.reverse() };
     } catch (e) {
         return { success: false, message: e.toString() };
     }

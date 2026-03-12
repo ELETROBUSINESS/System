@@ -26,7 +26,11 @@ const API_URLS = window.USER_API_CONFIG || {
 async function fetchBalanceData(forceUpdate = false) {
     if (!document.getElementById('valor1') && !document.getElementById('kpi-ticket')) return;
 
-    // Detectar Período
+    // Detectar Loja e Período
+    const params = new URLSearchParams(window.location.search);
+    const storeSel = document.getElementById('loja-select');
+    const storeId = params.get('loja') || (storeSel ? storeSel.value : 'DT#25');
+    
     const periodSelect = document.getElementById('period-select');
     const selectedPeriod = periodSelect ? periodSelect.value : 'dia';
 
@@ -37,7 +41,6 @@ async function fetchBalanceData(forceUpdate = false) {
     let hasCache = false;
 
     // URL & Payload
-    const storeId = 'DT#25'; // Fixed for now
     const urlNew = NEW_API;
     const payloadNew = { action: 'calcular', loja: storeId, periodo: selectedPeriod };
     const urlLegacy = API_URLS.PAGINA_1;
@@ -363,8 +366,9 @@ const DataManager = {
      * @param {string} key Identificador único do dado (ex: 'balance_data')
      * @param {string} url URL da API
      * @param {function(data, isUpdate)} renderFn Callback para renderizar a UI. isUpdate=true indica que os dados chegaram depois (animação).
+     * @param {object} options Opções para o fetch (method, body, etc)
      */
-    fetchSmart: async function (key, url, renderFn) {
+    fetchSmart: async function (key, url, renderFn, options = {}) {
         if (!url || url === 'undefined' || url === "") {
             console.warn(`[DataManager] URL invalid for ${key}. Skipping.`);
             return;
@@ -384,7 +388,7 @@ const DataManager = {
 
         // 2. Network Fetch (Background)
         try {
-            const response = await fetch(url);
+            const response = await fetch(url, options);
             const newData = await response.json();
 
             // Compara para evitar render desnecessário
@@ -1350,8 +1354,18 @@ function fetchMovements(forceUpdate = false) {
     const list = document.getElementById('movements-list');
     if (!list) return;
 
-    if (!API_URLS.MOVEMENTS || API_URLS.MOVEMENTS === "") return;
-    const url = API_URLS.MOVEMENTS;
+    const url = window.NEW_API || "https://script.google.com/macros/s/AKfycbyZtUsI44xA4MQQLZWJ6K93t6ZaSaN6hw7YQw9EclZG9E85kM6yOWQCQ0D-ZJpGmyq4/exec";
+    
+    // Get Store ID dynamically
+    const params = new URLSearchParams(window.location.search);
+    const storeSel = document.getElementById('loja-select');
+    const storeId = params.get('loja') || (storeSel ? storeSel.value : 'DT#25');
+
+    const options = {
+        method: 'POST',
+        redirect: 'follow',
+        body: JSON.stringify({ action: 'listar_movimentacoes', loja: storeId })
+    };
 
     // Skeleton (apenas se não houver cache)
     if (!DataManager.get('movements_data')) {
@@ -1370,7 +1384,11 @@ function fetchMovements(forceUpdate = false) {
         list.innerHTML = skeletonRow.repeat(3);
     }
 
-    DataManager.fetchSmart('movements_data', url, (data, isUpdate) => {
+    DataManager.fetchSmart('movements_data', url, (dataJson, isUpdate) => {
+        let data = [];
+        if (dataJson.data && Array.isArray(dataJson.data)) data = dataJson.data;
+        else if (Array.isArray(dataJson)) data = dataJson;
+
         if (!data || data.length === 0) {
             list.innerHTML = `<div class="p-4 text-center text-xs text-gray-400">Nenhuma movimentação recente.</div>`;
             return;
@@ -1397,7 +1415,7 @@ function fetchMovements(forceUpdate = false) {
         // Poderíamos animar fade-in, mas na lista é ok substituir.
         renderMovements();
         updateLastUpdateIndicator();
-    });
+    }, options);
 }
 
 function renderMovements() {
@@ -1407,7 +1425,8 @@ function renderMovements() {
     let html = '';
     movimentacoesData.forEach(item => {
         const type = item.type ? item.type.toLowerCase() : '';
-        const isEntry = type.includes('entrada');
+        const isEntry = type.includes('entrada') || type.includes('venda');
+        const isOut = type.includes('sa') || type.includes('despesa');
         const icon = isEntry ? 'bx-up-arrow-alt' : 'bx-down-arrow-alt';
         const iconBg = isEntry ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600';
 
@@ -1737,26 +1756,31 @@ function logStorageUsage() {
 let fullMetricsData = null;
 
 function fetchMetricsDashboardData(forceUpdate = false) {
-    if (!API_URLS.MOVEMENTS || API_URLS.MOVEMENTS === "") return;
+    const url = window.NEW_API || "https://script.google.com/macros/s/AKfycbyZtUsI44xA4MQQLZWJ6K93t6ZaSaN6hw7YQw9EclZG9E85kM6yOWQCQ0D-ZJpGmyq4/exec";
+    
+    // Get Store ID dynamically
+    const params = new URLSearchParams(window.location.search);
+    const storeSel = document.getElementById('loja-select');
+    const storeId = params.get('loja') || (storeSel ? storeSel.value : 'DT#25');
 
-    // API URL para buscar todas as transações
-    const url = API_URLS.MOVEMENTS;
+    const options = {
+        method: 'POST',
+        redirect: 'follow',
+        body: JSON.stringify({ action: 'listar_movimentacoes', loja: storeId })
+    };
 
-    // Se não tem cache, e estamos no extrato, maybe show skeleton?
-    // Mas a renderExtractList trata lista vazia.
-
-    DataManager.fetchSmart('extract_data', url, (dataJson, isUpdate) => {
+    DataManager.fetchSmart(`extract_data_${storeId}`, url, (dataJson, isUpdate) => {
         // Handle API structure
         let rows = [];
-        if (dataJson.content && Array.isArray(dataJson.content)) rows = dataJson.content;
+        if (dataJson.data && Array.isArray(dataJson.data)) rows = dataJson.data;
+        else if (dataJson.content && Array.isArray(dataJson.content)) rows = dataJson.content;
         else if (Array.isArray(dataJson)) rows = dataJson;
         else if (typeof dataJson === 'object') rows = Object.values(dataJson); // Fallback
 
         if (!rows || rows.length === 0) {
             fullMetricsData = [];
-            // Se for update e vazio, talvez limpar?
         } else {
-            // Detect format: Array of Arrays (Sheet) vs Array of Objects (JSON)
+            // A API 26 já retorna objetos prontos em .data
             const firstItem = rows[0];
             const isObject = firstItem && typeof firstItem === 'object' && !Array.isArray(firstItem);
 
@@ -1790,10 +1814,7 @@ function fetchMetricsDashboardData(forceUpdate = false) {
             }
         }
 
-        // Inverter a ordem original (Assumindo que vem Antigo -> Novo, queremos Novo -> Antigo)
-        // Isso resolve a ordem intra-dia (mesmo dia, horas diferentes não parseadas)
         if (fullMetricsData.length > 0) {
-            fullMetricsData.reverse();
             // Em seguida, ordena por Dia (Estável: mantém a inversão feita acima para dias iguais)
             fullMetricsData.sort((a, b) => parseDate(b.timestamp) - parseDate(a.timestamp));
         }
@@ -1807,7 +1828,7 @@ function fetchMetricsDashboardData(forceUpdate = false) {
             updateMetricsDashboard();
             updateLastUpdateIndicator();
         }
-    });
+    }, options);
 }
 
 /* --- LÓGICA DE MÉTRICAS (DASHBOARD) --- */
@@ -1861,8 +1882,9 @@ function calculateExtractTotals() {
 
     fullMetricsData.forEach(t => {
         let val = parseCurrencyVal(t.total);
-        if ((t.type || '').toLowerCase().includes('entrada')) totalIn += val;
-        else if ((t.type || '').toLowerCase().includes('sa')) totalOut += Math.abs(val);
+        const typeLc = (t.type || '').toLowerCase();
+        if (typeLc.includes('entrada') || typeLc.includes('venda')) totalIn += val;
+        else if (typeLc.includes('sa') || typeLc.includes('despesa')) totalOut += Math.abs(val);
     });
 
     // Update Elements, removing + and -
@@ -1876,45 +1898,35 @@ function calculateExtractTotals() {
 function parseDate(str) {
     if (!str) return 0;
     try {
-        // 1. If it's already a Date object
-        if (str instanceof Date) {
-            const d = new Date(str);
-            d.setHours(0, 0, 0, 0);
-            return d.getTime();
-        }
-
-        // 2. If it is a string
+        if (str instanceof Date) return str.getTime();
         const strVal = String(str).trim();
+        
+        // 1. Tenta Date Nativo (ISO etc)
+        const d = new Date(strVal);
+        if (!isNaN(d.getTime())) return d.getTime();
 
-        // ISO Date (yyyy-mm-dd)
-        if (strVal.match(/^\d{4}-\d{2}-\d{2}/)) {
-            const d = new Date(strVal);
-            d.setHours(0, 0, 0, 0);
-            return d.getTime();
-        }
-
-        // BR Date (dd/mm/yyyy) or other formats
-        // Split by / or - or space
-        let parts = strVal.split(/[\/\-\s]+/);
-
+        // 2. Fallback dd/mm/yyyy [hh:mm:ss]
+        let parts = strVal.split(/[\/\-\s\:]+/);
         if (parts.length >= 3) {
-            // Check if parts[2] is year (4 digits) -> dd/mm/yyyy
-            if (parts[2].length === 4) {
-                const d = new Date(parts[2], parts[1] - 1, parts[0]);
-                d.setHours(0, 0, 0, 0);
-                return d.getTime();
+            let day, month, year, hour = 0, minute = 0, second = 0;
+            if (parts[2].length === 4) { // dd/mm/yyyy
+                day = parseInt(parts[0]);
+                month = parseInt(parts[1]) - 1;
+                year = parseInt(parts[2]);
+                hour = parseInt(parts[3]) || 0;
+                minute = parseInt(parts[4]) || 0;
+                second = parseInt(parts[5]) || 0;
+            } else if (parts[0].length === 4) { // yyyy/mm/dd
+                year = parseInt(parts[0]);
+                month = parseInt(parts[1]) - 1;
+                day = parseInt(parts[2]);
+                hour = parseInt(parts[3]) || 0;
+                minute = parseInt(parts[4]) || 0;
+                second = parseInt(parts[5]) || 0;
             }
-            // Check if parts[0] is year (4 digits) -> yyyy/mm/dd
-            if (parts[0].length === 4) {
-                const d = new Date(parts[0], parts[1] - 1, parts[2]);
-                d.setHours(0, 0, 0, 0);
-                return d.getTime();
-            }
+            if (year) return new Date(year, month, day, hour, minute, second).getTime();
         }
-    } catch (e) {
-        console.warn('Error parsing date:', str);
-        return 0;
-    }
+    } catch (e) {}
     return 0;
 }
 
@@ -1946,8 +1958,8 @@ function renderExtractList() {
         const type = String(t.type || '').toLowerCase();
         let matchesType = true;
 
-        if (currentExtractFilter === 'in') matchesType = type.includes('entrada');
-        if (currentExtractFilter === 'out') matchesType = type.includes('sa');
+        if (currentExtractFilter === 'in') matchesType = type.includes('entrada') || type.includes('venda');
+        if (currentExtractFilter === 'out') matchesType = type.includes('sa') || type.includes('despesa');
 
         const name = String(t.payment || '').toLowerCase();
         const desc = String(t.descricao || '').toLowerCase();
@@ -1979,7 +1991,7 @@ function renderExtractList() {
     let contentHtml = '';
     visibleItems.forEach(t => {
         const typeLc = (t.type || '').toLowerCase();
-        const isIn = typeLc.includes('entrada');
+        const isIn = typeLc.includes('entrada') || typeLc.includes('venda');
 
         let val = parseCurrencyVal(t.total);
         const valStr = `R$ ${Math.abs(val).toFixed(2).replace('.', ',')}`;
