@@ -111,18 +111,18 @@
 
         /* --- PRODUCT LIST --- */
         .product-grid {
-            padding: 0 12px 140px;
+            padding: 0 8px 140px;
             display: grid;
-            gap: 10px;
+            gap: 8px;
         }
 
         .card-item {
             background: #fff;
-            padding: 8px 10px;
+            padding: 6px 8px;
             border-radius: var(--radius-lg);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             border: 1px solid rgba(0,0,0,0.02);
             box-shadow: 0 4px 12px rgba(0,0,0,0.02);
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -181,6 +181,7 @@
             padding: 2px;
             border-radius: 8px;
             flex-shrink: 0;
+            margin-left: auto;
         }
 
         .btn-qty {
@@ -529,7 +530,7 @@
                         </div>
                         <div class="qty-wrap">
                             <button class="btn-qty" onclick="updateQty('${p.id}', -1)" ${qty <= 0 ? 'disabled' : ''}><i class='bx bx-minus'></i></button>
-                            <span class="qty-num">${qty}</span>
+                            ${qty > 0 ? `<span class="qty-num">${qty}</span>` : ''}
                             <button class="btn-qty" onclick="updateQty('${p.id}', 1)" ${isOut || qty >= stock ? 'disabled' : ''}><i class='bx bx-plus'></i></button>
                         </div>
                     </div>
@@ -602,7 +603,8 @@
             btn.disabled = true;
 
             try {
-                const orderId = 'SA' + Date.now() + Math.floor(Math.random() * 999);
+                const numericId = Date.now() + '' + Math.floor(Math.random() * 999);
+                const orderId = 'SA-' + numericId;
                 const total = items.reduce((s, i) => s + (i.priceNew * i.quantity), 0);
 
                 fetch(APPSCRIPT_URL, {
@@ -617,7 +619,7 @@
                     })
                 });
 
-                const link = `${window.location.origin}/super-app/payment.html?orderId=${orderId}`;
+                const link = `${window.location.origin}/super-app/payment.html?orderId=${numericId}`;
                 document.getElementById('generated-url').innerText = link;
                 document.getElementById('link-modal').style.display = 'flex';
             } catch (e) {

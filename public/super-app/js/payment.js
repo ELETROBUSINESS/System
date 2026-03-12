@@ -424,9 +424,21 @@ async function setupPaymentStep() {
     showProcessingOverlay();
 
     try {
-        validatedCart = await validateCartPrices(CartManager.get());
+        const localCart = CartManager.get();
+        // Se o carrinho estiver vazio e tivermos dados de um pedido via link, usamos eles
+        if (localCart.length === 0 && validatedOrderData && validatedOrderData.cartItems) {
+            console.log("[Checkout] Usando itens do pedido vinculado ao link.");
+            validatedCart = validatedOrderData.cartItems;
+        } else {
+            validatedCart = await validateCartPrices(localCart);
+        }
     } catch (e) {
-        validatedCart = CartManager.get().map(i => ({ ...i, pricePix: i.priceNew, priceBase: i.priceNew }));
+        const localCart = CartManager.get();
+        if (localCart.length === 0 && validatedOrderData && validatedOrderData.cartItems) {
+            validatedCart = validatedOrderData.cartItems;
+        } else {
+            validatedCart = localCart.map(i => ({ ...i, pricePix: i.priceNew, priceBase: i.priceNew }));
+        }
     }
 
     hideProcessingOverlay();
@@ -1021,37 +1033,52 @@ function setupPixEvents() {
 let validatedOrderData = null;
 async function loadOrderFromUrl() {
     const params = new URLSearchParams(window.location.search);
-    const orderId = params.get('orderId');
-    if (!orderId) return;
+    const rawOrderId = params.get('orderId');
+    if (!rawOrderId) return;
 
-    // Se for link de pedido, removemos a opção de WhatsApp para evitar confusão
+    // Normaliza o ID para busca (sempre com SA-)
+    const searchId = rawOrderId.startsWith('SA') 
+        ? (rawOrderId.startsWith('SA-') ? rawOrderId : 'SA-' + rawOrderId.substring(2))
+        : 'SA-' + rawOrderId;
+
+    // Se for link de pedido, removemos a opção de WhatsApp
     const zapOpt = document.getElementById('opt-zap');
     if (zapOpt) zapOpt.style.display = 'none';
 
-    console.log(`[Link Shortener] Detectado link via ID: ${orderId}. Buscando dados...`);
+    console.log(`[Link Shortener] Detectado link via ID: ${searchId}...`);
     
     try {
-        const response = await fetch(`${APPSCRIPT_URL}?action=getOrderById&orderId=${orderId}`);
+        const response = await fetch(`${APPSCRIPT_URL}?action=getOrderById&orderId=${searchId}`);
         const result = await response.json();
 
         if (result.status === "success" && result.data) {
             const orderData = result.data;
             console.log("[Link Shortener] Pedido recuperado com sucesso.");
             
-            // Se o carrinho atual estiver vazio, podemos tentar preencher com os dados do pedido.
-            const currentCart = JSON.parse(localStorage.getItem('app_cart') || '[]');
-            if (currentCart.length === 0 && orderData.itemsString) {
-                console.log("[Link Shortener] Carrinho vazio, preenchendo resumo do pedido.");
+            validatedOrderData = orderData;
+
+            // Extrai itens (pode vir como array ou string JSON)
+            if (orderData.items) {
+                validatedOrderData.cartItems = Array.isArray(orderData.items) ? orderData.items : JSON.parse(orderData.items);
+            } else if (orderData.itemsString) {
+                validatedOrderData.cartItems = JSON.parse(orderData.itemsString);
             }
 
             // Exibe o vendedor se existir
             if (orderData.seller) {
-                validatedOrderData = orderData;
                 const sellerRow = document.getElementById('pay-seller-row');
                 const sellerName = document.getElementById('pay-seller-name');
                 if (sellerRow && sellerName) {
                     sellerRow.style.display = 'flex';
                     sellerName.textContent = orderData.seller;
+                }
+            }
+
+            // Se o carrinho estiver vazio, preenchemos a visualização do Passo 3 antecipadamente
+            if (CartManager.get().length === 0 && validatedOrderData.cartItems) {
+                console.log("[Link Shortener] Injetando resumo do pedido.");
+                if (document.getElementById('step-payment').classList.contains('active')) {
+                    setupPaymentStep();
                 }
             }
         } else if (result.status === "expired") {
