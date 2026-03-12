@@ -57,61 +57,43 @@
 
     <!-- Dashboard Layout (Migrated from Ideial N1) -->
     <div id="app-container">
-        <!-- Same structure as Conta.html (CSS handled by .info class) -->
-        <div class="info">
-            <div class="photo-profile">
-                <img src="/users/45692327000100/CD1/adm/nb/img/profile_photo.jpg">
-                <div class="detals">
-                    <h1>Olá, Nubia!</h1>
-                    <p>CEO: D'TUDO | Dupão</p>
-                </div>
-                <i class="fi fi-rr-shield-trust"></i>
-            </div>
-            <div class="balance">
-                <p>Saldo</p>
-                <div class="saldo">
-                    <span id="valor1" class="">R$&nbsp;</span>
-                    <i class="bx bx-show" id="toggle-balance-icon"></i>
-                </div>
-                <div class="pending">
-                    <div id="balloons-container" class="value-balloon-container">
-                        <!-- InfinitePay Balloon -->
-                        <div class="value-balloon infinite" onclick="toggleBalloon(this)">
-                            <img src="https://i.ibb.co/14pX8yx/Logo-Infinite-Pay.png" alt="InfinitePay"
-                                id="icon-infinite" style="height: 20px; width: auto; border-radius: 0;">
-                            <i class='bx bx-credit-card-front' style="color: #25D366; display: none;"
-                                id="icon-infinite-fallback"></i>
-
-                            <div class="balloon-info" style="display:none;">
-                                <span class="b-title">A receber</span>
-                                <span class="b-legend">Vendas a receber da infinitepay</span>
-                            </div>
-
-                            <span id="valor2">R$ 0,00</span>
-                        </div>
-                        <!-- Crediário Balloon -->
-                        <div class="value-balloon crediario" onclick="toggleBalloon(this)">
-                            <img src="https://blogger.googleusercontent.com/img/a/AVvXsEjh9HYsK8nD_NA8Hd5v0I1Hq2ObgdmzJHoG9-XB1gzug5LIFUchj2H0gzpnPyTWj4pqVtqZy92a2OUhhdKnvv3JKBuXQjlCBgKiP0Shqu-dpWwqtqsPDInrDyabTzQrbUeitDypok-NgZnvrhzzTvB8g6vvuCk7V3vjb39NrYueaYqRJkrRH-Ud7dF7bhQ"
-                                alt="Crediário" style="height: 20px; width: auto; border-radius: 0;">
-
-                            <div class="balloon-info" style="display:none;">
-                                <span class="b-title">Cartão Digital</span>
-                                <span class="b-legend">Valores a receber do Crediario Digital</span>
-                            </div>
-
-                            <span id="cred-val-balloon">R$ 0,00</span>
-                        </div>
+        <!-- Apresentação da Página -->
+        <div class="metrics-presentation">
+            <div class="metrics-header-row">
+                <h1 class="metrics-title">Métricas</h1>
+                
+                <!-- Filtro de Período -->
+                <div class="period-filter-row">
+                    <span id="period-legend" class="period-filter-label">Hoje</span>
+                    <div class="period-action-btn" onclick="openPeriodModal()">
+                        <i class='bx bx-calendar'></i>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="filter-area mb-2 px-2 flex justify-end w-full">
-            <select class="period-selector" id="period-select" onchange="updateMetricsDashboard()">
-                <option value="dia" selected>Hoje</option>
-                <option value="semana">Esta Semana</option>
-                <option value="mes">Este Mês</option>
-            </select>
+            <!-- Seletor de Lojas (Tags Otimizadas no CSS) -->
+            <div class="store-tags-container">
+                <!-- Loja 1: Ipixuna (Ativa) -->
+                <div id="store-ipixuna" onclick="selectStore('DT#25', 'D\'Tudo - Ipixuna', this)" class="store-tag active">
+                    <i class='bx bx-wallet-cards store-tag-icon'></i>
+                    <span class="store-tag-label">D'Tudo - Ipixuna</span>
+                </div>
+
+                <!-- Loja 2: Aurora (Em Breve) -->
+                <div id="store-aurora" onclick="selectStoreAurora(this)" class="store-tag">
+                    <i class='bx bx-wallet-cards store-tag-icon'></i>
+                    <span class="store-tag-label">D'Tudo - Aurora</span>
+                </div>
+
+                <!-- Loja 3: Mãe do Rio (Em Breve) -->
+                <div id="store-maedorio" onclick="selectStoreAurora(this)" class="store-tag">
+                    <i class='bx bx-wallet-cards store-tag-icon'></i>
+                    <span class="store-tag-label">D'Tudo - Mãe do Rio</span>
+                </div>
+            </div>
+            
+            <input type="hidden" id="period-select" value="dia">
+            <input type="hidden" id="loja-select" value="DT#25">
         </div>
 
         <div class="kpi-area grid-kpi">
@@ -176,6 +158,67 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal de Seleção de Período (Padrão Sistema) -->
+    <div id="period-modal-overlay" onclick="closePeriodModal()" class="fixed inset-0 z-[10000] hidden items-end justify-center">
+        <div class="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm transition-opacity opacity-0" id="period-overlay-bg"></div>
+        <div id="period-modal-content" onclick="event.stopPropagation()" class="bg-white w-full max-w-[500px] h-fit max-h-[70vh] rounded-t-3xl shadow-2xl z-10 flex flex-col transform translate-y-full transition-transform duration-300">
+            <!-- Pílula Nubank + Título Centralizado -->
+            <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mt-3 mb-1"></div>
+            <div class="relative flex justify-center items-center p-4 border-b border-gray-100">
+                <h2 class="text-base font-bold text-gray-800 tracking-wide uppercase">Filtrar Período</h2>
+                <button onclick="closePeriodModal()" class="absolute right-4 w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors">
+                    <i class="bx bx-x text-xl"></i>
+                </button>
+            </div>
+            
+            <div id="period-list" class="flex-1 overflow-y-auto p-4 space-y-3 pb-8 relative">
+                <!-- Dia -->
+                <div onclick="selectPeriod('dia')" class="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 hover:shadow-sm transition-shadow cursor-pointer">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-gray-600 bg-gray-100">
+                        <i class="bx bx-calendar-event text-lg"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-start">
+                            <p class="text-sm text-gray-800 font-bold">Hoje</p>
+                            <span class="text-[10px] text-gray-400 font-medium ml-2 shrink-0">Filtrar</span>
+                        </div>
+                        <p class="text-[11px] text-gray-600 font-medium mt-0.5">Exibe métricas do faturamento diário</p>
+                    </div>
+                </div>
+
+                <!-- Semana -->
+                <div onclick="selectPeriod('semana')" class="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 hover:shadow-sm transition-shadow cursor-pointer">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-gray-600 bg-gray-100">
+                        <i class="bx bx-calendar-week text-lg"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-start">
+                            <p class="text-sm text-gray-800 font-bold">Semana</p>
+                            <span class="text-[10px] text-gray-400 font-medium ml-2 shrink-0">Filtrar</span>
+                        </div>
+                        <p class="text-[11px] text-gray-600 font-medium mt-0.5">Métricas resumidas da última semana</p>
+                    </div>
+                </div>
+
+                <!-- Mês -->
+                <div onclick="selectPeriod('mes')" class="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 hover:shadow-sm transition-shadow cursor-pointer">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-gray-600 bg-gray-100">
+                        <i class="bx bx-calendar-check text-lg"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-start">
+                            <p class="text-sm text-gray-800 font-bold">Este Mês</p>
+                            <span class="text-[10px] text-gray-400 font-medium ml-2 shrink-0">Filtrar</span>
+                        </div>
+                        <p class="text-[11px] text-gray-600 font-medium mt-0.5">Visão geral do desempenho mensal</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Seleção de Período (Padrão Sistema) -->
 
     <!-- Navbar (Standardized) -->
     <div class="nav-container">
@@ -269,6 +312,86 @@
     <!-- Script Unificado -->
     <script src="/assets/js/script26.js"></script>
     <script>
+        // Logic For Period Modal (System Pattern)
+        function openPeriodModal() {
+            const overlay = document.getElementById('period-modal-overlay');
+            const bg = document.getElementById('period-overlay-bg');
+            const content = document.getElementById('period-modal-content');
+            
+            if(!overlay) return;
+            overlay.classList.remove('hidden');
+            overlay.style.display = 'flex';
+            
+            setTimeout(() => {
+                if(bg) bg.classList.remove('opacity-0');
+                if(content) content.classList.remove('translate-y-full');
+            }, 10);
+        }
+
+        function closePeriodModal() {
+            const overlay = document.getElementById('period-modal-overlay');
+            const bg = document.getElementById('period-overlay-bg');
+            const content = document.getElementById('period-modal-content');
+            
+            if(!overlay) return;
+            
+            if(bg) bg.classList.add('opacity-0');
+            if(content) content.classList.add('translate-y-full');
+            
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                overlay.style.display = 'none';
+            }, 300);
+        }
+
+        function selectPeriod(p) {
+            const periodInput = document.getElementById('period-select');
+            const periodLegend = document.getElementById('period-legend');
+            
+            if (periodInput) {
+                periodInput.value = p;
+                
+                // Atualiza legenda
+                if (periodLegend) {
+                    const labels = {
+                        'dia': 'Hoje',
+                        'semana': 'Semana',
+                        'mes': 'Este Mês'
+                    };
+                    periodLegend.innerText = labels[p] || p;
+                }
+                
+                updateMetricsDashboard();
+                if (typeof fetchBalanceData === 'function') fetchBalanceData(true);
+            }
+            closePeriodModal();
+        }
+
+        // Logic For Store Selection (Inline Pattern)
+        function selectStoreAurora(element) {
+            const originalHtml = element.innerHTML;
+            
+            // Ativa animação (Usando classes CSS novas)
+            element.innerHTML = `
+                <i class='bx bx-lock store-tag-icon'></i>
+                <span class="store-tag-label">Em breve..</span>
+            `;
+
+            setTimeout(() => {
+                element.innerHTML = originalHtml;
+            }, 3000);
+        }
+
+        function selectStore(id, name, element) {
+            const storeInput = document.getElementById('loja-select');
+            if (!storeInput) return;
+
+            // Logica simples de active (Ipixuna já é default)
+            storeInput.value = id;
+            updateMetricsDashboard();
+            if (typeof fetchBalanceData === 'function') fetchBalanceData(true);
+        }
+
         // Init specifically for Metricas Page
         window.addEventListener('load', () => {
             // fetchBalanceData will auto-run due to IDs
