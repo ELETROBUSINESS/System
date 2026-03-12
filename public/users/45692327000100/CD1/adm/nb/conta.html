@@ -91,13 +91,7 @@
                 </div>
                 <div class="header-right-novo">
                     <div class="action-btn-novo relative" title="Notificações" onclick="openNotifModal()">
-                        <i class="bx bx-bell relative">
-                            <!-- Indicador ponto vermelho -->
-                            <span class="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 hidden" id="nova-notif-badger"></span>
-                            </span>
-                        </i>
+                        <i class="bx bx-bell relative"></i>
                     </div>
                 </div>
             </div>
@@ -151,7 +145,7 @@
         </div>
 
         <!-- 1. Prestes a Vencer (Card Dinâmico) -->
-        <div class="finance-card card-vencer-area" id="card-vencer">
+        <div class="finance-card card-vencer-area cursor-pointer" id="card-vencer" onclick="navigateTo('manager.html')">
             <div id="paint-overlay"></div>
             <div class="p-4">
                 <div class="carousel-container" id="due-carousel">

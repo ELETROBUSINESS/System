@@ -1409,7 +1409,10 @@ function fetchMovements(forceUpdate = false) {
         const sortedData = [...data].reverse().sort(sortFn);
 
         // Armazena as 5 últimas movimentações globalmente
-        movimentacoesData = sortedData.slice(0, 5);
+        movimentacoesData = sortedData.slice(0, 5).map(item => ({
+            ...item,
+            loja: item.loja || item.Loja || ''
+        }));
 
         // Se for update, a renderMovements já substitui o HTML, o que é um "flash" aceitável para listas
         // Poderíamos animar fade-in, mas na lista é ok substituir.
@@ -1424,9 +1427,10 @@ function renderMovements() {
 
     let html = '';
     movimentacoesData.forEach(item => {
-        const type = item.type ? item.type.toLowerCase() : '';
-        const isEntry = type.includes('entrada') || type.includes('venda');
-        const isOut = type.includes('sa') || type.includes('despesa');
+        const typeLc = (item.type || '').toLowerCase();
+        const isEntry = typeLc.includes('entrada') || typeLc.includes('venda') || typeLc.includes('ajuste+') || typeLc.includes('recebimento');
+        const isOut = typeLc.includes('sa') || typeLc.includes('despesa') || typeLc.includes('ajuste-') || typeLc.includes('pagamento');
+        
         const icon = isEntry ? 'bx-up-arrow-alt' : 'bx-down-arrow-alt';
         const iconBg = isEntry ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600';
 
@@ -1444,7 +1448,7 @@ function renderMovements() {
                     <i class='bx ${icon} text-lg'></i>
                 </div>
                 <div class="text-left">
-                    <p class="text-xs font-bold text-gray-800">${item.payment || 'Pagamento'}</p>
+                    <p class="text-xs font-bold text-gray-800">${item.payment || 'Pagamento'} • <span class="text-[9px] text-red-500">${item.loja || ''}</span></p>
                     <p class="text-[9px] text-gray-400 font-bold uppercase">${item.timestamp || ''}</p>
                 </div>
             </div>
@@ -1787,6 +1791,7 @@ function fetchMetricsDashboardData(forceUpdate = false) {
             if (isObject) {
                 // API returns correct layout directly
                 fullMetricsData = rows.map(item => ({
+                    loja: item.loja || item.Loja || '',
                     timestamp: item.timestamp || item.Data || '',
                     payment: item.payment || item.Pagamento || '',
                     descricao: item.descricao || item.Descricao || '',
@@ -1883,8 +1888,12 @@ function calculateExtractTotals() {
     fullMetricsData.forEach(t => {
         let val = parseCurrencyVal(t.total);
         const typeLc = (t.type || '').toLowerCase();
-        if (typeLc.includes('entrada') || typeLc.includes('venda')) totalIn += val;
-        else if (typeLc.includes('sa') || typeLc.includes('despesa')) totalOut += Math.abs(val);
+        
+        const isIn = typeLc.includes('entrada') || typeLc.includes('venda') || typeLc.includes('ajuste+') || typeLc.includes('recebimento');
+        const isOut = typeLc.includes('sa') || typeLc.includes('despesa') || typeLc.includes('ajuste-') || typeLc.includes('pagamento');
+
+        if (isIn) totalIn += val;
+        else if (isOut) totalOut += Math.abs(val);
     });
 
     // Update Elements, removing + and -
@@ -1901,11 +1910,8 @@ function parseDate(str) {
         if (str instanceof Date) return str.getTime();
         const strVal = String(str).trim();
         
-        // 1. Tenta Date Nativo (ISO etc)
-        const d = new Date(strVal);
-        if (!isNaN(d.getTime())) return d.getTime();
-
-        // 2. Fallback dd/mm/yyyy [hh:mm:ss]
+        // 1. Tenta detectar formato DD/MM/YYYY ou YYYY/MM/DD explicitamente primeiro
+        // Isso evita que o navegador inverta dia/mês em strings DD/MM/YYYY interpretando como US.
         let parts = strVal.split(/[\/\-\s\:]+/);
         if (parts.length >= 3) {
             let day, month, year, hour = 0, minute = 0, second = 0;
@@ -1916,6 +1922,9 @@ function parseDate(str) {
                 hour = parseInt(parts[3]) || 0;
                 minute = parseInt(parts[4]) || 0;
                 second = parseInt(parts[5]) || 0;
+                if (!isNaN(day) && !isNaN(month)) {
+                    return new Date(year, month, day, hour, minute, second).getTime();
+                }
             } else if (parts[0].length === 4) { // yyyy/mm/dd
                 year = parseInt(parts[0]);
                 month = parseInt(parts[1]) - 1;
@@ -1923,9 +1932,16 @@ function parseDate(str) {
                 hour = parseInt(parts[3]) || 0;
                 minute = parseInt(parts[4]) || 0;
                 second = parseInt(parts[5]) || 0;
+                if (!isNaN(day) && !isNaN(month)) {
+                    return new Date(year, month, day, hour, minute, second).getTime();
+                }
             }
-            if (year) return new Date(year, month, day, hour, minute, second).getTime();
         }
+
+        // 2. Fallback para Date Nativo (ISO etc)
+        const d = new Date(strVal);
+        if (!isNaN(d.getTime())) return d.getTime();
+
     } catch (e) {}
     return 0;
 }
@@ -1955,11 +1971,14 @@ function renderExtractList() {
 
     // Filtra
     let filtered = fullMetricsData.filter(t => {
-        const type = String(t.type || '').toLowerCase();
+        const typeLc = String(t.type || '').toLowerCase();
+        
+        const isIn = typeLc.includes('entrada') || typeLc.includes('venda') || typeLc.includes('ajuste+') || typeLc.includes('recebimento');
+        const isOut = typeLc.includes('sa') || typeLc.includes('despesa') || typeLc.includes('ajuste-') || typeLc.includes('pagamento');
+        
         let matchesType = true;
-
-        if (currentExtractFilter === 'in') matchesType = type.includes('entrada') || type.includes('venda');
-        if (currentExtractFilter === 'out') matchesType = type.includes('sa') || type.includes('despesa');
+        if (currentExtractFilter === 'in') matchesType = isIn;
+        if (currentExtractFilter === 'out') matchesType = isOut;
 
         const name = String(t.payment || '').toLowerCase();
         const desc = String(t.descricao || '').toLowerCase();
@@ -1991,10 +2010,16 @@ function renderExtractList() {
     let contentHtml = '';
     visibleItems.forEach(t => {
         const typeLc = (t.type || '').toLowerCase();
-        const isIn = typeLc.includes('entrada') || typeLc.includes('venda');
+        const isIn = typeLc.includes('entrada') || typeLc.includes('venda') || typeLc.includes('ajuste+') || typeLc.includes('recebimento');
 
         let val = parseCurrencyVal(t.total);
         const valStr = `R$ ${Math.abs(val).toFixed(2).replace('.', ',')}`;
+
+        // Lógica de título inteligente: se for saída e tiver descrição, usa descrição
+        let title = t.payment || 'Movimentação';
+        if (!isIn && t.descricao && t.descricao.length > 3) {
+            title = t.descricao;
+        }
 
         // Display timestamp or a default
         const dateDisplay = t.timestamp || 'Data N/D';
@@ -2007,7 +2032,7 @@ function renderExtractList() {
                 </svg>
             </div>
             <div class="flex-1 ml-4 text-left">
-                <p class="text-xs font-bold text-gray-800">${t.payment || 'Movimentação'}</p>
+                <p class="text-xs font-bold text-gray-800">${title} <span class="text-[9px] text-red-500 font-bold ml-1">${t.loja || ''}</span></p>
                 <p class="text-[9px] text-gray-400 font-bold uppercase tracking-tight">${dateDisplay}</p>
             </div>
             <p class="text-xs font-bold ${isIn ? 'trans-val-pos' : 'trans-val-neg'}">
@@ -2356,15 +2381,41 @@ async function loadNotifData() {
     }
 }
 
+
+
 /**
  * --- VENDAS RECENTES (INLINE) ---
- * Busca e renderiza as 3 últimas vendas diretamente na tela.
+ * Busca e renderiza as 3 últimas vendas diretamente na tela com Skeleton Loading.
  */
 async function fetchRecentSalesInline(force = false) {
     const list = document.getElementById('recent-sales-inline');
     if (!list) return;
 
-    const storeId = 'DT#25'; 
+    // Exibe Skeleton Loading (Animação de carregamento fluida)
+    list.innerHTML = `
+        <div class="sales-row skeleton-loader" style="align-items: flex-start; opacity: 0.6;">
+            <div class="skeleton" style="width: 40px; height: 40px; border-radius: 12px; margin-right: 12px;"></div>
+            <div class="sales-info" style="flex: 1;">
+                <div class="skeleton" style="width: 60%; height: 14px; margin-bottom: 8px;"></div>
+                <div class="skeleton" style="width: 40%; height: 10px;"></div>
+            </div>
+            <div style="text-align: right;">
+                <div class="skeleton" style="width: 50px; height: 16px; margin-bottom: 6px;"></div>
+                <div class="skeleton" style="width: 35px; height: 10px;"></div>
+            </div>
+        </div>
+        <div class="sales-row skeleton-loader" style="align-items: flex-start; opacity: 0.4;">
+            <div class="skeleton" style="width: 40px; height: 40px; border-radius: 12px; margin-right: 12px;"></div>
+            <div class="sales-info" style="flex: 1;">
+                <div class="skeleton" style="width: 55%; height: 14px; margin-bottom: 8px;"></div>
+                <div class="skeleton" style="width: 35%; height: 10px;"></div>
+            </div>
+        </div>
+    `;
+
+    const params = new URLSearchParams(window.location.search);
+    const storeSel = document.getElementById('loja-select');
+    const storeId = params.get('loja') || (storeSel ? storeSel.value : 'DT#25');
     const url = window.NEW_API || "https://script.google.com/macros/s/AKfycbyZtUsI44xA4MQQLZWJ6K93t6ZaSaN6hw7YQw9EclZG9E85kM6yOWQCQ0D-ZJpGmyq4/exec";
 
     try {
@@ -2395,38 +2446,48 @@ function renderRecentSalesInline(vendas) {
     }
 
     let html = '';
+    const monthNames = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+
     vendas.forEach(v => {
         const valorVal = v.valor || 'R$ 0,00';
         const operador = v.operador || 'Sistema';
         const pagamento = v.pagamento || 'Outros';
         const timestamp = v.timestamp || '';
+        const lojaRaw = v.loja || '';
+        const lojaDisplay = (lojaRaw === 'DT#25') ? "D'Tudo - Ipixuna" : lojaRaw;
         
-        // Formata valor se for numérico puro, mas aqui geralmente já vem formatado de fetchNotifications
-        // Vamos apenas usar como string se já tem R$
         const valorDisplay = isBalanceVisible ? valorVal : 'R$ ***,**';
         
-        let hora = '';
+        let dataFmt = '';
         if (timestamp) {
             try {
-                const d = new Date(timestamp);
-                hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-            } catch(err) { hora = ''; }
+                // parseDate now handles ISO strings from API26.js correctly
+                const ts = parseDate(timestamp);
+                if (ts > 0) {
+                    const d = new Date(ts);
+                    const month = monthNames[d.getMonth()].toLowerCase();
+                    dataFmt = `${String(d.getDate()).padStart(2, '0')}/${month}`;
+                }
+            } catch(err) { 
+                dataFmt = '';
+            }
         }
 
         html += `
-            <div class="sales-row">
-                <div class="sales-icon">
+            <div class="sales-row" style="align-items: flex-start;">
+                <div class="sales-icon" style="margin-top: 2px;">
                     <i class='bx bx-cart-alt'></i>
                 </div>
                 <div class="sales-info">
-                    <div class="sales-title">${operador}</div>
-                    <div class="sales-meta">${pagamento} • ${hora}</div>
+                    <div class="sales-title" style="color: #4b5563; font-weight: 800;">${lojaDisplay}</div>
+                    <div class="sales-meta" style="font-size: 11px; font-weight: 700; color: #1f2937;">${operador} • ${pagamento}</div>
                 </div>
-                <div class="sales-value">${valorDisplay}</div>
+                <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end;">
+                    <div class="sales-value">${valorDisplay}</div>
+                    <div class="sales-date" style="font-size: 9px; font-weight: 800; color: #9ca3af; margin-top: 2px;">${dataFmt}</div>
+                </div>
             </div>
         `;
     });
     list.innerHTML = html;
 }
-
-
