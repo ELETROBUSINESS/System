@@ -182,42 +182,71 @@ function startOfferTimers() {
 
 // --- 3. BANCO DE DADOS CENTRAL (CACHE) ---
 const DataManager = {
+    _isSyncing: false,
+    _unsubscribe: null,
+
     init: function () {
-        this.sync();
+        this.startRealtimeSync();
     },
 
-    sync: async function () {
-        const now = Date.now();
-        const lastSync = parseInt(localStorage.getItem(CACHE_TIME_KEY) || '0');
-
-        if (now - lastSync < CACHE_DURATION && localStorage.getItem(CACHE_KEY)) {
-            console.log("[DataManager] Cache recente, pulando sincronização.");
+    /**
+     * Inicia a sincronização em tempo real via Firestore
+     * Isso reduz o tempo de carregamento para milissegundos.
+     */
+    startRealtimeSync: function () {
+        if (!db) {
+            console.warn("[DataManager] Firestore não inicializado, tentando novamente em 1s...");
+            setTimeout(() => this.startRealtimeSync(), 1000);
             return;
         }
 
+        console.log("[DataManager] Iniciando escuta em tempo real (Firestore)...");
+
+        this._unsubscribe = db.collection("products").onSnapshot((snapshot) => {
+            const products = [];
+            snapshot.forEach(doc => {
+                products.push({ id: doc.id, ...doc.data() });
+            });
+
+            if (products.length > 0) {
+                console.log(`[DataManager] ${products.length} produtos recebidos via Firestore.`);
+                
+                // Salva no cache para carregamento instantâneo no próximo refresh
+                localStorage.setItem(CACHE_KEY, JSON.stringify(products));
+                localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+
+                // Avisa o app que os dados mudaram
+                document.dispatchEvent(new CustomEvent('productsUpdated', { detail: products }));
+            } else {
+                // Se o Firestore estiver vazio (ex: projeto novo), faz o fallback para o AppScript
+                console.warn("[DataManager] Firestore vazio. Usando fallback AppScript...");
+                this.fallbackSync();
+            }
+        }, (error) => {
+            console.error("[DataManager] Erro no Firestore listener:", error);
+            this.fallbackSync();
+        });
+    },
+
+    /**
+     * Fallback caso o Firestore falhe ou esteja vazio
+     */
+    fallbackSync: async function () {
         if (this._isSyncing) return;
         this._isSyncing = true;
 
         try {
-            console.log("[DataManager] Sincronizando produtos...");
+            console.log("[DataManager] Executando sincronização de fallback (AppScript)...");
             const response = await fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`);
             const result = await response.json();
 
             if (result.status === "success" && result.data) {
-                const oldData = localStorage.getItem(CACHE_KEY);
-                const newDataStr = JSON.stringify(result.data);
-
-                if (oldData !== newDataStr) {
-                    console.log("[DataManager] Dados atualizados detectados.");
-                    localStorage.setItem(CACHE_KEY, newDataStr);
-                    localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-                    document.dispatchEvent(new CustomEvent('productsUpdated', { detail: result.data }));
-                } else {
-                    localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-                }
+                localStorage.setItem(CACHE_KEY, JSON.stringify(result.data));
+                localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+                document.dispatchEvent(new CustomEvent('productsUpdated', { detail: result.data }));
             }
         } catch (e) {
-            console.error("[DataManager] Erro ao sincronizar:", e);
+            console.error("[DataManager] Erro no fallback:", e);
         } finally {
             this._isSyncing = false;
         }
@@ -226,6 +255,10 @@ const DataManager = {
     getProducts: function () {
         const data = localStorage.getItem(CACHE_KEY);
         return data ? JSON.parse(data) : [];
+    },
+
+    stop: function() {
+        if (this._unsubscribe) this._unsubscribe();
     }
 };
 

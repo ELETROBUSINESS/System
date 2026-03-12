@@ -49,6 +49,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (typeof updateCartBadge === 'function') updateCartBadge();
+
+    // Listener para o caso dos resultados mudarem (real-time sync)
+    document.addEventListener('productsUpdated', () => {
+        console.log("[Search] Dados atualizados detectados. Atualizando resultados...");
+        const urlParams = new URLSearchParams(window.location.search);
+        const query = urlParams.get('q') || '';
+        const category = urlParams.get('category') || '';
+        
+        if (query) performSearch(query, 'query');
+        else if (category) performSearch(category, 'category');
+        else performSearch('', 'all');
+    });
 });
 
 // --- LÓGICA DO MODAL DE BUSCA (Centralizado em global.js) ---
@@ -158,23 +170,30 @@ async function performSearch(term, type) {
         return;
     }
 
-    // Tenta pegar do cache imediatamente
-    let allProducts = getCachedData();
+    // 1. Tenta pegar do cache imediatamente
+    let allProducts = DataManager.getProducts();
 
-    // Se NÃO tem cache, mostra skeleton e busca do zero
+    // Se NÃO tem cache, mostra skeleton
     if (!allProducts || allProducts.length === 0) {
         renderSkeletonGrid('search-results-container', 4);
-        try {
-            const res = await fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`);
-            const json = await res.json();
-            if (json.status === 'success') {
-                allProducts = json.data;
-                localStorage.setItem(CACHE_KEY, JSON.stringify(allProducts));
-                localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+        console.log("[Search] Aguardando dados do DataManager...");
+        
+        // Se após 3s não temos nada, tentamos o fetch manual como último recurso
+        setTimeout(async () => {
+            const current = DataManager.getProducts();
+            if(!current || current.length === 0) {
+                 try {
+                    const res = await fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`);
+                    const json = await res.json();
+                    if (json.status === 'success') {
+                        saveToCache(json.data);
+                        performSearch(term, type); // Tenta novamente
+                    }
+                } catch (e) { console.error("Erro fetch manual search:", e); }
             }
-        } catch (e) {
-            console.error("Erro ao buscar produtos:", e);
-        }
+        }, 3000);
+        
+        if (!allProducts || allProducts.length === 0) return;
     }
 
     if (!allProducts || allProducts.length === 0) {

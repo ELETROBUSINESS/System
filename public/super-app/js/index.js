@@ -112,8 +112,10 @@ function extractProductImages(prod) {
 function getCachedData() {
     const json = localStorage.getItem(CACHE_KEY);
     const time = localStorage.getItem(CACHE_TIME_KEY);
-    if (!json || !time) return null;
-    if (new Date().getTime() - parseInt(time) > CACHE_DURATION) { clearCache(); return null; }
+    if (!json) return null;
+    
+    // Com Firestore, o cache é apenas para carregamento instantâneo
+    // O DataManager cuidará de atualizar os dados em background.
     return JSON.parse(json);
 }
 
@@ -749,40 +751,35 @@ async function initProductFeed() {
     // 1. Tenta Cache Instantâneo para evitar tempo de espera desnecessário
     const cached = getCachedData();
     if (cached && cached.length > 0) {
+        console.log("[Feed] Carregando via cache instantâneo...");
         window._apiFetched = true;
         const urlParams = new URLSearchParams(window.location.search);
         filterLocalCategory(urlParams.get('filter') || 'todos');
 
-        // Esconde loader se existir
         const customLoader = document.getElementById('custom-loader-overlay');
         if (customLoader) customLoader.style.display = 'none';
-
-        // Faz um sync em background silencioso se necessário (via global.js DataManager)
-        if (typeof DataManager !== 'undefined') DataManager.sync();
+        
+        // O DataManager já foi iniciado em global.js e atualizará se houver mudanças via Firestore
     } else {
-        // 2. Se não tem cache, aí sim fazemos o processo com loading/skeleton
-        const fetchPromise = (async () => {
-            try {
-                const response = await fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`);
-                const result = await response.json();
-                if (result.status === "success" && result.data) {
-                    saveToCache(result.data);
-                    return result.data;
-                }
-            } catch (e) { console.error(e); }
-            return [];
-        })();
-
-        const [data] = await Promise.all([
-            fetchPromise,
-            new Promise(r => setTimeout(r, 400)) // Skeleton visível por um momento se não há cache
-        ]);
-
-        if (data && data.length > 0) {
-            window._apiFetched = true;
-            const urlParams = new URLSearchParams(window.location.search);
-            filterLocalCategory(urlParams.get('filter') || 'todos');
-        }
+        console.log("[Feed] Sem cache, aguardando DataManager ou buscando fallback...");
+        
+        // Se após 2 segundos ainda não temos dados, tentamos o fetch manual
+        setTimeout(async () => {
+            const current = getCachedData();
+            if (!current || current.length === 0) {
+                console.log("[Feed] Fallback manual disparado.");
+                try {
+                    const response = await fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`);
+                    const result = await response.json();
+                    if (result.status === "success" && result.data) {
+                        saveToCache(result.data);
+                        window._apiFetched = true;
+                        const urlParams = new URLSearchParams(window.location.search);
+                        filterLocalCategory(urlParams.get('filter') || 'todos');
+                    }
+                } catch (e) { console.error(e); }
+            }
+        }, 2000);
     }
 
 
@@ -1926,16 +1923,22 @@ document.addEventListener("DOMContentLoaded", () => {
             initProductFeed();
         }
     }
-    // Listener para quando o background sync atualizar os produtos
-    document.addEventListener('productsUpdated', (e) => {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (typeof filterLocalCategory === 'function') {
-            filterLocalCategory(urlParams.get('filter') || 'todos');
-        }
-        if (window.location.search.includes('FASCINIO') && typeof renderCategories === 'function') {
-            renderCategories(true);
-        }
-    });
+// Listener para quando o background sync atualizar os produtos (Firestore ou AppScript)
+document.addEventListener('productsUpdated', (e) => {
+    console.log("[App] Produtos atualizados via Realtime/Sync.");
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+
+    // Se estivermos na home, atualiza o feed
+    if (!productId && document.getElementById('firebase-products-container')) {
+        filterLocalCategory(urlParams.get('filter') || 'todos');
+    }
+    
+    // Atualiza categorias se necessário
+    if (window.location.search.includes('FASCINIO') && typeof renderCategories === 'function') {
+        renderCategories(true);
+    }
+});
 });
 
 window.toggleSearchExpansion = function (event) {

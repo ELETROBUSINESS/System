@@ -529,10 +529,18 @@ function doGet(e) {
         else if (action === "atualizarStatusNota") {
             response = atualizarStatusNota(e.parameter.chave, e.parameter.novoStatus);
         }
+
+        else if (action === "getOrderById") {
+            response = getPedidoSuperApp(e.parameter.orderId);
+        }
         else if (action === "getMissaoCadastroRapido") {
             response = obterProgressoMissao(e.parameter.operador);
         }
 
+
+        else if (action === "syncProducts") {
+            response = syncProductsToFirebase();
+        }
 
         // --- AÇÃO DESCONHECIDA ---
         else {
@@ -2391,6 +2399,9 @@ function saveProduct(data) {
             const sufixoAcao = tipoAcao === "edit" ? " (Edição)" : " (Novo)";
             
             sheetMovs.appendRow([new Date(), operadorNome + sufixoAcao, nomeProduto, temEstoque, temImagem]);
+
+            // 🔥 SINCRONIZA COM FIREBASE (NOVO)
+            syncProductsToFirebase();
         } catch(e) { }
 
         return { status: "success", message: tipoAcao === "edit" ? "Produto atualizado!" : "Produto criado!", type: tipoAcao };
@@ -2820,6 +2831,9 @@ function abaterEstoqueLote(itens) {
                 }
             }
         });
+        
+        // 🔥 SINCRONIZA COM FIREBASE (NOVO)
+        syncProductsToFirebase();
 
         return { status: "success", message: `Estoque atualizado para ${totalProcessado} itens.` };
 
@@ -2850,29 +2864,84 @@ function salvarPedidoSuperApp(data) {
             sheet.getRange("1:1").setFontWeight("bold").setBackground("#f3f3f3");
         }
 
-        const itemsString = data.items.map(i => `${i.quantity}x ${i.name}`).join(" | ");
+        // Se o orderId for numérico vindo do seller app, mantemos. Caso contrário geramos.
+        const finalOrderId = data.orderId || ('SA-' + Date.now() + '-' + Math.floor(Math.random() * 1000));
+
+        const itemsString = typeof data.items === 'string' ? data.items : (data.items.map(i => `${i.quantity}x ${i.name}`).join(" | "));
         const dateStr = Utilities.formatDate(new Date(), "GMT-3", "dd/MM/yyyy HH:mm:ss");
 
         const rowData = [];
         rowData[0] = dateStr;
-        rowData[1] = data.orderId;
+        rowData[1] = finalOrderId;
         rowData[2] = data.userId || "guest";
-        rowData[3] = data.clientData ? `${data.clientData.firstName} ${data.clientData.lastName}` : "Cliente";
+        rowData[3] = data.clientData ? `${data.clientData.firstName || ''} ${data.clientData.lastName || ''}`.trim() : "Cliente";
         rowData[4] = data.clientData ? data.clientData.phone : "";
         rowData[5] = data.clientData ? data.clientData.email : "";
         rowData[6] = data.deliveryData ? data.deliveryData.address : "Retirada";
         rowData[7] = itemsString;
-        rowData[8] = data.productsTotal;
-        rowData[9] = data.shippingCost;
-        rowData[10] = data.total;
-        // ...
-        rowData[14] = data.status || "Pendente"; // COLUNA O
+        rowData[8] = data.productsTotal || 0;
+        rowData[9] = data.shippingCost || 0;
+        rowData[10] = data.total || 0;
+        rowData[11] = data.status || "Pendente";
+        rowData[12] = data.gateway || "Link";
+        rowData[13] = data.account || "default";
+        rowData[14] = data.statusId || data.status || "Pendente"; // COLUNA O
 
         sheet.appendRow(rowData);
 
-        return { status: "success", message: "Pedido salvo na planilha" };
+        return { status: "success", message: "Pedido salvo na planilha", orderId: finalOrderId };
     } catch (e) {
         return { status: "error", message: "Erro ao salvar pedido: " + e.toString() };
+    }
+}
+
+function getPedidoSuperApp(orderId) {
+    try {
+        const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(PEDIDOS_SHEET_NAME);
+        if (!sheet) return { status: "error", message: "Aba pedidos não encontrada" };
+
+        const data = sheet.getDataRange().getValues();
+        const headers = data[0].map(h => String(h).toLowerCase().trim());
+        const idxOrderId = headers.indexOf("id pedido");
+        const idxStatusId = headers.indexOf("status-id");
+
+        if (idxOrderId === -1) return { status: "error", message: "Coluna ID Pedido não encontrada" };
+
+        const searchId = String(orderId);
+
+        for (let i = 1; i < data.length; i++) {
+            const row = data[i];
+            const rowOrderId = String(row[idxOrderId]);
+            
+            if (rowOrderId === searchId) {
+                const status = String(row[idxStatusId] || row[11]).toLowerCase(); // Fallback para coluna Status real
+                
+                // SEGURANÇA: Se já foi pago ou finalizado, não retorna os itens por privacidade
+                const blockStatus = ["pago", "finalizado", "entregue", "approved", "shipped"];
+                if (blockStatus.includes(status)) {
+                    return { status: "expired", message: "Este link já foi utilizado ou o pedido já foi concluído." };
+                }
+
+                // Parse itens string "1x Item A | 2x Item B" de volta para objeto aproximado se necessário
+                // Ou se salvamos o JSON original na planilha (recomendado para links)
+                return {
+                    status: "success",
+                    data: {
+                        orderId: rowOrderId,
+                        userId: row[2],
+                        clientName: row[3],
+                        itemsString: row[7],
+                        productsTotal: row[8],
+                        shippingCost: row[9],
+                        total: row[10],
+                        status: row[11]
+                    }
+                };
+            }
+        }
+        return { status: "not_found", message: "Pedido não encontrado." };
+    } catch (e) {
+        return { status: "error", message: e.toString() };
     }
 }
 
@@ -3051,3 +3120,53 @@ function obterProgressoMissao(operador) {
     }
 }
 
+// ==========================================================
+// SINCRONIZAÇÃO COM FIREBASE (VIA CLOUD FUNCTIONS)
+// ==========================================================
+
+/**
+ * Envia a lista de produtos formatada para o Firestore via Cloud Function
+ * Isso permite que o Super App carregue instantaneamente.
+ */
+function syncProductsToFirebase() {
+  try {
+    const SYNC_URL = "https://us-central1-super-app25.cloudfunctions.net/syncProducts";
+    const SYNC_SECRET = "dtudo_sync_2024_secure";
+
+    console.log("Iniciando sincronização com Firebase...");
+
+    // 1. Obtém os produtos formatados exatamente como o Super App espera
+    const result = listarProdutosSuperApp();
+    
+    if (result.status !== "success" || !result.data) {
+      console.error("Erro ao obter produtos para sincronia: " + result.message);
+      return { status: "error", message: "Falha ao ler produtos" };
+    }
+
+    // 2. Envia para a Cloud Function
+    const options = {
+      method: "post",
+      contentType: "application/json",
+      payload: JSON.stringify({
+        secret: SYNC_SECRET,
+        products: result.data
+      }),
+      muteHttpExceptions: true
+    };
+
+    const response = UrlFetchApp.fetch(SYNC_URL, options);
+    const responseData = JSON.parse(response.getContentText());
+
+    console.log("Resposta Firebase Sync: " + response.getContentText());
+
+    return { 
+      status: responseData.status || "success", 
+      synced: responseData.synced || 0,
+      timestamp: new Date()
+    };
+
+  } catch (e) {
+    console.error("Erro Fatal syncProductsToFirebase: " + e.toString());
+    return { status: "error", message: e.toString() };
+  }
+}
