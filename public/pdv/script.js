@@ -123,10 +123,11 @@ var getFirstImageUrl = (url) => {
     return cleanUrl; 
 };
 var mapStatusFirebaseToUI = (fbStatus) => {
-    if (fbStatus === 'approved') return 'pendente';
-    if (fbStatus === 'preparation') return 'preparando';
-    if (fbStatus === 'shipped') return 'enviado';
-    if (fbStatus === 'delivered') return 'finalizado';
+    const s = String(fbStatus || '').toLowerCase();
+    if (s === 'approved' || s === 'aprovado') return 'pendente';
+    if (s === 'preparation' || s === 'preparando') return 'preparando';
+    if (s === 'shipped' || s === 'enviado') return 'enviado';
+    if (s === 'delivered' || s === 'finalizado') return 'finalizado';
     return fbStatus;
 };
 
@@ -274,10 +275,18 @@ async function fetchOrdersFromAPI() {
         const result = await response.json();
 
         if (result.status === "success" && result.data) {
-            activeOrdersData = result.data.map(order => ({
+            // Filtrar apenas pedidos que estão com status de pagamento/fluxo válido (Ignora 'pendente' de espera de pagamento)
+            const validStatuses = ['approved', 'aprovado', 'preparation', 'preparando', 'shipped', 'enviado', 'delivered', 'finalizado'];
+            
+            activeOrdersData = result.data
+                .filter(order => {
+                    const s = String(order.status || '').toLowerCase();
+                    return validStatuses.includes(s);
+                })
+                .map(order => ({
                 id: order.id,
                 displayId: order.displayId || order.id,
-                status: order.status,
+                status: mapStatusFirebaseToUI(order.status),
                 client: order.client || "Cliente",
                 address: order.address || "Retirada",
                 items: order.items || "",
