@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-view="mobile">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Gerador de Link de Venda | D'TUDO</title>
+    <link rel="icon" href="/assets/img/iconWeb.png">
+
+    <!-- Bibliotecas Externas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
+    <style>
+        :root {
+            --primary: #db0038;
+            --primary-dark: #b8002e;
+            --surface: #ffffff;
+            --background: #f8fafc;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --secondary: #10b981; /* Verde Comissão */
+            --radius-2xl: 32px;
+            --radius-xl: 24px;
+            --radius-lg: 16px;
+        }
+
+
+
+        * {
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            overscroll-behavior-y: contain;
+        }
+        
+        #app-container {
+            max-width: 500px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: var(--background);
+            position: relative;
+        }
+
+        /* PADRÃO HEADER MÉTRICAS */
+        .metrics-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 30px 20px 10px;
+            background: var(--background);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .metrics-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -0.03em;
+        }
+
+        /* --- SEARCH --- */
+        .search-area {
+            padding: 10px 20px 20px;
+        }
+
+        .search-box {
+            position: relative;
+            background: #fff;
+            border-radius: var(--radius-lg);
+            border: 2px solid transparent;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.04);
+            transition: all 0.3s;
+        }
+
+        .search-box:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 12px 30px rgba(219, 0, 56, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 16px 16px 16px 52px;
+            border: none;
+            outline: none;
+            font-size: 15px;
+            font-weight: 500;
+            background: transparent;
+            color: var(--text-main);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 22px;
+            color: var(--text-muted);
+        }
+
+        /* --- PRODUCT LIST --- */
+        .product-grid {
+            padding: 0 16px 140px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .card-item {
+            background: #fff;
+            padding: 14px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border: 1px solid rgba(0,0,0,0.02);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-item:active {
+            transform: scale(0.97);
+            background: #f8fafc;
+        }
+
+        .img-box {
+            width: 76px;
+            height: 76px;
+            border-radius: 14px;
+            background: #f1f5f9;
+            overflow: hidden;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .img-content {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .info-box {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .info-box h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 2px;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .price-text {
+            font-size: 17px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        /* --- CONTROLS --- */
+        .qty-wrap {
+            display: flex;
+            align-items: center;
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: 12px;
+        }
+
+        .btn-qty {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border: none;
+            color: var(--text-main);
+        }
+
+        .btn-qty:disabled { opacity: 0.4; box-shadow: none; }
+
+        .qty-num {
+            font-size: 14px;
+            font-weight: 700;
+            min-width: 32px;
+            text-align: center;
+        }
+
+        /* --- CART BAR --- */
+        .checkout-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #fff;
+            border-radius: 32px 32px 0 0;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.08);
+            z-index: 1000;
+            padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .checkout-bar.active {
+            transform: translateY(0);
+        }
+
+        .commission-pill {
+            background: #ecfdf5;
+            border: 1px solid #d1fae5;
+            padding: 12px 16px;
+            border-radius: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        /* --- MODAL --- */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: #fff;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 36px;
+            padding: 32px;
+            position: relative;
+            animation: modalPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.85); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            width: 100%;
+            padding: 18px;
+            border-radius: 18px;
+            font-weight: 800;
+            font-size: 15px;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 10px 20px rgba(219, 0, 56, 0.15);
+        }
+
+        .btn-whatsapp { background: #10b981; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.15); }
+
+        /* --- TOAST --- */
+        .custom-toast {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translate(-50%, -40px);
+            background: #1e293b;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 9999;
+            opacity: 0;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+
+        .custom-toast.show { opacity: 1; transform: translate(-50%, 0); }
+    </style>
+</head>
+
+<body>
+    <div id="toast" class="custom-toast"></div>
+
+    <div id="app-container">
+        <!-- Header -->
+        <div class="metrics-header-row" id="stuck-header">
+            <h1 class="metrics-title">Link de pagamento</h1>
+        </div>
+
+        <!-- Search -->
+        <div class="search-area">
+            <div class="search-box">
+                <i class='bx bx-search search-icon'></i>
+                <input type="text" id="search-input" placeholder="Pesquisar produto no estoque..." class="search-input" autocomplete="off">
+            </div>
+        </div>
+
+        <!-- Catalog -->
+        <div id="product-list" class="product-grid">
+            <div class="py-32 flex flex-col items-center justify-center text-slate-300">
+                <div class="w-10 h-10 border-[3px] border-slate-100 border-t-red-500 rounded-full animate-spin mb-4"></div>
+                <span class="text-[10px] font-bold uppercase tracking-widest">Acessando catálogos...</span>
+            </div>
+        </div>
+
+        <!-- Checkout Bar -->
+        <div id="cart-footer" class="checkout-bar">
+            <!-- INFO COMISSÃO -->
+            <div class="commission-pill">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center text-white">
+                        <i class='bx bx-coin-stack text-lg'></i>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter">Sua Comissão</p>
+                        <p class="text-xs font-semibold text-emerald-800">1,5% por venda</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <span id="commission-value" class="text-lg font-black text-emerald-700">R$ 0,00</span>
+                </div>
+            </div>
+
+            <!-- RESUMO -->
+            <div class="flex items-center justify-between mb-6 px-1">
+                <div>
+                    <span id="cart-count" class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block mb-1">0 ITENS</span>
+                    <span id="cart-total" class="text-2xl font-black text-slate-900">R$ 0,00</span>
+                </div>
+                <div class="text-right">
+                    <span id="selected-seller-badge" class="hidden bg-slate-100 text-slate-600 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
+                        Vendedor: <span id="display-seller-name">-</span>
+                    </span>
+                </div>
+            </div>
+
+            <button onclick="openSellerModal()" class="btn-primary">
+                Finalizar e Gerar Link <i class='bx bx-right-arrow-alt'></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Seleção de Vendedor -->
+    <div id="seller-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="text-2xl font-black text-slate-900 mb-1 text-center">Quem está vendendo?</h2>
+            <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-8 text-center">Selecione seu nome para o link</p>
+            
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <button onclick="selectSeller('Nubia')" class="p-5 rounded-2xl bg-slate-50 border-2 border-transparent hover:border-red-500 hover:bg-red-50 transition-all flex flex-col items-center gap-2 group">
+                    <div class="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:text-red-500">
+                        <i class='bx bx-user text-2xl'></i>
+                    </div>
+                    <span class="font-bold text-slate-700">Nubia</span>
+                </button>
+                <button onclick="selectSeller('Evelyn')" class="p-5 rounded-2xl bg-slate-50 border-2 border-transparent hover:border-red-500 hover:bg-red-50 transition-all flex flex-col items-center gap-2 group">
+                    <div class="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:text-red-500">
+                        <i class='bx bx-user text-2xl'></i>
+                    </div>
+                    <span class="font-bold text-slate-700">Evelyn</span>
+                </button>
+                <button onclick="selectSeller('Nathan')" class="p-5 rounded-2xl bg-slate-50 border-2 border-transparent hover:border-red-500 hover:bg-red-50 transition-all flex flex-col items-center gap-2 group">
+                    <div class="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:text-red-500">
+                        <i class='bx bx-user text-2xl'></i>
+                    </div>
+                    <span class="font-bold text-slate-700">Nathan</span>
+                </button>
+                <button onclick="selectSeller('Ryan')" class="p-5 rounded-2xl bg-slate-50 border-2 border-transparent hover:border-red-500 hover:bg-red-50 transition-all flex flex-col items-center gap-2 group">
+                    <div class="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:text-red-500">
+                        <i class='bx bx-user text-2xl'></i>
+                    </div>
+                    <span class="font-bold text-slate-700">Ryan</span>
+                </button>
+            </div>
+            
+            <button onclick="document.getElementById('seller-modal').style.display='none'" class="w-full py-4 text-[10px] font-black text-slate-300 uppercase tracking-widest hover:text-red-500 transition-colors">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Modal Success -->
+    <div id="link-modal" class="modal-overlay">
+        <div class="modal-content text-center">
+            <div class="w-20 h-20 bg-emerald-50 rounded-[30px] flex items-center justify-center mx-auto mb-6">
+                <i class='bx bxs-check-circle text-5xl text-emerald-500'></i>
+            </div>
+            <h2 class="text-2xl font-black text-slate-900 mb-2">Link Pronto!</h2>
+            <p class="text-slate-500 text-sm mb-6 leading-relaxed px-4">O link de pagamento foi gerado. O estoque está reservado para o seu cliente.</p>
+            
+            <div class="bg-slate-50 border border-dashed border-slate-200 p-4 rounded-2xl mb-8 break-all font-mono text-[11px] text-slate-500 select-all" id="generated-url">
+                ---
+            </div>
+
+            <div class="space-y-3">
+                <button onclick="shareWhatsApp()" class="btn-primary btn-whatsapp text-white">
+                    <i class='bx bxl-whatsapp text-2xl'></i> Enviar WhatsApp
+                </button>
+                <button onclick="copyToClipboard()" class="w-full py-4 font-bold text-slate-600 flex items-center justify-center gap-2 active:scale-95 transition-transform">
+                    <i class='bx bx-copy'></i> Copiar Link
+                </button>
+            </div>
+            
+            <button onclick="closeModal()" class="mt-8 text-[10px] font-black text-slate-300 uppercase tracking-widest hover:text-red-500 transition-colors">Voltar</button>
+        </div>
+    </div>
+
+    <script>
+        const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
+        let catalog = [];
+        let cart = {};
+        let selectedSeller = '';
+
+        // Scroll listener removido para manter padrão estático das métricas
+
+
+        async function init() {
+            try {
+                const cache = localStorage.getItem('dtudo_products_cache');
+                if (cache) {
+                    catalog = JSON.parse(cache);
+                    renderCatalog();
+                }
+
+                const resp = await fetch(`${APPSCRIPT_URL}?action=listarProdutosSuperApp`);
+                const result = await resp.json();
+                if (result.status === "success" && result.data) {
+                    catalog = result.data.filter(p => {
+                        if (!p.id || !p.name) return false;
+                        const name = String(p.name).toLowerCase();
+                        // Ignora headers e itens fantasmas
+                        if (name === 'nome' || name.includes('descrição') || name.includes('foto')) return false;
+                        return true;
+                    });
+                    localStorage.setItem('dtudo_products_cache', JSON.stringify(catalog));
+                    renderCatalog();
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function isValidImg(url) {
+            if (!url || typeof url !== 'string') return false;
+            const u = url.toLowerCase();
+            if (u.startsWith('foto') || u.includes('image/jpeg;base64:1') || u.includes('invalid') || u.length < 10) return false;
+            return true;
+        }
+
+        function getSafeImg(url) {
+            if (!isValidImg(url)) return '';
+            return url.split(',')[0].trim();
+        }
+
+        function renderCatalog(filter = '') {
+            const container = document.getElementById('product-list');
+            
+            let filtered = catalog.filter(p => {
+                // Filtro de Imagem Obrigatória e Válida
+                if (!isValidImg(p.imgUrl)) return false;
+                
+                const name = String(p.name || "").toLowerCase();
+                const query = filter.toLowerCase();
+                return name.includes(query);
+            });
+
+            filtered.sort((a, b) => {
+                const inCartA = cart[a.id] ? 1 : 0;
+                const inCartB = cart[b.id] ? 1 : 0;
+                if (inCartA !== inCartB) return inCartB - inCartA;
+                return parseInt(b.stock || 0) - parseInt(a.stock || 0);
+            });
+            
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="py-24 text-center text-slate-300 font-bold uppercase text-[10px] tracking-widest"><i class='bx bx-search-alt text-5xl mb-3 block'></i>Nada encontrado</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(p => {
+                const qty = cart[p.id]?.quantity || 0;
+                const price = parseFloat(p['price-oferta'] || p.price || 0);
+                const stock = parseInt(p.stock || 0);
+                const isOut = stock <= 0;
+                const low = stock > 0 && stock <= 3;
+                
+                return `
+                    <div class="card-item ${isOut ? 'opacity-40 grayscale' : ''} ${qty > 0 ? 'ring-2 ring-red-500/10 bg-red-50/10' : ''}">
+                        <div class="img-box">
+                            <img src="${getSafeImg(p.imgUrl)}" class="img-content" onerror="this.src='/assets/img/iconWeb.png'">
+                            ${isOut ? '<div class="absolute inset-0 bg-black/60 flex items-center justify-center"><span class="text-[8px] text-white font-bold uppercase tracking-tighter">Esgotado</span></div>' : ''}
+                        </div>
+                        <div class="info-box">
+                            <h3>${p.name}</h3>
+                            <div class="flex items-center gap-2">
+                                <span class="price-text">R$ ${price.toFixed(2).replace('.', ',')}</span>
+                                ${low ? `<span class="bg-orange-50 text-orange-600 text-[8px] font-bold px-1.5 py-0.5 rounded-md uppercase">Só ${stock} un</span>` : ''}
+                            </div>
+                            ${qty > 0 ? `<div class="text-[9px] text-red-500 font-extrabold uppercase tracking-widest mt-1">✓ Selecionado</div>` : ''}
+                        </div>
+                        <div class="qty-wrap">
+                            <button class="btn-qty" onclick="updateQty('${p.id}', -1)" ${qty <= 0 ? 'disabled' : ''}><i class='bx bx-minus'></i></button>
+                            <span class="qty-num">${qty}</span>
+                            <button class="btn-qty" onclick="updateQty('${p.id}', 1)" ${isOut || qty >= stock ? 'disabled' : ''}><i class='bx bx-plus'></i></button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateQty(id, delta) {
+            const product = catalog.find(p => String(p.id) === String(id));
+            if (!product) return;
+
+            if (!cart[id]) {
+                if (delta <= 0) return;
+                cart[id] = { 
+                    id: product.id, 
+                    name: product.name, 
+                    priceNew: parseFloat(product['price-oferta'] || product.price || 0), 
+                    image: getSafeImg(product.imgUrl),
+                    quantity: 0 
+                };
+            }
+
+            cart[id].quantity += delta;
+            if (cart[id].quantity <= 0) delete cart[id];
+
+            updateFooter();
+            renderCatalog(document.getElementById('search-input').value);
+        }
+
+        function updateFooter() {
+            const items = Object.values(cart);
+            const count = items.reduce((s, i) => s + i.quantity, 0);
+            const total = items.reduce((s, i) => s + (i.priceNew * i.quantity), 0);
+            const commission = total * 0.015;
+            
+            const footer = document.getElementById('cart-footer');
+            if (count > 0) {
+                footer.classList.add('active');
+                document.getElementById('cart-count').innerText = `${count} ${count === 1 ? 'ITEM' : 'ITENS'}`;
+                document.getElementById('cart-total').innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
+                document.getElementById('commission-value').innerText = `R$ ${commission.toFixed(2).replace('.', ',')}`;
+            } else {
+                footer.classList.remove('active');
+            }
+        }
+
+        function openSellerModal() {
+            document.getElementById('seller-modal').style.display = 'flex';
+        }
+
+        function selectSeller(name) {
+            selectedSeller = name;
+            document.getElementById('display-seller-name').innerText = name;
+            document.getElementById('selected-seller-badge').classList.remove('hidden');
+            document.getElementById('seller-modal').style.display = 'none';
+            generateLink();
+        }
+
+        async function generateLink() {
+            const items = Object.values(cart);
+            if (items.length === 0) return;
+            if (!selectedSeller) {
+                openSellerModal();
+                return;
+            }
+
+            const btn = document.querySelector('.btn-primary');
+            const original = btn.innerHTML;
+            btn.innerHTML = "<i class='bx bx-loader-alt animate-spin'></i> Criando link...";
+            btn.disabled = true;
+
+            try {
+                const orderId = 'SA' + Date.now() + Math.floor(Math.random() * 999);
+                const total = items.reduce((s, i) => s + (i.priceNew * i.quantity), 0);
+
+                fetch(APPSCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({ 
+                        action: 'salvarPedido', 
+                        data: {
+                            orderId, items, productsTotal: total, total, status: "Link Gerado",
+                            deliveryData: { seller: selectedSeller }
+                        } 
+                    })
+                });
+
+                const link = `${window.location.origin}/super-app/payment.html?orderId=${orderId}${selectedSeller ? '&seller='+encodeURIComponent(selectedSeller) : ''}`;
+                document.getElementById('generated-url').innerText = link;
+                document.getElementById('link-modal').style.display = 'flex';
+            } catch (e) {
+                console.error(e);
+            } finally {
+                btn.innerHTML = original;
+                btn.disabled = false;
+            }
+        }
+
+        function closeModal() { document.getElementById('link-modal').style.display = 'none'; }
+
+        function copyToClipboard() {
+            navigator.clipboard.writeText(document.getElementById('generated-url').innerText).then(() => {
+                showToast("Link copiado!");
+            });
+        }
+
+        function shareWhatsApp() {
+            const url = document.getElementById('generated-url').innerText;
+            window.open(`https://wa.me/?text=${encodeURIComponent("Olá! Clique no link para ver os produtos e finalizar seu pedido:\n\n" + url)}`, '_blank');
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerHTML = `<i class='bx bxs-check-circle text-emerald-400'></i> ${msg}`;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        document.getElementById('search-input').oninput = (e) => renderCatalog(e.target.value);
+        init();
+    </script>
+</body>
+</html>
+

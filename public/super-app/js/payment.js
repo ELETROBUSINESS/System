@@ -59,7 +59,8 @@ function registrarPedido({ cart, total, method, gateway = 'Mercado Pago', status
             mode: deliveryMode,
             store: selectedStore,
             city,
-            cep
+            cep,
+            seller: (typeof validatedOrderData !== 'undefined' && validatedOrderData && validatedOrderData.seller) ? validatedOrderData.seller : (new URLSearchParams(window.location.search).get('seller') || "")
         },
         items: cart.map(i => ({
             id: i.id, name: i.name,
@@ -1017,6 +1018,7 @@ function setupPixEvents() {
 }
 
 // ─── BACKGROUND LOADER PARA LINKS DE PAGAMENTO ────────────
+let validatedOrderData = null;
 async function loadOrderFromUrl() {
     const params = new URLSearchParams(window.location.search);
     const orderId = params.get('orderId');
@@ -1037,13 +1039,20 @@ async function loadOrderFromUrl() {
             console.log("[Link Shortener] Pedido recuperado com sucesso.");
             
             // Se o carrinho atual estiver vazio, podemos tentar preencher com os dados do pedido.
-            // O ideal é que o Seller App envie o JSON original para a API, mas se não, 
-            // pelo menos evitamos que o usuário veja um carrinho vazio se o localStorage falhar.
             const currentCart = JSON.parse(localStorage.getItem('app_cart') || '[]');
             if (currentCart.length === 0 && orderData.itemsString) {
                 console.log("[Link Shortener] Carrinho vazio, preenchendo resumo do pedido.");
-                // Aqui poderíamos parsear o itemsString se for JSON, 
-                // ou simplesmente mostrar o total recuperado.
+            }
+
+            // Exibe o vendedor se existir
+            if (orderData.seller) {
+                validatedOrderData = orderData;
+                const sellerRow = document.getElementById('pay-seller-row');
+                const sellerName = document.getElementById('pay-seller-name');
+                if (sellerRow && sellerName) {
+                    sellerRow.style.display = 'flex';
+                    sellerName.textContent = orderData.seller;
+                }
             }
         } else if (result.status === "expired") {
             showToast(result.message, "warning");

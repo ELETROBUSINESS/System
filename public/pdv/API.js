@@ -2886,6 +2886,7 @@ function salvarPedidoSuperApp(data) {
         rowData[12] = data.gateway || "Link";
         rowData[13] = data.account || "default";
         rowData[14] = data.statusId || data.status || "Pendente"; // COLUNA O
+        rowData[15] = data.deliveryData ? data.deliveryData.seller : ""; // COLUNA P
 
         sheet.appendRow(rowData);
 
@@ -2934,7 +2935,8 @@ function getPedidoSuperApp(orderId) {
                         productsTotal: row[8],
                         shippingCost: row[9],
                         total: row[10],
-                        status: row[11]
+                        status: row[11],
+                        seller: row[15] // Coluna P
                     }
                 };
             }
