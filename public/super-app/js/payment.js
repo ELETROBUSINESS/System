@@ -888,7 +888,74 @@ function setupCardModal() {
 }
 
 async function handleCardPayment() {
-    openCardModal();
+    showProcessingOverlay();
+    try {
+        const cart = validatedCart.length ? validatedCart : CartManager.get();
+        const user = (typeof auth !== 'undefined') ? auth.currentUser : null;
+        const fullName = document.getElementById("reg-full-name")?.value.trim() || "Cliente";
+        const phone = document.getElementById("reg-phone")?.value.trim() || "";
+        const address = document.getElementById("address")?.value || "";
+        const city = document.getElementById("city-select")?.value || "";
+        const cep = document.getElementById("cep")?.value || "";
+
+        const nameParts = fullName.split(' ');
+
+        const payload = {
+            userId: user?.uid || 'guest',
+            items: cart.map(i => ({
+                id: String(i.id),
+                name: i.name,
+                quantity: Number(i.quantity),
+                priceNew: Number(i.priceBase || i.priceNew),
+                image: i.image || ''
+            })),
+            shippingCost: currentShippingCost,
+            deliveryData: {
+                mode: deliveryMode,
+                store: selectedStore,
+                address: address,
+                city: city,
+                cep: cep
+            },
+            clientData: {
+                firstName: nameParts[0],
+                lastName: nameParts.slice(1).join(' ') || 'Cliente',
+                email: user?.email || 'cliente@dtudo.com.br',
+                phone: phone
+            }
+        };
+
+        const resp = await fetch(`${CLOUD_FUNCTIONS_URL}/createInfinitePayLink`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await resp.json();
+        hideProcessingOverlay();
+
+        if (result.url) {
+            // Track purchase attempt
+            if (typeof trackEvent === 'function') {
+                trackEvent('begin_checkout', {
+                    value: window._totalCard,
+                    currency: 'BRL',
+                    payment_type: 'card',
+                    gateway: 'infinitepay'
+                });
+            }
+            
+            // Redireciona para o link de pagamento da InfinitePay
+            console.log("Redirecionando para InfinitePay:", result.url);
+            window.location.href = result.url;
+        } else {
+            showToast("Erro ao gerar link de pagamento. Tente novamente.", "error");
+        }
+    } catch (e) {
+        hideProcessingOverlay();
+        console.error("InfinitePay Link Error:", e);
+        showToast("Erro ao processar pagamento com InfinitePay.", "error");
+    }
 }
 
 
