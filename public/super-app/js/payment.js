@@ -430,20 +430,23 @@ async function setupPaymentStep() {
 
     try {
         const localCart = CartManager.get();
-        // Se o carrinho estiver vazio e tivermos dados de um pedido via link, usamos eles
-        if (localCart.length === 0 && validatedOrderData && validatedOrderData.cartItems) {
-            console.log("[Checkout] Usando itens do pedido vinculado ao link.");
-            validatedCart = validatedOrderData.cartItems;
+        const linkCart = (validatedOrderData && validatedOrderData.cartItems) ? validatedOrderData.cartItems : [];
+
+        if (localCart.length === 0 && linkCart.length > 0) {
+            console.log("[Checkout] Validando preços do pedido vinculado ao link.");
+            validatedCart = await validateCartPrices(linkCart);
         } else {
             validatedCart = await validateCartPrices(localCart);
         }
     } catch (e) {
+        console.warn("[Checkout] Falha ao validar preços, usando fallback:", e);
         const localCart = CartManager.get();
-        if (localCart.length === 0 && validatedOrderData && validatedOrderData.cartItems) {
-            validatedCart = validatedOrderData.cartItems;
-        } else {
-            validatedCart = localCart.map(i => ({ ...i, pricePix: i.priceNew, priceBase: i.priceNew }));
-        }
+        const sourceCart = (localCart.length > 0) ? localCart : (validatedOrderData?.cartItems || []);
+        validatedCart = sourceCart.map(i => ({ 
+            ...i, 
+            pricePix: i.pricePix || i.priceNew, 
+            priceBase: i.priceBase || i.priceNew 
+        }));
     }
 
     hideProcessingOverlay();
