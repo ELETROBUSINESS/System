@@ -613,7 +613,11 @@
                     body: JSON.stringify({ 
                         action: 'salvarPedido', 
                         data: {
-                            orderId, items, productsTotal: total, total, status: "Link Gerado",
+                            orderId, 
+                            items: JSON.stringify(items), 
+                            productsTotal: total, 
+                            total, 
+                            status: "Link Gerado",
                             deliveryData: { seller: selectedSeller }
                         } 
                     })

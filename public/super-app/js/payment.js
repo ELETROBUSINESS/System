@@ -62,12 +62,12 @@ function registrarPedido({ cart, total, method, gateway = 'Mercado Pago', status
             cep,
             seller: (typeof validatedOrderData !== 'undefined' && validatedOrderData && validatedOrderData.seller) ? validatedOrderData.seller : (new URLSearchParams(window.location.search).get('seller') || "")
         },
-        items: cart.map(i => ({
+        items: JSON.stringify(cart.map(i => ({
             id: i.id, name: i.name,
             quantity: i.quantity,
             price: i.priceBase || i.priceNew,
             image: i.image
-        })),
+        }))),
         productsTotal,
         shippingCost: currentShippingCost,
         total,
@@ -291,7 +291,12 @@ function setupStepNavigation() {
     if (btnPayment) {
         btnPayment.addEventListener("click", async () => {
             const cart = CartManager.get();
-            if (cart.length === 0) { showToast("Carrinho vazio!", "error"); return; }
+            const hasOrderData = (validatedOrderData && validatedOrderData.cartItems && validatedOrderData.cartItems.length > 0);
+            
+            if (cart.length === 0 && !hasOrderData) { 
+                showToast("Carrinho vazio!", "error"); 
+                return; 
+            }
 
             if (deliveryMode === 'delivery') {
                 if (!document.getElementById("cep")?.value || !document.getElementById("address")?.value) {
@@ -1058,10 +1063,16 @@ async function loadOrderFromUrl() {
             validatedOrderData = orderData;
 
             // Extrai itens (pode vir como array ou string JSON)
-            if (orderData.items) {
-                validatedOrderData.cartItems = Array.isArray(orderData.items) ? orderData.items : JSON.parse(orderData.items);
-            } else if (orderData.itemsString) {
-                validatedOrderData.cartItems = JSON.parse(orderData.itemsString);
+            try {
+                if (orderData.items) {
+                    validatedOrderData.cartItems = Array.isArray(orderData.items) ? orderData.items : JSON.parse(orderData.items);
+                } else if (orderData.itemsString) {
+                    // Tenta parsear, se falhar (ex: string humanizada), mantém vazio para evitar crash
+                    validatedOrderData.cartItems = JSON.parse(orderData.itemsString);
+                }
+            } catch (ee) {
+                console.warn("[Link Shortener] Erro ao parsear itens do pedido. O formato pode estar inválido.", ee);
+                validatedOrderData.cartItems = [];
             }
 
             // Exibe o vendedor se existir
