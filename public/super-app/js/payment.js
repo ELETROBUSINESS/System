@@ -117,29 +117,50 @@ function showToast(msg, type = 'info') {
 }
 
 // ─── REGRA DE PARCELAS SEM JUROS ─────────────────────────
-// Sincronizado com o backend (functions/index.js - createPayment)
+// Sincronizado conforme novas taxas disponibilizadas pela InfinitePay
 function getInstallmentPlan(total) {
-    // Regra: sem juros até 3x (quando total >= R$300), 2x (>= R$150), 1x abaixo
-    const freeInstallments = total >= 300 ? 3 : total >= 150 ? 2 : 1;
-    // Permite parcelar apenas a partir de R$ 150
-    const maxInstallments = total >= 150 ? 12 : 1;
-    const INTEREST_RATE = 0.0199; // 1.99% ao mês (cartão c/ juros acima do limite sem juros)
+    // Nova Tabela:
+    // Até R$ 50 -> 3x sem juros
+    // Até R$ 100 -> 4x sem juros
+    // Até R$ 200 -> 6x sem juros
+    // Acima de R$ 200 -> 12x sem juros (extrapolação lógica para maiores valores)
+    
+    let freeInstallments = 1;
+    if (total >= 200) freeInstallments = 6;
+    else if (total >= 100) freeInstallments = 4;
+    else if (total >= 50) freeInstallments = 3;
+    else if (total >= 10) freeInstallments = 1; // Mínimo para parcelar geralmente é R$5-10
+
+    // InfinitePay permite até 12x. Vamos habilitar conforme o valor.
+    let maxInstallments = 1;
+    if (total >= 200) maxInstallments = 12;
+    else if (total >= 100) maxInstallments = 6;
+    else if (total >= 50) maxInstallments = 4;
+    else if (total >= 20) maxInstallments = 3;
+
+    const INTEREST_RATE = 0.0199; // 1.99% ao mês (caso o cliente escolha mais parcelas que o "sem juros")
 
     const plan = [];
     for (let n = 1; n <= maxInstallments; n++) {
-        if (total / n < 5) break; // MP exige parcela mínima de R$5
+        // Garantia de parcela mínima (InfinitePay/Gateways costumam exigir min R$5.00)
+        if (total / n < 5) break; 
 
         let installmentValue, totalWithInterest;
         if (n <= freeInstallments) {
             installmentValue = total / n;
             totalWithInterest = total;
         } else {
-            // Juros simples para exibição informativa
+            // Cálculo de juros para parcelas que excedem a carência sem juros
             const factor = Math.pow(1 + INTEREST_RATE, n);
             installmentValue = (total * factor * INTEREST_RATE) / (factor - 1);
             totalWithInterest = installmentValue * n;
         }
-        plan.push({ n, installmentValue, totalWithInterest, free: n <= freeInstallments });
+        plan.push({ 
+            n, 
+            installmentValue, 
+            totalWithInterest, 
+            free: n <= freeInstallments 
+        });
     }
     return plan;
 }
@@ -517,6 +538,7 @@ function renderTotals(totalPix, totalCard, savings, discountValue = 0, coupon = 
     // Armazena globalmente para usar no confirmar
     window._totalPix = totalPix;
     window._totalCard = totalCard;
+    window._currentDiscount = discountValue;
 
     const subtotalCard = (totalCard + (coupon ? discountValue : 0)) - currentShippingCost;
     document.getElementById('pay-subtotal').textContent = fmt(subtotalCard);
@@ -642,7 +664,7 @@ async function handleConfirmPayment() {
     if (selectedPayMethod === 'pix') {
         await handlePixPayment();
     } else if (selectedPayMethod === 'card') {
-        await handleCardPayment();
+        await handleInfinitePayPayment();
     } else {
         handleWhatsAppPayment();
     }
@@ -652,17 +674,17 @@ async function handleConfirmPayment() {
 async function handlePixPayment() {
     showProcessingOverlay();
     try {
-        const data = await startCustomCheckout('pix');
-        hideProcessingOverlay();
-        if (data && data.point_of_interaction) {
-            showPixScreen(data);
+        const paymentData = await startCustomCheckout('pix');
+        if (paymentData && paymentData.point_of_interaction) {
+            showPixScreen(paymentData);
         } else {
-            showToast("Erro ao gerar PIX. Tente novamente.", "error");
+            throw new Error("Não foi possível gerar os dados do PIX.");
         }
     } catch (e) {
-        hideProcessingOverlay();
         console.error(e);
-        showToast("Erro ao gerar PIX.", "error");
+        showToast("Erro ao gerar PIX (Mercado Pago): " + e.message, "error");
+    } finally {
+        hideProcessingOverlay();
     }
 }
 
@@ -909,45 +931,58 @@ function setupCardModal() {
     });
 }
 
-async function handleCardPayment() {
+async function handleInfinitePayPayment() {
     showProcessingOverlay();
     try {
         const cart = validatedCart.length ? validatedCart : CartManager.get();
-        const user = (typeof auth !== 'undefined') ? auth.currentUser : null;
+        const isPix = selectedPayMethod === 'pix';
+        const total = isPix ? (window._totalPix || 0) : (window._totalCard || 0);
+        
+        // 1. Registrar o pedido no sistema antes de redirecionar
+        const orderId = registrarPedido({
+            cart, 
+            total,
+            method: selectedPayMethod,
+            gateway: 'InfinitePay Checkout',
+            status: 'Aguardando Pagamento'
+        });
+
+        // 2. Chamar Cloud Function para gerar o link
         const fullName = document.getElementById("reg-full-name")?.value.trim() || "Cliente";
         const phone = document.getElementById("reg-phone")?.value.trim() || "";
-        const address = document.getElementById("address")?.value || "";
-        const city = document.getElementById("city-select")?.value || "";
-        const cep = document.getElementById("cep")?.value || "";
 
-        const nameParts = fullName.split(' ');
+        // Prepara itens com o preço correto baseado no método (Pix tem 2% de desconto no pricePix)
+        const itemsPayload = cart.map(i => ({
+            name: i.name,
+            quantity: Number(i.quantity),
+            price: Number(isPix ? (i.pricePix || i.priceNew) : (i.priceBase || i.priceNew))
+        }));
+
+        // Adiciona cupom de desconto como um item negativo se houver
+        if (appliedCoupon && window._currentDiscount > 0) {
+            itemsPayload.push({
+                name: `Cupom: ${appliedCoupon.code}`,
+                quantity: 1,
+                price: -Math.abs(window._currentDiscount)
+            });
+        }
 
         const payload = {
-            userId: user?.uid || 'guest',
-            items: cart.map(i => ({
-                id: String(i.id),
-                name: i.name,
-                quantity: Number(i.quantity),
-                priceNew: Number(i.priceBase || i.priceNew),
-                image: i.image || ''
-            })),
-            shippingCost: currentShippingCost,
-            deliveryData: {
-                mode: deliveryMode,
-                store: selectedStore,
-                address: address,
-                city: city,
-                cep: cep
-            },
-            clientData: {
-                firstName: nameParts[0],
-                lastName: nameParts.slice(1).join(' ') || 'Cliente',
-                email: user?.email || 'cliente@dtudo.com.br',
+            orderId: orderId,
+            items: itemsPayload,
+            customer: {
+                name: fullName,
                 phone: phone
-            }
+            },
+            payment_method: selectedPayMethod, // 'pix' ou 'card'
+            redirect_url: window.location.origin + "/super-app/pedidos.html"
         };
 
-        const resp = await fetch(`${CLOUD_FUNCTIONS_URL}/createInfinitePayLink`, {
+        // Note: A URL da função pode variar conforme a região. 
+        // Usamos a URL base definida no topo, ajustando se necessário.
+        const INFINITE_FUNCTION_URL = CLOUD_FUNCTIONS_URL.replace('us-central1', 'southamerica-east1') + '/createInfinitePayLink';
+        
+        const resp = await fetch(INFINITE_FUNCTION_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -956,13 +991,13 @@ async function handleCardPayment() {
         const result = await resp.json();
         hideProcessingOverlay();
 
-        if (result.url) {
+        if (result.status === 'success' && result.url) {
             // Track purchase attempt
             if (typeof trackEvent === 'function') {
                 trackEvent('begin_checkout', {
-                    value: window._totalCard,
+                    value: total,
                     currency: 'BRL',
-                    payment_type: 'card',
+                    payment_type: selectedPayMethod,
                     gateway: 'infinitepay'
                 });
             }
@@ -978,6 +1013,10 @@ async function handleCardPayment() {
         console.error("InfinitePay Link Error:", e);
         showToast("Erro ao processar pagamento com InfinitePay.", "error");
     }
+}
+
+async function handleCardPayment() {
+    await handleInfinitePayPayment();
 }
 
 
