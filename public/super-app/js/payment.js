@@ -271,13 +271,8 @@ function setupMasks() {
                             if (addr) addr.value = `${data.logradouro}, ${data.bairro}`.replace(/^, /, '');
                             const city = document.getElementById('city-select');
                             if (city && data.localidade) {
-                                for (const opt of city.options) {
-                                    if (opt.value.toLowerCase().includes(data.localidade.toLowerCase())) {
-                                        city.value = opt.value;
-                                        city.dispatchEvent(new Event('change'));
-                                        break;
-                                    }
-                                }
+                                city.value = data.localidade;
+                                calculateShipping();
                             }
                         }
                     }).catch(() => { });
@@ -425,14 +420,10 @@ function calculateShipping() {
     const address = document.getElementById('address')?.value || '';
     const subtotal = cart.reduce((s, i) => s + (i.priceNew * i.quantity), 0);
 
-    // Se for cidades padrão (Ipixuna/Aurora), usa frete fixo
-    if (city === 'Ipixuna do Pará') {
+    // Se for cidades padrão (Ipixuna), usa frete grátis
+    if (city === 'Ipixuna do Pará' || city === 'Ipixuna do Para') {
         currentShippingCost = 0; // Festival Frete Grátis
         renderFreightOptions(null); // Oculta opções dinâmicas
-        updateShippingDisplay(subtotal);
-    } else if (city === 'Aurora do Pará') {
-        currentShippingCost = 50;
-        renderFreightOptions(null);
         updateShippingDisplay(subtotal);
     } else {
         // Para outras cidades e se o CEP estiver preenchido, busca SuperFrete
