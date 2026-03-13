@@ -387,6 +387,9 @@ function setupDeliveryLogic() {
     const citySelect = document.getElementById('city-select');
     if (citySelect) citySelect.addEventListener('change', calculateShipping);
 
+    const addressInput = document.getElementById('address');
+    if (addressInput) addressInput.addEventListener('blur', calculateShipping);
+
     window.selectDeliveryType = (type) => {
         deliveryMode = type;
         document.querySelectorAll('.co-toggle').forEach(c => c.classList.remove('sel'));
@@ -418,18 +421,118 @@ function setupDeliveryLogic() {
 function calculateShipping() {
     const cart = CartManager.get();
     const city = document.getElementById('city-select')?.value || '';
-    const total = cart.reduce((s, i) => s + (i.priceNew * i.quantity), 0);
+    const cep = document.getElementById('cep')?.value || '';
+    const address = document.getElementById('address')?.value || '';
+    const subtotal = cart.reduce((s, i) => s + (i.priceNew * i.quantity), 0);
 
+    // Se for cidades padrão (Ipixuna/Aurora), usa frete fixo
     if (city === 'Ipixuna do Pará') {
         currentShippingCost = 0; // Festival Frete Grátis
+        renderFreightOptions(null); // Oculta opções dinâmicas
+        updateShippingDisplay(subtotal);
     } else if (city === 'Aurora do Pará') {
         currentShippingCost = 50;
+        renderFreightOptions(null);
+        updateShippingDisplay(subtotal);
     } else {
-        currentShippingCost = 0; // Paragominas ou outro: tratado via WhatsApp
+        // Para outras cidades e se o CEP estiver preenchido, busca SuperFrete
+        const cleanCep = cep.replace(/\D/g, '');
+        if (cleanCep.length === 8) {
+            fetchDynamicFreight(cleanCep, cart, address, city);
+        } else {
+            currentShippingCost = 0;
+            updateShippingDisplay(subtotal);
+        }
+    }
+}
+
+async function fetchDynamicFreight(cep, cart, address, city) {
+    const container = document.getElementById('freight-list');
+    const wrapper = document.getElementById('shipping-options-container');
+    const manualInfo = document.getElementById('manual-shipping-info');
+    
+    if (wrapper) wrapper.style.display = 'block';
+    if (manualInfo) manualInfo.style.display = 'none';
+    if (container) container.innerHTML = '<div style="font-size:0.8rem; color:var(--faint); padding:10px 0;"><i class="bx bx-loader-alt bx-spin"></i> Calculando frete...</div>';
+
+    try {
+        // Busca os produtos detalhados para ter peso/medidas
+        const allProds = DataManager.getProducts();
+        const itemsWithMeasures = cart.map(item => {
+            const p = allProds.find(x => String(x.id) === String(item.id));
+            if (p) {
+                return {
+                    id: p.id,
+                    name: p.name,
+                    quantity: item.quantity,
+                    weight: parseFloat(p.peso) || 0.5,
+                    height: parseFloat(p.altura) || 10,
+                    width: parseFloat(p.largura) || 10,
+                    length: parseFloat(p.comprimento) || 10
+                };
+            }
+            return { id: item.id, quantity: item.quantity, weight: 0.5, height: 10, width: 10, length: 10 };
+        });
+
+        const resp = await fetch(`${CLOUD_FUNCTIONS_URL}/calculateFreight`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                destination_cep: cep,
+                destination_address: address,
+                destination_city: city,
+                items: itemsWithMeasures
+            })
+        });
+
+        const options = await resp.json();
+        renderFreightOptions(options);
+
+    } catch (e) {
+        console.error("Erro SuperFrete:", e);
+        if (container) container.innerHTML = '<div style="font-size:0.8rem; color:var(--accent);">Erro ao calcular frete dinâmico.</div>';
+        if (manualInfo) manualInfo.style.display = 'flex';
+    }
+}
+
+function renderFreightOptions(options) {
+    const container = document.getElementById('freight-list');
+    const wrapper = document.getElementById('shipping-options-container');
+    const manualInfo = document.getElementById('manual-shipping-info');
+
+    if (!options || options.length === 0) {
+        if (wrapper) wrapper.style.display = 'none';
+        if (manualInfo) manualInfo.style.display = 'flex';
+        return;
     }
 
-    updateShippingDisplay(total);
+    if (wrapper) wrapper.style.display = 'block';
+    if (manualInfo) manualInfo.style.display = 'none';
+
+    container.innerHTML = options.map((opt, idx) => `
+        <div class="co-pay-option freight-opt ${idx === 0 ? 'sel' : ''}" style="padding:12px; margin-bottom:8px;" onclick="selectFreightOption(this, ${opt.price}, '${opt.name}')">
+            <div class="co-pay-info">
+                <div class="co-pay-label" style="font-size:0.85rem;">${opt.name}</div>
+                <div class="co-pay-sub" style="font-size:0.75rem;">Chega em até ${opt.delivery_time} dias úteis</div>
+            </div>
+            <div style="font-weight:700; font-size:0.85rem;">${fmt(opt.price)}</div>
+        </div>
+    `).join('');
+
+    // Seleciona a primeira opção por padrão
+    const first = options[0];
+    if (first) {
+        currentShippingCost = first.price;
+        updateShippingDisplay();
+    }
 }
+
+window.selectFreightOption = (el, price, name) => {
+    document.querySelectorAll('.freight-opt').forEach(opt => opt.classList.remove('sel'));
+    el.classList.add('sel');
+    currentShippingCost = price;
+    updateShippingDisplay();
+};
 
 function updateShippingDisplay(subtotal) {
     const cart = CartManager.get();
