@@ -621,6 +621,11 @@ function listarProdutosSuperApp(lojaFiltro) {
         const idxImgUrl = headers.indexOf("imgurl") !== -1 ? headers.indexOf("imgurl") : (headers.indexOf("img url") !== -1 ? headers.indexOf("img url") : 7);
         const idxSold = headers.indexOf("vendido") !== -1 ? headers.indexOf("vendido") : 17;
         const idxLoja = headers.indexOf("loja") !== -1 ? headers.indexOf("loja") : 18;
+        
+        const idxPeso = headers.indexOf("peso");
+        const idxAltura = headers.indexOf("altura");
+        const idxLargura = headers.indexOf("largura");
+        const idxComprimento = headers.indexOf("comprimento");
 
         const idxWebPrice = headers.indexOf("web_price");
 
@@ -693,7 +698,11 @@ function listarProdutosSuperApp(lojaFiltro) {
                 stock: estoque,
                 ncm: ncm,
                 sold: idxSold !== -1 ? (parseInt(row[idxSold]) || 0) : 0,
-                loja: lojaRaw
+                loja: lojaRaw,
+                peso: idxPeso !== -1 ? row[idxPeso] : null,
+                altura: idxAltura !== -1 ? row[idxAltura] : null,
+                largura: idxLargura !== -1 ? row[idxLargura] : null,
+                comprimento: idxComprimento !== -1 ? row[idxComprimento] : null
             };
 
             // 3. Força o uso da Coluna Q (Index 16) para Preço Promocional
