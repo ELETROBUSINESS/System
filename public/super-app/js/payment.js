@@ -477,6 +477,11 @@ async function fetchDynamicFreight(cep, cart, address, city) {
         });
 
         const options = await resp.json();
+        if (options && options.some(o => o.name.includes("(Regional)") || o.name.includes("(Nacional)"))) {
+            console.log("🚚 Usando Fallback Inteligente (API SuperFrete não retornou opções válidas)");
+        } else {
+            console.log("🚚 Sucesso! Opções SuperFrete recebidas.");
+        }
         renderFreightOptions(options);
 
     } catch (e) {
