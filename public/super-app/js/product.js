@@ -367,6 +367,42 @@ function renderProductView(prod, variacoesGroup, allProducts, activeIndex) {
                 <h3 style="font-size:1.2rem; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">Descrição</h3>
                 <p style="color:#666; line-height:1.6; white-space: pre-line;">${prod.description || 'Sem descrição detalhada.'}</p>
             </div>
+
+            <!-- Seção de Medidas (Informações Técnicas) -->
+            <div style="background:#fff; margin-top:10px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1); overflow: hidden;">
+                <div onclick="toggleSpecs(this)" style="padding: 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                    <h3 style="font-size:1.1rem; margin: 0;">Medidas e Informações Técnicas</h3>
+                    <i class='bx bx-chevron-down' style="font-size: 1.5rem; transition: transform 0.3s;"></i>
+                </div>
+                <div class="specs-content" style="display: none; padding: 0 20px 20px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px 0; color: #666; width: 40%;">Peso</td>
+                            <td style="padding: 10px 0; font-weight: 500;">${prod.peso ? prod.peso + ' kg' : 'Não informado'}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px 0; color: #666;">Altura</td>
+                            <td style="padding: 10px 0; font-weight: 500;">${prod.altura ? prod.altura + ' cm' : 'Não informado'}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px 0; color: #666;">Largura</td>
+                            <td style="padding: 10px 0; font-weight: 500;">${prod.largura ? prod.largura + ' cm' : 'Não informado'}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px 0; color: #666;">Comprimento</td>
+                            <td style="padding: 10px 0; font-weight: 500;">${prod.comprimento ? prod.comprimento + ' cm' : 'Não informado'}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 10px 0; color: #666;">Categoria</td>
+                            <td style="padding: 10px 0; font-weight: 500;">${prod.category || 'Geral'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 0; color: #666;">Marca</td>
+                            <td style="padding: 10px 0; font-weight: 500;">${prod.brand || prod.loja || 'D\'Tudo'}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
         `;
 
 
@@ -485,4 +521,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Inicializa lógica de busca global (modal)
     if (typeof setupSearch === 'function') setupSearch();
 });
+
+window.toggleSpecs = function (header) {
+    const content = header.nextElementSibling;
+    const icon = header.querySelector('i');
+    const isHidden = content.style.display === 'none' || content.style.display === '';
+    
+    if (isHidden) {
+        content.style.display = 'block';
+        icon.style.transform = 'rotate(180deg)';
+    } else {
+        content.style.display = 'none';
+        icon.style.transform = 'rotate(0deg)';
+    }
+};
 

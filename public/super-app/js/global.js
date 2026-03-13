@@ -205,7 +205,12 @@ const DataManager = {
         this._unsubscribe = db.collection("products").onSnapshot((snapshot) => {
             const products = [];
             snapshot.forEach(doc => {
-                products.push({ id: doc.id, ...doc.data() });
+                const data = doc.data();
+                // REGRA SUPER APP: Só exibe se tiver NCM cadastrado
+                const hasNcm = data.ncm && String(data.ncm).trim().length >= 2;
+                if (hasNcm) {
+                    products.push({ id: doc.id, ...data });
+                }
             });
 
             if (products.length > 0) {
@@ -241,9 +246,12 @@ const DataManager = {
             const result = await response.json();
 
             if (result.status === "success" && result.data) {
-                localStorage.setItem(CACHE_KEY, JSON.stringify(result.data));
+                // REGRA SUPER APP: Só exibe se tiver NCM cadastrado
+                const filteredData = result.data.filter(p => p.ncm && String(p.ncm).trim().length >= 2);
+                
+                localStorage.setItem(CACHE_KEY, JSON.stringify(filteredData));
                 localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-                document.dispatchEvent(new CustomEvent('productsUpdated', { detail: result.data }));
+                document.dispatchEvent(new CustomEvent('productsUpdated', { detail: filteredData }));
             }
         } catch (e) {
             console.error("[DataManager] Erro no fallback:", e);
