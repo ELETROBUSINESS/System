@@ -2344,7 +2344,12 @@ function saveProduct(data) {
             unit: data.unit || 'UN',
             origem: data.origem || '0',
             csosn: data.csosn || '102',
-            "promocional": parseFloat(data.promoPrice) || 0
+            "promocional": parseFloat(data.promoPrice) || 0,
+            "peso": parseFloat(data.peso) || 0,
+            "altura": parseFloat(data.altura) || 0,
+            "largura": parseFloat(data.largura) || 0,
+            "comprimento": parseFloat(data.comprimento) || 0,
+            "descricao": data.descricao || ""
             // O campo 'cadastrado' (ou TRUE) não parece ter header padrão no getSheet, verifique se precisa
         };
 

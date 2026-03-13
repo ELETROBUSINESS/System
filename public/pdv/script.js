@@ -1845,6 +1845,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- RENDERING DO GRID (SE FOR SITE) ---
         if (currentProductFilter === 'site') {
+            const readyCount = produtosFiltrados.filter(p => p.ncm && String(p.ncm).trim().length >= 2).length;
+            
+            const summaryBanner = document.createElement('div');
+            summaryBanner.className = 'site-summary-info';
+            summaryBanner.style.marginBottom = '20px';
+            summaryBanner.style.padding = '15px';
+            summaryBanner.style.background = '#f8fafc';
+            summaryBanner.style.border = '1px solid #e2e8f0';
+            summaryBanner.style.borderRadius = '12px';
+            summaryBanner.style.display = 'flex';
+            summaryBanner.style.alignItems = 'center';
+            summaryBanner.style.gap = '10px';
+            summaryBanner.style.fontSize = '0.95rem';
+            summaryBanner.style.color = '#475569';
+            
+            summaryBanner.innerHTML = `
+                <i class='bx bx-check-shield' style="font-size: 1.5rem; color: #16a34a;"></i>
+                <div>
+                   Exibindo <strong>${totalItems}</strong> produtos no catálogo do site. 
+                   Desses, <strong>${readyCount}</strong> estão aptos (possuem NCM) para venda imediata.
+                </div>
+            `;
+            container.appendChild(summaryBanner);
+
             const grid = document.createElement('div');
             grid.className = 'adv-results-grid site-mode';
             container.appendChild(grid);
@@ -1894,8 +1918,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="adv-card-body" style="padding: 10px;">
                             <h4 class="adv-card-title" title="${prod.name}" style="margin: 0 0 5px;">${prod.name}</h4>
                             <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 5px;">#${prod.id}</div>
-                            <div style="display: flex; gap: 4px;">
+                            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
                                 ${prod.brand ? `<span class="brand-tag" style="font-size: 0.6rem; padding: 2px 5px;">${prod.brand}</span>` : ''}
+                                ${(!prod.ncm || String(prod.ncm).trim().length < 2) ? `<span style="font-size: 0.6rem; padding: 2px 5px; background: #fff7ed; color: #c2410c; border: 1px solid #fdba74; border-radius: 4px;">Sem NCM</span>` : ''}
+                                ${(!prod.peso || !prod.altura || !prod.largura || !prod.comprimento) ? `<span style="font-size: 0.6rem; padding: 2px 5px; background: #fdf2f2; color: #9b1c1c; border: 1px solid #f8b4b4; border-radius: 4px;">Sem Frete</span>` : ''}
                             </div>
                         </div>
                         <div class="adv-card-price-box" style="padding: 10px; border-top: 1px solid #f1f5f9; background: #fafafa;">
@@ -2298,6 +2324,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Mockup de Marcas para teste (Depois virá do banco)
     let brandsCache = ["Samsung", "Apple", "Xiaomi", "Motorola", "Dell", "Logitech", "TP-Link", "Multilaser"];
+    let categoriesCache = ["Geral", "Eletrônicos", "Acessórios", "Moda", "Casa"];
 
     // 1. LISTENER DO NOVO BOTÃO ADICIONAR
     const btnAddProduct = document.getElementById('btn-add-product');
@@ -2332,6 +2359,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('edit-prod-promo').value = prod.promoPrice || '';
             document.getElementById('edit-prod-cost').value = prod.costPrice || '';
             document.getElementById('edit-prod-brand').value = prod.brand || '';
+            document.getElementById('edit-prod-category').value = prod.category || '';
             document.getElementById('edit-prod-img-url').value = prod.imgUrl || '';
             document.getElementById('edit-prod-stock').value = prod.stock || 0;
             updateImagePreview(prod.imgUrl);
@@ -2351,6 +2379,13 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('edit-prod-unit').value = prod.unit || 'UN';
             document.getElementById('edit-prod-csosn').value = prod.csosn || '102';
             document.getElementById('edit-prod-origem').value = prod.origem || '0';
+
+            // Novos Campos (Logística e Descrição)
+            document.getElementById('edit-prod-weight').value = prod.peso || '';
+            document.getElementById('edit-prod-height').value = prod.altura || '';
+            document.getElementById('edit-prod-width').value = prod.largura || '';
+            document.getElementById('edit-prod-length').value = prod.comprimento || '';
+            document.getElementById('edit-prod-description').value = prod.descricao || '';
 
         } else {
             // --- MODO NOVO PRODUTO ---
@@ -2492,8 +2527,15 @@ document.addEventListener('DOMContentLoaded', () => {
             csosn: document.getElementById('edit-prod-csosn').value,
             origem: document.getElementById('edit-prod-origem').value,
 
-            // Categoria (opcional, se não tiver no form, enviamos string vazia ou Geral)
-            category: 'Geral',
+            // Novos Campos (Logística e Descrição)
+            peso: document.getElementById('edit-prod-weight').value || 0,
+            altura: document.getElementById('edit-prod-height').value || 0,
+            largura: document.getElementById('edit-prod-width').value || 0,
+            comprimento: document.getElementById('edit-prod-length').value || 0,
+            descricao: document.getElementById('edit-prod-description').value.trim(),
+
+            // Categoria (Real-time)
+            category: document.getElementById('edit-prod-category').value.trim() || 'Geral',
             operador: document.getElementById('summary-seller-name')?.textContent || "Caixa Principal"
         };
 
@@ -2651,10 +2693,67 @@ document.addEventListener('DOMContentLoaded', () => {
             brandSuggestionsList.style.display = 'block';
         });
         
-        // Hide on click outside
         document.addEventListener('click', (e) => {
             if (e.target !== editProdBrand) {
                 brandSuggestionsList.style.display = 'none';
+            }
+        });
+    }
+
+    // --- LÓGICA DE AUTOCOMPLETE PARA CATEGORIA ---
+    const editProdCategory = document.getElementById('edit-prod-category');
+    const categorySuggestionsList = document.getElementById('category-suggestions-list');
+    
+    if (editProdCategory && categorySuggestionsList) {
+        editProdCategory.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            categorySuggestionsList.innerHTML = '';
+            if (!val) {
+                categorySuggestionsList.style.display = 'none';
+                return;
+            }
+            
+            // Collect unique categories from cache
+            const uniqueCatsDec = new Set(categoriesCache.map(c => c.toLowerCase()));
+            if (localProductCache) {
+                localProductCache.forEach(p => {
+                    if (p.category) uniqueCatsDec.add(p.category.toLowerCase());
+                });
+            }
+            
+            const matchedCats = Array.from(uniqueCatsDec)
+                .filter(c => c.includes(val))
+                .slice(0, 10);
+                
+            matchedCats.forEach(cat => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+                div.onclick = () => {
+                    editProdCategory.value = div.textContent;
+                    categorySuggestionsList.style.display = 'none';
+                };
+                categorySuggestionsList.appendChild(div);
+            });
+            
+            if (matchedCats.length === 0) {
+                const div = document.createElement('div');
+                div.className = 'suggestion-item suggestion-new';
+                div.textContent = `Nova categoria: ${e.target.value}`;
+                div.onclick = () => {
+                    categoriesCache.push(e.target.value);
+                    categorySuggestionsList.style.display = 'none';
+                };
+                categorySuggestionsList.appendChild(div);
+            }
+            
+            categorySuggestionsList.style.display = 'block';
+        });
+        
+        // Hide on click outside
+        document.addEventListener('click', (e) => {
+            if (e.target !== editProdCategory) {
+                categorySuggestionsList.style.display = 'none';
             }
         });
     }

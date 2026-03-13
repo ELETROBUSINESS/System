@@ -1823,6 +1823,18 @@
                         </div>
 
                         <div class="form-grid">
+                            <div class="form-group relative-container">
+                                <label>Categoria</label>
+                                <div class="input-with-icon">
+                                    <input type="text" id="edit-prod-category"
+                                        placeholder="Digite para buscar categoria..." autocomplete="off">
+                                    <i class='bx bx-category'></i>
+                                </div>
+                                <div id="category-suggestions-list" class="suggestions-dropdown"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-grid">
                             <div class="form-group relative-container" style="flex: 3;">
                                 <label>Marca / Fabricante</label>
                                 <div class="input-with-icon">
@@ -1873,6 +1885,40 @@
                                         id="calc-markup">0%</span></div>
                                 <div class="stat-item"><span class="lbl">Lucro:</span><span class="val text-success"
                                         id="calc-profit">R$ 0,00</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Nova Seção de Logística -->
+                        <div class="fiscal-section-clean" style="margin-top: 20px;">
+                            <div class="fiscal-header">
+                                <i class='bx bx-package'></i>
+                                <span>Logística e Detalhes</span>
+                            </div>
+
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Peso (kg)</label>
+                                    <input type="number" id="edit-prod-weight" step="0.001" placeholder="0.000">
+                                </div>
+                                <div class="form-group">
+                                    <label>Altura (cm)</label>
+                                    <input type="number" id="edit-prod-height" step="0.1" placeholder="0.0">
+                                </div>
+                                <div class="form-group">
+                                    <label>Largura (cm)</label>
+                                    <input type="number" id="edit-prod-width" step="0.1" placeholder="0.0">
+                                </div>
+                                <div class="form-group">
+                                    <label>Comprimento (cm)</label>
+                                    <input type="number" id="edit-prod-length" step="0.1" placeholder="0.0">
+                                </div>
+                            </div>
+
+                            <div class="form-group mt-10">
+                                <label>Descrição do Produto</label>
+                                <textarea id="edit-prod-description" rows="3"
+                                    placeholder="Informações detalhadas do produto..."
+                                    style="width: 100%; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; font-family: inherit; font-size: 0.9rem;"></textarea>
                             </div>
                         </div>
 
@@ -2637,7 +2683,7 @@
         <div class="brand-row">
             <img src="assets/sistema.png" alt="Logo" class="brand-img-icon">
 
-            <span class="brand-name-text">ELETRO<span class="highlight-dot">. 1.0.0.49.5.1</span></span>
+            <span class="brand-name-text">ELETRO<span class="highlight-dot">. 1.0.0.49.7</span></span>
         </div>
     </div>
     <div class="pn">
