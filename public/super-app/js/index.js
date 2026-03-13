@@ -21,11 +21,12 @@ let searchDebounceTimeout = null;
 
 // ==================== 1. UTILITÁRIOS E CACHE ====================
 
-// --- NOVA REGRA DE PARCELAMENTO ---
+// --- NOVA REGRA DE PARCELAMENTO (INFINITEPAY) ---
 function calculateInstallmentsRule(price) {
-    if (price >= 300) return 3;
-    if (price >= 150) return 2;
-    return 1; // À vista no cartão
+    if (price >= 200) return 6;
+    if (price >= 100) return 4;
+    if (price >= 50) return 3;
+    return 1; // À vista no cartão ou abaixo de R$50
 }
 
 // --- HELPER PARA OBTER A BASE DE CÁLCULO DA PARCELA ---
@@ -197,7 +198,7 @@ function buildProductCardHTML(prod) {
     let installmentHtml = '';
     if (maxInst > 1) {
         const instVal = new Intl.NumberFormat('pt-BR', fmtConfig).format(priceCard / maxInst);
-        installmentHtml = `<div class="installment-text">ou <b>${maxInst}x</b> de <b>${instVal}</b></div>`;
+        installmentHtml = `<div class="installment-text">ou <b>${maxInst}x</b> de <b>${instVal}</b> <small style="font-size: 0.65rem; color: #00a650; font-weight: 700;">sem juros</small></div>`;
     } else {
         installmentHtml = `<div class="installment-text">ou <b>${fmtCard}</b> no cartão</div>`;
     }

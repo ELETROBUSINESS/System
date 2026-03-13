@@ -44,9 +44,9 @@ function extractProductImages(prod) {
 }
 
 function calculateInstallmentsRule(price) {
-    // Nova regra solicitada: máximo 3x de acordo com o valor
-    if (price >= 300) return 3;
-    if (price >= 150) return 2;
+    if (price >= 200) return 6;
+    if (price >= 100) return 4;
+    if (price >= 50) return 3;
     return 1; // À vista no cartão
 }
 
@@ -230,7 +230,7 @@ function renderProductView(prod, variacoesGroup, allProducts, activeIndex) {
                     <span style="color: #00a650; font-size: 1.15rem; font-weight: 600; margin-left: 10px; background: #e6f7ee; padding: 2px 6px; border-radius: 4px;">${discountPerc}% OFF</span>
                 </div>
                 <div class="installment-line" style="font-size: 1.15rem; color: #333; margin-top: 5px;">
-                    ou até <b>${maxInstallments}x R$ ${instParts.reais}</b><span style="font-size: 0.75rem; position: relative; top: -5px;">,${instParts.centavos}</span> no cartão
+                    ou até <b>${maxInstallments}x R$ ${instParts.reais}</b><span style="font-size: 0.75rem; position: relative; top: -5px;">,${instParts.centavos}</span> <span style="color: #00a650; font-weight: 700;">sem juros</span> no cartão
                 </div>
                 <div style="color: #00a650; font-size: 0.85rem; font-weight: 600; margin-top: 5px;">
                     <i class='bx bxs-zap'></i> Preço exclusivo no Pix
