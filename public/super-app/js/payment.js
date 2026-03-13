@@ -420,8 +420,12 @@ function calculateShipping() {
     const address = document.getElementById('address')?.value || '';
     const subtotal = cart.reduce((s, i) => s + (i.priceNew * i.quantity), 0);
 
+    // Normalização para comparação robusta
+    const normalizedCity = city.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const isIpixuna = normalizedCity.includes('ipixuna');
+
     // Se for cidades padrão (Ipixuna), usa frete grátis
-    if (city === 'Ipixuna do Pará' || city === 'Ipixuna do Para') {
+    if (isIpixuna) {
         currentShippingCost = 0; // Festival Frete Grátis
         renderFreightOptions(null); // Oculta opções dinâmicas
         updateShippingDisplay(subtotal);
@@ -431,7 +435,9 @@ function calculateShipping() {
         if (cleanCep.length === 8) {
             fetchDynamicFreight(cleanCep, cart, address, city);
         } else {
-            currentShippingCost = 0;
+            // Se CEP incompleto e não é Ipixuna, reseta custo para null (A calcular)
+            currentShippingCost = null; 
+            renderFreightOptions(null);
             updateShippingDisplay(subtotal);
         }
     }
@@ -477,10 +483,10 @@ async function fetchDynamicFreight(cep, cart, address, city) {
         });
 
         const options = await resp.json();
-        if (options && options.some(o => o.name.includes("(Regional)") || o.name.includes("(Nacional)"))) {
-            console.log("🚚 Usando Fallback Inteligente (API SuperFrete não retornou opções válidas)");
+        if (options && options.length > 0) {
+            console.log(`🚚 Sucesso! ${options.length} opções de frete recebidas.`);
         } else {
-            console.log("🚚 Sucesso! Opções SuperFrete recebidas.");
+            console.warn("🚚 API SuperFrete não retornou opções de frete válidas para este CEP.");
         }
         renderFreightOptions(options);
 
@@ -533,14 +539,18 @@ window.selectFreightOption = (el, price, name) => {
 function updateShippingDisplay(subtotal) {
     const cart = CartManager.get();
     const sub = subtotal || cart.reduce((s, i) => s + (i.priceNew * i.quantity), 0);
-    const total = sub + currentShippingCost;
+    const total = sub + (Number(currentShippingCost) || 0);
 
     const subtotalEl = document.getElementById('subtotal-display');
     const shippingEl = document.getElementById('shipping-cost-display');
     const totalEl = document.getElementById('total-display');
 
     if (subtotalEl) subtotalEl.textContent = fmt(sub);
-    if (shippingEl) shippingEl.textContent = currentShippingCost === 0 ? 'Grátis 🎉' : fmt(currentShippingCost);
+    if (shippingEl) {
+        if (currentShippingCost === 0) shippingEl.textContent = 'Grátis 🎉';
+        else if (currentShippingCost > 0) shippingEl.textContent = fmt(currentShippingCost);
+        else shippingEl.textContent = 'A calcular';
+    }
     if (totalEl) totalEl.textContent = fmt(total);
 }
 
