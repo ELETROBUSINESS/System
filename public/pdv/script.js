@@ -3228,10 +3228,13 @@ document.addEventListener('DOMContentLoaded', () => {
         cart = [];
         removeDiscount();
         resetPaymentMethod();
+        selectedCrediarioClient = null;
+        updateSummaryClientCard();
         lastSaleData = null;
 
-        // Reset Troco UI
+        // Reset Troco e Parcelas UI
         window.lastTrocoValue = 0;
+        window.tempInstallments = 1;
         const rowResumo = document.getElementById('summary-change-row');
         if (rowResumo) rowResumo.style.display = 'none';
 
@@ -5232,7 +5235,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 2. Reset UI Immediately
         clearCart();
-        selectedCrediarioClient = null;
         const clientSpan = document.getElementById('selected-client-name');
         if (clientSpan) clientSpan.innerText = "Cliente não identificado";
 

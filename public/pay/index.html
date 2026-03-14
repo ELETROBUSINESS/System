@@ -7,43 +7,16 @@
     <title>ELETROPAY</title>
     <link rel="icon" href="/assets/img/iconWeb.png">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            content: ['./index.html'],
+            safelist: ['bg-emerald-100', 'text-emerald-600', 'bg-red-100', 'text-red-600', 'bg-slate-100', 'text-slate-800'],
+        }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="manifest" href="manifest.json">
     <!-- Boxicons CDN -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <style>
-        /* Install Banner (Floating) */
-        #install-app-banner {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.9);
-            width: 90%;
-            max-width: 320px;
-            background: white;
-            border-radius: 24px;
-            padding: 32px 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            gap: 16px;
-            z-index: 10001;
-            /* Higher than sheets */
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        #install-app-banner.visible {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 1;
-            pointer-events: all;
-        }
-
-
-
         :root {
             --main-color: #db0038;
             --light-red: #ff4d6d;
@@ -1437,6 +1410,16 @@
             setTimeout(() => modalOverlay.classList.add('overlay-hidden'), 300);
         };
 
+        // --- Limpeza de Service Workers antigos que podem travar a nova API ---
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                for (let registration of registrations) {
+                    registration.unregister();
+                    console.log("Service Worker antigo desativado para garantir sincronia com nova API.");
+                }
+            });
+        }
+
         document.getElementById('notifBtn').onclick = () => {
             modalOverlay.classList.remove('overlay-hidden');
             document.getElementById('notificationSheet').classList.remove('sheet-hidden');
@@ -1466,80 +1449,6 @@
 
         // Start
         init();
-    </script>
-    <!-- Install App Banner -->
-    <div id="install-app-banner">
-        <div
-            class="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-content-center overflow-hidden mb-2 shadow-sm">
-            <img src="/assets/img/iconWeb.png" class="w-full h-full object-cover">
-        </div>
-        <div>
-            <h3 class="font-bold text-lg text-slate-800 mb-1">Instalar EletroPay</h3>
-            <p class="text-xs text-slate-500 leading-relaxed px-4">Tenha acesso rápido às suas faturas e receba
-                notificações direto no seu celular.</p>
-        </div>
-        <button id="install-btn-action"
-            class="w-full py-3 bg-[#db0038] text-white font-bold rounded-xl shadow-lg shadow-red-500/30 active:scale-95 transition-transform">Instalar
-            Agora</button>
-        <button class="text-xs text-slate-400 font-medium py-2" onclick="closeInstallBanner()">Agora não</button>
-    </div>
-
-    <!-- PWA Logic -->
-    <script>
-        let deferredPrompt;
-        const installBanner = document.getElementById('install-app-banner');
-        const installBtn = document.getElementById('install-btn-action');
-
-        function isPWA() {
-            return (window.matchMedia('(display-mode: standalone)').matches) || (window.navigator.standalone) || document.referrer.includes('android-app://');
-        }
-
-        // Only show if mobile and NOT already PWA
-        const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            if (!isMobile || isPWA()) return;
-
-            // Prevent the mini-infobar from appearing on mobile
-            e.preventDefault();
-            // Stash the event so it can be triggered later.
-            deferredPrompt = e;
-            // Update UI notify the user they can install the PWA
-            showInstallBanner();
-        });
-
-        function showInstallBanner() {
-            // Check if user dismissed recently (e.g., in last 24h) - implementing simple session check for now
-            if (sessionStorage.getItem('install_dismissed')) return;
-
-            installBanner.classList.add('visible');
-            modalOverlay.classList.remove('overlay-hidden');
-        }
-
-        function closeInstallBanner() {
-            installBanner.classList.remove('visible');
-            modalOverlay.classList.add('overlay-hidden');
-            sessionStorage.setItem('install_dismissed', 'true');
-        }
-
-        installBtn.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                console.log(`User response to the install prompt: ${outcome}`);
-                deferredPrompt = null;
-                closeInstallBanner();
-            } else {
-                // Fallback for iOS or if prompt unavailable (manual instructions)
-                alert("Para instalar: Toque no botão Compartilhar do seu navegador e selecione 'Adicionar à Tela de Início'.");
-            }
-        });
-
-        // Setup for iOS (Manual Trigger since beforeinstallprompt doesn't fire)
-        if (isMobile && !isPWA() && !deferredPrompt && /iPhone|iPad/i.test(navigator.userAgent)) {
-            // For iOS we might show it anyway after a timeout just to inform
-            setTimeout(showInstallBanner, 2000);
-        }
     </script>
 </body>
 
