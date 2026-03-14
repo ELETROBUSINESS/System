@@ -28,7 +28,9 @@ const COL_CLIENTE = {
     VENCIMENTO: 8,
     LIMITE: 9,
     BADGE: 10,
-    PASS: 11
+    PASS: 11,
+    PROX_VALOR: 12,
+    QTD_REST: 13
 };
 
 // Banco de dados de Usuários (Painel Administrativo)
@@ -177,11 +179,13 @@ function listarClientes(data) {
                 loja: rows[i][COL_CLIENTE.LOJA],
                 id: rows[i][COL_CLIENTE.ID],
                 nome: rows[i][COL_CLIENTE.NOME],
-                apelido: rows[i][COL_CLIENTE.BADGE] || rows[i][COL_CLIENTE.NOME] || "Sem Nome", // Usa Badge como Apelido
+                apelido: rows[i][COL_CLIENTE.BADGE] || rows[i][COL_CLIENTE.NOME] || "Sem Nome", 
                 cpf: rows[i][COL_CLIENTE.CPF],
                 saldo: rows[i][COL_CLIENTE.SALDO],
                 limite: rows[i][COL_CLIENTE.LIMITE],
-                vencimento: rows[i][COL_CLIENTE.VENCIMENTO]
+                vencimento: rows[i][COL_CLIENTE.VENCIMENTO],
+                valorParcela: rows[i][COL_CLIENTE.PROX_VALOR],
+                parcelasRestantes: rows[i][COL_CLIENTE.QTD_REST]
             });
         }
 
@@ -274,7 +278,9 @@ function buscarCliente(dataInput) {
                         vencimento: rows[i][COL_CLIENTE.VENCIMENTO],
                         limite: rows[i][COL_CLIENTE.LIMITE],
                         badge: rows[i][COL_CLIENTE.BADGE],
-                        pass: rows[i][COL_CLIENTE.PASS]
+                        pass: rows[i][COL_CLIENTE.PASS],
+                        valorParcela: rows[i][COL_CLIENTE.PROX_VALOR],
+                        parcelasRestantes: rows[i][COL_CLIENTE.QTD_REST]
                     }
                 };
             }

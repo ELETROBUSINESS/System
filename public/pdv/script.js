@@ -5942,136 +5942,60 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnAlterarLimite = document.getElementById('btn-alterar-limite');
 
     const openClienteDetails = async (id) => {
-        const cliente = localClientCache.find(c => c.idCliente == id);
+        const cliente = localClientCache.find(c => c.idCliente == id || c.id == id);
         if (!cliente) return;
 
-        // 1. Preenchimento de Cabeçalho e Dados Básicos
-        document.getElementById('detail-cliente-nome').textContent = cliente.nomeCompleto || cliente.nomeExibicao;
-        // Remove os parênteses do apelido conforme solicitado
-        document.getElementById('detail-cliente-apelido').textContent = cliente.apelido ? cliente.apelido : '';
+        // --- CARREGAMENTO INSTANTÂNEO (VIA CACHE) ---
+        document.getElementById('detail-cliente-nome').textContent = cliente.nomeCompleto || cliente.nome || cliente.nomeExibicao;
+        document.getElementById('detail-cliente-apelido').textContent = cliente.apelido || '';
 
         const saldoEl = document.getElementById('detail-cliente-saldo');
-        saldoEl.textContent = formatCurrency(cliente.saldoDevedor);
-        // User requested black color for debt value instead of red
+        saldoEl.textContent = formatCurrency(cliente.saldoDevedor || cliente.saldo || 0);
         saldoEl.style.color = 'var(--text-dark)';
 
-        // 2. Cálculo de Data e Diferença de Dias (Proteção contra erro getMonth)
-        const dataObj = parseDataSegura(cliente.proximoVencimento);
-        let diffDays = 0;
-        let textoVencimento = "Sem vencimento";
         const vencimentoEl = document.getElementById('detail-cliente-vencimento');
-
-        if (dataObj && !isNaN(dataObj.getTime())) {
-            const hoje = new Date();
-            hoje.setHours(0, 0, 0, 0);
-            const dataVenc = new Date(dataObj);
-            dataVenc.setHours(0, 0, 0, 0);
-
-            // Calcula a diferença real de dias para os alertas visuais
-            const diffTime = dataVenc - hoje;
-            diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            const dia = String(dataObj.getDate()).padStart(2, '0');
-            const mes = String(dataObj.getMonth() + 1).padStart(2, '0');
-            const ano = dataObj.getFullYear();
-            textoVencimento = `${dia}/${mes}/${ano}`;
-
-            // Alerta visual de atraso (Texto removido conforme solicitado, mantem cor se desejado ou remove tb)
-            if (diffDays < 0 && cliente.saldoDevedor > 0.01) {
-                vencimentoEl.style.color = 'var(--warning-red)';
-                // textoVencimento += " (Atrasado)"; // REMOVIDO
-            } else {
-                vencimentoEl.style.color = 'var(--text-dark)';
-            }
-        }
-        vencimentoEl.textContent = textoVencimento;
-
-        // [NOVO] Cards de Parcelas (Prioriza dados do Backend)
         const qtdParcelasEl = document.getElementById('detail-cliente-qtd-parcelas');
         const valorParcelaEl = document.getElementById('detail-cliente-valor-parcela-mensal');
 
-        let qtdRestante = 0;
-        let valorMensal = 0;
-
-        // Se o Backend já mandou calculado, usa. Senão, calcula fallback.
-        if (cliente.parcelasRestantes !== undefined) {
-            qtdRestante = parseInt(cliente.parcelasRestantes) || 0;
+        // Preenchimento imediato com dados do cache (Novos campos vindos da API26)
+        if (cliente.vencimento) {
+            const dStr = String(cliente.vencimento);
+            vencimentoEl.textContent = dStr.includes('T') ? new Date(dStr).toLocaleDateString('pt-BR') : dStr;
         } else {
-            const totalP = parseInt(cliente.parcelasTotais) || 0;
-            const pagasP = parseInt(cliente.parcelasPagas) || 0;
-            qtdRestante = totalP - pagasP;
+            vencimentoEl.textContent = 'Sem vencimento';
         }
-
-        if (cliente.valorParcela !== undefined && parseFloat(cliente.valorParcela) > 0) {
-            valorMensal = parseFloat(cliente.valorParcela);
-        } else if (qtdRestante > 0 && cliente.saldoDevedor > 0) {
-            valorMensal = cliente.saldoDevedor / qtdRestante;
-        }
-
-        if (qtdParcelasEl) qtdParcelasEl.textContent = qtdRestante > 0 ? `${qtdRestante}x` : "-";
-        if (valorParcelaEl) valorParcelaEl.textContent = valorMensal > 0 ? formatCurrency(valorMensal) : "-";
-
+        
+        if (qtdParcelasEl) qtdParcelasEl.textContent = (cliente.parcelasRestantes > 0) ? `${cliente.parcelasRestantes}x` : "-";
+        if (valorParcelaEl) valorParcelaEl.textContent = (cliente.valorParcela > 0) ? formatCurrency(cliente.valorParcela) : "-";
 
         document.getElementById('detail-cliente-telefone').textContent = cliente.telefone || 'Não informado';
         document.getElementById('detail-cliente-endereco').textContent = cliente.endereco || 'Não informado';
 
-        // 3. Lógica da Barra de Limite
+        // Lógica da Barra de Limite (Cache)
         const limite = parseFloat(cliente.limite) || 0;
-        const saldo = parseFloat(cliente.saldoDevedor) || 0;
+        const saldo = parseFloat(cliente.saldoDevedor || cliente.saldo) || 0;
         const detailLimitTotal = document.getElementById('detail-cliente-limite-total');
         const detailProgressBar = document.getElementById('detail-cliente-progress');
         const detailLimitAvailable = document.getElementById('detail-cliente-disponivel');
         const detailLimitPercent = document.getElementById('detail-cliente-percentual');
 
         if (detailLimitTotal) detailLimitTotal.textContent = formatCurrency(limite);
-
         if (limite > 0) {
             const disponivel = limite - saldo;
             let percentualUso = (saldo / limite) * 100;
-            let visualWidth = percentualUso > 100 ? 100 : (percentualUso < 0 ? 0 : percentualUso);
-
             if (detailLimitAvailable) detailLimitAvailable.textContent = `Disponível: ${formatCurrency(disponivel)}`;
             if (detailLimitPercent) detailLimitPercent.textContent = `${percentualUso.toFixed(1)}% usado`;
-            if (detailProgressBar) {
-                detailProgressBar.style.width = `${visualWidth}%`;
-                detailProgressBar.className = 'progress-fill';
-                if (disponivel < 0) {
-                    detailProgressBar.classList.add('danger');
-                    detailLimitAvailable.style.color = 'var(--warning-red)';
-                } else if (percentualUso > 80) {
-                    detailProgressBar.classList.add('warning');
-                }
-            }
-        } else {
-            if (detailProgressBar) detailProgressBar.style.width = '0%';
-            if (detailLimitAvailable) detailLimitAvailable.textContent = "Sem limite definido";
-            if (detailLimitPercent) detailLimitPercent.textContent = "-";
+            if (detailProgressBar) detailProgressBar.style.width = `${Math.min(100, Math.max(0, percentualUso))}%`;
         }
-
-        // Reset Menu Dropdown
-        const menu = document.getElementById('client-options-dropdown');
-        if (menu) {
-            menu.classList.remove('active'); // Usa classe agora
-            menu.style.display = ''; // Limpa inline style se houver
-        }
-
-        // Reset QR Code Container
-        const qrContainer = document.getElementById('qrcode-container');
-        if (qrContainer) qrContainer.classList.remove('active');
-
-        // Guardar ID atual para ações do menu
-        document.getElementById('cliente-details-modal').setAttribute('data-current-client-id', id);
-        document.getElementById('cliente-details-modal').setAttribute('data-cliente-nome', cliente.nomeCompleto || cliente.nomeExibicao);
-
-        // Exibe o modal
+        
+        // Exibe o modal IMEDIATAMENTE
         openModal(document.getElementById('cliente-details-modal'));
 
-        // 4. Carregar Histórico...
+        // --- ATUALIZAÇÃO EM SEGUNDO PLANO (DADOS REAIS E HISTÓRICO) ---
         const historyContainer = document.getElementById('detail-history-container');
-        historyContainer.innerHTML = '<p style="text-align:center; padding:20px;"><i class="bx bx-loader-alt bx-spin"></i> Carregando extrato...</p>';
+        historyContainer.innerHTML = '<p style="text-align:center; padding:20px;"><i class="bx bx-loader-alt bx-spin"></i> Atualizando extrato...</p>';
 
         try {
-            // Nova API de extrato agrupado por Faturas
             const response = await fetch(CENTRAL_API_URL, {
                 method: 'POST',
                 body: JSON.stringify({ action: 'consultar_extrato_cliente', id_cliente: id })
@@ -6081,37 +6005,34 @@ document.addEventListener('DOMContentLoaded', () => {
             if (result.success && result.data.length > 0) {
                 const faturasAtivas = result.data.filter(f => (f.saldo_restante || 0) > 0.01);
                 
-                // 1. Atualização dos Cards de Resumo no Modal (Dados Reais)
+                // 1. Atualização Final dos Cards (Dados ultra-frescos)
                 const totalDevedor = faturasAtivas.reduce((acc, f) => acc + (f.saldo_restante || 0), 0);
                 const qtdP = faturasAtivas.length;
                 const valorP = qtdP > 0 ? faturasAtivas[0].saldo_restante : 0;
                 const proxV = qtdP > 0 ? new Date(faturasAtivas[0].vencimento) : null;
 
-                document.getElementById('detail-cliente-saldo').textContent = formatCurrency(totalDevedor);
-                document.getElementById('detail-cliente-qtd-parcelas').textContent = qtdP > 0 ? `${qtdP}x` : "-";
-                document.getElementById('detail-cliente-valor-parcela-mensal').textContent = valorP > 0 ? formatCurrency(valorP) : "-";
+                saldoEl.textContent = formatCurrency(totalDevedor);
+                if (qtdParcelasEl) qtdParcelasEl.textContent = qtdP > 0 ? `${qtdP}x` : "-";
+                if (valorParcelaEl) valorParcelaEl.textContent = valorP > 0 ? formatCurrency(valorP) : "-";
                 
                 if (proxV) {
-                    const vencEl = document.getElementById('detail-cliente-vencimento');
-                    const textoV = `${String(proxV.getDate()).padStart(2, '0')}/${String(proxV.getMonth() + 1).padStart(2, '0')}/${proxV.getFullYear()}`;
-                    vencEl.textContent = textoV;
-                    vencEl.style.color = (proxV < new Date().setHours(0,0,0,0)) ? 'var(--warning-red)' : 'var(--text-dark)';
+                    vencimentoEl.textContent = proxV.toLocaleDateString('pt-BR');
+                    vencimentoEl.style.color = (proxV < new Date().setHours(0,0,0,0)) ? 'var(--warning-red)' : 'var(--text-dark)';
                 }
 
-                // 2. Renderização do Histórico com nomes de meses
-                let html = '<div class="faturas-list-modern">';
+                // 2. Histórico com Nomes de Meses
                 const nomesMeses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+                let html = '<div class="faturas-list-modern">';
 
                 result.data.forEach(fatura => {
                     const totalFatura = parseFloat(fatura.saldo_restante || 0);
                     const isVencida = new Date(fatura.vencimento) < new Date();
                     const statusClass = totalFatura <= 0 ? 'fatura-paga' : (isVencida ? 'fatura-atrasada' : 'fatura-aberta');
 
-                    // Extrair Mês do BillingID (Ex: CLI...-042026)
                     let displayMonth = fatura.id;
                     const bParts = fatura.id.split('-');
                     if (bParts.length > 1) {
-                        const mYear = bParts[1]; // "042026"
+                        const mYear = bParts[1]; 
                         const mIdx = parseInt(mYear.substring(0, 2)) - 1;
                         if (mIdx >= 0 && mIdx < 12) displayMonth = nomesMeses[mIdx];
                     }
@@ -6134,8 +6055,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     `;
                 });
-                html += '</div>';
-                historyContainer.innerHTML = html;
+                historyContainer.innerHTML = html + '</div>';
             } else {
                 historyContainer.innerHTML = '<p class="text-center text-light pad-20">Nenhum lançamento no crediário.</p>';
             }

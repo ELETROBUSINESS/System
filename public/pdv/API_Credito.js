@@ -94,9 +94,9 @@ function registrarVendaCrediario(data) {
 
     sheet.getRange(sheet.getLastRow() + 1, 1, linhasParaInserir.length, 9).setValues(linhasParaInserir);
 
-    // Atualizar o Saldo na aba Clientes (Pula se for migração em lote)
+    // Recalcula tudo e sincroniza com a aba 'Clientes'
     if (!data.pular_saldo) {
-        atualizarSaldoGlobalCliente(idCliente, valorTotal);
+        sincronizarDadosResumoCliente(idCliente);
     }
 
     const billingFinal = linhasParaInserir.length > 0 ? linhasParaInserir[0][3] : "N/A";
@@ -112,8 +112,8 @@ function registrarPagamentoParcela(data) {
     const idCliente = String(data.id_cliente || data.id || "").trim();
     let valorPagamento = Math.abs(parseFloat(data.valor)) || 0;
 
-    if (!sheet) return { success: false, message: "Aba de crédito não encontrada." };
-    if (!idCliente) return { success: false, message: "ID do cliente não informado." };
+    if (!sheet) return { status: "error", message: "Aba de crédito não encontrada." };
+    if (!idCliente) return { status: "error", message: "ID do cliente não informado." };
 
     // 1. Obter todos os lançamentos do cliente para calcular o saldo real por fatura
     const rows = sheet.getDataRange().getValues();
@@ -133,10 +133,14 @@ function registrarPagamentoParcela(data) {
         if (tipo === 'compra') faturasStats[bId].compras.push(i + 1);
     }
 
-    // 2. Ordenar BillingIDs por vencimento para o cascateamento
+    // 2. Ordenar BillingIDs por vencimento Real para o cascateamento
     const ordenados = Object.values(faturasStats)
         .filter(f => f.saldoRestante > 0.01)
-        .sort((a, b) => new Date(a.vencimento) - new Date(b.vencimento));
+        .sort((a, b) => {
+            const da = a.vencimento instanceof Date ? a.vencimento : new Date(a.vencimento);
+            const db = b.vencimento instanceof Date ? b.vencimento : new Date(b.vencimento);
+            return da - db;
+        });
 
     // 3. Aplicar o pagamento nas faturas abertas
     for (let fatura of ordenados) {
@@ -148,16 +152,13 @@ function registrarPagamentoParcela(data) {
         if (valorPagamento >= fatura.saldoRestante - 0.01) {
             valorParaEstaFatura = fatura.saldoRestante;
             valorPagamento -= fatura.saldoRestante;
-            // Marca todas as linhas de compra dessa fatura como pagas
             fatura.compras.forEach(rowIdx => sheet.getRange(rowIdx, COL_CREDITO.STATUS + 1).setValue('paga'));
         } else {
             valorParaEstaFatura = valorPagamento;
             valorPagamento = 0;
-            // Marca como parcial
             fatura.compras.forEach(rowIdx => sheet.getRange(rowIdx, COL_CREDITO.STATUS + 1).setValue('parcial'));
         }
 
-        // Registra a linha do pagamento vinculado a este BillingID (Fatura)
         const dataPagamento = data.data_manual ? new Date(data.data_manual) : new Date();
         sheet.appendRow([
             "PAY-" + Date.now(),
@@ -172,9 +173,8 @@ function registrarPagamentoParcela(data) {
         ]);
     }
 
-    // Atualizar o Saldo na aba Clientes (Pula se for migração em lote)
     if (!data.pular_saldo) {
-        atualizarSaldoGlobalCliente(idCliente, -Math.abs(parseFloat(data.valor)));
+        sincronizarDadosResumoCliente(idCliente);
     }
     return { success: true, message: "Pagamento processado em cascata." };
 }
@@ -185,6 +185,32 @@ function registrarPagamentoParcela(data) {
 /**
  * Consulta o extrato do cliente agrupado por BillingID (Faturas)
  */
+/**
+ * Helper: Gera o BillingID (Ex: 1024-042026) considerando o mês de PAGAMENTO
+ */
+function gerarBillingID(idCliente, dataReferencia) {
+    let d = new Date(dataReferencia);
+    let mes = d.getMonth() + 1; // Mês da operação
+    let ano = d.getFullYear();
+
+    // REGRA DE OURO:
+    // 1. Toda compra cai no vencimento do mês seguinte (M+1)
+    mes++;
+    
+    // 2. Se a operação ocorreu APÓS o dia de fechamento (25), pula mais um mês (M+2)
+    if (d.getDate() > CLOSING_DAY) {
+        mes++;
+    }
+
+    // Ajuste de virada de ano
+    while (mes > 12) {
+        mes -= 12;
+        ano++;
+    }
+
+    return `${idCliente}-${String(mes).padStart(2, '0')}${ano}`;
+}
+
 function consultarExtratoCliente(data) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName(CREDITO_SHEET_NAME);
@@ -288,7 +314,11 @@ function consultarExtratoCliente(data) {
         });
     }
 
-    const listaFaturas = Object.values(faturasAgrupadas).sort((a, b) => new Date(a.vencimento) - new Date(b.vencimento));
+    const listaFaturas = Object.values(faturasAgrupadas).sort((a, b) => {
+        const da = a.vencimento instanceof Date ? a.vencimento : new Date(a.vencimento);
+        const db = b.vencimento instanceof Date ? b.vencimento : new Date(b.vencimento);
+        return da - db;
+    });
 
     return { 
         success: true,
@@ -299,49 +329,55 @@ function consultarExtratoCliente(data) {
 }
 
 /**
- * Helper: Gera o BillingID (Ex: 1024-042026) considerando o mês de PAGAMENTO
+ * Recalcula tudo e sincroniza com a aba 'Clientes'
  */
-function gerarBillingID(idCliente, dataReferencia) {
-    let d = new Date(dataReferencia);
-    let mes = d.getMonth() + 1; // Mês da operação
-    let ano = d.getFullYear();
-
-    // REGRA DE OURO:
-    // 1. Toda compra cai no vencimento do mês seguinte (M+1)
-    mes++;
-    
-    // 2. Se a operação ocorreu APÓS o dia de fechamento (25), pula mais um mês (M+2)
-    if (d.getDate() > CLOSING_DAY) {
-        mes++;
-    }
-
-    // Ajuste de virada de ano
-    while (mes > 12) {
-        mes -= 12;
-        ano++;
-    }
-
-    return `${idCliente}-${String(mes).padStart(2, '0')}${ano}`;
-}
-
-/**
- * Atualiza o saldo na aba 'Clientes' da API principal
- */
-function atualizarSaldoGlobalCliente(idCliente, variacao) {
+function sincronizarDadosResumoCliente(idCliente) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    // CLIENTES_SHEET_NAME e COL_CLIENTE são esperadas estar no escopo global (Main.gs / API26.gs)
-    const sheet = ss.getSheetByName(CLIENTES_SHEET_NAME || 'Clientes'); 
-    if (!sheet) return;
+    const creditorSheet = ss.getSheetByName(CREDITO_SHEET_NAME);
+    const clientSheet = ss.getSheetByName('Clientes');
+    if (!clientSheet || !creditorSheet) return;
 
-    const rows = sheet.getDataRange().getValues();
-    // COL_CLIENTE.ID e COL_CLIENTE.SALDO são índices (0-based)
-    const idIdx = (typeof COL_CLIENTE !== 'undefined') ? COL_CLIENTE.ID : 1;
-    const saldoIdx = (typeof COL_CLIENTE !== 'undefined') ? COL_CLIENTE.SALDO : 7;
+    const dataRows = creditorSheet.getDataRange().getValues();
+    const faturas = {};
 
-    for (let i = 1; i < rows.length; i++) {
-        if (String(rows[i][idIdx]).trim() === String(idCliente).trim()) {
-            const saldoAtual = parseFloat(rows[i][saldoIdx]) || 0;
-            sheet.getRange(i + 1, saldoIdx + 1).setValue(saldoAtual + variacao);
+    // 1. Agrupar saldos por fatura
+    for (let i = 1; i < dataRows.length; i++) {
+        if (String(dataRows[i][COL_CREDITO.ID_CLIENTE]).trim() === String(idCliente).trim()) {
+            const bid = dataRows[i][COL_CREDITO.BILLING_ID];
+            if (!faturas[bid]) faturas[bid] = { saldo: 0, vencimento: dataRows[i][COL_CREDITO.VENCIMENTO] };
+            faturas[bid].saldo += parseFloat(dataRows[i][COL_CREDITO.VALOR]) || 0;
+        }
+    }
+
+    // 2. Filtrar apenas as faturas abertas e ordenar cronologicamente
+    const abertas = Object.values(faturas)
+        .filter(f => f.saldo > 0.01)
+        .sort((a, b) => {
+            const da = a.vencimento instanceof Date ? a.vencimento : new Date(a.vencimento);
+            const db = b.vencimento instanceof Date ? b.vencimento : new Date(b.vencimento);
+            return da - db;
+        });
+
+    const saldoTotal = abertas.reduce((acc, f) => acc + f.saldo, 0);
+    const proxVenc = abertas.length > 0 ? abertas[0].vencimento : "";
+    const proxValor = abertas.length > 0 ? abertas[0].saldo : 0;
+    const qtdRest = abertas.length;
+
+    // 3. Atualizar aba Clientes
+    const cRows = clientSheet.getDataRange().getValues();
+    for (let j = 1; j < cRows.length; j++) {
+        if (String(cRows[j][1]).trim().toLowerCase() === String(idCliente).toLowerCase()) {
+            // Colunas: 7=Saldo, 8=Vencimento, 12=Valor Prox Parcela, 13=Qtd Parcelas
+            clientSheet.getRange(j + 1, 8).setValue(saldoTotal); // Coluna H
+            clientSheet.getRange(j + 1, 9).setValue(proxVenc);  // Coluna I
+            
+            // Garante cabeçalhos se não existirem
+            if (cRows[0].length < 13) {
+                 clientSheet.getRange(1, 13).setValue("Valor Proxima Parcela");
+                 clientSheet.getRange(1, 14).setValue("Parcelas Restantes");
+            }
+            clientSheet.getRange(j + 1, 13).setValue(proxValor);
+            clientSheet.getRange(j + 1, 14).setValue(qtdRest);
             break;
         }
     }
