@@ -214,40 +214,30 @@ function gerarBillingID(idCliente, dataReferencia) {
 function consultarExtratoCliente(data) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName(CREDITO_SHEET_NAME);
-    const idCliente = String(data.id_cliente || data.id || "").trim();
+    const idAlvo = String(data.id_cliente || data.id || "").trim().toLowerCase();
     const pinEnviado = String(data.pin || "").trim();
 
-    if (!idCliente) return { status: "error", message: "ID do cliente não informado." };
+    if (!idAlvo) return { status: "error", message: "ID do cliente não informado." };
 
-    // 1. Buscar Dados do Cliente (Autenticação)
+    // 1. Buscar Dados do Cliente
     const clientSheet = ss.getSheetByName('Clientes');
     if (!clientSheet) return { status: "error", message: "Banco de clientes não encontrado." };
 
     const clientRows = clientSheet.getDataRange().getValues();
     let clienteEncontrado = null;
 
-    // Índices baseados na estrutura da aba Clientes (0: Loja, 1: ID, 2: Nome, ..., 11: Pass)
-    const idxID = 1;
-    const idxNome = 2;
-    const idxTelefone = 5;
-    const idxEndereco = 6;
-    const idxSaldo = 7;
-    const idxVencimento = 8;
-    const idxLimite = 9;
-    const idxPass = 11;
-
     for (let i = 1; i < clientRows.length; i++) {
-        const idRow = String(clientRows[i][idxID]).trim();
-        if (idRow.toLowerCase() === idCliente.toLowerCase()) {
+        const idRow = String(clientRows[i][1]).trim().toLowerCase();
+        if (idRow === idAlvo) {
             clienteEncontrado = {
-                id: clientRows[i][idxID],
-                nome: clientRows[i][idxNome],
-                telefone: clientRows[i][idxTelefone],
-                endereco: clientRows[i][idxEndereco],
-                diaVencimento: clientRows[i][idxVencimento],
-                limite: clientRows[i][idxLimite],
-                saldoDevedor: clientRows[i][idxSaldo],
-                pass: String(clientRows[i][idxPass] || "").trim()
+                id: clientRows[i][1],
+                nome: clientRows[i][2],
+                telefone: clientRows[i][5],
+                endereco: clientRows[i][6],
+                diaVencimento: clientRows[i][8], 
+                limite: clientRows[i][9],
+                saldoDevedor: clientRows[i][7],
+                pass: String(clientRows[i][11] || "").trim()
             };
             break;
         }
@@ -255,31 +245,23 @@ function consultarExtratoCliente(data) {
 
     if (!clienteEncontrado) return { status: "error", message: "Cliente não encontrado." };
 
-    // 2. Lógica de Segurança (Senha/PIN)
     const temSenha = clienteEncontrado.pass && clienteEncontrado.pass !== "0" && clienteEncontrado.pass !== "";
     clienteEncontrado.temSenha = temSenha;
     
     if (temSenha) {
-        if (!pinEnviado) {
-            return { 
-                status: "auth_required", 
-                cliente: { nome: clienteEncontrado.nome, temSenha: true } 
-            };
-        }
-        if (pinEnviado !== clienteEncontrado.pass) {
-            return { status: "error", message: "PIN incorreto." };
-        }
+        if (!pinEnviado) return { status: "auth_required", cliente: { nome: clienteEncontrado.nome, temSenha: true } };
+        if (pinEnviado !== clienteEncontrado.pass) return { status: "error", message: "PIN incorreto." };
     }
 
     // 3. Buscar Movimentações
-    if (!sheet) return { status: "success", cliente: clienteEncontrado, data: [] };
+    if (!sheet) return { success: true, status: "success", cliente: clienteEncontrado, data: [] };
 
     const rows = sheet.getDataRange().getValues();
     const faturasAgrupadas = {};
 
     for (let i = 1; i < rows.length; i++) {
-        const idCol = String(rows[i][COL_CREDITO.ID_CLIENTE]).trim();
-        if (idCol !== idCliente) continue;
+        const idCol = String(rows[i][COL_CREDITO.ID_CLIENTE]).trim().toLowerCase();
+        if (idCol !== idAlvo) continue;
 
         const bId = rows[i][COL_CREDITO.BILLING_ID];
         if (!faturasAgrupadas[bId]) {
@@ -320,12 +302,7 @@ function consultarExtratoCliente(data) {
         return da - db;
     });
 
-    return { 
-        success: true,
-        status: "success", 
-        cliente: clienteEncontrado,
-        data: listaFaturas 
-    };
+    return { success: true, status: "success", cliente: clienteEncontrado, data: listaFaturas };
 }
 
 /**
@@ -337,19 +314,21 @@ function sincronizarDadosResumoCliente(idCliente) {
     const clientSheet = ss.getSheetByName('Clientes');
     if (!clientSheet || !creditorSheet) return;
 
+    const idAlvo = String(idCliente).trim().toLowerCase();
     const dataRows = creditorSheet.getDataRange().getValues();
     const faturas = {};
 
-    // 1. Agrupar saldos por fatura
+    // 1. Agrupar saldos por fatura (Case-insensitive)
     for (let i = 1; i < dataRows.length; i++) {
-        if (String(dataRows[i][COL_CREDITO.ID_CLIENTE]).trim() === String(idCliente).trim()) {
+        const idCol = String(dataRows[i][COL_CREDITO.ID_CLIENTE]).trim().toLowerCase();
+        if (idCol === idAlvo) {
             const bid = dataRows[i][COL_CREDITO.BILLING_ID];
             if (!faturas[bid]) faturas[bid] = { saldo: 0, vencimento: dataRows[i][COL_CREDITO.VENCIMENTO] };
             faturas[bid].saldo += parseFloat(dataRows[i][COL_CREDITO.VALOR]) || 0;
         }
     }
 
-    // 2. Filtrar apenas as faturas abertas e ordenar cronologicamente
+    // 2. Ordenar e filtrar abertas
     const abertas = Object.values(faturas)
         .filter(f => f.saldo > 0.01)
         .sort((a, b) => {
@@ -359,19 +338,27 @@ function sincronizarDadosResumoCliente(idCliente) {
         });
 
     const saldoTotal = abertas.reduce((acc, f) => acc + f.saldo, 0);
-    const proxVenc = abertas.length > 0 ? abertas[0].vencimento : "";
     const proxValor = abertas.length > 0 ? abertas[0].saldo : 0;
     const qtdRest = abertas.length;
 
-    // 3. Atualizar aba Clientes
+    // 3. Atualizar aba Clientes (Busca o Dia Fixo na Coluna O/14)
     const cRows = clientSheet.getDataRange().getValues();
     for (let j = 1; j < cRows.length; j++) {
-        if (String(cRows[j][1]).trim().toLowerCase() === String(idCliente).toLowerCase()) {
-            // Colunas: 7=Saldo, 8=Vencimento, 12=Valor Prox Parcela, 13=Qtd Parcelas
-            clientSheet.getRange(j + 1, 8).setValue(saldoTotal); // Coluna H
-            clientSheet.getRange(j + 1, 9).setValue(proxVenc);  // Coluna I
+        if (String(cRows[j][1]).trim().toLowerCase() === idAlvo) {
             
-            // Garante cabeçalhos se não existirem
+            // Tenta pegar o dia fixo da coluna O (14). Se não houver, fallback para 10.
+            const diaFixo = parseInt(cRows[j][14]) || 10;
+            let proxVencFinal = "";
+
+            if (abertas.length > 0) {
+                // Pega o Mês/Ano da fatura mais antiga aberta e aplica o dia fixo
+                const ref = abertas[0].vencimento instanceof Date ? abertas[0].vencimento : new Date(abertas[0].vencimento);
+                proxVencFinal = new Date(ref.getFullYear(), ref.getMonth(), diaFixo);
+            }
+
+            clientSheet.getRange(j + 1, 8).setValue(saldoTotal); // Saldo
+            clientSheet.getRange(j + 1, 9).setValue(proxVencFinal); // Vencimento Real Calculado
+            
             if (cRows[0].length < 13) {
                  clientSheet.getRange(1, 13).setValue("Valor Proxima Parcela");
                  clientSheet.getRange(1, 14).setValue("Parcelas Restantes");

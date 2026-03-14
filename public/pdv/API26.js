@@ -30,7 +30,8 @@ const COL_CLIENTE = {
     BADGE: 10,
     PASS: 11,
     PROX_VALOR: 12,
-    QTD_REST: 13
+    QTD_REST: 13,
+    DIA_VENCIMENTO: 14 // Coluna O
 };
 
 // Banco de dados de Usuários (Painel Administrativo)
@@ -185,7 +186,8 @@ function listarClientes(data) {
                 limite: rows[i][COL_CLIENTE.LIMITE],
                 vencimento: rows[i][COL_CLIENTE.VENCIMENTO],
                 valorParcela: rows[i][COL_CLIENTE.PROX_VALOR],
-                parcelasRestantes: rows[i][COL_CLIENTE.QTD_REST]
+                parcelasRestantes: rows[i][COL_CLIENTE.QTD_REST],
+                diaVencimento: rows[i][COL_CLIENTE.DIA_VENCIMENTO]
             });
         }
 
@@ -280,7 +282,8 @@ function buscarCliente(dataInput) {
                         badge: rows[i][COL_CLIENTE.BADGE],
                         pass: rows[i][COL_CLIENTE.PASS],
                         valorParcela: rows[i][COL_CLIENTE.PROX_VALOR],
-                        parcelasRestantes: rows[i][COL_CLIENTE.QTD_REST]
+                        parcelasRestantes: rows[i][COL_CLIENTE.QTD_REST],
+                        diaVencimento: rows[i][COL_CLIENTE.DIA_VENCIMENTO]
                     }
                 };
             }

@@ -6016,8 +6016,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (valorParcelaEl) valorParcelaEl.textContent = valorP > 0 ? formatCurrency(valorP) : "-";
                 
                 if (proxV) {
-                    vencimentoEl.textContent = proxV.toLocaleDateString('pt-BR');
-                    vencimentoEl.style.color = (proxV < new Date().setHours(0,0,0,0)) ? 'var(--warning-red)' : 'var(--text-dark)';
+                    // Usa o dia de vencimento fixo do cliente se disponível
+                    const diaFixo = parseInt(cliente.diaVencimento) || proxV.getDate();
+                    const dataVencCorrigida = new Date(proxV.getFullYear(), proxV.getMonth(), diaFixo);
+                    vencimentoEl.textContent = dataVencCorrigida.toLocaleDateString('pt-BR');
+                    vencimentoEl.style.color = (dataVencCorrigida < new Date().setHours(0,0,0,0)) ? 'var(--warning-red)' : 'var(--text-dark)';
                 }
 
                 // 2. Histórico com Nomes de Meses
