@@ -31,7 +31,7 @@ const COL_CLIENTE = {
     PASS: 11,
     PROX_VALOR: 12,
     QTD_REST: 13,
-    DIA_VENCIMENTO: 14 // Coluna O
+    DIA_VENCIMENTO: 8 // Coluna I
 };
 
 // Banco de dados de Usuários (Painel Administrativo)

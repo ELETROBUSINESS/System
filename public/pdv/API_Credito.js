@@ -5,7 +5,6 @@
 
 // --- CONFIGURAÇÕES DO MÓDULO ---
 const CREDITO_SHEET_NAME = "Crédito"; 
-const CLOSING_DAY = 25;              
 
 // Mapeamento das colunas da aba 'Crédito'
 // Definido como global para o projeto Apps Script
@@ -68,7 +67,7 @@ function registrarVendaCrediario(data) {
         dataReferencia.setMonth(dataCompra.getMonth() + i + mesOffsetBase);
 
         // Gera o BillingID: Este ID agora representa o MÊS DE PAGAMENTO (M+1 ou M+2)
-        const billingId = gerarBillingID(idCliente, dataReferencia);
+        const billingId = gerarBillingID(idCliente, dataReferencia, diaVencimento);
 
         // Sincroniza o Vencimento com o BillingID gerado
         const parts = billingId.split('-');
@@ -188,17 +187,25 @@ function registrarPagamentoParcela(data) {
 /**
  * Helper: Gera o BillingID (Ex: 1024-042026) considerando o mês de PAGAMENTO
  */
-function gerarBillingID(idCliente, dataReferencia) {
+function gerarBillingID(idCliente, dataReferencia, diaVencimentoUser) {
     let d = new Date(dataReferencia);
     let mes = d.getMonth() + 1; // Mês da operação
     let ano = d.getFullYear();
+
+    // 1. Determina o dia de vencimento do usuário (padrão 10)
+    const diaV = parseInt(diaVencimentoUser) || 10;
+
+    // 2. Calcula o dia de fechamento (Closing Day) dinamicamente
+    // Regra: O fechamento ocorre 15 dias antes do vencimento
+    let closingDay = (diaV - 15 + 30) % 30;
+    if (closingDay === 0) closingDay = 30; // Ajuste para fim do mês
 
     // REGRA DE OURO:
     // 1. Toda compra cai no vencimento do mês seguinte (M+1)
     mes++;
     
-    // 2. Se a operação ocorreu APÓS o dia de fechamento (25), pula mais um mês (M+2)
-    if (d.getDate() > CLOSING_DAY) {
+    // 2. Se a operação ocorreu APÓS o dia de fechamento, pula mais um mês (M+2)
+    if (d.getDate() > closingDay) {
         mes++;
     }
 
@@ -346,8 +353,8 @@ function sincronizarDadosResumoCliente(idCliente) {
     for (let j = 1; j < cRows.length; j++) {
         if (String(cRows[j][1]).trim().toLowerCase() === idAlvo) {
             
-            // Tenta pegar o dia fixo da coluna O (14). Se não houver, fallback para 10.
-            const diaFixo = parseInt(cRows[j][14]) || 10;
+            // Tenta pegar o dia fixo da coluna I (8). Se não houver, fallback para 10.
+            const diaFixo = parseInt(cRows[j][8]) || 10;
             let proxVencFinal = "";
 
             if (abertas.length > 0) {

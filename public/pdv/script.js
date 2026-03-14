@@ -2226,56 +2226,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     badgeHtml = `<div class="status-badge" style="background-color:#ea580c; color:white;" data-tooltip="Vence Hoje!">
                                 <i class='bx bx-bell'></i> <span>HOJE</span>
                              </div>`;
-                } else if (diffDays <= 3) {
-                    // VENCE EM BREVE (Até 3 dias) - Amarelo/Laranja
-                    badgeHtml = `<div class="status-badge badge-alerta" data-tooltip="Fecha em breve">
-                                <i class='bx bx-time-five'></i> <span>${diffDays}d</span>
-                             </div>`;
-                } else if (diffDays <= 10) {
-                    // FATURA ABERTA (Próxima do fechamento) - Azul
-                    badgeHtml = `<div class="status-badge" style="background-color:#3b82f6; color:white;" data-tooltip="Fatura Aberta">
-                                <i class='bx bx-calendar'></i> <span>${diffDays}d</span>
-                             </div>`;
-                } else {
-                    // FATURA FUTURA (Longe) - Verde Claro ou Cinza
-                    badgeHtml = `<div class="status-badge badge-em-dia" data-tooltip="Vencimento distante">
-                                <i class='bx bx-calendar-check'></i> <span>${diffDays}d</span>
-                             </div>`;
-                }
-            }
-
-            if (parseFloat(cliente.saldoDevedor) <= 0.01) { // Considera 0.01 como quitado (evita erros de arredondamento)
-                // QUITADO (Verde Azulado)
-                badgeHtml = `<div class="status-badge badge-quitado" data-tooltip="Cliente Quitado">
-                            <i class='bx bx-badge-check'></i> <span>OK</span>
-                         </div>`;
-            } else if (!temData) {
-                // TEM DÍVIDA MAS SEM DATA (Cinza)
-                badgeHtml = `<div class="status-badge" style="background-color:#9ca3af;" data-tooltip="Data não informada">
-                            <i class='bx bx-calendar-x'></i> <span>S/ Data</span>
-                         </div>`;
-            } else {
-                // TEM DÍVIDA E TEM DATA
-                if (diffDays < 0) {
-                    // ATRASADO (Vermelho)
-                    const diasAtraso = Math.abs(diffDays);
-                    badgeHtml = `<div class="status-badge badge-atrasado" data-tooltip="${diasAtraso} dia(s) de atraso">
-                                <i class='bx bx-time'></i> <span>-${diasAtraso}d</span>
-                             </div>`;
-                } else if (diffDays === 0) {
-                    // VENCE HOJE (Laranja Escuro)
-                    badgeHtml = `<div class="status-badge badge-alerta" style="background-color:#ea580c;" data-tooltip="Vence Hoje!">
-                                <i class='bx bx-bell'></i> <span>HOJE</span>
-                             </div>`;
                 } else if (diffDays <= 5) {
-                    // ALERTA / VENCE LOGO (Amarelo/Laranja)
-                    badgeHtml = `<div class="status-badge badge-alerta" data-tooltip="Vence em ${diffDays} dia(s)">
-                                <i class='bx bx-bell'></i> <span>${diffDays}d</span>
+                    // VENCE EM BREVE (Até 5 dias) - Amarelo/Laranja
+                    badgeHtml = `<div class="status-badge badge-alerta" data-tooltip="Vencimento próximo (${diffDays} dias)">
+                                <i class='bx bx-time-five'></i> <span>${diffDays}d</span>
                              </div>`;
                 } else {
                     // EM DIA (Verde)
                     badgeHtml = `<div class="status-badge badge-em-dia" data-tooltip="Em dia (Vence em ${diffDays} dias)">
-                                <i class='bx bx-check'></i> <span>Em dia</span>
+                                <i class='bx bx-calendar-check'></i> <span>OK</span>
                              </div>`;
                 }
             }
