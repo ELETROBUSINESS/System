@@ -5193,7 +5193,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             id_cliente: idCli,
                             valor: totalGeralVenda,
                             parcelas: tempInstallments || 1,
-                            descricao: `Venda ${lojaAtiva || 'PDV'}`,
+                            descricao: `Venda ${localStorage.getItem('lojaAtiva') || 'PDV'}`,
                             diaVencimento: client.vencimento || 10
                         })
                     }), "Registro Crediário Nova API");
