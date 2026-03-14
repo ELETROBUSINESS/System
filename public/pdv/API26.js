@@ -63,25 +63,6 @@ function doPost(e) {
     try {
         const data = JSON.parse(e.postData.contents);
         let response;
-
-        // --- NOVAS CONSTANTES PARA O MÓDULO CRÉDITO ---
-        const REGISTROS_SHEET_NAME = "Registros"; // Assuming this is a new constant needed
-        const CREDITO_SHEET_NAME = "Crédito"; // NOVA ABA
-
-        // Mapeamento Colunas Crédito (Extrato Detalhado)
-        const COL_CREDITO = {
-            ID: 0,            // ID Único da Linha (UUID)
-            DATA: 1,          // Data do Evento (Compra ou Pagto)
-            ID_CLIENTE: 2,    // Vinculo com Cliente
-            ID_PARCELA: 3,    // ID Agrupador da Parcela (ex: PEDIDO-123-P1)
-            TIPO: 4,          // 'COMPRA' ou 'PAGAMENTO'
-            DESCRICAO: 5,     // Ex: "Compra em 3x (1/3)"
-            VALOR: 6,         // Positivo (Dívida) ou Negativo (Pagto)
-            VENCIMENTO: 7,    // Data de Vencimento da Parcela
-            STATUS: 8         // 'ABERTA', 'PAGA', 'PARCIAL'
-        };
-        // --- FIM NOVAS CONSTANTES ---
-
         switch (data.action) {
             case 'calcular':
                 response = calcularDashboard(data);
@@ -106,13 +87,13 @@ function doPost(e) {
                 break;
             // --- NOVAS AÇÕES CRÉDITO ---
             case 'registrar_venda_crediario':
-                response = registrarVendaCrediario(data, CREDITO_SHEET_NAME, COL_CREDITO);
+                response = registrarVendaCrediario(data);
                 break;
             case 'registrar_pagamento_parcela':
-                response = registrarPagamentoParcela(data, CREDITO_SHEET_NAME, COL_CREDITO);
+                response = registrarPagamentoParcela(data);
                 break;
             case 'consultar_extrato_cliente':
-                response = consultarExtratoCliente(data, CREDITO_SHEET_NAME, COL_CREDITO);
+                response = consultarExtratoCliente(data);
                 break;
             case 'salvar_nota_fiscal':
                 response = salvarNotaFiscal(data);
@@ -661,7 +642,7 @@ function listarVendasRecentes(dataInput) {
         const sheet = getDatabaseSheet();
         if (!sheet) return { success: false, message: 'Aba não encontrada.' };
 
-        const rows = sheet.getDataRange().getValues(); // Use getValues to get real Date objects
+        const rows = sheet.getDataRange().getDisplayValues();
         if (rows.length <= 1) return { success: true, data: [] };
 
         const vendas = [];
@@ -675,17 +656,9 @@ function listarVendasRecentes(dataInput) {
 
             const tipo = String(r[COL.TIPO]).toLowerCase().trim();
             if (tipo === 'entrada' || tipo === 'venda') {
-                let ts = r[COL.TIMESTAMP];
-                // Se for objeto Date, converte para string ISO para o front
-                if (ts instanceof Date) {
-                    ts = ts.toISOString();
-                } else {
-                    ts = String(ts);
-                }
-
                 vendas.push({
                     loja: r[COL.LOJA],
-                    timestamp: ts,
+                    timestamp: r[COL.TIMESTAMP],
                     operador: r[1] || 'Vendedor',
                     valor: r[COL.TOTAL] || 'R$ 0,00',
                     pagamento: r[COL.PAGAMENTO] || ''
@@ -707,7 +680,7 @@ function listarMovimentacoes(dataInput) {
         const sheet = getDatabaseSheet();
         if (!sheet) return { success: false, message: 'Aba não encontrada.' };
 
-        const rows = sheet.getDataRange().getValues(); // Use getValues for real Date objects
+        const rows = sheet.getDataRange().getDisplayValues();
         if (rows.length <= 1) return { success: true, data: [] };
 
         const movimentacoes = [];
@@ -717,13 +690,6 @@ function listarMovimentacoes(dataInput) {
             const r = rows[i];
             const lojaRow = String(r[COL.LOJA]).trim();
             if (lojaAlvo && lojaRow !== String(lojaAlvo).trim()) continue;
-
-            let ts = r[COL.TIMESTAMP];
-            if (ts instanceof Date) {
-                ts = ts.toISOString();
-            } else {
-                ts = String(ts);
-            }
 
             movimentacoes.push({
                 loja: r[COL.LOJA],
@@ -737,7 +703,7 @@ function listarMovimentacoes(dataInput) {
                 taxas: r[8] || '0,00',
                 total: r[COL.TOTAL] || '0,00',
                 descricao: r[COL.DESCRICAO] || '',
-                timestamp: ts
+                timestamp: r[COL.TIMESTAMP] || ''
             });
         }
 

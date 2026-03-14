@@ -564,7 +564,7 @@
 
     <script>
         // --- API Config ---
-        const API_URL = "https://script.google.com/macros/s/AKfycbzB7dluoiNyJ4XK6oDK_iyuKZfwPTAJa4ua4RetQsUX9cMObgE-k_tFGI82HxW_OyMf/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbyZtUsI44xA4MQQLZWJ6K93t6ZaSaN6hw7YQw9EclZG9E85kM6yOWQCQ0D-ZJpGmyq4/exec";
 
         let GLOBAL_ID = null;
         let PIN = "";
@@ -782,9 +782,15 @@
             try {
                 document.getElementById('loading').style.display = 'flex';
                 // Using the exact action from API.js
-                const url = `${API_URL}?action=obterDadosFatura&idCliente=${GLOBAL_ID}&pin=${PIN}`;
-
-                const res = await fetch(url);
+                // Chamada para a Nova API Central
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'consultar_extrato_cliente',
+                        id_cliente: GLOBAL_ID,
+                        pin: PIN
+                    })
+                });
                 const json = await res.json();
 
                 document.getElementById('loading').style.display = 'none';
@@ -799,7 +805,8 @@
                     }
                     hideLoginScreen();
                     CLIENT_DATA = json.cliente;
-                    processInvoices(json);
+                    // O campo agora é json.data (lista de faturas)
+                    processInvoices(json.data);
                     renderApp();
                     document.getElementById('app-content').classList.remove('hidden');
                 } else {
@@ -837,106 +844,32 @@
         }
 
         // --- Data Processing (Same logic as meuacesso.html) ---
-        function processInvoices(data) {
-            const logs = data.historico || [];
-
-            // Determine Real Due Day dynamically
-            const defaultDia = parseInt(data.cliente.diaVencimento) || 10;
-            const diaVenc = getRealDueDay(logs, defaultDia);
-
-            // Expose for Profile Render
-            CLIENT_DATA.realDiaVencimento = diaVenc;
-
-            const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-            const fMap = {};
-
-            logs.forEach(log => {
-                let comp;
-                if (log.vencimentoParcela && log.vencimentoParcela.length > 5) {
-                    comp = parseDateSafe(log.vencimentoParcela);
-                } else {
-                    const dV = parseDateSafe(log.data);
-                    let b = new Date(dV.getFullYear(), dV.getMonth(), diaVenc);
-                    // If purchase is close to due date (e.g. 10 days before), move to next month
-                    if (dV.getDate() >= (diaVenc - 10)) {
-                        b.setMonth(b.getMonth() + 1);
-                    }
-                    comp = b;
-                }
-
-                // Key format: YYYY-MM
-                const key = `${comp.getFullYear()}-${String(comp.getMonth() + 1).padStart(2, '0')}`;
-
-                if (!fMap[key]) {
-                    fMap[key] = {
-                        dataVencimento: new Date(comp.getFullYear(), comp.getMonth(), diaVenc),
-                        totalCompras: 0,
-                        totalPagos: 0,
-                        itens: []
-                    };
-                }
-
-                fMap[key].itens.push(log);
-
-                // Check if payment or purchase
-                const isPayment = String(log.tipo).toLowerCase().includes('pagamento') || log.valor < 0;
-                if (isPayment) {
-                    fMap[key].totalPagos += Math.abs(log.valor);
-                } else {
-                    fMap[key].totalCompras += log.valor;
-                }
-            });
-
-            // Sort by date
-            let crua = Object.values(fMap).sort((a, b) => a.dataVencimento - b.dataVencimento);
-            let fin = [];
-            let atraso = { total: 0, itens: [] };
-
-            // Separate overdue
-            crua.forEach(fat => {
-                const s = fat.totalCompras - fat.totalPagos;
-                // If invoice due date is in the past
-                if (fat.dataVencimento < hoje) {
-                    // Add to backlog
-                    atraso.total += s;
-                    if (s > 0.01) {
-                        fat.itens.forEach(i => { i.isAtrasado = true; atraso.itens.push(i); });
-                    }
-                } else {
-                    fin.push(fat);
-                }
-            });
-
-            // If there's overdue amount, add to first available invoice or create one
-            if (atraso.total > 0.01) {
-                if (fin.length > 0) {
-                    // Add to the first future invoice
-                    fin[0].totalCompras += atraso.total;
-                    fin[0].itens = [...atraso.itens, ...fin[0].itens];
-                    fin[0].hasAtraso = true;
-                } else {
-                    // Create a "current" invoice for the overdue amount
-                    fin.push({
-                        dataVencimento: new Date(hoje.getFullYear(), hoje.getMonth(), diaVenc),
-                        totalCompras: atraso.total,
-                        totalPagos: 0,
-                        itens: atraso.itens,
-                        hasAtraso: true
-                    });
-                }
+        function processInvoices(dataFaturas) {
+            if (!Array.isArray(dataFaturas)) {
+                INVOICES = [];
+                return;
             }
 
-            // Ensure current month exists if empty
-            if (fin.length === 0) {
-                fin.push({
-                    dataVencimento: new Date(hoje.getFullYear(), hoje.getMonth(), diaVenc),
-                    totalCompras: 0,
-                    totalPagos: 0,
-                    itens: []
-                });
-            }
-
-            INVOICES = fin;
+            // Mapeia do formato novo para o formato que o UI já entende
+            INVOICES = dataFaturas.map(fat => {
+                const compras = fat.itens.filter(i => i.valor > 0).reduce((acc, i) => acc + i.valor, 0);
+                const pagos = Math.abs(fat.itens.filter(i => i.valor < 0).reduce((acc, i) => acc + i.valor, 0));
+                
+                return {
+                    id: fat.id,
+                    dataVencimento: parseDateSafe(fat.vencimento),
+                    totalCompras: compras,
+                    totalPagos: pagos,
+                    saldoDevedor: fat.saldo_restante,
+                    status: fat.status,
+                    itens: fat.itens.map(i => ({
+                        data: i.data,
+                        tipo: i.valor < 0 ? 'Pagamento' : 'Compra',
+                        valor: i.valor,
+                        nome: i.desc
+                    }))
+                };
+            }).sort((a, b) => a.dataVencimento - b.dataVencimento);
         }
 
         // --- Rendering ---

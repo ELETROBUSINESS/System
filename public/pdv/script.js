@@ -5186,15 +5186,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (String(metodoPagamento).toLowerCase().includes('crediário')) {
                 const idCli = client ? client.idCliente : null;
                 if (idCli) {
-                    const params = new URLSearchParams({
-                        action: 'registrarTransacao',
-                        idCliente: idCli,
-                        valor: totalGeralVenda,
-                        tipo: 'Compra',
-                        parcelas: tempInstallments || 1,
-                        isEntrada: 'false'
-                    });
-                    safeExec(fetch(`${SCRIPT_URL}?${params.toString()}`), "Registro Crediário");
+                    await safeExec(fetch(CENTRAL_API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'registrar_venda_crediario',
+                            id_cliente: idCli,
+                            valor: totalGeralVenda,
+                            parcelas: tempInstallments || 1,
+                            descricao: `Venda ${lojaAtiva || 'PDV'}`,
+                            diaVencimento: client.vencimento || 10
+                        })
+                    }), "Registro Crediário Nova API");
                 }
             }
 
@@ -6067,53 +6069,43 @@ document.addEventListener('DOMContentLoaded', () => {
         historyContainer.innerHTML = '<p style="text-align:center; padding:20px;"><i class="bx bx-loader-alt bx-spin"></i> Carregando extrato...</p>';
 
         try {
-            const response = await fetch(`${SCRIPT_URL}?action=obterHistorico&idCliente=${id}`);
+            // Nova API de extrato agrupado por Faturas
+            const response = await fetch(CENTRAL_API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'consultar_extrato_cliente', id_cliente: id })
+            });
             const result = await response.json();
 
-            if (result.status === 'success' && result.data.length > 0) {
-                let html = '<table class="history-table"><thead><tr><th>Data</th><th>Tipo</th><th>Valor</th><th>Doc</th></tr></thead><tbody>';
+            if (result.success && result.data.length > 0) {
+                let html = '<div class="faturas-list-modern">';
 
-                result.data.forEach(item => {
-                    const tipoLower = String(item.tipo).toLowerCase();
-                    const obsLower = String(item.obs || "").toLowerCase();
+                result.data.forEach(fatura => {
+                    const totalFatura = parseFloat(fatura.saldo_restante || 0);
+                    const isVencida = new Date(fatura.vencimento) < new Date();
+                    const statusClass = totalFatura <= 0 ? 'fatura-paga' : (isVencida ? 'fatura-atrasada' : 'fatura-aberta');
 
-                    // Lógica visual da tabela
-                    let tipoTexto = 'PAGTO';
-                    let tipoClass = 'type-pagamento';
-                    let valorColor = 'var(--success-green)';
-
-                    if (tipoLower.includes('compra')) {
-                        tipoTexto = 'COMPRA';
-                        tipoClass = 'type-compra';
-                        valorColor = 'var(--warning-red)';
-                    } else if (tipoLower.includes('renegiciação (baixa)') || tipoLower.includes('renegociação (baixa)')) {
-                        tipoTexto = 'RENEG. BAIXA';
-                        tipoClass = 'type-reneg-baixa';
-                        valorColor = '#2196F3';
-                    } else if (tipoLower.includes('renegociação (nova)')) {
-                        tipoTexto = 'RENEG. NOVA';
-                        tipoClass = 'type-reneg-nova';
-                        valorColor = 'var(--warning-red)';
-                    }
-
-                    let anexoHtml = '-';
-                    if (item.anexo && item.anexo.startsWith('http')) {
-                        anexoHtml = `<button class="btn-link-receipt" onclick="window.open('${item.anexo}', '_blank')"><i class='bx bx-show'></i></button>`;
-                    }
-
-                    html += `<tr>
-                    <td>${item.data}<br><small style="color:#999">${item.obs || ''}</small></td>
-                    <td><span class="history-type-tag ${tipoClass}">${tipoTexto}</span></td>
-                    <td style="color:${valorColor}; font-weight:600;">${formatCurrency(Math.abs(item.valor))}</td>
-                    <td>${anexoHtml}</td>
-                </tr>`;
+                    html += `
+                        <div class="fatura-group ${statusClass}">
+                            <div class="fatura-header-modern">
+                                <strong>FATURA: ${fatura.id}</strong>
+                                <span>${formatCurrency(totalFatura)}</span>
+                            </div>
+                            <div class="fatura-items-mini">
+                                ${fatura.itens.map(item => `
+                                    <div class="fatura-item-row">
+                                        <small>${new Date(item.data).toLocaleDateString('pt-BR')}</small>
+                                        <span>${item.desc}</span>
+                                        <strong>${formatCurrency(item.valor)}</strong>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
                 });
-
-                html += '</tbody></table>';
+                html += '</div>';
                 historyContainer.innerHTML = html;
-
             } else {
-                historyContainer.innerHTML = '<p class="text-center text-light pad-20">Nenhum histórico recente encontrado.</p>';
+                historyContainer.innerHTML = '<p class="text-center text-light pad-20">Nenhum lançamento no crediário.</p>';
             }
         } catch (e) {
             console.error("Erro histórico", e);
@@ -6380,18 +6372,22 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Processando Pagamento Duplo...");
 
         // --- DISPARO SIMULTÂNEO (Promise.all) ---
-        // Dispara as duas requisições ao mesmo tempo para ser mais rápido
         const [resVenda, resCliente] = await Promise.all([
-            // 1. Post no Fluxo de Caixa
+            // 1. Post no Fluxo de Caixa (Mantido para compatibilidade de relatórios)
             fetch(REGISTRO_VENDA_SCRIPT_URL, {
                 redirect: "follow",
                 method: "POST",
                 body: formVenda.toString(),
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
             }),
-            // 2. Get no Script de Clientes (seguindo o padrão de salvarCliente)
-            fetch(`${SCRIPT_URL}?${paramsCliente.toString()}`, {
-                method: 'GET'
+            // 2. Novo Registro de Pagamento na API Central (Cascata)
+            fetch(CENTRAL_API_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'registrar_pagamento_parcela',
+                    id_cliente: cliente.idCliente,
+                    valor: valor
+                })
             })
         ]);
 
