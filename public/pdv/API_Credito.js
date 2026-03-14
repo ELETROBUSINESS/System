@@ -38,34 +38,53 @@ function registrarVendaCrediario(data) {
     const idCliente = String(data.id_cliente || data.id || "").trim();
     const valorTotal = parseFloat(data.valor || data.total) || 0;
     const numParcelas = parseInt(data.parcelas) || 1;
+    const mesOffsetBase = parseInt(data.mes_offset) || 0; // Para migração de parcelas específicas (1/2, 2/2...)
+    
     // Suporte para data manual (Migração)
     const dataCompra = data.data_manual ? new Date(data.data_manual) : new Date();
 
-    if (!idCliente) return { success: false, message: "ID do cliente não informado." };
+    // Busca dia de vencimento real do cliente se não informado
+    let diaVencimento = parseInt(data.diaVencimento);
+    if (isNaN(diaVencimento)) {
+        const clientSheet = ss.getSheetByName('Clientes');
+        if (clientSheet) {
+            const cRows = clientSheet.getDataRange().getValues();
+            for (let j = 1; j < cRows.length; j++) {
+                if (String(cRows[j][1]).trim().toLowerCase() === idCliente.toLowerCase()) {
+                    diaVencimento = parseInt(cRows[j][8]) || 10;
+                    break;
+                }
+            }
+        }
+    }
+    if (isNaN(diaVencimento)) diaVencimento = 10;
 
     const linhasParaInserir = [];
 
     for (let i = 0; i < numParcelas; i++) {
-        // Calcula a data base para cada parcela (mês 0, mês 1, etc)
+        // Calcula a data base para cada parcela
         let dataReferencia = new Date(dataCompra);
-        dataReferencia.setMonth(dataCompra.getMonth() + i);
+        // Aplica o offset (Ex: Se comprou em Março e é parcela 2/2, offset base é 1, dataRef vira Abril)
+        dataReferencia.setMonth(dataCompra.getMonth() + i + mesOffsetBase);
 
-        // Gera o BillingID seguindo sua sugestão: ID_CLIENTE-MMYYYY
+        // Gera o BillingID: Este ID agora representa o MÊS DE PAGAMENTO (M+1 ou M+2)
         const billingId = gerarBillingID(idCliente, dataReferencia);
 
-        // Calcula o Vencimento (baseado no dia de vencimento fixo do cliente ou padrão dia 10)
-        const diaVencimento = parseInt(data.diaVencimento) || 10;
-        const dataVenc = new Date(dataReferencia.getFullYear(), dataReferencia.getMonth(), diaVencimento);
-
-        // Se a compra da parcela foi após o dia de fechamento, o billingId já reflete isso no gerarBillingID
+        // Sincroniza o Vencimento com o BillingID gerado
+        const parts = billingId.split('-');
+        const monthYear = parts[1]; // Ex: "042026"
+        const targetMes = parseInt(monthYear.substring(0, 2)) - 1; // 0-indexed
+        const targetAno = parseInt(monthYear.substring(2));
+        
+        const dataVenc = new Date(targetAno, targetMes, diaVencimento);
 
         const row = [
             "MOV-" + Date.now() + i,     // ID único
-            dataCompra,                  // Data do Registro
+            dataCompra,                  // Data Real da Operação
             idCliente,
             billingId,
             'compra',
-            `${data.descricao || "Venda Crediário"} (${i + 1}/${numParcelas})`,
+            data.descricao || `Venda Crediário`, // Agora usamos a descrição vinda do utilitário
             valorTotal / numParcelas,
             dataVenc,
             'aberta'
@@ -80,7 +99,8 @@ function registrarVendaCrediario(data) {
         atualizarSaldoGlobalCliente(idCliente, valorTotal);
     }
 
-    return { success: true, message: `Venda em ${numParcelas}x registrada com BillingID.` };
+    const billingFinal = linhasParaInserir.length > 0 ? linhasParaInserir[0][3] : "N/A";
+    return { success: true, message: `Venda registrada em ${billingFinal}` };
 }
 
 /**
@@ -162,13 +182,71 @@ function registrarPagamentoParcela(data) {
 /**
  * Consulta o extrato do cliente agrupado por BillingID (Faturas)
  */
+/**
+ * Consulta o extrato do cliente agrupado por BillingID (Faturas)
+ */
 function consultarExtratoCliente(data) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName(CREDITO_SHEET_NAME);
     const idCliente = String(data.id_cliente || data.id || "").trim();
+    const pinEnviado = String(data.pin || "").trim();
 
-    if (!sheet) return { success: false, faturas: [] };
-    if (!idCliente) return { success: false, message: "ID do cliente não informado." };
+    if (!idCliente) return { status: "error", message: "ID do cliente não informado." };
+
+    // 1. Buscar Dados do Cliente (Autenticação)
+    const clientSheet = ss.getSheetByName('Clientes');
+    if (!clientSheet) return { status: "error", message: "Banco de clientes não encontrado." };
+
+    const clientRows = clientSheet.getDataRange().getValues();
+    let clienteEncontrado = null;
+
+    // Índices baseados na estrutura da aba Clientes (0: Loja, 1: ID, 2: Nome, ..., 11: Pass)
+    const idxID = 1;
+    const idxNome = 2;
+    const idxTelefone = 5;
+    const idxEndereco = 6;
+    const idxSaldo = 7;
+    const idxVencimento = 8;
+    const idxLimite = 9;
+    const idxPass = 11;
+
+    for (let i = 1; i < clientRows.length; i++) {
+        const idRow = String(clientRows[i][idxID]).trim();
+        if (idRow.toLowerCase() === idCliente.toLowerCase()) {
+            clienteEncontrado = {
+                id: clientRows[i][idxID],
+                nome: clientRows[i][idxNome],
+                telefone: clientRows[i][idxTelefone],
+                endereco: clientRows[i][idxEndereco],
+                diaVencimento: clientRows[i][idxVencimento],
+                limite: clientRows[i][idxLimite],
+                saldoDevedor: clientRows[i][idxSaldo],
+                pass: String(clientRows[i][idxPass] || "").trim()
+            };
+            break;
+        }
+    }
+
+    if (!clienteEncontrado) return { status: "error", message: "Cliente não encontrado." };
+
+    // 2. Lógica de Segurança (Senha/PIN)
+    const temSenha = clienteEncontrado.pass && clienteEncontrado.pass !== "0" && clienteEncontrado.pass !== "";
+    clienteEncontrado.temSenha = temSenha;
+    
+    if (temSenha) {
+        if (!pinEnviado) {
+            return { 
+                status: "auth_required", 
+                cliente: { nome: clienteEncontrado.nome, temSenha: true } 
+            };
+        }
+        if (pinEnviado !== clienteEncontrado.pass) {
+            return { status: "error", message: "PIN incorreto." };
+        }
+    }
+
+    // 3. Buscar Movimentações
+    if (!sheet) return { status: "success", cliente: clienteEncontrado, data: [] };
 
     const rows = sheet.getDataRange().getValues();
     const faturasAgrupadas = {};
@@ -198,7 +276,6 @@ function consultarExtratoCliente(data) {
             faturasAgrupadas[bId].saldo_restante += valor;
             if (status !== 'paga') faturasAgrupadas[bId].status = 'aberta';
         } else if (tipo === 'pagamento') {
-            // Pagamentos diminuem o saldo restante (valor já é negativo)
             faturasAgrupadas[bId].saldo_restante += valor; 
         }
 
@@ -211,23 +288,37 @@ function consultarExtratoCliente(data) {
         });
     }
 
-    // Converte objeto para array e ordena por vencimento
     const listaFaturas = Object.values(faturasAgrupadas).sort((a, b) => new Date(a.vencimento) - new Date(b.vencimento));
 
-    return { success: true, data: listaFaturas };
+    return { 
+        success: true,
+        status: "success", 
+        cliente: clienteEncontrado,
+        data: listaFaturas 
+    };
 }
 
 /**
- * Helper: Gera o BillingID (Ex: 1024-032026) considerando o dia de fechamento
+ * Helper: Gera o BillingID (Ex: 1024-042026) considerando o mês de PAGAMENTO
  */
 function gerarBillingID(idCliente, dataReferencia) {
-    let mes = dataReferencia.getMonth() + 1;
-    let ano = dataReferencia.getFullYear();
+    let d = new Date(dataReferencia);
+    let mes = d.getMonth() + 1; // Mês da operação
+    let ano = d.getFullYear();
 
-    // Lógica de fechamento: se comprou após o CLOSING_DAY, cai no billing do mês seguinte
-    if (dataReferencia.getDate() > CLOSING_DAY) {
+    // REGRA DE OURO:
+    // 1. Toda compra cai no vencimento do mês seguinte (M+1)
+    mes++;
+    
+    // 2. Se a operação ocorreu APÓS o dia de fechamento (25), pula mais um mês (M+2)
+    if (d.getDate() > CLOSING_DAY) {
         mes++;
-        if (mes > 12) { mes = 1; ano++; }
+    }
+
+    // Ajuste de virada de ano
+    while (mes > 12) {
+        mes -= 12;
+        ano++;
     }
 
     return `${idCliente}-${String(mes).padStart(2, '0')}${ano}`;

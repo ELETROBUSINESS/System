@@ -6079,17 +6079,47 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
 
             if (result.success && result.data.length > 0) {
+                const faturasAtivas = result.data.filter(f => (f.saldo_restante || 0) > 0.01);
+                
+                // 1. Atualização dos Cards de Resumo no Modal (Dados Reais)
+                const totalDevedor = faturasAtivas.reduce((acc, f) => acc + (f.saldo_restante || 0), 0);
+                const qtdP = faturasAtivas.length;
+                const valorP = qtdP > 0 ? faturasAtivas[0].saldo_restante : 0;
+                const proxV = qtdP > 0 ? new Date(faturasAtivas[0].vencimento) : null;
+
+                document.getElementById('detail-cliente-saldo').textContent = formatCurrency(totalDevedor);
+                document.getElementById('detail-cliente-qtd-parcelas').textContent = qtdP > 0 ? `${qtdP}x` : "-";
+                document.getElementById('detail-cliente-valor-parcela-mensal').textContent = valorP > 0 ? formatCurrency(valorP) : "-";
+                
+                if (proxV) {
+                    const vencEl = document.getElementById('detail-cliente-vencimento');
+                    const textoV = `${String(proxV.getDate()).padStart(2, '0')}/${String(proxV.getMonth() + 1).padStart(2, '0')}/${proxV.getFullYear()}`;
+                    vencEl.textContent = textoV;
+                    vencEl.style.color = (proxV < new Date().setHours(0,0,0,0)) ? 'var(--warning-red)' : 'var(--text-dark)';
+                }
+
+                // 2. Renderização do Histórico com nomes de meses
                 let html = '<div class="faturas-list-modern">';
+                const nomesMeses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
                 result.data.forEach(fatura => {
                     const totalFatura = parseFloat(fatura.saldo_restante || 0);
                     const isVencida = new Date(fatura.vencimento) < new Date();
                     const statusClass = totalFatura <= 0 ? 'fatura-paga' : (isVencida ? 'fatura-atrasada' : 'fatura-aberta');
 
+                    // Extrair Mês do BillingID (Ex: CLI...-042026)
+                    let displayMonth = fatura.id;
+                    const bParts = fatura.id.split('-');
+                    if (bParts.length > 1) {
+                        const mYear = bParts[1]; // "042026"
+                        const mIdx = parseInt(mYear.substring(0, 2)) - 1;
+                        if (mIdx >= 0 && mIdx < 12) displayMonth = nomesMeses[mIdx];
+                    }
+
                     html += `
                         <div class="fatura-group ${statusClass}">
                             <div class="fatura-header-modern">
-                                <strong>FATURA: ${fatura.id}</strong>
+                                <strong>FATURA: ${displayMonth}</strong>
                                 <span>${formatCurrency(totalFatura)}</span>
                             </div>
                             <div class="fatura-items-mini">
@@ -6097,7 +6127,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <div class="fatura-item-row">
                                         <small>${new Date(item.data).toLocaleDateString('pt-BR')}</small>
                                         <span>${item.desc}</span>
-                                        <strong>${formatCurrency(item.valor)}</strong>
+                                        <strong>${formatCurrency(Math.abs(item.valor))}</strong>
                                     </div>
                                 `).join('')}
                             </div>

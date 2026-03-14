@@ -41,9 +41,10 @@ function migrarHistoricoParaCrediario() {
         timestamp: row[0],
         idCliente: idCliente,
         tipo: isCompra ? 'compra' : 'pagamento',
+        originalTipo: String(row[2]).trim(), // Preserva: "Compra", "Renegociação (Nova)", etc
         valor: parseFloat(row[3]) || 0,
         parcela: row[4],
-        obs: row[5] || (isCompra ? "Migração: Compra/Reneg" : "Migração: Pagto/Baixa")
+        obs: row[5]
       });
     }
   }
@@ -59,11 +60,30 @@ function migrarHistoricoParaCrediario() {
   logsParaProcessar.forEach((log, index) => {
     try {
       if (log.tipo === 'compra') {
+        const parcelaStr = String(log.parcela || "").trim();
+        let offset = 0;
+        let descFinal = log.obs || `Migração: ${log.originalTipo}`;
+
+        // Lógica de Inteligência para identificar parcelamento pelo campo 'parcela' (1/2, 2/6...)
+        if (parcelaStr && parcelaStr.includes('/')) {
+            const partes = parcelaStr.split('/');
+            const atual = parseInt(partes[0]) || 1;
+            const total = parseInt(partes[1]) || 1;
+            
+            // Se for parcela 1, offset 0. Se for parcela 2, offset 1, etc...
+            offset = atual - 1; 
+            descFinal = `${log.obs || "Compra Parc."} (${parcelaStr})`;
+        } else if (String(log.obs).toLowerCase().includes('compra parc')) {
+            // Fallback se a coluna parcela estiver vazia mas a obs dizer que é parcela
+            descFinal = log.obs;
+        }
+
         const res = registrarVendaCrediario({
           id_cliente: log.idCliente,
           valor: Math.abs(log.valor),
-          parcelas: 1, // Logs costumam registrar por linha, se era parcelado o valor já deve estar diluído ou totalizado
-          descricao: log.obs || "Migração: Compra",
+          parcelas: 1, 
+          mes_offset: offset, 
+          descricao: descFinal,
           data_manual: log.timestamp,
           pular_saldo: true
         });
